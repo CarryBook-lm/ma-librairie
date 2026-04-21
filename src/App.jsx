@@ -36,7 +36,8 @@ export default function BookPlatform() {
 
   const featured = books[0];
   const isFree = (book) => !book.price || book.price === 0;
-  const isOwned = (book) => purchased.includes(book.id) || isFree(book);
+  const hasAccess = (book) => isFree(book) || purchased.includes(book.id);
+  const openRead = (book) => { setSel(book); setView("reader"); };
   const openPay = (book) => {
     if (isFree(book)) { setSel(book); setPurchased(p => [...p, book.id]); setView("reader"); return; }
     setSel(book); setPayModal(true);
