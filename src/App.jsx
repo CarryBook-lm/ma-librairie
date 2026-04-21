@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import PaymentModal from "./PaymentModal.jsx";
 
 const BOOKS = [
   { id: 1, title: "L'Art de la Discipline", author: "Marcus Aurelius", category: "Développement Personnel", price: 2500, cover: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80", summary: "Un guide intemporel pour maîtriser son esprit, ses émotions et ses actions au quotidien. Basé sur la philosophie stoïcienne, ce livre transforme votre façon de voir les obstacles.", pages: 220, rating: 4.8, readers: 1240, color: "#C9A96E" },
@@ -11,280 +12,8 @@ const BOOKS = [
 
 const CATEGORIES = ["Tous", "Business", "Finance", "Marketing", "Développement Personnel", "Psychologie", "Santé"];
 
-const READER_CONTENT = `Toute grande réussite commence dans le silence d'une décision. Pas une décision spectaculaire, annoncée à la foule — mais cette décision intime, prise seul face à soi-même, où l'on choisit de ne plus être la même personne qu'hier.\n\nNous vivons à une époque de bruit. Les réseaux sociaux nous bombardent de success stories filtrées, de conseils contradictoires, de comparaisons épuisantes. Dans ce chaos, il est facile de perdre le fil de ce qui compte vraiment : votre propre chemin.\n\nCe premier chapitre pose une seule question : **Qui voulez-vous devenir ?**\n\nNon pas ce que vous voulez avoir, ni ce que vous voulez faire — mais qui. Car tout le reste découle de cette réponse.\n\n---\n\n**L'identité précède le comportement**\n\nLes chercheurs en psychologie comportementale ont démontré depuis longtemps ce que les sages ont toujours su : nous agissons de manière cohérente avec l'image que nous avons de nous-mêmes.\n\nSi vous vous voyez comme quelqu'un de discipliné, vous trouverez des moyens d'être discipliné — même dans les moments difficiles. Si vous vous voyez comme quelqu'un qui "essaie de maigrir", vous saboterez vos efforts à la première tentation.\n\nLa différence n'est pas la volonté. C'est l'identité.\n\nExercice pratique : Prenez une feuille. Écrivez trois phrases commençant par "Je suis quelqu'un qui..." en lien avec la personne que vous souhaitez devenir. Relisez-les chaque matin pendant 30 jours.\n\n*Continuez votre lecture pour découvrir le Chapitre 2 : Les Habitudes Silencieuses...*`;
+const READER_CONTENT = `Toute grande réussite commence dans le silence d'une décision. Pas une décision spectaculaire, annoncée à la foule — mais cette décision intime, prise seul face à soi-même, où l'on choisit de ne plus être la même personne qu'hier.\n\nNous vivons à une époque de bruit. Les réseaux sociaux nous bombardent de success stories filtrées, de conseils contradictoires, de comparaisons épuisantes. Dans ce chaos, il est facile de perdre le fil de ce qui compte vraiment : votre propre chemin.\n\nCe premier chapitre pose une seule question : **Qui voulez-vous devenir ?**\n\nNon pas ce que vous voulez avoir, ni ce que vous voulez faire — mais qui. Car tout le reste découle de cette réponse.\n\n---\n\n**L'identité précède le comportement**\n\nLes chercheurs en psychologie comportementale ont démontré depuis longtemps ce que les sages ont toujours su : nous agissons de manière cohérente avec l'image que nous avons de nous-mêmes.\n\nSi vous vous voyez comme quelqu'un de discipliné, vous trouverez des moyens d'être discipliné — même dans les moments difficiles.\n\nLa différence n'est pas la volonté. C'est l'identité.\n\n*Continuez votre lecture pour découvrir le Chapitre 2 : Les Habitudes Silencieuses...*`;
 
-const PAYMENT_METHODS = [
-  { id: "orange", label: "Orange Money", emoji: "🟠", color: "#FF7900", bg: "rgba(255,121,0,0.08)", border: "rgba(255,121,0,0.4)", country: "CM · CI · SN · BF", fields: [{ id: "phone", label: "Numéro Orange Money", placeholder: "6X XX XX XX XX", type: "tel", icon: "📱" }], instruction: "Un code de confirmation vous sera envoyé par SMS. Composez *150# sur votre téléphone pour valider le paiement." },
-  { id: "mtn", label: "MTN MoMo", emoji: "🟡", color: "#FFCC00", bg: "rgba(255,204,0,0.08)", border: "rgba(255,204,0,0.4)", country: "CM · GH · UG · RW", fields: [{ id: "phone", label: "Numéro MTN Mobile Money", placeholder: "6X XX XX XX XX", type: "tel", icon: "📱" }], instruction: "Vous recevrez une notification push sur votre application MTN MoMo. Approuvez le paiement pour confirmer." },
-  { id: "visa", label: "Carte Bancaire", emoji: null, color: "#C9A96E", bg: "rgba(201,169,110,0.08)", border: "rgba(201,169,110,0.4)", country: "Visa · Mastercard · Mondial", fields: [{ id: "name", label: "Titulaire de la carte", placeholder: "NOM PRÉNOM", type: "text", icon: "👤" }, { id: "number", label: "Numéro de carte", placeholder: "•••• •••• •••• ••••", type: "text", icon: "💳", format: "card" }, { id: "expiry", label: "Expiration", placeholder: "MM / AA", type: "text", icon: "📅", half: true }, { id: "cvv", label: "CVV", placeholder: "•••", type: "password", icon: "🔒", half: true }], instruction: "Paiement sécurisé 3D Secure. Votre banque peut envoyer un code de vérification par SMS." },
-  { id: "paypal", label: "PayPal", emoji: null, color: "#009cde", bg: "rgba(0,156,222,0.08)", border: "rgba(0,156,222,0.35)", country: "International · 200+ pays", fields: [{ id: "email", label: "Adresse e-mail PayPal", placeholder: "vous@email.com", type: "email", icon: "✉️" }], instruction: "Vous serez redirigé vers PayPal pour saisir votre mot de passe et finaliser le paiement en toute sécurité." },
-];
-
-function fmtCard(v) { return v.replace(/\D/g,"").slice(0,16).replace(/(.{4})/g,"$1 ").trim(); }
-function fmtExpiry(v) { const d=v.replace(/\D/g,"").slice(0,4); return d.length>=3?d.slice(0,2)+" / "+d.slice(2):d; }
-
-function PaymentModal({ book, onClose, onSuccess }) {
-  const [step, setStep] = useState(1);
-  const [method, setMethod] = useState(null);
-  const [fields, setFields] = useState({});
-  const [errors, setErrors] = useState({});
-  const [progress, setProgress] = useState(0);
-  const sel = PAYMENT_METHODS.find(m => m.id === method);
-
-  useEffect(() => {
-    if (step !== 3) return;
-    let p = 0;
-    const iv = setInterval(() => {
-      p += Math.random() * 15 + 6;
-      if (p >= 100) { clearInterval(iv); setProgress(100); setTimeout(() => setStep(4), 500); return; }
-      setProgress(p);
-    }, 300);
-    return () => clearInterval(iv);
-  }, [step]);
-
-  const validate = () => {
-    const e = {};
-    sel.fields.forEach(f => {
-      if (!fields[f.id]?.trim()) e[f.id] = "Requis";
-      if (f.id === "email" && fields[f.id] && !/\S+@\S+\.\S+/.test(fields[f.id])) e[f.id] = "Email invalide";
-    });
-    setErrors(e);
-    return !Object.keys(e).length;
-  };
-
-  const handleChange = (fid, val, fmt) => {
-    let v = val;
-    if (fmt === "card") v = fmtCard(val);
-    if (fid === "expiry") v = fmtExpiry(val);
-    if (fid === "cvv") v = val.replace(/\D/g,"").slice(0,4);
-    if (fid === "phone") v = val.replace(/[^\d\s+]/g,"").slice(0,16);
-    setFields(p => ({ ...p, [fid]: v }));
-    if (errors[fid]) setErrors(p => ({ ...p, [fid]: null }));
-  };
-
-  const S = { fontFamily: "Lato, sans-serif" };
-  const PF = { fontFamily: "'Playfair Display', Georgia, serif" };
-
-  const inp = (err, active) => ({
-    width: "100%", background: "#0A0907", border: `1px solid ${err ? "#C44B4B" : active ? (sel?.color || "#C9A96E") : "#3A3228"}`,
-    color: "#F5F0E8", padding: "12px 14px 12px 38px", ...S, fontSize: 14, outline: "none", transition: "border-color 0.2s", boxSizing: "border-box",
-  });
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-      onClick={step < 3 ? onClose : undefined}>
-      <div style={{ background: "#1A1713", width: "100%", maxWidth: 460, border: "1px solid #3A3228", maxHeight: "94vh", overflowY: "auto", position: "relative" }}
-        onClick={e => e.stopPropagation()}>
-
-        {/* Header */}
-        {step < 4 && (
-          <div style={{ padding: "20px 26px", borderBottom: "1px solid #2A2420", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {step === 2 && <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1 }}>←</button>}
-              <div>
-                <p style={{ ...S, fontSize: 10, letterSpacing: 2.5, color: "#5A5040", textTransform: "uppercase", marginBottom: 3 }}>
-                  {step === 1 ? "Étape 1 / 2" : step === 2 ? "Étape 2 / 2" : "En cours..."}
-                </p>
-                <p style={{ ...PF, fontSize: 17, fontWeight: 700 }}>
-                  {step === 1 ? "Choisir le paiement" : step === 2 ? sel?.label : "Traitement du paiement"}
-                </p>
-              </div>
-            </div>
-            {step < 3 && (
-              <button onClick={onClose} style={{ background: "none", border: "1px solid #3A3228", color: "#A89880", width: 30, height: 30, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
-            )}
-          </div>
-        )}
-
-        {/* Book bar */}
-        {step < 4 && (
-          <div style={{ margin: "18px 26px 0", background: "#0F0D0A", border: "1px solid #2A2420", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <img src={book.cover} alt="" style={{ width: 34, height: 46, objectFit: "cover" }} />
-              <div>
-                <p style={{ ...PF, fontSize: 13, fontWeight: 700 }}>{book.title}</p>
-                <p style={{ ...S, fontSize: 11, color: "#A89880", marginTop: 2 }}>{book.author}</p>
-              </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ ...PF, fontSize: 19, fontWeight: 700, color: "#C9A96E" }}>{book.price.toLocaleString()}</p>
-              <p style={{ ...S, fontSize: 9, color: "#A89880", letterSpacing: 1.5 }}>FCFA</p>
-            </div>
-          </div>
-        )}
-
-        <div style={{ padding: "22px 26px 28px" }}>
-
-          {/* STEP 1 */}
-          {step === 1 && (
-            <div>
-              <p style={{ ...S, fontSize: 11, color: "#5A5040", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Mobile Money Afrique</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
-                {PAYMENT_METHODS.filter(m => ["orange","mtn"].includes(m.id)).map(m => (
-                  <div key={m.id} onClick={() => { setMethod(m.id); setStep(2); setFields({}); setErrors({}); }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", border: `1px solid #2A2420`, cursor: "pointer", background: "transparent", transition: "all 0.18s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = m.color; e.currentTarget.style.background = m.bg; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2420"; e.currentTarget.style.background = "transparent"; }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 44, height: 44, background: m.bg, border: `1px solid ${m.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{m.emoji}</div>
-                      <div>
-                        <p style={{ ...PF, fontSize: 15, fontWeight: 700 }}>{m.label}</p>
-                        <p style={{ ...S, fontSize: 11, color: "#7A6850", marginTop: 2 }}>{m.country}</p>
-                      </div>
-                    </div>
-                    <span style={{ color: "#5A5040", fontSize: 20 }}>›</span>
-                  </div>
-                ))}
-              </div>
-
-              <p style={{ ...S, fontSize: 11, color: "#5A5040", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Carte & International</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {PAYMENT_METHODS.filter(m => ["visa","paypal"].includes(m.id)).map(m => (
-                  <div key={m.id} onClick={() => { setMethod(m.id); setStep(2); setFields({}); setErrors({}); }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", border: "1px solid #2A2420", cursor: "pointer", background: "transparent", transition: "all 0.18s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = m.color; e.currentTarget.style.background = m.bg; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2420"; e.currentTarget.style.background = "transparent"; }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 44, height: 44, background: m.bg, border: `1px solid ${m.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {m.id === "visa" ? (
-                          <svg viewBox="0 0 750 471" width="36" height="22">
-                            <path fill="#1A1F71" d="M278 334l33-195h54l-34 195zm247-190c-11-4-27-8-48-8-53 0-90 27-90 65-1 28 26 43 47 53 21 9 28 15 28 24 0 13-17 19-32 19-21 0-33-3-50-10l-7-3-8 44c13 5 35 10 59 10 56 0 92-26 92-66 0-22-14-39-44-53-18-9-30-15-30-24 0-8 10-17 30-17 17 0 30 4 39 7l5 2 8-42zm131-5h-41c-13 0-22 4-28 16l-79 179h56l11-29h68l6 29h49l-42-195zm-66 124l21-53 7-18 3 16 12 55h-43zm-388-124l-52 133-6-27c-10-31-40-65-74-82l48 171h56l83-195h-55z" />
-                            <path fill="#F2AE14" d="M132 139H46l-1 4c67 16 111 55 129 102l-19-89c-3-12-12-17-23-17z" />
-                          </svg>
-                        ) : (
-                          <span style={{ ...S, fontWeight: 900, fontSize: 13 }}>
-                            <span style={{ color: "#003087" }}>Pay</span><span style={{ color: "#009cde" }}>Pal</span>
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p style={{ ...PF, fontSize: 15, fontWeight: 700 }}>{m.label}</p>
-                        <p style={{ ...S, fontSize: 11, color: "#7A6850", marginTop: 2 }}>{m.country}</p>
-                      </div>
-                    </div>
-                    <span style={{ color: "#5A5040", fontSize: 20 }}>›</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 22, padding: "11px 14px", background: "rgba(78,158,95,0.06)", border: "1px solid rgba(78,158,95,0.18)" }}>
-                <span style={{ fontSize: 13 }}>🔒</span>
-                <p style={{ ...S, fontSize: 11, color: "#6AB87A", lineHeight: 1.5 }}>Paiement chiffré SSL 256-bit — vos données sont protégées.</p>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2 */}
-          {step === 2 && sel && (
-            <div>
-              <div style={{ padding: "12px 14px", background: sel.bg, border: `1px solid ${sel.border}`, marginBottom: 22, display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>ℹ️</span>
-                <p style={{ ...S, fontSize: 12, color: "#C8BFA8", lineHeight: 1.6 }}>{sel.instruction}</p>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                {sel.fields.map(f => {
-                  const [focused, setFocused] = useState(false);
-                  return (
-                    <div key={f.id} style={{ gridColumn: f.half ? "span 1" : "span 2" }}>
-                      <p style={{ ...S, fontSize: 10, color: errors[f.id] ? "#C44B4B" : "#7A6850", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 7 }}>
-                        {f.label}{errors[f.id] ? ` — ${errors[f.id]}` : ""}
-                      </p>
-                      <div style={{ position: "relative" }}>
-                        <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 13, pointerEvents: "none", opacity: 0.7 }}>{f.icon}</span>
-                        <input type={f.type} placeholder={f.placeholder} value={fields[f.id] || ""}
-                          onChange={e => handleChange(f.id, e.target.value, f.format)}
-                          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-                          style={inp(errors[f.id], focused)} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {sel.id === "visa" && (
-                <div style={{ margin: "18px 0", background: "linear-gradient(135deg, #1A1713 0%, #221E18 100%)", border: "1px solid #3A3228", borderLeft: `3px solid ${sel.color}`, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <p style={{ ...S, fontSize: 10, color: "#5A5040", letterSpacing: 2, marginBottom: 8 }}>CARTE</p>
-                    <p style={{ fontFamily: "'Courier New', monospace", fontSize: 15, letterSpacing: 3, color: "#F5F0E8" }}>{fields.number || "•••• •••• •••• ••••"}</p>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ ...S, fontSize: 10, color: "#5A5040", letterSpacing: 2, marginBottom: 8 }}>EXPIRE</p>
-                    <p style={{ ...S, fontSize: 14, color: "#C9A96E", fontWeight: 700 }}>{fields.expiry || "MM / AA"}</p>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
-                <button onClick={() => setStep(1)}
-                  style={{ padding: "12px 18px", background: "transparent", border: "1px solid #3A3228", color: "#A89880", ...S, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer" }}>
-                  Retour
-                </button>
-                <button onClick={() => validate() && setStep(3)}
-                  style={{ flex: 1, padding: "13px", background: `linear-gradient(135deg, ${sel.color}, ${sel.color}bb)`, border: "none", color: sel.id === "paypal" ? "#fff" : "#0F0D0A", ...S, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", cursor: "pointer" }}>
-                  Payer {book.price.toLocaleString()} FCFA
-                </button>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 16 }}>
-                {["🔒 SSL", "✓ Sécurisé", "⚡ Instantané"].map(t => (
-                  <p key={t} style={{ ...S, fontSize: 10, color: "#5A5040", letterSpacing: 1 }}>{t}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3 */}
-          {step === 3 && (
-            <div style={{ textAlign: "center", padding: "36px 0" }}>
-              <div style={{ width: 60, height: 60, border: "2px solid #2A2420", borderTop: `2px solid ${sel?.color || "#C9A96E"}`, borderRadius: "50%", margin: "0 auto 26px", animation: "spin 0.9s linear infinite" }} />
-              <p style={{ ...PF, fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Traitement en cours</p>
-              <p style={{ ...S, fontSize: 13, color: "#A89880", marginBottom: 30 }}>Vérification {sel?.label}...</p>
-              <div style={{ height: 4, background: "#1A1713", borderRadius: 2, margin: "0 10px", overflow: "hidden" }}>
-                <div style={{ height: "100%", background: `linear-gradient(90deg, ${sel?.color || "#C9A96E"}, ${sel?.color || "#C9A96E"}88)`, width: `${progress}%`, transition: "width 0.35s ease", borderRadius: 2 }} />
-              </div>
-              <p style={{ ...S, fontSize: 12, color: "#5A5040", marginTop: 10 }}>{Math.round(progress)}%</p>
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            </div>
-          )}
-
-          {/* STEP 4 */}
-          {step === 4 && (
-            <div style={{ textAlign: "center", padding: "32px 16px 24px" }}>
-              <div style={{ width: 68, height: 68, borderRadius: "50%", background: "rgba(78,158,95,0.12)", border: "2px solid #4E9E5F", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", animation: "popIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275)" }}>
-                <span style={{ fontSize: 30, color: "#4E9E5F" }}>✓</span>
-              </div>
-              <p style={{ ...PF, fontSize: 26, fontWeight: 900, marginBottom: 8 }}>Paiement confirmé !</p>
-              <p style={{ ...S, fontSize: 14, color: "#A89880", marginBottom: 4 }}>
-                <strong style={{ color: "#C9A96E" }}>{book.title}</strong>
-              </p>
-              <p style={{ ...S, fontSize: 13, color: "#6AB87A", marginBottom: 28 }}>est maintenant dans votre bibliothèque.</p>
-
-              <div style={{ background: "#0F0D0A", border: "1px solid #2A2420", padding: "14px 18px", marginBottom: 24, display: "flex", justifyContent: "space-between" }}>
-                <div style={{ textAlign: "left" }}>
-                  <p style={{ ...S, fontSize: 10, color: "#5A5040", letterSpacing: 1.5, marginBottom: 5 }}>MONTANT PAYÉ</p>
-                  <p style={{ ...PF, fontSize: 20, fontWeight: 700, color: "#C9A96E" }}>{book.price.toLocaleString()} FCFA</p>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ ...S, fontSize: 10, color: "#5A5040", letterSpacing: 1.5, marginBottom: 5 }}>VIA</p>
-                  <p style={{ ...S, fontSize: 14, fontWeight: 700 }}>{sel?.label}</p>
-                </div>
-              </div>
-
-              <button onClick={onSuccess}
-                style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg, #C9A96E, #E8C98A)", border: "none", color: "#0F0D0A", ...S, fontSize: 13, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", cursor: "pointer" }}>
-                Lire maintenant →
-              </button>
-              <style>{`@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── MAIN APP ───────────────────────────────────────────────── */
 export default function BookPlatform() {
   const [view, setView] = useState("home");
   const [sel, setSel] = useState(null);
@@ -293,8 +22,8 @@ export default function BookPlatform() {
   const [payModal, setPayModal] = useState(false);
   const [search, setSearch] = useState("");
 
-  const PF = { fontFamily: "'Playfair Display', Georgia, serif" };
-  const S = { fontFamily: "Lato, sans-serif" };
+  const PF = { fontFamily: "'Playfair Display',Georgia,serif" };
+  const S = { fontFamily: "Lato,sans-serif" };
 
   const filtered = BOOKS.filter(b => {
     const mc = activeCategory === "Tous" || b.category === activeCategory;
@@ -303,20 +32,14 @@ export default function BookPlatform() {
   });
 
   const featured = BOOKS[4];
-
   const openPay = (book) => { setSel(book); setPayModal(true); };
-  const onPaySuccess = () => {
-    setPurchased(p => [...p, sel.id]);
-    setPayModal(false);
-    setView("reader");
-  };
+  const onPaySuccess = () => { setPurchased(p => [...p, sel.id]); setPayModal(false); setView("reader"); };
 
   return (
     <div style={{ ...S, background: "#0F0D0A", minHeight: "100vh", color: "#F5F0E8" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Lato:wght@300;400;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        .bg { background: linear-gradient(135deg, #C9A96E, #E8C98A); }
         .btn-gold{background:linear-gradient(135deg,#C9A96E,#E8C98A);color:#0F0D0A;border:none;padding:12px 28px;font-family:Lato,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .3s}
         .btn-gold:hover{opacity:.85;transform:translateY(-1px)}
         .btn-out{background:transparent;color:#C9A96E;border:1px solid #C9A96E;padding:10px 24px;font-family:Lato,sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .3s}
@@ -339,8 +62,7 @@ export default function BookPlatform() {
         </div>
         <div style={{ display: "flex", gap: 32 }}>
           {[["home","Accueil"],["catalog","Catalogue"],["library","Ma Bibliothèque"]].map(([v,l]) => (
-            <span key={v} onClick={() => setView(v)}
-              style={{ cursor: "pointer", ...S, fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase", color: view === v ? "#C9A96E" : "#A89880", transition: "color .2s" }}>{l}</span>
+            <span key={v} onClick={() => setView(v)} style={{ cursor: "pointer", ...S, fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase", color: view === v ? "#C9A96E" : "#A89880", transition: "color .2s" }}>{l}</span>
           ))}
         </div>
         <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(201,169,110,.12)", border: "1px solid rgba(201,169,110,.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -406,7 +128,7 @@ export default function BookPlatform() {
           <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "60px 40px" }}>
             <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "auto 1fr", gap: 48, alignItems: "center" }}>
               <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", inset: -10, background: `linear-gradient(135deg, ${featured.color}33, transparent)` }}></div>
+                <div style={{ position: "absolute", inset: -10, background: `linear-gradient(135deg,${featured.color}33,transparent)` }}></div>
                 <img src={featured.cover} alt={featured.title} style={{ width: 220, height: 300, objectFit: "cover", position: "relative", zIndex: 1, display: "block" }} />
               </div>
               <div>
@@ -475,7 +197,7 @@ export default function BookPlatform() {
         </div>
       )}
 
-      {/* BOOK */}
+      {/* BOOK DETAIL */}
       {view === "book" && sel && (
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "50px 40px" }}>
           <button style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", ...S, fontSize: 13, letterSpacing: 1, marginBottom: 40, display: "flex", alignItems: "center", gap: 8 }} onClick={() => setView("catalog")}>← Retour au catalogue</button>
@@ -488,7 +210,7 @@ export default function BookPlatform() {
               <div style={{ marginTop: 22 }}>
                 {purchased.includes(sel.id)
                   ? <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => setView("reader")}>Lire maintenant</button>
-                  : <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => setPayModal(true)}>Acheter — {sel.price.toLocaleString()} FCFA</button>}
+                  : <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => openPay(sel)}>Acheter — {sel.price.toLocaleString()} FCFA</button>}
                 <button className="btn-out" style={{ width: "100%" }} onClick={() => setView("catalog")}>Voir d'autres livres</button>
               </div>
               <div style={{ marginTop: 16, padding: "12px", background: "rgba(78,158,95,.06)", border: "1px solid rgba(78,158,95,.18)", textAlign: "center" }}>
@@ -526,7 +248,7 @@ export default function BookPlatform() {
             <div style={{ ...S, fontSize: 11, color: "#5A5040" }}>8% lu</div>
           </div>
           <div style={{ height: 3, background: "#1A1713" }}><div style={{ height: "100%", width: "8%", background: "linear-gradient(90deg,#C9A96E,#E8C98A)" }}></div></div>
-          <div style={{ maxWidth: 700, margin: "60px auto", padding: "0 40px 100px", fontFamily: "Georgia, serif", lineHeight: 1.9, fontSize: 17, color: "#E8DFD0" }}>
+          <div style={{ maxWidth: 700, margin: "60px auto", padding: "0 40px 100px", fontFamily: "Georgia,serif", lineHeight: 1.9, fontSize: 17, color: "#E8DFD0" }}>
             <div style={{ textAlign: "center", marginBottom: 60 }}>
               <p style={{ ...S, fontSize: 11, color: "#C9A96E", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>Chapitre 1</p>
               <h1 style={{ ...PF, fontSize: 32, fontWeight: 900, fontStyle: "italic" }}>Les Fondations</h1>
@@ -572,22 +294,6 @@ export default function BookPlatform() {
                 ))}
               </div>
           }
-          <div style={{ marginTop: 56, borderTop: "1px solid #2A2420", paddingTop: 36 }}>
-            <h2 style={{ ...PF, fontSize: 22, marginBottom: 22 }}>Découvrir plus de livres</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
-              {BOOKS.filter(b => !purchased.includes(b.id)).slice(0,3).map(book => (
-                <div key={book.id} className="card" style={{ background: "#1A1713", border: "1px solid #2A2420", padding: 14, display: "flex", gap: 12, alignItems: "center" }}
-                  onClick={() => { setSel(book); setView("book"); }}>
-                  <img src={book.cover} alt={book.title} style={{ width: 52, height: 70, objectFit: "cover" }} />
-                  <div>
-                    <p style={{ ...PF, fontSize: 13, fontWeight: 700, marginBottom: 3 }}>{book.title}</p>
-                    <p style={{ ...S, fontSize: 11, color: "#A89880", marginBottom: 5 }}>{book.author}</p>
-                    <p style={{ ...S, fontSize: 13, color: "#C9A96E", fontWeight: 700 }}>{book.price.toLocaleString()} FCFA</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
