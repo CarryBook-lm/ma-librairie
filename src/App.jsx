@@ -59,117 +59,103 @@ function BookReader({ book, onBack }) {
   const progress = totalPages > 1 ? Math.round((currentPageIndex / (totalPages - 1)) * 100) : 100;
 
   const renderPara = (para, i) => {
-    if (para === "---") return <div key={i} style={{ width: 60, height: 1, background: "#3A3228", margin: "32px auto" }}></div>;
-    const html = para.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#C9A96E;font-weight:700">$1</strong>');
+    if (para === "---") return <div key={i} style={{ width: 40, height: 1, background: "#CCC", margin: "28px auto" }}></div>;
+    const html = para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     if (para.toLowerCase().startsWith("chapitre")) {
-      return <h2 key={i} style={{ ...PF, fontSize: 22, fontWeight: 700, color: "#C9A96E", margin: "32px 0 20px", lineHeight: 1.3 }} dangerouslySetInnerHTML={{ __html: html }} />;
+      return <h2 key={i} style={{ fontFamily: "Georgia,serif", fontSize: 18, fontWeight: 700, color: "#1A1A1A", margin: "36px 0 18px", lineHeight: 1.4, textAlign: "center", letterSpacing: 1 }} dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    return <p key={i} style={{ marginBottom: 22, textAlign: "justify", textIndent: "1.5em" }} dangerouslySetInnerHTML={{ __html: html }} />;
+    return <p key={i} style={{ marginBottom: 18, textAlign: "justify", textIndent: "2em", lineHeight: 1.9, color: "#1A1A1A", fontSize: 15 }} dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
   return (
-    <div style={{ ...S, background: "#0F0D0A", minHeight: "100vh", color: "#F5F0E8" }}>
+    <div style={{ fontFamily: "Lato,sans-serif", background: "#F5F0E8", minHeight: "100vh", color: "#1A1A1A" }}>
       <style>{`
-        @keyframes slideLeft{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-40px)}}
-        @keyframes slideRight{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        .page-content{animation:fadeIn 0.35s ease}
-        .page-exit-left{animation:slideLeft 0.3s ease forwards}
-        .page-exit-right{animation:slideRight 0.3s ease forwards}
-        .nav-btn{background:transparent;border:1px solid #3A3228;color:#A89880;width:44px;height:44px;cursor:pointer;font-size:18px;transition:all .2s;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
-        .nav-btn:hover:not(:disabled){border-color:#C9A96E;color:#C9A96E;background:rgba(201,169,110,0.08)}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .page-content{animation:fadeIn 0.3s ease}
+        .nav-btn{background:#fff;border:1px solid #DDD;color:#555;width:44px;height:44px;cursor:pointer;font-size:22px;transition:all .2s;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+        .nav-btn:hover:not(:disabled){border-color:#C9A96E;color:#C9A96E;background:#FFF8F0}
         .nav-btn:disabled{opacity:0.25;cursor:not-allowed}
-        @media(max-width:768px){.reader-page{padding:28px 20px!important;font-size:16px!important}}
+        @media(max-width:768px){.reader-inner{padding:28px 18px 100px!important;font-size:15px!important}}
       `}</style>
 
       {/* TOP BAR */}
-      <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", ...S, fontSize: 12, letterSpacing: 1, display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ background: "#fff", borderBottom: "1px solid #E8E0D0", padding: "0 20px", height: 54, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40, boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontFamily: "Lato,sans-serif", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
           ← Quitter
         </button>
-        <div style={{ textAlign: "center", flex: 1, padding: "0 16px" }}>
-          <p style={{ ...PF, fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{book.title}</p>
-          <p style={{ ...S, fontSize: 10, color: "#5A5040", marginTop: 2 }}>Page {currentPageIndex + 1} / {totalPages}</p>
+        <div style={{ textAlign: "center", flex: 1, padding: "0 12px" }}>
+          <p style={{ fontFamily: "Georgia,serif", fontSize: 13, fontWeight: 700, color: "#1A1A1A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{book.title}</p>
+          <p style={{ fontFamily: "Lato,sans-serif", fontSize: 10, color: "#AAA", marginTop: 1 }}>Page {currentPageIndex + 1} sur {totalPages}</p>
         </div>
         <button onClick={() => setShowTOC(!showTOC)}
-          style={{ background: showTOC ? "rgba(201,169,110,0.1)" : "none", border: "1px solid #3A3228", color: "#A89880", padding: "6px 12px", cursor: "pointer", ...S, fontSize: 11, letterSpacing: 1, whiteSpace: "nowrap" }}>
+          style={{ background: showTOC ? "#FFF8F0" : "none", border: "1px solid #DDD", color: "#888", padding: "5px 10px", cursor: "pointer", fontFamily: "Lato,sans-serif", fontSize: 11, borderRadius: 4 }}>
           ☰ Chapitres
         </button>
       </div>
 
       {/* PROGRESS BAR */}
-      <div style={{ height: 3, background: "#1A1713" }}>
-        <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#C9A96E,#E8C98A)", transition: "width 0.4s ease" }} />
+      <div style={{ height: 3, background: "#E8E0D0" }}>
+        <div style={{ height: "100%", width: `${progress}%`, background: "#C9A96E", transition: "width 0.4s ease" }} />
       </div>
 
       {/* TABLE OF CONTENTS */}
       {showTOC && (
-        <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "20px 24px" }}>
-          <p style={{ ...S, fontSize: 11, letterSpacing: 2, color: "#C9A96E", textTransform: "uppercase", marginBottom: 14 }}>Table des matières</p>
+        <div style={{ background: "#fff", borderBottom: "1px solid #E8E0D0", padding: "18px 24px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+          <p style={{ fontFamily: "Lato,sans-serif", fontSize: 11, letterSpacing: 2, color: "#C9A96E", textTransform: "uppercase", marginBottom: 12 }}>Table des matières</p>
           {chapters.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {chapters.map((ch, i) => (
-                <button key={i} onClick={() => { setShowTOC(false); }}
-                  style={{ background: "none", border: "none", color: "#C8BFA8", ...PF, fontSize: 14, textAlign: "left", cursor: "pointer", padding: "6px 0", borderBottom: "1px solid #2A2420" }}>
+                <button key={i} onClick={() => setShowTOC(false)}
+                  style={{ background: "none", border: "none", color: "#333", fontFamily: "Georgia,serif", fontSize: 14, textAlign: "left", cursor: "pointer", padding: "6px 0", borderBottom: "1px solid #F0EAE0" }}>
                   {ch.title}
                 </button>
               ))}
             </div>
           ) : (
-            <p style={{ ...S, fontSize: 13, color: "#5A5040", fontStyle: "italic" }}>Aucun chapitre détecté</p>
+            <p style={{ fontFamily: "Lato,sans-serif", fontSize: 13, color: "#AAA", fontStyle: "italic" }}>Aucun chapitre détecté</p>
           )}
         </div>
       )}
 
-      {/* PAGE CONTENT */}
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 40px 120px" }}>
+      {/* PAGE CONTENT — white paper style */}
+      <div style={{ maxWidth: 660, margin: "32px auto 0", padding: "0 16px 120px" }}>
+        <div style={{ background: "#fff", boxShadow: "0 2px 20px rgba(0,0,0,0.10)", minHeight: 500 }}>
 
-        {/* First page — title page */}
-        {currentPageIndex === 0 && (
-          <div style={{ textAlign: "center", marginBottom: 52, paddingBottom: 40, borderBottom: "1px solid #2A2420" }}>
-            <p style={{ ...S, fontSize: 10, color: "#C9A96E", letterSpacing: 3, textTransform: "uppercase", marginBottom: 12 }}>Lecture</p>
-            <h1 style={{ ...PF, fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 8, lineHeight: 1.3 }}>{book.title}</h1>
-            <p style={{ ...S, fontSize: 13, color: "#5A5040" }}>par {book.author}</p>
-            <div style={{ width: 48, height: 1, background: "#C9A96E", margin: "20px auto 0" }}></div>
+          {/* First page title */}
+          {currentPageIndex === 0 && (
+            <div style={{ textAlign: "center", padding: "40px 40px 28px", borderBottom: "1px solid #F0EAE0" }}>
+              <h1 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 700, fontStyle: "italic", color: "#1A1A1A", marginBottom: 8, lineHeight: 1.4 }}>{book.title}</h1>
+              <p style={{ fontFamily: "Lato,sans-serif", fontSize: 13, color: "#888" }}>par {book.author}</p>
+            </div>
+          )}
+
+          {/* Page text */}
+          <div className="page-content reader-inner" style={{ padding: "36px 44px 40px" }}>
+            {!book.content ? (
+              <p style={{ textAlign: "center", color: "#AAA", fontStyle: "italic", padding: "40px 0" }}>Le contenu de ce livre n'est pas encore disponible.</p>
+            ) : (
+              (pages[currentPageIndex] || []).map((para, i) => renderPara(para, i))
+            )}
           </div>
-        )}
 
-        {/* Page text */}
-        {!book.content ? (
-          <p style={{ textAlign: "center", color: "#5A5040", fontStyle: "italic", marginTop: 60 }}>Le contenu de ce livre n'est pas encore disponible.</p>
-        ) : (
-          <div className={animating ? (animDir === "left" ? "page-exit-left" : "page-exit-right") : "page-content"}
-            className="page-content reader-page"
-            style={{ fontFamily: "Georgia,serif", lineHeight: 1.95, fontSize: 17, color: "#E8DFD0" }}>
-            {(pages[currentPageIndex] || []).map((para, i) => renderPara(para, i))}
+          {/* Page number */}
+          <div style={{ textAlign: "center", padding: "12px 0 20px", borderTop: "1px solid #F0EAE0" }}>
+            <p style={{ fontFamily: "Georgia,serif", fontSize: 12, color: "#BBB", letterSpacing: 2 }}>— {currentPageIndex + 1} —</p>
           </div>
-        )}
-
-        {/* Page number */}
-        <div style={{ textAlign: "center", marginTop: 40, marginBottom: 20 }}>
-          <p style={{ ...S, fontSize: 12, color: "#3A3228", letterSpacing: 2 }}>— {currentPageIndex + 1} —</p>
         </div>
       </div>
 
       {/* BOTTOM NAVIGATION */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(15,13,10,0.96)", backdropFilter: "blur(12px)", borderTop: "1px solid #2A2420", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 40 }}>
-
-        <button className="nav-btn" onClick={() => goTo(currentPageIndex - 1, "right")} disabled={currentPageIndex === 0}>
-          ‹
-        </button>
-
-        {/* Page slider */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ ...S, fontSize: 11, color: "#5A5040", flexShrink: 0 }}>1</span>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(245,240,232,0.97)", backdropFilter: "blur(8px)", borderTop: "1px solid #E8E0D0", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 40 }}>
+        <button className="nav-btn" onClick={() => goTo(currentPageIndex - 1, "right")} disabled={currentPageIndex === 0}>‹</button>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontFamily: "Lato,sans-serif", fontSize: 11, color: "#AAA", flexShrink: 0 }}>1</span>
           <input type="range" min={0} max={totalPages - 1} value={currentPageIndex}
             onChange={e => goTo(parseInt(e.target.value), parseInt(e.target.value) > currentPageIndex ? "left" : "right")}
             style={{ flex: 1, accentColor: "#C9A96E", cursor: "pointer" }} />
-          <span style={{ ...S, fontSize: 11, color: "#5A5040", flexShrink: 0 }}>{totalPages}</span>
+          <span style={{ fontFamily: "Lato,sans-serif", fontSize: 11, color: "#AAA", flexShrink: 0 }}>{totalPages}</span>
         </div>
-
-        <button className="nav-btn" onClick={() => goTo(currentPageIndex + 1, "left")} disabled={currentPageIndex >= totalPages - 1}>
-          ›
-        </button>
+        <button className="nav-btn" onClick={() => goTo(currentPageIndex + 1, "left")} disabled={currentPageIndex >= totalPages - 1}>›</button>
       </div>
     </div>
   );
