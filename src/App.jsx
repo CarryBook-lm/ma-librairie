@@ -58,25 +58,57 @@ export default function BookPlatform() {
         input{outline:none;font-family:Lato,sans-serif}
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0F0D0A}::-webkit-scrollbar-thumb{background:#3A3228}
         @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* ── RESPONSIVE MOBILE ── */
+        .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;padding:80px 40px 60px;max-width:1200px;margin:0 auto}
+        .book-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .catalog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+        .book-detail-grid{display:grid;grid-template-columns:300px 1fr;gap:60px}
+        .featured-grid{display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:center;max-width:1200px;margin:0 auto}
+        .nav-links{display:flex;gap:32px}
+        .page-pad{padding:50px 40px}
+        .stats-row{display:flex;gap:32px;margin-top:44px}
+        .lib-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+
+        @media(max-width:768px){
+          .hero-grid{grid-template-columns:1fr;gap:32px;padding:40px 20px 32px}
+          .book-mini-grid{grid-template-columns:1fr 1fr;gap:10px}
+          .catalog-grid{grid-template-columns:1fr 1fr;gap:16px}
+          .book-detail-grid{grid-template-columns:1fr;gap:32px}
+          .featured-grid{grid-template-columns:1fr;gap:24px}
+          .nav-links{gap:16px}
+          .page-pad{padding:28px 16px}
+          .stats-row{gap:20px;margin-top:28px}
+          .lib-grid{grid-template-columns:1fr;gap:16px}
+          .btn-gold{padding:11px 18px;font-size:12px}
+          .btn-out{padding:9px 16px;font-size:11px}
+          .hero-title{font-size:36px!important}
+          .featured-img{width:140px!important;height:190px!important}
+          .hide-mobile{display:none!important}
+        }
+        @media(max-width:480px){
+          .catalog-grid{grid-template-columns:1fr}
+          .nav-links span:last-child{display:none}
+        }
       `}</style>
 
       {payModal && sel && <PaymentModal book={sel} onClose={() => setPayModal(false)} onSuccess={onPaySuccess} />}
 
       {/* NAV */}
-      <nav style={{ borderBottom: "1px solid #2A2420", padding: "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64, position: "sticky", top: 0, background: "rgba(15,13,10,0.97)", backdropFilter: "blur(12px)", zIndex: 50 }}>
-        <div onClick={() => setView("home")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 28, height: 28, background: "linear-gradient(135deg,#C9A96E,#E8C98A)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: "#0F0D0A", fontFamily: "Georgia" }}>L</span>
+      <nav style={{ borderBottom: "1px solid #2A2420", padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60, position: "sticky", top: 0, background: "rgba(15,13,10,0.97)", backdropFilter: "blur(12px)", zIndex: 50 }}>
+        <div onClick={() => setView("home")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 26, height: 26, background: "linear-gradient(135deg,#C9A96E,#E8C98A)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 900, color: "#0F0D0A", fontFamily: "Georgia" }}>L</span>
           </div>
-          <span style={{ ...PF, fontSize: 18, fontWeight: 700, letterSpacing: 1 }}>LIBRAIRIE<span style={{ color: "#C9A96E" }}>.</span></span>
+          <span style={{ ...PF, fontSize: 16, fontWeight: 700, letterSpacing: 1 }}>LIBRAIRIE<span style={{ color: "#C9A96E" }}>.</span></span>
         </div>
-        <div style={{ display: "flex", gap: 32 }}>
-          {[["home","Accueil"],["catalog","Catalogue"],["library","Ma Bibliothèque"]].map(([v,l]) => (
-            <span key={v} onClick={() => setView(v)} style={{ cursor: "pointer", ...S, fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase", color: view === v ? "#C9A96E" : "#A89880", transition: "color .2s" }}>{l}</span>
+        <div className="nav-links" style={{ display: "flex" }}>
+          {[["home","Accueil"],["catalog","Catalogue"],["library","Bibliothèque"]].map(([v,l]) => (
+            <span key={v} onClick={() => setView(v)} style={{ cursor: "pointer", ...S, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: view === v ? "#C9A96E" : "#A89880", transition: "color .2s", padding: "0 8px" }}>{l}</span>
           ))}
         </div>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(201,169,110,.12)", border: "1px solid rgba(201,169,110,.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ fontSize: 13, color: "#C9A96E" }}>L</span>
+        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(201,169,110,.12)", border: "1px solid rgba(201,169,110,.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: "#C9A96E" }}>L</span>
         </div>
       </nav>
 
@@ -93,38 +125,38 @@ export default function BookPlatform() {
           {/* HOME */}
           {view === "home" && (
             <div>
-              <div style={{ padding: "80px 40px 60px", maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
+              <div className="hero-grid">
                 <div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201,169,110,.1)", border: "1px solid rgba(201,169,110,.3)", padding: "6px 16px", marginBottom: 28 }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201,169,110,.1)", border: "1px solid rgba(201,169,110,.3)", padding: "6px 14px", marginBottom: 24 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#C9A96E", display: "block" }}></span>
-                    <span style={{ ...S, fontSize: 11, letterSpacing: 2, color: "#C9A96E", textTransform: "uppercase" }}>Plateforme de Lecture Premium</span>
+                    <span style={{ ...S, fontSize: 10, letterSpacing: 2, color: "#C9A96E", textTransform: "uppercase" }}>Plateforme de Lecture Premium</span>
                   </div>
-                  <h1 style={{ ...PF, fontSize: 52, fontWeight: 900, lineHeight: 1.1, marginBottom: 24 }}>
+                  <h1 className="hero-title" style={{ ...PF, fontSize: 52, fontWeight: 900, lineHeight: 1.1, marginBottom: 20 }}>
                     Les livres qui<br /><em style={{ color: "#C9A96E" }}>transforment</em><br />des vies.
                   </h1>
-                  <p style={{ ...S, fontSize: 15, color: "#A89880", lineHeight: 1.8, marginBottom: 36, maxWidth: 400 }}>
+                  <p style={{ ...S, fontSize: 15, color: "#A89880", lineHeight: 1.8, marginBottom: 28, maxWidth: 400 }}>
                     Accédez à des livres soigneusement sélectionnés. Payez uniquement ce que vous lisez.
                   </p>
-                  <div style={{ display: "flex", gap: 14 }}>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                     <button className="btn-gold" onClick={() => setView("catalog")}>Explorer le catalogue</button>
                     <button className="btn-out" onClick={() => setView("library")}>Ma bibliothèque</button>
                   </div>
-                  <div style={{ display: "flex", gap: 32, marginTop: 44 }}>
+                  <div className="stats-row">
                     {[[books.length.toString(),"Livres"],[`${books.reduce((s,b)=>s+(b.readers||0),0).toLocaleString()}`,"Lecteurs"],["4.8★","Note moy."]].map(([n,l]) => (
                       <div key={l}>
-                        <p style={{ ...PF, fontSize: 24, fontWeight: 700, color: "#C9A96E" }}>{n}</p>
+                        <p style={{ ...PF, fontSize: 22, fontWeight: 700, color: "#C9A96E" }}>{n}</p>
                         <p style={{ ...S, fontSize: 11, color: "#5A5040", letterSpacing: 1, textTransform: "uppercase" }}>{l}</p>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div className="book-mini-grid hide-mobile">
                   {books.slice(0,4).map((book,i) => (
                     <div key={book.id} className="card" onClick={() => { setSel(book); setView("book"); }} style={{ transform: i%2===1?"translateY(20px)":"none" }}>
                       <img src={book.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={book.title} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
                       <div style={{ background: "#1A1713", padding: "12px 14px", borderTop: "2px solid #C9A96E" }}>
                         <p style={{ ...PF, fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{book.title}</p>
-                        <p style={{ ...S, fontSize: 11, color: "#A89880" }}>{book.price?.toLocaleString()} FCFA</p>
+                        <p style={{ ...S, fontSize: 11, color: "#A89880" }}>{book.price > 0 ? `${book.price?.toLocaleString()} FCFA` : "Gratuit"}</p>
                       </div>
                     </div>
                   ))}
@@ -132,13 +164,12 @@ export default function BookPlatform() {
               </div>
 
               {/* Payment strip */}
-              <div style={{ borderTop: "1px solid #1E1B16", borderBottom: "1px solid #1E1B16", padding: "18px 40px", background: "#0C0A08" }}>
-                <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
-                  <p style={{ ...S, fontSize: 10, letterSpacing: 2.5, color: "#3A3228", textTransform: "uppercase" }}>Paiements acceptés</p>
-                  {[["🟠","Orange Money","#FF7900"],["🟡","MTN MoMo","#FFCC00"],["💳","Visa / Mastercard","#C9A96E"],["🌐","PayPal","#009cde"],["🔒","SSL 256-bit","#4E9E5F"]].map(([icon,label,color]) => (
-                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, opacity: 0.75 }}>
-                      <span style={{ fontSize: 14 }}>{icon}</span>
-                      <span style={{ ...S, fontSize: 12, color, fontWeight: 700 }}>{label}</span>
+              <div style={{ borderTop: "1px solid #1E1B16", borderBottom: "1px solid #1E1B16", padding: "14px 20px", background: "#0C0A08" }}>
+                <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+                  {[["🟠","Orange Money","#FF7900"],["🟡","MTN MoMo","#FFCC00"],["💳","Visa","#C9A96E"],["🌐","PayPal","#009cde"],["🔒","SSL","#4E9E5F"]].map(([icon,label,color]) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, opacity: 0.75 }}>
+                      <span style={{ fontSize: 13 }}>{icon}</span>
+                      <span style={{ ...S, fontSize: 11, color, fontWeight: 700 }}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -146,29 +177,30 @@ export default function BookPlatform() {
 
               {/* Featured */}
               {featured && (
-                <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "60px 40px" }}>
-                  <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "auto 1fr", gap: 48, alignItems: "center" }}>
-                    <div style={{ position: "relative" }}>
+                <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "40px 20px" }}>
+                  <div className="featured-grid">
+                    <div style={{ position: "relative", flexShrink: 0 }}>
                       <div style={{ position: "absolute", inset: -10, background: "linear-gradient(135deg,rgba(201,169,110,0.2),transparent)" }}></div>
-                      <img src={featured.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={featured.title} style={{ width: 220, height: 300, objectFit: "cover", position: "relative", zIndex: 1, display: "block" }} />
+                      <img className="featured-img" src={featured.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={featured.title} style={{ width: 200, height: 270, objectFit: "cover", position: "relative", zIndex: 1, display: "block" }} />
                     </div>
                     <div>
-                      <div style={{ display: "inline-block", padding: "4px 12px", background: "rgba(201,169,110,.12)", border: "1px solid rgba(201,169,110,.3)", ...S, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "#C9A96E", marginBottom: 16 }}>⭐ À la une</div>
-                      <h2 style={{ ...PF, fontSize: 36, fontWeight: 900, marginBottom: 8 }}>{featured.title}</h2>
-                      <p style={{ ...S, color: "#A89880", marginBottom: 16, fontSize: 14 }}>par {featured.author} · {featured.category}</p>
-                      <p style={{ ...S, fontSize: 15, color: "#C8BFA8", lineHeight: 1.75, maxWidth: 500, marginBottom: 28 }}>{featured.summary}</p>
-                      <div style={{ display: "flex", gap: 28, marginBottom: 28 }}>
-                        {[["Note",`${featured.rating || 4.5}/5`],["Lecteurs",(featured.readers||0).toLocaleString()],["Prix",`${featured.price?.toLocaleString()} FCFA`]].map(([k,v]) => (
+                      <div style={{ display: "inline-block", padding: "4px 12px", background: "rgba(201,169,110,.12)", border: "1px solid rgba(201,169,110,.3)", ...S, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "#C9A96E", marginBottom: 14 }}>⭐ À la une</div>
+                      <h2 style={{ ...PF, fontSize: 28, fontWeight: 900, marginBottom: 8, lineHeight: 1.2 }}>{featured.title}</h2>
+                      <p style={{ ...S, color: "#A89880", marginBottom: 12, fontSize: 13 }}>par {featured.author} · {featured.category}</p>
+                      <p style={{ ...S, fontSize: 14, color: "#C8BFA8", lineHeight: 1.7, maxWidth: 500, marginBottom: 20 }}>{(featured.summary||"").substring(0,120)}...</p>
+                      <div style={{ display: "flex", gap: 20, marginBottom: 20, flexWrap: "wrap" }}>
+                        {[["Note",`${featured.rating || 4.5}/5`],["Prix", isFree(featured) ? "Gratuit" : `${featured.price?.toLocaleString()} FCFA`]].map(([k,v]) => (
                           <div key={k}>
-                            <p style={{ ...S, fontSize: 10, color: "#5A5040", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 5 }}>{k}</p>
-                            <p style={{ ...PF, fontSize: 20, color: "#C9A96E" }}>{v}</p>
+                            <p style={{ ...S, fontSize: 10, color: "#5A5040", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>{k}</p>
+                            <p style={{ ...PF, fontSize: 18, color: isFree(featured) && k==="Prix" ? "#4E9E5F" : "#C9A96E" }}>{v}</p>
                           </div>
                         ))}
                       </div>
-                      <div style={{ display: "flex", gap: 12 }}>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                         <button className="btn-gold" onClick={() => { setSel(featured); setView("book"); }}>Voir le livre</button>
-                        {!purchased.includes(featured.id) && <button className="btn-out" onClick={() => openPay(featured)}>Acheter maintenant</button>}
-                        {purchased.includes(featured.id) && <button className="btn-out" onClick={() => { setSel(featured); setView("reader"); }}>Lire maintenant</button>}
+                        {hasAccess(featured)
+                          ? <button className="btn-out" onClick={() => { setSel(featured); setView("reader"); }}>Lire maintenant</button>
+                          : <button className="btn-out" onClick={() => openPay(featured)}>Acheter</button>}
                       </div>
                     </div>
                   </div>
@@ -179,15 +211,15 @@ export default function BookPlatform() {
 
           {/* CATALOG */}
           {view === "catalog" && (
-            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "50px 40px" }}>
+            <div className="page-pad" style={{ maxWidth: 1200, margin: "0 auto" }}>
               <p style={{ ...S, fontSize: 11, letterSpacing: 3, color: "#C9A96E", textTransform: "uppercase", marginBottom: 8 }}>Notre sélection</p>
-              <h1 style={{ ...PF, fontSize: 42, fontWeight: 900, marginBottom: 28 }}>Catalogue</h1>
-              <input type="text" placeholder="Rechercher un livre ou un auteur..." value={search} onChange={e => setSearch(e.target.value)}
-                style={{ maxWidth: 400, width: "100%", background: "#1A1713", border: "1px solid #3A3228", color: "#F5F0E8", padding: "10px 16px", fontSize: 14, marginBottom: 32, display: "block" }} />
-              <div style={{ display: "flex", gap: 10, marginBottom: 40, flexWrap: "wrap" }}>
+              <h1 style={{ ...PF, fontSize: 34, fontWeight: 900, marginBottom: 20 }}>Catalogue</h1>
+              <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
+                style={{ maxWidth: 400, width: "100%", background: "#1A1713", border: "1px solid #3A3228", color: "#F5F0E8", padding: "10px 16px", fontSize: 14, marginBottom: 24, display: "block" }} />
+              <div style={{ display: "flex", gap: 8, marginBottom: 28, flexWrap: "wrap" }}>
                 {CATEGORIES.map(c => (
                   <button key={c} onClick={() => setActiveCategory(c)}
-                    style={{ padding: "8px 18px", ...S, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", background: activeCategory===c ? "linear-gradient(135deg,#C9A96E,#E8C98A)" : "transparent", color: activeCategory===c ? "#0F0D0A" : "#A89880", border: activeCategory===c ? "none" : "1px solid #3A3228", fontWeight: activeCategory===c ? 700 : 400 }}>
+                    style={{ padding: "7px 14px", ...S, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", background: activeCategory===c ? "linear-gradient(135deg,#C9A96E,#E8C98A)" : "transparent", color: activeCategory===c ? "#0F0D0A" : "#A89880", border: activeCategory===c ? "none" : "1px solid #3A3228", fontWeight: activeCategory===c ? 700 : 400 }}>
                     {c}
                   </button>
                 ))}
@@ -197,29 +229,28 @@ export default function BookPlatform() {
                   <p style={{ ...PF, fontSize: 22, color: "#5A5040" }}>Aucun livre trouvé</p>
                 </div>
               )}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 28 }}>
+              <div className="catalog-grid">
                 {filtered.map(book => (
                   <div key={book.id} className="card" style={{ background: "#1A1713", border: `1px solid ${isFree(book) ? "rgba(78,158,95,0.3)" : "#2A2420"}` }}>
                     <div style={{ position: "relative" }} onClick={() => { setSel(book); setView("book"); }}>
-                      <img src={book.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={book.title} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
-                      {isFree(book) && <div style={{ position: "absolute", top: 10, left: 10, background: "#4E9E5F", padding: "4px 10px" }}><span style={{ ...S, fontSize: 10, fontWeight: 700, color: "#fff", letterSpacing: 1 }}>GRATUIT</span></div>}
-                      {!isFree(book) && hasAccess(book) && <div style={{ position: "absolute", top: 10, right: 10, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 10, color: "#fff" }}>Acheté</span></div>}
+                      <img src={book.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={book.title} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
+                      {isFree(book) && <div style={{ position: "absolute", top: 8, left: 8, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: 1 }}>GRATUIT</span></div>}
+                      {!isFree(book) && hasAccess(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 9, color: "#fff" }}>Acheté</span></div>}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: isFree(book) ? "linear-gradient(90deg,#4E9E5F,transparent)" : "linear-gradient(90deg,#C9A96E,transparent)" }}></div>
                     </div>
-                    <div style={{ padding: 18 }}>
-                      <div style={{ display: "inline-block", padding: "3px 9px", ...S, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", background: "rgba(201,169,110,0.1)", color: "#C9A96E", marginBottom: 10 }}>{book.category}</div>
-                      <h3 style={{ ...PF, fontSize: 16, fontWeight: 700, marginBottom: 5, lineHeight: 1.3, cursor: "pointer" }} onClick={() => { setSel(book); setView("book"); }}>{book.title}</h3>
-                      <p style={{ ...S, fontSize: 12, color: "#A89880", marginBottom: 8 }}>{book.author}</p>
-                      <p style={{ ...S, fontSize: 13, color: "#7A6850", lineHeight: 1.6, marginBottom: 14 }}>{(book.summary||"").substring(0,85)}...</p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <div style={{ padding: 14 }}>
+                      <div style={{ display: "inline-block", padding: "3px 8px", ...S, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", background: "rgba(201,169,110,0.1)", color: "#C9A96E", marginBottom: 8 }}>{book.category}</div>
+                      <h3 style={{ ...PF, fontSize: 14, fontWeight: 700, marginBottom: 4, lineHeight: 1.3, cursor: "pointer" }} onClick={() => { setSel(book); setView("book"); }}>{book.title}</h3>
+                      <p style={{ ...S, fontSize: 11, color: "#A89880", marginBottom: 8 }}>{book.author}</p>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                         {isFree(book)
-                          ? <span style={{ ...S, fontSize: 16, fontWeight: 700, color: "#4E9E5F" }}>Gratuit</span>
-                          : <span style={{ ...PF, fontSize: 18, fontWeight: 700, color: "#C9A96E" }}>{book.price?.toLocaleString()} FCFA</span>}
-                        <span style={{ ...S, fontSize: 12, color: "#A89880" }}>★ {book.rating || 4.5}</span>
+                          ? <span style={{ ...S, fontSize: 14, fontWeight: 700, color: "#4E9E5F" }}>Gratuit</span>
+                          : <span style={{ ...PF, fontSize: 15, fontWeight: 700, color: "#C9A96E" }}>{book.price?.toLocaleString()} F</span>}
+                        <span style={{ ...S, fontSize: 11, color: "#A89880" }}>★ {book.rating || 4.5}</span>
                       </div>
                       {hasAccess(book)
-                        ? <button className="btn-gold" style={{ width: "100%", padding: "10px" }} onClick={() => { setSel(book); setView("reader"); }}>Lire maintenant</button>
-                        : <button className="btn-gold" style={{ width: "100%", padding: "10px" }} onClick={() => openPay(book)}>Acheter</button>}
+                        ? <button className="btn-gold" style={{ width: "100%", padding: "9px" }} onClick={() => { setSel(book); setView("reader"); }}>Lire</button>
+                        : <button className="btn-gold" style={{ width: "100%", padding: "9px" }} onClick={() => openPay(book)}>Acheter</button>}
                     </div>
                   </div>
                 ))}
@@ -229,41 +260,40 @@ export default function BookPlatform() {
 
           {/* BOOK DETAIL */}
           {view === "book" && sel && (
-            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "50px 40px" }}>
-              <button style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", ...S, fontSize: 13, letterSpacing: 1, marginBottom: 40, display: "flex", alignItems: "center", gap: 8 }} onClick={() => setView("catalog")}>← Retour au catalogue</button>
-              <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 60 }}>
+            <div className="page-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
+              <button style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", ...S, fontSize: 13, letterSpacing: 1, marginBottom: 28, display: "flex", alignItems: "center", gap: 8 }} onClick={() => setView("catalog")}>← Retour</button>
+              <div className="book-detail-grid">
                 <div>
-                  <div style={{ position: "relative" }}>
-                    <div style={{ position: "absolute", inset: -12, background: "linear-gradient(135deg,rgba(201,169,110,0.13),transparent)" }}></div>
+                  <div style={{ position: "relative", maxWidth: 280 }}>
+                    <div style={{ position: "absolute", inset: -10, background: "linear-gradient(135deg,rgba(201,169,110,0.13),transparent)" }}></div>
                     <img src={sel.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={sel.title} style={{ width: "100%", display: "block", position: "relative", zIndex: 1 }} />
                   </div>
-                  <div style={{ marginTop: 22 }}>
+                  <div style={{ marginTop: 18, maxWidth: 280 }}>
                     {hasAccess(sel)
                       ? <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => setView("reader")}>Lire maintenant</button>
                       : <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => openPay(sel)}>Acheter — {sel.price?.toLocaleString()} FCFA</button>}
-                    {isFree(sel) && !hasAccess(sel) && (
-                      <button className="btn-gold" style={{ width: "100%", marginBottom: 10, background: "linear-gradient(135deg,#4E9E5F,#6AB87A)" }} onClick={() => openRead(sel)}>Lire gratuitement</button>
-                    )}
                     <button className="btn-out" style={{ width: "100%" }} onClick={() => setView("catalog")}>Voir d'autres livres</button>
                   </div>
-                  <div style={{ marginTop: 16, padding: "12px", background: "rgba(78,158,95,.06)", border: "1px solid rgba(78,158,95,.18)", textAlign: "center" }}>
-                    <p style={{ ...S, fontSize: 11, color: "#6AB87A", lineHeight: 1.7 }}>🔒 Paiement sécurisé<br />Orange Money · MTN · Visa · PayPal</p>
-                  </div>
+                  {!isFree(sel) && (
+                    <div style={{ marginTop: 14, padding: "10px", background: "rgba(78,158,95,.06)", border: "1px solid rgba(78,158,95,.18)", textAlign: "center", maxWidth: 280 }}>
+                      <p style={{ ...S, fontSize: 11, color: "#6AB87A", lineHeight: 1.7 }}>🔒 Orange Money · MTN · Visa · PayPal</p>
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <div style={{ display: "inline-block", padding: "4px 12px", background: "rgba(201,169,110,0.1)", color: "#C9A96E", ...S, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16 }}>{sel.category}</div>
-                  <h1 style={{ ...PF, fontSize: 38, fontWeight: 900, lineHeight: 1.15, marginBottom: 10 }}>{sel.title}</h1>
-                  <p style={{ ...S, fontSize: 15, color: "#A89880", marginBottom: 28 }}>par <span style={{ color: "#C9A96E" }}>{sel.author}</span></p>
-                  <div style={{ display: "flex", gap: 32, marginBottom: 36, paddingBottom: 36, borderBottom: "1px solid #2A2420" }}>
-                    {[["Note",`${sel.rating || 4.5}/5`],["Lecteurs",(sel.readers||0).toLocaleString()],["Pages",sel.pages||"—"]].map(([k,v]) => (
+                  <div style={{ display: "inline-block", padding: "4px 10px", background: "rgba(201,169,110,0.1)", color: "#C9A96E", ...S, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>{sel.category}</div>
+                  <h1 style={{ ...PF, fontSize: 30, fontWeight: 900, lineHeight: 1.15, marginBottom: 8 }}>{sel.title}</h1>
+                  <p style={{ ...S, fontSize: 14, color: "#A89880", marginBottom: 20 }}>par <span style={{ color: "#C9A96E" }}>{sel.author}</span></p>
+                  <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 28, borderBottom: "1px solid #2A2420", flexWrap: "wrap" }}>
+                    {[["Note",`${sel.rating || 4.5}/5`],["Lecteurs",(sel.readers||0).toLocaleString()],["Prix", isFree(sel) ? "Gratuit" : `${sel.price?.toLocaleString()} F`]].map(([k,v]) => (
                       <div key={k}>
-                        <p style={{ ...S, fontSize: 10, color: "#5A5040", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 5 }}>{k}</p>
-                        <p style={{ ...PF, fontSize: 22, color: "#C9A96E" }}>{v}</p>
+                        <p style={{ ...S, fontSize: 10, color: "#5A5040", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>{k}</p>
+                        <p style={{ ...PF, fontSize: 18, color: isFree(sel) && k==="Prix" ? "#4E9E5F" : "#C9A96E" }}>{v}</p>
                       </div>
                     ))}
                   </div>
-                  <h2 style={{ ...PF, fontSize: 20, fontWeight: 700, marginBottom: 14 }}>Résumé</h2>
-                  <p style={{ ...S, fontSize: 15, color: "#C8BFA8", lineHeight: 1.8 }}>{sel.summary}</p>
+                  <h2 style={{ ...PF, fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Résumé</h2>
+                  <p style={{ ...S, fontSize: 14, color: "#C8BFA8", lineHeight: 1.8 }}>{sel.summary}</p>
                 </div>
               </div>
             </div>
