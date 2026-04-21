@@ -64,7 +64,7 @@ function BookReader({ book, onBack }) {
     if (para.toLowerCase().startsWith("chapitre")) {
       return <h2 key={i} style={{ fontFamily: "Georgia,serif", fontSize: 18, fontWeight: 700, color: "#1A1A1A", margin: "36px 0 18px", lineHeight: 1.4, textAlign: "center", letterSpacing: 1 }} dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    return <p key={i} style={{ marginBottom: 18, textAlign: "justify", textIndent: "2em", lineHeight: 1.9, color: "#1A1A1A", fontSize: 15 }} dangerouslySetInnerHTML={{ __html: html }} />;
+    return <p key={i} style={{ marginBottom: 18, textAlign: "justify", textAlignLast: "left", hyphens: "auto", WebkitHyphens: "auto", MozHyphens: "auto", textIndent: "2em", lineHeight: 1.95, color: "#1A1A1A", fontSize: 15, wordSpacing: "0.05em" }} dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
   return (
@@ -130,7 +130,7 @@ function BookReader({ book, onBack }) {
           )}
 
           {/* Page text */}
-          <div className="page-content reader-inner" style={{ padding: "36px 44px 40px" }}>
+          <div className="page-content reader-inner" lang="fr" style={{ padding: "36px 44px 40px" }}>
             {!book.content ? (
               <p style={{ textAlign: "center", color: "#AAA", fontStyle: "italic", padding: "40px 0" }}>Le contenu de ce livre n'est pas encore disponible.</p>
             ) : (
