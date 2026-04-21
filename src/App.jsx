@@ -12,9 +12,13 @@ function BookReader({ book, onBack }) {
   // Parse content into pages (~1800 chars per page)
   const CHARS_PER_PAGE = 1800;
   const rawContent = book.content || "";
+  // Normalize: replace single \n with space, keep \n\n as paragraph breaks
+  const normalized = rawContent
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/([^\n])\n([^\n])/g, "$1 $2");
 
-  // Split into paragraphs first
-  const paragraphs = rawContent.split("\n\n").filter(p => p.trim());
+  const paragraphs = normalized.split("\n\n").filter(p => p.trim());
 
   // Group paragraphs into pages
   const pages = [];
@@ -130,7 +134,7 @@ function BookReader({ book, onBack }) {
           )}
 
           {/* Page text */}
-          <div className="page-content reader-inner" lang="fr" style={{ padding: "36px 44px 40px" }}>
+          <div className="page-content reader-inner" lang="fr" style={{ padding: "36px 44px 40px", textAlign: "justify" }}>
             {!book.content ? (
               <p style={{ textAlign: "center", color: "#AAA", fontStyle: "italic", padding: "40px 0" }}>Le contenu de ce livre n'est pas encore disponible.</p>
             ) : (
