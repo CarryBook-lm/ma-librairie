@@ -35,7 +35,12 @@ export default function BookPlatform() {
   });
 
   const featured = books[0];
-  const openPay = (book) => { setSel(book); setPayModal(true); };
+  const isFree = (book) => !book.price || book.price === 0;
+  const isOwned = (book) => purchased.includes(book.id) || isFree(book);
+  const openPay = (book) => {
+    if (isFree(book)) { setSel(book); setPurchased(p => [...p, book.id]); setView("reader"); return; }
+    setSel(book); setPayModal(true);
+  };
   const onPaySuccess = () => { setPurchased(p => [...p, sel.id]); setPayModal(false); setView("reader"); };
 
   return (
@@ -193,11 +198,12 @@ export default function BookPlatform() {
               )}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 28 }}>
                 {filtered.map(book => (
-                  <div key={book.id} className="card" style={{ background: "#1A1713", border: "1px solid #2A2420" }}>
+                  <div key={book.id} className="card" style={{ background: "#1A1713", border: `1px solid ${isFree(book) ? "rgba(78,158,95,0.3)" : "#2A2420"}` }}>
                     <div style={{ position: "relative" }} onClick={() => { setSel(book); setView("book"); }}>
                       <img src={book.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={book.title} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
-                      {purchased.includes(book.id) && <div style={{ position: "absolute", top: 10, right: 10, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 10, color: "#fff" }}>Acheté</span></div>}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#C9A96E,transparent)" }}></div>
+                      {isFree(book) && <div style={{ position: "absolute", top: 10, left: 10, background: "#4E9E5F", padding: "4px 10px" }}><span style={{ ...S, fontSize: 10, fontWeight: 700, color: "#fff", letterSpacing: 1 }}>GRATUIT</span></div>}
+                      {!isFree(book) && hasAccess(book) && <div style={{ position: "absolute", top: 10, right: 10, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 10, color: "#fff" }}>Acheté</span></div>}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: isFree(book) ? "linear-gradient(90deg,#4E9E5F,transparent)" : "linear-gradient(90deg,#C9A96E,transparent)" }}></div>
                     </div>
                     <div style={{ padding: 18 }}>
                       <div style={{ display: "inline-block", padding: "3px 9px", ...S, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", background: "rgba(201,169,110,0.1)", color: "#C9A96E", marginBottom: 10 }}>{book.category}</div>
@@ -205,10 +211,12 @@ export default function BookPlatform() {
                       <p style={{ ...S, fontSize: 12, color: "#A89880", marginBottom: 8 }}>{book.author}</p>
                       <p style={{ ...S, fontSize: 13, color: "#7A6850", lineHeight: 1.6, marginBottom: 14 }}>{(book.summary||"").substring(0,85)}...</p>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                        <span style={{ ...PF, fontSize: 18, fontWeight: 700, color: "#C9A96E" }}>{book.price?.toLocaleString()} FCFA</span>
+                        {isFree(book)
+                          ? <span style={{ ...S, fontSize: 16, fontWeight: 700, color: "#4E9E5F" }}>Gratuit</span>
+                          : <span style={{ ...PF, fontSize: 18, fontWeight: 700, color: "#C9A96E" }}>{book.price?.toLocaleString()} FCFA</span>}
                         <span style={{ ...S, fontSize: 12, color: "#A89880" }}>★ {book.rating || 4.5}</span>
                       </div>
-                      {purchased.includes(book.id)
+                      {hasAccess(book)
                         ? <button className="btn-gold" style={{ width: "100%", padding: "10px" }} onClick={() => { setSel(book); setView("reader"); }}>Lire maintenant</button>
                         : <button className="btn-gold" style={{ width: "100%", padding: "10px" }} onClick={() => openPay(book)}>Acheter</button>}
                     </div>
@@ -229,9 +237,12 @@ export default function BookPlatform() {
                     <img src={sel.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={sel.title} style={{ width: "100%", display: "block", position: "relative", zIndex: 1 }} />
                   </div>
                   <div style={{ marginTop: 22 }}>
-                    {purchased.includes(sel.id)
+                    {hasAccess(sel)
                       ? <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => setView("reader")}>Lire maintenant</button>
                       : <button className="btn-gold" style={{ width: "100%", marginBottom: 10 }} onClick={() => openPay(sel)}>Acheter — {sel.price?.toLocaleString()} FCFA</button>}
+                    {isFree(sel) && !hasAccess(sel) && (
+                      <button className="btn-gold" style={{ width: "100%", marginBottom: 10, background: "linear-gradient(135deg,#4E9E5F,#6AB87A)" }} onClick={() => openRead(sel)}>Lire gratuitement</button>
+                    )}
                     <button className="btn-out" style={{ width: "100%" }} onClick={() => setView("catalog")}>Voir d'autres livres</button>
                   </div>
                   <div style={{ marginTop: 16, padding: "12px", background: "rgba(78,158,95,.06)", border: "1px solid rgba(78,158,95,.18)", textAlign: "center" }}>
