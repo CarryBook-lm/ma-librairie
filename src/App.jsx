@@ -4,6 +4,177 @@ import { getBooks } from "./supabase.js";
 
 const CATEGORIES = ["Tous", "Business", "Finance", "Marketing", "Développement Personnel", "Psychologie", "Santé", "Roman", "Spiritualité", "Cuisine", "Education"];
 
+/* ─── BOOK READER ────────────────────────────────────────────── */
+function BookReader({ book, onBack }) {
+  const PF = { fontFamily: "'Playfair Display',Georgia,serif" };
+  const S = { fontFamily: "Lato,sans-serif" };
+
+  // Parse content into pages (~1800 chars per page)
+  const CHARS_PER_PAGE = 1800;
+  const rawContent = book.content || "";
+
+  // Split into paragraphs first
+  const paragraphs = rawContent.split("\n\n").filter(p => p.trim());
+
+  // Group paragraphs into pages
+  const pages = [];
+  let currentPage = [];
+  let currentLen = 0;
+
+  paragraphs.forEach(para => {
+    if (currentLen + para.length > CHARS_PER_PAGE && currentPage.length > 0) {
+      pages.push([...currentPage]);
+      currentPage = [para];
+      currentLen = para.length;
+    } else {
+      currentPage.push(para);
+      currentLen += para.length;
+    }
+  });
+  if (currentPage.length > 0) pages.push(currentPage);
+
+  // Extract chapters for table of contents
+  const chapters = paragraphs
+    .filter(p => p.toLowerCase().startsWith("chapitre"))
+    .map((p, i) => ({ title: p.split("\n")[0], index: i }));
+
+  const totalPages = Math.max(pages.length, 1);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [showTOC, setShowTOC] = useState(false);
+  const [animDir, setAnimDir] = useState(null); // "left" | "right"
+  const [animating, setAnimating] = useState(false);
+
+  const goTo = (idx, dir) => {
+    if (idx < 0 || idx >= totalPages || animating) return;
+    setAnimDir(dir);
+    setAnimating(true);
+    setTimeout(() => {
+      setCurrentPageIndex(idx);
+      setAnimating(false);
+      setAnimDir(null);
+      window.scrollTo(0, 0);
+    }, 300);
+  };
+
+  const progress = totalPages > 1 ? Math.round((currentPageIndex / (totalPages - 1)) * 100) : 100;
+
+  const renderPara = (para, i) => {
+    if (para === "---") return <div key={i} style={{ width: 60, height: 1, background: "#3A3228", margin: "32px auto" }}></div>;
+    const html = para.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#C9A96E;font-weight:700">$1</strong>');
+    if (para.toLowerCase().startsWith("chapitre")) {
+      return <h2 key={i} style={{ ...PF, fontSize: 22, fontWeight: 700, color: "#C9A96E", margin: "32px 0 20px", lineHeight: 1.3 }} dangerouslySetInnerHTML={{ __html: html }} />;
+    }
+    return <p key={i} style={{ marginBottom: 22, textAlign: "justify", textIndent: "1.5em" }} dangerouslySetInnerHTML={{ __html: html }} />;
+  };
+
+  return (
+    <div style={{ ...S, background: "#0F0D0A", minHeight: "100vh", color: "#F5F0E8" }}>
+      <style>{`
+        @keyframes slideLeft{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-40px)}}
+        @keyframes slideRight{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .page-content{animation:fadeIn 0.35s ease}
+        .page-exit-left{animation:slideLeft 0.3s ease forwards}
+        .page-exit-right{animation:slideRight 0.3s ease forwards}
+        .nav-btn{background:transparent;border:1px solid #3A3228;color:#A89880;width:44px;height:44px;cursor:pointer;font-size:18px;transition:all .2s;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
+        .nav-btn:hover:not(:disabled){border-color:#C9A96E;color:#C9A96E;background:rgba(201,169,110,0.08)}
+        .nav-btn:disabled{opacity:0.25;cursor:not-allowed}
+        @media(max-width:768px){.reader-page{padding:28px 20px!important;font-size:16px!important}}
+      `}</style>
+
+      {/* TOP BAR */}
+      <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "0 20px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", ...S, fontSize: 12, letterSpacing: 1, display: "flex", alignItems: "center", gap: 6 }}>
+          ← Quitter
+        </button>
+        <div style={{ textAlign: "center", flex: 1, padding: "0 16px" }}>
+          <p style={{ ...PF, fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{book.title}</p>
+          <p style={{ ...S, fontSize: 10, color: "#5A5040", marginTop: 2 }}>Page {currentPageIndex + 1} / {totalPages}</p>
+        </div>
+        <button onClick={() => setShowTOC(!showTOC)}
+          style={{ background: showTOC ? "rgba(201,169,110,0.1)" : "none", border: "1px solid #3A3228", color: "#A89880", padding: "6px 12px", cursor: "pointer", ...S, fontSize: 11, letterSpacing: 1, whiteSpace: "nowrap" }}>
+          ☰ Chapitres
+        </button>
+      </div>
+
+      {/* PROGRESS BAR */}
+      <div style={{ height: 3, background: "#1A1713" }}>
+        <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#C9A96E,#E8C98A)", transition: "width 0.4s ease" }} />
+      </div>
+
+      {/* TABLE OF CONTENTS */}
+      {showTOC && (
+        <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "20px 24px" }}>
+          <p style={{ ...S, fontSize: 11, letterSpacing: 2, color: "#C9A96E", textTransform: "uppercase", marginBottom: 14 }}>Table des matières</p>
+          {chapters.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {chapters.map((ch, i) => (
+                <button key={i} onClick={() => { setShowTOC(false); }}
+                  style={{ background: "none", border: "none", color: "#C8BFA8", ...PF, fontSize: 14, textAlign: "left", cursor: "pointer", padding: "6px 0", borderBottom: "1px solid #2A2420" }}>
+                  {ch.title}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p style={{ ...S, fontSize: 13, color: "#5A5040", fontStyle: "italic" }}>Aucun chapitre détecté</p>
+          )}
+        </div>
+      )}
+
+      {/* PAGE CONTENT */}
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 40px 120px" }}>
+
+        {/* First page — title page */}
+        {currentPageIndex === 0 && (
+          <div style={{ textAlign: "center", marginBottom: 52, paddingBottom: 40, borderBottom: "1px solid #2A2420" }}>
+            <p style={{ ...S, fontSize: 10, color: "#C9A96E", letterSpacing: 3, textTransform: "uppercase", marginBottom: 12 }}>Lecture</p>
+            <h1 style={{ ...PF, fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 8, lineHeight: 1.3 }}>{book.title}</h1>
+            <p style={{ ...S, fontSize: 13, color: "#5A5040" }}>par {book.author}</p>
+            <div style={{ width: 48, height: 1, background: "#C9A96E", margin: "20px auto 0" }}></div>
+          </div>
+        )}
+
+        {/* Page text */}
+        {!book.content ? (
+          <p style={{ textAlign: "center", color: "#5A5040", fontStyle: "italic", marginTop: 60 }}>Le contenu de ce livre n'est pas encore disponible.</p>
+        ) : (
+          <div className={animating ? (animDir === "left" ? "page-exit-left" : "page-exit-right") : "page-content"}
+            className="page-content reader-page"
+            style={{ fontFamily: "Georgia,serif", lineHeight: 1.95, fontSize: 17, color: "#E8DFD0" }}>
+            {(pages[currentPageIndex] || []).map((para, i) => renderPara(para, i))}
+          </div>
+        )}
+
+        {/* Page number */}
+        <div style={{ textAlign: "center", marginTop: 40, marginBottom: 20 }}>
+          <p style={{ ...S, fontSize: 12, color: "#3A3228", letterSpacing: 2 }}>— {currentPageIndex + 1} —</p>
+        </div>
+      </div>
+
+      {/* BOTTOM NAVIGATION */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(15,13,10,0.96)", backdropFilter: "blur(12px)", borderTop: "1px solid #2A2420", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 40 }}>
+
+        <button className="nav-btn" onClick={() => goTo(currentPageIndex - 1, "right")} disabled={currentPageIndex === 0}>
+          ‹
+        </button>
+
+        {/* Page slider */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ ...S, fontSize: 11, color: "#5A5040", flexShrink: 0 }}>1</span>
+          <input type="range" min={0} max={totalPages - 1} value={currentPageIndex}
+            onChange={e => goTo(parseInt(e.target.value), parseInt(e.target.value) > currentPageIndex ? "left" : "right")}
+            style={{ flex: 1, accentColor: "#C9A96E", cursor: "pointer" }} />
+          <span style={{ ...S, fontSize: 11, color: "#5A5040", flexShrink: 0 }}>{totalPages}</span>
+        </div>
+
+        <button className="nav-btn" onClick={() => goTo(currentPageIndex + 1, "left")} disabled={currentPageIndex >= totalPages - 1}>
+          ›
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function BookPlatform() {
   const [view, setView] = useState("home");
   const [sel, setSel] = useState(null);
@@ -300,37 +471,7 @@ export default function BookPlatform() {
           )}
 
           {/* READER */}
-          {view === "reader" && sel && (
-            <div>
-              <div style={{ background: "#161310", borderBottom: "1px solid #2A2420", padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <button style={{ background: "none", border: "none", color: "#A89880", cursor: "pointer", ...S, fontSize: 12, letterSpacing: 1 }} onClick={() => setView("book")}>← Retour</button>
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ ...PF, fontSize: 14, fontWeight: 700 }}>{sel.title}</p>
-                  <p style={{ ...S, fontSize: 11, color: "#5A5040" }}>par {sel.author}</p>
-                </div>
-                <div style={{ ...S, fontSize: 11, color: "#5A5040" }}>En lecture</div>
-              </div>
-              <div style={{ height: 3, background: "#1A1713" }}><div style={{ height: "100%", width: "8%", background: "linear-gradient(90deg,#C9A96E,#E8C98A)" }}></div></div>
-              <div style={{ maxWidth: 700, margin: "60px auto", padding: "0 40px 100px", fontFamily: "Georgia,serif", lineHeight: 1.9, fontSize: 17, color: "#E8DFD0" }}>
-                <div style={{ textAlign: "center", marginBottom: 60 }}>
-                  <p style={{ ...S, fontSize: 11, color: "#C9A96E", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>Lecture</p>
-                  <h1 style={{ ...PF, fontSize: 32, fontWeight: 900, fontStyle: "italic" }}>{sel.title}</h1>
-                  <p style={{ ...S, fontSize: 13, color: "#5A5040", marginTop: 8 }}>par {sel.author}</p>
-                  <div style={{ width: 60, height: 1, background: "#C9A96E", margin: "22px auto" }}></div>
-                </div>
-                {sel.content ? (
-                  sel.content.split("\n\n").map((para, i) => {
-                    if (para === "---") return <div key={i} style={{ width: 60, height: 1, background: "#2A2420", margin: "36px auto" }}></div>;
-                    const html = para.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#C9A96E">$1</strong>');
-                    if (para.startsWith("Chapitre")) return <h2 key={i} style={{ ...PF, fontSize: 26, fontWeight: 700, margin: "48px 0 20px", color: "#C9A96E" }} dangerouslySetInnerHTML={{ __html: html }} />;
-                    return <p key={i} style={{ marginBottom: 24 }} dangerouslySetInnerHTML={{ __html: html }} />;
-                  })
-                ) : (
-                  <p style={{ textAlign: "center", color: "#5A5040", fontStyle: "italic" }}>Le contenu de ce livre n'est pas encore disponible.</p>
-                )}
-              </div>
-            </div>
-          )}
+          {view === "reader" && sel && <BookReader book={sel} onBack={() => setView("book")} />}
 
           {/* LIBRARY */}
           {view === "library" && (
