@@ -167,18 +167,20 @@ export default function App() {
         </div>
 
         {/* Contenu */}
-        <div style={{ flex: 1, padding: "20px 16px 100px 16px", maxWidth: 640, margin: "0 auto", width: "100%" }}>
+        <div style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
           {paragraphs.map(function(para, i) {
             return (
               <p key={i} style={{
                 fontFamily: "Georgia, serif",
                 fontSize: "15px",
-                lineHeight: "1.95",
+                lineHeight: "1.9",
                 color: "#1a1a1a",
                 textAlign: "justify",
                 margin: 0,
                 marginBottom: "1em",
-                textIndent: i === 0 ? "0" : "1.5em"
+                textIndent: i === 0 ? "0" : "1.5em",
+                wordBreak: "break-word",
+                overflowWrap: "break-word"
               }}>
                 {para.trim()}
               </p>
