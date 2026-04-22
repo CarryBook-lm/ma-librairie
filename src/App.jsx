@@ -177,13 +177,7 @@ export default function App() {
         {/* Contenu page */}
         <div style={{ flex: 1, padding: "20px 14px 120px", maxWidth: 580, margin: "0 auto", width: "100%" }}>
           <div className="book-page">
-            {pages[readingPage].split('
-
-').filter(p => p.trim()).map((para, i) => (
-              <p key={i}>{para.trim()}</p>
-            ))}
-          </div>
-
+{pages[readingPage].split(/\n\n+/).filter(p => p.trim()).map((para, i) => (<p key={i}>{para.trim()}</p>))}
           {excerptMode && readingPage === total - 1 && (
             <div style={{ marginTop: 48, padding: 24, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
               <div style={{ color: G.gold, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
