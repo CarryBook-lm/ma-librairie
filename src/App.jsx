@@ -144,11 +144,11 @@ export default function App() {
       cursor: "pointer", transition: "transform 0.2s"
     },
     coverWrap: {
-      position: "relative", width: "100%", paddingBottom: "143%",
+      position: "relative", width: "100%", paddingBottom: "141%",
       background: "#1a1a1a", borderRadius: 6, overflow: "hidden", marginBottom: 10
     },
     coverImg: {
-      position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover"
+      position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain"
     },
     bookTitle: { fontSize: 13, color: "#e8e0d0", marginBottom: 4, lineHeight: 1.3 },
     bookAuthor: { fontSize: 11, color: "#888", marginBottom: 6 },
@@ -228,7 +228,7 @@ export default function App() {
             <div style={{ width: 240, flexShrink: 0 }}>
               {book.cover
                 ? <img src={book.cover} alt={book.title} style={{ width: "100%", borderRadius: 8, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }} />
-                : <div style={{ width: "100%", paddingBottom: "143%", background: "#1a1a1a", borderRadius: 8 }} />}
+                : <div style={{ width: "100%", paddingBottom: "141%", background: "#1a1a1a", borderRadius: 8 }} />}
             </div>
             <div style={{ flex: 1, minWidth: 240 }}>
               {free && <div style={{ background: "#4caf5022", color: "#4caf50", fontSize: 11, padding: "4px 12px", borderRadius: 12, display: "inline-block", marginBottom: 12, letterSpacing: 1 }}>GRATUIT</div>}
