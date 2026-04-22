@@ -205,14 +205,14 @@ export default function App() {
 
         {/* Navigation */}
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid #e0e0e0", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <button onClick={() => setReadingPage(function(p) { return Math.max(0, p - 1); })} disabled={readingPage === 0}
+          <button onClick={() => { setReadingPage(function(p) { return Math.max(0, p - 1); }); window.scrollTo(0,0); }} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? "#f5f5f5" : "#fdf8ee", border: "1px solid " + (readingPage === 0 ? "#e0e0e0" : G.gold), color: readingPage === 0 ? "#ccc" : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
           </button>
           <input type="range" min={0} max={total - 1} value={readingPage}
-            onChange={function(e) { setReadingPage(Number(e.target.value)); }}
+            onChange={function(e) { setReadingPage(Number(e.target.value)); window.scrollTo(0,0); }}
             style={{ flex: 1, accentColor: G.gold }} />
-          <button onClick={() => setReadingPage(function(p) { return Math.min(total - 1, p + 1); })} disabled={readingPage === total - 1}
+          <button onClick={() => { setReadingPage(function(p) { return Math.min(total - 1, p + 1); }); window.scrollTo(0,0); }} disabled={readingPage === total - 1}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? "#f5f5f5" : "#fdf8ee", border: "1px solid " + (readingPage === total - 1 ? "#e0e0e0" : G.gold), color: readingPage === total - 1 ? "#ccc" : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
             ›
           </button>
