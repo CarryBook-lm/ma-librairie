@@ -330,7 +330,12 @@ export default function App() {
         {page === "home" && (
           <div style={{ padding: "32px 16px 24px", textAlign: "center", background: "linear-gradient(180deg, #1a1208 0%, #0a0a0a 100%)" }}>
             <div style={{ fontSize: 10, letterSpacing: 4, color: G.gold, textTransform: "uppercase", marginBottom: 12 }}>Bienvenue</div>
-            <h1 style={{ fontSize: 28, color: G.text, marginBottom: 12, lineHeight: 1.3, fontWeight: "bold" }}>Votre librairie<br />numérique</h1>
+            <h1 style={{ fontSize: 28, color: G.text, marginBottom: 16, lineHeight: 1.3, fontWeight: "bold" }}>Votre librairie<br />numérique</h1>
+            {/* Hero image */}
+            <div style={{ borderRadius: 12, overflow: "hidden", marginBottom: 20, maxHeight: 220 }}>
+              <img src="https://i.ibb.co/Lh6krZ12/Whats-App-Image-2026-04-22-at-16-04-50.jpg"
+                alt="Lecteurs" style={{ width: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }} />
+            </div>
             <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.7, marginBottom: 24, maxWidth: 320, margin: "0 auto 24px" }}>
               Découvrez, lisez et achetez des livres depuis votre téléphone.
             </p>
@@ -338,11 +343,6 @@ export default function App() {
               style={{ padding: "12px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", cursor: "pointer" }}>
               Explorer le catalogue
             </button>
-          {/* Hero image */}
-          <div style={{ marginTop: 24, borderRadius: 12, overflow: "hidden", maxHeight: 220 }}>
-            <img src="https://i.ibb.co/Lh6krZ12/Whats-App-Image-2026-04-22-at-16-04-50.jpg"
-              alt="Lecteurs" style={{ width: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }} />
-          </div>
           </div>
         )}
 
