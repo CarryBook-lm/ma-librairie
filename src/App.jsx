@@ -100,7 +100,34 @@ export default function App() {
     });
   }
 
-  function handlePurchase() {
+  function async function handlePurchase() {
+    if (paymentMethod === "monetbil") {
+      // Monetbil widget
+      const serviceKey = import.meta.env.VITE_MONETBIL_KEY;
+      const amount = paymentBook.price;
+      const ref = "CB_" + paymentBook.id + "_" + Date.now();
+      const monetbilUrl = `https://fr.monetbil.com/widget/v2.1/${serviceKey}?amount=${amount}&phone=${phoneNumber}&currency=XAF&item_ref=${ref}&payment_ref=${ref}&return_url=${encodeURIComponent("https://www.carrybooks.com")}&notify_url=${encodeURIComponent("https://www.carrybooks.com/api/monetbil-notify")}`;
+      setPaymentStep(2);
+      window.open(monetbilUrl, "_blank");
+      // After redirect, mark as purchased
+      setTimeout(() => {
+        setPaymentStep(3);
+        const newP = [...purchasedBooks, paymentBook.id];
+        setPurchasedBooks(newP);
+        localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+        cacheBook(paymentBook);
+      }, 3000);
+      return;
+    }
+    setPaymentStep(2);
+    setTimeout(() => {
+      setPaymentStep(3);
+      const newP = [...purchasedBooks, paymentBook.id];
+      setPurchasedBooks(newP);
+      localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+      cacheBook(paymentBook);
+    }, 2500);
+  }
     setPaymentStep(2);
     setTimeout(() => {
       setPaymentStep(3);
@@ -284,7 +311,7 @@ export default function App() {
                   <h3 style={{ color: G.text, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
                   <p style={{ color: G.textDim, fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                    {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
+                    {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }, { id: "monetbil", label: "📱 Monetbil (Multi-pays)", color: "#00b4d8" }].map(m => (
                       <div key={m.id} onClick={() => setPaymentMethod(m.id)}
                         style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.border), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
                         <span style={{ color: G.text, fontSize: 14 }}>{m.label}</span>
