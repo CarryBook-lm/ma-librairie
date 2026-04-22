@@ -300,9 +300,8 @@ export default function App() {
 
       {/* NAVBAR */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid #262626", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
-        <div onClick={() => { setPage("home"); setShowMenu(false); }}
-          style={{ fontSize: 18, color: G.gold, letterSpacing: 3, cursor: "pointer", fontWeight: "bold" }}>
-          CARRYBOOKS
+        <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
+          <img src="https://i.ibb.co/675Dg17L/LOGO-CARRYBOOKS.jpg" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {!isOnline && <span style={{ fontSize: 10, background: "#3a2a00", color: G.gold, padding: "3px 8px", borderRadius: 10 }}>📴</span>}
@@ -491,7 +490,7 @@ export default function App() {
         {/* FOOTER */}
         {page !== "reader" && (
           <div style={{ background: G.surface, borderTop: "1px solid #262626", padding: "20px 16px", textAlign: "center" }}>
-            <div style={{ fontSize: 16, color: G.gold, fontWeight: "bold", letterSpacing: 3, marginBottom: 8 }}>CARRYBOOKS</div>
+            <img src="https://i.ibb.co/675Dg17L/LOGO-CARRYBOOKS.jpg" alt="CarryBooks" style={{ height: 48, borderRadius: 8, marginBottom: 8 }} />
             <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
             <div style={{ color: G.textFaint, fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
