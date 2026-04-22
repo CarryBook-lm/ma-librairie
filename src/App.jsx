@@ -8,6 +8,13 @@ const supabase = createClient(
 
 const CATEGORIES = ["Tous", "Business", "Roman", "Développement personnel", "Religion", "Science", "Histoire", "Jeunesse", "Autre"];
 
+const G = {
+  bg: "#0a0a0a", surface: "#141414", surface2: "#1e1e1e", border: "#262626",
+  gold: "#c9a84c", goldLight: "#e0be7a", goldDim: "rgba(201,168,76,0.15)",
+  text: "#f0ece4", textDim: "#888", textFaint: "#444",
+  green: "#4caf50", greenDim: "rgba(76,175,80,0.15)",
+};
+
 export default function App() {
   const [page, setPage] = useState("home");
   const [books, setBooks] = useState([]);
@@ -16,79 +23,60 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
+  const [excerptMode, setExcerptMode] = useState(false);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
-  const [excerptMode, setExcerptMode] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [cachedBooks, setCachedBooks] = useState({});
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
 
   useEffect(() => {
     fetchBooks();
-    // Charger les livres achetés depuis localStorage
-    const saved = localStorage.getItem("purchasedBooks");
-    if (saved) setPurchasedBooks(JSON.parse(saved));
-    const savedFav = localStorage.getItem("favoriteBooks");
-    if (savedFav) setFavoriteBooks(JSON.parse(savedFav));
-    const cached = localStorage.getItem("cachedBooks");
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      setCachedBooks(parsed);
-    }
+    const p = localStorage.getItem("purchasedBooks");
+    if (p) setPurchasedBooks(JSON.parse(p));
+    const f = localStorage.getItem("favoriteBooks");
+    if (f) setFavoriteBooks(JSON.parse(f));
+    const c = localStorage.getItem("cachedBooks");
+    if (c) setCachedBooks(JSON.parse(c));
   }, []);
 
   async function fetchBooks() {
     setLoading(true);
-    const { data } = await supabase
-      .from("books")
-      .select("*")
-      .eq("status", "actif")
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
     if (data) setBooks(data);
     setLoading(false);
   }
 
-  const filteredBooks = books.filter(b => {
-    const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.author?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCat = selectedCategory === "Tous" || b.category === selectedCategory;
-    return matchSearch && matchCat;
-  });
+  function hasAccess(book) { return book.price === 0 || purchasedBooks.includes(book.id); }
 
-  function hasAccess(book) {
-    return book.price === 0 || purchasedBooks.includes(book.id);
+  function cacheBook(book) {
+    const newCache = { ...cachedBooks, [book.id]: book };
+    setCachedBooks(newCache);
+    localStorage.setItem("cachedBooks", JSON.stringify(newCache));
   }
 
   function openBook(book) {
     setSelectedBook(book);
     setPage("detail");
-    // Mettre en cache les livres gratuits automatiquement
-    if (book.price === 0) {
-      const newCache = { ...cachedBooks, [book.id]: book };
-      setCachedBooks(newCache);
-      localStorage.setItem("cachedBooks", JSON.stringify(newCache));
-    }
+    setShowMenu(false);
+    if (book.price === 0) cacheBook(book);
   }
 
   function startReading(book, excerpt = false) {
-    // Si hors ligne, utiliser le contenu en cache
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
     if (!excerpt && !hasAccess(bookToRead)) {
       setPaymentBook(book);
@@ -116,24 +104,20 @@ export default function App() {
     setPaymentStep(2);
     setTimeout(() => {
       setPaymentStep(3);
-      const newPurchased = [...purchasedBooks, paymentBook.id];
-      setPurchasedBooks(newPurchased);
-      localStorage.setItem("purchasedBooks", JSON.stringify(newPurchased));
-      // Mettre en cache le contenu du livre pour lecture hors connexion
-      const newCache = { ...cachedBooks, [paymentBook.id]: paymentBook };
-      setCachedBooks(newCache);
-      localStorage.setItem("cachedBooks", JSON.stringify(newCache));
+      const newP = [...purchasedBooks, paymentBook.id];
+      setPurchasedBooks(newP);
+      localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+      cacheBook(paymentBook);
     }, 2500);
   }
 
-  // Split book content into pages
   function getPages(content) {
     if (!content) return ["Ce livre n'a pas encore de contenu."];
     const paragraphs = content.split(/\n\n+/).filter(p => p.trim());
     const pages = [];
     let current = "";
     for (const para of paragraphs) {
-      if ((current + para).length > 1800 && current.length > 0) {
+      if ((current + para).length > 1600 && current.length > 0) {
         pages.push(current.trim());
         current = para + "\n\n";
       } else {
@@ -144,351 +128,210 @@ export default function App() {
     return pages.length > 0 ? pages : ["Ce livre n'a pas encore de contenu."];
   }
 
-  const styles = {
-    app: { minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" },
-    nav: {
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-      background: "rgba(15,15,15,0.95)", borderBottom: "1px solid #2a2a2a",
-      padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64
-    },
-    logo: { fontSize: 22, fontWeight: "bold", color: "#c9a84c", letterSpacing: 3, cursor: "pointer" },
-    navLinks: { display: "flex", gap: 32, alignItems: "center" },
-    navLink: (active) => ({
-      cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase",
-      color: active ? "#c9a84c" : "#aaa", borderBottom: active ? "1px solid #c9a84c" : "none", paddingBottom: 2
-    }),
-    hero: {
-      paddingTop: 64, minHeight: "40vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "linear-gradient(180deg, #1a1410 0%, #0f0f0f 100%)", textAlign: "center", padding: "80px 32px 48px"
-    },
-    sectionTitle: { fontSize: 13, letterSpacing: 4, color: "#c9a84c", textTransform: "uppercase", marginBottom: 12 },
-    h1: { fontSize: 42, fontWeight: "normal", color: "#e8e0d0", marginBottom: 16, lineHeight: 1.2 },
-    subtitle: { fontSize: 16, color: "#888", maxWidth: 500, margin: "0 auto 32px" },
-    btn: (variant = "primary") => ({
-      padding: variant === "primary" ? "12px 32px" : "10px 24px",
-      background: variant === "primary" ? "#c9a84c" : "transparent",
-      border: variant === "primary" ? "none" : "1px solid #c9a84c",
-      color: variant === "primary" ? "#000" : "#c9a84c",
-      borderRadius: 4, cursor: "pointer", fontSize: 13, letterSpacing: 1,
-      textTransform: "uppercase", fontWeight: "bold"
-    }),
-    searchBar: {
-      display: "flex", gap: 12, alignItems: "center", padding: "24px 32px",
-      borderBottom: "1px solid #1a1a1a", background: "#0f0f0f", flexWrap: "wrap"
-    },
-    searchInput: {
-      flex: 1, minWidth: 200, padding: "10px 16px", background: "#1a1a1a",
-      border: "1px solid #2a2a2a", borderRadius: 4, color: "#e8e0d0", fontSize: 14,
-      fontFamily: "Georgia, serif"
-    },
-    catBtn: (active) => ({
-      padding: "6px 14px", borderRadius: 20, border: "1px solid",
-      borderColor: active ? "#c9a84c" : "#2a2a2a",
-      background: active ? "#c9a84c22" : "transparent",
-      color: active ? "#c9a84c" : "#888", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap"
-    }),
-    grid: {
-      display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-      gap: 24, padding: "32px"
-    },
-    bookCard: {
-      cursor: "pointer", transition: "transform 0.2s"
-    },
-    coverWrap: {
-      position: "relative", width: "100%", paddingBottom: "141%",
-      background: "#1a1a1a", borderRadius: 6, overflow: "hidden", marginBottom: 10
-    },
-    coverImg: {
-      position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain"
-    },
-    bookTitle: { fontSize: 13, color: "#e8e0d0", marginBottom: 4, lineHeight: 1.3 },
-    bookAuthor: { fontSize: 11, color: "#888", marginBottom: 6 },
-    bookPrice: (free) => ({ fontSize: 13, color: free ? "#4caf50" : "#c9a84c", fontWeight: "bold" }),
-    freeBadge: {
-      position: "absolute", top: 8, left: 8, background: "#4caf50", color: "#fff",
-      fontSize: 9, padding: "3px 8px", borderRadius: 10, fontWeight: "bold", letterSpacing: 1
-    },
-    emptyState: { textAlign: "center", padding: "80px 32px", color: "#555" },
-    loadingState: { textAlign: "center", padding: "80px 32px", color: "#888" }
-  };
+  const filteredBooks = books.filter(b => {
+    const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.author?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCat = selectedCategory === "Tous" || b.category === selectedCategory;
+    return matchSearch && matchCat;
+  });
 
-  // READER PAGE
+  const navItems = [
+    { id: "home", label: "Accueil" },
+    { id: "catalog", label: "Catalogue" },
+    { id: "library", label: "Ma bibliothèque" },
+    { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
+  ];
+
+  // READER
   if (page === "reader" && reading) {
     const allPages = getPages(reading.content);
     const pages = excerptMode ? allPages.slice(0, 2) : allPages;
-    const totalPages = pages.length;
+    const total = pages.length;
+    const progress = Math.round(((readingPage + 1) / total) * 100);
     return (
-      <div style={{ minHeight: "100vh", background: "#f5f0e8", display: "flex", flexDirection: "column" }}>
-        {/* Reader nav */}
-        <div style={{ background: "#1a1a1a", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <button onClick={() => { setPage("detail"); setReading(null); }}
-            style={{ background: "none", border: "none", color: "#c9a84c", cursor: "pointer", fontSize: 14 }}>
-            ← Retour
-          </button>
-          <span style={{ color: "#e8e0d0", fontSize: 14 }}>{reading.title}</span>
-          <span style={{ color: "#888", fontSize: 12 }}>Page {readingPage + 1} / {totalPages}</span>
+      <div style={{ minHeight: "100vh", background: "#faf7f2", display: "flex", flexDirection: "column", fontFamily: "Georgia, serif" }}>
+        <div style={{ background: G.surface, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
+          <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
+            style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>← Retour</button>
+          <span style={{ color: G.textDim, fontSize: 12, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reading.title}</span>
+          <span style={{ color: G.textFaint, fontSize: 11 }}>{readingPage + 1}/{total}{excerptMode ? " • extrait" : ""}</span>
         </div>
-        {/* Page content */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
-          <div style={{
-            background: "#fff", maxWidth: 600, width: "100%", minHeight: 700,
-            padding: "64px 56px", boxShadow: "0 4px 32px rgba(0,0,0,0.15)",
-            borderRadius: 4, position: "relative"
-          }}>
-            <div style={{
-              fontSize: 16, lineHeight: 1.9, color: "#1a1a1a", fontFamily: "Georgia, serif",
-              textAlign: "justify", hyphens: "auto", whiteSpace: "pre-wrap"
-            }}>
-              {pages[readingPage]}
-            </div>
-            {excerptMode && readingPage === totalPages - 1 && (
-              <div style={{ marginTop: 40, padding: "20px", background: "#f5f0e8", border: "1px solid #ccc", borderRadius: 6, textAlign: "center" }}>
-                <div style={{ fontSize: 14, color: "#555", marginBottom: 8 }}>— Fin de l'extrait —</div>
-                <div style={{ fontSize: 13, color: "#888" }}>Achetez le livre pour lire la suite</div>
-              </div>
-            )}
-            <div style={{ position: "absolute", bottom: 24, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "#999" }}>
-              — {readingPage + 1} {excerptMode ? `/ ${totalPages} (extrait)` : `/ ${totalPages}`} —
-            </div>
-          </div>
+        <div style={{ height: 2, background: G.border }}>
+          <div style={{ height: "100%", width: progress + "%", background: G.gold, transition: "width 0.3s" }} />
         </div>
-        {/* Navigation */}
-        <div style={{ background: "#1a1a1a", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: 32 }}>
+        <div style={{ flex: 1, padding: "32px 20px 100px", maxWidth: 640, margin: "0 auto", width: "100%" }}>
+          <p style={{ fontSize: 16, lineHeight: 2, color: "#1a1a1a", textAlign: "justify", hyphens: "auto", whiteSpace: "pre-wrap", margin: 0 }}>{pages[readingPage]}</p>
+          {excerptMode && readingPage === total - 1 && (
+            <div style={{ marginTop: 40, padding: 20, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8, textAlign: "center" }}>
+              <div style={{ color: G.gold, fontSize: 14, marginBottom: 8, fontWeight: "bold" }}>— Fin de l'extrait —</div>
+              <div style={{ color: G.textDim, fontSize: 13, marginBottom: 16 }}>Achetez le livre pour lire la suite</div>
+              <button onClick={() => { setPage("detail"); setReading(null); }}
+                style={{ padding: "10px 24px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                Acheter ce livre
+              </button>
+            </div>
+          )}
+          <div style={{ textAlign: "center", color: G.textFaint, fontSize: 12, marginTop: 32 }}>— {readingPage + 1} —</div>
+        </div>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.surface, borderTop: "1px solid #262626", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={() => setReadingPage(p => Math.max(0, p - 1))} disabled={readingPage === 0}
-            style={{ background: "#2a2a2a", border: "none", color: readingPage === 0 ? "#444" : "#c9a84c", width: 44, height: 44, borderRadius: "50%", cursor: readingPage === 0 ? "not-allowed" : "pointer", fontSize: 18 }}>
-            ‹
-          </button>
-          <input type="range" min={0} max={totalPages - 1} value={readingPage}
-            onChange={e => setReadingPage(Number(e.target.value))}
-            style={{ width: 200, accentColor: "#c9a84c" }} />
-          <button onClick={() => setReadingPage(p => Math.min(totalPages - 1, p + 1))} disabled={readingPage === totalPages - 1}
-            style={{ background: "#2a2a2a", border: "none", color: readingPage === totalPages - 1 ? "#444" : "#c9a84c", width: 44, height: 44, borderRadius: "50%", cursor: readingPage === totalPages - 1 ? "not-allowed" : "pointer", fontSize: 18 }}>
-            ›
-          </button>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? G.border : G.goldDim, border: "1px solid " + (readingPage === 0 ? G.border : G.gold), color: readingPage === 0 ? G.textFaint : G.gold, fontSize: 20, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>‹</button>
+          <input type="range" min={0} max={total - 1} value={readingPage} onChange={e => setReadingPage(Number(e.target.value))} style={{ flex: 1, accentColor: G.gold }} />
+          <button onClick={() => setReadingPage(p => Math.min(total - 1, p + 1))} disabled={readingPage === total - 1}
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? G.border : G.goldDim, border: "1px solid " + (readingPage === total - 1 ? G.border : G.gold), color: readingPage === total - 1 ? G.textFaint : G.gold, fontSize: 20, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>›</button>
         </div>
       </div>
     );
   }
 
-  // DETAIL PAGE
+  // DETAIL
   if (page === "detail" && selectedBook) {
     const book = selectedBook;
     const free = book.price === 0;
     const owned = hasAccess(book);
+    const isFav = favoriteBooks.includes(book.id);
     return (
-      <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" }}>
-        {/* Nav */}
-        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(15,15,15,0.95)", borderBottom: "1px solid #2a2a2a", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c", letterSpacing: 3, cursor: "pointer" }} onClick={() => setPage("home")}>LIBRAIRIE</div>
-          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: "#c9a84c", cursor: "pointer", fontSize: 14 }}>← Retour</button>
-        </nav>
-
-        {/* Layout côte à côte */}
-        <div style={{ paddingTop: 64, display: "flex", minHeight: "calc(100vh - 64px)" }}>
-          {/* Colonne gauche : couverture fixe */}
-          <div style={{ width: "40%", maxWidth: 420, flexShrink: 0, background: "#111", padding: "40px 32px", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
+        <div style={{ background: G.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
+          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>← Retour</button>
+          <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
+        </div>
+        <div style={{ padding: "24px 16px 40px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             {book.cover
-              ? <img src={book.cover} alt={book.title} style={{ width: "100%", borderRadius: 6, boxShadow: "0 12px 40px rgba(0,0,0,0.8)" }} />
-              : <div style={{ width: "100%", paddingBottom: "141%", background: "#2a2a2a", borderRadius: 6 }} />}
+              ? <img src={book.cover} alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
+              : <div style={{ width: 160, height: 226, background: G.surface2, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
           </div>
-
-          {/* Colonne droite : infos */}
-          <div style={{ flex: 1, padding: "40px 40px 40px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Badges */}
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {free && <span style={{ background: "#4caf5022", color: "#4caf50", fontSize: 11, padding: "4px 14px", borderRadius: 12, letterSpacing: 1 }}>GRATUIT</span>}
-              {book.category && <span style={{ background: "#c9a84c22", color: "#c9a84c", fontSize: 11, padding: "4px 14px", borderRadius: 12, letterSpacing: 1 }}>{book.category}</span>}
-            </div>
-
-            {/* Titre & auteur */}
-            <div>
-              <h1 style={{ fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: "bold", letterSpacing: 1, lineHeight: 1.2 }}>{book.title}</h1>
-              <p style={{ color: "#888", fontSize: 14 }}>par <span style={{ color: "#c9a84c" }}>{book.author}</span></p>
-            </div>
-
-            {/* Prix */}
-            <div style={{ fontSize: 24, color: free ? "#4caf50" : "#c9a84c", fontWeight: "bold" }}>
-              {free ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
-            </div>
-
-            {/* Résumé tronqué */}
-            {book.summary && (
-              <p style={{ color: "#bbb", lineHeight: 1.8, fontSize: 14, maxWidth: 520,
-                display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                {book.summary}
-              </p>
-            )}
-
-            {/* Boutons secondaires */}
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button onClick={() => startReading(book, true)}
-                style={{ padding: "12px 24px", background: "none", border: "2px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
-                📄 Lire un extrait
-              </button>
-              <button onClick={() => toggleFavorite(book.id)}
-                style={{ padding: "12px 24px", background: favoriteBooks.includes(book.id) ? "#c9a84c22" : "none", border: `2px solid ${favoriteBooks.includes(book.id) ? "#c9a84c" : "#444"}`, borderRadius: 4, color: favoriteBooks.includes(book.id) ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
-                {favoriteBooks.includes(book.id) ? "♥ Dans les favoris" : "♡ Ajouter aux favoris"}
-              </button>
-            </div>
-
-            {/* Bouton principal */}
-            {owned
-              ? <button onClick={() => startReading(book)} style={{ padding: "14px 40px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", alignSelf: "flex-start" }}>📖 Lire maintenant</button>
-              : free
-                ? <button onClick={() => startReading(book)} style={{ padding: "14px 40px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", alignSelf: "flex-start" }}>📖 Lire gratuitement</button>
-                : <button onClick={() => { setPaymentBook(book); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }}
-                    style={{ padding: "14px 40px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", alignSelf: "flex-start" }}>
-                    💳 Acheter — {book.price?.toLocaleString()} FCFA
-                  </button>
-            }
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12, flexWrap: "wrap" }}>
+            {free && <span style={{ background: G.greenDim, color: G.green, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>GRATUIT</span>}
+            {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
+          <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
+          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 16 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
+          <div style={{ textAlign: "center", fontSize: 22, color: free ? G.green : G.gold, fontWeight: "bold", marginBottom: 20 }}>
+            {free ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
+          </div>
+          {book.summary && (
+            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Résumé</div>
+              <p style={{ color: "#bbb", lineHeight: 1.8, fontSize: 13, margin: 0 }}>{book.summary}</p>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+            <button onClick={() => startReading(book, true)}
+              style={{ flex: 1, padding: "12px 8px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+              📄 Extrait
+            </button>
+            <button onClick={() => toggleFavorite(book.id)}
+              style={{ flex: 1, padding: "12px 8px", background: isFav ? G.goldDim : "none", border: "1.5px solid " + (isFav ? G.gold : G.border), borderRadius: 6, color: isFav ? G.gold : G.textDim, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
+              {isFav ? "♥ Favoris" : "♡ Favoris"}
+            </button>
+          </div>
+          <button
+            onClick={() => {
+              if (owned || free) { startReading(book); }
+              else { setPaymentBook(book); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }
+            }}
+            style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+            {owned || free ? "📖 Lire maintenant" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
+          </button>
         </div>
       </div>
     );
   }
 
-  // HOME / CATALOG
+  // HOME / CATALOG / LIBRARY / FAVORITES
   return (
-    <div style={styles.app}>
-      {/* NAV */}
-      <nav style={styles.nav}>
-        <div style={styles.logo} onClick={() => setPage("home")}>LIBRAIRIE</div>
-        {!isOnline && (
-          <div style={{ fontSize: 11, background: "#3a2a00", color: "#c9a84c", padding: "4px 12px", borderRadius: 12, letterSpacing: 1 }}>📴 Hors connexion</div>
-        )}
-        {/* Desktop nav */}
-        <div style={{ ...styles.navLinks, display: "flex" }} className="desktop-nav">
-          <span style={styles.navLink(page === "home")} onClick={() => setPage("home")}>Accueil</span>
-          <span style={styles.navLink(page === "catalog")} onClick={() => setPage("catalog")}>Catalogue</span>
-          <span style={styles.navLink(page === "library")} onClick={() => setPage("library")}>Ma bibliothèque</span>
-          <span style={styles.navLink(page === "favorites")} onClick={() => setPage("favorites")}>♥ Favoris{favoriteBooks.length > 0 ? ` (${favoriteBooks.length})` : ""}</span>
+    <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
+      <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
+
+      {/* NAVBAR */}
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid #262626", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+        <div onClick={() => { setPage("home"); setShowMenu(false); }}
+          style={{ fontSize: 18, color: G.gold, letterSpacing: 3, cursor: "pointer", fontWeight: "bold" }}>
+          LIBRAIRIE
         </div>
-        {/* Hamburger mobile */}
-        <button onClick={() => setShowMenu(m => !m)}
-          style={{ display: "none", background: "none", border: "none", color: "#c9a84c", fontSize: 24, cursor: "pointer", padding: "0 8px" }}
-          className="hamburger">
-          {showMenu ? "✕" : "☰"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {!isOnline && <span style={{ fontSize: 10, background: "#3a2a00", color: G.gold, padding: "3px 8px", borderRadius: 10 }}>📴</span>}
+          <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: G.gold, fontSize: 22, cursor: "pointer", padding: 4 }}>
+            {showMenu ? "✕" : "☰"}
+          </button>
+        </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* MENU */}
       {showMenu && (
-        <div style={{ position: "fixed", top: 64, left: 0, right: 0, background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", zIndex: 99, padding: "16px 0" }}>
-          {[
-            { label: "Accueil", id: "home" },
-            { label: "Catalogue", id: "catalog" },
-            { label: "Ma bibliothèque", id: "library" },
-            { label: `♥ Favoris${favoriteBooks.length > 0 ? ` (${favoriteBooks.length})` : ""}`, id: "favorites" },
-          ].map(item => (
-            <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
-              style={{ padding: "14px 32px", cursor: "pointer", fontSize: 14, letterSpacing: 1,
-                color: page === item.id ? "#c9a84c" : "#aaa",
-                borderLeft: page === item.id ? "3px solid #c9a84c" : "3px solid transparent",
-                background: page === item.id ? "#2a2a2a" : "transparent" }}>
-              {item.label}
-            </div>
-          ))}
+        <div style={{ position: "fixed", top: 56, left: 0, right: 0, bottom: 0, zIndex: 99, background: "rgba(0,0,0,0.95)" }} onClick={() => setShowMenu(false)}>
+          <div style={{ background: G.surface, borderBottom: "1px solid #262626" }} onClick={e => e.stopPropagation()}>
+            {navItems.map(item => (
+              <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
+                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === item.id ? G.gold : G.text, borderLeft: "3px solid " + (page === item.id ? G.gold : "transparent"), background: page === item.id ? G.goldDim : "transparent", borderBottom: "1px solid #262626" }}>
+                {item.label}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      <style>{`
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .hamburger { display: block !important; }
-        }
-      `}</style>
-
-      <div style={{ paddingTop: 64 }}>
+      <div style={{ paddingTop: 56 }}>
         {/* HERO */}
         {page === "home" && (
-          <div style={styles.hero}>
-            <div>
-              <div style={styles.sectionTitle}>Bienvenue</div>
-              <h1 style={styles.h1}>Votre librairie<br />numérique</h1>
-              <p style={styles.subtitle}>Découvrez nos livres, lisez les extraits et accédez à votre bibliothèque personnelle.</p>
-              <button style={styles.btn("primary")} onClick={() => setPage("catalog")}>Parcourir le catalogue</button>
-            </div>
+          <div style={{ padding: "32px 16px 24px", textAlign: "center", background: "linear-gradient(180deg, #1a1208 0%, #0a0a0a 100%)" }}>
+            <div style={{ fontSize: 10, letterSpacing: 4, color: G.gold, textTransform: "uppercase", marginBottom: 12 }}>Bienvenue</div>
+            <h1 style={{ fontSize: 28, color: G.text, marginBottom: 12, lineHeight: 1.3, fontWeight: "bold" }}>Votre librairie<br />numérique</h1>
+            <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.7, marginBottom: 24, maxWidth: 320, margin: "0 auto 24px" }}>
+              Découvrez, lisez et achetez des livres depuis votre téléphone.
+            </p>
+            <button onClick={() => setPage("catalog")}
+              style={{ padding: "12px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", cursor: "pointer" }}>
+              Explorer le catalogue
+            </button>
           </div>
         )}
 
-        {/* SEARCH + FILTERS */}
-        <div style={styles.searchBar}>
-          <input
-            style={styles.searchInput}
-            placeholder="Rechercher un livre ou un auteur..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {/* SEARCH + CATEGORIES */}
+        <div style={{ padding: "14px 16px 8px", background: G.bg, position: "sticky", top: 56, zIndex: 9, borderBottom: "1px solid #262626" }}>
+          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Rechercher un livre ou auteur..."
+            style={{ width: "100%", padding: "11px 14px", background: G.surface, border: "1px solid #262626", borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 10 }} />
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
             {CATEGORIES.map(cat => (
-              <button key={cat} style={styles.catBtn(selectedCategory === cat)} onClick={() => setSelectedCategory(cat)}>
+              <button key={cat} onClick={() => setSelectedCategory(cat)}
+                style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === cat ? G.gold : G.border), background: selectedCategory === cat ? G.goldDim : "transparent", color: selectedCategory === cat ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
                 {cat}
               </button>
             ))}
           </div>
         </div>
 
-        {/* SECTION TITLE */}
-        <div style={{ padding: "32px 32px 0" }}>
-          <div style={styles.sectionTitle}>
-            {page === "home" ? "Tous nos livres" : "Catalogue complet"}
-          </div>
-        </div>
-
         {/* BOOKS GRID */}
-        {loading ? (
-          <div style={styles.loadingState}>Chargement des livres...</div>
-        ) : filteredBooks.length === 0 ? (
-          <div style={styles.emptyState}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
-            <div>Aucun livre trouvé</div>
-          </div>
-        ) : (
-          <div style={styles.grid}>
-            {filteredBooks.map(book => (
-              <div key={book.id} style={styles.bookCard} onClick={() => openBook(book)}>
-                <div style={styles.coverWrap}>
-                  {book.cover
-                    ? <img src={book.cover} alt={book.title} style={styles.coverImg} />
-                    : <div style={{ ...styles.coverImg, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>📖</div>
-                  }
-                  {book.price === 0 && <div style={styles.freeBadge}>GRATUIT</div>}
-                </div>
-                <div style={styles.bookTitle}>{book.title}</div>
-                <div style={styles.bookAuthor}>{book.author}</div>
-                <div style={styles.bookPrice(book.price === 0)}>
-                  {book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* FAVORIS */}
-        {page === "favorites" && (
-          <div style={{ padding: "0 32px 64px" }}>
-            {favoriteBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "80px 32px", color: "#555" }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>♡</div>
-                <div style={{ marginBottom: 16 }}>Aucun livre dans vos favoris</div>
-                <button style={{ padding: "10px 24px", background: "none", border: "1px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }} onClick={() => setPage("home")}>
-                  Parcourir le catalogue
-                </button>
+        {(page === "home" || page === "catalog") && (
+          <div style={{ padding: "20px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 16 }}>
+              {page === "home" ? "Tous nos livres" : "Catalogue"}
+              {!loading && <span style={{ color: G.textFaint, marginLeft: 8, fontSize: 11, letterSpacing: 0 }}>({filteredBooks.length})</span>}
+            </div>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "60px 0", color: G.textDim }}>Chargement...</div>
+            ) : filteredBooks.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 0", color: G.textFaint }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
+                <div>Aucun livre trouvé</div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 24, padding: "0" }}>
-                {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
-                  <div key={book.id} style={{ cursor: "pointer" }} onClick={() => { setSelectedBook(book); setPage("detail"); }}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: "#1a1a1a", borderRadius: 6, overflow: "hidden", marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+                {filteredBooks.map(book => (
+                  <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
                       {book.cover
                         ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
-                        : <div style={{ position: "absolute", inset: 0, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>📖</div>}
-                      <div style={{ position: "absolute", top: 8, right: 8, color: "#c9a84c", fontSize: 16 }}>♥</div>
+                        : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
+                      {book.price === 0 && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                     </div>
-                    <div style={{ fontSize: 13, color: "#e8e0d0", marginBottom: 4 }}>{book.title}</div>
-                    <div style={{ fontSize: 11, color: "#888" }}>{book.author}</div>
-                    <div style={{ fontSize: 13, color: book.price === 0 ? "#4caf50" : "#c9a84c", fontWeight: "bold", marginTop: 4 }}>
-                      {book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
+                    <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
+                    <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
+                    <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
+                      {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
                     </div>
                   </div>
                 ))}
@@ -497,43 +340,59 @@ export default function App() {
           </div>
         )}
 
-        {/* MES LIVRES */}
+        {/* BIBLIOTHEQUE */}
         {page === "library" && (
-          <div style={{ padding: "32px" }}>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, letterSpacing: 4, color: "#c9a84c", textTransform: "uppercase", marginBottom: 8 }}>Ma bibliothèque</div>
-              <p style={{ color: "#555", fontSize: 13 }}>
-                {purchasedBooks.length === 0 ? "Aucun livre acheté pour l'instant" : `${purchasedBooks.length} livre${purchasedBooks.length > 1 ? "s" : ""} dans votre bibliothèque`}
-              </p>
-            </div>
-
+          <div style={{ padding: "20px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Ma bibliothèque</div>
+            <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>{purchasedBooks.length === 0 ? "Aucun livre acheté" : purchasedBooks.length + " livre" + (purchasedBooks.length > 1 ? "s" : "")}</p>
             {purchasedBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 32px", border: "1px dashed #2a2a2a", borderRadius: 8 }}>
-                <div style={{ fontSize: 56, marginBottom: 16 }}>📚</div>
-                <div style={{ color: "#888", marginBottom: 8 }}>Votre bibliothèque est vide</div>
-                <div style={{ color: "#555", fontSize: 13, marginBottom: 24 }}>Achetez un livre pour le retrouver ici</div>
-                <button onClick={() => setPage("home")}
-                  style={{ padding: "10px 24px", background: "none", border: "1px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>
-                  Parcourir le catalogue
-                </button>
+              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed #262626", borderRadius: 8 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
+                <div style={{ color: G.textDim, marginBottom: 8 }}>Votre bibliothèque est vide</div>
+                <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 12 }}>Parcourir</button>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 24 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
                 {books.filter(b => purchasedBooks.includes(b.id)).map(book => (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: "#1a1a1a", borderRadius: 6, overflow: "hidden", marginBottom: 10 }}>
-                      {book.cover
-                        ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
-                        : <div style={{ position: "absolute", inset: 0, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>📖</div>}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "16px 8px 8px", textAlign: "center" }}>
-                        <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1 }}>✓ ACHETÉ</div>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "12px 8px 8px", textAlign: "center" }}>
+                        <span style={{ fontSize: 9, color: G.green, letterSpacing: 1 }}>✓ ACHETÉ</span>
                       </div>
                     </div>
-                    <div style={{ fontSize: 13, color: "#e8e0d0", marginBottom: 4, lineHeight: 1.3 }}>{book.title}</div>
-                    <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>{book.author}</div>
-                    <button style={{ width: "100%", padding: "7px", background: "#c9a84c22", border: "1px solid #c9a84c44", borderRadius: 4, color: "#c9a84c", fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
-                      📖 LIRE
-                    </button>
+                    <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
+                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
+                    <button style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>📖 LIRE</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FAVORIS */}
+        {page === "favorites" && (
+          <div style={{ padding: "20px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Favoris</div>
+            <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>{favoriteBooks.length === 0 ? "Aucun favori" : favoriteBooks.length + " livre" + (favoriteBooks.length > 1 ? "s" : "")}</p>
+            {favoriteBooks.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed #262626", borderRadius: 8 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
+                <div style={{ color: G.textDim }}>Aucun livre dans vos favoris</div>
+                <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 16 }}>Parcourir</button>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+                {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
+                  <div key={book.id} style={{ cursor: "pointer" }} onClick={() => openBook(book)}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      <div style={{ position: "absolute", top: 8, right: 8, color: G.gold, fontSize: 16 }}>♥</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
+                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
+                    <div style={{ fontSize: 12, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}</div>
                   </div>
                 ))}
               </div>
@@ -544,48 +403,50 @@ export default function App() {
 
       {/* PAYMENT MODAL */}
       {showPayment && paymentBook && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
-          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, width: "90%", maxWidth: 460, padding: 32 }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+          <div style={{ background: G.surface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
             {paymentStep === 1 && (
               <>
-                <h2 style={{ color: "#c9a84c", marginBottom: 8 }}>Acheter ce livre</h2>
-                <p style={{ color: "#888", marginBottom: 24 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-                  {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" },
-                    { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
+                <div style={{ width: 40, height: 4, background: G.border, borderRadius: 2, margin: "0 auto 20px" }} />
+                <h3 style={{ color: G.text, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                <p style={{ color: G.textDim, fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
                     <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                      style={{ padding: 16, border: `2px solid ${paymentMethod === m.id ? m.color : "#2a2a2a"}`, borderRadius: 8, cursor: "pointer" }}>
-                      <span style={{ color: "#e8e0d0" }}>{m.label}</span>
+                      style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.border), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
+                      <span style={{ color: G.text, fontSize: 14 }}>{m.label}</span>
                     </div>
                   ))}
                 </div>
                 {paymentMethod && (
                   <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
-                    placeholder="Numéro de téléphone (ex: 237699000000)"
-                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, marginBottom: 16, boxSizing: "border-box" }} />
+                    placeholder="Numéro (ex: 237699000000)"
+                    style={{ width: "100%", padding: "12px 14px", background: G.bg, border: "1px solid #262626", borderRadius: 8, color: G.text, fontSize: 14, marginBottom: 16 }} />
                 )}
-                <div style={{ display: "flex", gap: 12 }}>
-                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 12, background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#888", cursor: "pointer" }}>Annuler</button>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: G.textDim, cursor: "pointer", fontSize: 13 }}>Annuler</button>
                   <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
-                    style={{ flex: 1, padding: 12, background: paymentMethod && phoneNumber ? "#c9a84c" : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed" }}>
+                    style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : G.border, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                     Payer
                   </button>
                 </div>
               </>
             )}
             {paymentStep === 2 && (
-              <div style={{ textAlign: "center", padding: "32px 0" }}>
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
-                <p style={{ color: "#888" }}>Traitement du paiement en cours...</p>
+                <p style={{ color: G.textDim }}>Traitement en cours...</p>
               </div>
             )}
             {paymentStep === 3 && (
               <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-                <h3 style={{ color: "#c9a84c", marginBottom: 8 }}>Paiement réussi !</h3>
-                <p style={{ color: "#888", marginBottom: 24 }}>Tu peux maintenant lire {paymentBook.title}</p>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                <h3 style={{ color: G.gold, marginBottom: 8 }}>Paiement réussi !</h3>
+                <p style={{ color: G.textDim, marginBottom: 24, fontSize: 14 }}>Tu peux lire {paymentBook.title}</p>
                 <button onClick={() => { setShowPayment(false); startReading(paymentBook); }}
-                  style={styles.btn("primary")}>Lire maintenant</button>
+                  style={{ padding: "13px 32px", background: G.gold, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                  📖 Lire maintenant
+                </button>
               </div>
             )}
           </div>
