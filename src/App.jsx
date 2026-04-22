@@ -100,7 +100,7 @@ export default function App() {
     });
   }
 
-  function handlePurchase() {
+  async function handlePurchase() { if (paymentMethod === "monetbil) { const url = `https://fr.monetbil.com/widget/v2.1/${import.meta.env.VITE_MONETBIL_KEY}?amount=${paymentBook.price}&phone=${phoneNumber}&currency=XAF&item_ref=CB_${paymentBook.id}&return_url=https://www.carrybooks.com`; window.open(url, _blank); setPaymentStep(3); const newP = [...purchasedBooks, paymentBook.id]; setPurchasedBooks(newP); localStorage.setItem(purchasedBooks, JSON.stringify(newP)); cacheBook(paymentBook); return; }
     setPaymentStep(2);
     setTimeout(() => {
       setPaymentStep(3);
@@ -585,4 +585,5 @@ export default function App() {
     </div>
   );
 }
+
 
