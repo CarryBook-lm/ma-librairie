@@ -238,16 +238,27 @@ export default function App() {
               <div style={{ fontSize: 28, color: free ? "#4caf50" : "#c9a84c", fontWeight: "bold", marginBottom: 24 }}>
                 {free ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
               </div>
-              <p style={{ color: "#aaa", lineHeight: 1.8, marginBottom: 32 }}>{book.summary}</p>
-              <div style={{ display: "flex", gap: 12 }}>
+              {/* Résumé */}
+              {book.summary && (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 2, color: "#c9a84c", textTransform: "uppercase", marginBottom: 12 }}>Résumé</div>
+                  <p style={{ color: "#aaa", lineHeight: 1.9, fontSize: 15 }}>{book.summary}</p>
+                </div>
+              )}
+
+              {/* Boutons */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320 }}>
+                <button onClick={() => startReading(book)} style={{ padding: "12px 24px", background: "none", border: "1px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                  📄 Lire un extrait
+                </button>
+                <button style={{ padding: "12px 24px", background: "none", border: "1px solid #555", borderRadius: 4, color: "#888", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>
+                  ♡ Ajouter aux favoris
+                </button>
                 {owned
-                  ? <button onClick={() => startReading(book)} style={styles.btn("primary")}>📖 Lire maintenant</button>
+                  ? <button onClick={() => startReading(book)} style={{ padding: "12px 24px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>📖 Lire maintenant</button>
                   : free
-                    ? <button onClick={() => startReading(book)} style={styles.btn("primary")}>📖 Lire gratuitement</button>
-                    : <>
-                        <button onClick={() => startReading(book)} style={styles.btn("primary")}>Acheter</button>
-                        <button onClick={() => startReading(book)} style={styles.btn("secondary")}>Lire l'extrait</button>
-                      </>
+                    ? <button onClick={() => startReading(book)} style={{ padding: "12px 24px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>📖 Lire gratuitement</button>
+                    : <button onClick={() => { setPaymentBook(book); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ padding: "12px 24px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>💳 Acheter — {book.price?.toLocaleString()} FCFA</button>
                 }
               </div>
             </div>
