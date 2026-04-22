@@ -226,54 +226,59 @@ export default function App() {
         </nav>
 
         {/* Layout côte à côte */}
-        <div style={{ paddingTop: 64, display: "flex", minHeight: "calc(100vh - 64px)", flexWrap: "wrap" }}>
-          {/* Colonne gauche : couverture */}
-          <div style={{ width: 320, flexShrink: 0, background: "#111", padding: "48px 32px", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+        <div style={{ paddingTop: 64, display: "flex", minHeight: "calc(100vh - 64px)" }}>
+          {/* Colonne gauche : couverture fixe */}
+          <div style={{ width: "40%", maxWidth: 420, flexShrink: 0, background: "#111", padding: "40px 32px", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
             {book.cover
               ? <img src={book.cover} alt={book.title} style={{ width: "100%", borderRadius: 6, boxShadow: "0 12px 40px rgba(0,0,0,0.8)" }} />
               : <div style={{ width: "100%", paddingBottom: "141%", background: "#2a2a2a", borderRadius: 6 }} />}
           </div>
 
           {/* Colonne droite : infos */}
-          <div style={{ flex: 1, minWidth: 280, padding: "48px 48px 64px" }}>
+          <div style={{ flex: 1, padding: "40px 40px 40px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Badges */}
-            <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {free && <span style={{ background: "#4caf5022", color: "#4caf50", fontSize: 11, padding: "4px 14px", borderRadius: 12, letterSpacing: 1 }}>GRATUIT</span>}
               {book.category && <span style={{ background: "#c9a84c22", color: "#c9a84c", fontSize: 11, padding: "4px 14px", borderRadius: 12, letterSpacing: 1 }}>{book.category}</span>}
             </div>
 
             {/* Titre & auteur */}
-            <h1 style={{ fontSize: 34, color: "#e8e0d0", marginBottom: 10, fontWeight: "bold", letterSpacing: 1, lineHeight: 1.2 }}>{book.title}</h1>
-            <p style={{ color: "#888", marginBottom: 28, fontSize: 15 }}>par <span style={{ color: "#c9a84c" }}>{book.author}</span></p>
+            <div>
+              <h1 style={{ fontSize: 28, color: "#e8e0d0", marginBottom: 8, fontWeight: "bold", letterSpacing: 1, lineHeight: 1.2 }}>{book.title}</h1>
+              <p style={{ color: "#888", fontSize: 14 }}>par <span style={{ color: "#c9a84c" }}>{book.author}</span></p>
+            </div>
 
             {/* Prix */}
-            <div style={{ fontSize: 26, color: free ? "#4caf50" : "#c9a84c", fontWeight: "bold", marginBottom: 32 }}>
+            <div style={{ fontSize: 24, color: free ? "#4caf50" : "#c9a84c", fontWeight: "bold" }}>
               {free ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
             </div>
 
-            {/* Résumé */}
+            {/* Résumé tronqué */}
             {book.summary && (
-              <p style={{ color: "#bbb", lineHeight: 1.9, fontSize: 15, marginBottom: 40, maxWidth: 580 }}>{book.summary}</p>
+              <p style={{ color: "#bbb", lineHeight: 1.8, fontSize: 14, maxWidth: 520,
+                display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {book.summary}
+              </p>
             )}
 
             {/* Boutons secondaires */}
-            <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button onClick={() => startReading(book)}
-                style={{ padding: "13px 28px", background: "none", border: "2px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                style={{ padding: "12px 24px", background: "none", border: "2px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                 📄 Lire un extrait
               </button>
-              <button style={{ padding: "13px 28px", background: "none", border: "2px solid #444", borderRadius: 4, color: "#888", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>
+              <button style={{ padding: "12px 24px", background: "none", border: "2px solid #444", borderRadius: 4, color: "#888", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
                 ♡ Ajouter aux favoris
               </button>
             </div>
 
             {/* Bouton principal */}
             {owned
-              ? <button onClick={() => startReading(book)} style={{ padding: "15px 44px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>📖 Lire maintenant</button>
+              ? <button onClick={() => startReading(book)} style={{ padding: "14px 40px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", alignSelf: "flex-start" }}>📖 Lire maintenant</button>
               : free
-                ? <button onClick={() => startReading(book)} style={{ padding: "15px 44px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>📖 Lire gratuitement</button>
+                ? <button onClick={() => startReading(book)} style={{ padding: "14px 40px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", alignSelf: "flex-start" }}>📖 Lire gratuitement</button>
                 : <button onClick={() => { setPaymentBook(book); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }}
-                    style={{ padding: "15px 44px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+                    style={{ padding: "14px 40px", background: "#c9a84c", border: "none", borderRadius: 4, color: "#000", cursor: "pointer", fontSize: 13, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", alignSelf: "flex-start" }}>
                     💳 Acheter — {book.price?.toLocaleString()} FCFA
                   </button>
             }
