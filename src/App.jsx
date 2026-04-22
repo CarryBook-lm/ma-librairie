@@ -328,10 +328,10 @@ export default function App() {
       <div style={{ paddingTop: 56 }}>
         {/* HERO */}
         {page === "home" && (
-          <div style={{ position: "relative", textAlign: "center", overflow: "hidden", minHeight: 280 }}>
+          <div style={{ position: "relative", textAlign: "center", overflow: "hidden", minHeight: 340 }}>
             {/* Image de fond */}
             <img src="https://i.ibb.co/Lh6krZ12/Whats-App-Image-2026-04-22-at-16-04-50.jpg"
-              alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+              alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" }} />
             {/* Overlay sombre */}
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.75) 100%)" }} />
             {/* Contenu par-dessus */}
