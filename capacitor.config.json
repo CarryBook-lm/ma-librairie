@@ -1,5 +1,1 @@
-{
-  "appId": "com.carrybook.librairie",
-  "appName": "Ma Librairie",
-  "webDir": "dist"
-}
+{"appId":"com.carrybook.librairie","appName":"Ma Librairie","webDir":"dist","server":{"url":"https://ma-librairie.vercel.app","cleartext":true}} 
