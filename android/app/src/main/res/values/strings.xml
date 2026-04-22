@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Ma Librairie</string>
-    <string name="title_activity_main">Ma Librairie</string>
+    <string name="app_name">CarryBooks</string>
+    <string name="title_activity_main">CarryBooks</string>
     <string name="package_name">com.carrybook.librairie</string>
     <string name="custom_url_scheme">com.carrybook.librairie</string>
 </resources>
