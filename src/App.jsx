@@ -315,6 +315,7 @@ export default function App() {
           <span style={styles.navLink(page === "home")} onClick={() => setPage("home")}>Accueil</span>
           <span style={styles.navLink(page === "catalog")} onClick={() => setPage("catalog")}>Catalogue</span>
           <span style={styles.navLink(page === "library")} onClick={() => setPage("library")}>Ma bibliothèque</span>
+          <span style={styles.navLink(page === "favorites")} onClick={() => setPage("favorites")}>♥ Favoris{favoriteBooks.length > 0 ? ` (${favoriteBooks.length})` : ""}</span>
         </div>
       </nav>
 
@@ -381,6 +382,39 @@ export default function App() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* FAVORIS */}
+        {page === "favorites" && (
+          <div style={{ padding: "0 32px 64px" }}>
+            {favoriteBooks.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 32px", color: "#555" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>♡</div>
+                <div style={{ marginBottom: 16 }}>Aucun livre dans vos favoris</div>
+                <button style={{ padding: "10px 24px", background: "none", border: "1px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }} onClick={() => setPage("home")}>
+                  Parcourir le catalogue
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 24, padding: "0" }}>
+                {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
+                  <div key={book.id} style={{ cursor: "pointer" }} onClick={() => { setSelectedBook(book); setPage("detail"); }}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: "#1a1a1a", borderRadius: 6, overflow: "hidden", marginBottom: 10 }}>
+                      {book.cover
+                        ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
+                        : <div style={{ position: "absolute", inset: 0, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>📖</div>}
+                      <div style={{ position: "absolute", top: 8, right: 8, color: "#c9a84c", fontSize: 16 }}>♥</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: "#e8e0d0", marginBottom: 4 }}>{book.title}</div>
+                    <div style={{ fontSize: 11, color: "#888" }}>{book.author}</div>
+                    <div style={{ fontSize: 13, color: book.price === 0 ? "#4caf50" : "#c9a84c", fontWeight: "bold", marginTop: 4 }}>
+                      {book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
