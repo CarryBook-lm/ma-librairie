@@ -19,6 +19,7 @@ export default function App() {
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
   const [excerptMode, setExcerptMode] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [cachedBooks, setCachedBooks] = useState({});
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showPayment, setShowPayment] = useState(false);
@@ -355,13 +356,47 @@ export default function App() {
         {!isOnline && (
           <div style={{ fontSize: 11, background: "#3a2a00", color: "#c9a84c", padding: "4px 12px", borderRadius: 12, letterSpacing: 1 }}>📴 Hors connexion</div>
         )}
-        <div style={styles.navLinks}>
+        {/* Desktop nav */}
+        <div style={{ ...styles.navLinks, display: "flex" }} className="desktop-nav">
           <span style={styles.navLink(page === "home")} onClick={() => setPage("home")}>Accueil</span>
           <span style={styles.navLink(page === "catalog")} onClick={() => setPage("catalog")}>Catalogue</span>
           <span style={styles.navLink(page === "library")} onClick={() => setPage("library")}>Ma bibliothèque</span>
           <span style={styles.navLink(page === "favorites")} onClick={() => setPage("favorites")}>♥ Favoris{favoriteBooks.length > 0 ? ` (${favoriteBooks.length})` : ""}</span>
         </div>
+        {/* Hamburger mobile */}
+        <button onClick={() => setShowMenu(m => !m)}
+          style={{ display: "none", background: "none", border: "none", color: "#c9a84c", fontSize: 24, cursor: "pointer", padding: "0 8px" }}
+          className="hamburger">
+          {showMenu ? "✕" : "☰"}
+        </button>
       </nav>
+
+      {/* Mobile menu */}
+      {showMenu && (
+        <div style={{ position: "fixed", top: 64, left: 0, right: 0, background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", zIndex: 99, padding: "16px 0" }}>
+          {[
+            { label: "Accueil", id: "home" },
+            { label: "Catalogue", id: "catalog" },
+            { label: "Ma bibliothèque", id: "library" },
+            { label: `♥ Favoris${favoriteBooks.length > 0 ? ` (${favoriteBooks.length})` : ""}`, id: "favorites" },
+          ].map(item => (
+            <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
+              style={{ padding: "14px 32px", cursor: "pointer", fontSize: 14, letterSpacing: 1,
+                color: page === item.id ? "#c9a84c" : "#aaa",
+                borderLeft: page === item.id ? "3px solid #c9a84c" : "3px solid transparent",
+                background: page === item.id ? "#2a2a2a" : "transparent" }}>
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .desktop-nav { display: none !important; }
+          .hamburger { display: block !important; }
+        }
+      `}</style>
 
       <div style={{ paddingTop: 64 }}>
         {/* HERO */}
@@ -462,27 +497,43 @@ export default function App() {
           </div>
         )}
 
-        {/* MA BIBLIOTHÈQUE */}
+        {/* MES LIVRES */}
         {page === "library" && (
-          <div style={{ padding: "0 32px 64px" }}>
+          <div style={{ padding: "32px" }}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 13, letterSpacing: 4, color: "#c9a84c", textTransform: "uppercase", marginBottom: 8 }}>Ma bibliothèque</div>
+              <p style={{ color: "#555", fontSize: 13 }}>
+                {purchasedBooks.length === 0 ? "Aucun livre acheté pour l'instant" : `${purchasedBooks.length} livre${purchasedBooks.length > 1 ? "s" : ""} dans votre bibliothèque`}
+              </p>
+            </div>
+
             {purchasedBooks.length === 0 ? (
-              <div style={styles.emptyState}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
-                <div>Aucun livre acheté pour l'instant</div>
-                <button style={{ ...styles.btn("secondary"), marginTop: 16 }} onClick={() => setPage("catalog")}>
+              <div style={{ textAlign: "center", padding: "60px 32px", border: "1px dashed #2a2a2a", borderRadius: 8 }}>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>📚</div>
+                <div style={{ color: "#888", marginBottom: 8 }}>Votre bibliothèque est vide</div>
+                <div style={{ color: "#555", fontSize: 13, marginBottom: 24 }}>Achetez un livre pour le retrouver ici</div>
+                <button onClick={() => setPage("home")}
+                  style={{ padding: "10px 24px", background: "none", border: "1px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 13, letterSpacing: 1, textTransform: "uppercase" }}>
                   Parcourir le catalogue
                 </button>
               </div>
             ) : (
-              <div style={styles.grid}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 24 }}>
                 {books.filter(b => purchasedBooks.includes(b.id)).map(book => (
-                  <div key={book.id} style={styles.bookCard} onClick={() => startReading(book)}>
-                    <div style={styles.coverWrap}>
-                      {book.cover ? <img src={book.cover} alt={book.title} style={styles.coverImg} /> : null}
+                  <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: "#1a1a1a", borderRadius: 6, overflow: "hidden", marginBottom: 10 }}>
+                      {book.cover
+                        ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
+                        : <div style={{ position: "absolute", inset: 0, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>📖</div>}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "16px 8px 8px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1 }}>✓ ACHETÉ</div>
+                      </div>
                     </div>
-                    <div style={styles.bookTitle}>{book.title}</div>
-                    <div style={styles.bookAuthor}>{book.author}</div>
-                    <div style={{ fontSize: 11, color: "#4caf50", marginTop: 4 }}>✓ Acheté</div>
+                    <div style={{ fontSize: 13, color: "#e8e0d0", marginBottom: 4, lineHeight: 1.3 }}>{book.title}</div>
+                    <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>{book.author}</div>
+                    <button style={{ width: "100%", padding: "7px", background: "#c9a84c22", border: "1px solid #c9a84c44", borderRadius: 4, color: "#c9a84c", fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
+                      📖 LIRE
+                    </button>
                   </div>
                 ))}
               </div>
