@@ -496,8 +496,6 @@ export default function App() {
             <div style={{ color: G.textFaint, fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
-      </div>
-
       {/* PAYMENT MODAL */}
       {showPayment && paymentBook && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
@@ -549,6 +547,7 @@ export default function App() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
