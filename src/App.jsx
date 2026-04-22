@@ -17,6 +17,8 @@ export default function App() {
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
+  const [favoriteBooks, setFavoriteBooks] = useState([]);
+  const [excerptMode, setExcerptMode] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
@@ -53,8 +55,8 @@ export default function App() {
     setPage("detail");
   }
 
-  function startReading(book) {
-    if (!hasAccess(book)) {
+  function startReading(book, excerpt = false) {
+    if (!excerpt && !hasAccess(book)) {
       setPaymentBook(book);
       setShowPayment(true);
       setPaymentStep(1);
@@ -62,9 +64,16 @@ export default function App() {
       setPhoneNumber("");
       return;
     }
+    setExcerptMode(excerpt);
     setReading(book);
     setReadingPage(0);
     setPage("reader");
+  }
+
+  function toggleFavorite(bookId) {
+    setFavoriteBooks(prev =>
+      prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId]
+    );
   }
 
   function handlePurchase() {
@@ -163,7 +172,8 @@ export default function App() {
 
   // READER PAGE
   if (page === "reader" && reading) {
-    const pages = getPages(reading.content);
+    const allPages = getPages(reading.content);
+    const pages = excerptMode ? allPages.slice(0, 2) : allPages;
     const totalPages = pages.length;
     return (
       <div style={{ minHeight: "100vh", background: "#f5f0e8", display: "flex", flexDirection: "column" }}>
@@ -189,8 +199,14 @@ export default function App() {
             }}>
               {pages[readingPage]}
             </div>
+            {excerptMode && readingPage === totalPages - 1 && (
+              <div style={{ marginTop: 40, padding: "20px", background: "#f5f0e8", border: "1px solid #ccc", borderRadius: 6, textAlign: "center" }}>
+                <div style={{ fontSize: 14, color: "#555", marginBottom: 8 }}>— Fin de l'extrait —</div>
+                <div style={{ fontSize: 13, color: "#888" }}>Achetez le livre pour lire la suite</div>
+              </div>
+            )}
             <div style={{ position: "absolute", bottom: 24, left: 0, right: 0, textAlign: "center", fontSize: 12, color: "#999" }}>
-              — {readingPage + 1} —
+              — {readingPage + 1} {excerptMode ? `/ ${totalPages} (extrait)` : `/ ${totalPages}`} —
             </div>
           </div>
         </div>
@@ -263,12 +279,13 @@ export default function App() {
 
             {/* Boutons secondaires */}
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button onClick={() => startReading(book)}
+              <button onClick={() => startReading(book, true)}
                 style={{ padding: "12px 24px", background: "none", border: "2px solid #c9a84c", borderRadius: 4, color: "#c9a84c", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                 📄 Lire un extrait
               </button>
-              <button style={{ padding: "12px 24px", background: "none", border: "2px solid #444", borderRadius: 4, color: "#888", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
-                ♡ Ajouter aux favoris
+              <button onClick={() => toggleFavorite(book.id)}
+                style={{ padding: "12px 24px", background: favoriteBooks.includes(book.id) ? "#c9a84c22" : "none", border: `2px solid ${favoriteBooks.includes(book.id) ? "#c9a84c" : "#444"}`, borderRadius: 4, color: favoriteBooks.includes(book.id) ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
+                {favoriteBooks.includes(book.id) ? "♥ Dans les favoris" : "♡ Ajouter aux favoris"}
               </button>
             </div>
 
