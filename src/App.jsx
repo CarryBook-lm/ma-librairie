@@ -100,7 +100,7 @@ export default function App() {
     });
   }
 
-  function async function handlePurchase() {
+  async function handlePurchase() {
     if (paymentMethod === "monetbil") {
       // Monetbil widget
       const serviceKey = import.meta.env.VITE_MONETBIL_KEY;
@@ -612,3 +612,4 @@ export default function App() {
     </div>
   );
 }
+
