@@ -140,6 +140,7 @@ export default function App() {
     { id: "catalog", label: "Catalogue" },
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
+    { id: "contact", label: "Contact" },
   ];
 
   // READER
@@ -301,7 +302,7 @@ export default function App() {
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid #262626", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }}
           style={{ fontSize: 18, color: G.gold, letterSpacing: 3, cursor: "pointer", fontWeight: "bold" }}>
-          LIBRAIRIE
+          CARRYBOOKS
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {!isOnline && <span style={{ fontSize: 10, background: "#3a2a00", color: G.gold, padding: "3px 8px", borderRadius: 10 }}>📴</span>}
@@ -460,6 +461,39 @@ export default function App() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+      </div>
+
+        {/* CONTACT */}
+        {page === "contact" && (
+          <div style={{ padding: "32px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>Contact</div>
+            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>EMAIL</div>
+              <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.text, fontSize: 15, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
+            </div>
+            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>À PROPOS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                CarryBooks est votre librairie numérique. Achetez et lisez vos livres préférés directement depuis votre téléphone, où que vous soyez au Cameroun et dans le monde.
+              </p>
+            </div>
+            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 10, padding: 20 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>SUPPORT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Pour toute question ou problème, écrivez-nous à <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.gold }}>carrybooks.com@gmail.com</a>. Nous répondons sous 24h.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* FOOTER */}
+        {page !== "reader" && (
+          <div style={{ background: G.surface, borderTop: "1px solid #262626", padding: "20px 16px", textAlign: "center" }}>
+            <div style={{ fontSize: 16, color: G.gold, fontWeight: "bold", letterSpacing: 3, marginBottom: 8 }}>CARRYBOOKS</div>
+            <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
+            <div style={{ color: G.textFaint, fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
       </div>
