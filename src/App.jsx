@@ -19,6 +19,8 @@ export default function App() {
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
   const [excerptMode, setExcerptMode] = useState(false);
+  const [cachedBooks, setCachedBooks] = useState({});
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
@@ -26,7 +28,30 @@ export default function App() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchBooks(); }, []);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchBooks();
+    // Charger les livres achetés depuis localStorage
+    const saved = localStorage.getItem("purchasedBooks");
+    if (saved) setPurchasedBooks(JSON.parse(saved));
+    const savedFav = localStorage.getItem("favoriteBooks");
+    if (savedFav) setFavoriteBooks(JSON.parse(savedFav));
+    const cached = localStorage.getItem("cachedBooks");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      setCachedBooks(parsed);
+    }
+  }, []);
 
   async function fetchBooks() {
     setLoading(true);
@@ -53,10 +78,18 @@ export default function App() {
   function openBook(book) {
     setSelectedBook(book);
     setPage("detail");
+    // Mettre en cache les livres gratuits automatiquement
+    if (book.price === 0) {
+      const newCache = { ...cachedBooks, [book.id]: book };
+      setCachedBooks(newCache);
+      localStorage.setItem("cachedBooks", JSON.stringify(newCache));
+    }
   }
 
   function startReading(book, excerpt = false) {
-    if (!excerpt && !hasAccess(book)) {
+    // Si hors ligne, utiliser le contenu en cache
+    const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
+    if (!excerpt && !hasAccess(bookToRead)) {
       setPaymentBook(book);
       setShowPayment(true);
       setPaymentStep(1);
@@ -65,22 +98,30 @@ export default function App() {
       return;
     }
     setExcerptMode(excerpt);
-    setReading(book);
+    setReading(bookToRead);
     setReadingPage(0);
     setPage("reader");
   }
 
   function toggleFavorite(bookId) {
-    setFavoriteBooks(prev =>
-      prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId]
-    );
+    setFavoriteBooks(prev => {
+      const updated = prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId];
+      localStorage.setItem("favoriteBooks", JSON.stringify(updated));
+      return updated;
+    });
   }
 
   function handlePurchase() {
     setPaymentStep(2);
     setTimeout(() => {
       setPaymentStep(3);
-      setPurchasedBooks(prev => [...prev, paymentBook.id]);
+      const newPurchased = [...purchasedBooks, paymentBook.id];
+      setPurchasedBooks(newPurchased);
+      localStorage.setItem("purchasedBooks", JSON.stringify(newPurchased));
+      // Mettre en cache le contenu du livre pour lecture hors connexion
+      const newCache = { ...cachedBooks, [paymentBook.id]: paymentBook };
+      setCachedBooks(newCache);
+      localStorage.setItem("cachedBooks", JSON.stringify(newCache));
     }, 2500);
   }
 
@@ -311,6 +352,9 @@ export default function App() {
       {/* NAV */}
       <nav style={styles.nav}>
         <div style={styles.logo} onClick={() => setPage("home")}>LIBRAIRIE</div>
+        {!isOnline && (
+          <div style={{ fontSize: 11, background: "#3a2a00", color: "#c9a84c", padding: "4px 12px", borderRadius: 12, letterSpacing: 1 }}>📴 Hors connexion</div>
+        )}
         <div style={styles.navLinks}>
           <span style={styles.navLink(page === "home")} onClick={() => setPage("home")}>Accueil</span>
           <span style={styles.navLink(page === "catalog")} onClick={() => setPage("catalog")}>Catalogue</span>
