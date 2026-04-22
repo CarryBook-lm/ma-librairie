@@ -1,1 +1,9 @@
-{"appId":"com.carrybook.librairie","appName":"CarryBooks","webDir":"dist"} 
+{
+  "appId": "com.carrybooks.app",
+  "appName": "CarryBooks",
+  "webDir": "dist",
+  "server": {
+    "url": "https://www.carrybooks.com",
+    "cleartext": true
+  }
+}
