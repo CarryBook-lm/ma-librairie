@@ -338,11 +338,11 @@ export default function App() {
               style={{ padding: "12px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", cursor: "pointer" }}>
               Explorer le catalogue
             </button>
-          </div>
           {/* Hero image */}
           <div style={{ marginTop: 24, borderRadius: 12, overflow: "hidden", maxHeight: 220 }}>
             <img src="https://i.ibb.co/Lh6krZ12/Whats-App-Image-2026-04-22-at-16-04-50.jpg"
               alt="Lecteurs" style={{ width: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }} />
+          </div>
           </div>
         )}
 
