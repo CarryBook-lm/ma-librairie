@@ -230,12 +230,64 @@ export default function App() {
           <button
             onClick={() => {
               if (owned || free) { startReading(book); }
-              else { setPaymentBook(book); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }
+              else { setPaymentBook(book); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); setShowPayment(true); }
             }}
             style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
             {owned || free ? "📖 Lire maintenant" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
           </button>
         </div>
+
+        {/* PAYMENT MODAL in detail page */}
+        {showPayment && paymentBook && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+            <div style={{ background: G.surface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
+              {paymentStep === 1 && (
+                <>
+                  <div style={{ width: 40, height: 4, background: G.border, borderRadius: 2, margin: "0 auto 20px" }} />
+                  <h3 style={{ color: G.text, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                  <p style={{ color: G.textDim, fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                    {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
+                      <div key={m.id} onClick={() => setPaymentMethod(m.id)}
+                        style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.border), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
+                        <span style={{ color: G.text, fontSize: 14 }}>{m.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {paymentMethod && (
+                    <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
+                      placeholder="Numéro (ex: 237699000000)"
+                      style={{ width: "100%", padding: "12px 14px", background: G.bg, border: "1px solid #262626", borderRadius: 8, color: G.text, fontSize: 14, marginBottom: 16 }} />
+                  )}
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: G.textDim, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                    <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
+                      style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : G.border, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
+                      Payer
+                    </button>
+                  </div>
+                </>
+              )}
+              {paymentStep === 2 && (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+                  <p style={{ color: G.textDim }}>Traitement en cours...</p>
+                </div>
+              )}
+              {paymentStep === 3 && (
+                <div style={{ textAlign: "center", padding: "32px 0" }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                  <h3 style={{ color: G.gold, marginBottom: 8 }}>Paiement réussi !</h3>
+                  <p style={{ color: G.textDim, marginBottom: 24, fontSize: 14 }}>Tu peux lire {paymentBook.title}</p>
+                  <button onClick={() => { setShowPayment(false); startReading(paymentBook); }}
+                    style={{ padding: "13px 32px", background: G.gold, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                    📖 Lire maintenant
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
