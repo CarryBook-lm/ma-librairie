@@ -148,38 +148,63 @@ export default function App() {
     const allPages = getPages(reading.content);
     const pages = excerptMode ? allPages.slice(0, 2) : allPages;
     const total = pages.length;
-    const progress = Math.round(((readingPage + 1) / total) * 100);
+
     return (
-      <div style={{ minHeight: "100vh", background: "#faf7f2", display: "flex", flexDirection: "column", fontFamily: "Georgia, serif" }}>
-        <div style={{ background: G.surface, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
+      <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", fontFamily: "Georgia, 'Times New Roman', serif" }}>
+        <style>{`
+          .book-page { 
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 17px;
+            line-height: 1.95;
+            color: #1a1a1a;
+            text-align: justify;
+            hyphens: none;
+            overflow-wrap: break-word;
+            word-break: normal;
+          }
+          .book-page p { margin: 0 0 1em 0; }
+          .book-page p + p { text-indent: 1.5em; margin-top: 0; }
+        `}</style>
+
+        {/* Header style livre */}
+        <div style={{ background: "#fff", borderBottom: "1px solid #e0e0e0", padding: "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
-            style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>← Retour</button>
-          <span style={{ color: G.textDim, fontSize: 12, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reading.title}</span>
-          <span style={{ color: G.textFaint, fontSize: 11 }}>{readingPage + 1}/{total}{excerptMode ? " • extrait" : ""}</span>
+            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 13, fontFamily: "Georgia, serif" }}>← Retour</button>
+          <span style={{ color: "#555", fontSize: 13, fontStyle: "italic", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reading.title}</span>
+          <span></span>
         </div>
-        <div style={{ height: 2, background: G.border }}>
-          <div style={{ height: "100%", width: progress + "%", background: G.gold, transition: "width 0.3s" }} />
-        </div>
-        <div style={{ flex: 1, padding: "32px 20px 100px", maxWidth: 640, margin: "0 auto", width: "100%" }}>
-          <p style={{ fontSize: 16, lineHeight: 2, color: "#1a1a1a", textAlign: "justify", hyphens: "auto", whiteSpace: "pre-wrap", margin: 0 }}>{pages[readingPage]}</p>
+
+        {/* Contenu page */}
+        <div style={{ flex: 1, padding: "20px 14px 120px", maxWidth: 580, margin: "0 auto", width: "100%" }}>
+          <div className="book-page">
+            {pages[readingPage].split('
+
+').filter(p => p.trim()).map((para, i) => (
+              <p key={i}>{para.trim()}</p>
+            ))}
+          </div>
+
           {excerptMode && readingPage === total - 1 && (
-            <div style={{ marginTop: 40, padding: 20, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 8, textAlign: "center" }}>
-              <div style={{ color: G.gold, fontSize: 14, marginBottom: 8, fontWeight: "bold" }}>— Fin de l'extrait —</div>
-              <div style={{ color: G.textDim, fontSize: 13, marginBottom: 16 }}>Achetez le livre pour lire la suite</div>
+            <div style={{ marginTop: 48, padding: 24, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
+              <div style={{ color: G.gold, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
+              <div style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>Achetez le livre pour lire la suite</div>
               <button onClick={() => { setPage("detail"); setReading(null); }}
-                style={{ padding: "10px 24px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                style={{ padding: "11px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
                 Acheter ce livre
               </button>
             </div>
           )}
-          <div style={{ textAlign: "center", color: G.textFaint, fontSize: 12, marginTop: 32 }}>— {readingPage + 1} —</div>
+
+          <div style={{ textAlign: "center", color: "#bbb", fontSize: 13, marginTop: 40, fontFamily: "Georgia, serif" }}>— {readingPage + 1} —</div>
         </div>
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.surface, borderTop: "1px solid #262626", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+
+        {/* Navigation bas */}
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid #e0e0e0", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={() => setReadingPage(p => Math.max(0, p - 1))} disabled={readingPage === 0}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? G.border : G.goldDim, border: "1px solid " + (readingPage === 0 ? G.border : G.gold), color: readingPage === 0 ? G.textFaint : G.gold, fontSize: 20, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>‹</button>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? "#f5f5f5" : "#fdf8ee", border: "1px solid " + (readingPage === 0 ? "#e0e0e0" : G.gold), color: readingPage === 0 ? "#ccc" : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>‹</button>
           <input type="range" min={0} max={total - 1} value={readingPage} onChange={e => setReadingPage(Number(e.target.value))} style={{ flex: 1, accentColor: G.gold }} />
           <button onClick={() => setReadingPage(p => Math.min(total - 1, p + 1))} disabled={readingPage === total - 1}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? G.border : G.goldDim, border: "1px solid " + (readingPage === total - 1 ? G.border : G.gold), color: readingPage === total - 1 ? G.textFaint : G.gold, fontSize: 20, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>›</button>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? "#f5f5f5" : "#fdf8ee", border: "1px solid " + (readingPage === total - 1 ? "#e0e0e0" : G.gold), color: readingPage === total - 1 ? "#ccc" : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>›</button>
         </div>
       </div>
     );
