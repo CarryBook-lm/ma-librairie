@@ -372,50 +372,105 @@ export default function BookPlatform() {
 
           {/* CATALOG */}
           {view === "catalog" && (
-            <div className="page-pad" style={{ maxWidth: 1200, margin: "0 auto" }}>
-              <p style={{ ...S, fontSize: 11, letterSpacing: 3, color: "#C9A96E", textTransform: "uppercase", marginBottom: 8 }}>Notre sélection</p>
-              <h1 style={{ ...PF, fontSize: 34, fontWeight: 900, marginBottom: 20 }}>Catalogue</h1>
-              <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
-                style={{ maxWidth: 400, width: "100%", background: "#1A1713", border: "1px solid #3A3228", color: "#F5F0E8", padding: "10px 16px", fontSize: 14, marginBottom: 24, display: "block" }} />
+            <div className="page-pad" style={{ maxWidth: 1300, margin: "0 auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+                <div>
+                  <p style={{ ...S, fontSize: 11, letterSpacing: 3, color: "#C9A96E", textTransform: "uppercase", marginBottom: 6 }}>Notre sélection</p>
+                  <h1 style={{ ...PF, fontSize: 30, fontWeight: 900 }}>Catalogue</h1>
+                </div>
+                <input type="text" placeholder="🔍 Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
+                  style={{ maxWidth: 260, width: "100%", background: "#1A1713", border: "1px solid #3A3228", color: "#F5F0E8", padding: "9px 14px", fontSize: 13 }} />
+              </div>
+
+              {/* Categories */}
               <div style={{ display: "flex", gap: 8, marginBottom: 28, flexWrap: "wrap" }}>
                 {CATEGORIES.map(c => (
                   <button key={c} onClick={() => setActiveCategory(c)}
-                    style={{ padding: "7px 14px", ...S, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", background: activeCategory===c ? "linear-gradient(135deg,#C9A96E,#E8C98A)" : "transparent", color: activeCategory===c ? "#0F0D0A" : "#A89880", border: activeCategory===c ? "none" : "1px solid #3A3228", fontWeight: activeCategory===c ? 700 : 400 }}>
+                    style={{ padding: "6px 14px", ...S, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", background: activeCategory===c ? "linear-gradient(135deg,#C9A96E,#E8C98A)" : "transparent", color: activeCategory===c ? "#0F0D0A" : "#A89880", border: activeCategory===c ? "none" : "1px solid #3A3228", fontWeight: activeCategory===c ? 700 : 400 }}>
                     {c}
                   </button>
                 ))}
               </div>
+
               {filtered.length === 0 && (
                 <div style={{ textAlign: "center", padding: "60px 0" }}>
                   <p style={{ ...PF, fontSize: 22, color: "#5A5040" }}>Aucun livre trouvé</p>
                 </div>
               )}
-              <div className="catalog-grid">
+
+              {/* VITRINE — couvertures uniquement */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 20 }}>
                 {filtered.map(book => (
-                  <div key={book.id} className="card" style={{ background: "#1A1713", border: `1px solid ${isFree(book) ? "rgba(78,158,95,0.3)" : "#2A2420"}` }}>
-                    <div style={{ position: "relative" }} onClick={() => { setSel(book); setView("book"); }}>
-                      <img src={book.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={book.title} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
-                      {isFree(book) && <div style={{ position: "absolute", top: 8, left: 8, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: 1 }}>GRATUIT</span></div>}
-                      {!isFree(book) && hasAccess(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#4E9E5F", padding: "3px 8px" }}><span style={{ ...S, fontSize: 9, color: "#fff" }}>Acheté</span></div>}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: isFree(book) ? "linear-gradient(90deg,#4E9E5F,transparent)" : "linear-gradient(90deg,#C9A96E,transparent)" }}></div>
-                    </div>
-                    <div style={{ padding: 14 }}>
-                      <div style={{ display: "inline-block", padding: "3px 8px", ...S, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", background: "rgba(201,169,110,0.1)", color: "#C9A96E", marginBottom: 8 }}>{book.category}</div>
-                      <h3 style={{ ...PF, fontSize: 14, fontWeight: 700, marginBottom: 4, lineHeight: 1.3, cursor: "pointer" }} onClick={() => { setSel(book); setView("book"); }}>{book.title}</h3>
-                      <p style={{ ...S, fontSize: 11, color: "#A89880", marginBottom: 8 }}>{book.author}</p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                        {isFree(book)
-                          ? <span style={{ ...S, fontSize: 14, fontWeight: 700, color: "#4E9E5F" }}>Gratuit</span>
-                          : <span style={{ ...PF, fontSize: 15, fontWeight: 700, color: "#C9A96E" }}>{book.price?.toLocaleString()} F</span>}
-                        <span style={{ ...S, fontSize: 11, color: "#A89880" }}>★ {book.rating || 4.5}</span>
+                  <div key={book.id} className="card" onClick={() => setSel(sel?.id === book.id ? null : book)}
+                    style={{ cursor: "pointer", position: "relative" }}>
+
+                    {/* Couverture pleine */}
+                    <div style={{ position: "relative", borderRadius: 2, overflow: "hidden", boxShadow: sel?.id === book.id ? "0 0 0 2px #C9A96E, 0 8px 24px rgba(0,0,0,0.5)" : "0 4px 16px rgba(0,0,0,0.4)", transition: "box-shadow 0.2s" }}>
+                      <img src={book.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={book.title}
+                        style={{ width: "100%", aspectRatio: "2/3", objectFit: "cover", display: "block" }} />
+
+                      {/* Badges */}
+                      {isFree(book) && (
+                        <div style={{ position: "absolute", top: 8, left: 8, background: "#4E9E5F", padding: "3px 8px" }}>
+                          <span style={{ ...S, fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: 1 }}>GRATUIT</span>
+                        </div>
+                      )}
+                      {!isFree(book) && hasAccess(book) && (
+                        <div style={{ position: "absolute", top: 8, right: 8, background: "#4E9E5F", padding: "3px 8px" }}>
+                          <span style={{ ...S, fontSize: 9, color: "#fff" }}>✓ Lu</span>
+                        </div>
+                      )}
+
+                      {/* Overlay bas avec titre + prix */}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.85))", padding: "28px 10px 10px" }}>
+                        <p style={{ ...PF, fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.3, marginBottom: 4 }}>{book.title}</p>
+                        <p style={{ ...S, fontSize: 12, fontWeight: 700, color: isFree(book) ? "#6AB87A" : "#E8C98A" }}>
+                          {isFree(book) ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}
+                        </p>
                       </div>
-                      {hasAccess(book)
-                        ? <button className="btn-gold" style={{ width: "100%", padding: "9px" }} onClick={() => { setSel(book); setView("reader"); }}>Lire</button>
-                        : <button className="btn-gold" style={{ width: "100%", padding: "9px" }} onClick={() => openPay(book)}>Acheter</button>}
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* PANNEAU DÉTAIL — s'ouvre au clic */}
+              {sel && view === "catalog" && (
+                <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#1A1713", borderTop: "2px solid #C9A96E", padding: "20px 24px", zIndex: 100, boxShadow: "0 -8px 32px rgba(0,0,0,0.5)", maxHeight: "55vh", overflowY: "auto" }}>
+                  <div style={{ maxWidth: 700, margin: "0 auto", display: "grid", gridTemplateColumns: "90px 1fr", gap: 18, alignItems: "start" }}>
+                    <img src={sel.cover || "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80"} alt={sel.title}
+                      style={{ width: "100%", aspectRatio: "2/3", objectFit: "cover", borderRadius: 2 }} />
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                        <div>
+                          <div style={{ display: "inline-block", padding: "2px 8px", ...S, fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase", background: "rgba(201,169,110,0.15)", color: "#C9A96E", marginBottom: 6 }}>{sel.category}</div>
+                          <h2 style={{ ...PF, fontSize: 18, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{sel.title}</h2>
+                          <p style={{ ...S, fontSize: 12, color: "#A89880", marginBottom: 10 }}>par {sel.author}</p>
+                        </div>
+                        <button onClick={() => setSel(null)} style={{ background: "none", border: "none", color: "#5A5040", fontSize: 22, cursor: "pointer", flexShrink: 0, padding: "0 4px" }}>×</button>
+                      </div>
+                      <p style={{ ...S, fontSize: 13, color: "#C8BFA8", lineHeight: 1.6, marginBottom: 14 }}>{sel.summary || "Aucune description disponible."}</p>
+                      <div style={{ display: "flex", gap: 20, marginBottom: 16, flexWrap: "wrap" }}>
+                        <div>
+                          <p style={{ ...S, fontSize: 9, color: "#5A5040", textTransform: "uppercase", letterSpacing: 1.5 }}>Prix</p>
+                          <p style={{ ...PF, fontSize: 18, color: isFree(sel) ? "#4E9E5F" : "#C9A96E", fontWeight: 700 }}>{isFree(sel) ? "Gratuit" : `${sel.price?.toLocaleString()} FCFA`}</p>
+                        </div>
+                        <div>
+                          <p style={{ ...S, fontSize: 9, color: "#5A5040", textTransform: "uppercase", letterSpacing: 1.5 }}>Note</p>
+                          <p style={{ ...PF, fontSize: 18, color: "#C9A96E" }}>★ {sel.rating || 4.5}</p>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        {hasAccess(sel)
+                          ? <button className="btn-gold" style={{ padding: "10px 20px" }} onClick={() => { setView("reader"); }}>Lire maintenant</button>
+                          : <button className="btn-gold" style={{ padding: "10px 20px" }} onClick={() => openPay(sel)}>
+                              {isFree(sel) ? "Lire gratuitement" : `Acheter — ${sel.price?.toLocaleString()} FCFA`}
+                            </button>}
+                        <button className="btn-out" style={{ padding: "10px 20px" }} onClick={() => setSel(null)}>Fermer</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
