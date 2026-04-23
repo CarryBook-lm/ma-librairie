@@ -342,21 +342,22 @@ export default function Admin() {
                   Colle le texte de ton livre ici. Sépare les chapitres avec une ligne vide.
                 </p>
                 <button onClick={() => {
-                  const cleaned = form.content
-                    .replace(/
-/g, '
-')
-                    .replace(/([^
-])
-([^
-])/g, '$1 $2')
-                    .replace(/
-{3,}/g, '
-
-')
-                    .replace(/[ 	]+/g, ' ')
-                    .trim();
-                  setForm(f => ({ ...f, content: cleaned }));
+                  let txt = form.content;
+                  txt = txt.split("\r\n").join("\n");
+                  txt = txt.split("\r").join("\n");
+                  const lines = txt.split("\n");
+                  const result = [];
+                  let para = "";
+                  for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line === "") {
+                      if (para !== "") { result.push(para); para = ""; }
+                    } else {
+                      para = para === "" ? line : para + " " + line;
+                    }
+                  }
+                  if (para !== "") result.push(para);
+                  setForm(f => ({ ...f, content: result.join("\n\n") }));
                 }} style={{ marginBottom: 10, padding: "8px 16px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 12 }}>
                   🧹 Nettoyer le texte PDF
                 </button>
