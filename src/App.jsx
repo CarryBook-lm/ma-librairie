@@ -143,8 +143,7 @@ export default function App() {
   const filteredBooks = books.filter(b => {
     const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.author?.toLowerCase().includes(searchQuery.toLowerCase());
-    const normalize = s => (s || "").toLowerCase().replace(/s$/, "").trim();
-    const matchCat = selectedCategory === "Tous" || normalize(b.category) === normalize(selectedCategory);
+    const matchCat = selectedCategory === "Tous" || b.category === selectedCategory;
     return matchSearch && matchCat;
   });
 
@@ -350,7 +349,7 @@ export default function App() {
       {/* NAVBAR */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
-          <img src="https://i.ibb.co/Myq691Tp/LOGO-CARRYBOOKSgrr-Photoroom.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
+          <img src="https://i.ibb.co/NdyYdD1G/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {!isOnline && <span style={{ fontSize: 10, background: "#3a2a00", color: G.gold, padding: "3px 8px", borderRadius: 10 }}>📴</span>}
@@ -539,7 +538,7 @@ export default function App() {
         {/* FOOTER */}
         {page !== "reader" && (
           <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "20px 16px", textAlign: "center" }}>
-            <img src="https://i.ibb.co/Myq691Tp/LOGO-CARRYBOOKSgrr-Photoroom.png" alt="CarryBooks" style={{ height: 48, borderRadius: 8, marginBottom: 8 }} />
+            <img src="https://i.ibb.co/NdyYdD1G/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 48, borderRadius: 8, marginBottom: 8 }} />
             <a href="mailto:carrybooks.com@gmail.com" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
             <div style={{ color: "#444", fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
