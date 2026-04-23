@@ -349,11 +349,11 @@ export default function App() {
       {/* NAVBAR */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(245,240,232,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
-          <img src="https://i.ibb.co/NdyYdD1G/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
+          <img src="https://i.ibb.co/G3vhkkpq/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {!isOnline && <span style={{ fontSize: 10, background: "#3a2a00", color: G.gold, padding: "3px 8px", borderRadius: 10 }}>📴</span>}
-          <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: G.gold, fontSize: 22, cursor: "pointer", padding: 4 }}>
+          <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
         </div>
@@ -537,10 +537,10 @@ export default function App() {
 
         {/* FOOTER */}
         {page !== "reader" && (
-          <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "20px 16px", textAlign: "center" }}>
-            <img src="https://i.ibb.co/NdyYdD1G/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 48, borderRadius: 8, marginBottom: 8 }} />
-            <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
-            <div style={{ color: G.textDim, fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
+          <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "32px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <img src="https://i.ibb.co/G3vhkkpq/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 64, borderRadius: 8 }} />
+            <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 13, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
+            <div style={{ color: G.textDim, fontSize: 12 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
       {/* PAYMENT MODAL */}
