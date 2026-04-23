@@ -341,6 +341,25 @@ export default function Admin() {
                 <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
                   Colle le texte de ton livre ici. Sépare les chapitres avec une ligne vide.
                 </p>
+                <button onClick={() => {
+                  const cleaned = form.content
+                    .replace(/
+/g, '
+')
+                    .replace(/([^
+])
+([^
+])/g, '$1 $2')
+                    .replace(/
+{3,}/g, '
+
+')
+                    .replace(/[ 	]+/g, ' ')
+                    .trim();
+                  setForm(f => ({ ...f, content: cleaned }));
+                }} style={{ marginBottom: 10, padding: "8px 16px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 12 }}>
+                  🧹 Nettoyer le texte PDF
+                </button>
                 <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                   placeholder="CHAPITRE 1&#10;&#10;Le texte de ton livre commence ici..." rows={16}
                   style={{ ...inputStyle, resize: "vertical", fontFamily: "Georgia, serif", fontSize: 14, lineHeight: 1.7 }} />
