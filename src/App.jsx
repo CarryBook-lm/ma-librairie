@@ -9,10 +9,11 @@ const supabase = createClient(
 const CATEGORIES = ["Tous", "Business", "Roman", "Développement personnel", "Religion", "Science", "Histoire", "Jeunesse", "Autre"];
 
 const G = {
-  bg: "#0a0a0a", surface: "#141414", surface2: "#1e1e1e", border: "#262626",
+  bg: "#f5f0e8", surface: "#ede7d9", surface2: "#e8e0ce", border: "#d8cdb8",
   gold: "#c9a84c", goldLight: "#e0be7a", goldDim: "rgba(201,168,76,0.15)",
-  text: "#f0ece4", textDim: "#888", textFaint: "#444",
+  text: "#1a1208", textDim: "#7a6a50", textFaint: "#b0a090",
   green: "#4caf50", greenDim: "rgba(76,175,80,0.15)",
+  navBg: "#0a0a0a", navSurface: "#141414", navBorder: "#262626", navText: "#f0ece4",
 };
 
 export default function App() {
@@ -288,29 +289,29 @@ export default function App() {
         {/* PAYMENT MODAL in detail page */}
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-            <div style={{ background: G.surface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
+            <div style={{ background: G.navSurface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid " + G.navBorder }}>
               {paymentStep === 1 && (
                 <>
-                  <div style={{ width: 40, height: 4, background: G.border, borderRadius: 2, margin: "0 auto 20px" }} />
-                  <h3 style={{ color: G.text, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
-                  <p style={{ color: G.textDim, fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
+                  <div style={{ width: 40, height: 4, background: G.navBorder, borderRadius: 2, margin: "0 auto 20px" }} />
+                  <h3 style={{ color: G.navText, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                  <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
                     {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
                       <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                        style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.border), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
-                        <span style={{ color: G.text, fontSize: 14 }}>{m.label}</span>
+                        style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.navBorder), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
+                        <span style={{ color: G.navText, fontSize: 14 }}>{m.label}</span>
                       </div>
                     ))}
                   </div>
                   {paymentMethod && (
                     <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                       placeholder="Numéro (ex: 237699000000)"
-                      style={{ width: "100%", padding: "12px 14px", background: G.bg, border: "1px solid #262626", borderRadius: 8, color: G.text, fontSize: 14, marginBottom: 16 }} />
+                      style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid " + G.navBorder, borderRadius: 8, color: G.navText, fontSize: 14, marginBottom: 16 }} />
                   )}
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: G.textDim, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid " + G.navBorder, borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
                     <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
-                      style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : G.border, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
+                      style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                       Payer
                     </button>
                   </div>
@@ -319,14 +320,14 @@ export default function App() {
               {paymentStep === 2 && (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
-                  <p style={{ color: G.textDim }}>Traitement en cours...</p>
+                  <p style={{ color: "#888" }}>Traitement en cours...</p>
                 </div>
               )}
               {paymentStep === 3 && (
                 <div style={{ textAlign: "center", padding: "32px 0" }}>
                   <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
                   <h3 style={{ color: G.gold, marginBottom: 8 }}>Paiement réussi !</h3>
-                  <p style={{ color: G.textDim, marginBottom: 24, fontSize: 14 }}>Tu peux lire {paymentBook.title}</p>
+                  <p style={{ color: "#888", marginBottom: 24, fontSize: 14 }}>Tu peux lire {paymentBook.title}</p>
                   <button onClick={() => { setShowPayment(false); startReading(paymentBook); }}
                     style={{ padding: "13px 32px", background: G.gold, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
                     📖 Lire maintenant
@@ -346,7 +347,7 @@ export default function App() {
       <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
 
       {/* NAVBAR */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid #262626", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
           <img src="https://i.ibb.co/Myq691Tp/LOGO-CARRYBOOKSgrr-Photoroom.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
         </div>
@@ -361,10 +362,10 @@ export default function App() {
       {/* MENU */}
       {showMenu && (
         <div style={{ position: "fixed", top: 56, left: 0, right: 0, bottom: 0, zIndex: 99, background: "rgba(0,0,0,0.95)" }} onClick={() => setShowMenu(false)}>
-          <div style={{ background: G.surface, borderBottom: "1px solid #262626" }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: G.navSurface, borderBottom: "1px solid " + G.navBorder }} onClick={e => e.stopPropagation()}>
             {navItems.map(item => (
               <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
-                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === item.id ? G.gold : G.text, borderLeft: "3px solid " + (page === item.id ? G.gold : "transparent"), background: page === item.id ? G.goldDim : "transparent", borderBottom: "1px solid #262626" }}>
+                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === item.id ? G.gold : G.navText, borderLeft: "3px solid " + (page === item.id ? G.gold : "transparent"), background: page === item.id ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
                 {item.label}
               </div>
             ))}
@@ -400,10 +401,10 @@ export default function App() {
         )}
 
         {/* SEARCH + CATEGORIES */}
-        <div style={{ padding: "14px 16px 8px", background: G.bg, position: "sticky", top: 56, zIndex: 9, borderBottom: "1px solid #262626" }}>
+        <div style={{ padding: "14px 16px 8px", background: G.bg, position: "sticky", top: 56, zIndex: 9, borderBottom: "1px solid " + G.border }}>
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             placeholder="Rechercher un livre ou auteur..."
-            style={{ width: "100%", padding: "11px 14px", background: G.surface, border: "1px solid #262626", borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 10 }} />
+            style={{ width: "100%", padding: "11px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 10 }} />
           <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
             {CATEGORIES.map(cat => (
               <button key={cat} onClick={() => setSelectedCategory(cat)}
@@ -456,7 +457,7 @@ export default function App() {
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Ma bibliothèque</div>
             <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>{purchasedBooks.length === 0 ? "Aucun livre acheté" : purchasedBooks.length + " livre" + (purchasedBooks.length > 1 ? "s" : "")}</p>
             {purchasedBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed #262626", borderRadius: 8 }}>
+              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8 }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
                 <div style={{ color: G.textDim, marginBottom: 8 }}>Votre bibliothèque est vide</div>
                 <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 12 }}>Parcourir</button>
@@ -487,7 +488,7 @@ export default function App() {
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Favoris</div>
             <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>{favoriteBooks.length === 0 ? "Aucun favori" : favoriteBooks.length + " livre" + (favoriteBooks.length > 1 ? "s" : "")}</p>
             {favoriteBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed #262626", borderRadius: 8 }}>
+              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8 }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>♡</div>
                 <div style={{ color: G.textDim }}>Aucun livre dans vos favoris</div>
                 <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 16 }}>Parcourir</button>
@@ -536,38 +537,38 @@ export default function App() {
 
         {/* FOOTER */}
         {page !== "reader" && (
-          <div style={{ background: G.surface, borderTop: "1px solid #262626", padding: "20px 16px", textAlign: "center" }}>
+          <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "20px 16px", textAlign: "center" }}>
             <img src="https://i.ibb.co/Myq691Tp/LOGO-CARRYBOOKSgrr-Photoroom.png" alt="CarryBooks" style={{ height: 48, borderRadius: 8, marginBottom: 8 }} />
-            <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
-            <div style={{ color: G.textFaint, fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
+            <a href="mailto:carrybooks.com@gmail.com" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
+            <div style={{ color: "#444", fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
       {/* PAYMENT MODAL */}
       {showPayment && paymentBook && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: G.surface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
+          <div style={{ background: G.navSurface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid " + G.navBorder }}>
             {paymentStep === 1 && (
               <>
-                <div style={{ width: 40, height: 4, background: G.border, borderRadius: 2, margin: "0 auto 20px" }} />
-                <h3 style={{ color: G.text, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
-                <p style={{ color: G.textDim, fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
+                <div style={{ width: 40, height: 4, background: G.navBorder, borderRadius: 2, margin: "0 auto 20px" }} />
+                <h3 style={{ color: G.navText, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
                   {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
                     <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                      style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.border), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
-                      <span style={{ color: G.text, fontSize: 14 }}>{m.label}</span>
+                      style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.navBorder), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
+                      <span style={{ color: G.navText, fontSize: 14 }}>{m.label}</span>
                     </div>
                   ))}
                 </div>
                 {paymentMethod && (
                   <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                     placeholder="Numéro (ex: 237699000000)"
-                    style={{ width: "100%", padding: "12px 14px", background: G.bg, border: "1px solid #262626", borderRadius: 8, color: G.text, fontSize: 14, marginBottom: 16 }} />
+                    style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid " + G.navBorder, borderRadius: 8, color: G.navText, fontSize: 14, marginBottom: 16 }} />
                 )}
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: G.textDim, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid " + G.navBorder, borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
                   <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
-                    style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : G.border, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
+                    style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                     Payer
                   </button>
                 </div>
@@ -576,14 +577,14 @@ export default function App() {
             {paymentStep === 2 && (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
-                <p style={{ color: G.textDim }}>Traitement en cours...</p>
+                <p style={{ color: "#888" }}>Traitement en cours...</p>
               </div>
             )}
             {paymentStep === 3 && (
               <div style={{ textAlign: "center", padding: "32px 0" }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
                 <h3 style={{ color: G.gold, marginBottom: 8 }}>Paiement réussi !</h3>
-                <p style={{ color: G.textDim, marginBottom: 24, fontSize: 14 }}>Tu peux lire {paymentBook.title}</p>
+                <p style={{ color: "#888", marginBottom: 24, fontSize: 14 }}>Tu peux lire {paymentBook.title}</p>
                 <button onClick={() => { setShowPayment(false); startReading(paymentBook); }}
                   style={{ padding: "13px 32px", background: G.gold, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
                   📖 Lire maintenant
