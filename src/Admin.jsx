@@ -6,10 +6,10 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-const CATEGORIES = ["Business", "Roman", "Développement personnel", "Religion", "Science", "Histoire", "Jeunesse", "Autre"];
+const CATEGORIES = ["Romans", "Histoires", "Lyrics", "Amour", "Humour", "Autres"];
 
 const emptyForm = {
-  title: "", author: "", price: "", cover: "", category: "Business",
+  title: "", author: "", price: "", cover: "", category: "Romans",
   summary: "", content: "", status: "actif"
 };
 
@@ -23,6 +23,7 @@ export default function Admin() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => { fetchBooks(); }, []);
@@ -104,69 +105,77 @@ export default function Admin() {
   const activeBooks = books.filter(b => b.status === "actif").length;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" }}>
-      {/* Sidebar */}
-      <div style={{ width: 220, background: "#1a1a1a", borderRight: "1px solid #2a2a2a", padding: "24px 0", flexShrink: 0 }}>
-        <div style={{ padding: "0 20px 24px", borderBottom: "1px solid #2a2a2a" }}>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c", letterSpacing: 2 }}>LIBRAIRIE</div>
-          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Admin</div>
-        </div>
-        {[
-          { id: "dashboard", label: "Tableau de bord", icon: "📊" },
-          { id: "books", label: "Livres", icon: "📚" },
-        ].map(item => (
-          <div key={item.id} onClick={() => setView(item.id)}
-            style={{ padding: "12px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-              background: view === item.id ? "#2a2a2a" : "transparent",
-              color: view === item.id ? "#c9a84c" : "#aaa",
-              borderLeft: view === item.id ? "3px solid #c9a84c" : "3px solid transparent" }}>
-            <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
-          </div>
-        ))}
-        <div style={{ padding: "12px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, color: "#aaa" }}
-          onClick={() => window.open("/", "_blank")}>
-          <span>🌐</span><span style={{ fontSize: 14 }}>Voir le site</span>
-        </div>
-        <div style={{ position: "absolute", bottom: 20, left: 0, width: 220, padding: "0 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#c9a84c", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: "#000" }}>A</div>
-            <span style={{ fontSize: 13, color: "#aaa" }}>Admin</span>
-          </div>
+    <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" }}>
+
+      {/* TOP NAV MOBILE */}
+      <div style={{ background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", padding: "0 16px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c", letterSpacing: 2 }}>CARRYBOOKS</div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={() => window.open("/", "_blank")}
+            style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
+            🌐 Site
+          </button>
+          <button onClick={() => setShowMenu(m => !m)}
+            style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 22, cursor: "pointer", padding: 4 }}>
+            {showMenu ? "✕" : "☰"}
+          </button>
         </div>
       </div>
 
-      {/* Main */}
-      <div style={{ flex: 1, padding: 32, overflowY: "auto" }}>
+      {/* MENU DROPDOWN MOBILE */}
+      {showMenu && (
+        <div style={{ background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", zIndex: 40 }}>
+          {[
+            { id: "dashboard", label: "Tableau de bord", icon: "📊" },
+            { id: "books", label: "Livres", icon: "📚" },
+          ].map(item => (
+            <div key={item.id} onClick={() => { setView(item.id); setShowMenu(false); }}
+              style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                background: view === item.id ? "#2a2a2a" : "transparent",
+                color: view === item.id ? "#c9a84c" : "#aaa",
+                borderLeft: "3px solid " + (view === item.id ? "#c9a84c" : "transparent"),
+                borderBottom: "1px solid #2a2a2a" }}>
+              <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      <div style={{ padding: "20px 16px 80px" }}>
+
         {/* DASHBOARD */}
         {view === "dashboard" && (
           <div>
-            <h1 style={{ fontSize: 24, color: "#c9a84c", marginBottom: 24 }}>Tableau de bord</h1>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>Tableau de bord</h1>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
               {[
-                { label: "Revenus totaux", value: `${totalRevenue.toLocaleString()} FCFA`, icon: "💰" },
-                { label: "Livres actifs", value: activeBooks, icon: "📚" },
-                { label: "Total livres", value: books.length, icon: "📖" },
+                { label: "Revenus", value: `${totalRevenue.toLocaleString()} F`, icon: "💰" },
+                { label: "Actifs", value: activeBooks, icon: "📚" },
+                { label: "Total", value: books.length, icon: "📖" },
               ].map((stat, i) => (
-                <div key={i} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 20 }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>{stat.icon}</div>
-                  <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{stat.value}</div>
-                  <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{stat.label}</div>
+                <div key={i} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{stat.icon}</div>
+                  <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{stat.value}</div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{stat.label}</div>
                 </div>
               ))}
             </div>
-            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 20 }}>
-              <h3 style={{ color: "#c9a84c", marginBottom: 16 }}>Derniers livres ajoutés</h3>
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+              <h3 style={{ color: "#c9a84c", marginBottom: 14, fontSize: 14 }}>Derniers livres ajoutés</h3>
               {books.slice(0, 5).map(book => (
                 <div key={book.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid #2a2a2a" }}>
-                  {book.cover && <img src={book.cover} alt="" style={{ width: 40, height: 56, objectFit: "cover", borderRadius: 4 }} />}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, color: "#e8e0d0" }}>{book.title}</div>
-                    <div style={{ fontSize: 12, color: "#888" }}>{book.author}</div>
+                  {book.cover
+                    ? <img src={book.cover} alt="" style={{ width: 36, height: 50, objectFit: "cover" }} />
+                    : <div style={{ width: 36, height: 50, background: "#2a2a2a" }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: "#e8e0d0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{book.title}</div>
+                    <div style={{ fontSize: 11, color: "#888" }}>{book.author}</div>
                   </div>
-                  <div style={{ color: "#c9a84c", fontSize: 14 }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} FCFA`}</div>
-                  <div style={{ fontSize: 11, padding: "3px 8px", borderRadius: 12, background: book.status === "actif" ? "#1a3a1a" : "#3a1a1a", color: book.status === "actif" ? "#4caf50" : "#f44336" }}>{book.status}</div>
+                  <div style={{ fontSize: 11, padding: "3px 8px", borderRadius: 12, background: book.status === "actif" ? "#1a3a1a" : "#3a1a1a", color: book.status === "actif" ? "#4caf50" : "#f44336", flexShrink: 0 }}>{book.status}</div>
                 </div>
               ))}
+              {books.length === 0 && <div style={{ color: "#555", textAlign: "center", padding: 20 }}>Aucun livre</div>}
             </div>
           </div>
         )}
@@ -174,54 +183,48 @@ export default function Admin() {
         {/* BOOKS */}
         {view === "books" && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <h1 style={{ fontSize: 24, color: "#c9a84c" }}>Livres</h1>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>Livres ({books.length})</h1>
               <button onClick={openAdd}
-                style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 20px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}>
-                + AJOUTER UN LIVRE
+                style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}>
+                + AJOUTER
               </button>
             </div>
 
-            {/* Books table */}
-            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #2a2a2a" }}>
-                    {["Couverture", "Titre / Auteur", "Prix", "Catégorie", "Contenu", "Statut", "Actions"].map(h => (
-                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {books.map(book => (
-                    <tr key={book.id} style={{ borderBottom: "1px solid #1e1e1e" }}>
-                      <td style={{ padding: "12px 16px" }}>
-                        {book.cover ? <img src={book.cover} alt="" style={{ width: 40, height: 56, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 40, height: 56, background: "#2a2a2a", borderRadius: 4 }} />}
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <div style={{ fontSize: 14, color: "#e8e0d0" }}>{book.title}</div>
-                        <div style={{ fontSize: 12, color: "#888" }}>{book.author}</div>
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#c9a84c" }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} F`}</td>
-                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#aaa" }}>{book.category}</td>
-                      <td style={{ padding: "12px 16px", fontSize: 12, color: book.content ? "#4caf50" : "#888" }}>{book.content ? "✓ Oui" : "✗ Non"}</td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <button onClick={() => toggleStatus(book)}
-                          style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, border: "none", cursor: "pointer", background: book.status === "actif" ? "#1a3a1a" : "#3a1a1a", color: book.status === "actif" ? "#4caf50" : "#f44336" }}>
-                          {book.status}
-                        </button>
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <button onClick={() => openEdit(book)} style={{ background: "none", border: "none", cursor: "pointer", color: "#c9a84c", marginRight: 8, fontSize: 16 }}>✏️</button>
-                        <button onClick={() => handleDelete(book.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#f44336", fontSize: 16 }}>🗑️</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {books.length === 0 && (
-                    <tr><td colSpan={7} style={{ padding: 32, textAlign: "center", color: "#555" }}>Aucun livre ajouté</td></tr>
-                  )}
-                </tbody>
-              </table>
+            {/* Liste cards sur mobile */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {books.map(book => (
+                <div key={book.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  {book.cover
+                    ? <img src={book.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", flexShrink: 0 }} />
+                    : <div style={{ width: 50, height: 70, background: "#2a2a2a", flexShrink: 0 }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, color: "#e8e0d0", marginBottom: 2, fontWeight: "bold" }}>{book.title}</div>
+                    <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>{book.author}</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: 12, color: "#c9a84c" }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} F`}</span>
+                      <span style={{ fontSize: 11, color: "#aaa" }}>{book.category}</span>
+                      <span style={{ fontSize: 11, color: book.content ? "#4caf50" : "#888" }}>{book.content ? "✓ Contenu" : "✗ Sans contenu"}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0, alignItems: "flex-end" }}>
+                    <button onClick={() => toggleStatus(book)}
+                      style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, border: "none", cursor: "pointer", background: book.status === "actif" ? "#1a3a1a" : "#3a1a1a", color: book.status === "actif" ? "#4caf50" : "#f44336" }}>
+                      {book.status}
+                    </button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => openEdit(book)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18 }}>✏️</button>
+                      <button onClick={() => handleDelete(book.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18 }}>🗑️</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {books.length === 0 && (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
+                  <div>Aucun livre ajouté</div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -229,16 +232,16 @@ export default function Admin() {
 
       {/* FORM MODAL */}
       {showForm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, width: "90%", maxWidth: 600, maxHeight: "90vh", overflowY: "auto", padding: 32 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <h2 style={{ color: "#c9a84c", fontSize: 18 }}>{editingBook ? "Modifier le livre" : "Ajouter un livre"}</h2>
-              <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer" }}>×</button>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "16px 16px 0 0", width: "100%", maxWidth: 600, maxHeight: "92vh", overflowY: "auto", padding: "24px 20px 40px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ color: "#c9a84c", fontSize: 17 }}>{editingBook ? "Modifier le livre" : "Ajouter un livre"}</h2>
+              <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#888", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
 
             {/* Tabs */}
-            <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: "1px solid #2a2a2a" }}>
-              {[{ id: "info", label: "📋 Informations" }, { id: "content", label: "📝 Contenu" }].map(tab => (
+            <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid #2a2a2a" }}>
+              {[{ id: "info", label: "📋 Infos" }, { id: "content", label: "📝 Contenu" }].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   style={{ padding: "8px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13,
                     color: activeTab === tab.id ? "#c9a84c" : "#888",
@@ -250,69 +253,44 @@ export default function Admin() {
 
             {activeTab === "info" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Titre */}
                 <div>
                   <label style={labelStyle}>TITRE *</label>
                   <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                     placeholder="Titre du livre" style={inputStyle} />
                 </div>
-
-                {/* Auteur */}
                 <div>
                   <label style={labelStyle}>AUTEUR *</label>
                   <input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}
                     placeholder="Nom et prénom" style={inputStyle} />
                 </div>
-
-                {/* Prix */}
                 <div>
                   <label style={labelStyle}>PRIX (FCFA) *</label>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder="Ex: 2500 (mettez 0 pour gratuit)" type="number" style={inputStyle} />
+                    placeholder="Ex: 2500 (0 pour gratuit)" type="number" style={inputStyle} />
                 </div>
 
                 {/* COUVERTURE */}
                 <div>
                   <label style={labelStyle}>COUVERTURE</label>
-
-                  {/* Bouton upload depuis PC */}
-                  <div style={{ marginBottom: 10 }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={handleImageUpload}
-                      style={{ display: "none" }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                      disabled={uploading}
-                      style={{
-                        width: "100%", padding: "12px", borderRadius: 6, border: "2px dashed #c9a84c",
-                        background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : "#c9a84c",
-                        cursor: uploading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: "bold",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8
-                      }}>
-                      {uploading ? "⏳ Upload en cours..." : "📁 Uploader depuis mon PC"}
-                    </button>
-                    {uploadError && <div style={{ color: "#f44336", fontSize: 12, marginTop: 6 }}>{uploadError}</div>}
-                  </div>
-
-                  {/* Séparateur */}
+                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} style={{ display: "none" }} />
+                  <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} disabled={uploading}
+                    style={{ width: "100%", padding: "12px", borderRadius: 6, border: "2px dashed #c9a84c",
+                      background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : "#c9a84c",
+                      cursor: uploading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: "bold",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 }}>
+                    {uploading ? "⏳ Upload en cours..." : "📁 Uploader depuis mon PC"}
+                  </button>
+                  {uploadError && <div style={{ color: "#f44336", fontSize: 12, marginBottom: 8 }}>{uploadError}</div>}
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                     <div style={{ flex: 1, height: 1, background: "#2a2a2a" }} />
                     <span style={{ fontSize: 11, color: "#555" }}>OU COLLER UNE URL</span>
                     <div style={{ flex: 1, height: 1, background: "#2a2a2a" }} />
                   </div>
-
                   <input value={form.cover} onChange={e => setForm(f => ({ ...f, cover: e.target.value }))}
                     placeholder="https://i.ibb.co/.../image.jpg" style={inputStyle} />
-
-                  {/* Aperçu */}
                   {form.cover && (
                     <div style={{ marginTop: 10, textAlign: "center" }}>
-                      <img src={form.cover} alt="Aperçu" style={{ maxHeight: 150, borderRadius: 6, border: "1px solid #2a2a2a" }}
+                      <img src={form.cover} alt="Aperçu" style={{ maxHeight: 140, border: "1px solid #2a2a2a" }}
                         onError={e => { e.target.style.display = "none"; }} />
                     </div>
                   )}
@@ -347,22 +325,24 @@ export default function Admin() {
                   txt = txt.split("\r").join("\n");
                   const lines = txt.split("\n");
                   const result = [];
-                  let para = "";
+                  let current = [];
                   for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (line === "") {
-                      if (para !== "") { result.push(para); para = ""; }
-                    } else {
-                      para = para === "" ? line : para + " " + line;
-                    }
+                    const line = lines[i];
+                    const trimmed = line.trim();
+                    if (/^\s*\d+\s*$/.test(line)) { if (current.length > 0) { result.push(current.join(" ")); current = []; } continue; }
+                    if (trimmed === "") { if (current.length > 0) { result.push(current.join(" ")); current = []; } continue; }
+                    const isNew = line.startsWith(" ") || trimmed.startsWith("—") || /^[-–—]\s/.test(trimmed);
+                    if (isNew && current.length > 0) { result.push(current.join(" ")); current = [trimmed]; }
+                    else if (isNew) { current = [trimmed]; }
+                    else { current.length === 0 ? current = [trimmed] : current.push(trimmed); }
                   }
-                  if (para !== "") result.push(para);
-                  setForm(f => ({ ...f, content: result.join("\n\n") }));
-                }} style={{ marginBottom: 10, padding: "8px 16px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 12 }}>
+                  if (current.length > 0) result.push(current.join(" "));
+                  setForm(f => ({ ...f, content: result.filter(p => p.trim()).join("\n\n") }));
+                }} style={{ marginBottom: 10, padding: "10px 16px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 13, width: "100%" }}>
                   🧹 Nettoyer le texte PDF
                 </button>
                 <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-                  placeholder="CHAPITRE 1&#10;&#10;Le texte de ton livre commence ici..." rows={16}
+                  placeholder="CHAPITRE 1&#10;&#10;Le texte de ton livre commence ici..." rows={14}
                   style={{ ...inputStyle, resize: "vertical", fontFamily: "Georgia, serif", fontSize: 14, lineHeight: 1.7 }} />
                 <div style={{ fontSize: 11, color: "#555", marginTop: 8 }}>
                   {form.content ? `${form.content.length} caractères · ~${Math.ceil(form.content.length / 1800)} pages` : "Aucun contenu"}
@@ -371,13 +351,13 @@ export default function Admin() {
             )}
 
             {/* Boutons */}
-            <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
               <button onClick={() => setShowForm(false)}
-                style={{ padding: "10px 20px", background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#888", cursor: "pointer" }}>
+                style={{ flex: 1, padding: "12px 0", background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 14 }}>
                 Annuler
               </button>
               <button onClick={handleSave} disabled={saving}
-                style={{ padding: "10px 24px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: saving ? "not-allowed" : "pointer" }}>
+                style={{ flex: 2, padding: "12px 0", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
                 {saving ? "Enregistrement..." : editingBook ? "Mettre à jour" : "Ajouter le livre"}
               </button>
             </div>
