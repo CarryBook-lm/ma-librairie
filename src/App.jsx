@@ -6,7 +6,7 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-const CATEGORIES = ["Tous", "Business", "Roman", "Développement personnel", "Religion", "Science", "Histoire", "Jeunesse", "Autre"];
+const CATEGORIES = ["Tous", "Romans", "Histoires", "Lyrics", "Amour", "Humour", "Autres"];
 
 const G = {
   bg: "#f5f0e8", surface: "#ede7d9", surface2: "#e8e0ce", border: "#d8cdb8",
@@ -433,7 +433,7 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
                 {filteredBooks.map(book => (
                   <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
                       {book.cover
                         ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
                         : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
@@ -466,7 +466,7 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
                 {books.filter(b => purchasedBooks.includes(b.id)).map(book => (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
                       {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "12px 8px 8px", textAlign: "center" }}>
                         <span style={{ fontSize: 9, color: G.green, letterSpacing: 1 }}>✓ ACHETÉ</span>
@@ -497,7 +497,7 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
                 {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => openBook(book)}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
                       {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
                       <div style={{ position: "absolute", top: 8, right: 8, color: G.gold, fontSize: 16 }}>♥</div>
                     </div>
