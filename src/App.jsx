@@ -13,7 +13,7 @@ const G = {
   gold: "#c9a84c", goldLight: "#e0be7a", goldDim: "rgba(201,168,76,0.15)",
   text: "#1a1208", textDim: "#7a6a50", textFaint: "#b0a090",
   green: "#4caf50", greenDim: "rgba(76,175,80,0.15)",
-  navBg: "#0a0a0a", navSurface: "#141414", navBorder: "#262626", navText: "#f0ece4",
+  navBg: "#f5f0e8", navSurface: "#ede7d9", navBorder: "#d8cdb8", navText: "#1a1208",
 };
 
 export default function App() {
@@ -289,27 +289,27 @@ export default function App() {
         {/* PAYMENT MODAL in detail page */}
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-            <div style={{ background: G.navSurface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid " + G.navBorder }}>
+            <div style={{ background: "#141414", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
               {paymentStep === 1 && (
                 <>
-                  <div style={{ width: 40, height: 4, background: G.navBorder, borderRadius: 2, margin: "0 auto 20px" }} />
-                  <h3 style={{ color: G.navText, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                  <div style={{ width: 40, height: 4, background: "#262626", borderRadius: 2, margin: "0 auto 20px" }} />
+                  <h3 style={{ color: "#f0ece4", marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
                   <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
                     {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
                       <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                        style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.navBorder), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
-                        <span style={{ color: G.navText, fontSize: 14 }}>{m.label}</span>
+                        style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : "#262626"), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
+                        <span style={{ color: "#f0ece4", fontSize: 14 }}>{m.label}</span>
                       </div>
                     ))}
                   </div>
                   {paymentMethod && (
                     <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                       placeholder="Numéro (ex: 237699000000)"
-                      style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid " + G.navBorder, borderRadius: 8, color: G.navText, fontSize: 14, marginBottom: 16 }} />
+                      style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 8, color: "#f0ece4", fontSize: 14, marginBottom: 16 }} />
                   )}
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid " + G.navBorder, borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
                     <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
                       style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                       Payer
@@ -347,7 +347,7 @@ export default function App() {
       <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
 
       {/* NAVBAR */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(245,240,232,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
           <img src="https://i.ibb.co/NdyYdD1G/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
         </div>
@@ -539,34 +539,34 @@ export default function App() {
         {page !== "reader" && (
           <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "20px 16px", textAlign: "center" }}>
             <img src="https://i.ibb.co/NdyYdD1G/Sans-nom-4-Photoroom.png" alt="CarryBooks" style={{ height: 48, borderRadius: 8, marginBottom: 8 }} />
-            <a href="mailto:carrybooks.com@gmail.com" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
-            <div style={{ color: "#444", fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
+            <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 12, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
+            <div style={{ color: G.textDim, fontSize: 11, marginTop: 8 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
       {/* PAYMENT MODAL */}
       {showPayment && paymentBook && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: G.navSurface, borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid " + G.navBorder }}>
+          <div style={{ background: "#141414", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
             {paymentStep === 1 && (
               <>
-                <div style={{ width: 40, height: 4, background: G.navBorder, borderRadius: 2, margin: "0 auto 20px" }} />
-                <h3 style={{ color: G.navText, marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                <div style={{ width: 40, height: 4, background: "#262626", borderRadius: 2, margin: "0 auto 20px" }} />
+                <h3 style={{ color: "#f0ece4", marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
                 <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
                   {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
                     <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                      style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : G.navBorder), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
-                      <span style={{ color: G.navText, fontSize: 14 }}>{m.label}</span>
+                      style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : "#262626"), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
+                      <span style={{ color: "#f0ece4", fontSize: 14 }}>{m.label}</span>
                     </div>
                   ))}
                 </div>
                 {paymentMethod && (
                   <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                     placeholder="Numéro (ex: 237699000000)"
-                    style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid " + G.navBorder, borderRadius: 8, color: G.navText, fontSize: 14, marginBottom: 16 }} />
+                    style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 8, color: "#f0ece4", fontSize: 14, marginBottom: 16 }} />
                 )}
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid " + G.navBorder, borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
                   <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
                     style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                     Payer
