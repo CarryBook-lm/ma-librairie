@@ -179,7 +179,9 @@ export default function App() {
         </div>
 
         {/* Contenu */}
-        <div style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden" }}>
+        <div
+          onContextMenu={e => e.preventDefault()}
+          style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden", userSelect: "none", WebkitUserSelect: "none", MozUserSelect: "none", msUserSelect: "none" }}>
           {paragraphs.map(function(para, i) {
             return (
               <p key={i} style={{
@@ -192,7 +194,9 @@ export default function App() {
                 marginBottom: "1em",
                 textIndent: i === 0 ? "0" : "1.5em",
                 wordBreak: "break-word",
-                overflowWrap: "break-word"
+                overflowWrap: "break-word",
+                userSelect: "none",
+                WebkitUserSelect: "none"
               }}>
                 {para.trim()}
               </p>
