@@ -27,6 +27,7 @@ export default function App() {
   const [readerSize, setReaderSize] = useState(15);
   const [readerFont, setReaderFont] = useState("Georgia, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
+  const [readerDark, setReaderDark] = useState(false);
   const [excerptMode, setExcerptMode] = useState(false);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
@@ -176,43 +177,57 @@ export default function App() {
     ];
 
     return (
-      <div style={{ minHeight: "100vh", background: "#ffffff", display: "flex", flexDirection: "column", fontFamily: readerFont }}>
+      <div style={{ minHeight: "100vh", background: readerDark ? "#1a1a1a" : "#ffffff", display: "flex", flexDirection: "column", fontFamily: readerFont }}>
         {/* Header */}
-        <div style={{ background: "#fff", borderBottom: "1px solid #ddd", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ background: readerDark ? "#111" : "#fff", borderBottom: "1px solid " + (readerDark ? "#333" : "#ddd"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
-            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 14 }}>
+            style={{ background: "none", border: "none", color: readerDark ? "#aaa" : "#888", cursor: "pointer", fontSize: 14 }}>
             ← Retour
           </button>
-          <span style={{ color: "#555", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ color: readerDark ? "#ccc" : "#555", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {reading.title}
           </span>
           <button onClick={() => setShowReaderSettings(s => !s)}
-            style={{ background: "none", border: "1px solid #ddd", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13, padding: "4px 10px", fontWeight: "bold" }}>
+            style={{ background: "none", border: "1px solid " + (readerDark ? "#444" : "#ddd"), borderRadius: 6, color: readerDark ? "#ccc" : "#888", cursor: "pointer", fontSize: 13, padding: "4px 10px", fontWeight: "bold" }}>
             Aa
           </button>
         </div>
 
         {/* Panneau paramètres */}
         {showReaderSettings && (
-          <div style={{ background: "#fafafa", borderBottom: "1px solid #e0e0e0", padding: "14px 16px" }}>
+          <div style={{ background: readerDark ? "#222" : "#fafafa", borderBottom: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "14px 16px" }}>
+            {/* Mode jour/nuit */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Mode</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setReaderDark(false)}
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (!readerDark ? G.gold : "#ddd"), borderRadius: 6, background: !readerDark ? "#fdf8ee" : "#fff", color: !readerDark ? G.gold : "#555", cursor: "pointer", fontSize: 13 }}>
+                  ☀️ Jour
+                </button>
+                <button onClick={() => setReaderDark(true)}
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (readerDark ? G.gold : "#555"), borderRadius: 6, background: readerDark ? "#333" : "#222", color: readerDark ? G.gold : "#aaa", cursor: "pointer", fontSize: 13 }}>
+                  🌙 Nuit
+                </button>
+              </div>
+            </div>
             {/* Taille police */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, color: "#888", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Taille du texte</div>
+              <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Taille du texte</div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <button onClick={() => setReaderSize(s => Math.max(12, s - 1))}
-                  style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid #ddd", background: "#fff", fontSize: 18, cursor: "pointer", color: "#555" }}>−</button>
-                <span style={{ fontSize: readerSize, fontFamily: readerFont, flex: 1, textAlign: "center", color: "#333" }}>Aa ({readerSize}px)</span>
+                  style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid " + (readerDark ? "#444" : "#ddd"), background: readerDark ? "#333" : "#fff", fontSize: 18, cursor: "pointer", color: readerDark ? "#ccc" : "#555" }}>−</button>
+                <span style={{ fontSize: readerSize, fontFamily: readerFont, flex: 1, textAlign: "center", color: readerDark ? "#ccc" : "#333" }}>Aa ({readerSize}px)</span>
                 <button onClick={() => setReaderSize(s => Math.min(24, s + 1))}
-                  style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid #ddd", background: "#fff", fontSize: 18, cursor: "pointer", color: "#555" }}>+</button>
+                  style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid " + (readerDark ? "#444" : "#ddd"), background: readerDark ? "#333" : "#fff", fontSize: 18, cursor: "pointer", color: readerDark ? "#ccc" : "#555" }}>+</button>
               </div>
             </div>
             {/* Police */}
             <div>
-              <div style={{ fontSize: 11, color: "#888", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Police</div>
+              <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Police</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {FONTS.map(f => (
                   <button key={f.value} onClick={() => setReaderFont(f.value)}
-                    style={{ padding: "6px 12px", border: "1.5px solid " + (readerFont === f.value ? G.gold : "#ddd"), borderRadius: 6, background: readerFont === f.value ? "#fdf8ee" : "#fff", color: readerFont === f.value ? G.gold : "#555", cursor: "pointer", fontSize: 13, fontFamily: f.value }}>
+                    style={{ padding: "6px 12px", border: "1.5px solid " + (readerFont === f.value ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: readerFont === f.value ? (readerDark ? "#333" : "#fdf8ee") : (readerDark ? "#2a2a2a" : "#fff"), color: readerFont === f.value ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontFamily: f.value }}>
                     {f.label}
                   </button>
                 ))}
@@ -231,7 +246,7 @@ export default function App() {
                 fontFamily: readerFont,
                 fontSize: readerSize + "px",
                 lineHeight: "1.9",
-                color: "#1a1a1a",
+                color: readerDark ? "#e0e0e0" : "#1a1a1a",
                 textAlign: "justify",
                 margin: 0,
                 marginBottom: "1em",
@@ -255,22 +270,22 @@ export default function App() {
             </div>
           )}
 
-          <div style={{ textAlign: "center", color: "#ccc", fontSize: 13, marginTop: 40, fontFamily: "Georgia, serif" }}>
+          <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 13, marginTop: 40, fontFamily: readerFont }}>
             — {readingPage + 1} —
           </div>
         </div>
 
         {/* Navigation */}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid #e0e0e0", padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={() => { setReadingPage(function(p) { return Math.max(0, p - 1); }); window.scrollTo(0,0); }} disabled={readingPage === 0}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? "#f5f5f5" : "#fdf8ee", border: "1px solid " + (readingPage === 0 ? "#e0e0e0" : G.gold), color: readingPage === 0 ? "#ccc" : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === 0 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === 0 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
           </button>
           <input type="range" min={0} max={total - 1} value={readingPage}
             onChange={function(e) { setReadingPage(Number(e.target.value)); window.scrollTo(0,0); }}
             style={{ flex: 1, accentColor: G.gold }} />
           <button onClick={() => { setReadingPage(function(p) { return Math.min(total - 1, p + 1); }); window.scrollTo(0,0); }} disabled={readingPage === total - 1}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? "#f5f5f5" : "#fdf8ee", border: "1px solid " + (readingPage === total - 1 ? "#e0e0e0" : G.gold), color: readingPage === total - 1 ? "#ccc" : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === total - 1 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === total - 1 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
             ›
           </button>
         </div>
