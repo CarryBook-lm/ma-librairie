@@ -319,6 +319,36 @@ export default function Admin() {
                 <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
                   Colle le texte de ton livre ici. Sépare les chapitres avec une ligne vide.
                 </p>
+                {/* Barre de formatage */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  {[
+                    { label: "G", tag: "strong", title: "Gras", style: { fontWeight: "bold" } },
+                    { label: "I", tag: "em", title: "Italique", style: { fontStyle: "italic" } },
+                    { label: "S", tag: "u", title: "Souligné", style: { textDecoration: "underline" } },
+                  ].map(({ label, tag, title, style: btnStyle }) => (
+                    <button key={tag} title={title} onMouseDown={e => {
+                      e.preventDefault();
+                      const ta = document.getElementById("contentTextarea");
+                      if (!ta) return;
+                      const start = ta.selectionStart;
+                      const end = ta.selectionEnd;
+                      const selected = form.content.substring(start, end);
+                      if (!selected) return;
+                      const before = form.content.substring(0, start);
+                      const after = form.content.substring(end);
+                      const newContent = before + `<${tag}>${selected}</${tag}>` + after;
+                      setForm(f => ({ ...f, content: newContent }));
+                      setTimeout(() => {
+                        ta.focus();
+                        ta.setSelectionRange(start, end + tag.length * 2 + 5);
+                      }, 0);
+                    }}
+                      style={{ ...btnStyle, padding: "6px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", cursor: "pointer", fontSize: 14, fontFamily: "Georgia, serif" }}>
+                      {label}
+                    </button>
+                  ))}
+                  <span style={{ fontSize: 11, color: "#555", alignSelf: "center", marginLeft: 4 }}>Sélectionne du texte puis clique</span>
+                </div>
                 <button onClick={() => {
                   let txt = form.content;
                   txt = txt.split("\r\n").join("\n");
@@ -341,7 +371,7 @@ export default function Admin() {
                 }} style={{ marginBottom: 10, padding: "10px 16px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 13, width: "100%" }}>
                   🧹 Nettoyer le texte PDF
                 </button>
-                <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
+                <textarea id="contentTextarea" value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                   placeholder="CHAPITRE 1&#10;&#10;Le texte de ton livre commence ici..." rows={14}
                   style={{ ...inputStyle, resize: "vertical", fontFamily: "Georgia, serif", fontSize: 14, lineHeight: 1.7 }} />
                 <div style={{ fontSize: 11, color: "#555", marginTop: 8 }}>

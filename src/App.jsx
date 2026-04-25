@@ -197,9 +197,7 @@ export default function App() {
                 overflowWrap: "break-word",
                 userSelect: "none",
                 WebkitUserSelect: "none"
-              }}>
-                {para.trim()}
-              </p>
+              }} dangerouslySetInnerHTML={{ __html: para.trim() }} />
             );
           })}
 
@@ -265,9 +263,9 @@ export default function App() {
             {free ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
           </div>
           {book.summary && (
-            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Résumé</div>
-              <p style={{ color: "#bbb", lineHeight: 1.8, fontSize: 13, margin: 0 }}>{book.summary}</p>
+              <p style={{ color: G.text, lineHeight: 1.8, fontSize: 12, margin: 0, fontStyle: "italic", textAlign: "justify" }}>{book.summary}</p>
             </div>
           )}
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
