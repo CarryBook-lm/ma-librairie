@@ -16,6 +16,7 @@ const emptyForm = {
 export default function Admin() {
   const [view, setView] = useState("dashboard");
   const [books, setBooks] = useState([]);
+  const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -26,11 +27,16 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { fetchBooks(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); }, []);
 
   async function fetchBooks() {
     const { data } = await supabase.from("books").select("*").order("created_at", { ascending: false });
     if (data) setBooks(data);
+  }
+
+  async function fetchUsers() {
+    const { data } = await supabase.from("purchases").select("user_id, book_id, created_at");
+    if (data) setUsers(data);
   }
 
   async function handleImageUpload(e) {
@@ -128,6 +134,7 @@ export default function Admin() {
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Livres", icon: "📚" },
+            { id: "users", label: "Utilisateurs", icon: "👥" },
           ].map(item => (
             <div key={item.id} onClick={() => { setView(item.id); setShowMenu(false); }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
@@ -223,6 +230,51 @@ export default function Admin() {
                 <div style={{ textAlign: "center", padding: "40px 0", color: "#555" }}>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
                   <div>Aucun livre ajouté</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {view === "users" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>Utilisateurs connectés</h1>
+              <button onClick={fetchUsers} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
+            </div>
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#c9a84c" }}>{[...new Set(users.map(u => u.user_id))].length}</div>
+                  <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>Acheteurs</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#c9a84c" }}>{users.length}</div>
+                  <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>Achats total</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[...new Set(users.map(u => u.user_id))].map(userId => {
+                const userPurchases = users.filter(u => u.user_id === userId);
+                const lastPurchase = userPurchases.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                return (
+                  <div key={userId} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>ID : {userId.substring(0, 16)}...</div>
+                        <div style={{ fontSize: 12, color: "#aaa" }}>Dernier achat : {new Date(lastPurchase.created_at).toLocaleDateString("fr-FR")}</div>
+                      </div>
+                      <div style={{ background: "#2a2a2a", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "#c9a84c" }}>
+                        {userPurchases.length} livre{userPurchases.length > 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {users.length === 0 && (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
+                  <div>Aucun achat enregistré</div>
                 </div>
               )}
             </div>
