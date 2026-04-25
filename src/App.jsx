@@ -24,6 +24,9 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
+  const [readerSize, setReaderSize] = useState(15);
+  const [readerFont, setReaderFont] = useState("Georgia, serif");
+  const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [excerptMode, setExcerptMode] = useState(false);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
@@ -164,19 +167,59 @@ export default function App() {
       ? pages[readingPage].split(/\n\n+/).filter(function(p) { return p.trim().length > 0; })
       : [];
 
+    const FONTS = [
+      { label: "Georgia", value: "Georgia, serif" },
+      { label: "Arial", value: "Arial, sans-serif" },
+      { label: "Verdana", value: "Verdana, sans-serif" },
+      { label: "Palatino", value: "Palatino, serif" },
+      { label: "Courier", value: "Courier New, monospace" },
+    ];
+
     return (
-      <div style={{ minHeight: "100vh", background: "#ffffff", display: "flex", flexDirection: "column", fontFamily: "Georgia, serif" }}>
+      <div style={{ minHeight: "100vh", background: "#ffffff", display: "flex", flexDirection: "column", fontFamily: readerFont }}>
         {/* Header */}
-        <div style={{ background: "#fff", borderBottom: "1px solid #ddd", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ background: "#fff", borderBottom: "1px solid #ddd", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
-            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 14, fontFamily: "Georgia, serif" }}>
+            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 14 }}>
             ← Retour
           </button>
-          <span style={{ color: "#555", fontSize: 13, fontStyle: "italic", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ color: "#555", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {reading.title}
           </span>
-          <span style={{ opacity: 0 }}>x</span>
+          <button onClick={() => setShowReaderSettings(s => !s)}
+            style={{ background: "none", border: "1px solid #ddd", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13, padding: "4px 10px", fontWeight: "bold" }}>
+            Aa
+          </button>
         </div>
+
+        {/* Panneau paramètres */}
+        {showReaderSettings && (
+          <div style={{ background: "#fafafa", borderBottom: "1px solid #e0e0e0", padding: "14px 16px" }}>
+            {/* Taille police */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Taille du texte</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <button onClick={() => setReaderSize(s => Math.max(12, s - 1))}
+                  style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid #ddd", background: "#fff", fontSize: 18, cursor: "pointer", color: "#555" }}>−</button>
+                <span style={{ fontSize: readerSize, fontFamily: readerFont, flex: 1, textAlign: "center", color: "#333" }}>Aa ({readerSize}px)</span>
+                <button onClick={() => setReaderSize(s => Math.min(24, s + 1))}
+                  style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid #ddd", background: "#fff", fontSize: 18, cursor: "pointer", color: "#555" }}>+</button>
+              </div>
+            </div>
+            {/* Police */}
+            <div>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Police</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {FONTS.map(f => (
+                  <button key={f.value} onClick={() => setReaderFont(f.value)}
+                    style={{ padding: "6px 12px", border: "1.5px solid " + (readerFont === f.value ? G.gold : "#ddd"), borderRadius: 6, background: readerFont === f.value ? "#fdf8ee" : "#fff", color: readerFont === f.value ? G.gold : "#555", cursor: "pointer", fontSize: 13, fontFamily: f.value }}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Contenu */}
         <div
@@ -185,8 +228,8 @@ export default function App() {
           {paragraphs.map(function(para, i) {
             return (
               <p key={i} style={{
-                fontFamily: "Georgia, serif",
-                fontSize: "15px",
+                fontFamily: readerFont,
+                fontSize: readerSize + "px",
                 lineHeight: "1.9",
                 color: "#1a1a1a",
                 textAlign: "justify",
