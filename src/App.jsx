@@ -40,6 +40,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showMenu, setShowMenu] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -58,6 +60,42 @@ export default function App() {
     const c = localStorage.getItem("cachedBooks");
     if (c) setCachedBooks(JSON.parse(c));
   }, []);
+
+  // Auth listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) loadUserPurchases(session.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) loadUserPurchases(session.user.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function loadUserPurchases(userId) {
+    const { data } = await supabase.from("purchases").select("book_id").eq("user_id", userId);
+    if (data) {
+      const ids = data.map(p => p.book_id);
+      setPurchasedBooks(ids);
+      localStorage.setItem("purchasedBooks", JSON.stringify(ids));
+    }
+  }
+
+  async function signInWithGoogle() {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: "https://www.carrybooks.com" }
+    });
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setUser(null);
+    setPurchasedBooks([]);
+    localStorage.removeItem("purchasedBooks");
+  }
 
   async function fetchBooks() {
     setLoading(true);
@@ -114,6 +152,7 @@ export default function App() {
     const newP = [...purchasedBooks, paymentBook.id];
     setPurchasedBooks(newP);
     localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+    if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
     cacheBook(paymentBook);
     return;
   }
@@ -413,6 +452,10 @@ export default function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {!isOnline && <span style={{ fontSize: 10, background: "#3a2a00", color: G.gold, padding: "3px 8px", borderRadius: 10 }}>📴</span>}
+          {user
+            ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
+            : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+          }
           <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
@@ -423,12 +466,42 @@ export default function App() {
       {showMenu && (
         <div style={{ position: "fixed", top: 56, left: 0, right: 0, bottom: 0, zIndex: 99, background: "rgba(0,0,0,0.95)" }} onClick={() => setShowMenu(false)}>
           <div style={{ background: G.navSurface, borderBottom: "1px solid " + G.navBorder }} onClick={e => e.stopPropagation()}>
+            {user && (
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid " + G.navBorder, display: "flex", alignItems: "center", gap: 12 }}>
+                <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%" }} />
+                <div>
+                  <div style={{ fontSize: 14, color: G.navText, fontWeight: "bold" }}>{user.user_metadata?.full_name || user.email}</div>
+                  <div style={{ fontSize: 11, color: G.textDim }}>{user.email}</div>
+                </div>
+              </div>
+            )}
             {navItems.map(item => (
               <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
                 style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === item.id ? G.gold : G.navText, borderLeft: "3px solid " + (page === item.id ? G.gold : "transparent"), background: page === item.id ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
                 {item.label}
               </div>
             ))}
+            {user
+              ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
+              : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
+            }
+          </div>
+        </div>
+      )}
+
+      {/* AUTH MODAL */}
+      {showAuthModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
+          <div style={{ background: "#141414", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #262626" }}>
+            <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
+            <h2 style={{ color: "#f0ece4", fontSize: 18, marginBottom: 8 }}>Connexion</h2>
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>Connecte-toi pour accéder à tes livres achetés sur tous tes appareils.</p>
+            <button onClick={signInWithGoogle}
+              style={{ width: "100%", padding: "14px 0", background: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 12 }}>
+              <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
+              Continuer avec Google
+            </button>
+            <button onClick={() => setShowAuthModal(false)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
           </div>
         </div>
       )}
