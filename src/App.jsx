@@ -52,6 +52,7 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -87,11 +88,13 @@ export default function App() {
           loadUserPurchases(session.user.id);
           window.history.replaceState(null, "", window.location.pathname);
         }
+        setAuthChecked(true);
       });
     } else {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setUser(session?.user ?? null);
         if (session?.user) loadUserPurchases(session.user.id);
+        setAuthChecked(true);
       });
     }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -100,6 +103,7 @@ export default function App() {
       if (event === "SIGNED_OUT") {
         setPurchasedBooks([]);
         localStorage.removeItem("purchasedBooks");
+        setShowAuthModal(false);
       }
     });
     return () => subscription.unsubscribe();
@@ -557,7 +561,7 @@ export default function App() {
       )}
 
       {/* AUTH MODAL */}
-      {showAuthModal && (
+      {showAuthModal && authChecked && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
           <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
             <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
