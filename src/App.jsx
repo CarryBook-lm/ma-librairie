@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Preferences } from "@capacitor/preferences";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -8,7 +9,26 @@ const supabase = createClient(
     auth: {
       persistSession: true,
       storageKey: "carrybooks-auth",
-      storage: window.localStorage,
+      storage: {
+        getItem: async (key) => {
+          try {
+            const { value } = await Preferences.get({ key });
+            return value;
+          } catch { return localStorage.getItem(key); }
+        },
+        setItem: async (key, value) => {
+          try {
+            await Preferences.set({ key, value });
+            localStorage.setItem(key, value);
+          } catch { localStorage.setItem(key, value); }
+        },
+        removeItem: async (key) => {
+          try {
+            await Preferences.remove({ key });
+            localStorage.removeItem(key);
+          } catch { localStorage.removeItem(key); }
+        },
+      },
       autoRefreshToken: true,
       detectSessionInUrl: true,
       flowType: "implicit",
