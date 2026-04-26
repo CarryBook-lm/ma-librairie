@@ -10,7 +10,7 @@ const CATEGORIES = ["Romans", "Histoires", "Lyrics", "Amour", "Humour", "Autres"
 
 const emptyForm = {
   title: "", author: "", price: "", cover: "", category: "Romans",
-  summary: "", content: "", status: "actif"
+  summary: "", content: "", pdf_url: "", status: "actif"
 };
 
 export default function Admin() {
@@ -369,6 +369,56 @@ export default function Admin() {
               <div>
                 <label style={labelStyle}>CONTENU DU LIVRE</label>
                 <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
+                  Choisis entre uploader un PDF ou coller le texte.
+                </p>
+
+                {/* Toggle PDF / Texte */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => setForm(f => ({ ...f, pdf_url: "" }))}
+                    style={{ flex: 1, padding: "10px 0", border: "2px solid " + (!form.pdf_url ? "#c9a84c" : "#2a2a2a"), borderRadius: 6, background: !form.pdf_url ? "#c9a84c22" : "transparent", color: !form.pdf_url ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                    📝 Texte
+                  </button>
+                  <button onClick={() => setForm(f => ({ ...f, pdf_url: f.pdf_url || "pending" }))}
+                    style={{ flex: 1, padding: "10px 0", border: "2px solid " + (form.pdf_url ? "#c9a84c" : "#2a2a2a"), borderRadius: 6, background: form.pdf_url ? "#c9a84c22" : "transparent", color: form.pdf_url ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                    📄 PDF
+                  </button>
+                </div>
+
+                {/* Upload PDF */}
+                {form.pdf_url !== "" && (
+                  <div style={{ marginBottom: 16 }}>
+                    <input type="file" accept=".pdf" id="pdfFileInput" style={{ display: "none" }}
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        setUploading(true);
+                        try {
+                          const fileName = `${Date.now()}_${file.name.replace(/\s/g, "_")}`;
+                          const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "application/pdf" });
+                          if (error) throw error;
+                          const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+                          setForm(f => ({ ...f, pdf_url: urlData.publicUrl }));
+                        } catch (err) {
+                          alert("Erreur upload : " + err.message);
+                        }
+                        setUploading(false);
+                        e.target.value = "";
+                      }} />
+                    <button onClick={() => document.getElementById("pdfFileInput").click()} disabled={uploading}
+                      style={{ width: "100%", padding: "12px", borderRadius: 6, border: "2px dashed #c9a84c", background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : "#c9a84c", cursor: uploading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: "bold", marginBottom: 10 }}>
+                      {uploading ? "⏳ Upload en cours..." : "📄 Uploader le PDF"}
+                    </button>
+                    {form.pdf_url && form.pdf_url !== "pending" && (
+                      <div style={{ fontSize: 12, color: "#4caf50", padding: "8px 12px", background: "#1a3a1a", borderRadius: 6 }}>
+                        ✅ PDF uploadé
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Zone texte - seulement si mode texte */}
+                {!form.pdf_url && (<>
+                <p style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
                   Colle le texte de ton livre ici. Sépare les chapitres avec une ligne vide.
                 </p>
                 {/* Barre de formatage */}
@@ -429,6 +479,7 @@ export default function Admin() {
                 <div style={{ fontSize: 11, color: "#555", marginTop: 8 }}>
                   {form.content ? `${form.content.length} caractères · ~${Math.ceil(form.content.length / 1800)} pages` : "Aucun contenu"}
                 </div>
+                </>)}
               </div>
             )}
 

@@ -200,6 +200,31 @@ export default function App() {
 
   // READER
   if (page === "reader" && reading) {
+    // Mode PDF
+    if (reading.pdf_url && reading.pdf_url !== "pending") {
+      return (
+        <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
+          <div style={{ background: "#111", borderBottom: "1px solid #333", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+            <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
+              style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14 }}>
+              ← Retour
+            </button>
+            <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {reading.title}
+            </span>
+            <span style={{ opacity: 0 }}>x</span>
+          </div>
+          <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
+            <iframe
+              src={reading.pdf_url + "#toolbar=0&navpanes=0&scrollbar=1"}
+              style={{ width: "100%", height: "calc(100vh - 56px)", border: "none" }}
+              title={reading.title}
+            />
+          </div>
+        </div>
+      );
+    }
+
     const allPages = getPages(reading.content);
     const pages = excerptMode ? allPages.slice(0, 2) : allPages;
     const total = pages.length;
