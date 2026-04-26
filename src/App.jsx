@@ -117,13 +117,33 @@ export default function App() {
         setAuthChecked(true);
       });
     }
+    // Restaurer session depuis Preferences si disponible
+    Preferences.get({ key: "sb-session" }).then(({ value }) => {
+      if (value) {
+        try {
+          const saved = JSON.parse(value);
+          supabase.auth.setSession(saved).then(({ data }) => {
+            if (data?.session?.user) {
+              setUser(data.session.user);
+              loadUserPurchases(data.session.user.id);
+            }
+          }).catch(() => {});
+        } catch(e) {}
+      }
+    }).catch(() => {});
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) loadUserPurchases(session.user.id);
+      if (session?.user) {
+        loadUserPurchases(session.user.id);
+        // Sauvegarder session dans Preferences
+        Preferences.set({ key: "sb-session", value: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }) }).catch(() => {});
+      }
       if (event === "SIGNED_OUT") {
         setPurchasedBooks([]);
         localStorage.removeItem("purchasedBooks");
         setShowAuthModal(false);
+        Preferences.remove({ key: "sb-session" }).catch(() => {});
       }
     });
     return () => subscription.unsubscribe();
