@@ -216,7 +216,7 @@ export default function App() {
           </div>
           <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
             <iframe
-              src={reading.pdf_url + "#toolbar=0&navpanes=0&scrollbar=1"}
+              src={"https://docs.google.com/viewer?url=" + encodeURIComponent(reading.pdf_url) + "&embedded=true"}
               style={{ width: "100%", height: "calc(100vh - 56px)", border: "none" }}
               title={reading.title}
             />
