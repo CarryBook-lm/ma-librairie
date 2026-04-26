@@ -77,13 +77,29 @@ export default function App() {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Traiter le hash de retour Google OAuth (mobile)
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token")) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          setUser(session.user);
+          loadUserPurchases(session.user.id);
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      });
+    } else {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        if (session?.user) loadUserPurchases(session.user.id);
+      });
+    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) loadUserPurchases(session.user.id);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) loadUserPurchases(session.user.id);
+      if (event === "SIGNED_OUT") {
+        setPurchasedBooks([]);
+        localStorage.removeItem("purchasedBooks");
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -103,7 +119,7 @@ export default function App() {
   async function signInWithGoogle() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: "https://www.carrybooks.com" }
+      options: { redirectTo: window.location.origin }
     });
   }
 
