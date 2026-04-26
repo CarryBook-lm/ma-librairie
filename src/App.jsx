@@ -11,6 +11,7 @@ const supabase = createClient(
       storage: window.localStorage,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      flowType: "implicit",
     }
   }
 );
@@ -119,7 +120,7 @@ export default function App() {
   async function signInWithGoogle() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: "https://www.carrybooks.com" }
     });
   }
 
