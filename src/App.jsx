@@ -191,11 +191,12 @@ export default function App() {
     return;
   }
    setPaymentStep(2);
-    setTimeout(() => {
+    setTimeout(async () => {
       setPaymentStep(3);
       const newP = [...purchasedBooks, paymentBook.id];
       setPurchasedBooks(newP);
       localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+      if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
       cacheBook(paymentBook);
     }, 2500);
   }
