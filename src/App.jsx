@@ -82,9 +82,12 @@ export default function App() {
   async function loadUserPurchases(userId) {
     const { data } = await supabase.from("purchases").select("book_id").eq("user_id", userId);
     if (data) {
-      const ids = data.map(p => p.book_id);
-      setPurchasedBooks(ids);
-      localStorage.setItem("purchasedBooks", JSON.stringify(ids));
+      const remoteIds = data.map(p => p.book_id);
+      // Fusionner avec les achats locaux
+      const local = JSON.parse(localStorage.getItem("purchasedBooks") || "[]");
+      const merged = [...new Set([...remoteIds, ...local])];
+      setPurchasedBooks(merged);
+      localStorage.setItem("purchasedBooks", JSON.stringify(merged));
     }
   }
 
@@ -413,6 +416,13 @@ export default function App() {
             style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
             {owned || free ? "📖 Lire maintenant" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
           </button>
+
+          {(owned || free) && (
+            <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
+              style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 8 }}>
+              {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
+            </button>
+          )}
         </div>
 
         {/* PAYMENT MODAL in detail page */}
@@ -637,7 +647,7 @@ export default function App() {
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
                     <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
-                    <button style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>📖 LIRE</button>
+                    <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>📖 LIRE</button>
                   </div>
                 ))}
               </div>
