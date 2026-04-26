@@ -63,6 +63,11 @@ export default function App() {
 
   // Auth listener
   useEffect(() => {
+    // Enregistrement du Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) loadUserPurchases(session.user.id);
