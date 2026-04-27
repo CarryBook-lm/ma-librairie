@@ -19,7 +19,7 @@ const CATEGORIES = {
 
 const emptyForm = {
   title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
-  summary: "", content: "", pdf_url: "", status: "actif"
+  summary: "", content: "", pdf_url: "", excerpt_pdf_url: "", status: "actif"
 };
 
 export default function Admin() {
@@ -370,10 +370,46 @@ export default function Admin() {
                     </select>
                   )}
                   {form.contentType === "pdf" && (
-                    <div style={{ marginTop: 6 }}>
-                      <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 4 }}>Extrait jusqu'à la page :</label>
-                      <input type="number" min="1" max="50" value={form.extract_pages} onChange={e => setForm(f => ({ ...f, extract_pages: parseInt(e.target.value) || 5 }))}
-                        style={{ ...inputStyle, width: 80 }} />
+                    <div style={{ marginTop: 8, background: "#1a1a1a", borderRadius: 8, padding: 12 }}>
+                      <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Options d'extrait PDF</label>
+                      
+                      {/* Option 1: Automatique */}
+                      <div style={{ marginBottom: 10 }}>
+                        <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 4 }}>📄 Extrait automatique (nombre de pages) :</label>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <input type="number" min="1" max="50" value={form.extract_pages} onChange={e => setForm(f => ({ ...f, extract_pages: parseInt(e.target.value) || 5 }))}
+                            style={{ ...inputStyle, width: 70 }} />
+                          <span style={{ color: "#888", fontSize: 12 }}>pages</span>
+                        </div>
+                      </div>
+
+                      {/* Option 2: PDF extrait manuel */}
+                      <div>
+                        <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 6 }}>📤 OU uploader un PDF d'extrait séparé :</label>
+                        {form.excerpt_pdf_url ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ color: "#4caf50", fontSize: 12 }}>✅ Extrait PDF uploadé</span>
+                            <button onClick={() => setForm(f => ({ ...f, excerpt_pdf_url: "" }))}
+                              style={{ background: "none", border: "1px solid #555", color: "#aaa", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: 11 }}>
+                              Supprimer
+                            </button>
+                          </div>
+                        ) : (
+                          <label style={{ display: "block", padding: "8px 12px", border: "1px dashed #555", borderRadius: 6, cursor: "pointer", color: "#888", fontSize: 12, textAlign: "center" }}>
+                            📁 Choisir un fichier PDF extrait
+                            <input type="file" accept=".pdf" style={{ display: "none" }} onChange={async e => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              const fileName = Date.now() + "_excerpt_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+                              const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "application/pdf" });
+                              if (!error) {
+                                const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+                                setForm(f => ({ ...f, excerpt_pdf_url: urlData.publicUrl }));
+                              }
+                            }} />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
