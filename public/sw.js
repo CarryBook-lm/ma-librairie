@@ -1,5 +1,5 @@
 // BlindDate Service Worker v1.0
-const CACHE_NAME = 'blinddate-v1';
+const CACHE_NAME = 'carrybooks-v3';
 const ASSETS = [
   '/',
   '/index.html',
