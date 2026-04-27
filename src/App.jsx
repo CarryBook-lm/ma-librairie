@@ -298,6 +298,10 @@ export default function App() {
   if (page === "reader" && reading) {
     // Mode PDF
     if (reading.pdf_url && reading.pdf_url !== "pending") {
+      const savedPdfPage = parseInt(localStorage.getItem("pdfProgress_" + reading.id) || "1");
+      const maxPage = excerptMode ? (reading.extract_pages || 5) : 9999;
+      const startPage = excerptMode ? 1 : savedPdfPage;
+      const pdfSrc = reading.pdf_url + "#page=" + startPage;
       return (
         <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
           <div style={{ background: "#111", borderBottom: "1px solid #333", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
@@ -306,9 +310,14 @@ export default function App() {
               ← Retour
             </button>
             <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {reading.title}
+              {reading.title}{excerptMode ? " — Extrait" : ""}
             </span>
-            <span style={{ opacity: 0 }}>x</span>
+            {!excerptMode && (
+              <input type="number" min="1" defaultValue={startPage}
+                onChange={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
+                style={{ width: 48, background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: 4, padding: "2px 6px", fontSize: 12 }} />
+            )}
+            {excerptMode && <span style={{ opacity: 0 }}>x</span>}
           </div>
           <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
             <iframe
@@ -317,6 +326,11 @@ export default function App() {
               title={reading.title}
             />
           </div>
+          {excerptMode && (
+            <div style={{ background: "#111", padding: "12px 16px", textAlign: "center" }}>
+              <span style={{ color: "#aaa", fontSize: 12 }}>Extrait limité — Achetez pour lire la suite</span>
+            </div>
+          )}
         </div>
       );
     }
