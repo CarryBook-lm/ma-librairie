@@ -302,7 +302,9 @@ export default function App() {
       const savedPdfPage = parseInt(localStorage.getItem("pdfProgress_" + reading.id) || "1");
       const maxPage = excerptMode ? (reading.extract_pages || 5) : 9999;
       const startPage = excerptMode ? 1 : savedPdfPage;
-      const pdfSrc = reading.pdf_url + "#page=" + startPage;
+      // Use excerpt_pdf_url if in excerpt mode and available
+      const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
+      const pdfSrc = activePdfUrl + "#page=" + startPage;
       return (
         <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
           <div style={{ background: "#111", borderBottom: "1px solid #333", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
@@ -322,7 +324,7 @@ export default function App() {
           </div>
           <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
             <iframe
-              src={"https://docs.google.com/viewer?url=" + encodeURIComponent(reading.pdf_url) + "&embedded=true"}
+              src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
               style={{ width: "100%", height: "calc(100vh - 56px)", border: "none" }}
               title={reading.title}
             />
@@ -891,5 +893,6 @@ export default function App() {
     </div>
   );
 }
+
 
 
