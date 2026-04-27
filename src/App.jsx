@@ -41,7 +41,7 @@ const CATEGORIES = {
   "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces"],
   "Développement personnel": ["Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
   "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education"],
-  "Formation": []
+  "Formation": [],
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
   "Lyrics": ["Focus", "À la une"],
