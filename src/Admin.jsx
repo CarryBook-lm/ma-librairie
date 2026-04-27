@@ -6,10 +6,18 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-const CATEGORIES = ["Romans", "Histoires", "Lyrics", "Amour", "Humour", "Autres"];
+const CATEGORIES = {
+  "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
+  "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces"],
+  "Développement personnel": ["Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
+  "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education"],
+  "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
+  "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
+  "Lyrics": ["Focus", "À la une"],
+};
 
 const emptyForm = {
-  title: "", author: "", price: "", cover: "", category: "Romans",
+  title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
   summary: "", content: "", pdf_url: "", status: "actif"
 };
 
@@ -210,7 +218,7 @@ export default function Admin() {
                     <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>{book.author}</div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: "#c9a84c" }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} F`}</span>
-                      <span style={{ fontSize: 11, color: "#aaa" }}>{book.category}</span>
+                      <span style={{ fontSize: 11, color: "#aaa" }}>{book.category}{book.subcategory ? " › " + book.subcategory : ""}</span>
                       <span style={{ fontSize: 11, color: book.content ? "#4caf50" : "#888" }}>{book.content ? "✓ Contenu" : "✗ Sans contenu"}</span>
                     </div>
                   </div>
@@ -351,9 +359,22 @@ export default function Admin() {
                 {/* Catégorie */}
                 <div>
                   <label style={labelStyle}>CATÉGORIE</label>
-                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value, subcategory: "" }))} style={inputStyle}>
+                    {Object.keys(CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+                  {form.category && CATEGORIES[form.category] && (
+                    <select value={form.subcategory} onChange={e => setForm(f => ({ ...f, subcategory: e.target.value }))} style={{ ...inputStyle, marginTop: 6 }}>
+                      <option value="">-- Sous-catégorie (optionnel) --</option>
+                      {CATEGORIES[form.category].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  )}
+                  {form.contentType === "pdf" && (
+                    <div style={{ marginTop: 6 }}>
+                      <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 4 }}>Extrait jusqu'à la page :</label>
+                      <input type="number" min="1" max="50" value={form.extract_pages} onChange={e => setForm(f => ({ ...f, extract_pages: parseInt(e.target.value) || 5 }))}
+                        style={{ ...inputStyle, width: 80 }} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Résumé */}

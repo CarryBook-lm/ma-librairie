@@ -36,7 +36,15 @@ const supabase = createClient(
   }
 );
 
-const CATEGORIES = ["Tous", "Romans", "Histoires", "Lyrics", "Amour", "Humour", "Autres"];
+const CATEGORIES = {
+  "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
+  "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces"],
+  "Développement personnel": ["Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
+  "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education"],
+  "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
+  "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
+  "Lyrics": ["Focus", "À la une"],
+};
 
 const G = {
   bg: "#f5f0e8", surface: "#ede7d9", surface2: "#e8e0ce", border: "#d8cdb8",
@@ -54,6 +62,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
+  const [selectedSubCategory, setSelectedSubCategory] = useState("Tous");
   const [readerSize, setReaderSize] = useState(15);
   const [readerFont, setReaderFont] = useState("Georgia, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
@@ -209,7 +218,12 @@ export default function App() {
     }
     setExcerptMode(excerpt);
     setReading(bookToRead);
-    setReadingPage(0);
+    if (!excerpt) {
+      const saved = localStorage.getItem("readingProgress_" + bookToRead.id);
+      setReadingPage(saved ? parseInt(saved) : 0);
+    } else {
+      setReadingPage(0);
+    }
     setPage("reader");
   }
 
@@ -265,8 +279,11 @@ export default function App() {
   const filteredBooks = books.filter(b => {
     const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.author?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCat = selectedCategory === "Tous" || b.category === selectedCategory;
-    return matchSearch && matchCat;
+    const matchCat = selectedCategory === "Tous" || 
+      b.category === selectedCategory ||
+      b.category?.toLowerCase().startsWith(selectedCategory.toLowerCase().replace(/s$/, ""));
+    const matchSub = selectedSubCategory === "Tous" || b.subcategory === selectedSubCategory;
+    return matchSearch && matchCat && matchSub;
   });
 
   const navItems = [
@@ -650,13 +667,31 @@ export default function App() {
             placeholder="Rechercher un livre ou auteur..."
             style={{ width: "100%", padding: "11px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 10 }} />
           <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-            {CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setSelectedCategory(cat)}
+            <button onClick={() => { setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); }}
+              style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === "Tous" ? G.gold : G.border), background: selectedCategory === "Tous" ? G.goldDim : "transparent", color: selectedCategory === "Tous" ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+              Tous
+            </button>
+            {Object.keys(CATEGORIES).map(cat => (
+              <button key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); }}
                 style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === cat ? G.gold : G.border), background: selectedCategory === cat ? G.goldDim : "transparent", color: selectedCategory === cat ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
                 {cat}
               </button>
             ))}
           </div>
+          {selectedCategory !== "Tous" && CATEGORIES[selectedCategory] && (
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginTop: 6 }}>
+              <button onClick={() => setSelectedSubCategory("Tous")}
+                style={{ flexShrink: 0, padding: "4px 12px", borderRadius: 20, border: "1px solid " + (selectedSubCategory === "Tous" ? G.goldLight : G.border), background: selectedSubCategory === "Tous" ? G.goldDim : "transparent", color: selectedSubCategory === "Tous" ? G.gold : G.textFaint, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+                Tous
+              </button>
+              {CATEGORIES[selectedCategory].map(sub => (
+                <button key={sub} onClick={() => setSelectedSubCategory(sub)}
+                  style={{ flexShrink: 0, padding: "4px 12px", borderRadius: 20, border: "1px solid " + (selectedSubCategory === sub ? G.goldLight : G.border), background: selectedSubCategory === sub ? G.goldDim : "transparent", color: selectedSubCategory === sub ? G.gold : G.textFaint, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {sub}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* BOOKS GRID */}
