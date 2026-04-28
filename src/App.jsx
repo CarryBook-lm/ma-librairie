@@ -734,6 +734,11 @@ export default function App() {
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
+          {page === "home" && (
+            <button onClick={() => setPage("catalog")} style={{ background: "none", border: "none", color: G.text, fontSize: 20, cursor: "pointer", padding: 4 }}>
+              🔍
+            </button>
+          )}
           <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
@@ -786,32 +791,8 @@ export default function App() {
 
       <div style={{ paddingTop: 56 }}>
         {/* HERO */}
-        {page === "home" && (
-          <div style={{ textAlign: "center" }}>
-            {/* Hero avec image de fond — titre + description seulement */}
-            <div style={{ position: "relative", overflow: "hidden" }}>
-              <img src="https://i.ibb.co/Lh6krZ12/Whats-App-Image-2026-04-22-at-16-04-50.jpg"
-                alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.7) 100%)" }} />
-              <div style={{ position: "relative", zIndex: 2, padding: "40px 16px 32px" }}>
-                <div style={{ fontSize: 10, letterSpacing: 4, color: G.gold, textTransform: "uppercase", marginBottom: 12 }}>Bienvenue</div>
-                <h1 style={{ fontSize: 28, color: "#fff", marginBottom: 16, lineHeight: 1.3, fontWeight: "bold", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>Votre librairie<br />numérique</h1>
-                <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, lineHeight: 1.7, maxWidth: 320, margin: "0 auto" }}>
-                  Découvrez, lisez et achetez des livres depuis votre téléphone.
-                </p>
-              </div>
-            </div>
-            {/* Bouton sur fond noir en dessous */}
-            <div style={{ padding: "24px 16px", background: G.bg }}>
-              <button onClick={() => setPage("catalog")}
-                style={{ padding: "12px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", cursor: "pointer" }}>
-                Explorer le catalogue
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* SEARCH + CATEGORIES */}
+        {/* SEARCH + CATEGORIES - caché sur home Netflix */}
+        {(page === "catalog" || searchQuery || selectedCategory !== "Tous" || page !== "home") && (
         <div style={{ padding: "14px 16px 8px", background: G.bg, position: "sticky", top: 56, zIndex: 9, borderBottom: "1px solid " + G.border }}>
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             placeholder="Rechercher un livre ou auteur..."
@@ -843,6 +824,7 @@ export default function App() {
             </div>
           )}
         </div>
+        )}
 
         {/* BOOKS GRID - Netflix style for home, grid for catalog */}
         {(page === "home" || page === "catalog") && (
@@ -1130,6 +1112,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
