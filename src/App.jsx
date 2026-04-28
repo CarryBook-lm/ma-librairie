@@ -263,7 +263,7 @@ export default function App() {
           amount: paymentBook.price,
           phone: phone,
           description: "Achat " + paymentBook.title + " sur CarryBooks",
-          external_reference: "CB_" + paymentBook.id + "_" + Date.now()
+          external_reference: "CB_" + paymentBook.id + "_" + (user ? user.id : "guest") + "_" + Date.now()
         })
       });
       const payData = await payRes.json();
@@ -645,32 +645,14 @@ export default function App() {
               {isFav ? "♥ Favoris" : "♡ Favoris"}
             </button>
           </div>
-          {/* Bouton Lire */}
-          {book.can_read !== false && (
           <button
             onClick={() => {
               if (owned || free) { startReading(book); }
               else { setPaymentBook(book); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); setShowPayment(true); }
             }}
-            style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>
+            style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
             {owned || free ? "📖 Lire maintenant" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
           </button>
-          )}
-
-          {/* Bouton Télécharger */}
-          {book.can_download && book.pdf_url && book.pdf_url !== "pending" && (owned || free) && (
-            <a href={book.pdf_url} download={book.title + ".pdf"} target="_blank" rel="noreferrer"
-              style={{ display: "block", width: "100%", padding: 13, background: "transparent", border: "2px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", textDecoration: "none", marginBottom: 8, boxSizing: "border-box" }}>
-              ⬇️ Télécharger le PDF
-            </a>
-          )}
-          {book.can_download && !owned && !free && book.can_read === false && (
-            <button
-              onClick={() => { setPaymentBook(book); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); setShowPayment(true); }}
-              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>
-              💳 Acheter — {book.price?.toLocaleString()} FCFA
-            </button>
-          )}
 
           {(owned || free) && (
             <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
@@ -887,7 +869,7 @@ export default function App() {
                       {book.price === 0 && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                     </div>
                     <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
-                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                    <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
                     <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
                       {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
                     </div>
@@ -920,7 +902,7 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
-                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
                     <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>📖 LIRE</button>
                   </div>
                 ))}
@@ -949,7 +931,7 @@ export default function App() {
                       <div style={{ position: "absolute", top: 8, right: 8, color: G.gold, fontSize: 16 }}>♥</div>
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
-                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
                     <div style={{ fontSize: 12, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}</div>
                   </div>
                 ))}
