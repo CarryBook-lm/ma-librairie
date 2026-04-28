@@ -417,7 +417,6 @@ export default function App() {
       { label: "Arial", value: "Arial, sans-serif" },
       { label: "Verdana", value: "Verdana, sans-serif" },
       { label: "Palatino", value: "Palatino, serif" },
-      { label: "Courier", value: "Courier New, monospace" },
     ];
 
     return (
