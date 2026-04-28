@@ -89,9 +89,7 @@ export default function App() {
   const [translating, setTranslating] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioRef] = useState(() => ({ current: null }));
-  const [speechSynth] = useState(() => window.speechSynthesis || null);
-  const [speechUtterance, setSpeechUtterance] = useState(null);
-  const [audioMode, setAudioMode] = useState(null); // 'mp3' or 'synth'
+  const [audioMode, setAudioMode] = useState(null); // 'mp3' only
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -308,10 +306,8 @@ export default function App() {
 
   function stopAudio() {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-    if (speechSynth) speechSynth.cancel();
     setAudioPlaying(false);
     setAudioMode(null);
-    setSpeechUtterance(null);
   }
 
   function playMp3(url) {
@@ -322,19 +318,6 @@ export default function App() {
     setAudioPlaying(true);
     setAudioMode('mp3');
     audio.onended = () => { setAudioPlaying(false); setAudioMode(null); };
-  }
-
-  function playSynth(text) {
-    stopAudio();
-    if (!speechSynth) { alert("Synthèse vocale non disponible sur ce navigateur."); return; }
-    const utter = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
-    utter.lang = translateLang === 'en' ? 'en-US' : 'fr-FR';
-    utter.rate = 0.95;
-    utter.onend = () => { setAudioPlaying(false); setAudioMode(null); };
-    setSpeechUtterance(utter);
-    speechSynth.speak(utter);
-    setAudioPlaying(true);
-    setAudioMode('synth');
   }
 
   async function translateText(text, targetLang) {
@@ -471,14 +454,15 @@ export default function App() {
             style={{ background: "none", border: "1px solid " + (readerDark ? "#444" : "#ddd"), borderRadius: 6, color: readerDark ? "#ccc" : "#888", cursor: "pointer", fontSize: 13, padding: "4px 10px", fontWeight: "bold" }}>
             Aa
           </button>
+          {reading.audio_url && (
           <button onClick={() => {
             if (audioPlaying) { stopAudio(); }
-            else if (reading.audio_url) { playMp3(reading.audio_url); }
-            else { playSynth(translatedContent || reading.content || ""); }
+            else { playMp3(reading.audio_url); }
           }}
             style={{ background: audioPlaying ? G.gold : "none", border: "1px solid " + (audioPlaying ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, color: audioPlaying ? "#000" : (readerDark ? "#ccc" : "#888"), cursor: "pointer", fontSize: 16, padding: "4px 10px" }}>
             {audioPlaying ? "⏸" : "🔊"}
           </button>
+          )}
         </div>
 
         {/* Panneau paramètres */}
@@ -680,28 +664,29 @@ export default function App() {
 
         {/* PAYMENT MODAL in detail page */}
         {showPayment && paymentBook && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-            <div style={{ background: "#141414", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+            <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
               {paymentStep === 1 && (
                 <>
-                  <div style={{ width: 40, height: 4, background: "#262626", borderRadius: 2, margin: "0 auto 20px" }} />
-                  <h3 style={{ color: "#f0ece4", marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
-                  <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
+                  <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+                  <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                  <p style={{ color: "#555", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                    {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
+                    {[{ id: "orange", label: "Orange Money", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Orange_logo.svg/240px-Orange_logo.svg.png", color: "#ff6600" }, { id: "mtn", label: "MTN MoMo", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/New-mtn-logo.jpg/240px-New-mtn-logo.jpg", color: "#ffc000" }].map(m => (
                       <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                        style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : "#262626"), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
-                        <span style={{ color: "#f0ece4", fontSize: 14 }}>{m.label}</span>
+                        style={{ padding: "12px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : "#e0e0e0"), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "22" : "#f9f9f9", display: "flex", alignItems: "center", gap: 12 }}>
+                        <img src={m.logo} alt={m.label} style={{ width: 36, height: 36, objectFit: "contain", borderRadius: 4 }} />
+                        <span style={{ color: "#1a1a1a", fontSize: 15, fontWeight: paymentMethod === m.id ? "bold" : "normal" }}>{m.label}</span>
                       </div>
                     ))}
                   </div>
                   {paymentMethod && (
                     <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                       placeholder="Numéro (ex: 237699000000)"
-                      style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 8, color: "#f0ece4", fontSize: 14, marginBottom: 16 }} />
+                      style={{ width: "100%", padding: "12px 14px", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 8, color: "#1a1a1a", fontSize: 14, marginBottom: 16 }} />
                   )}
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                    <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #ccc", borderRadius: 6, color: "#666", cursor: "pointer", fontSize: 13 }}>Annuler</button>
                     <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
                       style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                       Payer
@@ -989,28 +974,29 @@ export default function App() {
         )}
       {/* PAYMENT MODAL */}
       {showPayment && paymentBook && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: "#141414", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #262626" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+          <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
             {paymentStep === 1 && (
               <>
-                <div style={{ width: 40, height: 4, background: "#262626", borderRadius: 2, margin: "0 auto 20px" }} />
-                <h3 style={{ color: "#f0ece4", marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
-                <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
+                <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16 }}>Acheter ce livre</h3>
+                <p style={{ color: "#555", fontSize: 13, marginBottom: 20 }}>{paymentBook.title} — {paymentBook.price?.toLocaleString()} FCFA</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                  {[{ id: "orange", label: "🟠 Orange Money", color: "#ff6600" }, { id: "mtn", label: "🟡 MTN MoMo", color: "#ffc000" }].map(m => (
+                  {[{ id: "orange", label: "Orange Money", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Orange_logo.svg/240px-Orange_logo.svg.png", color: "#ff6600" }, { id: "mtn", label: "MTN MoMo", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/New-mtn-logo.jpg/240px-New-mtn-logo.jpg", color: "#ffc000" }].map(m => (
                     <div key={m.id} onClick={() => setPaymentMethod(m.id)}
-                      style={{ padding: "14px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : "#262626"), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "11" : "transparent" }}>
-                      <span style={{ color: "#f0ece4", fontSize: 14 }}>{m.label}</span>
+                      style={{ padding: "12px 16px", border: "2px solid " + (paymentMethod === m.id ? m.color : "#e0e0e0"), borderRadius: 8, cursor: "pointer", background: paymentMethod === m.id ? m.color + "22" : "#f9f9f9", display: "flex", alignItems: "center", gap: 12 }}>
+                      <img src={m.logo} alt={m.label} style={{ width: 36, height: 36, objectFit: "contain", borderRadius: 4 }} />
+                      <span style={{ color: "#1a1a1a", fontSize: 15, fontWeight: paymentMethod === m.id ? "bold" : "normal" }}>{m.label}</span>
                     </div>
                   ))}
                 </div>
                 {paymentMethod && (
                   <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                     placeholder="Numéro (ex: 237699000000)"
-                    style={{ width: "100%", padding: "12px 14px", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 8, color: "#f0ece4", fontSize: 14, marginBottom: 16 }} />
+                    style={{ width: "100%", padding: "12px 14px", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 8, color: "#1a1a1a", fontSize: 14, marginBottom: 16 }} />
                 )}
                 <div style={{ display: "flex", gap: 10 }}>
-                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #262626", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                  <button onClick={() => setShowPayment(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #ccc", borderRadius: 6, color: "#666", cursor: "pointer", fontSize: 13 }}>Annuler</button>
                   <button onClick={handlePurchase} disabled={!paymentMethod || !phoneNumber}
                     style={{ flex: 2, padding: 13, background: paymentMethod && phoneNumber ? G.gold : "#333", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: paymentMethod && phoneNumber ? "pointer" : "not-allowed", fontSize: 13 }}>
                     Payer

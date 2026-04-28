@@ -116,8 +116,12 @@ export default function Admin() {
     setActiveTab("info");
   }
 
-  const totalRevenue = books.reduce((s, b) => s + (b.price || 0) * (b.sales || 0), 0);
+  const totalRevenue = users.reduce((s, purchase) => {
+    const book = books.find(b => b.id === purchase.book_id);
+    return s + (book ? (book.price || 0) : 0);
+  }, 0);
   const activeBooks = books.filter(b => b.status === "actif").length;
+  const totalSales = users.length;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" }}>
@@ -167,8 +171,8 @@ export default function Admin() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
               {[
                 { label: "Revenus", value: `${totalRevenue.toLocaleString()} F`, icon: "💰" },
+                { label: "Ventes", value: totalSales, icon: "🛒" },
                 { label: "Actifs", value: activeBooks, icon: "📚" },
-                { label: "Total", value: books.length, icon: "📖" },
               ].map((stat, i) => (
                 <div key={i} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
                   <div style={{ fontSize: 22, marginBottom: 6 }}>{stat.icon}</div>
