@@ -92,6 +92,16 @@ export default function App() {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioRef] = useState(() => ({ current: null }));
   const [audioMode, setAudioMode] = useState(null); // 'mp3' only
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    const featuredBooks = books.filter(b => b.featured);
+    if (featuredBooks.length <= 1) return;
+    const interval = setInterval(() => {
+      setHeroIndex(i => (i + 1) % featuredBooks.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [books]);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -835,21 +845,28 @@ export default function App() {
           <div style={{ paddingBottom: 80 }}>
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
-                {/* HERO BANNER */}
+                {/* HERO CAROUSEL */}
                 {(() => {
-                  const featuredBook = books.find(b => b.featured) || books[0];
-                  if (!featuredBook) return null;
+                  const featuredBooks = books.filter(b => b.featured);
+                  const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.slice(0, 5);
+                  if (heroBooks.length === 0) return null;
+                  const featuredBook = heroBooks[heroIndex % heroBooks.length];
                   return (
-                    <div onClick={() => openBook(featuredBook)} style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", cursor: "pointer", marginBottom: 24 }}>
-                      {featuredBook.cover
-                        ? <img src={featuredBook.cover} alt={featuredBook.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(245,240,232,0.7) 70%, " + G.bg + " 100%)" }} />
-                      <div style={{ position: "absolute", bottom: 20, left: 16, right: 16 }}>
+                    <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", marginBottom: 24 }}>
+                      {heroBooks.map((book, idx) => (
+                        <div key={book.id} onClick={() => openBook(book)}
+                          style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % heroBooks.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
+                          {book.cover
+                            ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
+                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(245,240,232,0.7) 70%, " + G.bg + " 100%)" }} />
+                        </div>
+                      ))}
+                      <div style={{ position: "absolute", bottom: 20, left: 16, right: 16, zIndex: 2 }}>
                         <div style={{ fontSize: 10, color: G.gold, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>★ À la une</div>
                         <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4, lineHeight: 1.2 }}>{featuredBook.title}</div>
                         <div style={{ fontSize: 13, color: G.textDim, marginBottom: 12 }}>par {featuredBook.author}</div>
-                        <div style={{ display: "flex", gap: 10 }}>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                           <button onClick={e => { e.stopPropagation(); openBook(featuredBook); }}
                             style={{ padding: "10px 20px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>
                             Découvrir
@@ -859,6 +876,14 @@ export default function App() {
                             {favoriteBooks.includes(featuredBook.id) ? "♥" : "♡"}
                           </button>
                         </div>
+                        {heroBooks.length > 1 && (
+                          <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+                            {heroBooks.map((_, idx) => (
+                              <div key={idx} onClick={e => { e.stopPropagation(); setHeroIndex(idx); }}
+                                style={{ width: idx === (heroIndex % heroBooks.length) ? 20 : 6, height: 6, borderRadius: 3, background: idx === (heroIndex % heroBooks.length) ? G.gold : "rgba(201,168,76,0.4)", cursor: "pointer", transition: "all 0.3s" }} />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -878,6 +903,7 @@ export default function App() {
                             {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                          <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
                           <div style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 2 }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</div>
                         </div>
                       ))}
@@ -906,6 +932,7 @@ export default function App() {
                               {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             </div>
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                            <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
                             <div style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 2 }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</div>
                           </div>
                         ))}

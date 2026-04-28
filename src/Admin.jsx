@@ -15,12 +15,14 @@ const CATEGORIES = {
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
   "Lyrics": ["Focus", "À la une"],
+  "Livre Audio": ["Roman", "Conte", "Développement personnel", "Business", "Enfants", "Adultes"],
+  "Livres Gratuits": [],
 };
 
 const emptyForm = {
   title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
   summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
-  can_read: true, can_download: false
+  can_read: true, can_download: false, featured: false
 };
 
 export default function Admin() {
@@ -605,6 +607,14 @@ export default function Admin() {
               <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
                 <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>📖 Options d'accès</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                    <input type="checkbox" checked={form.featured === true} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))}
+                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                    <div>
+                      <div style={{ color: "#e8e0d0", fontSize: 14 }}>⭐ Mettre à la une (Hero)</div>
+                      <div style={{ color: "#555", fontSize: 11 }}>Ce livre apparaîtra dans le carrousel hero de l'accueil</div>
+                    </div>
+                  </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                     <input type="checkbox" checked={form.can_read !== false} onChange={e => setForm(f => ({ ...f, can_read: e.target.checked }))}
                       style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
