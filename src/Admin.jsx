@@ -29,6 +29,9 @@ export default function Admin() {
   const [view, setView] = useState("dashboard");
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
+  const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
+  const [subSettingsSaving, setSubSettingsSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -39,7 +42,29 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { fetchBooks(); fetchUsers(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); }, []);
+
+  async function fetchSubscribers() {
+    const { data } = await supabase.from("subscriptions").select("*").order("created_at", { ascending: false });
+    if (data) setSubscribers(data);
+  }
+
+  async function fetchSubSettings() {
+    const { data } = await supabase.from("sub_settings").select("*").limit(1);
+    if (data && data.length > 0) setSubSettings(data[0]);
+  }
+
+  async function saveSubSettings() {
+    setSubSettingsSaving(true);
+    const { data: existing } = await supabase.from("sub_settings").select("id").limit(1);
+    if (existing && existing.length > 0) {
+      await supabase.from("sub_settings").update(subSettings).eq("id", existing[0].id);
+    } else {
+      await supabase.from("sub_settings").insert([subSettings]);
+    }
+    setSubSettingsSaving(false);
+    alert("Paramètres sauvegardés !");
+  }
 
   async function fetchBooks() {
     const { data } = await supabase.from("books").select("*").order("created_at", { ascending: false });
@@ -156,6 +181,7 @@ export default function Admin() {
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Livres", icon: "📚" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
+            { id: "subscription", label: "Abonnements", icon: "⭐" },
           ].map(item => (
             <div key={item.id} onClick={() => { setView(item.id); setShowMenu(false); }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
@@ -315,6 +341,66 @@ export default function Admin() {
                   <div>Aucun achat enregistré</div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ABONNEMENTS */}
+        {view === "subscription" && (
+          <div>
+            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>⭐ Abonnements</h1>
+
+            {/* Paramètres */}
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 16, letterSpacing: 1, textTransform: "uppercase" }}>Paramètres</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Prix mensuel (FCFA)</label>
+                  <input type="number" value={subSettings.monthly_price} onChange={e => setSubSettings(s => ({ ...s, monthly_price: parseInt(e.target.value) || 0 }))}
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Prix annuel (FCFA)</label>
+                  <input type="number" value={subSettings.annual_price} onChange={e => setSubSettings(s => ({ ...s, annual_price: parseInt(e.target.value) || 0 }))}
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Livres par mois</label>
+                  <input type="number" value={subSettings.books_per_month} onChange={e => setSubSettings(s => ({ ...s, books_per_month: parseInt(e.target.value) || 1 }))}
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14 }} />
+                </div>
+                <button onClick={saveSubSettings} disabled={subSettingsSaving}
+                  style={{ padding: "12px 0", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
+                  {subSettingsSaving ? "Sauvegarde..." : "💾 Sauvegarder"}
+                </button>
+              </div>
+            </div>
+
+            {/* Abonnés actifs */}
+            <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>
+              Abonnés ({subscribers.filter(s => s.status === "actif").length} actifs)
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {subscribers.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>⭐</div>
+                  <div>Aucun abonnement enregistré</div>
+                </div>
+              ) : subscribers.map(sub => (
+                <div key={sub.id} style={{ background: "#1a1a1a", border: "1px solid " + (sub.status === "actif" ? "#c9a84c44" : "#2a2a2a"), borderRadius: 8, padding: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>ID : {sub.user_id?.substring(0, 16)}...</div>
+                      <div style={{ fontSize: 12, color: "#aaa" }}>Plan : {sub.plan} — {sub.price?.toLocaleString()} F</div>
+                      <div style={{ fontSize: 12, color: "#aaa" }}>Expire : {new Date(sub.expires_at).toLocaleDateString("fr-FR")}</div>
+                      <div style={{ fontSize: 12, color: "#aaa" }}>Livres : {sub.books_used || 0}/{sub.books_per_month}</div>
+                    </div>
+                    <div style={{ background: sub.status === "actif" ? "#1a3a1a" : "#3a1a1a", color: sub.status === "actif" ? "#4caf50" : "#f44336", fontSize: 11, padding: "4px 10px", borderRadius: 12 }}>
+                      {sub.status}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

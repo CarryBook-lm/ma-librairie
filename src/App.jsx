@@ -93,6 +93,13 @@ export default function App() {
   const [audioRef] = useState(() => ({ current: null }));
   const [audioMode, setAudioMode] = useState(null); // 'mp3' only
   const [heroIndex, setHeroIndex] = useState(0);
+  const [subscription, setSubscription] = useState(null);
+  const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [subPlan, setSubPlan] = useState("mensuel");
+  const [subPaymentStep, setSubPaymentStep] = useState(1);
+  const [subPhone, setSubPhone] = useState("");
+  const [subPaymentMethod, setSubPaymentMethod] = useState(null);
 
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
@@ -183,12 +190,21 @@ export default function App() {
     const { data } = await supabase.from("purchases").select("book_id").eq("user_id", userId);
     if (data) {
       const remoteIds = data.map(p => p.book_id);
-      // Fusionner avec les achats locaux
       const local = JSON.parse(localStorage.getItem("purchasedBooks") || "[]");
       const merged = [...new Set([...remoteIds, ...local])];
       setPurchasedBooks(merged);
       localStorage.setItem("purchasedBooks", JSON.stringify(merged));
     }
+    // Charger abonnement actif
+    const now = new Date().toISOString();
+    const { data: sub } = await supabase.from("subscriptions")
+      .select("*").eq("user_id", userId).eq("status", "actif")
+      .gte("expires_at", now).order("created_at", { ascending: false }).limit(1);
+    if (sub && sub.length > 0) setSubscription(sub[0]);
+    else setSubscription(null);
+    // Charger paramètres abonnement
+    const { data: settings } = await supabase.from("sub_settings").select("*").limit(1);
+    if (settings && settings.length > 0) setSubSettings(settings[0]);
   }
 
   async function signInWithGoogle() {
@@ -212,7 +228,77 @@ export default function App() {
     setLoading(false);
   }
 
-  function hasAccess(book) { return book.price === 0 || purchasedBooks.includes(book.id); }
+  function hasAccess(book) {
+    if (book.price === 0) return true;
+    if (purchasedBooks.includes(book.id)) return true;
+    if (subscription && subscription.status === "actif") return true;
+    return false;
+  }
+
+  function booksLeftThisMonth() {
+    if (!subscription) return 0;
+    return Math.max(0, (subscription.books_per_month || subSettings.books_per_month) - (subscription.books_used || 0));
+  }
+
+  async function handleSubscribe() {
+    setSubPaymentStep(2);
+    try {
+      let phone = subPhone.replace(/\s/g, "");
+      if (phone.startsWith("0")) phone = "237" + phone.slice(1);
+      if (!phone.startsWith("237")) phone = "237" + phone;
+      const price = subPlan === "mensuel" ? subSettings.monthly_price : subSettings.annual_price;
+      const payRes = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "collect",
+          amount: price,
+          phone,
+          description: "Abonnement CarryBooks " + subPlan,
+          external_reference: "SUB_" + subPlan + "_" + (user ? user.id : "guest") + "_" + Date.now()
+        })
+      });
+      const payData = await payRes.json();
+      if (payData.reference) {
+        setTimeout(async () => {
+          try {
+            const checkRes = await fetch("/api/campay", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "check", reference: payData.reference })
+            });
+            const checkData = await checkRes.json();
+            if (checkData.status === "SUCCESSFUL") {
+              const now = new Date();
+              const expires = new Date(now);
+              if (subPlan === "mensuel") expires.setMonth(expires.getMonth() + 1);
+              else expires.setFullYear(expires.getFullYear() + 1);
+              if (user) {
+                const { data: newSub } = await supabase.from("subscriptions").insert([{
+                  user_id: user.id,
+                  plan: subPlan,
+                  books_per_month: subSettings.books_per_month,
+                  books_used: 0,
+                  price,
+                  started_at: now.toISOString(),
+                  expires_at: expires.toISOString(),
+                  status: "actif"
+                }]).select().single();
+                if (newSub) setSubscription(newSub);
+              }
+              setSubPaymentStep(3);
+            } else {
+              setSubPaymentStep(1);
+              alert("Paiement non confirmé. Réessayez.");
+            }
+          } catch(e) { setSubPaymentStep(1); alert("Erreur de vérification."); }
+        }, 25000);
+      } else {
+        setSubPaymentStep(1);
+        alert("Erreur: " + (payData.message || "Réessayez."));
+      }
+    } catch(e) { setSubPaymentStep(1); alert("Erreur de connexion."); }
+  }
 
   function cacheBook(book) {
     const newCache = { ...cachedBooks, [book.id]: book };
@@ -390,6 +476,7 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Accueil" },
     { id: "catalog", label: "Catalogue" },
+    { id: "subscription", label: "Abonnement" },
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
     { id: "contact", label: "Contact" },
@@ -1063,6 +1150,71 @@ export default function App() {
         )}
       </div>
 
+        {/* ABONNEMENT */}
+        {page === "subscription" && (
+          <div style={{ padding: "24px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Abonnement</div>
+            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 24 }}>Accédez à {subSettings.books_per_month} livres par mois pour un tarif fixe.</p>
+
+            {/* Abonnement actif */}
+            {subscription && (
+              <div style={{ background: G.goldDim, border: "2px solid " + G.gold, borderRadius: 12, padding: 20, marginBottom: 24 }}>
+                <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>✅ Abonnement actif</div>
+                <div style={{ fontSize: 15, color: G.text, fontWeight: "bold", marginBottom: 4 }}>Plan {subscription.plan}</div>
+                <div style={{ fontSize: 13, color: G.textDim, marginBottom: 4 }}>Expire le {new Date(subscription.expires_at).toLocaleDateString("fr-FR")}</div>
+                <div style={{ fontSize: 13, color: G.text }}>📚 {booksLeftThisMonth()} livre{booksLeftThisMonth() > 1 ? "s" : ""} restant{booksLeftThisMonth() > 1 ? "s" : ""} ce mois</div>
+              </div>
+            )}
+
+            {/* Offres */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
+              {/* Mensuel */}
+              <div onClick={() => setSubPlan("mensuel")}
+                style={{ border: "2px solid " + (subPlan === "mensuel" ? G.gold : G.border), borderRadius: 12, padding: 20, cursor: "pointer", background: subPlan === "mensuel" ? G.goldDim : G.surface }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Mensuel</div>
+                    <div style={{ fontSize: 13, color: G.textDim }}>{subSettings.books_per_month} livres par mois</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{subSettings.monthly_price?.toLocaleString()} F</div>
+                    <div style={{ fontSize: 11, color: G.textDim }}>/ mois</div>
+                  </div>
+                </div>
+              </div>
+              {/* Annuel */}
+              <div onClick={() => setSubPlan("annuel")}
+                style={{ border: "2px solid " + (subPlan === "annuel" ? G.gold : G.border), borderRadius: 12, padding: 20, cursor: "pointer", background: subPlan === "annuel" ? G.goldDim : G.surface, position: "relative" }}>
+                <div style={{ position: "absolute", top: -10, right: 16, background: G.gold, color: "#000", fontSize: 10, fontWeight: "bold", padding: "2px 10px", borderRadius: 10, letterSpacing: 1 }}>ÉCONOMIQUE</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Annuel</div>
+                    <div style={{ fontSize: 13, color: G.textDim }}>{subSettings.books_per_month} livres par mois</div>
+                    <div style={{ fontSize: 11, color: G.green }}>Économisez {((subSettings.monthly_price * 12) - subSettings.annual_price)?.toLocaleString()} F</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{subSettings.annual_price?.toLocaleString()} F</div>
+                    <div style={{ fontSize: 11, color: G.textDim }}>/ an</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => { if (!user) { setShowAuthModal(true); return; } setShowSubModal(true); setSubPaymentStep(1); setSubPaymentMethod(null); setSubPhone(""); }}
+              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              {subscription ? "Renouveler l'abonnement" : "S'abonner maintenant"}
+            </button>
+
+            <div style={{ marginTop: 24, padding: 16, background: G.surface, borderRadius: 8, border: "1px solid " + G.border }}>
+              <div style={{ fontSize: 13, color: G.text, fontWeight: "bold", marginBottom: 12 }}>✅ Ce que comprend l'abonnement :</div>
+              <div style={{ fontSize: 13, color: G.textDim, marginBottom: 8 }}>📚 {subSettings.books_per_month} livres de ton choix chaque mois</div>
+              <div style={{ fontSize: 13, color: G.textDim, marginBottom: 8 }}>📱 Lecture sur tous tes appareils</div>
+              <div style={{ fontSize: 13, color: G.textDim, marginBottom: 8 }}>🔄 Accès immédiat après paiement</div>
+              <div style={{ fontSize: 13, color: G.textDim }}>💳 Tu peux aussi acheter des livres hors quota</div>
+            </div>
+          </div>
+        )}
+
         {/* CONTACT */}
         {page === "contact" && (
           <div style={{ padding: "32px 16px 80px" }}>
@@ -1094,6 +1246,58 @@ export default function App() {
             <div style={{ color: G.textDim, fontSize: 12 }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
+      {/* SUBSCRIPTION PAYMENT MODAL */}
+      {showSubModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+          <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+            {subPaymentStep === 1 && (
+              <>
+                <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16 }}>Abonnement {subPlan}</h3>
+                <p style={{ color: "#555", fontSize: 13, marginBottom: 20 }}>{subPlan === "mensuel" ? subSettings.monthly_price?.toLocaleString() : subSettings.annual_price?.toLocaleString()} FCFA / {subPlan === "mensuel" ? "mois" : "an"}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {[{ id: "orange", label: "Orange Money", logo: "data:image/png;base64,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", color: "#ff6600" }, { id: "mtn", label: "MTN MoMo", logo: "data:image/png;base64,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", color: "#ffc000" }].map(m => (
+                    <div key={m.id} onClick={() => setSubPaymentMethod(m.id)}
+                      style={{ padding: "12px 16px", border: "2px solid " + (subPaymentMethod === m.id ? m.color : "#e0e0e0"), borderRadius: 8, cursor: "pointer", background: subPaymentMethod === m.id ? m.color + "22" : "#f9f9f9", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                      <img src={m.logo} alt={m.label} style={{ width: 36, height: 36, objectFit: "contain", borderRadius: 4 }} />
+                      <span style={{ color: "#1a1a1a", fontSize: 15, fontWeight: subPaymentMethod === m.id ? "bold" : "normal" }}>{m.label}</span>
+                    </div>
+                  ))}
+                </div>
+                {subPaymentMethod && (
+                  <input value={subPhone} onChange={e => setSubPhone(e.target.value)}
+                    placeholder="Numéro (ex: 237699000000)"
+                    style={{ width: "100%", padding: "12px 14px", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 8, color: "#1a1a1a", fontSize: 14, marginBottom: 16 }} />
+                )}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setShowSubModal(false)} style={{ flex: 1, padding: 13, background: "none", border: "1px solid #ccc", borderRadius: 6, color: "#666", cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                  <button onClick={handleSubscribe} disabled={!subPaymentMethod || !subPhone}
+                    style={{ flex: 2, padding: 13, background: subPaymentMethod && subPhone ? G.gold : "#ccc", border: "none", borderRadius: 6, color: "#fff", fontWeight: "bold", cursor: subPaymentMethod && subPhone ? "pointer" : "not-allowed", fontSize: 13 }}>
+                    Payer
+                  </button>
+                </div>
+              </>
+            )}
+            {subPaymentStep === 2 && (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+                <p style={{ color: "#888" }}>Traitement en cours...</p>
+              </div>
+            )}
+            {subPaymentStep === 3 && (
+              <div style={{ textAlign: "center", padding: "32px 0" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                <h3 style={{ color: G.gold, marginBottom: 8 }}>Abonnement activé !</h3>
+                <p style={{ color: "#888", marginBottom: 24, fontSize: 14 }}>Profite de tes {subSettings.books_per_month} livres ce mois 🎉</p>
+                <button onClick={() => { setShowSubModal(false); setPage("home"); }}
+                  style={{ padding: "13px 32px", background: G.gold, border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                  📚 Explorer les livres
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* PAYMENT MODAL */}
       {showPayment && paymentBook && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
@@ -1149,8 +1353,6 @@ export default function App() {
     </div>
   );
 }
-
-
 
 
 
