@@ -540,6 +540,7 @@ export default function Admin() {
                 </div>
                 </>)}
               </div>
+            )}
 
               {/* Section Audio */}
               <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
@@ -572,9 +573,6 @@ export default function Admin() {
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Boutons */}
             <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
               <button onClick={() => setShowForm(false)}
                 style={{ flex: 1, padding: "12px 0", background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 14 }}>
