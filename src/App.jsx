@@ -39,12 +39,14 @@ const supabase = createClient(
 const CATEGORIES = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
   "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces"],
-  "Développement personnel": ["Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
+  "Développement personnel": ["Confiance en soi", "Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
   "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education"],
   "Formation": [],
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
   "Lyrics": ["Focus", "À la une"],
+  "Livre Audio": ["Roman", "Conte", "Développement personnel", "Business"],
+  "Livres Gratuits": [],
 };
 
 const G = {
@@ -365,9 +367,11 @@ export default function App() {
   const filteredBooks = books.filter(b => {
     const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.author?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCat = selectedCategory === "Tous" || 
+    let matchCat = selectedCategory === "Tous" ||
       b.category === selectedCategory ||
       b.category?.toLowerCase().startsWith(selectedCategory.toLowerCase().replace(/s$/, ""));
+    if (selectedCategory === "Livres Gratuits") matchCat = b.price === 0;
+    if (selectedCategory === "Livre Audio") matchCat = b.category === "Livre Audio" || !!b.audio_url;
     const matchSub = selectedSubCategory === "Tous" || b.subcategory === selectedSubCategory;
     return matchSearch && matchCat && matchSub;
   });
@@ -939,7 +943,7 @@ export default function App() {
                 ) : filteredBooks.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "60px 0", color: G.textFaint }}>
                     <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
-                    <div>Aucun livre trouvé</div>
+                    <div style={{ color: G.textDim, fontSize: 15, fontStyle: "italic" }}>Projet en cours,<br />revenez dans quelques jours ✨</div>
                   </div>
                 ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
@@ -1112,7 +1116,6 @@ export default function App() {
     </div>
   );
 }
-
 
 
 
