@@ -237,27 +237,72 @@ export default function App() {
   }
 
  async function handlePurchase() {
-  if (paymentMethod === "monetbil") {
-    const key = import.meta.env.VITE_MONETBIL_KEY;
-    const url = "https://fr.monetbil.com/widget/v2.1/" + key + "?amount=" + paymentBook.price + "&phone=" + phoneNumber + "&currency=XAF&item_ref=CB_" + paymentBook.id + "&return_url=https://www.carrybooks.com";
-    window.open(url, "_blank");
-    setPaymentStep(3);
-    const newP = [...purchasedBooks, paymentBook.id];
-    setPurchasedBooks(newP);
-    localStorage.setItem("purchasedBooks", JSON.stringify(newP));
-    if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
-    cacheBook(paymentBook);
-    return;
-  }
-   setPaymentStep(2);
-    setTimeout(async () => {
-      setPaymentStep(3);
-      const newP = [...purchasedBooks, paymentBook.id];
-      setPurchasedBooks(newP);
-      localStorage.setItem("purchasedBooks", JSON.stringify(newP));
-      if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
-      cacheBook(paymentBook);
-    }, 2500);
+    setPaymentStep(2);
+    try {
+      // Obtenir le token Campay LIVE
+      const tokenRes = await fetch("https://www.campay.net/api/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: import.meta.env.VITE_CAMPAY_USERNAME,
+          password: import.meta.env.VITE_CAMPAY_PASSWORD
+        })
+      });
+      const tokenData = await tokenRes.json();
+      const token = tokenData.token;
+      if (!token) throw new Error("Token non obtenu");
+
+      // Formater le numéro
+      let phone = phoneNumber.replace(/\s/g, "");
+      if (phone.startsWith("0")) phone = "237" + phone.slice(1);
+      if (!phone.startsWith("237")) phone = "237" + phone;
+
+      // Initier le paiement
+      const payRes = await fetch("https://www.campay.net/api/collect/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Token " + token },
+        body: JSON.stringify({
+          amount: String(paymentBook.price),
+          currency: "XAF",
+          from: phone,
+          description: "Achat " + paymentBook.title + " sur CarryBooks",
+          external_reference: "CB_" + paymentBook.id + "_" + Date.now()
+        })
+      });
+      const payData = await payRes.json();
+
+      if (payData.reference) {
+        // Vérifier le statut après 20 secondes
+        setTimeout(async () => {
+          try {
+            const checkRes = await fetch("https://www.campay.net/api/transaction/" + payData.reference + "/", {
+              headers: { "Authorization": "Token " + token }
+            });
+            const checkData = await checkRes.json();
+            if (checkData.status === "SUCCESSFUL") {
+              setPaymentStep(3);
+              const newP = [...purchasedBooks, paymentBook.id];
+              setPurchasedBooks(newP);
+              localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+              if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
+              cacheBook(paymentBook);
+            } else {
+              setPaymentStep(1);
+              alert("Paiement non confirmé. Veuillez réessayer.");
+            }
+          } catch(e) {
+            setPaymentStep(1);
+            alert("Erreur de vérification. Vérifiez votre solde et réessayez.");
+          }
+        }, 20000);
+      } else {
+        setPaymentStep(1);
+        alert("Erreur lors de l'initiation du paiement. Vérifiez votre numéro.");
+      }
+    } catch(e) {
+      setPaymentStep(1);
+      alert("Erreur de connexion. Vérifiez votre connexion internet.");
+    }
   }
 
   function getPages(content) {
@@ -893,6 +938,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
