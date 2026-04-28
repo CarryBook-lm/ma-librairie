@@ -83,6 +83,10 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [readerScrollMode, setReaderScrollMode] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState(null);
+  const [translateLang, setTranslateLang] = useState(null);
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -226,6 +230,8 @@ export default function App() {
       setReadingPage(0);
     }
     setPage("reader");
+    setTranslatedContent(null);
+    setTranslateLang(null);
   }
 
   function toggleFavorite(bookId) {
@@ -292,6 +298,31 @@ export default function App() {
       setPaymentStep(1);
       alert("Erreur de connexion. Vérifiez votre connexion internet.");
     }
+  }
+
+  async function translateText(text, targetLang) {
+    setTranslating(true);
+    try {
+      const chunks = text.match(/.{1,4000}/gs) || [text];
+      const results = [];
+      for (const chunk of chunks) {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(chunk)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const translated = data[0].map(s => s[0]).join("");
+        results.push(translated);
+      }
+      setTranslatedContent(results.join(""));
+      setTranslateLang(targetLang);
+    } catch(e) {
+      alert("Erreur de traduction. Vérifiez votre connexion.");
+    }
+    setTranslating(false);
+  }
+
+  function resetTranslation() {
+    setTranslatedContent(null);
+    setTranslateLang(null);
   }
 
   function getPages(content) {
@@ -372,12 +403,14 @@ export default function App() {
       );
     }
 
-    const allPages = getPages(reading.content);
+    const allPages = getPages(translatedContent || reading.content);
     const pages = excerptMode ? allPages.slice(0, 2) : allPages;
     const total = pages.length;
-    const paragraphs = pages[readingPage]
-      ? pages[readingPage].split(/\n\n+/).filter(function(p) { return p.trim().length > 0; })
-      : [];
+
+    // In scroll mode, show all paragraphs; in page mode show current page only
+    const scrollAllParagraphs = readerScrollMode
+      ? pages.flatMap(p => p.split(/\n\n+/).filter(x => x.trim()))
+      : (pages[readingPage] ? pages[readingPage].split(/\n\n+/).filter(p => p.trim().length > 0) : []);
 
     const FONTS = [
       { label: "Georgia", value: "Georgia, serif" },
@@ -444,6 +477,41 @@ export default function App() {
                 ))}
               </div>
             </div>
+            {/* Mode de lecture */}
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Mode de lecture</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setReaderScrollMode(false)}
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (!readerScrollMode ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: !readerScrollMode ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: !readerScrollMode ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  📄 Page à page
+                </button>
+                <button onClick={() => setReaderScrollMode(true)}
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (readerScrollMode ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: readerScrollMode ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: readerScrollMode ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  📜 Scroll
+                </button>
+              </div>
+            </div>
+            {/* Traduction */}
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Traduction</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => translating ? null : (translateLang === "fr" ? resetTranslation() : translateText(reading.content, "fr"))}
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (translateLang === "fr" ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: translateLang === "fr" ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: translateLang === "fr" ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  🇫🇷 Français
+                </button>
+                <button onClick={() => translating ? null : (translateLang === "en" ? resetTranslation() : translateText(reading.content, "en"))}
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (translateLang === "en" ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: translateLang === "en" ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: translateLang === "en" ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  🇬🇧 English
+                </button>
+                {translateLang && (
+                  <button onClick={resetTranslation}
+                    style={{ padding: "8px 12px", border: "1.5px solid " + (readerDark ? "#444" : "#ddd"), borderRadius: 6, background: "transparent", color: readerDark ? "#aaa" : "#555", cursor: "pointer", fontSize: 13 }}>
+                    ✕ Original
+                  </button>
+                )}
+              </div>
+              {translating && <p style={{ color: G.gold, fontSize: 12, marginTop: 6, textAlign: "center" }}>Traduction en cours...</p>}
+            </div>
           </div>
         )}
 
@@ -451,7 +519,7 @@ export default function App() {
         <div
           onContextMenu={e => e.preventDefault()}
           style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden", userSelect: "none", WebkitUserSelect: "none", MozUserSelect: "none", msUserSelect: "none" }}>
-          {paragraphs.map(function(para, i) {
+          {scrollAllParagraphs.map(function(para, i) {
             return (
               <p key={i} style={{
                 fontFamily: readerFont,
@@ -486,8 +554,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        {/* Navigation - cachée en mode scroll */}
+        {!readerScrollMode && (
           <button onClick={() => { setReadingPage(function(p) { return Math.max(0, p - 1); }); window.scrollTo(0,0); }} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === 0 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === 0 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
@@ -500,6 +568,7 @@ export default function App() {
             ›
           </button>
         </div>
+        )}
       </div>
     );
   }
@@ -927,6 +996,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
