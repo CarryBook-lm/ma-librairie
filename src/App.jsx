@@ -121,6 +121,10 @@ export default function App() {
 
   useEffect(() => {
     fetchBooks();
+    // Charger les paramètres d'abonnement au démarrage
+    supabase.from("sub_settings").select("*").limit(1).then(({ data }) => {
+      if (data && data.length > 0) setSubSettings(data[0]);
+    });
     const p = localStorage.getItem("purchasedBooks");
     if (p) setPurchasedBooks(JSON.parse(p));
     const f = localStorage.getItem("favoriteBooks");

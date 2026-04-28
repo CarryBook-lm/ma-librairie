@@ -406,11 +406,6 @@ export default function Admin() {
                     style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14 }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Prix annuel (FCFA)</label>
-                  <input type="number" value={subSettings.annual_price} onChange={e => setSubSettings(s => ({ ...s, annual_price: parseInt(e.target.value) || 0 }))}
-                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14 }} />
-                </div>
-                <div>
                   <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Livres par mois</label>
                   <input type="number" value={subSettings.books_per_month} onChange={e => setSubSettings(s => ({ ...s, books_per_month: parseInt(e.target.value) || 1 }))}
                     style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14 }} />
