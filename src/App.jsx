@@ -143,6 +143,7 @@ export default function App() {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setUser(session?.user ?? null);
         if (session?.user) loadUserPurchases(session.user.id);
+        else setShowAuthModal(true); // Afficher modal si non connecté
         setAuthChecked(true);
       });
     }
@@ -791,14 +792,19 @@ export default function App() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
           <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
             <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
-            <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Connexion</h2>
-            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>Connecte-toi pour accéder à tes livres achetés sur tous tes appareils.</p>
+            <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur CarryBooks 📚</h2>
+            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
+            <div style={{ textAlign: "left", marginBottom: 24, padding: "0 8px" }}>
+              <div style={{ fontSize: 13, color: G.text, marginBottom: 6 }}>✅ Accéder à tes livres depuis n'importe quel appareil</div>
+              <div style={{ fontSize: 13, color: G.text, marginBottom: 6 }}>✅ Ne jamais perdre tes achats</div>
+              <div style={{ fontSize: 13, color: G.text }}>✅ Sans mot de passe</div>
+            </div>
             <button onClick={signInWithGoogle}
-              style={{ width: "100%", padding: "14px 0", background: "#fff", border: "1px solid #ddd", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 12 }}>
+              style={{ width: "100%", padding: "14px 0", background: "#fff", border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
               <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
               Continuer avec Google
             </button>
-            <button onClick={() => setShowAuthModal(false)} style={{ background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+            <button onClick={() => setShowAuthModal(false)} style={{ background: "none", border: "none", color: G.textFaint, cursor: "pointer", fontSize: 12 }}>Continuer sans compte →</button>
           </div>
         </div>
       )}
