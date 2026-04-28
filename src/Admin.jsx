@@ -19,7 +19,8 @@ const CATEGORIES = {
 
 const emptyForm = {
   title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
-  summary: "", content: "", pdf_url: "", status: "actif", audio_url: ""
+  summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
+  can_read: true, can_download: false
 };
 
 export default function Admin() {
@@ -44,8 +45,13 @@ export default function Admin() {
   }
 
   async function fetchUsers() {
-    const { data } = await supabase.from("purchases").select("user_id, book_id, created_at");
+    const { data, error } = await supabase
+      .from("purchases")
+      .select("user_id, book_id, created_at")
+      .order("created_at", { ascending: false });
+    if (error) { console.error("Purchases error:", error); }
     if (data) setUsers(data);
+    else setUsers([]);
   }
 
   async function handleImageUpload(e) {
@@ -270,16 +276,33 @@ export default function Admin() {
               {[...new Set(users.map(u => u.user_id))].map(userId => {
                 const userPurchases = users.filter(u => u.user_id === userId);
                 const lastPurchase = userPurchases.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                const userRevenue = userPurchases.reduce((s, p) => {
+                  const book = books.find(b => b.id === p.book_id);
+                  return s + (book ? (book.price || 0) : 0);
+                }, 0);
                 return (
                   <div key={userId} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <div>
                         <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>ID : {userId.substring(0, 16)}...</div>
                         <div style={{ fontSize: 12, color: "#aaa" }}>Dernier achat : {new Date(lastPurchase.created_at).toLocaleDateString("fr-FR")}</div>
                       </div>
-                      <div style={{ background: "#2a2a2a", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "#c9a84c" }}>
-                        {userPurchases.length} livre{userPurchases.length > 1 ? "s" : ""}
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ background: "#2a2a2a", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "#c9a84c", marginBottom: 4 }}>
+                          {userPurchases.length} livre{userPurchases.length > 1 ? "s" : ""}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#4caf50" }}>{userRevenue.toLocaleString()} F</div>
                       </div>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {userPurchases.map((p, i) => {
+                        const book = books.find(b => b.id === p.book_id);
+                        return book ? (
+                          <span key={i} style={{ background: "#2a2a2a", borderRadius: 4, padding: "2px 8px", fontSize: 11, color: "#aaa" }}>
+                            {book.title}
+                          </span>
+                        ) : null;
+                      })}
                     </div>
                   </div>
                 );
@@ -577,6 +600,30 @@ export default function Admin() {
                   </div>
                 )}
               </div>
+
+              {/* Options lecture / téléchargement */}
+              <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
+                <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>📖 Options d'accès</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                    <input type="checkbox" checked={form.can_read !== false} onChange={e => setForm(f => ({ ...f, can_read: e.target.checked }))}
+                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                    <div>
+                      <div style={{ color: "#e8e0d0", fontSize: 14 }}>📖 Permettre la lecture (Liseuse)</div>
+                      <div style={{ color: "#555", fontSize: 11 }}>Le lecteur peut lire dans la liseuse en ligne</div>
+                    </div>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                    <input type="checkbox" checked={form.can_download === true} onChange={e => setForm(f => ({ ...f, can_download: e.target.checked }))}
+                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                    <div>
+                      <div style={{ color: "#e8e0d0", fontSize: 14 }}>⬇️ Permettre le téléchargement (PDF)</div>
+                      <div style={{ color: "#555", fontSize: 11 }}>Le lecteur peut télécharger le PDF sur son appareil</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
             <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
               <button onClick={() => setShowForm(false)}
                 style={{ flex: 1, padding: "12px 0", background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 14 }}>
