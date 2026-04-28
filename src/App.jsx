@@ -844,37 +844,140 @@ export default function App() {
           )}
         </div>
 
-        {/* BOOKS GRID */}
+        {/* BOOKS GRID - Netflix style for home, grid for catalog */}
         {(page === "home" || page === "catalog") && (
-          <div style={{ padding: "20px 16px 80px" }}>
-            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 16 }}>
-              {page === "home" ? "Tous nos livres" : "Catalogue"}
-              {!loading && <span style={{ color: G.textFaint, marginLeft: 8, fontSize: 11, letterSpacing: 0 }}>({filteredBooks.length})</span>}
-            </div>
-            {loading ? (
-              <div style={{ textAlign: "center", padding: "60px 0", color: G.textDim }}>Chargement...</div>
-            ) : filteredBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 0", color: G.textFaint }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
-                <div>Aucun livre trouvé</div>
-              </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-                {filteredBooks.map(book => (
-                  <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
-                      {book.cover
-                        ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
-                        : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
-                      {book.price === 0 && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
+          <div style={{ paddingBottom: 80 }}>
+            {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
+              <>
+                {/* HERO BANNER */}
+                {(() => {
+                  const featuredBook = books.find(b => b.featured) || books[0];
+                  if (!featuredBook) return null;
+                  return (
+                    <div onClick={() => openBook(featuredBook)} style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", cursor: "pointer", marginBottom: 24 }}>
+                      {featuredBook.cover
+                        ? <img src={featuredBook.cover} alt={featuredBook.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(245,240,232,0.7) 70%, " + G.bg + " 100%)" }} />
+                      <div style={{ position: "absolute", bottom: 20, left: 16, right: 16 }}>
+                        <div style={{ fontSize: 10, color: G.gold, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>★ À la une</div>
+                        <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4, lineHeight: 1.2 }}>{featuredBook.title}</div>
+                        <div style={{ fontSize: 13, color: G.textDim, marginBottom: 12 }}>par {featuredBook.author}</div>
+                        <div style={{ display: "flex", gap: 10 }}>
+                          <button onClick={e => { e.stopPropagation(); openBook(featuredBook); }}
+                            style={{ padding: "10px 20px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>
+                            Découvrir
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); toggleFavorite(featuredBook.id); }}
+                            style={{ padding: "10px 16px", background: "rgba(255,255,255,0.7)", border: "1px solid " + G.border, borderRadius: 4, color: G.text, fontSize: 14, cursor: "pointer" }}>
+                            {favoriteBooks.includes(featuredBook.id) ? "♥" : "♡"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
-                    <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
-                    <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
-                      {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
+                  );
+                })()}
+
+                {/* NOUVEAUTÉS */}
+                {books.slice(0, 10).length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
+                    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                      {books.slice(0, 10).map(book => (
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer" }}>
+                          <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                            {book.cover
+                              ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+                            {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                          </div>
+                          <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                          <div style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 2 }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* CARROUSELS PAR CATÉGORIE */}
+                {Object.keys(CATEGORIES).map(cat => {
+                  const catBooks = books.filter(b => b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")));
+                  if (catBooks.length === 0) return null;
+                  return (
+                    <div key={cat} style={{ marginBottom: 28 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px", marginBottom: 12 }}>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{cat}</div>
+                        <button onClick={() => { setSelectedCategory(cat); setPage("catalog"); }}
+                          style={{ fontSize: 12, color: G.gold, background: "none", border: "none", cursor: "pointer" }}>Tout voir →</button>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                        {catBooks.map(book => (
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer" }}>
+                            <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                              {book.cover
+                                ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+                              {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                            </div>
+                            <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                            <div style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 2 }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* MES FAVORIS */}
+                {favoriteBooks.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Mes favoris</div>
+                    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                      {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer" }}>
+                          <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                            {book.cover && <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                            <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
+                          </div>
+                          <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ padding: "20px 16px 80px" }}>
+                <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 16 }}>
+                  {searchQuery ? "Résultats" : selectedCategory !== "Tous" ? selectedCategory : "Catalogue"}
+                  {!loading && <span style={{ color: G.textFaint, marginLeft: 8, fontSize: 11, letterSpacing: 0 }}>({filteredBooks.length})</span>}
+                </div>
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "60px 0", color: G.textDim }}>Chargement...</div>
+                ) : filteredBooks.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "60px 0", color: G.textFaint }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
+                    <div>Aucun livre trouvé</div>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+                    {filteredBooks.map(book => (
+                      <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
+                        <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
+                          {book.cover
+                            ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
+                          {book.price === 0 && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
+                        </div>
+                        <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
+                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                        <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
+                          {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1027,6 +1130,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
