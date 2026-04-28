@@ -87,6 +87,11 @@ export default function App() {
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translateLang, setTranslateLang] = useState(null);
   const [translating, setTranslating] = useState(false);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioRef] = useState(() => ({ current: null }));
+  const [speechSynth] = useState(() => window.speechSynthesis || null);
+  const [speechUtterance, setSpeechUtterance] = useState(null);
+  const [audioMode, setAudioMode] = useState(null); // 'mp3' or 'synth'
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -232,6 +237,7 @@ export default function App() {
     setPage("reader");
     setTranslatedContent(null);
     setTranslateLang(null);
+    stopAudio();
   }
 
   function toggleFavorite(bookId) {
@@ -298,6 +304,37 @@ export default function App() {
       setPaymentStep(1);
       alert("Erreur de connexion. Vérifiez votre connexion internet.");
     }
+  }
+
+  function stopAudio() {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (speechSynth) speechSynth.cancel();
+    setAudioPlaying(false);
+    setAudioMode(null);
+    setSpeechUtterance(null);
+  }
+
+  function playMp3(url) {
+    stopAudio();
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.play();
+    setAudioPlaying(true);
+    setAudioMode('mp3');
+    audio.onended = () => { setAudioPlaying(false); setAudioMode(null); };
+  }
+
+  function playSynth(text) {
+    stopAudio();
+    if (!speechSynth) { alert("Synthèse vocale non disponible sur ce navigateur."); return; }
+    const utter = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
+    utter.lang = translateLang === 'en' ? 'en-US' : 'fr-FR';
+    utter.rate = 0.95;
+    utter.onend = () => { setAudioPlaying(false); setAudioMode(null); };
+    setSpeechUtterance(utter);
+    speechSynth.speak(utter);
+    setAudioPlaying(true);
+    setAudioMode('synth');
   }
 
   async function translateText(text, targetLang) {
@@ -433,6 +470,14 @@ export default function App() {
           <button onClick={() => setShowReaderSettings(s => !s)}
             style={{ background: "none", border: "1px solid " + (readerDark ? "#444" : "#ddd"), borderRadius: 6, color: readerDark ? "#ccc" : "#888", cursor: "pointer", fontSize: 13, padding: "4px 10px", fontWeight: "bold" }}>
             Aa
+          </button>
+          <button onClick={() => {
+            if (audioPlaying) { stopAudio(); }
+            else if (reading.audio_url) { playMp3(reading.audio_url); }
+            else { playSynth(translatedContent || reading.content || ""); }
+          }}
+            style={{ background: audioPlaying ? G.gold : "none", border: "1px solid " + (audioPlaying ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, color: audioPlaying ? "#000" : (readerDark ? "#ccc" : "#888"), cursor: "pointer", fontSize: 16, padding: "4px 10px" }}>
+            {audioPlaying ? "⏸" : "🔊"}
           </button>
         </div>
 

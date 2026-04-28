@@ -19,7 +19,7 @@ const CATEGORIES = {
 
 const emptyForm = {
   title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
-  summary: "", content: "", pdf_url: "", status: "actif"
+  summary: "", content: "", pdf_url: "", status: "actif", audio_url: ""
 };
 
 export default function Admin() {
@@ -539,6 +539,38 @@ export default function Admin() {
                   {form.content ? `${form.content.length} caractères · ~${Math.ceil(form.content.length / 1800)} pages` : "Aucun contenu"}
                 </div>
                 </>)}
+              </div>
+
+              {/* Section Audio */}
+              <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
+                <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🎧 Livre Audio (MP3)</label>
+                {form.audio_url ? (
+                  <div>
+                    <audio controls src={form.audio_url} style={{ width: "100%", marginBottom: 8 }} />
+                    <button onClick={() => setForm(f => ({ ...f, audio_url: "" }))}
+                      style={{ padding: "6px 14px", background: "none", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", cursor: "pointer", fontSize: 12 }}>
+                      🗑 Supprimer l'audio
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <label style={{ fontSize: 12, color: "#aaa", display: "block", marginBottom: 8 }}>Uploade un fichier MP3 :</label>
+                    <input type="file" accept="audio/mp3,audio/mpeg" onChange={async e => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const fileName = "audio_" + Date.now() + "_" + file.name.replace(/\s/g, "_");
+                      const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "audio/mpeg" });
+                      if (!error) {
+                        const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+                        setForm(f => ({ ...f, audio_url: urlData.publicUrl }));
+                      } else {
+                        alert("Erreur upload audio : " + error.message);
+                      }
+                    }}
+                      style={{ color: "#aaa", fontSize: 13 }} />
+                    <p style={{ fontSize: 11, color: "#555", marginTop: 6 }}>Si aucun MP3, la synthèse vocale sera utilisée automatiquement.</p>
+                  </div>
+                )}
               </div>
             )}
 
