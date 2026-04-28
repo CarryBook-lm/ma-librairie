@@ -17,6 +17,7 @@ const CATEGORIES = {
   "Lyrics": ["Focus", "À la une"],
   "Livre Audio": ["Roman", "Conte", "Développement personnel", "Business", "Enfants", "Adultes"],
   "Livres Gratuits": [],
+  "Podcast": ["Amour", "Argent", "Confiance en soi", "Spiritualité", "Motivation"],
 };
 
 const emptyForm = {
@@ -25,7 +26,48 @@ const emptyForm = {
   can_read: true, can_download: false, featured: false
 };
 
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "CarryBooks2026!";
+
 export default function Admin() {
+  const [adminAuth, setAdminAuth] = useState(() => sessionStorage.getItem("cb_admin") === "ok");
+  const [adminInput, setAdminInput] = useState("");
+  const [adminError, setAdminError] = useState(false);
+
+  function handleAdminLogin() {
+    if (adminInput === ADMIN_PASSWORD) {
+      sessionStorage.setItem("cb_admin", "ok");
+      setAdminAuth(true);
+      setAdminError(false);
+    } else {
+      setAdminError(true);
+      setAdminInput("");
+    }
+  }
+
+  if (!adminAuth) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 320, textAlign: "center" }}>
+          <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
+          <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>Administration</h2>
+          <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Accès réservé</p>
+          <input
+            type="password"
+            value={adminInput}
+            onChange={e => setAdminInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleAdminLogin()}
+            placeholder="Mot de passe"
+            style={{ width: "100%", padding: "12px 14px", background: "#111", border: "1px solid " + (adminError ? "#f44336" : "#2a2a2a"), borderRadius: 8, color: "#e8e0d0", fontSize: 14, marginBottom: 8, boxSizing: "border-box" }}
+          />
+          {adminError && <p style={{ color: "#f44336", fontSize: 12, marginBottom: 8 }}>Mot de passe incorrect</p>}
+          <button onClick={handleAdminLogin}
+            style={{ width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
+            Connexion
+          </button>
+        </div>
+      </div>
+    );
+  }
   const [view, setView] = useState("dashboard");
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -166,6 +208,10 @@ export default function Admin() {
           <button onClick={() => window.open("/", "_blank")}
             style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
             🌐 Site
+          </button>
+          <button onClick={() => { sessionStorage.removeItem("cb_admin"); setAdminAuth(false); }}
+            style={{ background: "none", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
+            🔒 Déco
           </button>
           <button onClick={() => setShowMenu(m => !m)}
             style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 22, cursor: "pointer", padding: 4 }}>

@@ -45,8 +45,9 @@ const CATEGORIES = {
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
   "Lyrics": ["Focus", "À la une"],
-  "Livre Audio": ["Roman", "Conte", "Développement personnel", "Business"],
+  "Livre Audio": ["Roman", "Conte", "Développement personnel", "Business", "Enfants", "Adultes"],
   "Livres Gratuits": [],
+  "Podcast": ["Amour", "Argent", "Confiance en soi", "Spiritualité", "Motivation"],
 };
 
 const G = {
@@ -1166,35 +1167,18 @@ export default function App() {
               </div>
             )}
 
-            {/* Offres */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
-              {/* Mensuel */}
-              <div onClick={() => setSubPlan("mensuel")}
-                style={{ border: "2px solid " + (subPlan === "mensuel" ? G.gold : G.border), borderRadius: 12, padding: 20, cursor: "pointer", background: subPlan === "mensuel" ? G.goldDim : G.surface }}>
+            {/* Offre Mensuel uniquement */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ border: "2px solid " + G.gold, borderRadius: 12, padding: 20, background: G.goldDim }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Mensuel</div>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Abonnement Mensuel</div>
                     <div style={{ fontSize: 13, color: G.textDim }}>{subSettings.books_per_month} livres par mois</div>
+                    <div style={{ fontSize: 11, color: G.textFaint, marginTop: 4 }}>Sans engagement — résiliable à tout moment</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{subSettings.monthly_price?.toLocaleString()} F</div>
+                    <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{subSettings.monthly_price?.toLocaleString()} F</div>
                     <div style={{ fontSize: 11, color: G.textDim }}>/ mois</div>
-                  </div>
-                </div>
-              </div>
-              {/* Annuel */}
-              <div onClick={() => setSubPlan("annuel")}
-                style={{ border: "2px solid " + (subPlan === "annuel" ? G.gold : G.border), borderRadius: 12, padding: 20, cursor: "pointer", background: subPlan === "annuel" ? G.goldDim : G.surface, position: "relative" }}>
-                <div style={{ position: "absolute", top: -10, right: 16, background: G.gold, color: "#000", fontSize: 10, fontWeight: "bold", padding: "2px 10px", borderRadius: 10, letterSpacing: 1 }}>ÉCONOMIQUE</div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Annuel</div>
-                    <div style={{ fontSize: 13, color: G.textDim }}>{subSettings.books_per_month} livres par mois</div>
-                    <div style={{ fontSize: 11, color: G.green }}>Économisez {((subSettings.monthly_price * 12) - subSettings.annual_price)?.toLocaleString()} F</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{subSettings.annual_price?.toLocaleString()} F</div>
-                    <div style={{ fontSize: 11, color: G.textDim }}>/ an</div>
                   </div>
                 </div>
               </div>
@@ -1219,17 +1203,15 @@ export default function App() {
         {page === "contact" && (
           <div style={{ padding: "32px 16px 80px" }}>
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>Contact</div>
-            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 10, padding: 20, marginBottom: 16 }}>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>EMAIL</div>
               <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.text, fontSize: 15, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
             </div>
-            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 10, padding: 20, marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>À PROPOS</div>
-              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                CarryBooks est votre librairie numérique. Achetez et lisez vos livres préférés directement depuis votre téléphone, où que vous soyez au Cameroun et dans le monde.
-              </p>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>WHATSAPP</div>
+              <a href="https://chat.whatsapp.com/CarryBooks" target="_blank" rel="noreferrer" style={{ color: G.gold, fontSize: 14 }}>Rejoindre le groupe WhatsApp</a>
             </div>
-            <div style={{ background: G.surface, border: "1px solid #262626", borderRadius: 10, padding: 20 }}>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>SUPPORT</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
                 Pour toute question ou problème, écrivez-nous à <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.gold }}>carrybooks.com@gmail.com</a>. Nous répondons sous 24h.
@@ -1238,12 +1220,92 @@ export default function App() {
           </div>
         )}
 
+        {/* FAQ */}
+        {page === "faq" && (
+          <div style={{ padding: "32px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>FAQ</div>
+            {[
+              { q: "Comment acheter un livre ?", r: "Clique sur le livre de ton choix, puis sur le bouton Acheter. Paye avec MTN MoMo ou Orange Money. Le livre est disponible immédiatement après paiement." },
+              { q: "Qu'est-ce que l'abonnement ?", r: "L'abonnement mensuel te donne accès à un certain nombre de livres par mois pour un prix fixe. Tu peux aussi acheter des livres en dehors de ton quota." },
+              { q: "Puis-je lire hors connexion ?", r: "Oui ! Après avoir acheté un livre, clique sur 'Télécharger hors connexion' sur la page du livre pour le sauvegarder sur ton appareil." },
+              { q: "Mes achats sont-ils sauvegardés ?", r: "Oui, en te connectant avec Google, tous tes achats sont synchronisés et accessibles depuis n'importe quel appareil." },
+              { q: "Comment contacter le support ?", r: "Écris-nous à carrybooks.com@gmail.com. Nous répondons sous 24h." },
+            ].map((item, i) => (
+              <div key={i} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}>❓ {item.q}</div>
+                <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{item.r}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* À PROPOS */}
+        {page === "about" && (
+          <div style={{ padding: "32px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>À propos de nous</div>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 60, borderRadius: 8, marginBottom: 12 }} />
+              <p style={{ color: G.gold, fontSize: 13, fontStyle: "italic", letterSpacing: 1 }}>Lis. Apprends. Évolue.</p>
+            </div>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
+                CarryBooks est la première librairie numérique africaine pensée pour les lecteurs camerounais et africains. Notre mission est de rendre la lecture accessible à tous, partout en Afrique, depuis son téléphone.
+              </p>
+            </div>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>NOTRE VISION</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
+                Faire de l'Afrique un continent de lecteurs numériques, en proposant des œuvres africaines et internationales accessibles via Mobile Money.
+              </p>
+            </div>
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>CARRYBOOKS EN CHIFFRES</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginTop: 8 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{books.length}+</div>
+                  <div style={{ fontSize: 11, color: G.textFaint }}>Livres disponibles</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>🌍</div>
+                  <div style={{ fontSize: 11, color: G.textFaint }}>Afrique & Monde</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* FOOTER */}
         {page !== "reader" && (
-          <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "32px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 64, borderRadius: 8 }} />
-            <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 13, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
-            <div style={{ color: G.textDim, fontSize: 12 }}>© 2026 CarryBooks. Tous droits réservés.</div>
+          <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "28px 16px 40px" }}>
+            {/* Logo */}
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
+            </div>
+            {/* Liens */}
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 24px", marginBottom: 20 }}>
+              <button onClick={() => setPage("faq")} style={{ background: "none", border: "none", color: G.textDim, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>FAQ</button>
+              <button onClick={() => setPage("about")} style={{ background: "none", border: "none", color: G.textDim, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>À propos de nous</button>
+              <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
+            </div>
+            {/* Réseaux sociaux */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
+              <a href="https://www.facebook.com/CarryBooks" target="_blank" rel="noreferrer"
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
+                <span style={{ fontSize: 24 }}>📘</span>
+                <span style={{ fontSize: 10, color: G.textFaint }}>Facebook</span>
+              </a>
+              <a href="https://chat.whatsapp.com/CarryBooks" target="_blank" rel="noreferrer"
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
+                <span style={{ fontSize: 24 }}>💬</span>
+                <span style={{ fontSize: 10, color: G.textFaint }}>WhatsApp</span>
+              </a>
+              <a href="https://www.tiktok.com/@CarryBooks" target="_blank" rel="noreferrer"
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
+                <span style={{ fontSize: 24 }}>🎵</span>
+                <span style={{ fontSize: 10, color: G.textFaint }}>TikTok</span>
+              </a>
+            </div>
+            <div style={{ color: G.textFaint, fontSize: 11, textAlign: "center" }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
       {/* SUBSCRIPTION PAYMENT MODAL */}
