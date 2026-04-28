@@ -239,32 +239,19 @@ export default function App() {
  async function handlePurchase() {
     setPaymentStep(2);
     try {
-      // Obtenir le token Campay LIVE
-      const tokenRes = await fetch("https://www.campay.net/api/token/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: import.meta.env.VITE_CAMPAY_USERNAME,
-          password: import.meta.env.VITE_CAMPAY_PASSWORD
-        })
-      });
-      const tokenData = await tokenRes.json();
-      const token = tokenData.token;
-      if (!token) throw new Error("Token non obtenu");
-
       // Formater le numéro
       let phone = phoneNumber.replace(/\s/g, "");
       if (phone.startsWith("0")) phone = "237" + phone.slice(1);
       if (!phone.startsWith("237")) phone = "237" + phone;
 
-      // Initier le paiement
-      const payRes = await fetch("https://www.campay.net/api/collect/", {
+      // Appel via notre fonction serverless (évite CORS)
+      const payRes = await fetch("/api/campay", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Token " + token },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: String(paymentBook.price),
-          currency: "XAF",
-          from: phone,
+          action: "collect",
+          amount: paymentBook.price,
+          phone: phone,
           description: "Achat " + paymentBook.title + " sur CarryBooks",
           external_reference: "CB_" + paymentBook.id + "_" + Date.now()
         })
@@ -272,11 +259,13 @@ export default function App() {
       const payData = await payRes.json();
 
       if (payData.reference) {
-        // Vérifier le statut après 20 secondes
+        // Vérifier le statut après 25 secondes
         setTimeout(async () => {
           try {
-            const checkRes = await fetch("https://www.campay.net/api/transaction/" + payData.reference + "/", {
-              headers: { "Authorization": "Token " + token }
+            const checkRes = await fetch("/api/campay", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "check", reference: payData.reference })
             });
             const checkData = await checkRes.json();
             if (checkData.status === "SUCCESSFUL") {
@@ -288,16 +277,16 @@ export default function App() {
               cacheBook(paymentBook);
             } else {
               setPaymentStep(1);
-              alert("Paiement non confirmé. Veuillez réessayer.");
+              alert("Paiement non confirmé. Vérifiez votre solde et réessayez.");
             }
           } catch(e) {
             setPaymentStep(1);
             alert("Erreur de vérification. Vérifiez votre solde et réessayez.");
           }
-        }, 20000);
+        }, 25000);
       } else {
         setPaymentStep(1);
-        alert("Erreur lors de l'initiation du paiement. Vérifiez votre numéro.");
+        alert("Erreur: " + (payData.message || "Vérifiez votre numéro et réessayez."));
       }
     } catch(e) {
       setPaymentStep(1);
@@ -938,6 +927,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
