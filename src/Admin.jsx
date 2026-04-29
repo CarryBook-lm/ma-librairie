@@ -118,9 +118,9 @@ export default function Admin() {
     setSubSettingsSaving(true);
     const { data: existing } = await supabase.from("sub_settings").select("id").limit(1);
     if (existing && existing.length > 0) {
-      await supabase.from("sub_settings").update(subSettings).eq("id", existing[0].id);
+      await supabase.from("sub_settings").update({ ...subSettings, quiz_price: quizPrice }).eq("id", existing[0].id);
     } else {
-      await supabase.from("sub_settings").insert([subSettings]);
+      await supabase.from("sub_settings").insert([{ ...subSettings, quiz_price: quizPrice }]);
     }
     setSubSettingsSaving(false);
     alert("Paramètres sauvegardés !");
