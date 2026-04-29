@@ -480,7 +480,8 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
   return (
     <div style={{ padding: "0 0 80px" }}>
       {/* Hero */}
-      <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", padding: "28px 16px 24px", textAlign: "center" }}>
+      <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", padding: "28px 16px 24px", textAlign: "center", position: "relative" }}>
+        <button onClick={() => setPage("home")} style={{ position: "absolute", left: 14, top: 14, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
         <div style={{ fontSize: 36, marginBottom: 6 }}>🎯</div>
         <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>Carry'Quiz</div>
         <div style={{ fontSize: 13, color: "#bbb", marginTop: 4, marginBottom: 18 }}>Découvre des vérités sur toi-même</div>
@@ -507,7 +508,7 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
               }}>
                 <div style={{ fontSize: 30, marginBottom: 6 }}>{quiz.emoji}</div>
                 <div style={{ fontSize: 11, fontWeight: "bold", color: G.text, lineHeight: 1.3 }}>{quiz.title}</div>
-                <div style={{ fontSize: 10, color: G.gold, marginTop: 6 }}>Gratuit ▶</div>
+                <div style={{ fontSize: 10, color: G.gold, marginTop: 6 }}>{quizPrice || 500} FCFA ▶</div>
               </div>
             ))}
           </div>
@@ -532,7 +533,7 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
                 <div style={{ fontSize: 12, color: G.textDim, marginTop: 3 }}>{quiz.description}</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <div style={{ fontSize: 10, color: "#888" }}>Gratuit</div>
+                <div style={{ fontSize: 10, color: G.gold, fontWeight: "bold" }}>{quizPrice || 500} F</div>
                 <div style={{ color: G.gold, fontSize: 18 }}>›</div>
               </div>
             </div>
@@ -571,7 +572,8 @@ function QuizPlay({ quiz, answers, setAnswers, currentQ, setCurrentQ, setQuizPag
     <div style={{ padding: "0 0 80px" }}>
       <div style={{ background: G.surface, padding: "14px 16px 0", borderBottom: "1px solid " + G.border }}>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: G.textDim, marginBottom: 6 }}>
-          <span style={{ maxWidth: "70%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{quiz.emoji} {quiz.title}</span>
+          <button onClick={() => setQuizPage("quizHome")} style={{ background: "none", border: "none", color: G.gold, fontSize: 13, cursor: "pointer", padding: 0 }}>← Retour</button>
+          <span style={{ maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{quiz.emoji} {quiz.title}</span>
           <span>{currentQ + 1}/{quiz.questions.length}</span>
         </div>
         <div style={{ height: 5, background: G.border, borderRadius: 3, marginBottom: 10 }}>
@@ -676,6 +678,10 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
 
   return (
     <div style={{ minHeight: "100vh", position: "relative", background: G.bg }}>
+      {/* Back button */}
+      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center" }}>
+        <button onClick={() => setQuizPage("quizHome")} style={{ background: "none", border: "none", color: G.gold, fontSize: 14, cursor: "pointer", padding: 0 }}>← Retour aux quiz</button>
+      </div>
       {/* Blurred preview */}
       <div style={{ padding: "16px", filter: "blur(6px)", userSelect: "none", pointerEvents: "none", opacity: 0.5 }}>
         <div style={{ background: G.surface, borderRadius: 12, padding: 16, textAlign: "center" }}>
@@ -773,6 +779,10 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 
   return (
     <div style={{ padding: "0 0 80px" }}>
+      {/* Back button */}
+      <div style={{ padding: "10px 14px", background: G.surface, borderBottom: "1px solid " + G.border }}>
+        <button onClick={() => setQuizPage("quizHome")} style={{ background: "none", border: "none", color: G.gold, fontSize: 14, cursor: "pointer", padding: 0 }}>← Autres quiz</button>
+      </div>
       {/* Result header */}
       <div style={{ background: "linear-gradient(135deg, #1a1208, #3d2b0a)", padding: "28px 16px 24px", textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 10 }}>{quiz.emoji}</div>
@@ -819,7 +829,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
                   <span style={{ fontSize: 24 }}>{q.emoji}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{q.title}</div>
-                    <div style={{ fontSize: 11, color: G.gold, marginTop: 2 }}>Gratuit ▶</div>
+                    <div style={{ fontSize: 11, color: G.gold, marginTop: 2 }}>{quizPrice || 500} FCFA ▶</div>
                   </div>
                 </div>
               ))}
@@ -2155,7 +2165,7 @@ export default function App() {
                   }}>
                     <div style={{ fontSize: 24, marginBottom: 4 }}>{quiz.emoji}</div>
                     <div style={{ fontSize: 11, color: "#ddd", lineHeight: 1.3 }}>{quiz.title.substring(0,35)}{quiz.title.length>35?"…":""}</div>
-                    <div style={{ fontSize: 10, color: G.gold, marginTop: 5 }}>Gratuit ▶</div>
+                    <div style={{ fontSize: 10, color: G.gold, marginTop: 5 }}>{quizPrice || 500} FCFA ▶</div>
                   </div>
                 ))}
               </div>
