@@ -467,7 +467,6 @@ const QUIZ_DATA = [
 
 function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuestion, quizCategory, setQuizCategory, G, quizPrice, setPage }) {
   const filtered = quizCategory === "Tous" ? QUIZ_DATA : QUIZ_DATA.filter(q => q.category === quizCategory);
-  const popular = QUIZ_DATA.filter(q => q.popular).slice(0, 5);
 
   function startQuiz(quiz) {
     setActiveQuiz(quiz);
@@ -479,63 +478,41 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
 
   return (
     <div style={{ padding: "0 0 80px" }}>
-      {/* Hero */}
-      <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", padding: "28px 16px 24px", textAlign: "center", position: "relative" }}>
+      {/* Hero — minimal comme sur la capture */}
+      <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", padding: "32px 16px 28px", textAlign: "center", position: "relative" }}>
         <button onClick={() => setPage("home")} style={{ position: "absolute", left: 14, top: 14, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
-        <div style={{ fontSize: 36, marginBottom: 6 }}>🎯</div>
-        <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>Carry'Quiz</div>
-        <div style={{ fontSize: 13, color: "#bbb", marginTop: 4, marginBottom: 18 }}>Découvre des vérités sur toi-même</div>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+        <div style={{ fontSize: 52, marginBottom: 10 }}>🎯</div>
+        <div style={{ fontSize: 26, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif", marginBottom: 8 }}>Carry'Quiz</div>
+        <div style={{ fontSize: 15, color: "#ccc", marginBottom: 28 }}>Découvre des vérités sur toi-même</div>
+        {/* Catégories uniquement */}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
           {QUIZ_CATEGORIES.map(cat => (
             <button key={cat} onClick={() => setQuizCategory(cat)} style={{
-              padding: "5px 12px", borderRadius: 20, border: "1px solid " + (quizCategory === cat ? G.gold : "rgba(255,255,255,0.2)"),
-              background: quizCategory === cat ? G.gold : "transparent", color: quizCategory === cat ? "#1a1208" : "#ddd",
-              fontSize: 11, cursor: "pointer", fontWeight: quizCategory === cat ? "bold" : "normal"
+              padding: "8px 18px", borderRadius: 24, fontSize: 13, cursor: "pointer", fontWeight: quizCategory === cat ? "bold" : "normal",
+              border: "1.5px solid " + (quizCategory === cat ? G.gold : "rgba(255,255,255,0.25)"),
+              background: quizCategory === cat ? G.gold : "transparent",
+              color: quizCategory === cat ? "#1a1208" : "#ddd",
             }}>{cat}</button>
           ))}
         </div>
       </div>
 
-      {/* Popular */}
-      {quizCategory === "Tous" && (
-        <div style={{ padding: "16px 16px 0" }}>
-          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>🔥 Tests populaires</div>
-          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 8 }}>
-            {popular.map(quiz => (
-              <div key={quiz.id} onClick={() => startQuiz(quiz)} style={{
-                minWidth: 150, background: G.surface, border: "1px solid " + G.gold, borderRadius: 12,
-                padding: "14px 12px", cursor: "pointer", textAlign: "center", flexShrink: 0
-              }}>
-                <div style={{ fontSize: 30, marginBottom: 6 }}>{quiz.emoji}</div>
-                <div style={{ fontSize: 11, fontWeight: "bold", color: G.text, lineHeight: 1.3 }}>{quiz.title}</div>
-                <div style={{ fontSize: 10, color: G.gold, marginTop: 6 }}>{quizPrice || 500} FCFA ▶</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* List */}
-      <div style={{ padding: "14px 16px 0" }}>
-        <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>
-          {quizCategory === "Tous" ? "Tous les tests" : quizCategory}
-        </div>
+      {/* Liste des quiz — sans prix affiché */}
+      <div style={{ padding: "16px 16px 0" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map(quiz => (
             <div key={quiz.id} onClick={() => startQuiz(quiz)} style={{
-              background: G.surface, border: "1px solid " + G.border, borderRadius: 12,
-              padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14
+              background: G.surface, border: "1px solid " + G.border, borderRadius: 14,
+              padding: "16px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14,
+              transition: "border-color 0.2s"
             }}>
-              <div style={{ fontSize: 32, flexShrink: 0 }}>{quiz.emoji}</div>
+              <div style={{ fontSize: 34, flexShrink: 0 }}>{quiz.emoji}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: G.gold, marginBottom: 2 }}>{quiz.category}</div>
-                <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3 }}>{quiz.title}</div>
-                <div style={{ fontSize: 12, color: G.textDim, marginTop: 3 }}>{quiz.description}</div>
+                <div style={{ fontSize: 10, color: G.gold, marginBottom: 3, letterSpacing: 1, textTransform: "uppercase" }}>{quiz.category}</div>
+                <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.4 }}>{quiz.title}</div>
+                <div style={{ fontSize: 12, color: G.textDim, marginTop: 4 }}>{quiz.description}</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <div style={{ fontSize: 10, color: G.gold, fontWeight: "bold" }}>{quizPrice || 500} F</div>
-                <div style={{ color: G.gold, fontSize: 18 }}>›</div>
-              </div>
+              <div style={{ color: G.gold, fontSize: 22, flexShrink: 0 }}>›</div>
             </div>
           ))}
         </div>
@@ -829,7 +806,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
                   <span style={{ fontSize: 24 }}>{q.emoji}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{q.title}</div>
-                    <div style={{ fontSize: 11, color: G.gold, marginTop: 2 }}>{quizPrice || 500} FCFA ▶</div>
+                    <div style={{ fontSize: 11, color: G.gold, marginTop: 2 }}>Commencer ▶</div>
                   </div>
                 </div>
               ))}
@@ -2165,7 +2142,7 @@ export default function App() {
                   }}>
                     <div style={{ fontSize: 24, marginBottom: 4 }}>{quiz.emoji}</div>
                     <div style={{ fontSize: 11, color: "#ddd", lineHeight: 1.3 }}>{quiz.title.substring(0,35)}{quiz.title.length>35?"…":""}</div>
-                    <div style={{ fontSize: 10, color: G.gold, marginTop: 5 }}>{quizPrice || 500} FCFA ▶</div>
+                    <div style={{ fontSize: 10, color: G.gold, marginTop: 5 }}>Commencer ▶</div>
                   </div>
                 ))}
               </div>
