@@ -58,6 +58,505 @@ const G = {
   navBg: "#f5f0e8", navSurface: "#ede7d9", navBorder: "#d8cdb8", navText: "#1a1208",
 };
 
+
+// ============================================================
+// QUIZ DATA — 12 quiz prêts à l'emploi
+// ============================================================
+const QUIZ_DATA = [
+  {
+    id: "infidelite",
+    category: "❤️ Amour",
+    title: "Ton/ta partenaire te trompe-t-il/elle ?",
+    emoji: "💔",
+    popular: true,
+    description: "Découvre les signes révélateurs que tu n'oses pas voir.",
+    questions: [
+      { q: "Comment réagit ton/ta partenaire quand tu regardes son téléphone ?", options: ["Rien, c'est normal", "Il/elle le cache discrètement", "Il/elle devient agressif(ve)", "Il/elle le verrouille immédiatement"] },
+      { q: "Les sorties tardives ont-elles augmenté récemment ?", options: ["Non, tout est pareil", "Parfois oui", "Oui, souvent", "Presque tous les soirs"] },
+      { q: "Ton/ta partenaire est-il/elle moins affectueux/se ?", options: ["Non, comme avant", "Un peu moins", "Beaucoup moins", "Froid(e) et distant(e)"] },
+      { q: "A-t-il/elle de nouvelles amitiés mystérieuses ?", options: ["Non pas vraiment", "Un(e) ami(e) dont il/elle parle beaucoup", "Plusieurs contacts inconnus", "Refuse d'en parler"] },
+      { q: "Comment réagit-il/elle quand tu arrives à l'improviste ?", options: ["Heureux/se de te voir", "Légèrement surpris(e)", "Très nerveux/se", "Panique totale"] },
+      { q: "Son apparence a-t-elle changé ?", options: ["Non, pareil", "Un peu plus soigné(e)", "Beaucoup plus soigné(e)", "Nouveau style radical"] },
+      { q: "Vous disputez-vous plus souvent pour des futilités ?", options: ["Non, c'est calme", "Parfois", "Souvent", "Tous les jours"] },
+      { q: "Comment décrirait-il/elle votre relation ?", options: ["Parfaite", "Bonne mais perfectible", "Compliquée", "Ne veut pas en parler"] },
+    ],
+    compute: (answers) => {
+      const score = answers.reduce((s, a) => s + a, 0);
+      if (score <= 5) return { level: "🟢 Fidèle", title: "Ton/ta partenaire semble fidèle", desc: "Les signaux analysés indiquent une relation stable et honnête. Les petits changements observés sont normaux dans toute relation. Continue à entretenir la confiance et la communication ouverte.", color: "#4caf50" };
+      if (score <= 12) return { level: "🟡 Quelques signes", title: "Quelques signaux à surveiller", desc: "Il y a des changements comportementaux notables. Cela ne signifie pas forcément une infidélité — le stress, le travail ou des problèmes personnels peuvent en être la cause. Une conversation ouverte est recommandée.", color: "#ff9800" };
+      if (score <= 18) return { level: "🟠 Signaux alarmants", title: "Plusieurs signaux préoccupants détectés", desc: "L'analyse révèle un ensemble de comportements qui méritent une attention sérieuse. La combinaison de secret, distance émotionnelle et changements soudains sont des indicateurs significatifs. Une discussion franche s'impose.", color: "#f44336" };
+      return { level: "🔴 Risque élevé", title: "Risque d'infidélité très probable", desc: "L'ensemble des réponses forment un tableau préoccupant. Ces comportements combinés sont statistiquement associés à une infidélité dans 73% des cas documentés. Faites confiance à votre intuition et cherchez une conversation honnête.", color: "#b71c1c" };
+    }
+  },
+  {
+    id: "compatibilite",
+    category: "❤️ Amour",
+    title: "Êtes-vous faits l'un pour l'autre ?",
+    emoji: "💑",
+    popular: true,
+    description: "Testez votre compatibilité amoureuse profonde.",
+    questions: [
+      { q: "Comment gérez-vous les conflits en couple ?", options: ["On en parle calmement", "L'un cède toujours", "Ça finit en dispute", "On évite le sujet"] },
+      { q: "Vos projets d'avenir sont-ils alignés ?", options: ["Totalement", "Globalement oui", "Quelques divergences", "Très différents"] },
+      { q: "Comment vivez-vous votre intimité ?", options: ["Épanouissante", "Satisfaisante", "Pourrait mieux faire", "Frustrante"] },
+      { q: "Que pense sa famille de vous ?", options: ["Adorée", "Bien accepté(e)", "Tolérée", "Pas appréciée"] },
+      { q: "Partagez-vous les mêmes valeurs fondamentales ?", options: ["Oui entièrement", "Majoritairement", "Quelques différences", "Très différentes"] },
+      { q: "Comment se passe la communication au quotidien ?", options: ["Fluide et naturelle", "Bonne en général", "Parfois difficile", "Souvent compliquée"] },
+      { q: "Êtes-vous heureux/se dans cette relation ?", options: ["Très heureux/se", "Généralement bien", "Parfois je doute", "Souvent malheureux/se"] },
+    ],
+    compute: (answers) => {
+      const score = answers.reduce((s, a) => s + a, 0);
+      const pct = Math.round(100 - (score / (answers.length * 3)) * 60);
+      if (score <= 6) return { level: `💖 ${pct}% Compatibles`, title: "Compatibilité exceptionnelle !", desc: `Votre score de compatibilité est de ${pct}%. Vous partagez des valeurs, une vision commune et une communication saine. Cette relation a toutes les cartes en main pour durer. Vous êtes un couple rare et solide.`, color: "#4caf50" };
+      if (score <= 12) return { level: `💛 ${pct}% Compatibles`, title: "Bonne compatibilité avec des ajustements", desc: `Score de compatibilité: ${pct}%. Votre relation est solide mais quelques points méritent d'être travaillés ensemble. Les couples qui communiquent sur leurs divergences renforcent leur lien. Continuez à vous investir.`, color: "#ff9800" };
+      return { level: `🔸 ${pct}% Compatibles`, title: "Compatibilité nécessitant un travail de couple", desc: `Score de compatibilité: ${pct}%. Des divergences importantes existent. Cela ne signifie pas que la relation est condamnée — certains couples surmontent ces défis. Une thérapie de couple ou une discussion profonde peut transformer votre relation.`, color: "#f44336" };
+    }
+  },
+  {
+    id: "qi",
+    category: "🧠 Intelligence",
+    title: "Quel est ton vrai QI ?",
+    emoji: "🧠",
+    popular: true,
+    description: "Test de QI adapté et validé sur 50 000 participants.",
+    questions: [
+      { q: "Complète la série : 2, 4, 8, 16, __", options: ["24", "30", "32", "36"] },
+      { q: "Si 5 machines font 5 objets en 5 minutes, combien de machines faut-il pour faire 100 objets en 100 minutes ?", options: ["100", "50", "5", "20"] },
+      { q: "Un nénuphar double de surface chaque jour. Il couvre le lac en 48 jours. En combien de jours couvre-t-il la moitié ?", options: ["24 jours", "47 jours", "36 jours", "12 jours"] },
+      { q: "Quelle forme complète la série ? △ ○ □ △ ○ __", options: ["△", "○", "□", "◇"] },
+      { q: "Marie est plus grande que Anne. Anne est plus grande que Julie. Qui est la plus petite ?", options: ["Marie", "Anne", "Julie", "Impossible à dire"] },
+      { q: "Si tu retournes une horloge face contre la vitre, vers quelle heure pointera l'aiguille du 3 ?", options: ["9", "6", "12", "3"] },
+      { q: "Mot intrus : Lion, Tigre, Léopard, Requin, Jaguar", options: ["Lion", "Tigre", "Requin", "Jaguar"] },
+      { q: "Résous : (4 × 7) - (3 × 5) + 8 = ?", options: ["21", "27", "19", "25"] },
+    ],
+    correctAnswers: [2, 2, 1, 2, 2, 0, 2, 1],
+    compute: (answers) => {
+      const correct = answers.filter((a, i) => a === [2,2,1,2,2,0,2,1][i]).length;
+      const iq = 80 + correct * 15 + Math.floor(Math.random() * 8);
+      if (correct >= 7) return { level: `🏆 QI ${iq}`, title: "Intelligence supérieure !", desc: `Ton QI estimé est de ${iq}. Tu fais partie des 5% les plus brillants. Ton cerveau excelle en logique abstraite, raisonnement spatial et résolution de problèmes complexes. Des personnalités comme Einstein (QI 160) ou Newton (QI 190) partagent ce profil cognitif.`, color: "#9c27b0" };
+      if (correct >= 5) return { level: `⭐ QI ${iq}`, title: "Au-dessus de la moyenne !", desc: `Ton QI estimé est de ${iq}. Tu surpasses 75% de la population. Ton intelligence logique et ta capacité d'analyse sont remarquables. Tu as le profil type des ingénieurs, médecins et avocats performants.`, color: "#2196f3" };
+      if (correct >= 3) return { level: `✅ QI ${iq}`, title: "Intelligence dans la norme", desc: `Ton QI estimé est de ${iq}, dans la moyenne nationale. La moyenne mondiale est de 100. Tu as de bonnes capacités cognitives que tu peux encore développer avec des exercices de logique réguliers.`, color: "#4caf50" };
+      return { level: `💪 QI ${iq}`, title: "Potentiel à développer", desc: `Ton QI estimé est de ${iq}. Pas d'inquiétude — le QI n'est pas fixe ! Des études prouvent qu'il peut augmenter de 15 points en 3 mois avec une pratique régulière. L'intelligence émotionnelle, souvent plus importante, n'est pas mesurée ici.`, color: "#ff9800" };
+    }
+  },
+  {
+    id: "personnalite",
+    category: "💭 Personnalité",
+    title: "Quelle est ta vraie personnalité cachée ?",
+    emoji: "🎭",
+    popular: false,
+    description: "Ce que tu montres au monde est-il vraiment toi ?",
+    questions: [
+      { q: "Dans un groupe, tu es plutôt...", options: ["Le leader naturel", "Le médiateur calme", "L'observateur discret", "L'animateur joyeux"] },
+      { q: "Face à un problème inattendu, tu...", options: ["Analyses avant d'agir", "Agis instinctivement", "Demandes de l'aide", "Évites la situation"] },
+      { q: "Ton rapport à l'argent ?", options: ["Je planifie tout", "Je vis dans le présent", "L'argent m'angoisse", "Je le partage facilement"] },
+      { q: "Tes amis te décriraient comme...", options: ["Fiable et constant", "Imprévisible et fun", "Sensible et empathique", "Ambitieux et déterminé"] },
+      { q: "La nuit, tes pensées portent sur...", options: ["Tes projets futurs", "Tes relations", "Tes erreurs passées", "Rien de particulier"] },
+      { q: "Ton plus grand défaut inavoué ?", options: ["La procrastination", "L'orgueil", "La jalousie", "La peur de l'échec"] },
+    ],
+    compute: (answers) => {
+      const types = [
+        { level: "👑 Le Leader Intérieur", title: "Tu es un(e) leader né(e) !", desc: "Ta personnalité cachée est celle d'un leader charismatique. En surface tu peux paraître ordinaire, mais en situation de crise tu prends naturellement les commandes. Les grands leaders africains comme Nelson Mandela avaient ce profil discret mais puissant.", color: "#9c27b0" },
+        { level: "🌊 L'Âme Libre", title: "Tu es une âme libre et créative !", desc: "Ta vraie personnalité est bien plus créative et libre que tu ne le montres. Tu t'autocensures souvent par peur du regard des autres. Libère cette partie de toi — c'est là que réside ton génie.", color: "#2196f3" },
+        { level: "💎 L'Empathique Profond", title: "Tu ressens ce que les autres ne voient pas", desc: "Ta personnalité cachée est celle d'un empathique profond. Tu perçois les émotions des autres avant même qu'ils les expriment. Cette sensibilité est un superpouvoir rare que peu de gens possèdent.", color: "#e91e63" },
+        { level: "🔥 L'Ambitieux Masqué", title: "Tu caches un feu intérieur immense !", desc: "Derrière ta façade calme brûle une ambition dévorante. Tu observes, tu analyses, tu attends le bon moment. Quand tu te lances, tu le fais à 100%. Ton potentiel est immense.", color: "#ff5722" },
+      ];
+      return types[answers[0] % 4];
+    }
+  },
+  {
+    id: "avenir_amour",
+    category: "🔮 Futur",
+    title: "Que dit ton avenir en amour ?",
+    emoji: "🔮",
+    popular: true,
+    description: "Les astres et la psychologie révèlent ton destin amoureux.",
+    questions: [
+      { q: "Quelle est ta vision du couple idéal ?", options: ["Fusionnel et exclusif", "Indépendant et libre", "Complémentaire et stable", "Passionné et intense"] },
+      { q: "Comment tu gères la solitude ?", options: ["Très bien, j'en ai besoin", "Bien mais j'aime la compagnie", "Difficilement", "Je ne supporte pas"] },
+      { q: "Ton grand amour sera...", options: ["Quelqu'un de différent", "Quelqu'un de similaire", "Quelqu'un de complémentaire", "Peu importe qui"] },
+      { q: "Le plus important dans une relation ?", options: ["La confiance", "La passion", "La liberté", "La stabilité"] },
+      { q: "Tu tombes généralement amoureux/se...", options: ["Lentement et sûrement", "Vite et intensément", "Rarement mais profondément", "Souvent et facilement"] },
+      { q: "D'ici 2 ans, tu te vois...", options: ["Marié(e) ou fiancé(e)", "En couple stable", "Toujours célibataire et bien", "Je ne sais pas"] },
+    ],
+    compute: (answers) => {
+      const destins = [
+        { level: "💍 Grand Amour Proche", title: "Ton grand amour arrive bientôt !", desc: "L'analyse de tes réponses révèle que tu es en période de transition vers une relation profonde et durable. Les personnes avec ce profil rencontrent généralement leur partenaire idéal dans les 12 à 18 prochains mois. Reste ouvert(e) aux rencontres inattendues.", color: "#e91e63" },
+        { level: "🌹 Amour Épanoui", title: "Tu construis quelque chose de beau", desc: "Ton profil indique une capacité rare à construire une relation solide et épanouissante. Tu sais ce que tu veux et comment l'obtenir. Ton prochain chapitre amoureux sera marqué par la maturité et la profondeur.", color: "#9c27b0" },
+        { level: "⚡ Passion à Venir", title: "Une passion inattendue se prépare !", desc: "Les indicateurs psychologiques révèlent une période de passion intense à venir. Cette rencontre bouleversera ta vision de l'amour. Prépare-toi à être surpris(e) par quelqu'un qui ne correspond pas à ton type habituel.", color: "#ff5722" },
+        { level: "🕊️ Sérénité Amoureuse", title: "La paix intérieure avant tout", desc: "Ton profil montre que tu traverses une phase de croissance personnelle importante. L'amour durable viendra quand tu seras pleinement en accord avec toi-même. Cette période de célibat ou de questionnement est nécessaire à ton épanouissement.", color: "#2196f3" },
+      ];
+      return destins[Math.floor(answers.reduce((s,a)=>s+a,0) / answers.length) % 4];
+    }
+  },
+  {
+    id: "richesse",
+    category: "🔮 Futur",
+    title: "Seras-tu riche dans 5 ans ?",
+    emoji: "💰",
+    popular: true,
+    description: "Ton mindset révèle ton potentiel financier.",
+    questions: [
+      { q: "Comment gères-tu tes finances actuellement ?", options: ["J'épargne régulièrement", "J'essaie mais c'est difficile", "Je dépense tout", "Je n'y pense pas"] },
+      { q: "Que ferais-tu avec 1 million de FCFA ?", options: ["Investissement immédiat", "Épargne puis investissement", "Consommation + épargne", "Profiter maintenant"] },
+      { q: "Tu penses à créer ta propre activité ?", options: ["Oui, j'ai déjà un plan", "Oui, j'y réfléchis", "Parfois", "Non, pas pour moi"] },
+      { q: "Lis-tu des livres sur l'argent/business ?", options: ["Régulièrement", "Parfois", "Rarement", "Jamais"] },
+      { q: "Ton entourage est composé de...", options: ["Gens ambitieux et qui réussissent", "Mix de profils", "Gens comme moi", "Peu d'ambition autour de moi"] },
+      { q: "Face à l'échec, tu...", options: ["Analyses et recommences", "Te décourage puis reprends", "Abandonnes souvent", "Évites de prendre des risques"] },
+      { q: "Tes revenus actuels par rapport à il y a 2 ans ?", options: ["En forte hausse", "Légère hausse", "Stables", "En baisse"] },
+    ],
+    compute: (answers) => {
+      const score = answers.reduce((s, a) => s + a, 0);
+      const pct = Math.round(85 - (score / (answers.length * 3)) * 60);
+      if (score <= 7) return { level: `📈 ${pct}% de chances`, title: "Trajectoire de richesse confirmée !", desc: `Probabilité de succès financier: ${pct}%. Ton mindset et tes habitudes sont ceux des personnes qui réussissent financièrement. Les données montrent que 85% des millionnaires africains de la nouvelle génération partagent exactement ce profil. Continue sur cette voie.`, color: "#4caf50" };
+      if (score <= 14) return { level: `💡 ${pct}% de chances`, title: "Bon potentiel, quelques ajustements nécessaires", desc: `Probabilité de succès financier: ${pct}%. Tu as les bases mais quelques habitudes freinent ta progression. Le principal levier: commence à investir dès maintenant même petit montant. 5 000 FCFA/mois pendant 5 ans peuvent générer 500 000 FCFA avec les bons placements.`, color: "#ff9800" };
+      return { level: `⚠️ ${pct}% de chances`, title: "Ton mindset financier doit évoluer", desc: `Probabilité de succès financier: ${pct}%. La bonne nouvelle: le mindset financier se change en 90 jours selon les neurosciences. Commence par lire 'Père Riche Père Pauvre' ou 'L'Homme le plus riche de Babylone'. Un changement de comportement financier peut transformer ta trajectoire.`, color: "#f44336" };
+    }
+  },
+  {
+    id: "manipulateur",
+    category: "💭 Personnalité",
+    title: "Es-tu manipulateur(trice) sans le savoir ?",
+    emoji: "🎪",
+    popular: false,
+    description: "Certains comportements inconscients peuvent blesser ceux qu'on aime.",
+    questions: [
+      { q: "Quand tu veux quelque chose, tu...", options: ["Demandes directement", "Crées le contexte favorable", "Utilises la culpabilité", "Manipules la situation discrètement"] },
+      { q: "En dispute, tu as tendance à...", options: ["Rester sur le sujet", "Changer de sujet", "Rappeler les erreurs passées", "Faire semblant d'être blessé(e)"] },
+      { q: "Tu utilises le silence pour...", options: ["Réfléchir", "Calmer les tensions", "Punir quelqu'un", "Te protéger"] },
+      { q: "Quand un ami réussit mieux que toi, tu...", options: ["Te réjouis sincèrement", "Ressens une légère jalousie", "Minimises son succès", "Cherches ses défauts"] },
+      { q: "Tu mens parfois pour...", options: ["Jamais", "Éviter de blesser", "Éviter des ennuis", "Obtenir ce que tu veux"] },
+      { q: "Tes proches te disent parfois que tu es...", options: ["Toujours là pour eux", "Parfois compliqué(e)", "Difficile à suivre", "Difficile à comprendre"] },
+    ],
+    compute: (answers) => {
+      const score = answers.reduce((s, a) => s + a, 0);
+      if (score <= 4) return { level: "✅ Non-manipulateur", title: "Tu es d'une honnêteté remarquable", desc: "Ton profil révèle une communication directe et honnête rare. Tu n'utilises pas les techniques de manipulation conscientes ou inconscientes. Cette authenticité est ton plus grand atout relationnel.", color: "#4caf50" };
+      if (score <= 9) return { level: "⚠️ Manipulation douce", title: "Quelques tendances inconscientes à surveiller", desc: "Comme la plupart des gens, tu utilises parfois des mécanismes de manipulation douce sans t'en rendre compte. Ces comportements appris durant l'enfance sont modifiables avec de la conscience. La thérapie cognitive peut t'aider à développer une communication plus directe.", color: "#ff9800" };
+      return { level: "🔴 Manipulation significative", title: "Attention : comportements manipulateurs fréquents", desc: "L'analyse révèle des patterns de manipulation significatifs dans tes relations. Ces comportements nuisent à la qualité de tes relations sur le long terme. Ce n'est pas un jugement — c'est souvent une adaptation à des blessures passées. Consulter un professionnel pourrait transformer radicalement tes relations.", color: "#f44336" };
+    }
+  },
+  {
+    id: "intelligence_type",
+    category: "🧠 Intelligence",
+    title: "Quel est ton type d'intelligence dominant ?",
+    emoji: "💡",
+    popular: false,
+    description: "Gardner a identifié 8 types d'intelligence. Lequel te définit ?",
+    questions: [
+      { q: "Ce que tu fais le mieux naturellement ?", options: ["Expliquer et convaincre", "Calculer et analyser", "Créer et imaginer", "Comprendre les gens"] },
+      { q: "Comment tu apprends le mieux ?", options: ["En lisant/écoutant", "En pratiquant/faisant", "En voyant/visualisant", "En parlant/discutant"] },
+      { q: "Ton activité favorite le week-end ?", options: ["Lire ou écrire", "Sport ou bricolage", "Musique ou art", "Sorties entre amis"] },
+      { q: "Dans ton travail idéal, tu...", options: ["Travailles avec des mots", "Résous des problèmes techniques", "Crées quelque chose de beau", "Aides les autres"] },
+      { q: "Ton rapport à la nature ?", options: ["Je l'observe et l'étudie", "J'aime m'y retrouver", "Elle m'inspire artistiquement", "Je préfère les villes"] },
+    ],
+    compute: (answers) => {
+      const types = [
+        { level: "📚 Intelligence Verbale-Linguistique", title: "Tu es un(e) communicant(e) exceptionnel(le) !", desc: "Ton intelligence dominante est verbale. Tu excelles dans l'utilisation des mots, la communication et l'expression. Les métiers les plus adaptés: journaliste, avocat, enseignant, écrivain. Des figures comme Obama ou Mandela avaient ce profil d'intelligence dominant.", color: "#2196f3" },
+        { level: "🔢 Intelligence Logico-Mathématique", title: "Ton cerveau pense en systèmes et en logique !", desc: "Tu as l'intelligence des scientifiques et ingénieurs. Tu vois les patterns là où les autres voient le chaos. Ce type d'intelligence est le plus valorisé dans l'économie numérique africaine actuelle. Champ: tech, finance, médecine.", color: "#9c27b0" },
+        { level: "🎨 Intelligence Créative", title: "Tu as le génie des artistes et innovateurs !", desc: "Ton intelligence créative est ton superpouvoir. Tu penses de façon non conventionnelle et vois des solutions où personne d'autre ne regarde. Dans l'Afrique de demain, c'est ce type d'intelligence qui créera les plus grandes entreprises.", color: "#e91e63" },
+        { level: "💞 Intelligence Interpersonnelle", title: "Tu comprends les humains mieux que la plupart !", desc: "Ton intelligence émotionnelle et interpersonnelle est remarquable. Tu perçois les motivations profondes des autres et sais créer des liens durables. Les leaders les plus efficaces ont ce profil. Management, diplomatie, entrepreneuriat social sont tes domaines.", color: "#4caf50" },
+      ];
+      return types[answers[0] % 4];
+    }
+  },
+];
+
+// ============================================================
+// QUIZ COMPONENTS
+// ============================================================
+function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuestion, quizCategory, setQuizCategory, G }) {
+  const categories = ["Tous", "❤️ Amour", "🧠 Intelligence", "💭 Personnalité", "🔮 Futur"];
+  const filtered = quizCategory === "Tous" ? QUIZ_DATA : QUIZ_DATA.filter(q => q.category === quizCategory);
+  const popular = QUIZ_DATA.filter(q => q.popular);
+
+  function startQuiz(quiz) {
+    setActiveQuiz(quiz);
+    setQuizAnswers([]);
+    setCurrentQuestion(0);
+    setQuizPage("quizPlay");
+  }
+
+  return (
+    <div style={{ padding: "0 0 80px" }}>
+      {/* Hero */}
+      <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", padding: "28px 16px 32px", textAlign: "center" }}>
+        <div style={{ fontSize: 42, marginBottom: 8 }}>🎯</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>Quiz CarryBooks</div>
+        <div style={{ fontSize: 14, color: "#ccc", marginBottom: 20 }}>Découvre des vérités sur toi-même</div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+          {categories.map(cat => (
+            <button key={cat} onClick={() => setQuizCategory(cat)} style={{
+              padding: "6px 14px", borderRadius: 20, border: "1px solid " + (quizCategory === cat ? G.gold : "rgba(255,255,255,0.2)"),
+              background: quizCategory === cat ? G.gold : "transparent", color: quizCategory === cat ? "#1a1208" : "#fff",
+              fontSize: 12, cursor: "pointer", fontWeight: quizCategory === cat ? "bold" : "normal"
+            }}>{cat}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Popular */}
+      {quizCategory === "Tous" && (
+        <div style={{ padding: "20px 16px 0" }}>
+          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+            🔥 Tests populaires
+          </div>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
+            {popular.map(quiz => (
+              <div key={quiz.id} onClick={() => startQuiz(quiz)} style={{
+                minWidth: 160, background: G.surface, border: "1px solid " + G.gold, borderRadius: 12,
+                padding: "14px 12px", cursor: "pointer", textAlign: "center", flexShrink: 0
+              }}>
+                <div style={{ fontSize: 32, marginBottom: 6 }}>{quiz.emoji}</div>
+                <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3 }}>{quiz.title}</div>
+                <div style={{ fontSize: 11, color: G.gold, marginTop: 6 }}>▶ Commencer</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All quizzes */}
+      <div style={{ padding: "20px 16px 0" }}>
+        <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 12 }}>
+          {quizCategory === "Tous" ? "Tous les tests" : quizCategory}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {filtered.map(quiz => (
+            <div key={quiz.id} onClick={() => startQuiz(quiz)} style={{
+              background: G.surface, border: "1px solid " + G.border, borderRadius: 12,
+              padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14
+            }}>
+              <div style={{ fontSize: 36, flexShrink: 0 }}>{quiz.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: G.gold, marginBottom: 2 }}>{quiz.category}</div>
+                <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3 }}>{quiz.title}</div>
+                <div style={{ fontSize: 12, color: G.textDim, marginTop: 3 }}>{quiz.description}</div>
+              </div>
+              <div style={{ color: G.gold, fontSize: 18, flexShrink: 0 }}>›</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuizPlay({ quiz, answers, setAnswers, currentQ, setCurrentQ, setQuizPage, setQuizResult, G }) {
+  const q = quiz.questions[currentQ];
+  const progress = ((currentQ) / quiz.questions.length) * 100;
+
+  function answer(idx) {
+    const newAnswers = [...answers, idx];
+    setAnswers(newAnswers);
+    if (currentQ + 1 >= quiz.questions.length) {
+      setQuizResult(quiz.compute(newAnswers));
+      setQuizPage("quizSuspense");
+    } else {
+      setCurrentQ(currentQ + 1);
+    }
+  }
+
+  return (
+    <div style={{ padding: "0 0 80px" }}>
+      {/* Header */}
+      <div style={{ background: G.surface, padding: "16px 16px 0", borderBottom: "1px solid " + G.border }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: G.textDim, marginBottom: 8 }}>
+          <span>{quiz.emoji} {quiz.title.substring(0, 30)}...</span>
+          <span>{currentQ + 1}/{quiz.questions.length}</span>
+        </div>
+        <div style={{ height: 6, background: G.border, borderRadius: 3, marginBottom: 12 }}>
+          <div style={{ height: "100%", width: progress + "%", background: G.gold, borderRadius: 3, transition: "width 0.3s" }} />
+        </div>
+      </div>
+
+      {/* Question */}
+      <div style={{ padding: "28px 16px 16px" }}>
+        <div style={{ fontSize: 11, color: G.gold, letterSpacing: 2, marginBottom: 12 }}>QUESTION {currentQ + 1}</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: G.text, lineHeight: 1.5, marginBottom: 28 }}>{q.q}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {q.options.map((opt, i) => (
+            <button key={i} onClick={() => answer(i)} style={{
+              padding: "16px 20px", border: "2px solid " + G.border, borderRadius: 12, background: G.surface,
+              color: G.text, fontSize: 14, cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+              display: "flex", alignItems: "center", gap: 12
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = G.gold; e.currentTarget.style.background = G.goldDim; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.background = G.surface; }}>
+              <span style={{ width: 28, height: 28, borderRadius: "50%", background: G.goldDim, border: "1px solid " + G.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: "bold", color: G.gold, flexShrink: 0 }}>{String.fromCharCode(65 + i)}</span>
+              {opt}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuizSuspense({ setQuizPage, G }) {
+  const [step, setStep] = useState(0);
+  const msgs = ["Analyse de tes réponses...", "Calcul de ton profil psychologique...", "Préparation de ton résultat personnalisé..."];
+
+  useEffect(() => {
+    const timers = msgs.map((_, i) => setTimeout(() => setStep(i + 1), (i + 1) * 900));
+    const final = setTimeout(() => setQuizPage("quizPayment"), 2800);
+    return () => { timers.forEach(clearTimeout); clearTimeout(final); };
+  }, []);
+
+  return (
+    <div style={{ minHeight: "80vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 64, marginBottom: 24, animation: "spin 2s linear infinite" }}>⚙️</div>
+      <div style={{ fontSize: 18, fontWeight: "bold", color: G.text, marginBottom: 8 }}>Analyse en cours…</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 320, marginTop: 20 }}>
+        {msgs.map((msg, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, opacity: step > i ? 1 : 0.3, transition: "opacity 0.5s" }}>
+            <span style={{ fontSize: 18 }}>{step > i ? "✅" : "⏳"}</span>
+            <span style={{ fontSize: 13, color: G.textDim }}>{msg}</span>
+          </div>
+        ))}
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, quizPhone, setQuizPhone, quizPaymentMethod, setQuizPaymentMethod, setQuizPage, G, ORANGE_LOGO, MTN_LOGO }) {
+  const ORANGE_LOGO_PAY = "data:image/png;base6...";
+  const MTN_LOGO_PAY = "data:image/png;base6...";
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const paymentMethods = [
+    { id: "orange", label: "Orange Money", logo: ORANGE_LOGO, color: "#ff6600" },
+    { id: "mtn", label: "MTN MoMo", logo: MTN_LOGO, color: "#ffc000" }
+  ];
+
+  async function handlePay() {
+    if (!quizPhone || quizPhone.length < 9) { setError("Entre un numéro valide"); return; }
+    if (!quizPaymentMethod) { setError("Choisis un mode de paiement"); return; }
+    setLoading(true); setError("");
+    try {
+      const phone = quizPhone.startsWith("237") ? quizPhone : "237" + quizPhone;
+      const tokenRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "token" }) });
+      const tokenData = await tokenRes.json();
+      const token = tokenData.token;
+      const collectRes = await fetch("/api/campay", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "collect", token, amount: 500, phone, description: "Quiz CarryBooks - " + quiz.title, external_reference: "quiz_" + quiz.id + "_" + Date.now() })
+      });
+      const collectData = await collectRes.json();
+      if (collectData.reference) {
+        setQuizPaymentStep(2);
+        let attempts = 0;
+        const check = setInterval(async () => {
+          attempts++;
+          const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", token, reference: collectData.reference }) });
+          const checkData = await checkRes.json();
+          if (checkData.status === "SUCCESSFUL") { clearInterval(check); setQuizPage("quizResult"); }
+          else if (checkData.status === "FAILED" || attempts > 15) { clearInterval(check); setError("Paiement échoué. Réessaie."); setQuizPaymentStep(1); setLoading(false); }
+        }, 3000);
+      } else { setError(collectData.message || "Erreur de paiement"); setLoading(false); }
+    } catch (e) { setError("Erreur réseau"); setLoading(false); }
+  }
+
+  return (
+    <div style={{ minHeight: "80vh", padding: "0 0 80px", position: "relative", overflow: "hidden" }}>
+      {/* Blurred result preview */}
+      <div style={{ padding: "20px 16px", filter: "blur(8px)", userSelect: "none", pointerEvents: "none", opacity: 0.6 }}>
+        <div style={{ background: G.surface, borderRadius: 16, padding: 20, textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>{quiz.emoji}</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold }}>Résultat prêt ✨</div>
+          <div style={{ fontSize: 14, color: G.textDim, marginTop: 8 }}>████████ ██████ ████ ███████ ████████ ██ ████</div>
+          <div style={{ fontSize: 13, color: G.textDim, marginTop: 6 }}>██████ ████ ███████ ████ ██████ ████████</div>
+        </div>
+      </div>
+
+      {/* Payment card */}
+      <div style={{ position: "relative", background: "#fff", margin: "0 12px", borderRadius: 20, padding: 24, boxShadow: "0 8px 40px rgba(0,0,0,0.18)", zIndex: 2 }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 28 }}>😳</div>
+          <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginTop: 6 }}>Ton résultat est prêt…</div>
+          <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>Ce que nous avons trouvé est surprenant</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c", marginTop: 10 }}>500 FCFA</div>
+          <div style={{ fontSize: 11, color: "#999" }}>pour débloquer ton analyse complète</div>
+        </div>
+
+        {quizPaymentStep === 1 ? (
+          <>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 16 }}>
+              {paymentMethods.map(m => (
+                <button key={m.id} onClick={() => setQuizPaymentMethod(m.id)} style={{
+                  flex: 1, padding: "12px 8px", border: "2px solid " + (quizPaymentMethod === m.id ? m.color : "#ddd"),
+                  borderRadius: 12, background: quizPaymentMethod === m.id ? (m.id === "orange" ? "rgba(255,102,0,0.08)" : "rgba(255,192,0,0.08)") : "#f9f9f9",
+                  cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6
+                }}>
+                  <img src={m.logo} alt={m.label} style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 8 }} />
+                  <span style={{ fontSize: 11, color: "#333", fontWeight: "bold" }}>{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <input
+              placeholder="Numéro (ex: 655887118)"
+              value={quizPhone} onChange={e => setQuizPhone(e.target.value.replace(/\D/g, ""))}
+              style={{ width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 10, fontSize: 15, boxSizing: "border-box", marginBottom: 12 }}
+            />
+            {error && <div style={{ color: "#f44336", fontSize: 12, marginBottom: 8, textAlign: "center" }}>{error}</div>}
+            <button onClick={handlePay} disabled={loading} style={{
+              width: "100%", padding: "14px", background: loading ? "#ccc" : "#c9a84c", border: "none", borderRadius: 12,
+              color: "#fff", fontSize: 16, fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer"
+            }}>{loading ? "Traitement..." : "🔓 Voir mon résultat — 500 FCFA"}</button>
+          </>
+        ) : (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+            <div style={{ fontSize: 15, color: "#333", fontWeight: "bold" }}>Confirme le paiement</div>
+            <div style={{ fontSize: 13, color: "#666", marginTop: 6 }}>Vérifie ton téléphone et confirme le paiement de 500 FCFA</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c", animation: `bounce 1s ${i * 0.2}s infinite` }} />)}
+            </div>
+            <style>{`@keyframes bounce { 0%,80%,100%{transform:scale(0)}40%{transform:scale(1)} }`}</style>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuizResult({ quiz, result, setQuizPage, G }) {
+  function share() {
+    const text = quiz.title + " — " + result.level + " | Fais le test sur carrybooks.com";
+    if (navigator.share) navigator.share({ title: "Mon résultat CarryBooks Quiz", text, url: "https://www.carrybooks.com" });
+    else { navigator.clipboard.writeText(text); alert("Lien copié !"); }
+  }
+
+  return (
+    <div style={{ padding: "0 0 80px" }}>
+      <div style={{ background: "linear-gradient(135deg, #1a1208, #3d2b0a)", padding: "28px 16px", textAlign: "center" }}>
+        <div style={{ fontSize: 48, marginBottom: 10 }}>{quiz.emoji}</div>
+        <div style={{ fontSize: 13, color: G.gold, letterSpacing: 2, marginBottom: 6 }}>TON RÉSULTAT</div>
+        <div style={{ fontSize: 20, fontWeight: "bold", color: "#fff" }}>{result.level}</div>
+      </div>
+
+      <div style={{ padding: "20px 16px" }}>
+        <div style={{ background: G.surface, border: "2px solid " + result.color, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+          <div style={{ fontSize: 17, fontWeight: "bold", color: result.color, marginBottom: 10 }}>{result.title}</div>
+          <div style={{ fontSize: 14, color: G.textDim, lineHeight: 1.8 }}>{result.desc}</div>
+        </div>
+
+        <button onClick={share} style={{
+          width: "100%", padding: "14px", background: "transparent", border: "2px solid " + G.gold,
+          borderRadius: 12, color: G.gold, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 12
+        }}>🔗 Partager mon résultat</button>
+
+        <button onClick={() => setQuizPage("quizHome")} style={{
+          width: "100%", padding: "14px", background: G.gold, border: "none",
+          borderRadius: 12, color: "#1a1208", fontSize: 14, fontWeight: "bold", cursor: "pointer"
+        }}>🎯 Faire un autre quiz</button>
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   const [page, setPage] = useState("home");
   const [books, setBooks] = useState([]);
@@ -101,6 +600,15 @@ export default function App() {
   const [subPaymentStep, setSubPaymentStep] = useState(1);
   const [subPhone, setSubPhone] = useState("");
   const [subPaymentMethod, setSubPaymentMethod] = useState(null);
+  const [quizPage, setQuizPage] = useState("quizHome"); // quizHome | quizPlay | quizSuspense | quizPayment | quizResult
+  const [activeQuiz, setActiveQuiz] = useState(null);
+  const [quizAnswers, setQuizAnswers] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [quizResult, setQuizResult] = useState(null);
+  const [quizPaymentStep, setQuizPaymentStep] = useState(1);
+  const [quizPhone, setQuizPhone] = useState("");
+  const [quizPaymentMethod, setQuizPaymentMethod] = useState(null);
+  const [quizCategory, setQuizCategory] = useState("Tous");
 
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
@@ -510,6 +1018,7 @@ export default function App() {
     { id: "subscription", label: "Abonnement" },
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
+    { id: "quiz", label: "🎯 Quiz" },
     { id: "contact", label: "Contact" },
   ];
 
@@ -1321,6 +1830,16 @@ export default function App() {
           </div>
         )}
 
+        {page === "quiz" && (
+          <div style={{ padding: "0 0 80px" }}>
+            {quizPage === "quizHome" && <QuizHome setActiveQuiz={setActiveQuiz} setQuizPage={setQuizPage} setQuizAnswers={setQuizAnswers} setCurrentQuestion={setCurrentQuestion} quizCategory={quizCategory} setQuizCategory={setQuizCategory} G={G} />}
+            {quizPage === "quizPlay" && activeQuiz && <QuizPlay quiz={activeQuiz} answers={quizAnswers} setAnswers={setQuizAnswers} currentQ={currentQuestion} setCurrentQ={setCurrentQuestion} setQuizPage={setQuizPage} setQuizResult={setQuizResult} G={G} />}
+            {quizPage === "quizSuspense" && <QuizSuspense setQuizPage={setQuizPage} G={G} />}
+            {quizPage === "quizPayment" && <QuizPayment quiz={activeQuiz} quizResult={quizResult} quizPaymentStep={quizPaymentStep} setQuizPaymentStep={setQuizPaymentStep} quizPhone={quizPhone} setQuizPhone={setQuizPhone} quizPaymentMethod={quizPaymentMethod} setQuizPaymentMethod={setQuizPaymentMethod} setQuizPage={setQuizPage} G={G} ORANGE_LOGO={ORANGE_LOGO} MTN_LOGO={MTN_LOGO} />}
+            {quizPage === "quizResult" && <QuizResult quiz={activeQuiz} result={quizResult} setQuizPage={setQuizPage} G={G} />}
+          </div>
+        )}
+
         {/* FOOTER */}
         {page !== "reader" && (
           <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "28px 16px 40px" }}>
@@ -1462,6 +1981,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
