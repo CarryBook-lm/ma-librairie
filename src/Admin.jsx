@@ -29,13 +29,13 @@ const emptyForm = {
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "CarryBooks2026!";
 
 export default function Admin() {
-  const [adminAuth, setAdminAuth] = useState(() => sessionStorage.getItem("cb_admin") === "ok");
+  const [adminAuth, setAdminAuth] = useState(() => localStorage.getItem("cb_admin") === "ok");
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState(false);
 
   function handleAdminLogin() {
     if (adminInput === ADMIN_PASSWORD) {
-      sessionStorage.setItem("cb_admin", "ok");
+      localStorage.setItem("cb_admin", "ok");
       setAdminAuth(true);
       setAdminError(false);
     } else {
@@ -209,7 +209,7 @@ export default function Admin() {
             style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
             🌐 Site
           </button>
-          <button onClick={() => { sessionStorage.removeItem("cb_admin"); setAdminAuth(false); }}
+          <button onClick={() => { localStorage.removeItem("cb_admin"); setAdminAuth(false); }}
             style={{ background: "none", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
             🔒 Déco
           </button>
