@@ -879,18 +879,23 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
                     <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
-                    {prog > 0 && (
-                      <div style={{ marginBottom: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: G.textFaint, marginBottom: 2 }}>
-                          <span>Progression</span><span>Page {prog}</span>
+                    {(() => {
+                      const pdfProg = parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0");
+                      const showProg = book.pdf_url ? pdfProg > 1 : prog > 0;
+                      const label = book.pdf_url ? (pdfProg > 1 ? "P." + pdfProg : "") : (prog > 0 ? "P." + prog : "");
+                      return showProg ? (
+                        <div style={{ marginBottom: 6 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: G.textFaint, marginBottom: 2 }}>
+                            <span>Progression</span><span>{label}</span>
+                          </div>
+                          <div style={{ height: 3, background: G.border, borderRadius: 2 }}>
+                            <div style={{ height: "100%", width: "60%", background: G.gold, borderRadius: 2 }} />
+                          </div>
                         </div>
-                        <div style={{ height: 3, background: G.border, borderRadius: 2 }}>
-                          <div style={{ height: "100%", width: Math.min(100, prog * 5) + "%", background: G.gold, borderRadius: 2 }} />
-                        </div>
-                      </div>
-                    )}
+                      ) : null;
+                    })()}
                     <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
-                      {prog > 0 ? "▶ CONTINUER" : "📖 LIRE"}
+                      {(book.pdf_url ? parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0") > 1 : prog > 0) ? "▶ CONTINUER" : "📖 LIRE"}
                     </button>
                   </div>
                 );
@@ -960,6 +965,7 @@ export default function App() {
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -1249,9 +1255,32 @@ export default function App() {
     }
   }
 
+  async function loadBookRatings(bookId) {
+    const { data } = await supabase.from("book_reviews").select("rating, user_id").eq("book_id", bookId);
+    if (data && data.length > 0) {
+      const avg = data.reduce((s, r) => s + r.rating, 0) / data.length;
+      const userRating = user ? (data.find(r => r.user_id === user.id)?.rating || 0) : 0;
+      setBookRatings(prev => ({ ...prev, [bookId]: { avg: Math.round(avg * 10) / 10, count: data.length, userRating } }));
+    } else {
+      setBookRatings(prev => ({ ...prev, [bookId]: { avg: 0, count: 0, userRating: 0 } }));
+    }
+  }
+
+  async function submitRating(bookId, rating) {
+    if (!user) { alert("Connecte-toi pour noter ce livre"); return; }
+    const existing = await supabase.from("book_reviews").select("id").eq("book_id", bookId).eq("user_id", user.id).limit(1);
+    if (existing.data && existing.data.length > 0) {
+      await supabase.from("book_reviews").update({ rating }).eq("id", existing.data[0].id);
+    } else {
+      await supabase.from("book_reviews").insert([{ book_id: bookId, user_id: user.id, rating }]);
+    }
+    loadBookRatings(bookId);
+  }
+
   function openBook(book) {
     setSelectedBook(book);
     setPage("detail");
+    loadBookRatings(book.id);
     setShowMenu(false);
     if (book.price === 0) cacheBook(book);
   }
@@ -1448,7 +1477,7 @@ export default function App() {
             </span>
             {!excerptMode && (
               <input type="number" min="1" defaultValue={startPage}
-                onChange={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
+                onChange={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)} onBlur={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
                 style={{ width: 48, background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: 4, padding: "2px 6px", fontSize: 12 }} />
             )}
             {excerptMode && <span style={{ opacity: 0 }}>x</span>}
@@ -1684,6 +1713,38 @@ export default function App() {
               <p style={{ color: G.text, lineHeight: 1.8, fontSize: 12, margin: 0, fontStyle: "italic", textAlign: "justify" }}>{book.summary}</p>
             </div>
           )}
+          {/* ⭐ Ratings */}
+          {(() => {
+            const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
+            return (
+              <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{r.count > 0 ? r.avg.toFixed(1) : "—"}</span>
+                    <div>
+                      <div style={{ display: "flex", gap: 2 }}>
+                        {[1,2,3,4,5].map(s => (
+                          <span key={s} style={{ fontSize: 14, color: s <= Math.round(r.avg) ? "#f5c518" : G.border }}>★</span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 10, color: G.textFaint }}>{r.count} avis</div>
+                    </div>
+                  </div>
+                  {owned || free ? (
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>Ton avis</div>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {[1,2,3,4,5].map(s => (
+                          <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : G.border, padding: 0 }}>★</button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : <div style={{ fontSize: 11, color: G.textFaint, textAlign: "right" }}>Achète pour<br/>laisser un avis</div>}
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
             <button onClick={() => startReading(book, true)}
               style={{ flex: 1, padding: "12px 8px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
