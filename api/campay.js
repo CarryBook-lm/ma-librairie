@@ -11,8 +11,8 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: process.env.VITE_CAMPAY_USERNAME,
-        password: process.env.VITE_CAMPAY_PASSWORD
+        username: process.env.CAMPAY_USERNAME,
+        password: process.env.CAMPAY_PASSWORD
       })
     });
 
