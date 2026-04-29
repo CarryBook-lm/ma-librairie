@@ -834,10 +834,132 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
   );
 }
 
+// ─── LIBRARY PAGE COMPONENT ───
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G }) {
+  const [libTab, setLibTab] = useState("books"); // "books" | "history"
+  const myBooks = books.filter(b => purchasedBooks.includes(b.id));
+
+  return (
+    <div style={{ padding: "0 0 80px" }}>
+      {/* Header */}
+      <div style={{ padding: "20px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
+        <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 12 }}>Ma bibliothèque</div>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 0 }}>
+          {[["books", "📚 Mes livres (" + myBooks.length + ")"], ["history", "🧾 Historique"]].map(([id, label]) => (
+            <button key={id} onClick={() => setLibTab(id)} style={{
+              flex: 1, padding: "10px 0", background: "none", border: "none",
+              borderBottom: "2px solid " + (libTab === id ? G.gold : "transparent"),
+              color: libTab === id ? G.gold : G.textDim, fontSize: 13, cursor: "pointer", fontWeight: libTab === id ? "bold" : "normal"
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Books tab */}
+      {libTab === "books" && (
+        <div style={{ padding: "16px 16px 0" }}>
+          {myBooks.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8, marginTop: 8 }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
+              <div style={{ color: G.textDim, marginBottom: 8 }}>Votre bibliothèque est vide</div>
+              <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 12 }}>Parcourir</button>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+              {myBooks.map(book => {
+                const prog = parseInt(localStorage.getItem("readingProgress_" + book.id) || "0");
+                return (
+                  <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
+                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
+                      {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "12px 8px 8px", textAlign: "center" }}>
+                        <span style={{ fontSize: 9, color: G.green, letterSpacing: 1 }}>✓ ACHETÉ</span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
+                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
+                    {prog > 0 && (
+                      <div style={{ marginBottom: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: G.textFaint, marginBottom: 2 }}>
+                          <span>Progression</span><span>Page {prog}</span>
+                        </div>
+                        <div style={{ height: 3, background: G.border, borderRadius: 2 }}>
+                          <div style={{ height: "100%", width: Math.min(100, prog * 5) + "%", background: G.gold, borderRadius: 2 }} />
+                        </div>
+                      </div>
+                    )}
+                    <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
+                      {prog > 0 ? "▶ CONTINUER" : "📖 LIRE"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* History tab */}
+      {libTab === "history" && (
+        <div style={{ padding: "16px 16px 0" }}>
+          {purchaseHistory.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8 }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🧾</div>
+              <div style={{ color: G.textDim }}>Aucun achat enregistré</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Total */}
+              <div style={{ background: G.goldDim, border: "1px solid " + G.gold, borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 11, color: G.textDim }}>Total dépensé</div>
+                  <div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>
+                    {purchaseHistory.reduce((s, p) => s + (p.amount || 0), 0).toLocaleString()} FCFA
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 11, color: G.textDim }}>Livres achetés</div>
+                  <div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{purchaseHistory.length}</div>
+                </div>
+              </div>
+
+              {/* Purchase list */}
+              {purchaseHistory.map((purchase, i) => {
+                const book = books.find(b => b.id === purchase.book_id);
+                if (!book) return null;
+                const date = purchase.created_at ? new Date(purchase.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "—";
+                return (
+                  <div key={i} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: "12px 14px", display: "flex", gap: 12, alignItems: "center" }}>
+                    {book.cover && <img src={book.cover} alt={book.title} style={{ width: 44, height: 60, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 3 }}>{book.title}</div>
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 11, color: G.textFaint }}>📅 {date}</span>
+                        <span style={{ fontSize: 12, fontWeight: "bold", color: G.gold }}>{purchase.amount ? purchase.amount.toLocaleString() + " F" : "—"}</span>
+                      </div>
+                    </div>
+                    <button onClick={() => startReading(book)} style={{ padding: "6px 12px", background: G.goldDim, border: "1px solid " + G.gold, borderRadius: 6, color: G.gold, fontSize: 11, cursor: "pointer", flexShrink: 0 }}>
+                      📖
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function App() {
   const [page, setPage] = useState("home");
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -981,13 +1103,14 @@ export default function App() {
   }, []);
 
   async function loadUserPurchases(userId) {
-    const { data } = await supabase.from("purchases").select("book_id").eq("user_id", userId);
+    const { data } = await supabase.from("purchases").select("book_id, created_at, amount").eq("user_id", userId).order("created_at", { ascending: false });
     if (data) {
       const remoteIds = data.map(p => p.book_id);
       const local = JSON.parse(localStorage.getItem("purchasedBooks") || "[]");
       const merged = [...new Set([...remoteIds, ...local])];
       setPurchasedBooks(merged);
       localStorage.setItem("purchasedBooks", JSON.stringify(merged));
+      setPurchaseHistory(data);
     }
     // Charger abonnement actif
     const now = new Date().toISOString();
@@ -1508,14 +1631,14 @@ export default function App() {
         {/* Navigation - cachée en mode scroll */}
         {!readerScrollMode && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <button onClick={() => { setReadingPage(function(p) { return Math.max(0, p - 1); }); window.scrollTo(0,0); }} disabled={readingPage === 0}
+          <button onClick={() => { setReadingPage(function(p) { const np = Math.max(0, p - 1); if(reading) localStorage.setItem("readingProgress_" + reading.id, np); return np; }); window.scrollTo(0,0); }} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === 0 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === 0 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
           </button>
           <input type="range" min={0} max={total - 1} value={readingPage}
             onChange={function(e) { setReadingPage(Number(e.target.value)); window.scrollTo(0,0); }}
             style={{ flex: 1, accentColor: G.gold }} />
-          <button onClick={() => { setReadingPage(function(p) { return Math.min(total - 1, p + 1); }); window.scrollTo(0,0); }} disabled={readingPage === total - 1}
+          <button onClick={() => { setReadingPage(function(p) { const np = Math.min(total - 1, p + 1); if(reading) localStorage.setItem("readingProgress_" + reading.id, np); return np; }); window.scrollTo(0,0); }} disabled={readingPage === total - 1}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === total - 1 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === total - 1 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
             ›
           </button>
@@ -1929,33 +2052,7 @@ export default function App() {
 
         {/* BIBLIOTHEQUE */}
         {page === "library" && (
-          <div style={{ padding: "20px 16px 80px" }}>
-            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Ma bibliothèque</div>
-            <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>{purchasedBooks.length === 0 ? "Aucun livre acheté" : purchasedBooks.length + " livre" + (purchasedBooks.length > 1 ? "s" : "")}</p>
-            {purchasedBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8 }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
-                <div style={{ color: G.textDim, marginBottom: 8 }}>Votre bibliothèque est vide</div>
-                <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 12 }}>Parcourir</button>
-              </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-                {books.filter(b => purchasedBooks.includes(b.id)).map(book => (
-                  <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
-                    <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
-                      {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "12px 8px 8px", textAlign: "center" }}>
-                        <span style={{ fontSize: 9, color: G.green, letterSpacing: 1 }}>✓ ACHETÉ</span>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
-                    <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
-                    <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>📖 LIRE</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} />
         )}
 
         {/* FAVORIS */}
