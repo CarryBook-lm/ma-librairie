@@ -909,7 +909,10 @@ export default function App() {
     fetchBooks();
     // Charger les paramètres d'abonnement au démarrage
     supabase.from("sub_settings").select("*").limit(1).then(({ data }) => {
-      if (data && data.length > 0) setSubSettings(data[0]);
+      if (data && data.length > 0) {
+        setSubSettings(data[0]);
+        if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
+      }
     });
     const p = localStorage.getItem("purchasedBooks");
     if (p) setPurchasedBooks(JSON.parse(p));
