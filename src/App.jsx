@@ -626,12 +626,9 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
     try {
       const phone = quizPhone.replace(/[^0-9]/g,"");
       const fullPhone = phone.startsWith("237") ? phone : "237" + phone;
-      const tokenRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "token" }) });
-      const tokenData = await tokenRes.json();
-      if (!tokenData.token) { setError("Erreur de connexion Campay"); setLoading(false); return; }
       const collectRes = await fetch("/api/campay", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "collect", token: tokenData.token, amount: price, phone: fullPhone, description: "Carry'Quiz — " + quiz.title, external_reference: "quiz_" + quiz.id + "_" + Date.now() })
+        body: JSON.stringify({ action: "collect", amount: price, phone: fullPhone, description: "Carry'Quiz — " + quiz.title, external_reference: "quiz_" + quiz.id + "_" + Date.now() })
       });
       const collectData = await collectRes.json();
       if (collectData.reference) {
@@ -640,14 +637,14 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
         const check = setInterval(async () => {
           attempts++;
           try {
-            const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", token: tokenData.token, reference: collectData.reference }) });
+            const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: collectData.reference }) });
             const checkData = await checkRes.json();
             if (checkData.status === "SUCCESSFUL") { clearInterval(check); setQuizPage("quizResult"); }
             else if (checkData.status === "FAILED" || attempts > 20) { clearInterval(check); setError("Paiement non confirmé. Réessaie."); setQuizPaymentStep(1); setLoading(false); }
-          } catch(e) { clearInterval(check); setError("Erreur réseau lors de la vérification"); setQuizPaymentStep(1); setLoading(false); }
+          } catch(e) { clearInterval(check); setError("Erreur réseau."); setQuizPaymentStep(1); setLoading(false); }
         }, 3000);
       } else {
-        setError(collectData.message || "Erreur lors du paiement");
+        setError(collectData.message || collectData.error || "Erreur paiement. Vérifie ton numéro.");
         setLoading(false);
       }
     } catch (e) { setError("Erreur réseau. Vérifie ta connexion."); setLoading(false); }
@@ -2123,29 +2120,24 @@ export default function App() {
 
 
         {/* CARRY'QUIZ WIDGET — shown on home page */}
-        {(page === "home" || page === "catalog") && page !== "quiz" && (
+        {page === "home" && (
           <div style={{ padding: "20px 16px 0", background: G.bg }}>
-            <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 50%, #1a1208 100%)", borderRadius: 16, padding: "20px 16px", border: "1px solid " + G.gold }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                <div style={{ fontSize: 28 }}>🎯</div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>Carry'Quiz</div>
-                  <div style={{ fontSize: 11, color: "#bbb" }}>Découvre des vérités sur toi-même</div>
-                </div>
-                <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); }} style={{ marginLeft: "auto", padding: "6px 14px", background: G.gold, border: "none", borderRadius: 20, color: "#1a1208", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>Voir tout</button>
-              </div>
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-                {QUIZ_DATA.filter(q => q.popular).slice(0,4).map(quiz => (
-                  <div key={quiz.id} onClick={() => { setActiveQuiz(quiz); setQuizAnswers([]); setCurrentQuestion(0); setQuizPage("quizPlay"); setPage("quiz"); }} style={{
-                    minWidth: 130, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 10,
-                    padding: "12px 10px", cursor: "pointer", textAlign: "center", flexShrink: 0
-                  }}>
-                    <div style={{ fontSize: 24, marginBottom: 4 }}>{quiz.emoji}</div>
-                    <div style={{ fontSize: 11, color: "#ddd", lineHeight: 1.3 }}>{quiz.title.substring(0,35)}{quiz.title.length>35?"…":""}</div>
-                    <div style={{ fontSize: 10, color: G.gold, marginTop: 5 }}>Commencer ▶</div>
-                  </div>
+            <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 50%, #1a1208 100%)", borderRadius: 16, padding: "24px 16px 20px", border: "1px solid " + G.gold, textAlign: "center" }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>🎯</div>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif", marginBottom: 6 }}>Carry'Quiz</div>
+              <div style={{ fontSize: 13, color: "#ccc", marginBottom: 20 }}>Découvre des vérités sur toi-même</div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+                {QUIZ_CATEGORIES.filter(c => c !== "Tous").map(cat => (
+                  <button key={cat} onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory(cat); }} style={{
+                    padding: "7px 16px", borderRadius: 24, border: "1.5px solid rgba(255,255,255,0.25)",
+                    background: "transparent", color: "#ddd", fontSize: 12, cursor: "pointer"
+                  }}>{cat}</button>
                 ))}
               </div>
+              <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory("Tous"); }} style={{
+                padding: "10px 28px", background: G.gold, border: "none", borderRadius: 24,
+                color: "#1a1208", fontSize: 13, fontWeight: "bold", cursor: "pointer"
+              }}>Tous les quiz ▶</button>
             </div>
           </div>
         )}
