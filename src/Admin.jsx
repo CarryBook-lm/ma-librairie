@@ -95,7 +95,10 @@ export default function Admin() {
 
   async function fetchSubSettings() {
     const { data } = await supabase.from("sub_settings").select("*").limit(1);
-    if (data && data.length > 0) setSubSettings(data[0]);
+    if (data && data.length > 0) {
+      setSubSettings(data[0]);
+      if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
+    }
   }
 
 
@@ -427,16 +430,13 @@ export default function Admin() {
                 </div>
 
                 {/* Quiz Price */}
-                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: 20, marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 16 }}>🎯 Prix des Quiz</div>
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 12, color: G.textDim, marginBottom: 6 }}>Prix pour voir le résultat (FCFA)</div>
-                    <input type="number" value={quizPrice} onChange={e => setQuizPrice(parseInt(e.target.value) || 0)}
-                      style={{ width: "100%", padding: "10px 12px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
-                  </div>
+                <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#c9a84c", marginBottom: 12 }}>🎯 Prix des Quiz (FCFA)</div>
+                  <input type="number" value={quizPrice} onChange={e => setQuizPrice(parseInt(e.target.value) || 0)}
+                    style={{ width: "100%", padding: "10px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }} />
                   <button onClick={saveQuizPrice} disabled={quizPriceSaving}
-                    style={{ padding: "10px 20px", background: quizPriceSaving ? G.border : G.gold, border: "none", borderRadius: 8, color: "#1a1208", fontWeight: "bold", cursor: "pointer" }}>
-                    {quizPriceSaving ? "Sauvegarde..." : "💾 Sauvegarder"}
+                    style={{ padding: "10px 20px", background: quizPriceSaving ? "#333" : "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer" }}>
+                    {quizPriceSaving ? "Sauvegarde..." : "💾 Sauvegarder le prix quiz"}
                   </button>
                 </div>
 
