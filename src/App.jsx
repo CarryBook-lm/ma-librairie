@@ -426,7 +426,7 @@ export default function App() {
         }, 25000);
       } else {
         setPaymentStep(1);
-        alert("Erreur: " + (payData.message || "Vérifiez votre numéro et réessayez."));
+        alert("Erreur Campay: " + JSON.stringify(payData));
       }
     } catch(e) {
       setPaymentStep(1);
