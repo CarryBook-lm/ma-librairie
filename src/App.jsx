@@ -1764,12 +1764,8 @@ export default function App() {
               const pageText = scrollAllParagraphs.slice(0, 3).map(p => p.replace(/<[^>]*>/g, "")).join(" ").substring(0, 300);
               const title = reading.title || "";
               const author = reading.author || "";
-              const msg = "📖 Extrait de " + title + " par " + author + ":
-
-" + pageText + "...
-
-💳 Lire le livre complet sur CarryBooks :
-https://www.carrybooks.com";
+              const lines2 = ["📖 Extrait de " + title + " par " + author + ":", "", pageText + "...", "", "💳 Lire le livre complet sur CarryBooks :", "https://www.carrybooks.com"];
+              const msg = lines2.join("\n");
               if (navigator.share) {
                 navigator.share({ title: title, text: msg, url: "https://www.carrybooks.com" }).catch(() => {});
               } else {
@@ -2644,6 +2640,7 @@ https://www.carrybooks.com";
     </div>
   );
 }
+
 
 
 
