@@ -628,6 +628,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
     if (!quizPhone || quizPhone.replace(/[^0-9]/g,"").length < 9) { setError("Entre un numéro valide (9 chiffres)"); return; }
     if (!quizPaymentMethod) { setError("Choisis MTN MoMo ou Orange Money"); return; }
     setLoading(true); setError("");
+    setQuizPaymentStep(4);
     try {
       const phone = quizPhone.replace(/[^0-9]/g,"");
       const fullPhone = phone.startsWith("237") ? phone : "237" + phone;
@@ -637,22 +638,21 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
       });
       const collectData = await collectRes.json();
       if (collectData.reference) {
-        setQuizPaymentStep(2);
         let attempts = 0;
         const check = setInterval(async () => {
           attempts++;
           try {
             const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: collectData.reference }) });
             const checkData = await checkRes.json();
-            if (checkData.status === "SUCCESSFUL") { clearInterval(check); setQuizPage("quizResult"); }
-            else if (checkData.status === "FAILED" || attempts > 20) { clearInterval(check); setError("Paiement non confirmé. Réessaie."); setQuizPaymentStep(1); setLoading(false); }
-          } catch(e) { clearInterval(check); setError("Erreur réseau."); setQuizPaymentStep(1); setLoading(false); }
+            if (checkData.status === "SUCCESSFUL") { clearInterval(check); setQuizPage("quizResult"); setLoading(false); }
+            else if (checkData.status === "FAILED" || attempts > 20) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
+          } catch(e) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
         }, 3000);
       } else {
-        setError(collectData.message || collectData.error || "Erreur paiement. Vérifie ton numéro.");
+        setQuizPaymentStep(5);
         setLoading(false);
       }
-    } catch (e) { setError("Erreur réseau. Vérifie ta connexion."); setLoading(false); }
+    } catch (e) { setQuizPaymentStep(5); setLoading(false); }
   }
 
   return (
@@ -674,10 +674,10 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
 
       {/* Payment card */}
       <div style={{ position: "sticky", bottom: 0, background: "#fff", margin: "0", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", boxShadow: "0 -8px 40px rgba(0,0,0,0.2)", zIndex: 10 }}>
-        {quizPaymentStep === 1 ? (
+        {quizPaymentStep === 1 && (
           <>
             <div style={{ textAlign: "center", marginBottom: 18 }}>
-              <div style={{ fontSize: 26 }}>😳</div>
+              <div style={{ fontSize: 26 }}>{quiz.emoji}</div>
               <div style={{ fontSize: 16, fontWeight: "bold", color: "#1a1208", marginTop: 6 }}>Ton résultat est prêt…</div>
               <div style={{ fontSize: 13, color: "#666", marginTop: 4, fontStyle: "italic" }}>Ce que nous avons trouvé est surprenant</div>
               {quizResult?.teaser && (
@@ -685,44 +685,92 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
                   🔒 {quizResult.teaser}
                 </div>
               )}
-              <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c", marginTop: 14 }}>{price} FCFA</div>
-              <div style={{ fontSize: 11, color: "#999" }}>pour débloquer ta vérité complète</div>
+              <div style={{ background: "#fff8e1", padding: "10px 14px", borderRadius: 8, marginTop: 14 }}>
+                <div style={{ fontSize: 11, color: "#7a5c00" }}>Prix</div>
+                <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{price} FCFA</div>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-              {methods.map(m => (
-                <button key={m.id} onClick={() => setQuizPaymentMethod(m.id)} style={{
-                  flex: 1, padding: "12px 8px", border: "2px solid " + (quizPaymentMethod === m.id ? m.color : "#ddd"),
-                  borderRadius: 12, background: quizPaymentMethod === m.id ? (m.id==="orange" ? "rgba(255,102,0,0.08)" : "rgba(255,192,0,0.08)") : "#fafafa",
-                  cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5
-                }}>
-                  <img src={m.logo} alt={m.label} style={{ width: 42, height: 42, objectFit: "contain", borderRadius: 8 }} />
-                  <span style={{ fontSize: 10, color: "#333", fontWeight: "bold" }}>{m.label}</span>
-                </button>
-              ))}
-            </div>
-            <input
-              placeholder="Numéro (ex: 655 88 71 18)"
-              value={quizPhone}
-              onChange={e => setQuizPhone(e.target.value.replace(/[^0-9]/g,""))}
-              style={{ width: "100%", padding: "13px 14px", border: "1.5px solid #ddd", borderRadius: 10, fontSize: 15, boxSizing: "border-box", marginBottom: 10, outline: "none" }}
-            />
-            {error && <div style={{ color: "#f44336", fontSize: 12, marginBottom: 8, textAlign: "center" }}>{error}</div>}
-            <button onClick={handlePay} disabled={loading} style={{
-              width: "100%", padding: "15px", background: loading ? "#ccc" : "linear-gradient(135deg, #c9a84c, #e0be7a)",
-              border: "none", borderRadius: 12, color: loading ? "#666" : "#1a1208", fontSize: 16, fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer"
-            }}>{loading ? "Traitement en cours…" : "🔓 Voir ma vérité — " + price + " FCFA"}</button>
-            <div style={{ textAlign: "center", marginTop: 10, fontSize: 11, color: "#999" }}>🔒 Paiement sécurisé via Campay</div>
+            <button onClick={() => setQuizPaymentStep(2)} style={{
+              width: "100%", padding: 14, background: "linear-gradient(135deg, #c9a84c, #e0be7a)", color: "#1a1208",
+              border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>
+              💎 Continuer vers le paiement
+            </button>
+            <div style={{ textAlign: "center", fontSize: 11, color: "#999" }}>🔒 Paiement sécurisé via Campay</div>
           </>
-        ) : (
-          <div style={{ textAlign: "center", padding: "10px 0 20px" }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>📱</div>
-            <div style={{ fontSize: 16, color: "#1a1208", fontWeight: "bold" }}>Confirme sur ton téléphone</div>
-            <div style={{ fontSize: 13, color: "#666", marginTop: 6 }}>Une notification de paiement a été envoyée à ton numéro. Confirme le {price} FCFA.</div>
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
-              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: "#c9a84c", animation: `dotBounce 1.2s ${i*0.2}s infinite ease-in-out` }} />)}
+        )}
+        {quizPaymentStep === 2 && (
+          <div style={{ textAlign: "center", padding: "10px 0" }}>
+            <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
+            <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
+            <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>Avec quel opérateur veux-tu payer ?</p>
+            <button onClick={() => { setQuizPaymentMethod("mtn"); setQuizPaymentStep(3); }} style={{
+              width: "100%", padding: 16, marginBottom: 10, background: "#FFCC00", color: "#000",
+              border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
+            }}>📱 MTN Mobile Money</button>
+            <button onClick={() => { setQuizPaymentMethod("orange"); setQuizPaymentStep(3); }} style={{
+              width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
+              border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
+            }}>📱 Orange Money</button>
+            <button onClick={() => setQuizPaymentStep(1)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>← Retour</button>
+          </div>
+        )}
+        {quizPaymentStep === 3 && (
+          <div style={{ padding: "10px 0" }}>
+            <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro</h3>
+            <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>{quizPaymentMethod === "mtn" ? "📱 MTN Mobile Money" : "📱 Orange Money"}</p>
+            <input value={quizPhone} onChange={e => setQuizPhone(e.target.value.replace(/[^0-9]/g,""))}
+              placeholder="Ex : 671234567"
+              style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
+            <p style={{ color: "#aaa", fontSize: 11, marginBottom: 16, textAlign: "center" }}>Sans le 237, juste tes 9 chiffres</p>
+            {error && <div style={{ color: "#f44336", fontSize: 12, marginBottom: 8, textAlign: "center" }}>{error}</div>}
+            <button onClick={handlePay} disabled={loading || !quizPhone || quizPhone.length < 8}
+              style={{ width: "100%", padding: 14, background: (quizPhone && quizPhone.length >= 8 && !loading) ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: (quizPhone && quizPhone.length >= 8 && !loading) ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
+              {loading ? "Traitement..." : "💎 Payer " + price + " FCFA"}
+            </button>
+            <button onClick={() => setQuizPaymentStep(2)} style={{ width: "100%", background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", padding: 8 }}>← Retour</button>
+          </div>
+        )}
+        {quizPaymentStep === 4 && (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>⏳</div>
+            <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Paiement en cours...</h3>
+            <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, textAlign: "left", marginBottom: 16 }}>
+              <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
+                ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
+              </p>
             </div>
-            <button onClick={() => { setQuizPaymentStep(1); setLoading(false); setError(""); }} style={{ marginTop: 20, background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 20px", fontSize: 12, color: "#666", cursor: "pointer" }}>← Changer de numéro</button>
-            <style>{`@keyframes dotBounce{0%,80%,100%{transform:scale(0.6)}40%{transform:scale(1)}}`}</style>
+            <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
+              Confirme la transaction sur ton téléphone {quizPaymentMethod === "mtn" ? "MTN" : "Orange"}.<br/>
+              Cela peut prendre jusqu'à 30 secondes.
+            </p>
+          </div>
+        )}
+        {quizPaymentStep === 5 && (
+          <div style={{ padding: "20px 0" }}>
+            <div style={{ textAlign: "center", marginBottom: 18 }}>
+              <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
+              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
+              <p style={{ color: "#888", fontSize: 13 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+            </div>
+            <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
+              <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
+              <p style={{ color: "#7a4a00", fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+                ✅ Vérifie ton solde Mobile Money<br/>
+                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                ✅ Patiente quelques minutes et réessaie<br/>
+                ✅ Vérifie ta connexion internet
+              </p>
+            </div>
+            <button onClick={() => { setQuizPaymentStep(2); setQuizPaymentMethod(null); setQuizPhone(""); setLoading(false); setError(""); }} style={{
+              width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+              border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>
+              🔁 Réessayer
+            </button>
+            <button onClick={() => { setQuizPaymentStep(1); setQuizPaymentMethod(null); setQuizPhone(""); setLoading(false); setError(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>
+              Annuler
+            </button>
           </div>
         )}
       </div>
