@@ -1771,7 +1771,7 @@ export default function App() {
 💳 Lire le livre complet sur CarryBooks :
 https://www.carrybooks.com";
               if (navigator.share) {
-                navigator.share({ title: title, text: msg, url: "https://www.carrybooks.com" });
+                navigator.share({ title: title, text: msg, url: "https://www.carrybooks.com" }).catch(() => {});
               } else {
                 window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
               }
