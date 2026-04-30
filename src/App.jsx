@@ -1147,8 +1147,22 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
     }
   }
 
+  // ALL HOOKS MUST BE HERE - before any conditional returns
+  const [selDay, setSelDay] = useState("");
+  const [selMonth, setSelMonth] = useState("");
+  const [selYear, setSelYear] = useState("");
+  const days = Array.from({length: 31}, (_, i) => i + 1);
+  const months = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({length: 80}, (_, i) => currentYear - i);
+
   const computedBirthdate = selYear && selMonth && selDay ? selYear + "-" + selMonth + "-" + selDay : birthdate;
   const sign = getSign(computedBirthdate);
+
+  function updateBirthdate(y, m, d) {
+    if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
+    else setBirthdate("");
+  }
 
   // HOME
   if (horoscopePage === "home") return (
@@ -1179,22 +1193,6 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
       </div>
     </div>
   );
-
-  // FORM
-  const days = Array.from({length: 31}, (_, i) => i + 1);
-  const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({length: 80}, (_, i) => currentYear - i);
-
-  // Local state for day/month/year selects
-  const [selDay, setSelDay] = useState(birthdate ? birthdate.split("-")[2] || "" : "");
-  const [selMonth, setSelMonth] = useState(birthdate ? birthdate.split("-")[1] || "" : "");
-  const [selYear, setSelYear] = useState(birthdate ? birthdate.split("-")[0] || "" : "");
-
-  function updateBirthdate(y, m, d) {
-    if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
-    else setBirthdate("");
-  }
 
   if (horoscopePage === "form") return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", padding: "0 0 80px" }}>
