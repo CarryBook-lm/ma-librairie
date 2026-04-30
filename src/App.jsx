@@ -67,7 +67,7 @@ const G = {
 // CARRY'QUIZ — Quiz System
 // ============================================================
 
-const QUIZ_CATEGORIES = ["Tous", "❤️ Amour", "🧠 Intelligence", "💭 Personnalité", "💰 Argent & Succès", "🔥 Quiz Choc"];
+const QUIZ_CATEGORIES = ["Tous", "❤️ Amour", "🧠 Test du QI", "💭 Personnalité", "💰 Argent & Succès", "🔥 Quiz Choc"];
 
 const QUIZ_DATA = [
   // ─── AMOUR ───
@@ -207,8 +207,10 @@ const QUIZ_DATA = [
   // ─── INTELLIGENCE ───
   {
     id: "vrai_qi",
-    category: "🧠 Intelligence",
-    title: "Quel est ton vrai niveau d'intelligence ?",
+    category: "🧠 Test du QI",
+    title: "Test du QI — Quel est ton quotient intellectuel ?",
+    subtitle: "Intelligence",
+    subtitleDesc: "Quel est ton quotient intellectuel ?",
     emoji: "🧩",
     popular: true,
     description: "Test validé sur 50 000 participants africains.",
@@ -239,7 +241,7 @@ const QUIZ_DATA = [
   },
   {
     id: "age_mental",
-    category: "🧠 Intelligence",
+    category: "🧠 Test du QI",
     title: "Ton âge mental est-il supérieur à ton âge réel ?",
     emoji: "🧮",
     popular: false,
@@ -2742,25 +2744,38 @@ export default function App() {
         )}
 
 
-        {/* CARRY'QUIZ WIDGET — shown on home page */}
+        {/* CARRY'QUIZ WIDGET — compact 3 lines */}
         {page === "home" && (
-          <div style={{ padding: "20px 16px 0", background: G.bg }}>
-            <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 50%, #1a1208 100%)", borderRadius: 16, padding: "24px 16px 20px", border: "1px solid " + G.gold, textAlign: "center" }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>🎯</div>
-              <div style={{ fontSize: 20, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif", marginBottom: 6 }}>Carry'Quiz</div>
-              <div style={{ fontSize: 13, color: "#ccc", marginBottom: 20 }}>Découvre des vérités sur toi-même</div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
-                {QUIZ_CATEGORIES.filter(c => c !== "Tous").map(cat => (
-                  <button key={cat} onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory(cat); }} style={{
-                    padding: "7px 16px", borderRadius: 24, border: "1.5px solid rgba(255,255,255,0.25)",
-                    background: "transparent", color: "#ddd", fontSize: 12, cursor: "pointer"
-                  }}>{cat}</button>
-                ))}
+          <div style={{ padding: "12px 16px 0", background: G.bg }}>
+            <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", borderRadius: 12, padding: "12px 14px", border: "1px solid " + G.gold }}>
+              {/* Line 1: Logo + Title */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 18 }}>🎯</span>
+                <span style={{ fontSize: 15, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>Carry'Quiz</span>
               </div>
-              <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory("Tous"); }} style={{
-                padding: "10px 28px", background: G.gold, border: "none", borderRadius: 24,
-                color: "#1a1208", fontSize: 13, fontWeight: "bold", cursor: "pointer"
-              }}>Tous les quiz ▶</button>
+              {/* Line 2: Subtitle */}
+              <div style={{ fontSize: 11, color: "#bbb", marginBottom: 10 }}>Découvre des vérités sur toi-même</div>
+              {/* Line 3: 4 buttons on one line */}
+              <div style={{ display: "flex", gap: 6 }}>
+                {[["❤️", "Amour", "❤️ Amour"], ["🧠", "Test du QI", "🧠 Test du QI"], ["💰", "Argent", "💰 Argent & Succès"]].map(([emoji, label, cat]) => (
+                  <button key={cat} onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory(cat); }} style={{
+                    flex: 1, padding: "6px 4px", borderRadius: 8, border: "1px solid rgba(201,168,76,0.3)",
+                    background: "rgba(255,255,255,0.06)", color: "#ddd", fontSize: 11, cursor: "pointer",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2
+                  }}>
+                    <span>{emoji}</span>
+                    <span style={{ fontSize: 9 }}>{label}</span>
+                  </button>
+                ))}
+                <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory("Tous"); }} style={{
+                  flex: 1, padding: "6px 4px", borderRadius: 8, border: "none",
+                  background: G.gold, color: "#1a1208", fontSize: 11, fontWeight: "bold", cursor: "pointer",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 2
+                }}>
+                  <span>🔥</span>
+                  <span style={{ fontSize: 9 }}>Tous</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
