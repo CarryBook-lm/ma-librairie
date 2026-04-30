@@ -960,6 +960,93 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
 }
 
 
+// ─── PDF READER WITH LOADING SCREEN ───
+function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
+  const [pdfLoaded, setPdfLoaded] = useState(false);
+  const [dots, setDots] = useState(".");
+  const [elapsed, setElapsed] = useState(0);
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (pdfLoaded) return;
+    const timer = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(timer);
+  }, [pdfLoaded, key]);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <div style={{ background: "#111", borderBottom: "1px solid #333", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14 }}>← Retour</button>
+        <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {reading.title}{excerptMode ? " — Extrait" : ""}
+        </span>
+        {!excerptMode ? (
+          <input type="number" min="1" defaultValue={startPage}
+            onChange={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
+            onBlur={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
+            style={{ width: 48, background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: 4, padding: "2px 6px", fontSize: 12 }} />
+        ) : <span style={{ opacity: 0 }}>x</span>}
+      </div>
+
+      {/* Loading overlay */}
+      {!pdfLoaded && (
+        <div style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, background: "#1a1a1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 5 }}>
+          <div style={{ fontSize: 52, marginBottom: 20 }}>📖</div>
+          <div style={{ color: "#c9a84c", fontSize: 16, fontWeight: "bold", marginBottom: 8 }}>Chargement du livre{dots}</div>
+          <div style={{ color: "#666", fontSize: 13, marginBottom: elapsed > 3 && startPage > 1 ? 12 : 28 }}>Merci de patienter</div>
+          {elapsed > 3 && startPage > 1 && (
+            <div style={{ background: "#2a2a1a", border: "1px solid #c9a84c44", borderRadius: 10, padding: "10px 16px", marginBottom: 20, textAlign: "center", maxWidth: 260 }}>
+              <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 4 }}>📌 Tu étais à la page</div>
+              <div style={{ fontSize: 26, fontWeight: "bold", color: "#c9a84c" }}>{startPage}</div>
+              <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Entre ce numéro dans le champ en haut ↑</div>
+            </div>
+          )}
+          <div style={{ width: 200, height: 4, background: "#333", borderRadius: 2, overflow: "hidden", marginBottom: 32 }}>
+            <div style={{ height: "100%", background: "linear-gradient(90deg, #c9a84c, #e0be7a)", borderRadius: 2, animation: "pdfLoad 1.5s ease-in-out infinite" }} />
+          </div>
+          {elapsed > 8 && (
+            <button onClick={() => { setKey(k => k + 1); setElapsed(0); }} style={{ padding: "10px 24px", background: "#c9a84c", border: "none", borderRadius: 8, color: "#1a1208", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+              🔄 Actualiser
+            </button>
+          )}
+          <style>{`@keyframes pdfLoad { 0%{width:0%;margin-left:0} 50%{width:70%;margin-left:0} 100%{width:0%;margin-left:100%} }`}</style>
+        </div>
+      )}
+
+      {/* Last page reminder banner — shows after load if not on page 1 */}
+      {pdfLoaded && startPage > 1 && (
+        <div style={{ background: "#2a2a1a", borderBottom: "1px solid #c9a84c44", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 12, color: "#c9a84c" }}>📌 Reprends à la page <strong>{startPage}</strong> — entre-la dans le champ en haut</span>
+        </div>
+      )}
+
+      {/* PDF iframe */}
+      <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
+        <iframe
+          key={key}
+          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
+          style={{ width: "100%", height: "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
+          title={reading.title}
+          onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
+        />
+      </div>
+
+      {excerptMode && (
+        <div style={{ background: "#111", padding: "12px 16px", textAlign: "center" }}>
+          <span style={{ color: "#aaa", fontSize: 12 }}>Extrait limité — Achetez pour lire la suite</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function App() {
   const [page, setPage] = useState("home");
   const [books, setBooks] = useState([]);
@@ -1466,35 +1553,13 @@ export default function App() {
       const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
       const pdfSrc = activePdfUrl + "#page=" + startPage;
       return (
-        <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
-          <div style={{ background: "#111", borderBottom: "1px solid #333", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-            <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
-              style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14 }}>
-              ← Retour
-            </button>
-            <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {reading.title}{excerptMode ? " — Extrait" : ""}
-            </span>
-            {!excerptMode && (
-              <input type="number" min="1" defaultValue={startPage}
-                onChange={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)} onBlur={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
-                style={{ width: 48, background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: 4, padding: "2px 6px", fontSize: 12 }} />
-            )}
-            {excerptMode && <span style={{ opacity: 0 }}>x</span>}
-          </div>
-          <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
-            <iframe
-              src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
-              style={{ width: "100%", height: "calc(100vh - 56px)", border: "none" }}
-              title={reading.title}
-            />
-          </div>
-          {excerptMode && (
-            <div style={{ background: "#111", padding: "12px 16px", textAlign: "center" }}>
-              <span style={{ color: "#aaa", fontSize: 12 }}>Extrait limité — Achetez pour lire la suite</span>
-            </div>
-          )}
-        </div>
+        <PdfReader
+          reading={reading}
+          excerptMode={excerptMode}
+          startPage={startPage}
+          activePdfUrl={activePdfUrl}
+          onBack={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
+        />
       );
     }
 
