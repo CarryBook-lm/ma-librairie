@@ -862,7 +862,8 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
           {myBooks.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8, marginTop: 8 }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
-              <div style={{ color: G.textDim, marginBottom: 8 }}>Votre bibliothèque est vide</div>
+              <div style={{ color: G.textDim, marginBottom: 4, fontWeight: "bold", fontSize: 14 }}>Votre bibliothèque est vide</div>
+              <div style={{ color: G.textFaint, fontSize: 12, lineHeight: 1.6, marginBottom: 8 }}>Tous vos livres achetés apparaîtront ici. Achetez un livre et retrouvez-le à tout moment, même hors connexion !</div>
               <button onClick={() => setPage("home")} style={{ padding: "10px 20px", background: "none", border: "1px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12, cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", marginTop: 12 }}>Parcourir</button>
             </div>
           ) : (
@@ -1095,6 +1096,8 @@ export default function App() {
   const [audioRef] = useState(() => ({ current: null }));
   const [audioMode, setAudioMode] = useState(null); // 'mp3' only
   const [heroIndex, setHeroIndex] = useState(0);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [showSubModal, setShowSubModal] = useState(false);
@@ -1127,7 +1130,13 @@ export default function App() {
     const off = () => setIsOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
-    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+    const handleInstall = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handleInstall);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+      window.removeEventListener("beforeinstallprompt", handleInstall);
+    };
   }, []);
 
   useEffect(() => {
@@ -2094,6 +2103,26 @@ export default function App() {
                   );
                 })()}
 
+                {/* TWO BIG BUTTONS */}
+                <div style={{ display: "flex", gap: 0, margin: "0 0 20px 0" }}>
+                  <button onClick={async () => {
+                    if (deferredPrompt) {
+                      deferredPrompt.prompt();
+                      const { outcome } = await deferredPrompt.userChoice;
+                      if (outcome === "accepted") setDeferredPrompt(null);
+                    } else {
+                      setShowInstallModal(true);
+                    }
+                  }} style={{ flex: 1, padding: "16px 8px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", fontSize: 13, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 22 }}>📲</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Installer l'app CarryBooks</span>
+                  </button>
+                  <button onClick={() => setPage("library")} style={{ flex: 1, padding: "16px 8px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 13, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 22 }}>📚</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Ma Bibliothèque</span>
+                  </button>
+                </div>
+
                 {/* NOUVEAUTÉS */}
                 {books.slice(0, 10).length > 0 && (
                   <div style={{ marginBottom: 28 }}>
@@ -2399,6 +2428,55 @@ export default function App() {
                 padding: "10px 28px", background: G.gold, border: "none", borderRadius: 24,
                 color: "#1a1208", fontSize: 13, fontWeight: "bold", cursor: "pointer"
               }}>Tous les quiz ▶</button>
+            </div>
+          </div>
+        )}
+
+
+        {/* INSTALL GUIDE MODAL */}
+        {showInstallModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "flex-end" }}>
+            <div style={{ background: "#fff", width: "100%", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px" }}>
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>📲</div>
+                <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208" }}>Installer CarryBooks</div>
+                <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>Accès rapide depuis ton écran d'accueil</div>
+              </div>
+              {/* iPhone */}
+              <div style={{ background: "#f9f9f9", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🍎</span> Sur iPhone (Safari)
+                </div>
+                {[
+                  ["⬆️", "Appuie sur le bouton Partager en bas de Safari"],
+                  ["📋", "Fais défiler et appuie sur "Sur l'écran d'accueil""],
+                  ["✅", "Appuie sur Ajouter"]
+                ].map(([icon, text], i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontSize: 16, width: 24, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+                    <span style={{ fontSize: 13, color: "#555" }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Android */}
+              <div style={{ background: "#f9f9f9", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🤖</span> Sur Android (Chrome)
+                </div>
+                {[
+                  ["⋮", "Appuie sur les 3 points en haut à droite"],
+                  ["➕", "Appuie sur "Ajouter à l'écran d'accueil""],
+                  ["✅", "Confirme en appuyant sur Ajouter"]
+                ].map(([icon, text], i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontSize: 16, width: 24, textAlign: "center", flexShrink: 0, fontWeight: "bold" }}>{icon}</span>
+                    <span style={{ fontSize: 13, color: "#555" }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setShowInstallModal(false)} style={{ width: "100%", padding: 14, background: "#c9a84c", border: "none", borderRadius: 12, color: "#1a1208", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>
+                J'ai compris ✓
+              </button>
             </div>
           </div>
         )}
