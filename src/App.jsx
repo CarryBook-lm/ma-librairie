@@ -1129,6 +1129,21 @@ export default function App() {
         if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
       }
     });
+    // Load all book ratings for catalog display
+    supabase.from("book_reviews").select("book_id, rating").then(({ data }) => {
+      if (!data) return;
+      const grouped = {};
+      data.forEach(r => {
+        if (!grouped[r.book_id]) grouped[r.book_id] = [];
+        grouped[r.book_id].push(r.rating);
+      });
+      const ratings = {};
+      Object.keys(grouped).forEach(id => {
+        const arr = grouped[id];
+        ratings[id] = { avg: Math.round((arr.reduce((s,v)=>s+v,0)/arr.length)*10)/10, count: arr.length, userRating: 0 };
+      });
+      setBookRatings(ratings);
+    });
     const p = localStorage.getItem("purchasedBooks");
     if (p) setPurchasedBooks(JSON.parse(p));
     const f = localStorage.getItem("favoriteBooks");
@@ -1546,9 +1561,9 @@ export default function App() {
   if (page === "reader" && reading) {
     // Mode PDF
     if (reading.pdf_url && reading.pdf_url !== "pending") {
-      const savedPdfPage = parseInt(localStorage.getItem("pdfProgress_" + reading.id) || "1");
+      const savedPdfPage = parseInt(localStorage.getItem("pdfProgress_" + reading.id) || "0");
       const maxPage = excerptMode ? (reading.extract_pages || 5) : 9999;
-      const startPage = excerptMode ? 1 : savedPdfPage;
+      const startPage = excerptMode ? 1 : (savedPdfPage > 0 ? savedPdfPage : 1);
       // Use excerpt_pdf_url if in excerpt mode and available
       const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
       const pdfSrc = activePdfUrl + "#page=" + startPage;
@@ -2084,7 +2099,12 @@ export default function App() {
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
-                          <div style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 2 }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
+                              <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2113,7 +2133,12 @@ export default function App() {
                             </div>
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                             <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
-                            <div style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 2 }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
+                              <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
+                            )}
+                          </div>
                           </div>
                         ))}
                       </div>
