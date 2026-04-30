@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Preferences } from "@capacitor/preferences";
 import { createClient } from "@supabase/supabase-js";
 
@@ -1197,9 +1197,9 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
   const years = Array.from({length: 80}, (_, i) => currentYear - i);
 
   // Local state for day/month/year selects
-  const [selDay, setSelDay] = React.useState(birthdate ? birthdate.split("-")[2] || "" : "");
-  const [selMonth, setSelMonth] = React.useState(birthdate ? birthdate.split("-")[1] || "" : "");
-  const [selYear, setSelYear] = React.useState(birthdate ? birthdate.split("-")[0] || "" : "");
+  const [selDay, setSelDay] = useState(birthdate ? birthdate.split("-")[2] || "" : "");
+  const [selMonth, setSelMonth] = useState(birthdate ? birthdate.split("-")[1] || "" : "");
+  const [selYear, setSelYear] = useState(birthdate ? birthdate.split("-")[0] || "" : "");
 
   function updateBirthdate(y, m, d) {
     if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
@@ -2947,6 +2947,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
