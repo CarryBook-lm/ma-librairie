@@ -1126,7 +1126,8 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
   async function generateHoroscope() {
     setHoroscopePage("loading");
     try {
-      const sign = getSign(birthdate);
+      const computedBirthdate = selYear && selMonth && selDay ? selYear + "-" + selMonth + "-" + selDay : birthdate;
+  const sign = getSign(computedBirthdate);
       const d = new Date(birthdate);
       const age = new Date().getFullYear() - d.getFullYear();
       const week = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -1156,7 +1157,8 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
     }
   }
 
-  const sign = getSign(birthdate);
+  const computedBirthdate = selYear && selMonth && selDay ? selYear + "-" + selMonth + "-" + selDay : birthdate;
+  const sign = getSign(computedBirthdate);
 
   // HOME
   if (horoscopePage === "home") return (
@@ -1194,11 +1196,10 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
   const currentYear = new Date().getFullYear();
   const years = Array.from({length: 80}, (_, i) => currentYear - i);
 
-  // Parse birthdate into parts
-  const bdParts = birthdate ? birthdate.split("-") : ["", "", ""];
-  const bdYear = bdParts[0] || "";
-  const bdMonth = bdParts[1] || "";
-  const bdDay = bdParts[2] || "";
+  // Local state for day/month/year selects
+  const [selDay, setSelDay] = React.useState(birthdate ? birthdate.split("-")[2] || "" : "");
+  const [selMonth, setSelMonth] = React.useState(birthdate ? birthdate.split("-")[1] || "" : "");
+  const [selYear, setSelYear] = React.useState(birthdate ? birthdate.split("-")[0] || "" : "");
 
   function updateBirthdate(y, m, d) {
     if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
@@ -1221,24 +1222,24 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 11, color: "#c4b5fd", display: "block", marginBottom: 6 }}>Jour</label>
-            <select value={bdDay} onChange={e => updateBirthdate(bdYear, bdMonth, e.target.value)}
-              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: bdDay ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
+            <select value={selDay} onChange={e => { setSelDay(e.target.value); updateBirthdate(selYear, selMonth, e.target.value); }}
+              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: selDay ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
               <option value="">Jour</option>
               {days.map(d => <option key={d} value={String(d).padStart(2,"0")}>{d}</option>)}
             </select>
           </div>
           <div style={{ flex: 2 }}>
             <label style={{ fontSize: 11, color: "#c4b5fd", display: "block", marginBottom: 6 }}>Mois</label>
-            <select value={bdMonth} onChange={e => updateBirthdate(bdYear, e.target.value, bdDay)}
-              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: bdMonth ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
+            <select value={selMonth} onChange={e => { setSelMonth(e.target.value); updateBirthdate(selYear, e.target.value, selDay); }}
+              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: selMonth ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
               <option value="">Mois</option>
               {months.map((m, i) => <option key={i} value={String(i+1).padStart(2,"0")}>{m}</option>)}
             </select>
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 11, color: "#c4b5fd", display: "block", marginBottom: 6 }}>Année</label>
-            <select value={bdYear} onChange={e => updateBirthdate(e.target.value, bdMonth, bdDay)}
-              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: bdYear ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
+            <select value={selYear} onChange={e => { setSelYear(e.target.value); updateBirthdate(e.target.value, selMonth, selDay); }}
+              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: selYear ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
               <option value="">Année</option>
               {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
             </select>
@@ -2946,6 +2947,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
