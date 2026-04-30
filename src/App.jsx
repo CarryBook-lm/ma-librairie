@@ -1609,16 +1609,16 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
         <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title="Ton diagnostic est prêt ✨" onBack={() => setBfStep(3)} />
           <div style={{ padding: 16 }}>
-            <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "24px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
-              <div style={{ fontSize: 56, marginBottom: 12 }}>{bfResult?.skinType?.emoji || "✨"}</div>
-              <div style={{ fontSize: 14, color: CC.textFaint, marginBottom: 4 }}>Ton type de peau</div>
-              <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{bfResult?.skinType?.name}</div>
-              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.5, fontStyle: "italic" }}>{bfResult?.skinType?.desc}</div>
+            <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton diagnostic personnalisé</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Notre analyse a révélé des résultats surprenants sur ta peau...</div>
             </div>
 
             <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
-              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>🔒 Ton diagnostic complet inclut :</div>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton diagnostic complet inclut :</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
+                ✅ Ton vrai type de peau identifié<br/>
                 ✅ Ta routine matin/soir personnalisée<br/>
                 ✅ Tes ingrédients miracles<br/>
                 ✅ Conseils ciblés pour tes problèmes<br/>
