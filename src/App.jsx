@@ -1222,6 +1222,163 @@ const BF_PROBLEMS = [
   { id: "secheresse", emoji: "💧", label: "Sécheresse, tiraillements" },
 ];
 
+// ─── BASE DE CONTENU BEAUTÉ FACIALE ───
+const BF_CONTENT = {
+  routines: {
+    grasse: {
+      intro: "Ma belle, ta peau brille parce qu'elle produit beaucoup de sébum. C'est en fait une bonne nouvelle — ta peau vieillira moins vite ! Mais il faut bien la gérer pour éviter brillance et boutons.",
+      naturel: {
+        matin: ["Nettoie ton visage à l'eau tiède + savon noir africain (très doux et purifiant)", "Tonifie avec de l'eau de rose maison (ou de l'hamamélis)", "Hydrate avec du gel d'aloe vera pur (à conserver au frigo)", "Protection solaire (essentielle, même peau grasse !)"],
+        soir: ["Démaquille à l'huile de jojoba (oui, le gras dissout le gras !)", "Nettoie au savon noir", "Eau de rose", "Gel d'aloe vera"],
+        bonus: "2x/semaine : Masque à l'argile verte (15 min) + gommage doux sucre + miel + jus de citron",
+        delai: "Ta peau s'équilibre en 4-8 semaines"
+      },
+      express: {
+        matin: ["Gel nettoyant doux (sans sulfates)", "Tonique à la niacinamide", "Sérum Niacinamide 10% → régule le sébum", "Crème hydratante légère non comédogène", "SPF 50 matifiant"],
+        soir: ["Démaquillant huile + gel nettoyant (double nettoyage)", "Tonique", "Sérum Acide Salicylique (BHA) → désincruste les pores", "Crème de nuit fluide"],
+        bonus: "2x/semaine : Masque à l'argile professionnel",
+        delai: "Visible en 2-4 semaines"
+      },
+      eviter: ["Eau brûlante (active le sébum)", "Trop laver ton visage (4-5x par jour) — effet rebond pire", "Crèmes très riches type beurre de karité pur", "Toucher tes boutons"]
+    },
+    seche: {
+      intro: "Ma belle, ta peau manque d'eau et de gras. Elle a besoin d'amour et d'hydratation profonde. Bonne nouvelle : avec les bons soins, elle deviendra douce, lumineuse et confortable.",
+      naturel: {
+        matin: ["Rince ton visage à l'eau tiède (jamais chaude !) — pas de savon le matin", "Tonifie avec de l'eau florale (rose, fleur d'oranger)", "Sérum maison : 2 gouttes d'huile de jojoba + 3 gouttes d'eau de rose", "Crème hydratante riche au beurre de karité", "Protection solaire"],
+        soir: ["Démaquille à l'huile de coco ou d'amande douce", "Lait nettoyant doux (pas de gel mousseux)", "Sérum hydratant maison (miel + eau de rose)", "Crème de nuit riche", "Huile pure (argan ou rose musquée) en finition"],
+        bonus: "2x/semaine : Masque au miel pur (15 min) + masque avocat + miel + huile d'olive",
+        delai: "Peau plus confortable en 2-3 semaines"
+      },
+      express: {
+        matin: ["Lait nettoyant doux ou eau micellaire", "Brume hydratante", "Sérum Acide Hyaluronique → hydrate en profondeur", "Crème nourrissante riche", "SPF 50 crème (pas en gel)"],
+        soir: ["Huile démaquillante + lait nettoyant", "Sérum Céramides → reconstruit la barrière cutanée", "Crème de nuit nourrissante", "Huile végétale en finition (jojoba, argan)"],
+        bonus: "2x/semaine : Masque hydratant intensif",
+        delai: "Peau transformée en 3-6 semaines"
+      },
+      eviter: ["Eau chaude (assèche +++)", "Savons agressifs et nettoyants moussants", "Exfoliation trop fréquente", "Climatiseur sec sans humidificateur", "Boire moins de 2L d'eau par jour"]
+    },
+    normale: {
+      intro: "Ma belle, tu as la chance d'avoir une peau équilibrée ! Ta mission n'est pas de la corriger, mais de la préserver dans le temps. Avec une routine simple et régulière, tu vas la garder belle longtemps.",
+      naturel: {
+        matin: ["Eau tiède + savon doux (savon d'Alep ou savon noir doux)", "Tonique à l'eau de rose", "Crème hydratante légère (gel d'aloe vera ou crème naturelle)", "Protection solaire"],
+        soir: ["Démaquille à l'huile de jojoba", "Savon doux", "Eau de rose", "Sérum maison : aloe + 1 goutte d'huile de rose musquée"],
+        bonus: "1-2x/semaine : Gommage doux (sucre + miel) + masque hydratant au miel",
+        delai: "Éclat préservé toute l'année"
+      },
+      express: {
+        matin: ["Nettoyant doux", "Tonique apaisant", "Sérum Vitamine C → éclat et anti-âge préventif", "Hydratant léger", "SPF 30-50"],
+        soir: ["Démaquillant + nettoyant", "Sérum Hyaluronique + Niacinamide (combo équilibre)", "Crème de nuit hydratante"],
+        bonus: "1-2x/semaine : Exfoliant doux (AHA léger)",
+        delai: "Peau lumineuse, prévention anti-âge"
+      },
+      eviter: ["Trop de produits actifs (rétinol, acides forts) — tu n'en as pas besoin", "Changer constamment de routine — la régularité fait tout", "Négliger le SPF en pensant 'j'ai pas besoin'"]
+    },
+    mixte: {
+      intro: "Ma belle, ta peau est un mélange : grasse au centre (zone T : front, nez, menton) et normale/sèche sur les joues. Le secret ? Traiter chaque zone différemment. C'est plus de travail mais ça vaut le coup.",
+      naturel: {
+        matin: ["Eau tiède + savon noir (sur tout le visage)", "Tonique : eau de rose sur les joues, hamamélis sur la zone T", "Hydratation différenciée : aloe léger zone T, aloe + 1 goutte de jojoba sur joues", "Protection solaire matifiante"],
+        soir: ["Huile de jojoba pour démaquiller (équilibre)", "Savon noir", "Tonique", "Hydratation : aloe sur zone T, crème naturelle légère sur les joues"],
+        bonus: "2x/semaine : Masque argile UNIQUEMENT sur la zone T + masque hydratant miel sur tout le visage",
+        delai: "Équilibre retrouvé en 4-6 semaines"
+      },
+      express: {
+        matin: ["Gel nettoyant doux", "Tonique à la niacinamide (régule la zone T sans assécher)", "Sérum Niacinamide sur tout le visage", "Hydratant : léger sur zone T, plus riche sur joues", "SPF léger"],
+        soir: ["Démaquillant + nettoyant", "Sérum Hyaluronique sur joues", "Sérum BHA léger sur zone T uniquement", "Crème de nuit légère"],
+        bonus: "2x/semaine : Masque argile zone T + masque hydratant joues",
+        delai: "Zones équilibrées en 3-5 semaines"
+      },
+      eviter: ["Traiter le visage entier comme s'il était gras (assèche les joues)", "Ou comme s'il était sec (gras zone T)", "Crèmes très riches partout"]
+    },
+    sensible: {
+      intro: "Ma belle, ta peau réagit vite — rougeurs, picotements, irritations. C'est qu'elle a une barrière cutanée fragile. Le secret ? Moins de produits, plus de douceur. On évite tout ce qui agresse, on chouchoute la barrière.",
+      naturel: {
+        matin: ["Eau tiède UNIQUEMENT (pas de savon le matin)", "Hydrolat de camomille ou bleuet (apaisants)", "Gel d'aloe vera pur (fraîcheur)", "Crème hydratante simple, sans parfum", "Protection solaire minérale (SPF physique, pas chimique)"],
+        soir: ["Démaquille à l'huile de jojoba ou amande douce", "Lait nettoyant doux SANS parfum", "Hydrolat apaisant", "Crème de nuit pour peaux sensibles", "1 goutte d'huile de calendula sur les zones très réactives"],
+        bonus: "1x/semaine maximum : Masque ultra-doux miel pur + 1 goutte de yaourt nature",
+        delai: "Moins de réactions en 2-4 semaines"
+      },
+      express: {
+        matin: ["Gel nettoyant doux pour peaux sensibles", "Eau thermale (Avène, La Roche-Posay)", "Sérum Centella Asiatica (Cica) → apaise et répare", "Crème barrière à la Centella ou panthénol", "SPF 50 minéral"],
+        soir: ["Eau micellaire pour peaux sensibles", "Sérum Niacinamide (apaisant)", "Crème réparatrice riche"],
+        bonus: "PAS de gommage abrasif. Brume thermale plusieurs fois par jour si rougeurs",
+        delai: "Peau apaisée en 3-5 semaines"
+      },
+      eviter: ["Tout produit parfumé", "Alcool dans les cosmétiques", "Eau chaude", "Frottements (sèche-toi en tapotant)", "Changements brusques de température", "Trop de produits superposés", "Acides forts, rétinol, gommages mécaniques"]
+    }
+  },
+
+  problems: {
+    acne: {
+      titre: "🔴 Acné active",
+      naturel: ["Tea tree pur (1 goutte sur chaque bouton, le soir uniquement)", "Masque argile verte + 1 goutte de tea tree, 2x/semaine", "Eau de rose au frigo plusieurs fois par jour", "Boire 2L d'eau + thé vert"],
+      express: ["Sérum Acide Salicylique 2% → désincruste les pores (le soir)", "Sérum Niacinamide 10% → régule le sébum", "Spot treatment au tea tree pour boutons isolés"],
+      conseils: "Lave tes pinceaux/téléphone/oreiller régulièrement. Change de taie d'oreiller 2-3x/semaine. Diminue le sucre, lait, et aliments très transformés. Ne JAMAIS percer tes boutons. Si acné sévère ou cicatrices : consulte un dermatologue."
+    },
+    taches: {
+      titre: "🟤 Taches noires / hyperpigmentation",
+      naturel: ["Jus de citron + miel + curcuma : 10 min sur les taches le SOIR uniquement (jamais le jour, photosensibilisant)", "Aloe vera pur matin et soir", "Huile de rose musquée : 2 gouttes le soir sur les taches"],
+      express: ["Sérum Vitamine C 15% → éclaircit et unifie (matin)", "Sérum Acide Kojique → cible précisément les taches (soir uniquement, ciblé)", "Crème Niacinamide → atténue progressivement"],
+      conseils: "⚠️ Sans SPF, ces produits sont INUTILES voire pires ! Le soleil aggrave les taches. Patience : compter 2-4 mois pour voir des résultats. Pas de gommage agressif sur les taches, pas d'épilation à la cire."
+    },
+    cicatrices: {
+      titre: "⚪ Cicatrices d'acné anciennes",
+      naturel: ["Huile de rose musquée pure : 2 gouttes matin et soir, en massage circulaire", "Miel pur en masque 15 min, 3x/semaine", "Vitamine E (perles à percer) en application ciblée"],
+      express: ["Sérum Niacinamide → atténue les marques rouges/brunes", "Crème à la rose musquée concentrée", "Sérum AHA léger → renouvelle les cellules"],
+      conseils: "Patience extrême : les cicatrices d'acné mettent 3-6 mois à s'estomper. Massage circulaire quotidien stimule la régénération. Cicatrices très creuses → consulte un dermato pour soins ciblés."
+    },
+    pores: {
+      titre: "⚫ Points noirs / Pores dilatés",
+      naturel: ["Bain de vapeur facial (eau bouillante + serviette sur la tête) 5 min, 1x/semaine", "Masque bicarbonate + miel sur la zone T uniquement, 1x/semaine", "Argile verte sur les zones avec points noirs"],
+      express: ["Sérum BHA (Acide Salicylique) → entre dans les pores et nettoie", "Sérum Niacinamide → resserre visuellement les pores", "Patchs nez (utilisation occasionnelle)"],
+      conseils: "Ne pas extraire à la main (cicatrices, infection). Pas de scrub agressif (irrite et augmente le sébum). Double nettoyage le soir (huile + nettoyant aqueux). Exfoliation chimique BHA > exfoliation mécanique."
+    },
+    cernes: {
+      titre: "👁️ Cernes / Poches",
+      naturel: ["Tranches de concombre ou sachets de thé vert froids, 10 min le matin", "Cuillères au congélateur appliquées sous les yeux", "Huile d'amande douce en massage léger le soir"],
+      express: ["Crème contour des yeux à la caféine (matin) → décongestionne", "Crème contour à la vitamine K (soir) → atténue les vaisseaux", "Sérum peptides → fermeté et réparation"],
+      conseils: "Sommeil 7-8h est ton meilleur allié. Hydratation 2L d'eau/jour. Réduire le sel (cause des poches). Limiter les écrans tard le soir. Application en TAPOTANT avec l'annulaire (jamais frotter)."
+    },
+    terne: {
+      titre: "😐 Peau terne",
+      naturel: ["Masque éclat : 1 cuillère de miel + 1 cuillère de yaourt + 1/2 cuillère de jus de citron, 15 min, 2x/semaine", "Gommage sucre + miel + huile d'olive, 1x/semaine", "Eau citronnée au réveil (à jeun)"],
+      express: ["Sérum Vitamine C → relance immédiatement l'éclat", "Exfoliant chimique AHA (acide glycolique) → renouvelle les cellules", "Brume vitaminée pour boost éclat instantané"],
+      conseils: "Vitamines = éclat : mange plus de fruits (mangue, papaye, agrumes), légumes verts. 2L d'eau non négociable. Sommeil de qualité. Limite tabac et alcool. Toujours protéger du soleil."
+    },
+    rides: {
+      titre: "⏳ Premières rides / Relâchement",
+      naturel: ["Huile de rose musquée pure matin et soir → riche en vitamine A naturelle", "Massage facial : 5 minutes le soir, mouvements ascendants → stimule collagène", "Masque blanc d'œuf (1x/semaine) → effet tenseur naturel"],
+      express: ["Sérum Acide Hyaluronique → repulpe et hydrate (matin et soir)", "Sérum Rétinol 0,3% → stimule collagène (soir uniquement, 2-3x/semaine pour commencer)", "Sérum Peptides → fermeté", "Crème anti-âge complète"],
+      conseils: "SPF tous les jours = ton anti-rides numéro 1. Hydratation interne et externe. Antioxydants : myrtilles, baies, légumes colorés, thé vert. Sommeil profond. ⚠️ Rétinol incompatible avec grossesse et allaitement."
+    },
+    rougeurs: {
+      titre: "🌹 Rougeurs / Sensibilité",
+      naturel: ["Hydrolat de bleuet ou camomille plusieurs fois par jour", "Masque yaourt nature + miel (15 min) → ultra-apaisant", "Gel d'aloe vera au frigo (effet froid décongestionnant)", "Huile de calendula en application ciblée"],
+      express: ["Sérum Centella Asiatica (Cica) → apaise et répare", "Crème à la panthénol (vitamine B5) → calmante", "Eau thermale (Avène, La Roche-Posay)", "Crème spéciale peau sensible"],
+      conseils: "Tout ce qui contient parfum, alcool, agrumes → à bannir. Pas de gommage mécanique. Eau chaude à éviter. Sèche-toi en TAPOTANT. SPF minéral (pas chimique). Si rougeurs persistantes ou rosacée → dermato."
+    },
+    secheresse: {
+      titre: "💧 Sécheresse / Tiraillements",
+      naturel: ["Huile végétale pure (jojoba, argan, rose musquée) en finition matin et soir", "Masque avocat + miel + huile d'olive, 2x/semaine", "Brume d'eau de rose plusieurs fois par jour"],
+      express: ["Sérum Acide Hyaluronique → ultra-hydratant", "Crème aux Céramides → reconstruit la barrière cutanée", "Baume nuit nourrissant → en cure de 2 semaines"],
+      conseils: "2,5L d'eau par jour minimum. Bonnes graisses : avocat, noix, poisson gras. Humidificateur dans la chambre si climatiseur ou harmattan. Douches tièdes et courtes. Astuce : applique tes soins sur peau légèrement humide → meilleure pénétration."
+    }
+  },
+
+  soleil: {
+    low: { titre: "☀️ Exposition faible (-1h/jour)", text: "Pour toi, le soleil n'est pas ton ennemi quotidien — mais il reste essentiel de te protéger. SPF 30 minimum chaque matin (oui, même si tu restes à l'intérieur, la lumière bleue des écrans et UV par les fenêtres comptent). Renouveler 1x dans la journée si tu sors. La protection solaire n'est pas optionnelle — c'est le meilleur anti-âge naturel." },
+    med: { titre: "☀️ Exposition modérée (1-3h/jour)", text: "Tu es exposée régulièrement — ta peau a besoin de protection sérieuse. SPF 50 OBLIGATOIRE chaque matin. Renouveler toutes les 4 heures quand tu es dehors. Lunettes de soleil (protègent les yeux et préviennent les rides du contour). Chapeau dans les heures fortes (12h-15h). Évite l'exposition entre 12h et 15h si possible." },
+    high: { titre: "🔥 Exposition intense (+3h/jour)", text: "Ton activité t'expose énormément au soleil — protection MAXIMALE indispensable. SPF 50+ ÉCRAN TOTAL, à renouveler toutes les 2h. Chapeau à larges bords ou casquette. Lunettes de soleil systématiquement. Vêtements couvrants (manches longues légères). Hydratation interne ++ (3L d'eau). ⚠️ Important : sans cette protection, AUCUN soin de ta routine ne fonctionnera. Le soleil détruit tout." }
+  },
+
+  age: {
+    ado: { titre: "🌱 Moins de 20 ans", text: "Ma belle, à ton âge, voici ce qu'il faut RETENIR : priorité = gérer l'acné, poser de bonnes habitudes. Routine SIMPLE : nettoyage doux + hydratant + SPF. Évite absolument les produits anti-âge (rétinol fort, peelings agressifs) — ta peau n'en a pas besoin. Hygiène de vie importante : sommeil, alimentation peu sucrée, hydratation. Les habitudes que tu prends maintenant détermineront l'état de ta peau à 40 ans. Mantra : 'Je pose les bases d'une belle peau pour la vie !'" },
+    "20s": { titre: "🌸 20-29 ans", text: "Ma belle, c'est l'âge idéal pour commencer la prévention. Priorité = traiter les problèmes actuels + commencer la prévention. Routine COMPLÈTE : nettoyage, sérum (vitamine C ou niacinamide), hydratant, SPF. Tu peux introduire DOUCEMENT les actifs (vitamine C le matin). SPF tous les jours = la meilleure décision anti-âge que tu peux prendre. Sommeil de qualité, hydratation, alimentation équilibrée. Mantra : 'Mes choix d'aujourd'hui dessinent mon visage de demain !'" },
+    "30s": { titre: "🌺 30-39 ans", text: "Ma belle, ta peau commence sa transformation — c'est le moment d'agir. Priorité = prévention anti-âge + uniformisation. Routine plus structurée : sérums actifs (vitamine C, niacinamide, hyaluronique). Introduction du rétinol en douceur (2x/semaine pour commencer). Soins contour des yeux essentiels. Massage facial régulier (stimule collagène). Hydratation interne renforcée (2,5L d'eau). Antioxydants (baies, thé vert, légumes colorés). Mantra : 'Ma peau évolue, je l'accompagne avec amour !'" },
+    "40s": { titre: "🌹 40-49 ans", text: "Ma belle, ta peau a une histoire — voici comment la sublimer. Priorité = anti-âge actif + fermeté + uniformisation. Routine RICHE : peptides, rétinol régulier, acide hyaluronique, vitamine C. Soins cou et décolleté indispensables. Soins contour des yeux ciblés. Massages quotidiens (5 min) → stimule collagène. Crèmes plus riches, surtout le soir. Considère un sérum aux peptides pour la fermeté. Mantra : 'Mes années d'expérience méritent une routine premium !'" },
+    "50plus": { titre: "🌷 50 ans et plus", text: "Ma belle, ta peau a vécu — donnons-lui ce qu'elle mérite. Priorité = nutrition profonde + densité + confort. Routine TRÈS nourrissante : huiles précieuses (rose musquée, argan), beurres. Sérums ciblés ménopause (peptides, hyaluronique haute concentration). Crèmes ultra-riches matin et soir. Soins anti-relâchement (massages, gua sha). Soins du cou et dos des mains essentiels. Hydratation interne renforcée + bonnes graisses (oméga-3, avocat, noix). Mantra : 'Ma beauté évolue, et chaque âge a sa lumière !'" }
+  }
+};
+
 function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod }) {
 
   function getSkinType(answers) {
@@ -1580,15 +1737,32 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
     }
   }
 
-  // ÉTAPE 6 — Résultat débloqué
+  // ÉTAPE 6 — Résultat débloqué COMPLET
   if (bfStep === 6 && bfResult) {
     const problemLabels = bfResult.problems.map(pid => BF_PROBLEMS.find(p => p.id === pid)).filter(Boolean);
+    const skinCode = bfResult.skinType.code;
+    const routine = BF_CONTENT.routines[skinCode] || BF_CONTENT.routines.normale;
+    const sunData = BF_CONTENT.soleil[bfResult.lifestyle.sun] || BF_CONTENT.soleil.med;
+    const ageData = BF_CONTENT.age[bfResult.lifestyle.age] || BF_CONTENT.age["20s"];
+
+    function reset() {
+      setCarryCarePage("home");
+      setBfStep(1);
+      setBfTypeAnswers([]);
+      setBfProblems([]);
+      setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
+      setBfResult(null);
+      setBfPaymentStep(1);
+      setBfPaymentPhone("");
+      setBfPaymentMethod(null);
+    }
+
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Ton diagnostic complet ✨" onBack={() => { setCarryCarePage("home"); setBfStep(1); }} />
+        <Header title="Ton diagnostic complet ✨" onBack={reset} />
         <div style={{ padding: 16 }}>
 
-          {/* Diagnostic principal */}
+          {/* DIAGNOSTIC PRINCIPAL */}
           <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "24px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
             <div style={{ fontSize: 56, marginBottom: 8 }}>{bfResult.skinType.emoji}</div>
             <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Ton diagnostic</div>
@@ -1596,7 +1770,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
             <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.5, fontStyle: "italic" }}>{bfResult.skinType.desc}</div>
           </div>
 
-          {/* Problèmes identifiés */}
+          {/* PROBLÈMES IDENTIFIÉS */}
           {problemLabels.length > 0 && (
             <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>🎯 Tes problèmes identifiés</div>
@@ -1611,28 +1785,151 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
             </div>
           )}
 
-          {/* Routine en cours de préparation */}
-          <div style={{ background: "linear-gradient(135deg, #f5ecec 0%, #e8d4b8 100%)", borderRadius: 14, padding: 20, marginBottom: 16, border: "1px solid " + CC.border, textAlign: "center" }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>✨</div>
-            <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>Ta routine personnalisée arrive bientôt !</div>
-            <div style={{ fontSize: 12, color: CC.noirSoft, lineHeight: 1.5 }}>
-              Notre équipe d'experts finalise les routines détaillées avec :<br/>
-              • Option 100% naturelle (recettes maison)<br/>
-              • Option rapide & efficace (CarryGoo.net)<br/>
-              • Conseils ciblés pour tes problèmes<br/><br/>
-              <strong>Tu seras notifiée dès que c'est prêt !</strong>
+          {/* INTRO ROUTINE */}
+          <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+            <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>{routine.intro}</div>
+          </div>
+
+          {/* OPTION 1 — NATUREL */}
+          <div style={{ background: "linear-gradient(135deg, #f0f7e8 0%, #d4e8c5 100%)", borderRadius: 16, padding: 18, marginBottom: 16, border: "1px solid #b8d4a0" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: "#2d5016", marginBottom: 4 }}>🌿 Option 1 — 100% Naturel</div>
+            <div style={{ fontSize: 11, color: "#4a7028", marginBottom: 14, fontStyle: "italic" }}>Recettes maison, ingrédients du marché — économique et accessible</div>
+
+            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5016", marginBottom: 6 }}>🌅 MATIN</div>
+              {routine.naturel.matin.map((step, i) => (
+                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
+                  {i + 1}. {step}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5016", marginBottom: 6 }}>🌙 SOIR</div>
+              {routine.naturel.soir.map((step, i) => (
+                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
+                  {i + 1}. {step}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 10, padding: 12, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.5 }}>✨ <strong>Bonus :</strong> {routine.naturel.bonus}</div>
+            </div>
+
+            <div style={{ fontSize: 11, color: "#4a7028", fontStyle: "italic", textAlign: "center", marginTop: 8 }}>
+              ⏰ {routine.naturel.delai}
             </div>
           </div>
 
-          {/* Disclaimer */}
+          {/* OPTION 2 — EXPRESS */}
+          <div style={{ background: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)", borderRadius: 16, padding: 18, marginBottom: 16, border: "1px solid " + CC.roseDeep }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>⚡ Option 2 — Rapide & Efficace</div>
+            <div style={{ fontSize: 11, color: CC.noirSoft, marginBottom: 14, fontStyle: "italic" }}>Sérums modernes — résultats rapides — disponibles bientôt sur CarryGoo.net</div>
+
+            <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>🌅 MATIN</div>
+              {routine.express.matin.map((step, i) => (
+                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
+                  {i + 1}. {step}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>🌙 SOIR</div>
+              {routine.express.soir.map((step, i) => (
+                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
+                  {i + 1}. {step}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 10, padding: 12, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.5 }}>✨ <strong>Bonus :</strong> {routine.express.bonus}</div>
+            </div>
+
+            <div style={{ fontSize: 11, color: CC.noirSoft, fontStyle: "italic", textAlign: "center", marginTop: 8 }}>
+              ⏰ {routine.express.delai}
+            </div>
+          </div>
+
+          {/* À ÉVITER */}
+          <div style={{ background: "#fff5f5", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid #ffcdd2" }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#c62828", marginBottom: 10 }}>❌ À éviter absolument</div>
+            {routine.eviter.map((item, i) => (
+              <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 6, lineHeight: 1.5 }}>
+                • {item}
+              </div>
+            ))}
+          </div>
+
+          {/* MODULES PROBLÈMES */}
+          {problemLabels.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>
+                🎯 Conseils ciblés pour tes problèmes
+              </div>
+              {problemLabels.map(p => {
+                const probContent = BF_CONTENT.problems[p.id];
+                if (!probContent) return null;
+                return (
+                  <div key={p.id} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 12, border: "1px solid " + CC.border }}>
+                    <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{probContent.titre}</div>
+
+                    <div style={{ background: "#f0f7e8", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: "#2d5016", marginBottom: 6 }}>🌿 Solutions naturelles</div>
+                      {probContent.naturel.map((sol, i) => (
+                        <div key={i} style={{ fontSize: 11, color: CC.noir, marginBottom: 4, lineHeight: 1.5 }}>• {sol}</div>
+                      ))}
+                    </div>
+
+                    <div style={{ background: CC.roseLight, borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>⚡ Solutions express</div>
+                      {probContent.express.map((sol, i) => (
+                        <div key={i} style={{ fontSize: 11, color: CC.noir, marginBottom: 4, lineHeight: 1.5 }}>• {sol}</div>
+                      ))}
+                    </div>
+
+                    <div style={{ background: "#fffbe6", borderRadius: 8, padding: 10 }}>
+                      <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.5 }}>📌 {probContent.conseils}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* AJUSTEMENT SOLEIL */}
+          <div style={{ background: "linear-gradient(135deg, #fff8e1 0%, #ffe082 100%)", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid #ffcc80" }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#7a5c00", marginBottom: 8 }}>{sunData.titre}</div>
+            <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.6 }}>{sunData.text}</div>
+          </div>
+
+          {/* AJUSTEMENT ÂGE */}
+          <div style={{ background: "linear-gradient(135deg, #f5ecec 0%, #e8d4b8 100%)", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>{ageData.titre}</div>
+            <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.6 }}>{ageData.text}</div>
+          </div>
+
+          {/* DISCLAIMER */}
           <div style={{ background: "#fff8e1", borderLeft: "3px solid " + CC.gold, padding: 12, borderRadius: 8, marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.5 }}>
-              ⚠️ Ces conseils sont indicatifs. Avant d'utiliser un nouveau produit, fais un test sur une petite zone. En cas de problème de peau important, consulte un dermatologue.
+              ⚠️ Ces conseils sont indicatifs. Avant d'utiliser un nouveau produit, fais un test sur une petite zone de peau (intérieur du poignet, 24h). En cas de problème de peau important, consulte un dermatologue.
             </div>
           </div>
 
-          {/* Boutons action */}
-          <button onClick={() => { setCarryCarePage("home"); setBfStep(1); setBfTypeAnswers([]); setBfProblems([]); setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null }); setBfResult(null); setBfPaymentStep(1); setBfPaymentPhone(""); setBfPaymentMethod(null); }} style={{
+          {/* PROCHAINEMENT */}
+          <div style={{ background: CC.noir, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 24, marginBottom: 6 }}>🛒</div>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#fff", marginBottom: 6 }}>Bientôt sur CarryGoo.net</div>
+            <div style={{ fontSize: 11, color: "#ddd", lineHeight: 1.5 }}>
+              Tous les sérums et produits recommandés seront disponibles à la vente dès le lancement de notre boutique. Reste connectée !
+            </div>
+          </div>
+
+          {/* BOUTON RETOUR */}
+          <button onClick={reset} style={{
             width: "100%", padding: 14, background: CC.noir, color: "#fff",
             border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer"
           }}>
