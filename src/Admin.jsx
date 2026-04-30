@@ -523,6 +523,124 @@ export default function Admin() {
             </div>
           </div>
         )}
+
+        {/* CODES PROMO */}
+        {view === "promos" && (
+          <div>
+            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>🎟️ Codes Promo</h1>
+
+            {/* Création nouveau code */}
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 16, letterSpacing: 1, textTransform: "uppercase" }}>Créer un code</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Code (ex: BIENVENUE20)</label>
+                  <input value={newPromo.code} onChange={e => setNewPromo(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                    placeholder="BIENVENUE20"
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Réduction (%)</label>
+                  <input type="number" min="1" max="100" value={newPromo.discount_pct} onChange={e => setNewPromo(p => ({ ...p, discount_pct: parseInt(e.target.value) || 0 }))}
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Date d'expiration (optionnel)</label>
+                  <input type="date" value={newPromo.expires_at} onChange={e => setNewPromo(p => ({ ...p, expires_at: e.target.value }))}
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Utilisations max (optionnel)</label>
+                  <input type="number" min="1" value={newPromo.uses_max} onChange={e => setNewPromo(p => ({ ...p, uses_max: e.target.value }))}
+                    placeholder="Illimité si vide"
+                    style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }} />
+                </div>
+                <button onClick={createPromo} style={{ padding: 12, background: "#c9a84c", color: "#000", border: "none", borderRadius: 6, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
+                  + Créer le code
+                </button>
+              </div>
+            </div>
+
+            {/* Liste codes */}
+            <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Codes existants ({promoCodes.length})</div>
+            {promoCodes.length === 0 ? (
+              <div style={{ color: "#888", textAlign: "center", padding: 30, fontSize: 13 }}>Aucun code créé pour l'instant</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {promoCodes.map(p => (
+                  <div key={p.id} style={{ background: "#1a1a1a", border: "1px solid " + (p.active ? "#c9a84c" : "#2a2a2a"), borderRadius: 8, padding: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 16, color: p.active ? "#c9a84c" : "#666", fontWeight: "bold", letterSpacing: 1 }}>{p.code}</div>
+                        <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>-{p.discount_pct}% • {p.uses_count || 0}{p.uses_max ? "/" + p.uses_max : ""} utilisations</div>
+                        {p.expires_at && <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Expire le {new Date(p.expires_at).toLocaleDateString("fr-FR")}</div>}
+                      </div>
+                      <div style={{ fontSize: 10, padding: "4px 8px", borderRadius: 4, background: p.active ? "#c9a84c22" : "#2a2a2a", color: p.active ? "#c9a84c" : "#888" }}>{p.active ? "ACTIF" : "INACTIF"}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => togglePromo(p.id, p.active)} style={{ flex: 1, padding: 8, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, cursor: "pointer" }}>
+                        {p.active ? "Désactiver" : "Activer"}
+                      </button>
+                      <button onClick={() => deletePromo(p.id)} style={{ flex: 1, padding: 8, background: "transparent", border: "1px solid #c62828", borderRadius: 6, color: "#c62828", fontSize: 12, cursor: "pointer" }}>
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STATISTIQUES */}
+        {view === "stats" && (
+          <div>
+            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>📈 Statistiques</h1>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>💰 Revenus totaux</div>
+                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{(stats.totalRevenue || 0).toLocaleString()} F</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>🛒 Total ventes</div>
+                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases || 0}</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>👥 Clients uniques</div>
+                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalUsers || 0}</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>📊 Panier moyen</div>
+                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases ? Math.round((stats.totalRevenue || 0) / stats.totalPurchases).toLocaleString() : 0} F</div>
+              </div>
+            </div>
+
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🏆 Top 5 livres vendus</div>
+              {(!stats.topBooks || stats.topBooks.length === 0) ? (
+                <div style={{ color: "#888", textAlign: "center", padding: 16, fontSize: 13 }}>Aucune vente pour l'instant</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {stats.topBooks.map((b, i) => {
+                    const book = books.find(bk => bk.id === b.id);
+                    return (
+                      <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 10, background: "#111", borderRadius: 6 }}>
+                        <div style={{ fontSize: 16, color: "#c9a84c", fontWeight: "bold", minWidth: 22 }}>#{i + 1}</div>
+                        <div style={{ flex: 1, fontSize: 13, color: "#e8e0d0" }}>{book ? book.title : "Livre supprimé (#" + b.id + ")"}</div>
+                        <div style={{ fontSize: 12, color: "#888" }}>{b.count} ventes</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <button onClick={() => { fetchStats(); }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 13, cursor: "pointer" }}>
+              🔄 Rafraîchir les statistiques
+            </button>
+          </div>
+        )}
       </div>
 
       {/* FORM MODAL */}

@@ -784,9 +784,10 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
   const [showFireworks, setShowFireworks] = useState(true);
 
   useEffect(() => {
+    setShowFireworks(true);
     const t = setTimeout(() => setShowFireworks(false), 2000);
     return () => clearTimeout(t);
-  }, []);
+  }, [quiz.id]);
 
   if (showFireworks) {
     return (
@@ -3063,8 +3064,8 @@ export default function App() {
 
       {/* BOUTON RETOUR GLOBAL (sur toutes les pages sauf accueil) */}
       {page !== "home" && !showMenu && (
-        <div style={{ background: G.surface, borderBottom: "1px solid " + G.border, padding: "10px 16px" }}>
-          <button onClick={() => { setPage("home"); setSelectedCategory("Tous"); setSearchQuery(""); }} style={{
+        <div style={{ position: "sticky", top: 56, zIndex: 49, background: G.surface, borderBottom: "1px solid " + G.border, padding: "10px 16px" }}>
+          <button onClick={() => { setPage("home"); setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); setSearchQuery(""); }} style={{
             background: "none", border: "none", color: G.gold, fontSize: 14, fontWeight: "bold",
             cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: 6
           }}>
