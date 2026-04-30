@@ -2440,42 +2440,22 @@ export default function App() {
               <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📲</div>
                 <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208" }}>Installer CarryBooks</div>
-                <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>Accès rapide depuis ton écran d'accueil</div>
+                <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>Acces rapide depuis ton ecran</div>
               </div>
-              {/* iPhone */}
               <div style={{ background: "#f9f9f9", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>🍎</span> Sur iPhone (Safari)
-                </div>
-                {[
-                  ["⬆️", "Appuie sur le bouton Partager en bas de Safari"],
-                  ["📋", "Fais défiler → appuie sur l'option écran d'accueil"],
-                  ["✅", "Appuie sur Ajouter"]
-                ].map(([icon, text], i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <span style={{ fontSize: 16, width: 24, textAlign: "center", flexShrink: 0 }}>{icon}</span>
-                    <span style={{ fontSize: 13, color: "#555" }}>{text}</span>
-                  </div>
-                ))}
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10 }}>🍎 Sur iPhone (Safari)</div>
+                <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>1. Appuie sur le bouton Partager ⬆️ en bas</div>
+                <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>2. Appuie sur Sur l'ecran d'accueil 📋</div>
+                <div style={{ fontSize: 13, color: "#555" }}>3. Appuie sur Ajouter ✅</div>
               </div>
-              {/* Android */}
               <div style={{ background: "#f9f9f9", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>🤖</span> Sur Android (Chrome)
-                </div>
-                {[
-                  ["⋮", "Appuie sur les 3 points en haut à droite"],
-                  ["➕", "Appuie sur "Ajouter à l'écran d'accueil""],
-                  ["✅", "Confirme en appuyant sur Ajouter"]
-                ].map(([icon, text], i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <span style={{ fontSize: 16, width: 24, textAlign: "center", flexShrink: 0, fontWeight: "bold" }}>{icon}</span>
-                    <span style={{ fontSize: 13, color: "#555" }}>{text}</span>
-                  </div>
-                ))}
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10 }}>🤖 Sur Android (Chrome)</div>
+                <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>1. Appuie sur les 3 points ⋮ en haut a droite</div>
+                <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>2. Appuie sur Ajouter a l'ecran d'accueil ➕</div>
+                <div style={{ fontSize: 13, color: "#555" }}>3. Confirme en appuyant Ajouter ✅</div>
               </div>
               <button onClick={() => setShowInstallModal(false)} style={{ width: "100%", padding: 14, background: "#c9a84c", border: "none", borderRadius: 12, color: "#1a1208", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>
-                J'ai compris ✓
+                OK compris !
               </button>
             </div>
           </div>
