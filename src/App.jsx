@@ -842,8 +842,11 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
   return (
     <div style={{ padding: "0 0 80px" }}>
       {/* Header */}
-      <div style={{ padding: "20px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
-        <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 12 }}>Ma bibliothèque</div>
+      <div style={{ padding: "12px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 14, padding: 0, marginRight: 12 }}>← Retour</button>
+          <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase" }}>Ma bibliothèque</div>
+        </div>
         {/* Tabs */}
         <div style={{ display: "flex", gap: 0 }}>
           {[["books", "📚 Mes livres (" + myBooks.length + ")"], ["history", "🧾 Historique"]].map(([id, label]) => (
@@ -2103,23 +2106,30 @@ export default function App() {
                   );
                 })()}
 
-                {/* TWO BIG BUTTONS */}
+                {/* HERO BUTTONS */}
                 <div style={{ display: "flex", gap: 0, margin: "0 0 20px 0" }}>
-                  <button onClick={async () => {
-                    if (deferredPrompt) {
-                      deferredPrompt.prompt();
-                      const { outcome } = await deferredPrompt.userChoice;
-                      if (outcome === "accepted") setDeferredPrompt(null);
-                    } else {
-                      setShowInstallModal(true);
-                    }
-                  }} style={{ flex: 1, padding: "16px 8px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", fontSize: 13, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: 22 }}>📲</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Installer l'app CarryBooks</span>
+                  {/* Install button — hidden once app is installed */}
+                  {!window.matchMedia("(display-mode: standalone)").matches && (
+                    <button onClick={async () => {
+                      if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        if (outcome === "accepted") setDeferredPrompt(null);
+                      } else {
+                        setShowInstallModal(true);
+                      }
+                    }} style={{ flex: 1, padding: "14px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, borderRight: "1px solid rgba(0,0,0,0.1)" }}>
+                      <span style={{ fontSize: 20 }}>📲</span>
+                      <span style={{ lineHeight: 1.2, textAlign: "center" }}>Installer CarryBooks</span>
+                    </button>
+                  )}
+                  <button onClick={() => setPage("library")} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: window.matchMedia("(display-mode: standalone)").matches ? "none" : "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 20 }}>📚</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Ma Bibliotheque</span>
                   </button>
-                  <button onClick={() => setPage("library")} style={{ flex: 1, padding: "16px 8px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 13, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: 22 }}>📚</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Ma Bibliothèque</span>
+                  <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory("Tous"); }} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 20 }}>🎯</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Carry'Quiz</span>
                   </button>
                 </div>
 
