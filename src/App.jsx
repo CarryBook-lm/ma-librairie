@@ -1758,33 +1758,6 @@ export default function App() {
             — {readingPage + 1} —
           </div>
 
-          {/* SHARE EXCERPT BUTTON */}
-          <div style={{ margin: "24px 0 60px", padding: "0 16px" }}>
-            <button onClick={() => {
-              const pageText = scrollAllParagraphs.slice(0, 3).map(p => p.replace(/<[^>]*>/g, "")).join(" ").substring(0, 300);
-              const title = reading.title || "";
-              const author = reading.author || "";
-              const lines2 = ["📖 Extrait de " + title + " par " + author + ":", "", pageText + "...", "", "💳 Lire le livre complet sur CarryBooks :", "https://www.carrybooks.com"];
-              const msg = lines2.join("\n");
-              if (navigator.share) {
-                navigator.share({ title: title, text: msg, url: "https://www.carrybooks.com" }).catch(() => {});
-              } else {
-                window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
-              }
-            }} style={{
-              width: "100%", padding: "13px 16px",
-              background: readerDark ? "#1a2a1a" : "#f0faf0",
-              border: "1.5px solid #4caf5066",
-              borderRadius: 10, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10
-            }}>
-              <span style={{ fontSize: 20 }}>📤</span>
-              <span style={{ fontSize: 13, fontWeight: "bold", color: "#4caf50" }}>Partager cet extrait avec vos amis</span>
-            </button>
-            <div style={{ textAlign: "center", fontSize: 11, color: readerDark ? "#555" : "#aaa", marginTop: 6 }}>
-              Faire decouvrir ce livre a vos proches
-            </div>
-          </div>
         </div>
 
         {/* Navigation - cachée en mode scroll */}
@@ -2640,6 +2613,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
