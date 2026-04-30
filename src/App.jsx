@@ -1690,14 +1690,14 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                   body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Faciale", external_reference: "carrycare_facial_" + Date.now() })
                 });
                 const data = await collect.json();
-                if (!data.reference) { alert("Erreur: " + (data.message || "paiement échoué")); setBfPaymentStep(3); return; }
+                if (!data.reference) { setBfPaymentStep(5); return; }
                 // Polling check
                 const ref = data.reference;
                 let attempts = 0;
                 const maxAttempts = 25;
                 const interval = setInterval(async () => {
                   attempts++;
-                  if (attempts >= maxAttempts) { clearInterval(interval); alert("Paiement non confirmé. Si tu as été débitée, contacte-nous."); setBfPaymentStep(3); return; }
+                  if (attempts >= maxAttempts) { clearInterval(interval); setBfPaymentStep(5); return; }
                   try {
                     const checkRes = await fetch("/api/campay", {
                       method: "POST",
@@ -1706,12 +1706,11 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                     });
                     const checkData = await checkRes.json();
                     if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfStep(6); setBfPaymentStep(1); }
-                    else if (checkData.status === "FAILED") { clearInterval(interval); alert("Paiement échoué. Réessaie."); setBfPaymentStep(3); }
+                    else if (checkData.status === "FAILED") { clearInterval(interval); setBfPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
               } catch (e) {
-                alert("Erreur de connexion. Réessaie.");
-                setBfPaymentStep(3);
+                setBfPaymentStep(5);
               }
             }} style={{
               width: "100%", padding: 16, background: CC.noir, color: "#fff",
@@ -1729,9 +1728,54 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
           <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
-          <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Confirme le paiement sur ton téléphone</div>
-          <div style={{ fontSize: 13, color: CC.textFaint, textAlign: "center" }}>Vérifie les notifications {bfPaymentMethod}...</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
+          <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>
+              ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>
+            Confirme la transaction sur ton téléphone {bfPaymentMethod}.<br/>
+            Cela peut prendre jusqu'à 30 secondes.
+          </div>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
+        </div>
+      );
+    }
+
+    // ÉCHEC
+    if (bfPaymentStep === 5) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Paiement non finalisé" onBack={() => setBfPaymentStep(2)} />
+          <div style={{ padding: 20 }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
+              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>Paiement non finalisé</h3>
+              <p style={{ color: CC.textFaint, fontSize: 14 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+            </div>
+            <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 16, borderRadius: 10, marginBottom: 20 }}>
+              <p style={{ color: "#7a4a00", fontSize: 13, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
+              <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.7, margin: 0 }}>
+                ✅ Vérifie ton solde Mobile Money<br/>
+                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                ✅ Patiente quelques minutes et réessaie<br/>
+                ✅ Vérifie ta connexion internet
+              </p>
+            </div>
+            <button onClick={() => { setBfPaymentStep(2); setBfPaymentMethod(null); setBfPaymentPhone(""); }} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>
+              🔁 Réessayer
+            </button>
+            <button onClick={() => { setBfPaymentStep(1); setBfPaymentMethod(null); setBfPaymentPhone(""); }} style={{
+              width: "100%", padding: 14, background: "transparent", color: CC.textFaint,
+              border: "1px solid " + CC.border, borderRadius: 12, fontSize: 13, cursor: "pointer"
+            }}>
+              Annuler
+            </button>
+          </div>
         </div>
       );
     }
