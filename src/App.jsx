@@ -1185,6 +1185,7 @@ const BF_TYPE_QUESTIONS = [
     { label: "Très bien toute la journée", v: "C" },
     { label: "Bien sur joues, mal au centre", v: "D" },
     { label: "Ma peau réagit au maquillage", v: "E" },
+    { label: "🚫 Je ne me maquille pas", v: "skip" },
   ]},
   { q: "Quand tu transpires :", options: [
     { label: "Ma peau devient huileuse rapidement", v: "A" },
@@ -1196,7 +1197,7 @@ const BF_TYPE_QUESTIONS = [
   { q: "Tu as souvent des boutons ou imperfections ?", options: [
     { label: "Oui, régulièrement, surtout zone T", v: "A" },
     { label: "Très rarement", v: "B" },
-    { label: "Parfois avant les règles", v: "C" },
+    { label: "Parfois (avant les règles ou en cas de stress)", v: "C" },
     { label: "Sur menton et front uniquement", v: "D" },
     { label: "Rarement, mais peau sensible", v: "E" },
   ]},
