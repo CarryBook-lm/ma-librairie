@@ -966,6 +966,8 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
   const [dots, setDots] = useState(".");
   const [elapsed, setElapsed] = useState(0);
   const [key, setKey] = useState(0);
+  const [pageInput, setPageInput] = useState(String(startPage));
+  const [pageSaved, setPageSaved] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
@@ -978,6 +980,15 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
     return () => clearInterval(timer);
   }, [pdfLoaded, key]);
 
+  function savePage() {
+    const p = parseInt(pageInput);
+    if (p > 0) {
+      localStorage.setItem("pdfProgress_" + reading.id, String(p));
+      setPageSaved(true);
+      setTimeout(() => setPageSaved(false), 2000);
+    }
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
       {/* Header */}
@@ -986,12 +997,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
         <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {reading.title}{excerptMode ? " — Extrait" : ""}
         </span>
-        {!excerptMode ? (
-          <input type="number" min="1" defaultValue={startPage}
-            onChange={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
-            onBlur={e => localStorage.setItem("pdfProgress_" + reading.id, e.target.value)}
-            style={{ width: 48, background: "#222", border: "1px solid #444", color: "#ccc", borderRadius: 4, padding: "2px 6px", fontSize: 12 }} />
-        ) : <span style={{ opacity: 0 }}>x</span>}
+        <span style={{ opacity: 0, width: 48 }}>x</span>
       </div>
 
       {/* Loading overlay */}
@@ -999,14 +1005,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
         <div style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, background: "#1a1a1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 5 }}>
           <div style={{ fontSize: 52, marginBottom: 20 }}>📖</div>
           <div style={{ color: "#c9a84c", fontSize: 16, fontWeight: "bold", marginBottom: 8 }}>Chargement du livre{dots}</div>
-          <div style={{ color: "#666", fontSize: 13, marginBottom: elapsed > 3 && startPage > 1 ? 12 : 28 }}>Merci de patienter</div>
-          {elapsed > 3 && startPage > 1 && (
-            <div style={{ background: "#2a2a1a", border: "1px solid #c9a84c44", borderRadius: 10, padding: "10px 16px", marginBottom: 20, textAlign: "center", maxWidth: 260 }}>
-              <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 4 }}>📌 Tu étais à la page</div>
-              <div style={{ fontSize: 26, fontWeight: "bold", color: "#c9a84c" }}>{startPage}</div>
-              <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>Entre ce numéro dans le champ en haut ↑</div>
-            </div>
-          )}
+          <div style={{ color: "#666", fontSize: 13, marginBottom: 28 }}>Merci de patienter</div>
           <div style={{ width: 200, height: 4, background: "#333", borderRadius: 2, overflow: "hidden", marginBottom: 32 }}>
             <div style={{ height: "100%", background: "linear-gradient(90deg, #c9a84c, #e0be7a)", borderRadius: 2, animation: "pdfLoad 1.5s ease-in-out infinite" }} />
           </div>
@@ -1019,10 +1018,21 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
         </div>
       )}
 
-      {/* Last page reminder banner — shows after load if not on page 1 */}
-      {pdfLoaded && startPage > 1 && (
-        <div style={{ background: "#2a2a1a", borderBottom: "1px solid #c9a84c44", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 12, color: "#c9a84c" }}>📌 Reprends à la page <strong>{startPage}</strong> — entre-la dans le champ en haut</span>
+      {/* Save progress banner — shows after load */}
+      {pdfLoaded && !excerptMode && (
+        <div style={{ background: "#1e1e10", borderBottom: "1px solid #c9a84c33", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, color: "#aaa", flexShrink: 0 }}>📌 Sauvegarder ma page :</span>
+          <input
+            type="number" min="1" value={pageInput}
+            onChange={e => { setPageInput(e.target.value); setPageSaved(false); }}
+            style={{ width: 52, background: "#2a2a1a", border: "1px solid #c9a84c55", color: "#c9a84c", borderRadius: 6, padding: "4px 8px", fontSize: 13, fontWeight: "bold", textAlign: "center" }}
+          />
+          <button onClick={savePage} style={{ padding: "4px 12px", background: pageSaved ? "#2a4a2a" : "#c9a84c", border: "none", borderRadius: 6, color: pageSaved ? "#4caf50" : "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
+            {pageSaved ? "✅ Sauvegardé !" : "OK"}
+          </button>
+          {startPage > 1 && (
+            <span style={{ fontSize: 10, color: "#666", marginLeft: "auto", flexShrink: 0 }}>Dernière: p.{startPage}</span>
+          )}
         </div>
       )}
 
@@ -1031,7 +1041,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
         <iframe
           key={key}
           src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
-          style={{ width: "100%", height: "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
+          style={{ width: "100%", height: pdfLoaded ? "calc(100vh - 96px)" : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
           title={reading.title}
           onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
         />
