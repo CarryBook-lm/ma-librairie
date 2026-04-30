@@ -781,6 +781,62 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
 function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswers, setCurrentQuestion }) {
   const related = QUIZ_DATA.filter(q => q.id !== quiz.id && q.category === quiz.category).slice(0, 3);
   const others = QUIZ_DATA.filter(q => q.id !== quiz.id && q.category !== quiz.category).slice(0, 2);
+  const [showFireworks, setShowFireworks] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowFireworks(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (showFireworks) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {/* Feux d'artifice */}
+        {[
+          { left: "20%", top: "30%", delay: "0s", color: "#ffd700" },
+          { left: "70%", top: "25%", delay: "0.3s", color: "#ff4081" },
+          { left: "45%", top: "55%", delay: "0.5s", color: "#00e5ff" },
+          { left: "30%", top: "65%", delay: "0.7s", color: "#76ff03" },
+          { left: "75%", top: "60%", delay: "0.9s", color: "#ff9100" },
+          { left: "55%", top: "20%", delay: "1.1s", color: "#e040fb" },
+        ].map((fw, i) => (
+          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
+            {[0,1,2,3,4,5,6,7].map(angle => (
+              <div key={angle} style={{
+                position: "absolute",
+                width: 6, height: 6,
+                borderRadius: "50%",
+                background: fw.color,
+                boxShadow: `0 0 12px ${fw.color}`,
+                animation: `fwExplode 1.4s ${fw.delay} ease-out forwards`,
+                transform: `rotate(${angle * 45}deg)`,
+                transformOrigin: "center"
+              }} />
+            ))}
+          </div>
+        ))}
+        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
+          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: G.gold, animation: "fadeIn 0.5s ease-out" }}>Ton résultat est prêt !</div>
+        </div>
+        <style>{`
+          @keyframes fwExplode {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+            100% { transform: translate(var(--tx, 60px), var(--ty, 0)) scale(0.2); opacity: 0; }
+          }
+          @keyframes rocketBounce {
+            0% { transform: scale(0) rotate(-30deg); }
+            60% { transform: scale(1.3) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   function startQuiz(q) {
     setActiveQuiz(q);
@@ -842,7 +898,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
             📲 Partager mon résultat
           </button>
           <button onClick={shareWithPartner} style={{ flex: 1, padding: "13px", background: "transparent", border: "2px solid " + G.gold, borderRadius: 12, color: G.gold, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
-            💌 Envoyer à mon crush
+            👯 Partager avec un(e) ami(e)
           </button>
         </div>
 
@@ -3004,6 +3060,18 @@ export default function App() {
           </button>
         </div>
       </nav>
+
+      {/* BOUTON RETOUR GLOBAL (sur toutes les pages sauf accueil) */}
+      {page !== "home" && !showMenu && (
+        <div style={{ background: G.surface, borderBottom: "1px solid " + G.border, padding: "10px 16px" }}>
+          <button onClick={() => { setPage("home"); setSelectedCategory("Tous"); setSearchQuery(""); }} style={{
+            background: "none", border: "none", color: G.gold, fontSize: 14, fontWeight: "bold",
+            cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: 6
+          }}>
+            ← Retour à l'accueil
+          </button>
+        </div>
+      )}
 
       {/* MENU */}
       {showMenu && (
