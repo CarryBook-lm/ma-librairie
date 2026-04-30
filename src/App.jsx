@@ -1128,6 +1128,7 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
     try {
       const computedBirthdate = selYear && selMonth && selDay ? selYear + "-" + selMonth + "-" + selDay : birthdate;
   const sign = getSign(computedBirthdate);
+
       const d = new Date(birthdate);
       const age = new Date().getFullYear() - d.getFullYear();
       const week = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -1159,6 +1160,17 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
 
   const computedBirthdate = selYear && selMonth && selDay ? selYear + "-" + selMonth + "-" + selDay : birthdate;
   const sign = getSign(computedBirthdate);
+
+
+  // Local state for day/month/year — must be at top before any returns
+  const [selDay, setSelDay] = useState("");
+  const [selMonth, setSelMonth] = useState("");
+  const [selYear, setSelYear] = useState("");
+
+  function updateBirthdate(y, m, d) {
+    if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
+    else setBirthdate("");
+  }
 
   // HOME
   if (horoscopePage === "home") return (
@@ -1196,15 +1208,7 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
   const currentYear = new Date().getFullYear();
   const years = Array.from({length: 80}, (_, i) => currentYear - i);
 
-  // Local state for day/month/year selects
-  const [selDay, setSelDay] = useState(birthdate ? birthdate.split("-")[2] || "" : "");
-  const [selMonth, setSelMonth] = useState(birthdate ? birthdate.split("-")[1] || "" : "");
-  const [selYear, setSelYear] = useState(birthdate ? birthdate.split("-")[0] || "" : "");
 
-  function updateBirthdate(y, m, d) {
-    if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
-    else setBirthdate("");
-  }
 
   if (horoscopePage === "form") return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", padding: "0 0 80px" }}>
