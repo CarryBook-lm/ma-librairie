@@ -1762,14 +1762,16 @@ export default function App() {
           <div style={{ margin: "24px 0 60px", padding: "0 16px" }}>
             <button onClick={() => {
               const pageText = scrollAllParagraphs.slice(0, 3).map(p => p.replace(/<[^>]*>/g, "")).join(" ").substring(0, 300);
-              const msg = "📖 Extrait de "" + reading.title + "" par " + reading.author + ":
+              const title = reading.title || "";
+              const author = reading.author || "";
+              const msg = "📖 Extrait de " + title + " par " + author + ":
 
 " + pageText + "...
 
 💳 Lire le livre complet sur CarryBooks :
 https://www.carrybooks.com";
               if (navigator.share) {
-                navigator.share({ title: reading.title, text: msg, url: "https://www.carrybooks.com" });
+                navigator.share({ title: title, text: msg, url: "https://www.carrybooks.com" });
               } else {
                 window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
               }
