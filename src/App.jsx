@@ -2376,21 +2376,17 @@ export default function App() {
               if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
               cacheBook(paymentBook);
             } else {
-              setPaymentStep(3);
-              alert("Paiement non confirmé. Vérifiez votre solde et réessayez.");
+              setPaymentStep(6);
             }
           } catch(e) {
-            setPaymentStep(3);
-            alert("Erreur de vérification. Vérifiez votre solde et réessayez.");
+            setPaymentStep(6);
           }
         }, 25000);
       } else {
-        setPaymentStep(3);
-        alert("Erreur Campay: " + JSON.stringify(payData));
+        setPaymentStep(6);
       }
     } catch(e) {
-      setPaymentStep(3);
-      alert("Erreur de connexion. Vérifiez votre connexion internet.");
+      setPaymentStep(6);
     }
   }
 
@@ -2855,6 +2851,33 @@ export default function App() {
                   <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
                     style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                     📖 Lire maintenant
+                  </button>
+                </div>
+              )}
+              {paymentStep === 6 && (
+                <div style={{ padding: "24px 0" }}>
+                  <div style={{ textAlign: "center", marginBottom: 20 }}>
+                    <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
+                    <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
+                    <p style={{ color: "#888", fontSize: 13 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+                  </div>
+                  <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
+                    <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
+                    <p style={{ color: "#7a4a00", fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+                      ✅ Vérifie ton solde Mobile Money<br/>
+                      ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                      ✅ Patiente quelques minutes et réessaie<br/>
+                      ✅ Vérifie ta connexion internet
+                    </p>
+                  </div>
+                  <button onClick={() => { setPaymentStep(2); setPaymentMethod(null); setPhoneNumber(""); }} style={{
+                    width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+                    border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+                  }}>
+                    🔁 Réessayer
+                  </button>
+                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>
+                    Annuler
                   </button>
                 </div>
               )}
@@ -3617,6 +3640,33 @@ export default function App() {
                 <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
                   style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                   📖 Lire maintenant
+                </button>
+              </div>
+            )}
+            {paymentStep === 6 && (
+              <div style={{ padding: "24px 0" }}>
+                <div style={{ textAlign: "center", marginBottom: 20 }}>
+                  <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
+                  <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
+                  <p style={{ color: "#888", fontSize: 13 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+                </div>
+                <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
+                  <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
+                  <p style={{ color: "#7a4a00", fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+                    ✅ Vérifie ton solde Mobile Money<br/>
+                    ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                    ✅ Patiente quelques minutes et réessaie<br/>
+                    ✅ Vérifie ta connexion internet
+                  </p>
+                </div>
+                <button onClick={() => { setPaymentStep(2); setPaymentMethod(null); setPhoneNumber(""); }} style={{
+                  width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+                  border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+                }}>
+                  🔁 Réessayer
+                </button>
+                <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>
+                  Annuler
                 </button>
               </div>
             )}
