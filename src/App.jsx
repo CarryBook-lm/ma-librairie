@@ -67,7 +67,7 @@ const G = {
 // CARRY'QUIZ — Quiz System
 // ============================================================
 
-const QUIZ_CATEGORIES = ["Tous", "❤️ Amour", "🧠 Test du QI", "💭 Personnalité", "💰 Argent & Succès", "🔥 Quiz Choc"];
+const QUIZ_CATEGORIES = ["Tous", "❤️ Amour", "🧠 Test du QI", "💭 Personnalité", "💰 Argent & Succès", "🔥 Quiz Choc", "🌸 Beauté & Santé"];
 
 const QUIZ_DATA = [
   // ─── AMOUR ───
@@ -467,7 +467,7 @@ const QUIZ_DATA = [
 // QUIZ COMPONENTS
 // ============================================================
 
-function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuestion, quizCategory, setQuizCategory, G, quizPrice, setPage }) {
+function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuestion, quizCategory, setQuizCategory, G, quizPrice, setPage, setCarryCarePage }) {
   const filtered = quizCategory === "Tous" ? QUIZ_DATA : QUIZ_DATA.filter(q => q.category === quizCategory);
 
   function startQuiz(quiz) {
@@ -489,7 +489,10 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
         {/* Catégories uniquement */}
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
           {QUIZ_CATEGORIES.map(cat => (
-            <button key={cat} onClick={() => setQuizCategory(cat)} style={{
+            <button key={cat} onClick={() => {
+              if (cat === "🌸 Beauté & Santé") { setPage("carrycare"); setCarryCarePage("home"); return; }
+              setQuizCategory(cat);
+            }} style={{
               padding: "8px 18px", borderRadius: 24, fontSize: 13, cursor: "pointer", fontWeight: quizCategory === cat ? "bold" : "normal",
               border: "1.5px solid " + (quizCategory === cat ? G.gold : "rgba(255,255,255,0.25)"),
               background: quizCategory === cat ? G.gold : "transparent",
@@ -1063,6 +1066,585 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
 }
 
 
+// ============================================================
+// ─── CARRYCARE — BEAUTÉ & SANTÉ ─────────────────────────────
+// ============================================================
+
+// Palette CarryCare (rose poudré + blanc + noir)
+const CC = {
+  rose: "#e8b4b8",
+  roseDeep: "#c08a8e",
+  roseLight: "#f5d7d9",
+  blanc: "#fdf8f8",
+  blancCasse: "#f5ecec",
+  noir: "#1a1a1a",
+  noirSoft: "#2d2d2d",
+  text: "#1a1a1a",
+  textFaint: "#6b5050",
+  border: "#e8d4d6",
+  gold: "#c9a66b"
+};
+
+// ─── PAGE D'ACCUEIL CARRYCARE ───
+function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult }) {
+
+  function startFacial() {
+    setBfStep(1);
+    setBfTypeAnswers([]);
+    setBfProblems([]);
+    setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
+    setBfResult(null);
+    setCarryCarePage("facialQuiz");
+  }
+
+  const quizCards = [
+    { id: "facial", emoji: "💄", title: "Beauté Faciale", subtitle: "Diagnostic peau + routine personnalisée", available: true, action: startFacial, gradient: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)" },
+    { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: false, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
+    { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: false, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
+    { id: "weight", emoji: "⚖️", title: "Garde la Ligne", subtitle: "Plan nutrition personnalisé", available: false, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: CC.blanc, padding: "0 0 80px" }}>
+      {/* Hero CarryCare */}
+      <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "32px 16px 36px", textAlign: "center", position: "relative", borderBottom: "1px solid " + CC.border }}>
+        <button onClick={() => setPage("quiz")} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
+        <div style={{ fontSize: 56, marginBottom: 8 }}>🌸</div>
+        <div style={{ fontSize: 32, fontWeight: "bold", color: CC.noir, fontFamily: "Georgia, serif", marginBottom: 6, letterSpacing: 1 }}>CarryCare</div>
+        <div style={{ fontSize: 14, color: CC.textFaint, fontStyle: "italic", marginBottom: 4 }}>Ton diagnostic personnalisé</div>
+        <div style={{ fontSize: 13, color: CC.textFaint }}>Beauté & Santé</div>
+      </div>
+
+      {/* Cartes Quiz */}
+      <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        {quizCards.map(card => (
+          <div key={card.id} onClick={() => card.available && card.action && card.action()} style={{
+            background: card.gradient, borderRadius: 18, padding: "20px 18px", cursor: card.available ? "pointer" : "default",
+            position: "relative", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            opacity: card.available ? 1 : 0.7, transition: "transform 0.2s"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ fontSize: 44 }}>{card.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{card.title}</div>
+                <div style={{ fontSize: 12, color: CC.noirSoft }}>{card.subtitle}</div>
+              </div>
+              {card.available ? (
+                <div style={{ background: CC.noir, color: "#fff", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: "bold" }}>Tester</div>
+              ) : (
+                <div style={{ background: "rgba(255,255,255,0.6)", color: CC.noir, borderRadius: 20, padding: "6px 12px", fontSize: 11, fontWeight: "bold" }}>Bientôt</div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding: "10px 20px", textAlign: "center", marginTop: 10 }}>
+        <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic" }}>
+          ✨ Diagnostic personnalisé propulsé par CarryCare
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── QUIZ BEAUTÉ FACIALE ───
+const BF_TYPE_QUESTIONS = [
+  { q: "Le matin au réveil, ta peau est :", options: [
+    { label: "Brillante surtout sur le front et le nez", v: "A" },
+    { label: "Tendue, inconfortable, ça tire", v: "B" },
+    { label: "Confortable, ni grasse ni sèche", v: "C" },
+    { label: "Brillante au centre, sèche sur les joues", v: "D" },
+    { label: "Rouge, irritée ou sensible au toucher", v: "E" },
+  ]},
+  { q: "2-3 heures après ta crème hydratante :", options: [
+    { label: "Ma peau brille beaucoup", v: "A" },
+    { label: "Ma peau tire encore", v: "B" },
+    { label: "Ma peau reste confortable", v: "C" },
+    { label: "Ça brille au centre, sec ailleurs", v: "D" },
+    { label: "Ma peau réagit (rougeurs, picotements)", v: "E" },
+  ]},
+  { q: "Tes pores sont :", options: [
+    { label: "Visibles partout", v: "A" },
+    { label: "Très fins, presque invisibles", v: "B" },
+    { label: "Normaux, peu visibles", v: "C" },
+    { label: "Visibles au centre du visage", v: "D" },
+    { label: "Variables selon les zones", v: "E" },
+  ]},
+  { q: "As-tu des points noirs ?", options: [
+    { label: "Beaucoup, surtout nez et front", v: "A" },
+    { label: "Très peu ou aucun", v: "B" },
+    { label: "Quelques-uns occasionnellement", v: "C" },
+    { label: "Sur la zone T uniquement", v: "D" },
+    { label: "Rarement", v: "E" },
+  ]},
+  { q: "Le maquillage tient sur ta peau :", options: [
+    { label: "Mal, il fond rapidement", v: "A" },
+    { label: "Il craque sur les zones sèches", v: "B" },
+    { label: "Très bien toute la journée", v: "C" },
+    { label: "Bien sur joues, mal au centre", v: "D" },
+    { label: "Ma peau réagit au maquillage", v: "E" },
+  ]},
+  { q: "Quand tu transpires :", options: [
+    { label: "Ma peau devient huileuse rapidement", v: "A" },
+    { label: "Je transpire peu, ma peau reste sèche", v: "B" },
+    { label: "Normal", v: "C" },
+    { label: "Le centre devient gras", v: "D" },
+    { label: "Ma peau rougit ou s'irrite", v: "E" },
+  ]},
+  { q: "Tu as souvent des boutons ou imperfections ?", options: [
+    { label: "Oui, régulièrement, surtout zone T", v: "A" },
+    { label: "Très rarement", v: "B" },
+    { label: "Parfois avant les règles", v: "C" },
+    { label: "Sur menton et front uniquement", v: "D" },
+    { label: "Rarement, mais peau sensible", v: "E" },
+  ]},
+  { q: "Comment réagit ta peau à un nouveau produit ?", options: [
+    { label: "Plutôt bien", v: "A" },
+    { label: "Elle a besoin de produits riches", v: "B" },
+    { label: "Aucune réaction particulière", v: "C" },
+    { label: "Réactions différentes selon zones", v: "D" },
+    { label: "Souvent rougeurs, picotements", v: "E" },
+  ]},
+];
+
+const BF_PROBLEMS = [
+  { id: "acne", emoji: "🔴", label: "Acné active" },
+  { id: "taches", emoji: "🟤", label: "Taches noires / hyperpigmentation" },
+  { id: "cicatrices", emoji: "⚪", label: "Cicatrices d'acné anciennes" },
+  { id: "pores", emoji: "⚫", label: "Points noirs / pores dilatés" },
+  { id: "cernes", emoji: "👁️", label: "Cernes ou poches" },
+  { id: "terne", emoji: "😐", label: "Peau terne, manque d'éclat" },
+  { id: "rides", emoji: "⏳", label: "Premières rides ou relâchement" },
+  { id: "rougeurs", emoji: "🌹", label: "Rougeurs ou peau qui réagit" },
+  { id: "secheresse", emoji: "💧", label: "Sécheresse, tiraillements" },
+];
+
+function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod }) {
+
+  function getSkinType(answers) {
+    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    answers.forEach(a => { if (counts[a] !== undefined) counts[a]++; });
+    const max = Math.max(...Object.values(counts));
+    const winner = Object.keys(counts).find(k => counts[k] === max);
+    const types = {
+      A: { code: "grasse", emoji: "🔵", name: "Peau Grasse", desc: "Ta peau produit beaucoup de sébum, surtout au niveau de la zone T" },
+      B: { code: "seche", emoji: "🟡", name: "Peau Sèche", desc: "Ta peau manque de lipides et tire facilement" },
+      C: { code: "normale", emoji: "🟢", name: "Peau Normale", desc: "Ta peau est équilibrée, ni grasse ni sèche" },
+      D: { code: "mixte", emoji: "🟣", name: "Peau Mixte", desc: "Ta peau est grasse au centre et normale ou sèche sur les côtés" },
+      E: { code: "sensible", emoji: "🔴", name: "Peau Sensible", desc: "Ta peau réagit facilement aux produits et agressions" },
+    };
+    return types[winner] || types.C;
+  }
+
+  function selectAnswer(questionIdx, value) {
+    const newAnswers = [...bfTypeAnswers];
+    newAnswers[questionIdx] = value;
+    setBfTypeAnswers(newAnswers);
+  }
+
+  function toggleProblem(id) {
+    if (bfProblems.includes(id)) {
+      setBfProblems(bfProblems.filter(p => p !== id));
+    } else {
+      setBfProblems([...bfProblems, id]);
+    }
+  }
+
+  // Header commun
+  const Header = ({ title, onBack }) => (
+    <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "20px 16px 18px", position: "relative", borderBottom: "1px solid " + CC.border }}>
+      <button onClick={onBack} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
+      <div style={{ textAlign: "center", paddingTop: 8 }}>
+        <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 2 }}>💄 Beauté Faciale</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>{title}</div>
+      </div>
+    </div>
+  );
+
+  // ÉTAPE 1 — Type de peau
+  if (bfStep === 1) {
+    const answeredCount = BF_TYPE_QUESTIONS.filter((_, i) => bfTypeAnswers[i]).length;
+    const allAnswered = answeredCount === BF_TYPE_QUESTIONS.length;
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 1 / 3 — Type de peau" onBack={() => setCarryCarePage("home")} />
+        <div style={{ padding: "16px" }}>
+          <div style={{ background: CC.roseLight, padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13, color: CC.noir }}>
+            ✨ Réponds à ces 8 questions pour identifier précisément ton type de peau
+          </div>
+          {BF_TYPE_QUESTIONS.map((q, idx) => (
+            <div key={idx} style={{ background: "#fff", borderRadius: 14, padding: "14px 14px", marginBottom: 12, border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>
+                {idx + 1}. {q.q}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {q.options.map(opt => (
+                  <button key={opt.v} onClick={() => selectAnswer(idx, opt.v)} style={{
+                    padding: "10px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer", textAlign: "left",
+                    border: "1.5px solid " + (bfTypeAnswers[idx] === opt.v ? CC.roseDeep : CC.border),
+                    background: bfTypeAnswers[idx] === opt.v ? CC.roseLight : "#fff",
+                    color: CC.noir,
+                    fontWeight: bfTypeAnswers[idx] === opt.v ? "bold" : "normal"
+                  }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button onClick={() => allAnswered && setBfStep(2)} disabled={!allAnswered} style={{
+            width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold",
+            cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10
+          }}>
+            {allAnswered ? "Suivant — Tes problèmes →" : `Réponds aux ${BF_TYPE_QUESTIONS.length - answeredCount} questions restantes`}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 2 — Problèmes
+  if (bfStep === 2) {
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 2 / 3 — Tes problèmes" onBack={() => setBfStep(1)} />
+        <div style={{ padding: "16px" }}>
+          <div style={{ background: CC.roseLight, padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13, color: CC.noir }}>
+            ✨ Coche tous les problèmes que tu as actuellement (plusieurs choix possibles)
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {BF_PROBLEMS.map(p => (
+              <button key={p.id} onClick={() => toggleProblem(p.id)} style={{
+                padding: "14px 16px", borderRadius: 12, fontSize: 14, cursor: "pointer", textAlign: "left",
+                border: "1.5px solid " + (bfProblems.includes(p.id) ? CC.roseDeep : CC.border),
+                background: bfProblems.includes(p.id) ? CC.roseLight : "#fff",
+                color: CC.noir, display: "flex", alignItems: "center", gap: 12,
+                fontWeight: bfProblems.includes(p.id) ? "bold" : "normal"
+              }}>
+                <span style={{ fontSize: 20 }}>{p.emoji}</span>
+                <span style={{ flex: 1 }}>{p.label}</span>
+                <span style={{ fontSize: 18 }}>{bfProblems.includes(p.id) ? "✅" : "⬜"}</span>
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setBfStep(3)} style={{
+            width: "100%", padding: 16, background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold",
+            cursor: "pointer", marginTop: 16
+          }}>
+            Suivant — Ton mode de vie →
+          </button>
+          <button onClick={() => { setBfProblems([]); setBfStep(3); }} style={{
+            width: "100%", padding: 12, background: "transparent", color: CC.textFaint,
+            border: "none", fontSize: 12, cursor: "pointer", marginTop: 6
+          }}>
+            Aucun problème majeur, juste de l'entretien →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 3 — Mode de vie
+  if (bfStep === 3) {
+    const lifestyleQuestions = [
+      { key: "age", q: "Ta tranche d'âge ?", options: [
+        { label: "🌱 Moins de 20 ans", v: "ado" },
+        { label: "🌸 20 - 29 ans", v: "20s" },
+        { label: "🌺 30 - 39 ans", v: "30s" },
+        { label: "🌹 40 - 49 ans", v: "40s" },
+        { label: "🌷 50 ans et plus", v: "50plus" },
+      ]},
+      { key: "sun", q: "Combien de temps au soleil par jour ?", options: [
+        { label: "🌤️ Moins d'1 heure", v: "low" },
+        { label: "☀️ Entre 1 et 3 heures", v: "med" },
+        { label: "🔥 Plus de 3 heures", v: "high" },
+      ]},
+      { key: "spf", q: "Tu utilises une protection solaire (SPF) ?", options: [
+        { label: "✅ Oui, tous les jours", v: "always" },
+        { label: "🟡 Parfois", v: "sometimes" },
+        { label: "❌ Non, jamais", v: "never" },
+      ]},
+      { key: "makeup", q: "Tu te maquilles à quelle fréquence ?", options: [
+        { label: "💄 Tous les jours", v: "daily" },
+        { label: "🎉 Occasionnellement", v: "occ" },
+        { label: "🚫 Rarement ou jamais", v: "rarely" },
+      ]},
+      { key: "water", q: "Combien d'eau bois-tu par jour ?", options: [
+        { label: "💧 Moins d'1 litre", v: "low" },
+        { label: "💧💧 1 à 2 litres", v: "med" },
+        { label: "💧💧💧 Plus de 2 litres", v: "high" },
+      ]},
+      { key: "sleep", q: "Sommeil et stress ?", options: [
+        { label: "😴 Bon sommeil et détendue", v: "good" },
+        { label: "😐 Moyen", v: "med" },
+        { label: "😩 Peu de sommeil et stressée", v: "bad" },
+      ]},
+    ];
+    const allDone = lifestyleQuestions.every(q => bfLifestyle[q.key] !== null);
+
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 3 / 3 — Ton mode de vie" onBack={() => setBfStep(2)} />
+        <div style={{ padding: "16px" }}>
+          <div style={{ background: CC.roseLight, padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13, color: CC.noir }}>
+            ✨ Ces dernières questions affinent ton diagnostic
+          </div>
+          {lifestyleQuestions.map((lq, idx) => (
+            <div key={lq.key} style={{ background: "#fff", borderRadius: 14, padding: "14px 14px", marginBottom: 12, border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>
+                {idx + 1}. {lq.q}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {lq.options.map(opt => (
+                  <button key={opt.v} onClick={() => setBfLifestyle({ ...bfLifestyle, [lq.key]: opt.v })} style={{
+                    padding: "10px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer", textAlign: "left",
+                    border: "1.5px solid " + (bfLifestyle[lq.key] === opt.v ? CC.roseDeep : CC.border),
+                    background: bfLifestyle[lq.key] === opt.v ? CC.roseLight : "#fff",
+                    color: CC.noir,
+                    fontWeight: bfLifestyle[lq.key] === opt.v ? "bold" : "normal"
+                  }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button onClick={() => {
+            if (!allDone) return;
+            // Calcul résultat
+            const skinType = getSkinType(bfTypeAnswers);
+            setBfResult({ skinType, problems: bfProblems, lifestyle: bfLifestyle });
+            setBfStep(4); // suspense
+            setTimeout(() => setBfStep(5), 2500); // payment
+          }} disabled={!allDone} style={{
+            width: "100%", padding: 16, background: allDone ? CC.noir : "#ccc", color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold",
+            cursor: allDone ? "pointer" : "not-allowed", marginTop: 10
+          }}>
+            {allDone ? "Voir mon diagnostic ✨" : "Réponds aux questions restantes"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 4 — Suspense
+  if (bfStep === 4) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 80, marginBottom: 20, animation: "spin 2s linear infinite" }}>✨</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse en cours...</div>
+        <div style={{ fontSize: 14, color: CC.textFaint, textAlign: "center" }}>Préparation de ton diagnostic personnalisé</div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
+      </div>
+    );
+  }
+
+  // ÉTAPE 5 — Paiement
+  if (bfStep === 5) {
+    if (bfPaymentStep === 1) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Ton diagnostic est prêt ✨" onBack={() => setBfStep(3)} />
+          <div style={{ padding: 16 }}>
+            <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "24px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 56, marginBottom: 12 }}>{bfResult?.skinType?.emoji || "✨"}</div>
+              <div style={{ fontSize: 14, color: CC.textFaint, marginBottom: 4 }}>Ton type de peau</div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{bfResult?.skinType?.name}</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.5, fontStyle: "italic" }}>{bfResult?.skinType?.desc}</div>
+            </div>
+
+            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>🔒 Ton diagnostic complet inclut :</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
+                ✅ Ta routine matin/soir personnalisée<br/>
+                ✅ Tes ingrédients miracles<br/>
+                ✅ Conseils ciblés pour tes problèmes<br/>
+                ✅ Option 100% naturel (recettes maison)<br/>
+                ✅ Option rapide & efficace (produits pro)<br/>
+                ✅ Erreurs à éviter
+              </div>
+            </div>
+
+            <button onClick={() => setBfPaymentStep(2)} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Choix méthode paiement
+    if (bfPaymentStep === 2) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Méthode de paiement" onBack={() => setBfPaymentStep(1)} />
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 14, color: CC.noir, marginBottom: 16, textAlign: "center" }}>
+              Choisis ta méthode de paiement
+            </div>
+            <button onClick={() => { setBfPaymentMethod("MTN"); setBfPaymentStep(3); }} style={{
+              width: "100%", padding: 18, background: "#FFCC00", color: "#000",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12
+            }}>
+              📱 MTN Mobile Money
+            </button>
+            <button onClick={() => { setBfPaymentMethod("ORANGE"); setBfPaymentStep(3); }} style={{
+              width: "100%", padding: 18, background: "#FF6600", color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              📱 Orange Money
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Saisie numéro
+    if (bfPaymentStep === 3) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title={"Ton numéro " + bfPaymentMethod} onBack={() => setBfPaymentStep(2)} />
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 12 }}>
+              Entre ton numéro {bfPaymentMethod} (9 chiffres, sans +237)
+            </div>
+            <input type="tel" value={bfPaymentPhone} onChange={(e) => setBfPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="6XXXXXXXX" style={{
+                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border,
+                borderRadius: 12, marginBottom: 16, outline: "none"
+              }} />
+            <button onClick={async () => {
+              if (bfPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
+              setBfPaymentStep(4);
+              const fullPhone = "237" + bfPaymentPhone;
+              try {
+                const collect = await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Faciale", external_reference: "carrycare_facial_" + Date.now() })
+                });
+                const data = await collect.json();
+                if (!data.reference) { alert("Erreur: " + (data.message || "paiement échoué")); setBfPaymentStep(3); return; }
+                // Polling check
+                const ref = data.reference;
+                let attempts = 0;
+                const maxAttempts = 25;
+                const interval = setInterval(async () => {
+                  attempts++;
+                  if (attempts >= maxAttempts) { clearInterval(interval); alert("Paiement non confirmé. Si tu as été débitée, contacte-nous."); setBfPaymentStep(3); return; }
+                  try {
+                    const checkRes = await fetch("/api/campay", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "check", reference: ref })
+                    });
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfStep(6); setBfPaymentStep(1); }
+                    else if (checkData.status === "FAILED") { clearInterval(interval); alert("Paiement échoué. Réessaie."); setBfPaymentStep(3); }
+                  } catch (e) {}
+                }, 3000);
+              } catch (e) {
+                alert("Erreur de connexion. Réessaie.");
+                setBfPaymentStep(3);
+              }
+            }} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Payer {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // En cours
+    if (bfPaymentStep === 4) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Confirme le paiement sur ton téléphone</div>
+          <div style={{ fontSize: 13, color: CC.textFaint, textAlign: "center" }}>Vérifie les notifications {bfPaymentMethod}...</div>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
+        </div>
+      );
+    }
+  }
+
+  // ÉTAPE 6 — Résultat débloqué
+  if (bfStep === 6 && bfResult) {
+    const problemLabels = bfResult.problems.map(pid => BF_PROBLEMS.find(p => p.id === pid)).filter(Boolean);
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Ton diagnostic complet ✨" onBack={() => { setCarryCarePage("home"); setBfStep(1); }} />
+        <div style={{ padding: 16 }}>
+
+          {/* Diagnostic principal */}
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "24px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
+            <div style={{ fontSize: 56, marginBottom: 8 }}>{bfResult.skinType.emoji}</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Ton diagnostic</div>
+            <div style={{ fontSize: 24, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>{bfResult.skinType.name}</div>
+            <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.5, fontStyle: "italic" }}>{bfResult.skinType.desc}</div>
+          </div>
+
+          {/* Problèmes identifiés */}
+          {problemLabels.length > 0 && (
+            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>🎯 Tes problèmes identifiés</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {problemLabels.map(p => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: CC.roseLight, borderRadius: 8 }}>
+                    <span style={{ fontSize: 18 }}>{p.emoji}</span>
+                    <span style={{ fontSize: 13, color: CC.noir }}>{p.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Routine en cours de préparation */}
+          <div style={{ background: "linear-gradient(135deg, #f5ecec 0%, #e8d4b8 100%)", borderRadius: 14, padding: 20, marginBottom: 16, border: "1px solid " + CC.border, textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>✨</div>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>Ta routine personnalisée arrive bientôt !</div>
+            <div style={{ fontSize: 12, color: CC.noirSoft, lineHeight: 1.5 }}>
+              Notre équipe d'experts finalise les routines détaillées avec :<br/>
+              • Option 100% naturelle (recettes maison)<br/>
+              • Option rapide & efficace (CarryGoo.net)<br/>
+              • Conseils ciblés pour tes problèmes<br/><br/>
+              <strong>Tu seras notifiée dès que c'est prêt !</strong>
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div style={{ background: "#fff8e1", borderLeft: "3px solid " + CC.gold, padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.5 }}>
+              ⚠️ Ces conseils sont indicatifs. Avant d'utiliser un nouveau produit, fais un test sur une petite zone. En cas de problème de peau important, consulte un dermatologue.
+            </div>
+          </div>
+
+          {/* Boutons action */}
+          <button onClick={() => { setCarryCarePage("home"); setBfStep(1); setBfTypeAnswers([]); setBfProblems([]); setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null }); setBfResult(null); setBfPaymentStep(1); setBfPaymentPhone(""); setBfPaymentMethod(null); }} style={{
+            width: "100%", padding: 14, background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer"
+          }}>
+            🌸 Retour à CarryCare
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 
 export default function App() {
   const [page, setPage] = useState("home");
@@ -1121,6 +1703,18 @@ export default function App() {
   const [quizPhone, setQuizPhone] = useState("");
   const [quizPaymentMethod, setQuizPaymentMethod] = useState(null);
   const [quizCategory, setQuizCategory] = useState("Tous");
+
+  // ─── CARRYCARE / BEAUTÉ & SANTÉ ───
+  const [carryCarePage, setCarryCarePage] = useState("home"); // home | facialQuiz
+  const [beautyQuizPrice, setBeautyQuizPrice] = useState(1000);
+  const [bfStep, setBfStep] = useState(1); // 1=type peau, 2=problèmes, 3=mode vie, 4=résultat suspense, 5=paiement, 6=résultat
+  const [bfTypeAnswers, setBfTypeAnswers] = useState([]); // 8 réponses A/B/C/D/E
+  const [bfProblems, setBfProblems] = useState([]); // cases cochées
+  const [bfLifestyle, setBfLifestyle] = useState({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
+  const [bfResult, setBfResult] = useState(null);
+  const [bfPaymentStep, setBfPaymentStep] = useState(1);
+  const [bfPaymentPhone, setBfPaymentPhone] = useState("");
+  const [bfPaymentMethod, setBfPaymentMethod] = useState(null);
 
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
@@ -2414,11 +3008,42 @@ export default function App() {
 
         {page === "quiz" && (
           <div style={{ padding: "0 0 80px" }}>
-            {quizPage === "quizHome" && <QuizHome setActiveQuiz={setActiveQuiz} setQuizPage={setQuizPage} setQuizAnswers={setQuizAnswers} setCurrentQuestion={setCurrentQuestion} quizCategory={quizCategory} setQuizCategory={setQuizCategory} G={G} quizPrice={quizPrice} setPage={setPage} />}
+            {quizPage === "quizHome" && <QuizHome setActiveQuiz={setActiveQuiz} setQuizPage={setQuizPage} setQuizAnswers={setQuizAnswers} setCurrentQuestion={setCurrentQuestion} quizCategory={quizCategory} setQuizCategory={setQuizCategory} G={G} quizPrice={quizPrice} setPage={setPage} setCarryCarePage={setCarryCarePage} />}
             {quizPage === "quizPlay" && activeQuiz && <QuizPlay quiz={activeQuiz} answers={quizAnswers} setAnswers={setQuizAnswers} currentQ={currentQuestion} setCurrentQ={setCurrentQuestion} setQuizPage={setQuizPage} setQuizResult={setQuizResult} G={G} setPage={setPage} />}
             {quizPage === "quizSuspense" && <QuizSuspense setQuizPage={setQuizPage} G={G} />}
             {quizPage === "quizPayment" && <QuizPayment quiz={activeQuiz} quizResult={quizResult} quizPaymentStep={quizPaymentStep} setQuizPaymentStep={setQuizPaymentStep} quizPhone={quizPhone} setQuizPhone={setQuizPhone} quizPaymentMethod={quizPaymentMethod} setQuizPaymentMethod={setQuizPaymentMethod} setQuizPage={setQuizPage} G={G} quizPrice={quizPrice} />}
             {quizPage === "quizResult" && <QuizResult quiz={activeQuiz} result={quizResult} setQuizPage={setQuizPage} G={G} setActiveQuiz={setActiveQuiz} setQuizAnswers={setQuizAnswers} setCurrentQuestion={setCurrentQuestion} />}
+          </div>
+        )}
+
+        {page === "carrycare" && (
+          <div>
+            {carryCarePage === "home" && (
+              <CarryCareHome
+                setPage={setPage}
+                setCarryCarePage={setCarryCarePage}
+                setBfStep={setBfStep}
+                setBfTypeAnswers={setBfTypeAnswers}
+                setBfProblems={setBfProblems}
+                setBfLifestyle={setBfLifestyle}
+                setBfResult={setBfResult}
+              />
+            )}
+            {carryCarePage === "facialQuiz" && (
+              <BeautyFacialQuiz
+                setPage={setPage}
+                setCarryCarePage={setCarryCarePage}
+                bfStep={bfStep} setBfStep={setBfStep}
+                bfTypeAnswers={bfTypeAnswers} setBfTypeAnswers={setBfTypeAnswers}
+                bfProblems={bfProblems} setBfProblems={setBfProblems}
+                bfLifestyle={bfLifestyle} setBfLifestyle={setBfLifestyle}
+                bfResult={bfResult} setBfResult={setBfResult}
+                beautyQuizPrice={beautyQuizPrice}
+                bfPaymentStep={bfPaymentStep} setBfPaymentStep={setBfPaymentStep}
+                bfPaymentPhone={bfPaymentPhone} setBfPaymentPhone={setBfPaymentPhone}
+                bfPaymentMethod={bfPaymentMethod} setBfPaymentMethod={setBfPaymentMethod}
+              />
+            )}
           </div>
         )}
 
