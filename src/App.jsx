@@ -1061,6 +1061,274 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
 }
 
 
+// ─── HOROSCOPE PAGE ───
+function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoroscopeData, birthdate, setBirthdate, phone, setPhone, method, setMethod, step, setStep, loading, setLoading, setPage, G, user }) {
+
+  function getSign(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    const m = d.getMonth() + 1, day = d.getDate();
+    if ((m===3&&day>=21)||(m===4&&day<=19)) return {sign:"Bélier", emoji:"♈"};
+    if ((m===4&&day>=20)||(m===5&&day<=20)) return {sign:"Taureau", emoji:"♉"};
+    if ((m===5&&day>=21)||(m===6&&day<=20)) return {sign:"Gémeaux", emoji:"♊"};
+    if ((m===6&&day>=21)||(m===7&&day<=22)) return {sign:"Cancer", emoji:"♋"};
+    if ((m===7&&day>=23)||(m===8&&day<=22)) return {sign:"Lion", emoji:"♌"};
+    if ((m===8&&day>=23)||(m===9&&day<=22)) return {sign:"Vierge", emoji:"♍"};
+    if ((m===9&&day>=23)||(m===10&&day<=22)) return {sign:"Balance", emoji:"♎"};
+    if ((m===10&&day>=23)||(m===11&&day<=21)) return {sign:"Scorpion", emoji:"♏"};
+    if ((m===11&&day>=22)||(m===12&&day<=21)) return {sign:"Sagittaire", emoji:"♐"};
+    if ((m===12&&day>=22)||(m===1&&day<=19)) return {sign:"Capricorne", emoji:"♑"};
+    if ((m===1&&day>=20)||(m===2&&day<=18)) return {sign:"Verseau", emoji:"♒"};
+    return {sign:"Poissons", emoji:"♓"};
+  }
+
+  async function handlePay() {
+    if (!phone || phone.replace(/[^0-9]/g,"").length < 9) { alert("Entre un numéro valide"); return; }
+    if (!method) { alert("Choisis MTN MoMo ou Orange Money"); return; }
+    setStep(2);
+    setLoading(true);
+    try {
+      const p = phone.replace(/[^0-9]/g,"");
+      const fullPhone = p.startsWith("237") ? p : "237" + p;
+      const collectRes = await fetch("/api/campay", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "collect", amount: 100, phone: fullPhone, description: "Horoscope CarryBooks", external_reference: "horoscope_" + Date.now() })
+      });
+      const collectData = await collectRes.json();
+      if (collectData.reference) {
+        let attempts = 0;
+        const check = setInterval(async () => {
+          attempts++;
+          const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: collectData.reference }) });
+          const checkData = await checkRes.json();
+          if (checkData.status === "SUCCESSFUL") {
+            clearInterval(check);
+            generateHoroscope();
+          } else if (checkData.status === "FAILED" || attempts > 20) {
+            clearInterval(check);
+            setStep(1);
+            setLoading(false);
+            alert("Paiement non confirmé. Réessaie.");
+          }
+        }, 3000);
+      } else {
+        setStep(1);
+        setLoading(false);
+        alert(collectData.message || "Erreur paiement");
+      }
+    } catch(e) {
+      setStep(1);
+      setLoading(false);
+      alert("Erreur réseau");
+    }
+  }
+
+  async function generateHoroscope() {
+    setHoroscopePage("loading");
+    try {
+      const sign = getSign(birthdate);
+      const d = new Date(birthdate);
+      const age = new Date().getFullYear() - d.getFullYear();
+      const week = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: "Tu es un astrologue mystique et bienveillant. Génère un horoscope complet et détaillé pour un(e) " + sign.sign + " (né(e) le " + d.toLocaleDateString("fr-FR") + ", " + age + " ans) pour la semaine du " + week + ". Réponds UNIQUEMENT en JSON valide sans markdown, avec ces clés exactes: {amour, argent, sante, travail, conseil, chiffres_chanceux (tableau de 3 nombres), niveau_energie (1-5), citation_du_jour}. Chaque section doit faire 2-3 phrases inspirantes et personnalisées."
+          }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content[0].text;
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+      setHoroscopeData({ ...parsed, sign: sign.sign, emoji: sign.emoji, birthdate });
+      setHoroscopePage("result");
+    } catch(e) {
+      setHoroscopePage("payment");
+      setStep(1);
+      setLoading(false);
+      alert("Erreur génération horoscope. Contacte le support.");
+    }
+  }
+
+  const sign = getSign(birthdate);
+
+  // HOME
+  if (horoscopePage === "home") return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 50%, #0d0d1a 100%)", padding: "0 0 80px" }}>
+      <div style={{ padding: "14px 16px", display: "flex", alignItems: "center" }}>
+        <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", fontSize: 14 }}>← Retour</button>
+      </div>
+      <div style={{ textAlign: "center", padding: "20px 20px 32px" }}>
+        <div style={{ fontSize: 72, marginBottom: 12 }}>🔮</div>
+        <div style={{ fontSize: 26, fontWeight: "bold", color: "#e9d5ff", fontFamily: "Georgia, serif", marginBottom: 8 }}>Ton Horoscope</div>
+        <div style={{ fontSize: 14, color: "#c4b5fd", marginBottom: 32, lineHeight: 1.6 }}>Découvre ce que les astres te réservent cette semaine</div>
+        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 32 }}>
+          {["♈ Bélier","♉ Taureau","♊ Gémeaux","♋ Cancer","♌ Lion","♍ Vierge","♎ Balance","♏ Scorpion","♐ Sagittaire","♑ Capricorne","♒ Verseau","♓ Poissons"].map(s => (
+            <span key={s} style={{ fontSize: 12, color: "#a78bfa", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 20, padding: "4px 10px" }}>{s}</span>
+          ))}
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 16, padding: 20, marginBottom: 24 }}>
+          <div style={{ fontSize: 13, color: "#c4b5fd", marginBottom: 6 }}>✨ Ce que tu recevras :</div>
+          {["💕 Amour & Relations", "💰 Argent & Finances", "🏥 Santé & Bien-être", "💼 Travail & Succès", "🎯 Conseil de la semaine", "🔢 Tes chiffres chanceux"].map(item => (
+            <div key={item} style={{ fontSize: 13, color: "#e9d5ff", marginBottom: 4 }}>• {item}</div>
+          ))}
+        </div>
+        <div style={{ fontSize: 24, fontWeight: "bold", color: "#fbbf24", marginBottom: 8 }}>100 FCFA</div>
+        <div style={{ fontSize: 12, color: "#8b7cf8", marginBottom: 24 }}>Paiement sécurisé via MTN MoMo ou Orange Money</div>
+        <button onClick={() => setHoroscopePage("form")} style={{ width: "100%", padding: 16, background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", borderRadius: 14, color: "#fff", fontWeight: "bold", fontSize: 16, cursor: "pointer", letterSpacing: 1 }}>
+          🔮 Voir mon horoscope
+        </button>
+      </div>
+    </div>
+  );
+
+  // FORM
+  if (horoscopePage === "form") return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", padding: "0 0 80px" }}>
+      <div style={{ padding: "14px 16px", display: "flex", alignItems: "center" }}>
+        <button onClick={() => setHoroscopePage("home")} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", fontSize: 14 }}>← Retour</button>
+      </div>
+      <div style={{ padding: "20px" }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>✨</div>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: "#e9d5ff", fontFamily: "Georgia, serif" }}>Ta date de naissance</div>
+          <div style={{ fontSize: 13, color: "#a78bfa", marginTop: 6 }}>Pour calculer ton signe et personnaliser ton horoscope</div>
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 12, color: "#c4b5fd", display: "block", marginBottom: 8 }}>Date de naissance</label>
+          <input type="date" value={birthdate} onChange={e => setBirthdate(e.target.value)}
+            style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: "#e9d5ff", fontSize: 16, boxSizing: "border-box" }} />
+        </div>
+        {sign && (
+          <div style={{ background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, textAlign: "center" }}>
+            <div style={{ fontSize: 32 }}>{sign.emoji}</div>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: "#e9d5ff", marginTop: 4 }}>Tu es {sign.sign} !</div>
+          </div>
+        )}
+        <button onClick={() => { if (!birthdate) { alert("Entre ta date de naissance"); return; } setHoroscopePage("payment"); }}
+          disabled={!birthdate}
+          style={{ width: "100%", padding: 16, background: birthdate ? "linear-gradient(135deg, #7c3aed, #a855f7)" : "#333", border: "none", borderRadius: 14, color: "#fff", fontWeight: "bold", fontSize: 16, cursor: birthdate ? "pointer" : "not-allowed" }}>
+          Continuer →
+        </button>
+      </div>
+    </div>
+  );
+
+  // PAYMENT
+  if (horoscopePage === "payment") return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", padding: "0 0 80px" }}>
+      <div style={{ padding: "14px 16px", display: "flex", alignItems: "center" }}>
+        <button onClick={() => setHoroscopePage("form")} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", fontSize: 14 }}>← Retour</button>
+      </div>
+      <div style={{ padding: "20px" }}>
+        {step === 1 && (
+          <>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 48, marginBottom: 8 }}>🔮</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: "#e9d5ff" }}>Débloque ton horoscope</div>
+              <div style={{ fontSize: 13, color: "#a78bfa", marginTop: 4 }}>Signe : {sign?.emoji} {sign?.sign}</div>
+              <div style={{ fontSize: 26, fontWeight: "bold", color: "#fbbf24", marginTop: 12 }}>100 FCFA</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+              {[{ id: "orange", label: "Orange Money", color: "#ff6600", emoji: "🟠" }, { id: "mtn", label: "MTN MoMo", color: "#ffc000", emoji: "🟡" }].map(m => (
+                <div key={m.id} onClick={() => setMethod(m.id)} style={{ padding: "14px 16px", border: "2px solid " + (method === m.id ? m.color : "rgba(167,139,250,0.3)"), borderRadius: 10, cursor: "pointer", background: method === m.id ? m.color + "22" : "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 24 }}>{m.emoji}</span>
+                  <span style={{ color: "#e9d5ff", fontSize: 15, fontWeight: method === m.id ? "bold" : "normal" }}>{m.label}</span>
+                </div>
+              ))}
+            </div>
+            {method && (
+              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Ton numéro (ex: 237699000000)"
+                style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: "#e9d5ff", fontSize: 14, marginBottom: 16, boxSizing: "border-box" }} />
+            )}
+            <button onClick={handlePay} disabled={!method || !phone}
+              style={{ width: "100%", padding: 16, background: method && phone ? "linear-gradient(135deg, #7c3aed, #a855f7)" : "#333", border: "none", borderRadius: 14, color: "#fff", fontWeight: "bold", fontSize: 16, cursor: method && phone ? "pointer" : "not-allowed" }}>
+              🔮 Voir mon horoscope — 100 FCFA
+            </button>
+          </>
+        )}
+        {step === 2 && (
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+            <div style={{ color: "#c4b5fd", fontSize: 16 }}>Confirmation du paiement...</div>
+            <div style={{ color: "#8b7cf8", fontSize: 13, marginTop: 8 }}>Les astres se consultent pour toi</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // LOADING
+  if (horoscopePage === "loading") return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ fontSize: 72, marginBottom: 20, animation: "spin 2s linear infinite" }}>🔮</div>
+      <div style={{ color: "#e9d5ff", fontSize: 18, fontWeight: "bold", marginBottom: 8 }}>Les astres parlent...</div>
+      <div style={{ color: "#a78bfa", fontSize: 13 }}>Ton horoscope se prépare</div>
+      <style>{`@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }`}</style>
+    </div>
+  );
+
+  // RESULT
+  if (horoscopePage === "result" && horoscopeData) {
+    const h = horoscopeData;
+    const stars = "⭐".repeat(h.niveau_energie || 3);
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", padding: "0 0 80px" }}>
+        <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <button onClick={() => { setHoroscopePage("home"); setHoroscopeData(null); }} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", fontSize: 14 }}>← Nouvel horoscope</button>
+          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", fontSize: 14 }}>Accueil</button>
+        </div>
+        <div style={{ textAlign: "center", padding: "16px 20px 24px" }}>
+          <div style={{ fontSize: 52, marginBottom: 6 }}>{h.emoji}</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#e9d5ff", fontFamily: "Georgia, serif" }}>{h.sign}</div>
+          <div style={{ fontSize: 13, color: "#a78bfa", marginTop: 4 }}>Semaine du {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</div>
+          <div style={{ fontSize: 14, color: "#fbbf24", marginTop: 8 }}>Énergie : {stars}</div>
+        </div>
+        <div style={{ padding: "0 16px" }}>
+          {[
+            ["💕", "Amour", h.amour],
+            ["💰", "Argent & Finances", h.argent],
+            ["🏥", "Santé", h.sante],
+            ["💼", "Travail", h.travail],
+          ].map(([emoji, title, text]) => (
+            <div key={title} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#c4b5fd", marginBottom: 6 }}>{emoji} {title}</div>
+              <div style={{ fontSize: 13, color: "#e9d5ff", lineHeight: 1.7 }}>{text}</div>
+            </div>
+          ))}
+          <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(168,85,247,0.2))", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#fbbf24", marginBottom: 6 }}>🎯 Conseil de la semaine</div>
+            <div style={{ fontSize: 13, color: "#e9d5ff", lineHeight: 1.7, fontStyle: "italic" }}>{h.conseil}</div>
+          </div>
+          <div style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, textAlign: "center" }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#fbbf24", marginBottom: 8 }}>🔢 Tes chiffres chanceux</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+              {(h.chiffres_chanceux || []).map((n, i) => (
+                <div key={i} style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(251,191,36,0.2)", border: "2px solid #fbbf24", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: "bold", color: "#fbbf24" }}>{n}</div>
+              ))}
+            </div>
+          </div>
+          {h.citation_du_jour && (
+            <div style={{ background: "rgba(255,255,255,0.03)", borderLeft: "3px solid #a78bfa", padding: "12px 16px", marginBottom: 16, borderRadius: "0 8px 8px 0" }}>
+              <div style={{ fontSize: 12, color: "#8b7cf8", marginBottom: 4 }}>✨ Citation du jour</div>
+              <div style={{ fontSize: 13, color: "#e9d5ff", fontStyle: "italic", lineHeight: 1.6 }}>{h.citation_du_jour}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+
 export default function App() {
   const [page, setPage] = useState("home");
   const [books, setBooks] = useState([]);
@@ -1101,6 +1369,13 @@ export default function App() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [horoscopePage, setHoroscopePage] = useState("home"); // home | form | payment | result
+  const [horoscopeData, setHoroscopeData] = useState(null);
+  const [horoscopeBirthdate, setHoroscopeBirthdate] = useState("");
+  const [horoscopePhone, setHoroscopePhone] = useState("");
+  const [horoscopeMethod, setHoroscopeMethod] = useState(null);
+  const [horoscopeStep, setHoroscopeStep] = useState(1);
+  const [horoscopeLoading, setHoroscopeLoading] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [showSubModal, setShowSubModal] = useState(false);
@@ -2132,6 +2407,10 @@ export default function App() {
                     <span style={{ fontSize: 20 }}>🎯</span>
                     <span style={{ lineHeight: 1.2, textAlign: "center" }}>Carry'Quiz</span>
                   </button>
+                  <button onClick={() => { setPage("horoscope"); setHoroscopePage("home"); }} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 20 }}>🔮</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Horoscope</span>
+                  </button>
                 </div>
 
                 {/* NOUVEAUTÉS */}
@@ -2409,6 +2688,19 @@ export default function App() {
           </div>
         )}
 
+        {page === "horoscope" && (
+          <HoroscopePage
+            horoscopePage={horoscopePage} setHoroscopePage={setHoroscopePage}
+            horoscopeData={horoscopeData} setHoroscopeData={setHoroscopeData}
+            birthdate={horoscopeBirthdate} setBirthdate={setHoroscopeBirthdate}
+            phone={horoscopePhone} setPhone={setHoroscopePhone}
+            method={horoscopeMethod} setMethod={setHoroscopeMethod}
+            step={horoscopeStep} setStep={setHoroscopeStep}
+            loading={horoscopeLoading} setLoading={setHoroscopeLoading}
+            setPage={setPage} G={G} user={user}
+          />
+        )}
+
         {page === "quiz" && (
           <div style={{ padding: "0 0 80px" }}>
             {quizPage === "quizHome" && <QuizHome setActiveQuiz={setActiveQuiz} setQuizPage={setQuizPage} setQuizAnswers={setQuizAnswers} setCurrentQuestion={setCurrentQuestion} quizCategory={quizCategory} setQuizCategory={setQuizCategory} G={G} quizPrice={quizPrice} setPage={setPage} />}
@@ -2613,6 +2905,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
