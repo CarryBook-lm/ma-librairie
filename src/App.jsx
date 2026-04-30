@@ -2449,7 +2449,7 @@ export default function App() {
                 </div>
                 {[
                   ["⬆️", "Appuie sur le bouton Partager en bas de Safari"],
-                  ["📋", "Fais défiler et appuie sur "Sur l'écran d'accueil""],
+                  ["📋", "Fais défiler → appuie sur l'option écran d'accueil"],
                   ["✅", "Appuie sur Ajouter"]
                 ].map(([icon, text], i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
