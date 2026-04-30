@@ -2747,9 +2747,9 @@ export default function App() {
         {/* CARRY'QUIZ WIDGET — compact 3 lines */}
         {page === "home" && (
           <div style={{ padding: "12px 16px 0", background: G.bg }}>
-            <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", borderRadius: 12, padding: "12px 14px", border: "1px solid " + G.gold }}>
+            <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", borderRadius: 12, padding: "12px 14px", border: "1px solid " + G.gold, textAlign: "center" }}>
               {/* Line 1: Logo + Title */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
                 <span style={{ fontSize: 18 }}>🎯</span>
                 <span style={{ fontSize: 15, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>Carry'Quiz</span>
               </div>

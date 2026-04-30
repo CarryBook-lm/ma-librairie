@@ -75,6 +75,9 @@ export default function Admin() {
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
+  const [promoCodes, setPromoCodes] = useState([]);
+  const [newPromo, setNewPromo] = useState({ code: "", discount_pct: 20, expires_at: "", uses_max: "" });
+  const [stats, setStats] = useState({ totalRevenue: 0, totalPurchases: 0, totalUsers: 0, topBooks: [] });
   const [subSettingsSaving, setSubSettingsSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
@@ -86,11 +89,54 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); }, []);
 
   async function fetchSubscribers() {
     const { data } = await supabase.from("subscriptions").select("*").order("created_at", { ascending: false });
     if (data) setSubscribers(data);
+  }
+
+  async function fetchPromoCodes() {
+    const { data } = await supabase.from("promo_codes").select("*").order("created_at", { ascending: false });
+    if (data) setPromoCodes(data);
+  }
+
+  async function fetchStats() {
+    const { data: purchases } = await supabase.from("purchases").select("amount, book_id, created_at");
+    const { data: users } = await supabase.from("purchases").select("user_id");
+    if (purchases) {
+      const total = purchases.reduce((s, p) => s + (p.amount || 0), 0);
+      const uniqueUsers = users ? new Set(users.map(u => u.user_id)).size : 0;
+      const bookCount = {};
+      purchases.forEach(p => { bookCount[p.book_id] = (bookCount[p.book_id] || 0) + 1; });
+      const topBooks = Object.entries(bookCount).sort((a,b) => b[1]-a[1]).slice(0,5).map(([id, count]) => ({ id: parseInt(id), count }));
+      setStats({ totalRevenue: total, totalPurchases: purchases.length, totalUsers: uniqueUsers, topBooks });
+    }
+  }
+
+  async function createPromo() {
+    if (!newPromo.code.trim()) return alert("Entre un code promo");
+    const code = newPromo.code.trim().toUpperCase();
+    const { error } = await supabase.from("promo_codes").insert([{
+      code, discount_pct: newPromo.discount_pct, active: true,
+      expires_at: newPromo.expires_at || null,
+      uses_max: newPromo.uses_max ? parseInt(newPromo.uses_max) : null,
+      uses_count: 0
+    }]);
+    if (error) { alert("Erreur: " + error.message); return; }
+    setNewPromo({ code: "", discount_pct: 20, expires_at: "", uses_max: "" });
+    fetchPromoCodes();
+  }
+
+  async function togglePromo(id, active) {
+    await supabase.from("promo_codes").update({ active: !active }).eq("id", id);
+    fetchPromoCodes();
+  }
+
+  async function deletePromo(id) {
+    if (!confirm("Supprimer ce code ?")) return;
+    await supabase.from("promo_codes").delete().eq("id", id);
+    fetchPromoCodes();
   }
 
   async function fetchSubSettings() {
@@ -246,6 +292,8 @@ export default function Admin() {
             { id: "books", label: "Livres", icon: "📚" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
+            { id: "promos", label: "Codes Promo", icon: "🎟️" },
+            { id: "stats", label: "Statistiques", icon: "📈" },
           ].map(item => (
             <div key={item.id} onClick={() => { setView(item.id); setShowMenu(false); }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
