@@ -1189,6 +1189,22 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
   );
 
   // FORM
+  const days = Array.from({length: 31}, (_, i) => i + 1);
+  const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({length: 80}, (_, i) => currentYear - i);
+
+  // Parse birthdate into parts
+  const bdParts = birthdate ? birthdate.split("-") : ["", "", ""];
+  const bdYear = bdParts[0] || "";
+  const bdMonth = bdParts[1] || "";
+  const bdDay = bdParts[2] || "";
+
+  function updateBirthdate(y, m, d) {
+    if (y && m && d) setBirthdate(y + "-" + m + "-" + d);
+    else setBirthdate("");
+  }
+
   if (horoscopePage === "form") return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%)", padding: "0 0 80px" }}>
       <div style={{ padding: "14px 16px", display: "flex", alignItems: "center" }}>
@@ -1200,18 +1216,43 @@ function HoroscopePage({ horoscopePage, setHoroscopePage, horoscopeData, setHoro
           <div style={{ fontSize: 20, fontWeight: "bold", color: "#e9d5ff", fontFamily: "Georgia, serif" }}>Ta date de naissance</div>
           <div style={{ fontSize: 13, color: "#a78bfa", marginTop: 6 }}>Pour calculer ton signe et personnaliser ton horoscope</div>
         </div>
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, color: "#c4b5fd", display: "block", marginBottom: 8 }}>Date de naissance</label>
-          <input type="date" value={birthdate} onChange={e => setBirthdate(e.target.value)}
-            style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: "#e9d5ff", fontSize: 16, boxSizing: "border-box" }} />
+
+        {/* 3 dropdowns */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 11, color: "#c4b5fd", display: "block", marginBottom: 6 }}>Jour</label>
+            <select value={bdDay} onChange={e => updateBirthdate(bdYear, bdMonth, e.target.value)}
+              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: bdDay ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
+              <option value="">Jour</option>
+              {days.map(d => <option key={d} value={String(d).padStart(2,"0")}>{d}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 2 }}>
+            <label style={{ fontSize: 11, color: "#c4b5fd", display: "block", marginBottom: 6 }}>Mois</label>
+            <select value={bdMonth} onChange={e => updateBirthdate(bdYear, e.target.value, bdDay)}
+              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: bdMonth ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
+              <option value="">Mois</option>
+              {months.map((m, i) => <option key={i} value={String(i+1).padStart(2,"0")}>{m}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 11, color: "#c4b5fd", display: "block", marginBottom: 6 }}>Année</label>
+            <select value={bdYear} onChange={e => updateBirthdate(e.target.value, bdMonth, bdDay)}
+              style={{ width: "100%", padding: "12px 8px", background: "#1a0a2e", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 10, color: bdYear ? "#e9d5ff" : "#8b7cf8", fontSize: 15, boxSizing: "border-box" }}>
+              <option value="">Année</option>
+              {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
+          </div>
         </div>
+
         {sign && (
-          <div style={{ background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, textAlign: "center" }}>
-            <div style={{ fontSize: 32 }}>{sign.emoji}</div>
-            <div style={{ fontSize: 16, fontWeight: "bold", color: "#e9d5ff", marginTop: 4 }}>Tu es {sign.sign} !</div>
+          <div style={{ background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 12, padding: "16px", marginBottom: 20, textAlign: "center" }}>
+            <div style={{ fontSize: 40 }}>{sign.emoji}</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: "#e9d5ff", marginTop: 6 }}>Tu es {sign.sign} !</div>
           </div>
         )}
-        <button onClick={() => { if (!birthdate) { alert("Entre ta date de naissance"); return; } setHoroscopePage("payment"); }}
+
+        <button onClick={() => { if (!birthdate) { alert("Choisis ta date de naissance complète"); return; } setHoroscopePage("payment"); }}
           disabled={!birthdate}
           style={{ width: "100%", padding: 16, background: birthdate ? "linear-gradient(135deg, #7c3aed, #a855f7)" : "#333", border: "none", borderRadius: 14, color: "#fff", fontWeight: "bold", fontSize: 16, cursor: birthdate ? "pointer" : "not-allowed" }}>
           Continuer →
