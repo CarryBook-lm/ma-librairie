@@ -3037,17 +3037,40 @@ export default function App() {
               🔗 Partager
             </button>
           </div>
-          <button
-            onClick={() => startReading(book)}
-            style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
-          </button>
-
-          {(owned || free) && (
-            <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
-              style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 8 }}>
-              {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
+          {/* Bouton principal LIRE/ACHETER/DÉBLOQUER */}
+          {(!owned && !free) ? (
+            <button
+              onClick={() => startReading(book)}
+              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              {(subscription && subscription.status === "actif" && booksLeftThisMonth() > 0) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
             </button>
+          ) : (
+            <>
+              {/* Bouton LIRE EN LIGNE (si can_read ou format TXT) */}
+              {(book.can_read !== false || !book.pdf_url) && (
+                <button
+                  onClick={() => startReading(book)}
+                  style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>
+                  📖 Lire maintenant
+                </button>
+              )}
+
+              {/* Bouton TÉLÉCHARGER LE PDF (si can_download && pdf_url) */}
+              {book.can_download && book.pdf_url && (
+                <a href={book.pdf_url} download={book.title + ".pdf"} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "block", textDecoration: "none", width: "100%", padding: 15, background: book.can_read !== false ? "transparent" : G.gold, border: "1.5px solid " + G.gold, borderRadius: 6, color: book.can_read !== false ? G.gold : "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", marginBottom: 8, boxSizing: "border-box" }}>
+                  ⬇️ Télécharger le PDF
+                </a>
+              )}
+
+              {/* Bouton TÉLÉCHARGER HORS CONNEXION (uniquement TXT) */}
+              {!book.pdf_url && (
+                <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
+                  style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 0 }}>
+                  {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
+                </button>
+              )}
+            </>
           )}
         </div>
 
