@@ -2544,9 +2544,17 @@ export default function App() {
         setSubLowWarningShown(true);
         setTimeout(() => alert("⚠️ Plus que 2 livres pour cet abonnement actif"), 500);
       }
-      // 5) Lancer la lecture
+      // 5) Lancer la lecture directement (sans re-vérifier hasAccess car React n'a pas encore re-rendu)
       setShowSubUnlockModal(null);
-      startReading(book);
+      const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
+      setExcerptMode(false);
+      setReading(bookToRead);
+      const saved = localStorage.getItem("readingProgress_" + bookToRead.id);
+      setReadingPage(saved ? parseInt(saved) : 0);
+      setPage("reader");
+      setTranslatedContent(null);
+      setTranslateLang(null);
+      stopAudio();
     } catch (e) {
       alert("Erreur. Réessaie.");
     }
