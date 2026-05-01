@@ -1164,10 +1164,9 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
             {pageSaved ? "✅ Sauvegardé !" : "OK"}
           </button>
           {startPage > 1 && (
-            <a href={activePdfUrl + "#page=" + startPage} target="_blank" rel="noopener noreferrer"
-              style={{ marginLeft: "auto", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 6, color: "#c9a84c", fontSize: 11, fontWeight: "bold", textDecoration: "none", flexShrink: 0 }}>
-              📍 Aller p.{startPage}
-            </a>
+            <span style={{ marginLeft: "auto", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 6, color: "#c9a84c", fontSize: 11, fontWeight: "bold", flexShrink: 0 }}>
+              📍 Tu en étais à la p.{startPage}
+            </span>
           )}
         </div>
       )}
