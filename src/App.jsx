@@ -717,12 +717,11 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
         )}
         {quizPaymentStep === 3 && (
           <div style={{ padding: "10px 0" }}>
-            <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro</h3>
-            <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>{quizPaymentMethod === "mtn" ? "📱 MTN Mobile Money" : "📱 Orange Money"}</p>
+            <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro {quizPaymentMethod === "mtn" ? "MTN" : "ORANGE"}</h3>
+            <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
             <input value={quizPhone} onChange={e => setQuizPhone(e.target.value.replace(/[^0-9]/g,""))}
-              placeholder="Ex : 671234567"
+              placeholder="6XXXXXXXX"
               style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
-            <p style={{ color: "#aaa", fontSize: 11, marginBottom: 16, textAlign: "center" }}>Sans le 237, juste tes 9 chiffres</p>
             {error && <div style={{ color: "#f44336", fontSize: 12, marginBottom: 8, textAlign: "center" }}>{error}</div>}
             <button onClick={handlePay} disabled={loading || !quizPhone || quizPhone.length < 8}
               style={{ width: "100%", padding: 14, background: (quizPhone && quizPhone.length >= 8 && !loading) ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: (quizPhone && quizPhone.length >= 8 && !loading) ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
@@ -3044,12 +3043,11 @@ export default function App() {
               )}
               {paymentStep === 3 && (
                 <div style={{ padding: "10px 0" }}>
-                  <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro</h3>
-                  <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>{paymentMethod === "mtn" ? "📱 MTN Mobile Money" : "📱 Orange Money"}</p>
+                  <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro {paymentMethod === "mtn" ? "MTN" : "ORANGE"}</h3>
+                  <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
                   <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
-                    placeholder="Ex : 671234567"
+                    placeholder="6XXXXXXXX"
                     style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
-                  <p style={{ color: "#aaa", fontSize: 11, marginBottom: 16, textAlign: "center" }}>Sans le 237, juste tes 9 chiffres</p>
                   <button onClick={handlePurchase} disabled={!phoneNumber || phoneNumber.length < 8}
                     style={{ width: "100%", padding: 14, background: phoneNumber && phoneNumber.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: phoneNumber && phoneNumber.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
                     💎 Payer {paymentBook.price?.toLocaleString()} FCFA
@@ -3960,12 +3958,11 @@ export default function App() {
             )}
             {subPaymentStep === 3 && (
               <div style={{ padding: "10px 0" }}>
-                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro</h3>
-                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>{subPaymentMethod === "mtn" ? "📱 MTN Mobile Money" : "📱 Orange Money"}</p>
+                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro {subPaymentMethod === "mtn" ? "MTN" : "ORANGE"}</h3>
+                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
                 <input value={subPhone} onChange={e => setSubPhone(e.target.value)}
-                  placeholder="Ex : 671234567"
+                  placeholder="6XXXXXXXX"
                   style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
-                <p style={{ color: "#aaa", fontSize: 11, marginBottom: 16, textAlign: "center" }}>Sans le 237, juste tes 9 chiffres</p>
                 <button onClick={handleSubscribe} disabled={!subPhone || subPhone.length < 8}
                   style={{ width: "100%", padding: 14, background: subPhone && subPhone.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: subPhone && subPhone.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
                   💎 Payer {(subPlan === "annuel" ? subSettings.annual_price : subSettings.monthly_price)?.toLocaleString()} FCFA
@@ -4074,12 +4071,11 @@ export default function App() {
             )}
             {paymentStep === 3 && (
               <div style={{ padding: "10px 0" }}>
-                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro</h3>
-                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>{paymentMethod === "mtn" ? "📱 MTN Mobile Money" : "📱 Orange Money"}</p>
+                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro {paymentMethod === "mtn" ? "MTN" : "ORANGE"}</h3>
+                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
                 <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
-                  placeholder="Ex : 671234567"
+                  placeholder="6XXXXXXXX"
                   style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
-                <p style={{ color: "#aaa", fontSize: 11, marginBottom: 16, textAlign: "center" }}>Sans le 237, juste tes 9 chiffres</p>
                 <button onClick={handlePurchase} disabled={!phoneNumber || phoneNumber.length < 8}
                   style={{ width: "100%", padding: 14, background: phoneNumber && phoneNumber.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: phoneNumber && phoneNumber.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
                   💎 Payer {paymentBook.price?.toLocaleString()} FCFA
