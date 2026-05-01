@@ -1165,7 +1165,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
       <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
         <iframe
           key={key}
-          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
+          src={activePdfUrl + "#page=" + startPage + "&toolbar=0"}
           style={{ width: "100%", height: pdfLoaded ? "calc(100vh - 96px)" : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
           title={reading.title}
           onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
