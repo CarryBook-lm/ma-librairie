@@ -2348,8 +2348,25 @@ export default function App() {
 
   async function fetchBooks() {
     setLoading(true);
-    const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
-    if (data) setBooks(data);
+    // 1) Charger d'abord depuis le cache (rapide + utile offline)
+    try {
+      const cachedBooksList = localStorage.getItem("cachedBooksList");
+      if (cachedBooksList) {
+        const parsed = JSON.parse(cachedBooksList);
+        if (Array.isArray(parsed) && parsed.length > 0) setBooks(parsed);
+      }
+    } catch(e) {}
+    // 2) Puis essayer de mettre à jour depuis le réseau
+    try {
+      const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
+      if (data) {
+        setBooks(data);
+        // Mettre à jour le cache
+        try { localStorage.setItem("cachedBooksList", JSON.stringify(data)); } catch(e) {}
+      }
+    } catch(e) {
+      // Pas de connexion : on garde le cache déjà chargé
+    }
     setLoading(false);
   }
 
