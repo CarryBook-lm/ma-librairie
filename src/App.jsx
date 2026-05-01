@@ -1093,6 +1093,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
   const [key, setKey] = useState(0);
   const [pageInput, setPageInput] = useState(String(startPage));
   const [pageSaved, setPageSaved] = useState(false);
+  const [showResumeButton, setShowResumeButton] = useState(startPage > 1);
 
   useEffect(() => {
     const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
@@ -1104,6 +1105,13 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
     const timer = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(timer);
   }, [pdfLoaded, key]);
+
+  function resumeToSavedPage() {
+    // Ouvrir le PDF directement (sans Google Viewer) dans un nouvel onglet à la bonne page
+    const directUrl = activePdfUrl + (activePdfUrl.includes("#") ? "&" : "#") + "page=" + startPage;
+    window.open(directUrl, "_blank");
+    setShowResumeButton(false);
+  }
 
   function savePage() {
     const p = parseInt(pageInput);
@@ -1145,7 +1153,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
 
       {/* Save progress banner — shows after load */}
       {pdfLoaded && !excerptMode && (
-        <div style={{ background: "#1e1e10", borderBottom: "1px solid #c9a84c33", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ background: "#1e1e10", borderBottom: "1px solid #c9a84c33", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, color: "#aaa", flexShrink: 0 }}>📌 Sauvegarder ma page :</span>
           <input
             type="number" min="1" value={pageInput}
@@ -1156,7 +1164,10 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
             {pageSaved ? "✅ Sauvegardé !" : "OK"}
           </button>
           {startPage > 1 && (
-            <span style={{ fontSize: 10, color: "#666", marginLeft: "auto", flexShrink: 0 }}>Dernière: p.{startPage}</span>
+            <a href={activePdfUrl + "#page=" + startPage} target="_blank" rel="noopener noreferrer"
+              style={{ marginLeft: "auto", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 6, color: "#c9a84c", fontSize: 11, fontWeight: "bold", textDecoration: "none", flexShrink: 0 }}>
+              📍 Aller p.{startPage}
+            </a>
           )}
         </div>
       )}
