@@ -92,7 +92,7 @@ export default function Admin() {
   useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); }, []);
 
   async function fetchSubscribers() {
-    const { data } = await supabase.from("subscriptions").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("subscriptions").select("*").order("started_at", { ascending: false });
     if (data) setSubscribers(data);
   }
 

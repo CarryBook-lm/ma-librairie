@@ -2140,6 +2140,10 @@ export default function App() {
   const [subPaymentStep, setSubPaymentStep] = useState(1);
   const [subPhone, setSubPhone] = useState("");
   const [subPaymentMethod, setSubPaymentMethod] = useState(null);
+  // Modals système d'abonnement avec quota
+  const [showSubUnlockModal, setShowSubUnlockModal] = useState(null); // book à débloquer
+  const [showSubLimitModal, setShowSubLimitModal] = useState(null); // book bloqué (quota atteint)
+  const [subLowWarningShown, setSubLowWarningShown] = useState(false);
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPage, setQuizPage] = useState("quizHome"); // quizHome | quizPlay | quizSuspense | quizPayment | quizResult
   const [activeQuiz, setActiveQuiz] = useState(null);
@@ -2289,13 +2293,24 @@ export default function App() {
     // Charger abonnement actif
     const { data: sub, error: subErr } = await supabase.from("subscriptions")
       .select("*").eq("user_id", userId).eq("status", "actif")
-      .order("created_at", { ascending: false }).limit(1);
+      .order("started_at", { ascending: false }).limit(1);
     if (subErr) console.error("Erreur chargement abo:", subErr);
     if (sub && sub.length > 0) {
-      // Vérifier expires_at côté JS (plus fiable que côté DB pour timezone)
-      const expDate = new Date(sub[0].expires_at);
-      if (expDate > new Date()) setSubscription(sub[0]);
-      else setSubscription(null);
+      let activeSub = sub[0];
+      const expDate = new Date(activeSub.expires_at);
+      if (expDate > new Date()) {
+        // Reset mensuel automatique : si started_at date de plus d'1 mois, reset books_used à 0
+        const startDate = new Date(activeSub.started_at);
+        const oneMonthLater = new Date(startDate);
+        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+        if (new Date() >= oneMonthLater && activeSub.books_used > 0) {
+          // Reset
+          const newStartDate = new Date().toISOString();
+          await supabase.from("subscriptions").update({ books_used: 0, started_at: newStartDate }).eq("id", activeSub.id);
+          activeSub = { ...activeSub, books_used: 0, started_at: newStartDate };
+        }
+        setSubscription(activeSub);
+      } else setSubscription(null);
     } else setSubscription(null);
     // Charger paramètres abonnement
     const { data: settings } = await supabase.from("sub_settings").select("*").limit(1);
@@ -2340,8 +2355,14 @@ export default function App() {
   function hasAccess(book) {
     if (book.price === 0) return true;
     if (purchasedBooks.includes(book.id)) return true;
-    if (subscription && subscription.status === "actif") return true;
     return false;
+  }
+
+  // L'abonné peut-il utiliser son abonnement pour débloquer ce livre ?
+  function canUseSubscriptionFor(book) {
+    if (!subscription || subscription.status !== "actif") return false;
+    if (book.price === 0 || purchasedBooks.includes(book.id)) return false;
+    return booksLeftThisMonth() > 0;
   }
 
   function booksLeftThisMonth() {
@@ -2461,6 +2482,17 @@ export default function App() {
   function startReading(book, excerpt = false) {
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
     if (!excerpt && !hasAccess(bookToRead)) {
+      // Si abonné et peut utiliser son abonnement → propose de débloquer via abo
+      if (canUseSubscriptionFor(book)) {
+        setShowSubUnlockModal(book);
+        return;
+      }
+      // Si abonné mais quota atteint → modal limite
+      if (subscription && subscription.status === "actif" && booksLeftThisMonth() === 0 && !purchasedBooks.includes(book.id) && book.price > 0) {
+        setShowSubLimitModal(book);
+        return;
+      }
+      // Sinon, achat individuel
       setPaymentBook(book);
       setShowPayment(true);
       setPaymentStep(1);
@@ -2480,6 +2512,44 @@ export default function App() {
     setTranslatedContent(null);
     setTranslateLang(null);
     stopAudio();
+  }
+
+  // Débloquer un livre en utilisant un crédit de l'abonnement
+  async function unlockWithSubscription(book) {
+    if (!user || !subscription) return;
+    if (booksLeftThisMonth() <= 0) {
+      setShowSubUnlockModal(null);
+      setShowSubLimitModal(book);
+      return;
+    }
+    try {
+      // 1) Ajouter le livre aux purchases (bibliothèque permanente)
+      await supabase.from("purchases").insert([{
+        user_id: user.id,
+        book_id: book.id,
+        amount: 0
+      }]);
+      // 2) Incrémenter books_used dans subscriptions
+      const newUsed = (subscription.books_used || 0) + 1;
+      await supabase.from("subscriptions").update({ books_used: newUsed }).eq("id", subscription.id);
+      // 3) Mettre à jour les states
+      const newPurchased = [...purchasedBooks, book.id];
+      setPurchasedBooks(newPurchased);
+      localStorage.setItem("purchasedBooks", JSON.stringify(newPurchased));
+      setSubscription({ ...subscription, books_used: newUsed });
+      cacheBook(book);
+      // 4) Avertissement si plus que 2 livres
+      const totalBooks = subscription.books_per_month || subSettings.books_per_month;
+      if (totalBooks - newUsed === 2 && !subLowWarningShown) {
+        setSubLowWarningShown(true);
+        setTimeout(() => alert("⚠️ Plus que 2 livres pour cet abonnement actif"), 500);
+      }
+      // 5) Lancer la lecture
+      setShowSubUnlockModal(null);
+      startReading(book);
+    } catch (e) {
+      alert("Erreur. Réessaie.");
+    }
   }
 
   function toggleFavorite(bookId) {
@@ -3673,6 +3743,87 @@ export default function App() {
             <div style={{ color: G.textFaint, fontSize: 11, textAlign: "center" }}>© 2026 CarryBooks. Tous droits réservés.</div>
           </div>
         )}
+      {/* MODAL DÉBLOQUER VIA ABONNEMENT */}
+      {showSubUnlockModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+          <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+            <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              {showSubUnlockModal.coverUrl && (
+                <img src={showSubUnlockModal.coverUrl} alt={showSubUnlockModal.title} style={{ height: 100, borderRadius: 6, marginBottom: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+              )}
+              <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17 }}>{showSubUnlockModal.title}</h3>
+              <p style={{ color: "#888", fontSize: 13 }}>par {showSubUnlockModal.author || "Auteur"}</p>
+            </div>
+            <div style={{ background: "#fff8e1", padding: 14, borderRadius: 8, marginBottom: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: "#7a5c00", lineHeight: 1.5 }}>
+                📚 Tu as <strong>{booksLeftThisMonth()}</strong> livre{booksLeftThisMonth() > 1 ? "s" : ""} restant{booksLeftThisMonth() > 1 ? "s" : ""} sur ton abonnement.<br/>
+                Ce livre rejoindra ta bibliothèque <strong>à vie</strong>.
+              </div>
+            </div>
+            <button onClick={() => unlockWithSubscription(showSubUnlockModal)} style={{
+              width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+              border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>
+              ✨ Débloquer avec mon abonnement
+            </button>
+            <button onClick={() => {
+              const book = showSubUnlockModal;
+              setShowSubUnlockModal(null);
+              setPaymentBook(book);
+              setShowPayment(true);
+              setPaymentStep(1);
+              setPaymentMethod(null);
+              setPhoneNumber("");
+            }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", marginBottom: 8 }}>
+              💎 Acheter individuellement ({showSubUnlockModal.price?.toLocaleString()} FCFA)
+            </button>
+            <button onClick={() => setShowSubUnlockModal(null)} style={{ width: "100%", padding: 8, background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LIMITE ATTEINTE */}
+      {showSubLimitModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+          <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+            <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 56, marginBottom: 12 }}>📚</div>
+              <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 17 }}>Limite atteinte</h3>
+              <p style={{ color: "#666", fontSize: 13, lineHeight: 1.5 }}>
+                Tu as utilisé tes <strong>{subscription?.books_per_month || subSettings.books_per_month} livres</strong> de ce mois.
+              </p>
+            </div>
+            <div style={{ background: "#fff3e0", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
+              <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                💡 Patiente jusqu'au prochain mois pour récupérer 20 nouveaux livres,<br/>
+                <strong>OU</strong> achète ce livre individuellement pour le garder à vie.
+              </p>
+            </div>
+            <button onClick={() => {
+              const book = showSubLimitModal;
+              setShowSubLimitModal(null);
+              setPaymentBook(book);
+              setShowPayment(true);
+              setPaymentStep(1);
+              setPaymentMethod(null);
+              setPhoneNumber("");
+            }} style={{
+              width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+              border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>
+              💎 Acheter ce livre — {showSubLimitModal.price?.toLocaleString()} FCFA
+            </button>
+            <button onClick={() => setShowSubLimitModal(null)} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer" }}>
+              Patienter
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* SUBSCRIPTION PAYMENT MODAL */}
       {showSubModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
