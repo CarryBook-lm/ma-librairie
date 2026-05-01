@@ -1165,7 +1165,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
       <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
         <iframe
           key={key}
-          src={activePdfUrl + "#page=" + startPage + "&toolbar=0"}
+          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
           style={{ width: "100%", height: pdfLoaded ? "calc(100vh - 96px)" : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
           title={reading.title}
           onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
@@ -2525,6 +2525,11 @@ export default function App() {
     // Si offline et livre non téléchargé : bloquer
     if (!isOnline && !cachedBooks[book.id]) {
       alert("📴 Hors connexion\n\nCe livre n'a pas été téléchargé.\nConnecte-toi à internet ou télécharge le livre quand tu es en ligne.");
+      return;
+    }
+    // Si offline et c'est un PDF : pas possible (Google Docs Viewer nécessite connexion)
+    if (!isOnline && book.pdf_url) {
+      alert("📴 Hors connexion\n\nLes livres PDF nécessitent une connexion internet pour être lus.\n\nLes livres au format texte (TXT) sont lisibles hors connexion.");
       return;
     }
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
