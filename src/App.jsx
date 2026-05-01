@@ -2464,10 +2464,20 @@ export default function App() {
     } catch(e) { setSubPaymentStep(6); }
   }
 
-  function cacheBook(book) {
+  async function cacheBook(book) {
     const newCache = { ...cachedBooks, [book.id]: book };
     setCachedBooks(newCache);
-    localStorage.setItem("cachedBooks", JSON.stringify(newCache));
+    try { localStorage.setItem("cachedBooks", JSON.stringify(newCache)); } catch(e) {}
+    // Si c'est un PDF, le télécharger dans le Cache API du Service Worker
+    if (book.pdf_url && 'caches' in window) {
+      try {
+        const cache = await caches.open("carrybooks-pdfs");
+        await cache.add(book.pdf_url);
+        console.log("PDF mis en cache:", book.title);
+      } catch(e) {
+        console.warn("Impossible de cacher le PDF:", e);
+      }
+    }
   }
 
   function shareBook(book) {
