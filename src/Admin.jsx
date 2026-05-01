@@ -75,6 +75,8 @@ export default function Admin() {
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
+  const [carrycarePrice, setCarrycarePrice] = useState(1000);
+  const [carrycarePriceSaving, setCarrycarePriceSaving] = useState(false);
   const [promoCodes, setPromoCodes] = useState([]);
   const [newPromo, setNewPromo] = useState({ code: "", discount_pct: 20, expires_at: "", uses_max: "" });
   const [stats, setStats] = useState({ totalRevenue: 0, totalPurchases: 0, totalUsers: 0, topBooks: [] });
@@ -144,6 +146,7 @@ export default function Admin() {
     if (data && data.length > 0) {
       setSubSettings(data[0]);
       if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
+      if (data[0].carrycare_price) setCarrycarePrice(data[0].carrycare_price);
     }
   }
 
@@ -158,6 +161,18 @@ export default function Admin() {
     }
     setQuizPriceSaving(false);
     alert("Prix quiz sauvegardé !");
+  }
+
+  async function saveCarrycarePrice() {
+    setCarrycarePriceSaving(true);
+    const { data: existing } = await supabase.from("sub_settings").select("id").limit(1);
+    if (existing && existing.length > 0) {
+      await supabase.from("sub_settings").update({ carrycare_price: carrycarePrice }).eq("id", existing[0].id);
+    } else {
+      await supabase.from("sub_settings").insert([{ carrycare_price: carrycarePrice }]);
+    }
+    setCarrycarePriceSaving(false);
+    alert("Prix CarryCare sauvegardé !");
   }
 
   async function saveSubSettings() {
@@ -479,12 +494,25 @@ export default function Admin() {
 
                 {/* Quiz Price */}
                 <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#c9a84c", marginBottom: 12 }}>🎯 Prix des Quiz (FCFA)</div>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#c9a84c", marginBottom: 4 }}>🎯 Prix Carry'Quiz classiques (FCFA)</div>
+                  <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Amour, QI, Personnalité, Argent, Quiz Choc</div>
                   <input type="number" value={quizPrice} onChange={e => setQuizPrice(parseInt(e.target.value) || 0)}
                     style={{ width: "100%", padding: "10px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }} />
                   <button onClick={saveQuizPrice} disabled={quizPriceSaving}
                     style={{ padding: "10px 20px", background: quizPriceSaving ? "#333" : "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer" }}>
-                    {quizPriceSaving ? "Sauvegarde..." : "💾 Sauvegarder le prix quiz"}
+                    {quizPriceSaving ? "Sauvegarde..." : "💾 Sauvegarder"}
+                  </button>
+                </div>
+
+                {/* CarryCare Price */}
+                <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#e91e63", marginBottom: 4 }}>🌸 Prix CarryCare (FCFA)</div>
+                  <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Beauté & Santé (résultats premium détaillés)</div>
+                  <input type="number" value={carrycarePrice} onChange={e => setCarrycarePrice(parseInt(e.target.value) || 0)}
+                    style={{ width: "100%", padding: "10px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }} />
+                  <button onClick={saveCarrycarePrice} disabled={carrycarePriceSaving}
+                    style={{ padding: "10px 20px", background: carrycarePriceSaving ? "#333" : "#e91e63", border: "none", borderRadius: 6, color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
+                    {carrycarePriceSaving ? "Sauvegarde..." : "💾 Sauvegarder"}
                   </button>
                 </div>
 
