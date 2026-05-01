@@ -945,12 +945,23 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 }
 
 // ─── LIBRARY PAGE COMPONENT ───
-function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G }) {
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, isOnline, cachedBooks }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
   const myBooks = books.filter(b => purchasedBooks.includes(b.id));
 
   return (
     <div style={{ padding: "0 0 80px" }}>
+      {!isOnline && (
+        <div style={{ background: "linear-gradient(135deg, #fff3e0, #ffe082)", padding: "14px 16px", borderBottom: "2px solid #ffb300" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 24 }}>📴</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#7a4a00", marginBottom: 2 }}>Vous êtes hors connexion</div>
+              <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.4 }}>Profitez de vos livres téléchargés ci-dessous</div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div style={{ padding: "12px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
@@ -2094,7 +2105,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
 
 
 export default function App() {
-  const [page, setPage] = useState("home");
+  const [page, setPage] = useState(navigator.onLine ? "home" : "library");
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
@@ -2178,7 +2189,11 @@ export default function App() {
 
   useEffect(() => {
     const on = () => setIsOnline(true);
-    const off = () => setIsOnline(false);
+    const off = () => {
+      setIsOnline(false);
+      // Si offline et pas en train de lire, basculer sur la bibliothèque
+      setPage(prev => (prev === "reader" || prev === "library") ? prev : "library");
+    };
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
     const handleInstall = (e) => { e.preventDefault(); setDeferredPrompt(e); };
@@ -2480,6 +2495,11 @@ export default function App() {
   }
 
   function startReading(book, excerpt = false) {
+    // Si offline et livre non téléchargé : bloquer
+    if (!isOnline && !cachedBooks[book.id]) {
+      alert("📴 Hors connexion\n\nCe livre n'a pas été téléchargé.\nConnecte-toi à internet ou télécharge le livre quand tu es en ligne.");
+      return;
+    }
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
     if (!excerpt && !hasAccess(bookToRead)) {
       // Si abonné et peut utiliser son abonnement → propose de débloquer via abo
@@ -3532,7 +3552,7 @@ export default function App() {
 
         {/* BIBLIOTHEQUE */}
         {page === "library" && (
-          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} />
+          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} isOnline={isOnline} cachedBooks={cachedBooks} />
         )}
 
         {/* FAVORIS */}
