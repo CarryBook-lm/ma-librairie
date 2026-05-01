@@ -3113,6 +3113,87 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* MODAL DÉBLOQUER VIA ABONNEMENT (sur page détail) */}
+        {showSubUnlockModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 9999 }}>
+            <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+              <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                {showSubUnlockModal.coverUrl && (
+                  <img src={showSubUnlockModal.coverUrl} alt={showSubUnlockModal.title} style={{ height: 100, borderRadius: 6, marginBottom: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                )}
+                <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17 }}>{showSubUnlockModal.title}</h3>
+                <p style={{ color: "#888", fontSize: 13 }}>par {showSubUnlockModal.author || "Auteur"}</p>
+              </div>
+              <div style={{ background: "#fff8e1", padding: 14, borderRadius: 8, marginBottom: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 13, color: "#7a5c00", lineHeight: 1.5 }}>
+                  📚 Tu as <strong>{booksLeftThisMonth()}</strong> livre{booksLeftThisMonth() > 1 ? "s" : ""} restant{booksLeftThisMonth() > 1 ? "s" : ""} sur ton abonnement.<br/>
+                  Ce livre rejoindra ta bibliothèque <strong>à vie</strong>.
+                </div>
+              </div>
+              <button onClick={() => unlockWithSubscription(showSubUnlockModal)} style={{
+                width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+                border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+              }}>
+                ✨ Débloquer avec mon abonnement
+              </button>
+              <button onClick={() => {
+                const bk = showSubUnlockModal;
+                setShowSubUnlockModal(null);
+                setPaymentBook(bk);
+                setShowPayment(true);
+                setPaymentStep(1);
+                setPaymentMethod(null);
+                setPhoneNumber("");
+              }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", marginBottom: 8 }}>
+                💎 Acheter individuellement ({showSubUnlockModal.price?.toLocaleString()} FCFA)
+              </button>
+              <button onClick={() => setShowSubUnlockModal(null)} style={{ width: "100%", padding: 8, background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL LIMITE ATTEINTE (sur page détail) */}
+        {showSubLimitModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 9999 }}>
+            <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+              <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 56, marginBottom: 12 }}>📚</div>
+                <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 17 }}>Limite atteinte</h3>
+                <p style={{ color: "#666", fontSize: 13, lineHeight: 1.5 }}>
+                  Tu as utilisé tes <strong>{subscription?.books_per_month || subSettings.books_per_month} livres</strong> de ce mois.
+                </p>
+              </div>
+              <div style={{ background: "#fff3e0", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
+                <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                  💡 Patiente jusqu'au prochain mois pour récupérer 20 nouveaux livres,<br/>
+                  <strong>OU</strong> achète ce livre individuellement pour le garder à vie.
+                </p>
+              </div>
+              <button onClick={() => {
+                const bk = showSubLimitModal;
+                setShowSubLimitModal(null);
+                setPaymentBook(bk);
+                setShowPayment(true);
+                setPaymentStep(1);
+                setPaymentMethod(null);
+                setPhoneNumber("");
+              }} style={{
+                width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+                border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+              }}>
+                💎 Acheter ce livre — {showSubLimitModal.price?.toLocaleString()} FCFA
+              </button>
+              <button onClick={() => setShowSubLimitModal(null)} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer" }}>
+                Patienter
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
