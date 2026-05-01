@@ -1165,7 +1165,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
       <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
         <iframe
           key={key}
-          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
+          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true#page=" + startPage}
           style={{ width: "100%", height: pdfLoaded ? "calc(100vh - 96px)" : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
           title={reading.title}
           onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
@@ -2766,14 +2766,12 @@ export default function App() {
       const startPage = excerptMode ? 1 : (savedPdfPage > 0 ? savedPdfPage : 1);
       // Use excerpt_pdf_url if in excerpt mode and available
       const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
-      // Ajouter le numéro de page à l'URL pour que Google Docs Viewer ouvre à la bonne page
-      const pdfUrlWithPage = activePdfUrl + (activePdfUrl.includes("#") ? "&" : "#") + "page=" + startPage;
       return (
         <PdfReader
           reading={reading}
           excerptMode={excerptMode}
           startPage={startPage}
-          activePdfUrl={pdfUrlWithPage}
+          activePdfUrl={activePdfUrl}
           onBack={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
         />
       );
