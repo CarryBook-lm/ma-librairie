@@ -3057,10 +3057,22 @@ export default function App() {
 
               {/* Bouton TÉLÉCHARGER LE PDF (si can_download && pdf_url) */}
               {book.can_download && book.pdf_url && (
-                <a href={book.pdf_url} download={book.title + ".pdf"} target="_blank" rel="noopener noreferrer"
-                  style={{ display: "block", textDecoration: "none", width: "100%", padding: 15, background: book.can_read !== false ? "transparent" : G.gold, border: "1.5px solid " + G.gold, borderRadius: 6, color: book.can_read !== false ? G.gold : "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", marginBottom: 8, boxSizing: "border-box" }}>
+                <button onClick={async () => {
+                  try {
+                    const a = document.createElement("a");
+                    a.href = book.pdf_url;
+                    a.download = (book.title || "livre") + ".pdf";
+                    a.target = "_self";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  } catch (e) {
+                    alert("Erreur de téléchargement. Réessaie.");
+                  }
+                }}
+                  style={{ width: "100%", padding: 15, background: book.can_read !== false ? "transparent" : G.gold, border: "1.5px solid " + G.gold, borderRadius: 6, color: book.can_read !== false ? G.gold : "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", marginBottom: 8, boxSizing: "border-box" }}>
                   ⬇️ Télécharger le PDF
-                </a>
+                </button>
               )}
 
               {/* Bouton TÉLÉCHARGER HORS CONNEXION (uniquement TXT) */}
