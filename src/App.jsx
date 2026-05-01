@@ -2287,12 +2287,16 @@ export default function App() {
       setPurchaseHistory(data);
     }
     // Charger abonnement actif
-    const now = new Date().toISOString();
-    const { data: sub } = await supabase.from("subscriptions")
+    const { data: sub, error: subErr } = await supabase.from("subscriptions")
       .select("*").eq("user_id", userId).eq("status", "actif")
-      .gte("expires_at", now).order("created_at", { ascending: false }).limit(1);
-    if (sub && sub.length > 0) setSubscription(sub[0]);
-    else setSubscription(null);
+      .order("created_at", { ascending: false }).limit(1);
+    if (subErr) console.error("Erreur chargement abo:", subErr);
+    if (sub && sub.length > 0) {
+      // Vérifier expires_at côté JS (plus fiable que côté DB pour timezone)
+      const expDate = new Date(sub[0].expires_at);
+      if (expDate > new Date()) setSubscription(sub[0]);
+      else setSubscription(null);
+    } else setSubscription(null);
     // Charger paramètres abonnement
     const { data: settings } = await supabase.from("sub_settings").select("*").limit(1);
     if (settings && settings.length > 0) setSubSettings(settings[0]);
@@ -2380,6 +2384,9 @@ export default function App() {
               if (subPlan === "mensuel") expires.setMonth(expires.getMonth() + 1);
               else expires.setFullYear(expires.getFullYear() + 1);
               if (user) {
+                // Désactiver les anciens abonnements actifs de cet utilisateur
+                await supabase.from("subscriptions").update({ status: "expire" }).eq("user_id", user.id).eq("status", "actif");
+                // Créer le nouveau
                 const { data: newSub } = await supabase.from("subscriptions").insert([{
                   user_id: user.id,
                   plan: subPlan,
