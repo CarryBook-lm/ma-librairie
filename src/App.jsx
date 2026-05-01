@@ -2155,6 +2155,9 @@ export default function App() {
   const [showSubUnlockModal, setShowSubUnlockModal] = useState(null); // book à débloquer
   const [showSubLimitModal, setShowSubLimitModal] = useState(null); // book bloqué (quota atteint)
   const [subLowWarningShown, setSubLowWarningShown] = useState(false);
+  // Téléchargement PDF
+  const [downloadingBook, setDownloadingBook] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPage, setQuizPage] = useState("quizHome"); // quizHome | quizPlay | quizSuspense | quizPayment | quizResult
   const [activeQuiz, setActiveQuiz] = useState(null);
@@ -2763,13 +2766,14 @@ export default function App() {
       const startPage = excerptMode ? 1 : (savedPdfPage > 0 ? savedPdfPage : 1);
       // Use excerpt_pdf_url if in excerpt mode and available
       const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
-      const pdfSrc = activePdfUrl + "#page=" + startPage;
+      // Ajouter le numéro de page à l'URL pour que Google Docs Viewer ouvre à la bonne page
+      const pdfUrlWithPage = activePdfUrl + (activePdfUrl.includes("#") ? "&" : "#") + "page=" + startPage;
       return (
         <PdfReader
           reading={reading}
           excerptMode={excerptMode}
           startPage={startPage}
-          activePdfUrl={activePdfUrl}
+          activePdfUrl={pdfUrlWithPage}
           onBack={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
         />
       );
@@ -3057,21 +3061,42 @@ export default function App() {
 
               {/* Bouton TÉLÉCHARGER LE PDF (si can_download && pdf_url) */}
               {book.can_download && book.pdf_url && (
-                <button onClick={async () => {
+                <button disabled={downloadingBook === book.id} onClick={async () => {
+                  setDownloadingBook(book.id);
+                  setDownloadProgress(0);
                   try {
+                    const response = await fetch(book.pdf_url);
+                    if (!response.ok) throw new Error("download failed");
+                    const reader = response.body.getReader();
+                    const total = parseInt(response.headers.get("Content-Length") || "0", 10);
+                    let received = 0;
+                    const chunks = [];
+                    while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) break;
+                      chunks.push(value);
+                      received += value.length;
+                      if (total > 0) setDownloadProgress(Math.round((received / total) * 100));
+                    }
+                    const blob = new Blob(chunks, { type: "application/pdf" });
+                    const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
-                    a.href = book.pdf_url;
+                    a.href = url;
                     a.download = (book.title || "livre") + ".pdf";
-                    a.target = "_self";
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    setDownloadingBook(null);
+                    setDownloadProgress(0);
                   } catch (e) {
+                    setDownloadingBook(null);
+                    setDownloadProgress(0);
                     alert("Erreur de téléchargement. Réessaie.");
                   }
                 }}
-                  style={{ width: "100%", padding: 15, background: book.can_read !== false ? "transparent" : G.gold, border: "1.5px solid " + G.gold, borderRadius: 6, color: book.can_read !== false ? G.gold : "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", marginBottom: 8, boxSizing: "border-box" }}>
-                  ⬇️ Télécharger le PDF
+                  style={{ width: "100%", padding: 15, background: downloadingBook === book.id ? "#ccc" : (book.can_read !== false ? "transparent" : G.gold), border: "1.5px solid " + G.gold, borderRadius: 6, color: book.can_read !== false ? G.gold : "#000", cursor: downloadingBook === book.id ? "wait" : "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", marginBottom: 8, boxSizing: "border-box" }}>
+                  {downloadingBook === book.id ? `⏳ Téléchargement ${downloadProgress}%` : "⬇️ Télécharger le PDF"}
                 </button>
               )}
 
@@ -4233,7 +4258,6 @@ export default function App() {
     </div>
   );
 }
-
 
 
 
