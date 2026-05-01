@@ -645,7 +645,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
             const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: collectData.reference }) });
             const checkData = await checkRes.json();
             if (checkData.status === "SUCCESSFUL") { clearInterval(check); setQuizPage("quizResult"); setLoading(false); }
-            else if (checkData.status === "FAILED" || attempts > 20) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
+            else if (checkData.status === "FAILED" || attempts > 60) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
           } catch(e) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
         }, 3000);
       } else {
@@ -945,23 +945,12 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 }
 
 // ─── LIBRARY PAGE COMPONENT ───
-function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, isOnline, cachedBooks }) {
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
   const myBooks = books.filter(b => purchasedBooks.includes(b.id));
 
   return (
     <div style={{ padding: "0 0 80px" }}>
-      {!isOnline && (
-        <div style={{ background: "linear-gradient(135deg, #fff3e0, #ffe082)", padding: "14px 16px", borderBottom: "2px solid #ffb300" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 24 }}>📴</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#7a4a00", marginBottom: 2 }}>Vous êtes hors connexion</div>
-              <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.4 }}>Profitez de vos livres téléchargés ci-dessous</div>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Header */}
       <div style={{ padding: "12px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
@@ -1093,7 +1082,6 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
   const [key, setKey] = useState(0);
   const [pageInput, setPageInput] = useState(String(startPage));
   const [pageSaved, setPageSaved] = useState(false);
-  const [showResumeButton, setShowResumeButton] = useState(startPage > 1);
 
   useEffect(() => {
     const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
@@ -1105,13 +1093,6 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
     const timer = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(timer);
   }, [pdfLoaded, key]);
-
-  function resumeToSavedPage() {
-    // Ouvrir le PDF directement (sans Google Viewer) dans un nouvel onglet à la bonne page
-    const directUrl = activePdfUrl + (activePdfUrl.includes("#") ? "&" : "#") + "page=" + startPage;
-    window.open(directUrl, "_blank");
-    setShowResumeButton(false);
-  }
 
   function savePage() {
     const p = parseInt(pageInput);
@@ -1153,7 +1134,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
 
       {/* Save progress banner — shows after load */}
       {pdfLoaded && !excerptMode && (
-        <div style={{ background: "#1e1e10", borderBottom: "1px solid #c9a84c33", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ background: "#1e1e10", borderBottom: "1px solid #c9a84c33", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 11, color: "#aaa", flexShrink: 0 }}>📌 Sauvegarder ma page :</span>
           <input
             type="number" min="1" value={pageInput}
@@ -1164,9 +1145,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
             {pageSaved ? "✅ Sauvegardé !" : "OK"}
           </button>
           {startPage > 1 && (
-            <span style={{ marginLeft: "auto", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 6, color: "#c9a84c", fontSize: 11, fontWeight: "bold", flexShrink: 0 }}>
-              📍 Tu en étais à la p.{startPage}
-            </span>
+            <span style={{ fontSize: 10, color: "#666", marginLeft: "auto", flexShrink: 0 }}>Dernière: p.{startPage}</span>
           )}
         </div>
       )}
@@ -1175,7 +1154,7 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
       <div onContextMenu={e => e.preventDefault()} style={{ flex: 1, userSelect: "none", WebkitUserSelect: "none" }}>
         <iframe
           key={key}
-          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true#page=" + startPage}
+          src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
           style={{ width: "100%", height: pdfLoaded ? "calc(100vh - 96px)" : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
           title={reading.title}
           onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
@@ -1820,7 +1799,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                 // Polling check
                 const ref = data.reference;
                 let attempts = 0;
-                const maxAttempts = 25;
+                const maxAttempts = 60;
                 const interval = setInterval(async () => {
                   attempts++;
                   if (attempts >= maxAttempts) { clearInterval(interval); setBfPaymentStep(5); return; }
@@ -2115,7 +2094,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
 
 
 export default function App() {
-  const [page, setPage] = useState(navigator.onLine ? "home" : "library");
+  const [page, setPage] = useState("home");
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
@@ -2165,9 +2144,6 @@ export default function App() {
   const [showSubUnlockModal, setShowSubUnlockModal] = useState(null); // book à débloquer
   const [showSubLimitModal, setShowSubLimitModal] = useState(null); // book bloqué (quota atteint)
   const [subLowWarningShown, setSubLowWarningShown] = useState(false);
-  // Téléchargement PDF
-  const [downloadingBook, setDownloadingBook] = useState(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPage, setQuizPage] = useState("quizHome"); // quizHome | quizPlay | quizSuspense | quizPayment | quizResult
   const [activeQuiz, setActiveQuiz] = useState(null);
@@ -2202,11 +2178,7 @@ export default function App() {
 
   useEffect(() => {
     const on = () => setIsOnline(true);
-    const off = () => {
-      setIsOnline(false);
-      // Si offline et pas en train de lire, basculer sur la bibliothèque
-      setPage(prev => (prev === "reader" || prev === "library") ? prev : "library");
-    };
+    const off = () => setIsOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
     const handleInstall = (e) => { e.preventDefault(); setDeferredPrompt(e); };
@@ -2225,7 +2197,6 @@ export default function App() {
       if (data && data.length > 0) {
         setSubSettings(data[0]);
         if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
-        if (data[0].carrycare_price) setBeautyQuizPrice(data[0].carrycare_price);
       }
     });
     // Load all book ratings for catalog display
@@ -2362,25 +2333,8 @@ export default function App() {
 
   async function fetchBooks() {
     setLoading(true);
-    // 1) Charger d'abord depuis le cache (rapide + utile offline)
-    try {
-      const cachedBooksList = localStorage.getItem("cachedBooksList");
-      if (cachedBooksList) {
-        const parsed = JSON.parse(cachedBooksList);
-        if (Array.isArray(parsed) && parsed.length > 0) setBooks(parsed);
-      }
-    } catch(e) {}
-    // 2) Puis essayer de mettre à jour depuis le réseau
-    try {
-      const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
-      if (data) {
-        setBooks(data);
-        // Mettre à jour le cache
-        try { localStorage.setItem("cachedBooksList", JSON.stringify(data)); } catch(e) {}
-      }
-    } catch(e) {
-      // Pas de connexion : on garde le cache déjà chargé
-    }
+    const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
+    if (data) setBooks(data);
     setLoading(false);
   }
 
@@ -2478,20 +2432,10 @@ export default function App() {
     } catch(e) { setSubPaymentStep(6); }
   }
 
-  async function cacheBook(book) {
+  function cacheBook(book) {
     const newCache = { ...cachedBooks, [book.id]: book };
     setCachedBooks(newCache);
-    try { localStorage.setItem("cachedBooks", JSON.stringify(newCache)); } catch(e) {}
-    // Si c'est un PDF, le télécharger dans le Cache API du Service Worker
-    if (book.pdf_url && 'caches' in window) {
-      try {
-        const cache = await caches.open("carrybooks-pdfs");
-        await cache.add(book.pdf_url);
-        console.log("PDF mis en cache:", book.title);
-      } catch(e) {
-        console.warn("Impossible de cacher le PDF:", e);
-      }
-    }
+    localStorage.setItem("cachedBooks", JSON.stringify(newCache));
   }
 
   function shareBook(book) {
@@ -2536,16 +2480,6 @@ export default function App() {
   }
 
   function startReading(book, excerpt = false) {
-    // Si offline et livre non téléchargé : bloquer
-    if (!isOnline && !cachedBooks[book.id]) {
-      alert("📴 Hors connexion\n\nCe livre n'a pas été téléchargé.\nConnecte-toi à internet ou télécharge le livre quand tu es en ligne.");
-      return;
-    }
-    // Si offline et c'est un PDF : pas possible (Google Docs Viewer nécessite connexion)
-    if (!isOnline && book.pdf_url) {
-      alert("📴 Hors connexion\n\nLes livres PDF nécessitent une connexion internet pour être lus.\n\nLes livres au format texte (TXT) sont lisibles hors connexion.");
-      return;
-    }
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
     if (!excerpt && !hasAccess(bookToRead)) {
       // Si abonné et peut utiliser son abonnement → propose de débloquer via abo
@@ -2777,6 +2711,7 @@ export default function App() {
       const startPage = excerptMode ? 1 : (savedPdfPage > 0 ? savedPdfPage : 1);
       // Use excerpt_pdf_url if in excerpt mode and available
       const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
+      const pdfSrc = activePdfUrl + "#page=" + startPage;
       return (
         <PdfReader
           reading={reading}
@@ -3050,73 +2985,17 @@ export default function App() {
               🔗 Partager
             </button>
           </div>
-          {/* Bouton principal LIRE/ACHETER/DÉBLOQUER */}
-          {(!owned && !free) ? (
-            <button
-              onClick={() => startReading(book)}
-              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-              {(subscription && subscription.status === "actif" && booksLeftThisMonth() > 0) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
+          <button
+            onClick={() => startReading(book)}
+            style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
+          </button>
+
+          {(owned || free) && (
+            <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
+              style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 8 }}>
+              {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
             </button>
-          ) : (
-            <>
-              {/* Bouton LIRE EN LIGNE (si can_read ou format TXT) */}
-              {(book.can_read !== false || !book.pdf_url) && (
-                <button
-                  onClick={() => startReading(book)}
-                  style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>
-                  📖 Lire maintenant
-                </button>
-              )}
-
-              {/* Bouton TÉLÉCHARGER LE PDF (si can_download && pdf_url) */}
-              {book.can_download && book.pdf_url && (
-                <button disabled={downloadingBook === book.id} onClick={async () => {
-                  setDownloadingBook(book.id);
-                  setDownloadProgress(0);
-                  try {
-                    const response = await fetch(book.pdf_url);
-                    if (!response.ok) throw new Error("download failed");
-                    const reader = response.body.getReader();
-                    const total = parseInt(response.headers.get("Content-Length") || "0", 10);
-                    let received = 0;
-                    const chunks = [];
-                    while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) break;
-                      chunks.push(value);
-                      received += value.length;
-                      if (total > 0) setDownloadProgress(Math.round((received / total) * 100));
-                    }
-                    const blob = new Blob(chunks, { type: "application/pdf" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = (book.title || "livre") + ".pdf";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    setDownloadingBook(null);
-                    setDownloadProgress(0);
-                  } catch (e) {
-                    setDownloadingBook(null);
-                    setDownloadProgress(0);
-                    alert("Erreur de téléchargement. Réessaie.");
-                  }
-                }}
-                  style={{ width: "100%", padding: 15, background: downloadingBook === book.id ? "#ccc" : (book.can_read !== false ? "transparent" : G.gold), border: "1.5px solid " + G.gold, borderRadius: 6, color: book.can_read !== false ? G.gold : "#000", cursor: downloadingBook === book.id ? "wait" : "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", textAlign: "center", marginBottom: 8, boxSizing: "border-box" }}>
-                  {downloadingBook === book.id ? `⏳ Téléchargement ${downloadProgress}%` : "⬇️ Télécharger le PDF"}
-                </button>
-              )}
-
-              {/* Bouton TÉLÉCHARGER HORS CONNEXION (uniquement TXT) */}
-              {!book.pdf_url && (
-                <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
-                  style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 0 }}>
-                  {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
-                </button>
-              )}
-            </>
           )}
         </div>
 
@@ -3653,7 +3532,7 @@ export default function App() {
 
         {/* BIBLIOTHEQUE */}
         {page === "library" && (
-          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} isOnline={isOnline} cachedBooks={cachedBooks} />
+          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} />
         )}
 
         {/* FAVORIS */}
