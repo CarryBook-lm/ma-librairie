@@ -1190,7 +1190,7 @@ const CC = {
 };
 
 // ─── PAGE D'ACCUEIL CARRYCARE ───
-function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData }) {
+function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData, setCapStep, setCapTexture, setCapProblems, setCapLifestyle, setCapResult }) {
 
   function startFacial() {
     setBfStep(1);
@@ -1216,10 +1216,19 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     setCarryCarePage("lineQuiz");
   }
 
+  function startHair() {
+    setCapStep(1);
+    setCapTexture(null);
+    setCapProblems([]);
+    setCapLifestyle({ lavage: null, age: null });
+    setCapResult(null);
+    setCarryCarePage("hairQuiz");
+  }
+
   const quizCards = [
     { id: "facial", emoji: "💄", title: "Beauté Faciale", subtitle: "Diagnostic peau + routine personnalisée", available: true, action: startFacial, gradient: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)" },
     { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: true, action: startBody, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
-    { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: false, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
+    { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: true, action: startHair, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
     { id: "weight", emoji: "⚖️", title: "Garde la Ligne", subtitle: "Plan nutrition personnalisé", available: true, action: startLine, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
   ];
 
@@ -4247,6 +4256,17 @@ export default function App() {
   const [lgPaymentMethod, setLgPaymentMethod] = useState(null);
   const [lgShowGift, setLgShowGift] = useState(false);
 
+  // ─── BEAUTÉ CAPILLAIRE STATES ───
+  const [capStep, setCapStep] = useState(1);
+  const [capTexture, setCapTexture] = useState(null);
+  const [capProblems, setCapProblems] = useState([]);
+  const [capLifestyle, setCapLifestyle] = useState({ lavage: null, age: null });
+  const [capResult, setCapResult] = useState(null);
+  const [capPaymentStep, setCapPaymentStep] = useState(1);
+  const [capPaymentPhone, setCapPaymentPhone] = useState("");
+  const [capPaymentMethod, setCapPaymentMethod] = useState(null);
+  const [capShowGift, setCapShowGift] = useState(false);
+
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
     if (featuredBooks.length <= 1) return;
@@ -5796,6 +5816,11 @@ export default function App() {
                 setBbResult={setBbResult}
                 setLgStep={setLgStep}
                 setLgData={setLgData}
+                setCapStep={setCapStep}
+                setCapTexture={setCapTexture}
+                setCapProblems={setCapProblems}
+                setCapLifestyle={setCapLifestyle}
+                setCapResult={setCapResult}
               />
             )}
             {carryCarePage === "facialQuiz" && (
@@ -5841,6 +5866,22 @@ export default function App() {
                 lgPaymentMethod={lgPaymentMethod} setLgPaymentMethod={setLgPaymentMethod}
                 lgShowGift={lgShowGift} setLgShowGift={setLgShowGift}
                 beautyQuizPrice={beautyQuizPrice}
+              />
+            )}
+            {carryCarePage === "hairQuiz" && (
+              <CapillaireQuiz
+                setPage={setPage}
+                setCarryCarePage={setCarryCarePage}
+                capStep={capStep} setCapStep={setCapStep}
+                capTexture={capTexture} setCapTexture={setCapTexture}
+                capProblems={capProblems} setCapProblems={setCapProblems}
+                capLifestyle={capLifestyle} setCapLifestyle={setCapLifestyle}
+                capResult={capResult} setCapResult={setCapResult}
+                beautyQuizPrice={beautyQuizPrice}
+                capPaymentStep={capPaymentStep} setCapPaymentStep={setCapPaymentStep}
+                capPaymentPhone={capPaymentPhone} setCapPaymentPhone={setCapPaymentPhone}
+                capPaymentMethod={capPaymentMethod} setCapPaymentMethod={setCapPaymentMethod}
+                capShowGift={capShowGift} setCapShowGift={setCapShowGift}
               />
             )}
           </div>
