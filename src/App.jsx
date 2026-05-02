@@ -3418,21 +3418,310 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
     }
   }
 
-  // ÉTAPE 9 — RÉSULTAT (à coder dans étape 4B)
+  // ÉTAPE 9 — RÉSULTAT
+  if (lgStep === 9) {
+    // ═══ CALCULS ═══
+    const { genre, objectif, kg, poids, taille, age, activite, repas, eau, sucre, blocages, sommeil, stress } = lgData;
 
-  return (
-    <div style={{ minHeight: "100vh", background: LG.blanc, padding: 20, textAlign: "center" }}>
-      <div style={{ marginTop: 100 }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>Page résultat arrive bientôt</div>
-        <div style={{ fontSize: 13, color: LG.textDim, marginBottom: 20 }}>Calcul calories + plan personnalisé en cours de finalisation</div>
-        <button onClick={() => { setCarryCarePage("home"); setLgStep(1); }}
-          style={{ padding: "12px 24px", background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
-          ← Retour à CarryCare
-        </button>
+    // IMC
+    const tailleM = taille / 100;
+    const imc = poids / (tailleM * tailleM);
+    let imcStatus = "", imcColor = "", imcAdvice = "";
+    if (imc < 18.5) {
+      imcStatus = "Sous-poids";
+      imcColor = "#2196f3";
+      imcAdvice = "Ton IMC indique que tu es en sous-poids. Concentre-toi sur une alimentation plus riche en calories saines (protéines, bonnes graisses, féculents complets). Si tu veux perdre encore du poids, consulte un médecin avant.";
+    } else if (imc < 25) {
+      imcStatus = "Poids normal";
+      imcColor = "#4caf50";
+      imcAdvice = "Bravo ! Ton IMC est dans la fourchette idéale. Garde tes bonnes habitudes : alimentation équilibrée, activité régulière, sommeil de qualité.";
+    } else if (imc < 30) {
+      imcStatus = "Surpoids";
+      imcColor = "#ff9800";
+      imcAdvice = "Ton IMC indique un léger surpoids. Avec quelques ajustements (réduction des sucres, plus d'activité physique, hydratation), tu peux retrouver ton équilibre durablement.";
+    } else if (imc < 35) {
+      imcStatus = "Obésité modérée";
+      imcColor = "#f57c00";
+      imcAdvice = "Ton IMC indique une obésité modérée. Ne te décourage pas — un changement progressif et durable est la clé. Consulte un médecin/nutritionniste pour t'accompagner.";
+    } else {
+      imcStatus = "Obésité importante";
+      imcColor = "#d32f2f";
+      imcAdvice = "Ton IMC est élevé. ⚠️ IMPORTANT : consulte un médecin avant de commencer tout régime. Tu peux y arriver, mais avec un suivi médical adapté.";
+    }
+
+    // BMR (Mifflin-St Jeor)
+    let bmr;
+    if (genre === "homme") {
+      bmr = (10 * poids) + (6.25 * taille) - (5 * age) + 5;
+    } else {
+      bmr = (10 * poids) + (6.25 * taille) - (5 * age) - 161;
+    }
+
+    // TDEE
+    const activeData = LIGNE_ACTIVITE.find(a => a.id === activite);
+    const tdee = bmr * (activeData ? activeData.multi : 1.375);
+
+    // Calories selon objectif
+    let caloriesObjectif = tdee;
+    let objectifText = "";
+    if (objectif === "perdre") { caloriesObjectif = tdee - 500; objectifText = "Pour perdre du poids"; }
+    else if (objectif === "tonifier") { caloriesObjectif = tdee - 200; objectifText = "Pour tonifier"; }
+    else if (objectif === "prendre") { caloriesObjectif = tdee + 300; objectifText = "Pour prendre du poids"; }
+    else { caloriesObjectif = tdee; objectifText = "Pour maintenir"; }
+
+    // Sécurité minimum
+    const minCal = genre === "homme" ? 1500 : 1200;
+    if (caloriesObjectif < minCal) caloriesObjectif = minCal;
+
+    const caloriesFinal = Math.round(caloriesObjectif);
+    const tdeeFinal = Math.round(tdee);
+
+    // Estimation durée pour atteindre l'objectif
+    let dureeText = "";
+    if ((objectif === "perdre" || objectif === "prendre") && kg > 0) {
+      // 0.5 kg/semaine pour perdre, 0.3 kg/semaine pour prendre
+      const semaines = objectif === "perdre" ? Math.round(kg * 2) : Math.round(kg * 3);
+      const mois = Math.round(semaines / 4);
+      dureeText = `À ce rythme, tes ${kg} kg seront atteints en environ ${semaines} semaines (~${mois} mois)`;
+    }
+
+    // Plan selon objectif
+    const plansObjectif = {
+      perdre: {
+        titre: "📉 Mon plan perte de poids",
+        intro: "Ton objectif : perdre " + (kg || "") + " kg sainement et durablement. La règle d'or : déficit calorique modéré + activité physique + sommeil de qualité.",
+        conseils: [
+          "🍽️ Mange 3 repas équilibrés + 1 collation si besoin (jamais sauter de repas)",
+          "🥗 Remplis la moitié de ton assiette de légumes à chaque repas",
+          "🍗 Privilégie protéines maigres (poulet, poisson, œufs, légumineuses)",
+          "🥖 Réduis pain blanc, riz blanc, pâtes blanches → choisis les versions complètes",
+          "💧 Bois minimum 2L d'eau/jour (ça aide à brûler les graisses)",
+          "🏃 Bouge 30 min/jour minimum (marche rapide, danse, sport)",
+          "💤 Dors 7-8h/nuit (le manque de sommeil fait grossir)",
+          "🚫 Évite les régimes drastiques : ils créent l'effet yoyo"
+        ]
+      },
+      tonifier: {
+        titre: "💪 Mon plan tonification",
+        intro: "Ton objectif : raffermir, perdre du gras et gagner du muscle. Combine renforcement musculaire + alimentation riche en protéines + récupération.",
+        conseils: [
+          "🍗 Augmente les protéines : 1.5g/kg de poids (ex: 65kg = 100g de protéines/jour)",
+          "🏋️ Renforcement musculaire 3-4x/semaine (poids du corps ou haltères)",
+          "🏃 Cardio modéré 2-3x/semaine pour brûler le gras",
+          "🥗 Légumes à volonté à chaque repas",
+          "🥑 Bonnes graisses : avocat, noix, huile d'olive, poissons gras",
+          "💧 Hydratation 2,5L/jour minimum (les muscles ont besoin d'eau)",
+          "💤 Sommeil = construction musculaire (vise 8h)",
+          "⏰ Patience : 2-3 mois pour des résultats visibles"
+        ]
+      },
+      prendre: {
+        titre: "📈 Mon plan prise de poids saine",
+        intro: "Ton objectif : prendre " + (kg || "") + " kg de manière équilibrée. La règle : surplus calorique modéré + protéines + bonnes graisses + entraînement.",
+        conseils: [
+          "🍽️ Mange plus souvent : 5 à 6 fois/jour (3 repas + 2-3 collations)",
+          "🍗 Protéines à chaque repas (œufs, viande, poisson, légumineuses)",
+          "🥑 Bonnes graisses : avocat, noix, beurre de cacahuète, huiles",
+          "🍚 Féculents complets : riz, pâtes complètes, patate douce, plantain",
+          "💪 Renforcement musculaire 3-4x/semaine (sinon tu prends que du gras)",
+          "💧 Hydratation suffisante (mais pas avant les repas pour ne pas couper l'appétit)",
+          "💤 Sommeil 8h/nuit minimum",
+          "📈 Pèse-toi 1x/semaine seulement (pas tous les jours)"
+        ]
+      },
+      maintenir: {
+        titre: "⚖️ Mon plan maintien",
+        intro: "Ton objectif : garder ton équilibre actuel. Tu es bien, et tu veux le rester. Continue tes bonnes habitudes !",
+        conseils: [
+          "🍽️ Continue tes 3 repas équilibrés par jour",
+          "🥗 Garde l'équilibre : protéines + légumes + féculents complets",
+          "💧 Hydratation 2L/jour",
+          "🏃 Maintiens ton activité physique régulière",
+          "💤 Sommeil de qualité 7-8h/nuit",
+          "📊 Pèse-toi 1x/semaine pour surveiller",
+          "🎯 Écoute ton corps : faim, satiété, énergie",
+          "⚖️ Si tu vois 2-3 kg en plus → ajuste rapidement (avant que ça s'accumule)"
+        ]
+      }
+    };
+
+    const planData = plansObjectif[objectif] || plansObjectif.maintenir;
+
+    // Conseils blocages
+    const conseilsBlocages = {
+      sucre: "🍬 **Sucre** : Le sucre est la 1ère cause de prise de poids. Réduis progressivement les sodas, biscuits, bonbons. Remplace par : fruits, dattes, chocolat noir 70%+. En 2 semaines tu n'auras plus envie de sucre.",
+      pain: "🍞 **Pain/féculents** : Pas besoin de les éliminer ! Choisis les versions complètes (pain complet, riz complet, pâtes complètes). Limite les portions : 1 poignée de féculent par repas.",
+      stress: "😰 **Stress** : Le stress fait sécréter du cortisol qui stocke la graisse au ventre. Pratique la respiration profonde, la méditation, le sport, ou parle à quelqu'un.",
+      alcool: "🍷 **Alcool** : Très calorique (1 verre de vin = ~120 kcal, 1 bière = ~150 kcal). Limite à 1-2 verres par semaine maximum. Préfère eau, tisanes, kombucha.",
+      temps: "⏱️ **Manque de temps** : Cuisine en batch le dimanche pour la semaine. Préfère les recettes simples (10-15 min). Évite les plats préparés (sel, sucre, additifs).",
+      motivation: "😴 **Motivation** : Fixe-toi de petits objectifs hebdomadaires (pas mensuels). Trouve un partenaire de motivation. Récompense-toi (mais pas avec de la nourriture !).",
+      regimes: "🔄 **Régimes ratés** : L'effet yoyo vient des régimes trop restrictifs. Cette fois → changement DURABLE, pas un régime. Mange équilibré, pas drastique.",
+      hormones: "🌸 **Hormones** : Post-grossesse, ménopause, syndrome ovarien... Sois patiente avec toi-même. Consulte un médecin pour bilan hormonal si besoin."
+    };
+
+    // Conseils sommeil
+    const conseilsSommeil = {
+      moins_6h: "💤 **Tu dors moins de 6h** : C'est ton ennemi n°1 pour la perte de poids. Le manque de sommeil augmente la faim et fait stocker la graisse. Vise 7-8h dès cette semaine.",
+      "6-7h": "😌 **Tu dors 6-7h** : C'est correct mais essaie de gagner 30 min à 1h. Le sommeil = ta meilleure arme pour atteindre ton objectif.",
+      "7-8h": "✨ **Tu dors 7-8h** : Parfait ! Continue comme ça. Ton sommeil te soutient dans ton objectif.",
+      plus_8h: "💤 **Tu dors plus de 8h** : C'est très bien si tu te sens en forme. Si tu te sens fatigué(e) malgré ça → consulte un médecin (apnée, anémie...)."
+    };
+
+    // Conseils stress
+    const conseilsStress = {
+      faible: "😌 **Stress faible** : Excellent ! Continue tes bonnes pratiques.",
+      modere: "😐 **Stress modéré** : Pratique la respiration profonde 5 min/jour. Marche dans la nature. Limite les écrans le soir.",
+      eleve: "😟 **Stress élevé** : Ton stress te fait stocker du gras au ventre. Pratique méditation, yoga, sport. Parle à quelqu'un de confiance.",
+      tres_eleve: "😰 **Stress très élevé** : Important : consulte un professionnel (médecin, psychologue). Le stress chronique impacte ta santé. Tu n'es pas seul(e)."
+    };
+
+    // Conseil eau
+    const conseilEau = {
+      moins_1L: "💧 **Tu bois moins de 1L** : C'est insuffisant. Augmente progressivement : 1 verre toutes les 2h. Vise 2L/jour. L'eau aide à brûler les graisses.",
+      "1-2L": "💧 **Tu bois 1-2L** : C'est correct. Vise 2L minimum. Astuce : 1 verre avant chaque repas réduit l'appétit.",
+      "2L_plus": "💧 **Tu bois plus de 2L** : Parfait ! Continue."
+    };
+
+    function restart() {
+      setLgStep(1);
+      setLgData({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
+      setLgPaymentStep(1);
+      setLgPaymentMethod(null);
+      setLgPaymentPhone("");
+    }
+
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Ton plan personnalisé" onBack={() => { setCarryCarePage("home"); setLgStep(1); }} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          {/* IMC */}
+          <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", border: "1px solid " + LG.vert, borderRadius: 14, padding: 20, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Ton IMC (Indice de Masse Corporelle)</div>
+            <div style={{ fontSize: 36, fontWeight: "bold", color: imcColor, marginBottom: 6 }}>{imc.toFixed(1)}</div>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>{imcStatus}</div>
+            <div style={{ fontSize: 12, color: LG.textDim, lineHeight: 1.6, fontStyle: "italic" }}>{imcAdvice}</div>
+          </div>
+
+          {/* CALORIES */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 12, textAlign: "center" }}>🔥 Tes calories quotidiennes</div>
+
+            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: 14, marginBottom: 10, textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: LG.textFaint, marginBottom: 4 }}>{objectifText}</div>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: LG.vertDeep }}>{caloriesFinal} kcal</div>
+              <div style={{ fontSize: 11, color: LG.textDim, marginTop: 4 }}>par jour</div>
+            </div>
+
+            <div style={{ fontSize: 11, color: LG.textFaint, lineHeight: 1.5, marginBottom: 10 }}>
+              💡 Pour info, ton métabolisme de base (BMR) est de <strong>{Math.round(bmr)} kcal</strong> et tes besoins de maintien sont d'environ <strong>{tdeeFinal} kcal</strong>.
+            </div>
+
+            {/* Répartition repas */}
+            <div style={{ background: "#fafafa", borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>📊 Répartition suggérée :</div>
+              <div style={{ fontSize: 12, color: LG.textDim, lineHeight: 1.8 }}>
+                🌅 Petit-déjeuner : <strong>{Math.round(caloriesFinal * 0.25)} kcal</strong> (25%)<br/>
+                ☀️ Déjeuner : <strong>{Math.round(caloriesFinal * 0.35)} kcal</strong> (35%)<br/>
+                🌙 Dîner : <strong>{Math.round(caloriesFinal * 0.30)} kcal</strong> (30%)<br/>
+                🍎 Collations : <strong>{Math.round(caloriesFinal * 0.10)} kcal</strong> (10%)
+              </div>
+            </div>
+
+            {dureeText && (
+              <div style={{ background: "#fef9e7", border: "1px solid #e8c547", borderRadius: 8, padding: 10, marginTop: 10, textAlign: "center" }}>
+                <div style={{ fontSize: 12, color: "#8a6d00", fontWeight: "bold" }}>⏰ {dureeText}</div>
+              </div>
+            )}
+          </div>
+
+          {/* PLAN SELON OBJECTIF */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>{planData.titre}</div>
+            <div style={{ fontSize: 13, color: LG.textDim, lineHeight: 1.6, marginBottom: 14, fontStyle: "italic" }}>{planData.intro}</div>
+            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: LG.vertDeep, marginBottom: 8 }}>✅ Mes 8 conseils clés</div>
+              {planData.conseils.map((c, i) => (
+                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, lineHeight: 1.5 }}>{c}</div>
+              ))}
+            </div>
+          </div>
+
+          {/* RECOMMANDATION LIVRE THONON (uniquement si "perdre") */}
+          {objectif === "perdre" && (
+            <div style={{ background: "linear-gradient(135deg, #fff8e1 0%, #ffe082 100%)", border: "2px solid #f57c00", borderRadius: 14, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#bf360c", marginBottom: 8, textAlign: "center" }}>📚 Pour t'accompagner dans ta perte de poids</div>
+              <div style={{ fontSize: 13, color: "#3a3a3a", lineHeight: 1.6, marginBottom: 14, textAlign: "center" }}>
+                Découvre <strong>"Le Programme Complet du Régime Thonon"</strong> — un guide détaillé qui complète parfaitement ton plan personnalisé avec menus, recettes et conseils pour réussir ta perte de poids.
+              </div>
+              <a href="https://carrybooks.com/?book=24" target="_blank" rel="noopener noreferrer"
+                style={{ display: "block", width: "100%", padding: 14, background: "#bf360c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", textDecoration: "none", textAlign: "center", boxSizing: "border-box" }}>
+                📖 Voir le livre
+              </a>
+            </div>
+          )}
+
+          {/* CONSEILS BLOCAGES */}
+          {blocages && blocages.length > 0 && (
+            <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 14 }}>🎯 Tes blocages — comment les surmonter</div>
+              {blocages.map(bid => {
+                const conseil = conseilsBlocages[bid];
+                if (!conseil) return null;
+                return (
+                  <div key={bid} style={{ background: "#fafafa", borderRadius: 10, padding: 12, marginBottom: 8, fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
+                    {conseil.split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* CONSEILS HYDRATATION */}
+          <div style={{ background: "#e3f2fd", border: "1px solid #64b5f6", borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#0d47a1", marginBottom: 8 }}>💧 Hydratation</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
+              {(conseilEau[eau] || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
+            </div>
+          </div>
+
+          {/* CONSEIL SOMMEIL */}
+          <div style={{ background: "#f3e5f5", border: "1px solid #ba68c8", borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#4a148c", marginBottom: 8 }}>💤 Sommeil</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
+              {(conseilsSommeil[sommeil] || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
+            </div>
+          </div>
+
+          {/* CONSEIL STRESS */}
+          <div style={{ background: "#fff3e0", border: "1px solid #ffb74d", borderRadius: 14, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#e65100", marginBottom: 8 }}>😌 Gestion du stress</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
+              {(conseilsStress[stress] || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
+            </div>
+          </div>
+
+          {/* CTA bas */}
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <button onClick={restart}
+              style={{ padding: "12px 24px", background: "#fff", color: LG.noir, border: "1.5px solid " + LG.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
+              🔄 Refaire le test
+            </button>
+            <button onClick={() => { setCarryCarePage("home"); setLgStep(1); }}
+              style={{ padding: "12px 24px", background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
+              🌸 Autre quiz CarryCare
+            </button>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 30, paddingTop: 20, borderTop: "1px solid " + LG.border }}>
+            <div style={{ fontSize: 11, color: LG.textFaint, fontStyle: "italic" }}>💝 Merci de faire confiance à CarryCare</div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
 
 
