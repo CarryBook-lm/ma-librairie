@@ -3233,13 +3233,198 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
     );
   }
 
-  // ÉTAPE 7 — SUSPENSE/PAIEMENT/RÉSULTAT à coder prochaine session
+  // ÉTAPE 7 — Suspense (feu d'artifice vert)
+  if (lgStep === 7) {
+    // Lance automatiquement le passage à l'étape 8 (paiement) après 2.5s
+    setTimeout(() => { if (lgStep === 7) setLgStep(8); }, 2500);
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {[
+          { left: "20%", top: "30%", delay: "0s", color: "#76ff03" },
+          { left: "70%", top: "25%", delay: "0.3s", color: "#4caf50" },
+          { left: "45%", top: "55%", delay: "0.5s", color: "#a5d6a7" },
+          { left: "30%", top: "65%", delay: "0.7s", color: "#00e676" },
+          { left: "75%", top: "60%", delay: "0.9s", color: "#69f0ae" },
+          { left: "55%", top: "20%", delay: "1.1s", color: "#b9f6ca" }
+        ].map((fw, i) => (
+          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
+            {[0,1,2,3,4,5,6,7].map(angle => (
+              <div key={angle} style={{
+                position: "absolute", width: 6, height: 6, borderRadius: "50%",
+                background: fw.color, boxShadow: "0 0 12px " + fw.color,
+                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
+                transform: "rotate(" + (angle * 45) + "deg)", transformOrigin: "center"
+              }} />
+            ))}
+          </div>
+        ))}
+        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
+          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#76ff03", animation: "fadeIn 0.5s ease-out" }}>Ton plan est prêt !</div>
+        </div>
+        <style>{`
+          @keyframes fwExplode { 0% { transform: translate(0, 0) scale(0.5); opacity: 1; } 100% { transform: translate(60px, 0) scale(0.2); opacity: 0; } }
+          @keyframes rocketBounce { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.3) rotate(10deg); } 100% { transform: scale(1) rotate(0deg); } }
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ÉTAPE 8 — Paiement (5 sous-étapes : info → operator → phone → wait → fail/success)
+  if (lgStep === 8) {
+    if (lgPaymentStep === 1) {
+      return (
+        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+          <Header title="Plan prêt !" onBack={() => setLgStep(6)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 60, marginBottom: 16 }}>⚖️</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>Ton plan personnalisé est prêt</div>
+            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 20, lineHeight: 1.6 }}>
+              Calcul de calories quotidiennes, plan d'action selon ton objectif, conseils sur tes blocages.<br/>
+              Reçois ton diagnostic complet pour atteindre tes objectifs.
+            </div>
+            <div style={{ background: "#f0fdf4", border: "1px solid " + LG.vert, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>📋 Tu vas recevoir :</div>
+              <div style={{ fontSize: 13, color: LG.textDim, lineHeight: 1.8 }}>
+                ✅ Ton IMC et ce qu'il signifie<br/>
+                ✅ Tes calories quotidiennes calculées<br/>
+                ✅ Plan personnalisé selon ton objectif<br/>
+                ✅ Conseils ciblés sur tes blocages<br/>
+                ✅ Conseils sommeil et gestion du stress
+              </div>
+            </div>
+            <button onClick={() => setLgPaymentStep(2)} style={{
+              width: "100%", padding: 16, background: LG.vertDeep, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Débloquer mon plan — {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (lgPaymentStep === 2) {
+      return (
+        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+          <Header title="Méthode de paiement" onBack={() => setLgPaymentStep(1)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 20, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            <button onClick={() => { setLgPaymentMethod("MTN"); setLgPaymentStep(3); }} style={{
+              width: "100%", padding: 16, background: "#FFCC00", color: "#000",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", marginBottom: 12, cursor: "pointer"
+            }}>📱 MTN Mobile Money</button>
+            <button onClick={() => { setLgPaymentMethod("ORANGE"); setLgPaymentStep(3); }} style={{
+              width: "100%", padding: 16, background: "#FF6600", color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>📱 Orange Money</button>
+          </div>
+        </div>
+      );
+    }
+    if (lgPaymentStep === 3) {
+      return (
+        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+          <Header title={"Ton numéro " + lgPaymentMethod} onBack={() => setLgPaymentStep(2)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 16, textAlign: "center" }}>
+              Entre ton numéro {lgPaymentMethod} (9 chiffres, sans +237)
+            </div>
+            <input type="tel" value={lgPaymentPhone} onChange={(e) => setLgPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="6XXXXXXXX" style={{
+                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border,
+                borderRadius: 12, marginBottom: 16, outline: "none"
+              }} />
+            <button onClick={async () => {
+              if (lgPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
+              setLgPaymentStep(4);
+              const fullPhone = "237" + lgPaymentPhone;
+              try {
+                const collect = await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Garde la Ligne", external_reference: "carrycare_line_" + Date.now() })
+                });
+                const data = await collect.json();
+                if (!data.reference) { setLgPaymentStep(5); return; }
+                const ref = data.reference;
+                let attempts = 0;
+                const maxAttempts = 25;
+                const interval = setInterval(async () => {
+                  attempts++;
+                  if (attempts >= maxAttempts) { clearInterval(interval); setLgPaymentStep(5); return; }
+                  try {
+                    const checkRes = await fetch("/api/campay", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "check", reference: ref })
+                    });
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setLgPaymentStep(1); setLgShowGift(true); setTimeout(() => { setLgShowGift(false); setLgStep(9); }, 2500); }
+                    else if (checkData.status === "FAILED") { clearInterval(interval); setLgPaymentStep(5); }
+                  } catch (e) {}
+                }, 3000);
+              } catch (e) { setLgPaymentStep(5); }
+            }} style={{
+              width: "100%", padding: 16, background: LG.vertDeep, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Payer {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (lgPaymentStep === 4) {
+      return (
+        <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 80, marginBottom: 20 }}>⏳</div>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: LG.noir, marginBottom: 8, textAlign: "center" }}>Paiement en cours...</div>
+          <div style={{ fontSize: 13, color: LG.textFaint, textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
+            📱 Vérifie ton téléphone et valide le paiement {lgPaymentMethod}.<br/>
+            Patiente un instant, on te montre ton plan dès que c'est validé.
+          </div>
+        </div>
+      );
+    }
+    if (lgPaymentStep === 5) {
+      return (
+        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+          <Header title="Paiement non finalisé" onBack={() => setLgPaymentStep(2)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
+            <div style={{ fontSize: 20, fontWeight: "bold", color: "#d32f2f", marginBottom: 12 }}>Paiement non finalisé</div>
+            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 20 }}>Le réseau de l'opérateur est peut-être occupé.</div>
+            <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: LG.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
+              <div style={{ fontSize: 13, color: LG.textDim, lineHeight: 1.8, textAlign: "center" }}>
+                ✅ Vérifie ton solde Mobile Money<br/>
+                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                ✅ Patiente quelques minutes et réessaie<br/>
+                ✅ Vérifie ta connexion internet
+              </div>
+            </div>
+            <button onClick={() => { setLgPaymentStep(2); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{
+              width: "100%", padding: 16, background: LG.vertDeep, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>🔄 Réessayer</button>
+            <button onClick={() => { setLgPaymentStep(1); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{
+              width: "100%", padding: 14, background: "#fff", color: LG.noir,
+              border: "1.5px solid " + LG.border, borderRadius: 12, fontSize: 14, cursor: "pointer"
+            }}>Annuler</button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // ÉTAPE 9 — RÉSULTAT (à coder dans étape 4B)
 
   return (
     <div style={{ minHeight: "100vh", background: LG.blanc, padding: 20, textAlign: "center" }}>
       <div style={{ marginTop: 100 }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>Page paiement et résultat arrivent bientôt</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>Page résultat arrive bientôt</div>
         <div style={{ fontSize: 13, color: LG.textDim, marginBottom: 20 }}>Calcul calories + plan personnalisé en cours de finalisation</div>
         <button onClick={() => { setCarryCarePage("home"); setLgStep(1); }}
           style={{ padding: "12px 24px", background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
