@@ -2090,7 +2090,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfPaymentStep(1); setBfShowGift(true); setTimeout(() => { setBfShowGift(false); setBfStep(6); }, 2500); }
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfPaymentStep(1); setBfShowGift(true); supabase.from("carrycare_results").insert([{ user_id: (await supabase.auth.getUser()).data.user?.id, quiz_type: "facial", result_data: { typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult } }]).then(()=>{}); setTimeout(() => { setBfShowGift(false); setBfStep(6); }, 2500); }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBfPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
@@ -2701,7 +2701,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBbPaymentStep(1); setBbShowGift(true); setTimeout(() => { setBbShowGift(false); setBbStep(6); }, 2500); }
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBbPaymentStep(1); setBbShowGift(true); supabase.from("carrycare_results").insert([{ user_id: (await supabase.auth.getUser()).data.user?.id, quiz_type: "body", result_data: { typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult } }]).then(()=>{}); setTimeout(() => { setBbShowGift(false); setBbStep(6); }, 2500); }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
@@ -3360,7 +3360,7 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setLgPaymentStep(1); setLgShowGift(true); setTimeout(() => { setLgShowGift(false); setLgStep(9); }, 2500); }
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setLgPaymentStep(1); setLgShowGift(true); supabase.from("carrycare_results").insert([{ user_id: (await supabase.auth.getUser()).data.user?.id, quiz_type: "line", result_data: lgData }]).then(()=>{}); setTimeout(() => { setLgShowGift(false); setLgStep(9); }, 2500); }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setLgPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
