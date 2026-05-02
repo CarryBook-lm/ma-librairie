@@ -4335,6 +4335,21 @@ export default function App() {
                 bfPaymentMethod={bfPaymentMethod} setBfPaymentMethod={setBfPaymentMethod}
               />
             )}
+            {carryCarePage === "bodyQuiz" && (
+              <BeautyBodyQuiz
+                setPage={setPage}
+                setCarryCarePage={setCarryCarePage}
+                bbStep={bbStep} setBbStep={setBbStep}
+                bbTypeAnswers={bbTypeAnswers} setBbTypeAnswers={setBbTypeAnswers}
+                bbProblems={bbProblems} setBbProblems={setBbProblems}
+                bbLifestyle={bbLifestyle} setBbLifestyle={setBbLifestyle}
+                bbResult={bbResult} setBbResult={setBbResult}
+                beautyQuizPrice={beautyQuizPrice}
+                bbPaymentStep={bbPaymentStep} setBbPaymentStep={setBbPaymentStep}
+                bbPaymentPhone={bbPaymentPhone} setBbPaymentPhone={setBbPaymentPhone}
+                bbPaymentMethod={bbPaymentMethod} setBbPaymentMethod={setBbPaymentMethod}
+              />
+            )}
           </div>
         )}
 
