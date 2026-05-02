@@ -1715,7 +1715,8 @@ const CAP_TEXTURES = [
   { id: "3C", emoji: "🌸", title: "Type 3C", subtitle: "Boucles très serrées (mini ressorts)", desc: "Boucles très denses, de la taille d'une paille" },
   { id: "4A", emoji: "✨", title: "Type 4A", subtitle: "Crépus définis (zigzag fin)", desc: "Boucles serrées en S, douces au toucher" },
   { id: "4B", emoji: "🌟", title: "Type 4B", subtitle: "Crépus en Z (zigzag prononcé)", desc: "Cheveux en angles, peu de définition naturelle" },
-  { id: "4C", emoji: "👑", title: "Type 4C", subtitle: "Crépus très serrés (peu définis)", desc: "Cheveux les plus crépus, fragiles, demandent beaucoup d'amour" }
+  { id: "4C", emoji: "👑", title: "Type 4C", subtitle: "Crépus très serrés (peu définis)", desc: "Cheveux les plus crépus, fragiles, demandent beaucoup d'amour" },
+  { id: "defrise", emoji: "💉", title: "Cheveux défrisés", subtitle: "Permanenté ou défrisé chimiquement", desc: "Cheveux lissés par traitement chimique" }
 ];
 
 const CAP_PROBLEMS = [
@@ -1840,6 +1841,24 @@ const CAP_CONTENT = {
         "Beurre nourrissant : beurre de karité brut, beurre de mangue, huile de ricin de la Jamaïque (JBCO)"
       ],
       conseils: "Tes cheveux sont précieux : zéro chaleur, zéro défrisage, manipulation minimale. Coiffures protectrices indispensables 90% du temps. Trim juste les pointes tous les 4 mois. Pousse en longueur : 0.5-1cm/mois mais elle EST là — la rétention de longueur est ton défi. Sois fière de tes cheveux, ils sont une couronne."
+    },
+    "defrise": {
+      titre: "💉 Cheveux défrisés — Routine de soin et de transition",
+      intro: "Tes cheveux ont été défrisés chimiquement. Ils sont plus fragiles, plus secs et cassent plus facilement que les cheveux naturels. Avec les bons soins, tu peux soit les garder en bonne santé, soit faire une transition douce vers le naturel.",
+      naturel: [
+        "🥥 Bain d'huile riche AVANT chaque retouche (huile de ricin + olive + coco) — protège la fibre",
+        "🌿 Masque hydratant hebdomadaire OBLIGATOIRE : avocat + miel + huile (1h sous bonnet)",
+        "💧 Vaporisateur quotidien : eau + glycérine + huile légère pour réhydrater",
+        "🌙 Bonnet satin la nuit OBLIGATOIRE (les cheveux défrisés cassent énormément)",
+        "✋ Manipulation très douce : peigne large, démêlage uniquement sur cheveux mouillés"
+      ],
+      express: [
+        "Shampoing ultra-doux sans sulfates : Mizani Moisturefuse, ORS Olive Oil, SheaMoisture Raw Shea Restorative",
+        "Masque réparateur protéiné mensuel : Aphogee 2-Step Protein Treatment, ORS Hair Mayonnaise",
+        "Soin reconstructeur intense : Olaplex No.3, Mizani Renew Strength, K18 Leave-In",
+        "Leave-in nourrissant : Mizani 25 Miracle Milk, Cantu Leave-In, Camille Rose Honey Hydrate"
+      ],
+      conseils: "Tes cheveux défrisés ont besoin de soins TRÈS riches et d'un équilibre protéines/hydratation strict. ⚠️ Important : zéro chaleur supplémentaire (fer, sèche-cheveux chaud) — la fibre est déjà fragilisée. Espace les retouches de défrisage à minimum 3-4 mois. Si tu veux faire une transition vers le naturel : laisse pousser tes cheveux naturels, fais des coiffures protectrices (tresses, vanilles, perruques), et coupe progressivement la partie défrisée. La transition prend 12-18 mois — ou tu peux faire un Big Chop direct (couper tout le défrisé d'un coup). Tu es magnifique avec tes cheveux, qu'ils soient défrisés ou naturels — c'est ton choix."
     }
   },
   problems: {
