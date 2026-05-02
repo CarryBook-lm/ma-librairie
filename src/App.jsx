@@ -2068,6 +2068,9 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
               if (bfPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
               setBfPaymentStep(4);
               const fullPhone = "237" + bfPaymentPhone;
+              // Récupérer user_id maintenant pour la sauvegarde
+              const userResp = await supabase.auth.getUser();
+              const userId = userResp.data.user?.id;
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
@@ -2090,7 +2093,24 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfPaymentStep(1); setBfShowGift(true); supabase.from("carrycare_results").insert([{ user_id: (await supabase.auth.getUser()).data.user?.id, quiz_type: "facial", result_data: { typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult } }]).then(()=>{}); setTimeout(() => { setBfShowGift(false); setBfStep(6); }, 2500); }
+                    if (checkData.status === "SUCCESSFUL") {
+                      clearInterval(interval);
+                      setBfPaymentStep(1);
+                      setBfShowGift(true);
+                      // Sauvegarde du résultat
+                      if (userId) {
+                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                          user_id: userId,
+                          quiz_type: "facial",
+                          result_data: { typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
+                        }]);
+                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
+                        else console.log("Résultat CarryCare facial sauvegardé !");
+                      } else {
+                        console.warn("Pas de user_id, sauvegarde impossible");
+                      }
+                      setTimeout(() => { setBfShowGift(false); setBfStep(6); }, 2500);
+                    }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBfPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
@@ -2680,6 +2700,8 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
               if (bbPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
               setBbPaymentStep(4);
               const fullPhone = "237" + bbPaymentPhone;
+              const userResp = await supabase.auth.getUser();
+              const userId = userResp.data.user?.id;
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
@@ -2701,7 +2723,23 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBbPaymentStep(1); setBbShowGift(true); supabase.from("carrycare_results").insert([{ user_id: (await supabase.auth.getUser()).data.user?.id, quiz_type: "body", result_data: { typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult } }]).then(()=>{}); setTimeout(() => { setBbShowGift(false); setBbStep(6); }, 2500); }
+                    if (checkData.status === "SUCCESSFUL") {
+                      clearInterval(interval);
+                      setBbPaymentStep(1);
+                      setBbShowGift(true);
+                      if (userId) {
+                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                          user_id: userId,
+                          quiz_type: "body",
+                          result_data: { typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
+                        }]);
+                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
+                        else console.log("Résultat CarryCare body sauvegardé !");
+                      } else {
+                        console.warn("Pas de user_id, sauvegarde impossible");
+                      }
+                      setTimeout(() => { setBbShowGift(false); setBbStep(6); }, 2500);
+                    }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
@@ -3339,6 +3377,8 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
               if (lgPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
               setLgPaymentStep(4);
               const fullPhone = "237" + lgPaymentPhone;
+              const userResp = await supabase.auth.getUser();
+              const userId = userResp.data.user?.id;
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
@@ -3360,7 +3400,23 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setLgPaymentStep(1); setLgShowGift(true); supabase.from("carrycare_results").insert([{ user_id: (await supabase.auth.getUser()).data.user?.id, quiz_type: "line", result_data: lgData }]).then(()=>{}); setTimeout(() => { setLgShowGift(false); setLgStep(9); }, 2500); }
+                    if (checkData.status === "SUCCESSFUL") {
+                      clearInterval(interval);
+                      setLgPaymentStep(1);
+                      setLgShowGift(true);
+                      if (userId) {
+                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                          user_id: userId,
+                          quiz_type: "line",
+                          result_data: lgData
+                        }]);
+                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
+                        else console.log("Résultat CarryCare line sauvegardé !");
+                      } else {
+                        console.warn("Pas de user_id, sauvegarde impossible");
+                      }
+                      setTimeout(() => { setLgShowGift(false); setLgStep(9); }, 2500);
+                    }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setLgPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
