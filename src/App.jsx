@@ -38,9 +38,9 @@ const supabase = createClient(
 
 const CATEGORIES = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
-  "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces"],
+  "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education", "Guide Pratique"],
+  "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces", "Guide Pratique"],
   "Développement personnel": ["Confiance en soi", "Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
-  "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education"],
   "Formation": [],
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
@@ -4788,8 +4788,22 @@ export default function App() {
 
   async function fetchBooks() {
     setLoading(true);
-    const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
-    if (data) setBooks(data);
+    try {
+      const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
+      if (data && data.length > 0) {
+        setBooks(data);
+        // Sauvegarder en cache pour usage offline
+        try { localStorage.setItem("cachedBooksList", JSON.stringify(data)); } catch (e) {}
+      } else {
+        // Fallback offline: charger depuis le cache
+        const cached = localStorage.getItem("cachedBooksList");
+        if (cached) setBooks(JSON.parse(cached));
+      }
+    } catch (e) {
+      // Erreur réseau (offline) : charger depuis le cache
+      const cached = localStorage.getItem("cachedBooksList");
+      if (cached) setBooks(JSON.parse(cached));
+    }
     setLoading(false);
   }
 
