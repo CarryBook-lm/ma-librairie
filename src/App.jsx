@@ -2881,6 +2881,269 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
   return null;
 }
 
+// ═══════════════════════════════════════════════
+// GARDE LA LIGNE — COMPOSANT QUIZ
+// ═══════════════════════════════════════════════
+function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLgData, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift, beautyQuizPrice }) {
+
+  // ANIMATION CADEAU (après paiement, avant résultat)
+  if (lgShowGift) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20, position: "relative", overflow: "hidden" }}>
+        <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a", marginBottom: 8, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2s forwards", opacity: 0 }}>✨ Voici ton plan ✨</div>
+        <div style={{ fontSize: 14, color: "#666", textAlign: "center", animation: "fadeInUp 0.6s ease-out 2.2s forwards", opacity: 0 }}>Préparé spécialement pour toi</div>
+        <style>{`
+          @keyframes giftShake { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
+          @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }
+          @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Couleurs Garde la Ligne (palette verte)
+  const LG = {
+    blanc: "#fdfdf9",
+    fond: "#f0fdf4",
+    vert: "#4caf50",
+    vertDeep: "#2e7d32",
+    border: "#d4e8d6",
+    noir: "#1a1a1a",
+    textDim: "#555",
+    textFaint: "#888"
+  };
+
+  // Header commun
+  const Header = ({ title, onBack }) => (
+    <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", padding: "12px 16px", borderBottom: "1px solid " + LG.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+      <button onClick={onBack} style={{ background: LG.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: LG.noir, flex: 1, textAlign: "center" }}>⚖️ {title}</div>
+    </div>
+  );
+
+  // ÉTAPE 1 — Genre + Objectif (+ kg si perdre/prendre)
+  if (lgStep === 1) {
+    const selectedObj = LIGNE_OBJECTIFS.find(o => o.id === lgData.objectif);
+    const needsKg = selectedObj && selectedObj.needsKg;
+    const canContinue = lgData.genre && lgData.objectif && (!needsKg || (lgData.kg && lgData.kg > 0));
+
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Garde la Ligne" onBack={() => { setCarryCarePage("home"); setLgStep(1); }} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 1 / 6</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Quel est ton objectif ?</div>
+          </div>
+
+          {/* GENRE */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>Tu es...</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              {[{ v: "femme", label: "👩 Femme" }, { v: "homme", label: "👨 Homme" }].map(opt => (
+                <button key={opt.v} onClick={() => setLgData({ ...lgData, genre: opt.v })}
+                  style={{ flex: 1, padding: 14, border: "1.5px solid " + (lgData.genre === opt.v ? LG.vert : LG.border), borderRadius: 10, background: lgData.genre === opt.v ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 14, cursor: "pointer", fontWeight: lgData.genre === opt.v ? "bold" : "normal" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* OBJECTIF */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>Mon objectif</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {LIGNE_OBJECTIFS.map(obj => (
+                <button key={obj.id} onClick={() => setLgData({ ...lgData, objectif: obj.id })}
+                  style={{ padding: 12, border: "1.5px solid " + (lgData.objectif === obj.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.objectif === obj.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 24 }}>{obj.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "bold", marginBottom: 2 }}>{obj.title}</div>
+                    <div style={{ fontSize: 11, color: LG.textFaint }}>{obj.subtitle}</div>
+                  </div>
+                  {lgData.objectif === obj.id && <span style={{ color: LG.vert, fontSize: 18 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* COMBIEN DE KG (si perdre ou prendre) */}
+          {needsKg && (
+            <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>
+                Combien de kilos veux-tu {lgData.objectif === "perdre" ? "perdre" : "prendre"} ?
+              </div>
+              <input type="number" min="1" max="30" value={lgData.kg || ""} onChange={e => setLgData({ ...lgData, kg: parseInt(e.target.value) || 0 })}
+                placeholder="Ex : 5" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+              <div style={{ fontSize: 11, color: LG.textFaint, marginTop: 8, textAlign: "center" }}>Entre 1 et 30 kg (au-delà, consulte un médecin)</div>
+            </div>
+          )}
+
+          <button onClick={() => canContinue && setLgStep(2)} disabled={!canContinue}
+            style={{ width: "100%", padding: 16, background: canContinue ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: canContinue ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {canContinue ? "Suivant — Mon profil ✨" : "Remplis tous les champs"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 2 — Profil (poids, taille, âge)
+  if (lgStep === 2) {
+    const canContinue = lgData.poids && lgData.poids > 0 && lgData.taille && lgData.taille > 0 && lgData.age && lgData.age > 0;
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Mon profil" onBack={() => setLgStep(1)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 2 / 6</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Tes données de base</div>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Pour calculer tes besoins en calories</div>
+          </div>
+
+          {/* POIDS */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>⚖️ Mon poids actuel (kg)</div>
+            <input type="number" min="30" max="250" value={lgData.poids || ""} onChange={e => setLgData({ ...lgData, poids: parseInt(e.target.value) || 0 })}
+              placeholder="Ex : 65" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+          </div>
+
+          {/* TAILLE */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>📏 Ma taille (cm)</div>
+            <input type="number" min="120" max="220" value={lgData.taille || ""} onChange={e => setLgData({ ...lgData, taille: parseInt(e.target.value) || 0 })}
+              placeholder="Ex : 165" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+          </div>
+
+          {/* ÂGE */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>🎂 Mon âge</div>
+            <input type="number" min="15" max="100" value={lgData.age || ""} onChange={e => setLgData({ ...lgData, age: parseInt(e.target.value) || 0 })}
+              placeholder="Ex : 28" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+          </div>
+
+          <button onClick={() => canContinue && setLgStep(3)} disabled={!canContinue}
+            style={{ width: "100%", padding: 16, background: canContinue ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: canContinue ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {canContinue ? "Suivant — Mon activité ✨" : "Remplis tous les champs"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 3 — Niveau d'activité
+  if (lgStep === 3) {
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Mon activité physique" onBack={() => setLgStep(2)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 3 / 6</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Mon niveau d'activité</div>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Pour ajuster tes besoins en calories</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {LIGNE_ACTIVITE.map(act => (
+              <button key={act.id} onClick={() => setLgData({ ...lgData, activite: act.id })}
+                style={{ padding: 14, border: "1.5px solid " + (lgData.activite === act.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.activite === act.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 28 }}>{act.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "bold", marginBottom: 2 }}>{act.label}</div>
+                  <div style={{ fontSize: 11, color: LG.textFaint }}>{act.desc}</div>
+                </div>
+                {lgData.activite === act.id && <span style={{ color: LG.vert, fontSize: 18 }}>✓</span>}
+              </button>
+            ))}
+          </div>
+
+          <button onClick={() => lgData.activite && setLgStep(4)} disabled={!lgData.activite}
+            style={{ width: "100%", padding: 16, background: lgData.activite ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: lgData.activite ? "pointer" : "not-allowed" }}>
+            {lgData.activite ? "Suivant — Mes habitudes ✨" : "Choisis ton niveau"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 4 — Habitudes alimentaires
+  if (lgStep === 4) {
+    const canContinue = lgData.repas && lgData.eau && lgData.sucre;
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Mes habitudes" onBack={() => setLgStep(3)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 4 / 6</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Mes habitudes alimentaires</div>
+          </div>
+
+          {/* REPAS PAR JOUR */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>🍽️ Combien de repas par jour ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {LIGNE_REPAS_FREQ.map(opt => (
+                <button key={opt.id} onClick={() => setLgData({ ...lgData, repas: opt.id })}
+                  style={{ padding: 12, border: "1.5px solid " + (lgData.repas === opt.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.repas === opt.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* EAU */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>💧 Combien d'eau par jour ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {LIGNE_EAU.map(opt => (
+                <button key={opt.id} onClick={() => setLgData({ ...lgData, eau: opt.id })}
+                  style={{ padding: 12, border: "1.5px solid " + (lgData.eau === opt.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.eau === opt.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* SUCRE / BOISSONS SUCRÉES */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>🍬 Tu consommes du sucre / sodas ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {LIGNE_SUCRE.map(opt => (
+                <button key={opt.id} onClick={() => setLgData({ ...lgData, sucre: opt.id })}
+                  style={{ padding: 12, border: "1.5px solid " + (lgData.sucre === opt.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.sucre === opt.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => canContinue && setLgStep(5)} disabled={!canContinue}
+            style={{ width: "100%", padding: 16, background: canContinue ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: canContinue ? "pointer" : "not-allowed" }}>
+            {canContinue ? "Suivant — Mes blocages ✨" : "Réponds à toutes les questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPES 5-6 + RÉSULTAT à coder dans la prochaine session
+
+  return (
+    <div style={{ minHeight: "100vh", background: LG.blanc, padding: 20, textAlign: "center" }}>
+      <div style={{ marginTop: 100 }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>Cette partie arrive bientôt</div>
+        <div style={{ fontSize: 13, color: LG.textDim, marginBottom: 20 }}>Le quiz "Garde la Ligne" est en cours de finalisation</div>
+        <button onClick={() => { setCarryCarePage("home"); setLgStep(1); }}
+          style={{ padding: "12px 24px", background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
+          ← Retour à CarryCare
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 export default function App() {
   const [page, setPage] = useState("home");
