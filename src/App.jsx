@@ -1646,6 +1646,53 @@ const BB_CONTENT = {
   }
 };
 
+// ═══ GARDE LA LIGNE — DONNÉES ═══
+const LIGNE_OBJECTIFS = [
+  { id: "perdre", emoji: "📉", title: "Perdre du poids", subtitle: "Je veux perdre quelques kilos durablement", needsKg: true },
+  { id: "tonifier", emoji: "💪", title: "Tonifier mon corps", subtitle: "Raffermir, perdre du gras, gagner du muscle", needsKg: false },
+  { id: "prendre", emoji: "📈", title: "Prendre du poids sainement", subtitle: "Gagner en masse de manière équilibrée", needsKg: true },
+  { id: "maintenir", emoji: "⚖️", title: "Maintenir ma forme", subtitle: "Je suis bien, je veux garder mon équilibre", needsKg: false }
+];
+
+const LIGNE_ACTIVITE = [
+  { id: "sedentaire", emoji: "🛋️", label: "Sédentaire", desc: "Métier assis, peu de marche", multi: 1.2 },
+  { id: "legere", emoji: "🚶", label: "Légère", desc: "Marche quotidienne, métier debout", multi: 1.375 },
+  { id: "moderee", emoji: "🏃", label: "Modérée", desc: "Sport 2-3x/semaine", multi: 1.55 },
+  { id: "intense", emoji: "💪", label: "Intense", desc: "Sport 4-6x/semaine", multi: 1.725 },
+  { id: "tres_intense", emoji: "🔥", label: "Très intense", desc: "Sport quotidien intense, athlète", multi: 1.9 }
+];
+
+const LIGNE_BLOCAGES = [
+  { id: "sucre", emoji: "🍬", label: "Sucre / friandises" },
+  { id: "pain", emoji: "🍞", label: "Pain / féculents" },
+  { id: "stress", emoji: "😰", label: "Stress qui pousse à manger" },
+  { id: "alcool", emoji: "🍷", label: "Boissons alcoolisées" },
+  { id: "temps", emoji: "⏱️", label: "Manque de temps pour cuisiner" },
+  { id: "motivation", emoji: "😴", label: "Manque de motivation" },
+  { id: "regimes", emoji: "🔄", label: "Régimes ratés (effet yoyo)" },
+  { id: "hormones", emoji: "🌸", label: "Hormones (post-grossesse, ménopause, etc.)" }
+];
+
+const LIGNE_REPAS_FREQ = [
+  { id: "1-2", label: "1 à 2 repas par jour" },
+  { id: "3", label: "3 repas par jour (classique)" },
+  { id: "4-5", label: "4 à 5 petits repas" },
+  { id: "irregulier", label: "Irrégulier, je mange quand j'ai faim" }
+];
+
+const LIGNE_EAU = [
+  { id: "moins_1L", label: "Moins de 1L par jour" },
+  { id: "1-2L", label: "Entre 1L et 2L" },
+  { id: "2L_plus", label: "Plus de 2L par jour" }
+];
+
+const LIGNE_SUCRE = [
+  { id: "jamais", label: "Jamais ou très rarement" },
+  { id: "parfois", label: "Parfois (1-2 fois/semaine)" },
+  { id: "souvent", label: "Souvent (plusieurs fois/semaine)" },
+  { id: "tous_jours", label: "Tous les jours" }
+];
+
 function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
 
   // ANIMATION CADEAU (après paiement, avant résultat)
