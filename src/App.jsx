@@ -2245,6 +2245,453 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
   return null;
 }
 
+// ═══════════════════════════════════════════════
+// BEAUTÉ CORPORELLE — COMPOSANT QUIZ
+// ═══════════════════════════════════════════════
+function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod }) {
+
+  function getBodySkinType(answers) {
+    const counts = { A: 0, B: 0, C: 0, D: 0 };
+    answers.forEach(a => { if (counts[a] !== undefined) counts[a]++; });
+    const max = Math.max(...Object.values(counts));
+    const winner = Object.keys(counts).find(k => counts[k] === max);
+    const types = {
+      A: { code: "seche", emoji: "🌵", name: "Peau Sèche", desc: "Ta peau corporelle manque d'hydratation" },
+      B: { code: "mixte", emoji: "🌸", name: "Peau Mixte", desc: "Certaines zones sèches, d'autres normales" },
+      C: { code: "grasse", emoji: "✨", name: "Peau Grasse", desc: "Ton corps produit beaucoup de sébum" },
+      D: { code: "sensible", emoji: "🌷", name: "Peau Sensible", desc: "Ta peau réagit facilement aux produits" }
+    };
+    return types[winner] || types.B;
+  }
+
+  function selectAnswer(questionIdx, value) {
+    const newAnswers = [...bbTypeAnswers];
+    newAnswers[questionIdx] = value;
+    setBbTypeAnswers(newAnswers);
+  }
+
+  function toggleProblem(id) {
+    if (bbProblems.includes(id)) setBbProblems(bbProblems.filter(p => p !== id));
+    else setBbProblems([...bbProblems, id]);
+  }
+
+  // Header commun
+  const Header = ({ title, onBack }) => (
+    <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+      <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🧴 {title}</div>
+    </div>
+  );
+
+  // ÉTAPE 1 — Type de peau corporelle (3 questions)
+  if (bbStep === 1) {
+    const allAnswered = BB_TYPE_QUESTIONS.every((_, i) => bbTypeAnswers[i]);
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Beauté Corporelle" onBack={() => { setCarryCarePage("home"); setBbStep(1); }} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Étape 1 / 3</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>Quel est ton type de peau ?</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginTop: 6 }}>3 questions pour identifier ta peau corporelle</div>
+          </div>
+          {BB_TYPE_QUESTIONS.map((q, qIdx) => (
+            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{qIdx + 1}. {q.q}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {q.options.map(opt => (
+                  <button key={opt.value} onClick={() => selectAnswer(qIdx, opt.value)}
+                    style={{ padding: 12, border: "1.5px solid " + (bbTypeAnswers[qIdx] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bbTypeAnswers[qIdx] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button onClick={() => allAnswered && setBbStep(2)} disabled={!allAnswered}
+            style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {allAnswered ? "Suivant — Mes problèmes ✨" : "Réponds aux 3 questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 2 — Sélection des problèmes
+  if (bbStep === 2) {
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Tes problèmes" onBack={() => setBbStep(1)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Étape 2 / 3</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>Coche tes préoccupations</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginTop: 6 }}>Tu peux en cocher plusieurs (ou aucune)</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 16 }}>
+            {BB_PROBLEMS.map(p => (
+              <button key={p.id} onClick={() => toggleProblem(p.id)}
+                style={{ padding: 12, border: "1.5px solid " + (bbProblems.includes(p.id) ? CC.rose : CC.border), borderRadius: 10, background: bbProblems.includes(p.id) ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{p.emoji}</span>
+                <span style={{ flex: 1 }}>{p.label}</span>
+                {bbProblems.includes(p.id) && <span style={{ color: CC.rose, fontSize: 16 }}>✓</span>}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setBbStep(3)}
+            style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>
+            Suivant — Mon mode de vie ✨
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 3 — Mode de vie (âge, soleil, gommage)
+  if (bbStep === 3) {
+    const ageOpts = [
+      { v: "ado", label: "Moins de 20 ans" },
+      { v: "20s", label: "20-29 ans" },
+      { v: "30s", label: "30-39 ans" },
+      { v: "40s", label: "40-49 ans" },
+      { v: "50plus", label: "50 ans et plus" }
+    ];
+    const sunOpts = [
+      { v: "low", label: "Moins d'1h/jour" },
+      { v: "med", label: "1 à 3h/jour" },
+      { v: "high", label: "Plus de 3h/jour" }
+    ];
+    const scrubOpts = [
+      { v: "yes", label: "Oui, 1-2x/semaine" },
+      { v: "sometimes", label: "Parfois" },
+      { v: "no", label: "Jamais" }
+    ];
+    const allDone = bbLifestyle.age && bbLifestyle.sun && bbLifestyle.scrub;
+    const sections = [
+      { key: "age", title: "Quel est ton âge ?", opts: ageOpts },
+      { key: "sun", title: "Combien d'heures au soleil par jour ?", opts: sunOpts },
+      { key: "scrub", title: "Tu te gommes le corps régulièrement ?", opts: scrubOpts }
+    ];
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Ton mode de vie" onBack={() => setBbStep(2)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Étape 3 / 3</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>Pour personnaliser ton diagnostic</div>
+          </div>
+          {sections.map(section => (
+            <div key={section.key} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{section.title}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {section.opts.map(opt => (
+                  <button key={opt.v} onClick={() => setBbLifestyle({ ...bbLifestyle, [section.key]: opt.v })}
+                    style={{ padding: 12, border: "1.5px solid " + (bbLifestyle[section.key] === opt.v ? CC.rose : CC.border), borderRadius: 10, background: bbLifestyle[section.key] === opt.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button onClick={() => {
+            if (!allDone) return;
+            const skinType = getBodySkinType(bbTypeAnswers);
+            setBbResult({ skinType, problems: bbProblems, lifestyle: bbLifestyle });
+            setBbStep(4);
+            setTimeout(() => setBbStep(5), 2500);
+          }} disabled={!allDone}
+            style={{ width: "100%", padding: 16, background: allDone ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allDone ? "pointer" : "not-allowed" }}>
+            {allDone ? "Voir mon diagnostic ✨" : "Réponds aux 3 questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 4 — Suspense
+  if (bbStep === 4) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 80, marginBottom: 20 }}>✨</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse en cours...</div>
+        <div style={{ fontSize: 14, color: CC.textFaint, textAlign: "center" }}>Préparation de ton diagnostic personnalisé</div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 5 — Paiement (5 sous-étapes : info → operator → phone → wait → fail/success)
+  if (bbStep === 5) {
+    if (bbPaymentStep === 1) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Diagnostic prêt !" onBack={() => setBbStep(3)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 60, marginBottom: 16 }}>🌸</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>Ton diagnostic est prêt</div>
+            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 20, lineHeight: 1.6 }}>
+              Type de peau corporelle identifié, problèmes ciblés, mode de vie analysé.<br/>
+              Reçois ton plan complet : routine personnalisée, conseils naturels et produits adaptés à TES besoins.
+            </div>
+            <div style={{ background: "#fdf8f8", border: "1px solid " + CC.rose, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📋 Tu vas recevoir :</div>
+              <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+                ✅ Ton type de peau corporelle expliqué<br/>
+                ✅ Routine matin et soir personnalisée<br/>
+                ✅ Conseils naturels (DIY) et produits<br/>
+                ✅ Plan d'action selon ton mode de vie<br/>
+                ✅ Conseils gommage et soleil adaptés
+              </div>
+            </div>
+            <button onClick={() => setBbPaymentStep(2)} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (bbPaymentStep === 2) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Méthode de paiement" onBack={() => setBbPaymentStep(1)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 20, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            <button onClick={() => { setBbPaymentMethod("MTN"); setBbPaymentStep(3); }} style={{
+              width: "100%", padding: 16, background: "#FFCC00", color: "#000",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", marginBottom: 12, cursor: "pointer"
+            }}>📱 MTN Mobile Money</button>
+            <button onClick={() => { setBbPaymentMethod("ORANGE"); setBbPaymentStep(3); }} style={{
+              width: "100%", padding: 16, background: "#FF6600", color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>📱 Orange Money</button>
+          </div>
+        </div>
+      );
+    }
+    if (bbPaymentStep === 3) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title={"Ton numéro " + bbPaymentMethod} onBack={() => setBbPaymentStep(2)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 16, textAlign: "center" }}>
+              Entre ton numéro {bbPaymentMethod} (9 chiffres, sans +237)
+            </div>
+            <input type="tel" value={bbPaymentPhone} onChange={(e) => setBbPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="6XXXXXXXX" style={{
+                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border,
+                borderRadius: 12, marginBottom: 16, outline: "none"
+              }} />
+            <button onClick={async () => {
+              if (bbPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
+              setBbPaymentStep(4);
+              const fullPhone = "237" + bbPaymentPhone;
+              try {
+                const collect = await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Corporelle", external_reference: "carrycare_body_" + Date.now() })
+                });
+                const data = await collect.json();
+                if (!data.reference) { setBbPaymentStep(5); return; }
+                const ref = data.reference;
+                let attempts = 0;
+                const maxAttempts = 25;
+                const interval = setInterval(async () => {
+                  attempts++;
+                  if (attempts >= maxAttempts) { clearInterval(interval); setBbPaymentStep(5); return; }
+                  try {
+                    const checkRes = await fetch("/api/campay", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "check", reference: ref })
+                    });
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBbStep(6); setBbPaymentStep(1); }
+                    else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
+                  } catch (e) {}
+                }, 3000);
+              } catch (e) { setBbPaymentStep(5); }
+            }} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Payer {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (bbPaymentStep === 4) {
+      return (
+        <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 80, marginBottom: 20 }}>⏳</div>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Paiement en cours...</div>
+          <div style={{ fontSize: 13, color: CC.textFaint, textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
+            📱 Vérifie ton téléphone et valide le paiement {bbPaymentMethod}.<br/>
+            Patiente un instant, on te montre ton diagnostic dès que c'est validé.
+          </div>
+        </div>
+      );
+    }
+    if (bbPaymentStep === 5) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Paiement non finalisé" onBack={() => setBbPaymentStep(2)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
+            <div style={{ fontSize: 20, fontWeight: "bold", color: CC.rose, marginBottom: 12 }}>Paiement non finalisé</div>
+            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 20 }}>Le réseau de l'opérateur est peut-être occupé.</div>
+            <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
+              <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.8, textAlign: "center" }}>
+                ✅ Vérifie ton solde Mobile Money<br/>
+                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                ✅ Patiente quelques minutes et réessaie<br/>
+                ✅ Vérifie ta connexion internet
+              </div>
+            </div>
+            <button onClick={() => { setBbPaymentStep(2); setBbPaymentMethod(null); setBbPaymentPhone(""); }} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>🔄 Réessayer</button>
+            <button onClick={() => { setBbPaymentStep(1); setBbPaymentMethod(null); setBbPaymentPhone(""); }} style={{
+              width: "100%", padding: 14, background: "#fff", color: CC.noir,
+              border: "1.5px solid " + CC.border, borderRadius: 12, fontSize: 14, cursor: "pointer"
+            }}>Annuler</button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // ÉTAPE 6 — RÉSULTAT FINAL
+  if (bbStep === 6 && bbResult) {
+    const problemLabels = bbResult.problems.map(pid => BB_PROBLEMS.find(p => p.id === pid)).filter(Boolean);
+    const skinCode = bbResult.skinType.code;
+    const typeData = BB_CONTENT.types[skinCode] || BB_CONTENT.types.mixte;
+    const sunData = BB_CONTENT.soleil[bbResult.lifestyle.sun] || BB_CONTENT.soleil.med;
+    const ageData = BB_CONTENT.age[bbResult.lifestyle.age] || BB_CONTENT.age["20s"];
+    const scrubData = BB_CONTENT.gommage[bbResult.lifestyle.scrub] || BB_CONTENT.gommage.sometimes;
+
+    function restart() {
+      setBbStep(1);
+      setBbTypeAnswers([]);
+      setBbProblems([]);
+      setBbLifestyle({ age: null, sun: null, scrub: null });
+      setBbResult(null);
+    }
+
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Ton diagnostic complet" onBack={() => { setCarryCarePage("home"); setBbStep(1); }} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          {/* Type de peau */}
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 14, padding: 20, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 50, marginBottom: 8 }}>{bbResult.skinType.emoji}</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Ton type de peau corporelle</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>{bbResult.skinType.name}</div>
+            <div style={{ fontSize: 13, color: CC.textDim }}>{bbResult.skinType.desc}</div>
+          </div>
+
+          {/* Routine type de peau */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>{typeData.titre}</div>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, marginBottom: 14, fontStyle: "italic" }}>{typeData.intro}</div>
+            <div style={{ background: "#f5f9f0", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5d2d", marginBottom: 8 }}>🌿 Routine naturelle</div>
+              {typeData.naturel.map((item, i) => (
+                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
+                  <span style={{ position: "absolute", left: 0 }}>•</span>{item}
+                </div>
+              ))}
+            </div>
+            <div style={{ background: "#fdf8f8", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 8 }}>💎 Routine express (produits)</div>
+              {typeData.express.map((item, i) => (
+                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
+                  <span style={{ position: "absolute", left: 0 }}>•</span>{item}
+                </div>
+              ))}
+            </div>
+            <div style={{ background: "#fef9e7", borderRadius: 10, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#8a6d00", marginBottom: 8 }}>💡 Mes conseils</div>
+              <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{typeData.conseils}</div>
+            </div>
+          </div>
+
+          {/* Problèmes ciblés */}
+          {problemLabels.length > 0 && (
+            <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 14 }}>🎯 Tes préoccupations ciblées</div>
+              {problemLabels.map(p => {
+                const pcontent = BB_CONTENT.problems[p.id];
+                if (!pcontent) return null;
+                const isPlaceholder = pcontent.naturel[0] && pcontent.naturel[0].startsWith("🚧");
+                return (
+                  <div key={p.id} style={{ background: "#fafafa", border: "1px solid " + CC.border, borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                    <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>{pcontent.titre}</div>
+                    {!isPlaceholder && (
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: "bold", color: "#2d5d2d", marginBottom: 4 }}>🌿 Naturel :</div>
+                        {pcontent.naturel.map((it, i) => (
+                          <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
+                        ))}
+                        <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginTop: 8, marginBottom: 4 }}>💎 Produits :</div>
+                        {pcontent.express.map((it, i) => (
+                          <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#5a5a5a", lineHeight: 1.5, marginTop: 8, fontStyle: "italic" }}>{pcontent.conseils}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Section soleil */}
+          <div style={{ background: "#fef9e7", border: "1px solid #e8c547", borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#8a6d00", marginBottom: 8 }}>{sunData.titre}</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{sunData.text}</div>
+          </div>
+
+          {/* Section gommage */}
+          <div style={{ background: "#f0f8ff", border: "1px solid #87ceeb", borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#2c5d8a", marginBottom: 8 }}>{scrubData.titre}</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{scrubData.text}</div>
+          </div>
+
+          {/* Section âge */}
+          <div style={{ background: "#fdf8f8", border: "1px solid " + CC.rose, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.rose, marginBottom: 8 }}>{ageData.titre}</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{ageData.text}</div>
+          </div>
+
+          {/* CTA bas */}
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <button onClick={restart}
+              style={{ padding: "12px 24px", background: "#fff", color: CC.noir, border: "1.5px solid " + CC.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
+              🔄 Refaire le test
+            </button>
+            <button onClick={() => { setCarryCarePage("home"); setBbStep(1); }}
+              style={{ padding: "12px 24px", background: CC.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
+              🌸 Autre quiz CarryCare
+            </button>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 30, paddingTop: 20, borderTop: "1px solid " + CC.border }}>
+            <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic" }}>💝 Merci de faire confiance à CarryCare</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 
 export default function App() {
   const [page, setPage] = useState("home");
