@@ -3945,6 +3945,213 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
   return null;
 }
 
+// ═══════════════════════════════════════════════
+// BEAUTÉ CAPILLAIRE — COMPOSANT QUIZ
+// ═══════════════════════════════════════════════
+function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTexture, setCapTexture, capProblems, setCapProblems, capLifestyle, setCapLifestyle, capResult, setCapResult, beautyQuizPrice, capPaymentStep, setCapPaymentStep, capPaymentPhone, setCapPaymentPhone, capPaymentMethod, setCapPaymentMethod, capShowGift, setCapShowGift }) {
+
+  // ANIMATION CADEAU (après paiement, avant résultat)
+  if (capShowGift) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf6e3 0%, #f5d7a3 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20, position: "relative", overflow: "hidden" }}>
+        <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a", marginBottom: 8, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2s forwards", opacity: 0 }}>✨ Voici ton diagnostic ✨</div>
+        <div style={{ fontSize: 14, color: "#666", textAlign: "center", animation: "fadeInUp 0.6s ease-out 2.2s forwards", opacity: 0 }}>Préparé spécialement pour toi</div>
+        <style>{`
+          @keyframes giftShake { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
+          @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }
+          @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Couleurs Beauté Capillaire (palette ambrée/marron doré)
+  const CAP = {
+    blanc: "#fdfbf6",
+    fond: "#fdf6e3",
+    or: "#c9a66b",
+    orDeep: "#8b6f3a",
+    border: "#e8d4b8",
+    noir: "#1a1a1a",
+    textDim: "#555",
+    textFaint: "#888"
+  };
+
+  // Header commun
+  const Header = ({ title, onBack }) => (
+    <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f5d7a3 100%)", padding: "12px 16px", borderBottom: "1px solid " + CAP.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+      <button onClick={onBack} style={{ background: CAP.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: CAP.noir, flex: 1, textAlign: "center" }}>💇🏾‍♀️ {title}</div>
+    </div>
+  );
+
+  function toggleProblem(id) {
+    if (capProblems.includes(id)) setCapProblems(capProblems.filter(p => p !== id));
+    else setCapProblems([...capProblems, id]);
+  }
+
+  // ÉTAPE 1 — Type de cheveux
+  if (capStep === 1) {
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Beauté Capillaire" onBack={() => { setCarryCarePage("home"); setCapStep(1); }} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 1 / 4</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>Quel est ton type de cheveux ?</div>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginTop: 6 }}>Choisis celui qui te ressemble le plus</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {CAP_TEXTURES.map(t => (
+              <button key={t.id} onClick={() => setCapTexture(t.id)}
+                style={{ padding: 14, border: "1.5px solid " + (capTexture === t.id ? CAP.or : CAP.border), borderRadius: 10, background: capTexture === t.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 28 }}>{t.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "bold", marginBottom: 2 }}>{t.title} — {t.subtitle}</div>
+                  <div style={{ fontSize: 11, color: CAP.textFaint }}>{t.desc}</div>
+                </div>
+                {capTexture === t.id && <span style={{ color: CAP.or, fontSize: 18 }}>✓</span>}
+              </button>
+            ))}
+          </div>
+
+          <button onClick={() => capTexture && setCapStep(2)} disabled={!capTexture}
+            style={{ width: "100%", padding: 16, background: capTexture ? CAP.orDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: capTexture ? "pointer" : "not-allowed" }}>
+            {capTexture ? "Suivant — Mes problèmes ✨" : "Choisis ton type"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 2 — Sélection des problèmes
+  if (capStep === 2) {
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Tes problèmes" onBack={() => setCapStep(1)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 2 / 4</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>Coche tes préoccupations</div>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginTop: 6 }}>Tu peux en cocher plusieurs (ou aucune)</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {CAP_PROBLEMS.map(p => (
+              <button key={p.id} onClick={() => toggleProblem(p.id)}
+                style={{ padding: 12, border: "1.5px solid " + (capProblems.includes(p.id) ? CAP.or : CAP.border), borderRadius: 10, background: capProblems.includes(p.id) ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{p.emoji}</span>
+                <span style={{ flex: 1 }}>{p.label}</span>
+                {capProblems.includes(p.id) && <span style={{ color: CAP.or, fontSize: 16 }}>✓</span>}
+              </button>
+            ))}
+          </div>
+
+          <button onClick={() => setCapStep(3)}
+            style={{ width: "100%", padding: 16, background: CAP.orDeep, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>
+            Suivant — Ma routine ✨
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 3 — Routine actuelle (lavage)
+  if (capStep === 3) {
+    const routineOpts = [
+      { v: "1_sem", label: "1 lavage par semaine" },
+      { v: "2_sem", label: "2 lavages par semaine" },
+      { v: "3plus_sem", label: "Plus de 2 lavages par semaine" },
+      { v: "rare", label: "Moins d'1 lavage par semaine" }
+    ];
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Ma routine" onBack={() => setCapStep(2)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 3 / 4</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>À quelle fréquence laves-tu tes cheveux ?</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {routineOpts.map(opt => (
+              <button key={opt.v} onClick={() => setCapLifestyle({ ...capLifestyle, lavage: opt.v })}
+                style={{ padding: 12, border: "1.5px solid " + (capLifestyle.lavage === opt.v ? CAP.or : CAP.border), borderRadius: 10, background: capLifestyle.lavage === opt.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <button onClick={() => capLifestyle.lavage && setCapStep(4)} disabled={!capLifestyle.lavage}
+            style={{ width: "100%", padding: 16, background: capLifestyle.lavage ? CAP.orDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: capLifestyle.lavage ? "pointer" : "not-allowed" }}>
+            {capLifestyle.lavage ? "Suivant — Mon âge ✨" : "Choisis ta fréquence"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 4 — Mode de vie (âge)
+  if (capStep === 4) {
+    const ageOpts = [
+      { v: "ado", label: "Moins de 20 ans" },
+      { v: "20s", label: "20-29 ans" },
+      { v: "30s", label: "30-39 ans" },
+      { v: "40s", label: "40-49 ans" },
+      { v: "50plus", label: "50 ans et plus" }
+    ];
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Mon âge" onBack={() => setCapStep(3)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 4 / 4</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>Quel est ton âge ?</div>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginTop: 6 }}>Pour des conseils adaptés à tes cheveux</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {ageOpts.map(opt => (
+              <button key={opt.v} onClick={() => setCapLifestyle({ ...capLifestyle, age: opt.v })}
+                style={{ padding: 12, border: "1.5px solid " + (capLifestyle.age === opt.v ? CAP.or : CAP.border), borderRadius: 10, background: capLifestyle.age === opt.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <button onClick={() => {
+            if (!capLifestyle.age) return;
+            const texture = CAP_TEXTURES.find(t => t.id === capTexture);
+            setCapResult({ texture, problems: capProblems, lifestyle: capLifestyle });
+            setCapStep(5);
+          }} disabled={!capLifestyle.age}
+            style={{ width: "100%", padding: 16, background: capLifestyle.age ? CAP.orDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: capLifestyle.age ? "pointer" : "not-allowed" }}>
+            {capLifestyle.age ? "Voir mon diagnostic ✨" : "Choisis ton âge"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPES 5+ (suspense, paiement, résultat) — à coder dans étape 3 et 4
+
+  return (
+    <div style={{ minHeight: "100vh", background: CAP.blanc, padding: 20, textAlign: "center" }}>
+      <div style={{ marginTop: 100 }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>Cette partie arrive bientôt</div>
+        <div style={{ fontSize: 13, color: CAP.textDim, marginBottom: 20 }}>Diagnostic capillaire en cours de finalisation</div>
+        <button onClick={() => { setCarryCarePage("home"); setCapStep(1); }}
+          style={{ padding: "12px 24px", background: CAP.orDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
+          ← Retour à CarryCare
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 export default function App() {
   const [page, setPage] = useState("home");
