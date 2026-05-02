@@ -1379,7 +1379,7 @@ const BF_CONTENT = {
         delai: "Éclat préservé toute l'année"
       },
       express: {
-        matin: ["Nettoyant doux", "Tonique apaisant", "Sérum Vitamine C → éclat et anti-âge préventif", "Hydratant léger", "SPF 30-50"],
+        matin: ["Nettoyant doux", "Tonique apaisant", "Sérum Vitamine C → éclat et anti-âge préventif", "Hydratant léger", "Crème solaire SPF 30-50"],
         soir: ["Démaquillant + nettoyant", "Sérum Hyaluronique + Niacinamide (combo équilibre)", "Crème de nuit hydratante"],
         bonus: "1-2x/semaine : Exfoliant doux (AHA léger)",
         delai: "Peau lumineuse, prévention anti-âge"
@@ -1461,7 +1461,7 @@ const BF_CONTENT = {
       titre: "⏳ Premières rides / Relâchement",
       naturel: ["Huile de rose musquée pure matin et soir → riche en vitamine A naturelle", "Massage facial : 5 minutes le soir, mouvements ascendants → stimule collagène", "Masque blanc d'œuf (1x/semaine) → effet tenseur naturel"],
       express: ["Sérum Acide Hyaluronique → repulpe et hydrate (matin et soir)", "Sérum Rétinol 0,3% → stimule collagène (soir uniquement, 2-3x/semaine pour commencer)", "Sérum Peptides → fermeté", "Crème anti-âge complète"],
-      conseils: "SPF tous les jours = ton anti-rides numéro 1. Hydratation interne et externe. Antioxydants : myrtilles, baies, légumes colorés, thé vert. Sommeil profond. ⚠️ Rétinol incompatible avec grossesse et allaitement."
+      conseils: "Crème solaire (SPF) tous les jours = ton anti-rides numéro 1. Hydratation interne et externe. Antioxydants : myrtilles, baies, légumes colorés, thé vert. Sommeil profond. ⚠️ Rétinol incompatible avec grossesse et allaitement."
     },
     rougeurs: {
       titre: "🌹 Rougeurs / Sensibilité",
@@ -1478,14 +1478,14 @@ const BF_CONTENT = {
   },
 
   soleil: {
-    low: { titre: "☀️ Exposition faible (-1h/jour)", text: "Pour toi, le soleil n'est pas ton ennemi quotidien — mais il reste essentiel de te protéger. SPF 30 minimum chaque matin (oui, même si tu restes à l'intérieur, la lumière bleue des écrans et UV par les fenêtres comptent). Renouveler 1x dans la journée si tu sors. La protection solaire n'est pas optionnelle — c'est le meilleur anti-âge naturel." },
-    med: { titre: "☀️ Exposition modérée (1-3h/jour)", text: "Tu es exposée régulièrement — ta peau a besoin de protection sérieuse. SPF 50 OBLIGATOIRE chaque matin. Renouveler toutes les 4 heures quand tu es dehors. Lunettes de soleil (protègent les yeux et préviennent les rides du contour). Chapeau dans les heures fortes (12h-15h). Évite l'exposition entre 12h et 15h si possible." },
-    high: { titre: "🔥 Exposition intense (+3h/jour)", text: "Ton activité t'expose énormément au soleil — protection MAXIMALE indispensable. SPF 50+ ÉCRAN TOTAL, à renouveler toutes les 2h. Chapeau à larges bords ou casquette. Lunettes de soleil systématiquement. Vêtements couvrants (manches longues légères). Hydratation interne ++ (3L d'eau). ⚠️ Important : sans cette protection, AUCUN soin de ta routine ne fonctionnera. Le soleil détruit tout." }
+    low: { titre: "☀️ Exposition faible (-1h/jour)", text: "Pour toi, le soleil n'est pas ton ennemi quotidien — mais il reste essentiel de te protéger. Crème solaire SPF 30 minimum chaque matin (oui, même si tu restes à l'intérieur, la lumière bleue des écrans et UV par les fenêtres comptent). Renouveler 1x dans la journée si tu sors. La protection solaire n'est pas optionnelle — c'est le meilleur anti-âge naturel." },
+    med: { titre: "☀️ Exposition modérée (1-3h/jour)", text: "Tu es exposée régulièrement — ta peau a besoin de protection sérieuse. Crème solaire SPF 50 OBLIGATOIRE chaque matin. Renouveler toutes les 4 heures quand tu es dehors. Lunettes de soleil (protègent les yeux et préviennent les rides du contour). Chapeau dans les heures fortes (12h-15h). Évite l'exposition entre 12h et 15h si possible." },
+    high: { titre: "🔥 Exposition intense (+3h/jour)", text: "Ton activité t'expose énormément au soleil — protection MAXIMALE indispensable. Crème solaire SPF 50+ ÉCRAN TOTAL, à renouveler toutes les 2h. Chapeau à larges bords ou casquette. Lunettes de soleil systématiquement. Vêtements couvrants (manches longues légères). Hydratation interne ++ (3L d'eau). ⚠️ Important : sans cette protection, AUCUN soin de ta routine ne fonctionnera. Le soleil détruit tout." }
   },
 
   age: {
     ado: { titre: "🌱 Moins de 20 ans", text: "Ma belle, à ton âge, voici ce qu'il faut RETENIR : priorité = gérer l'acné, poser de bonnes habitudes. Routine SIMPLE : nettoyage doux + hydratant + SPF. Évite absolument les produits anti-âge (rétinol fort, peelings agressifs) — ta peau n'en a pas besoin. Hygiène de vie importante : sommeil, alimentation peu sucrée, hydratation. Les habitudes que tu prends maintenant détermineront l'état de ta peau à 40 ans. Mantra : 'Je pose les bases d'une belle peau pour la vie !'" },
-    "20s": { titre: "🌸 20-29 ans", text: "Ma belle, c'est l'âge idéal pour commencer la prévention. Priorité = traiter les problèmes actuels + commencer la prévention. Routine COMPLÈTE : nettoyage, sérum (vitamine C ou niacinamide), hydratant, SPF. Tu peux introduire DOUCEMENT les actifs (vitamine C le matin). SPF tous les jours = la meilleure décision anti-âge que tu peux prendre. Sommeil de qualité, hydratation, alimentation équilibrée. Mantra : 'Mes choix d'aujourd'hui dessinent mon visage de demain !'" },
+    "20s": { titre: "🌸 20-29 ans", text: "Ma belle, c'est l'âge idéal pour commencer la prévention. Priorité = traiter les problèmes actuels + commencer la prévention. Routine COMPLÈTE : nettoyage, sérum (vitamine C ou niacinamide), hydratant, SPF. Tu peux introduire DOUCEMENT les actifs (vitamine C le matin). Crème solaire (SPF) tous les jours = la meilleure décision anti-âge que tu peux prendre. Sommeil de qualité, hydratation, alimentation équilibrée. Mantra : 'Mes choix d'aujourd'hui dessinent mon visage de demain !'" },
     "30s": { titre: "🌺 30-39 ans", text: "Ma belle, ta peau commence sa transformation — c'est le moment d'agir. Priorité = prévention anti-âge + uniformisation. Routine plus structurée : sérums actifs (vitamine C, niacinamide, hyaluronique). Introduction du rétinol en douceur (2x/semaine pour commencer). Soins contour des yeux essentiels. Massage facial régulier (stimule collagène). Hydratation interne renforcée (2,5L d'eau). Antioxydants (baies, thé vert, légumes colorés). Mantra : 'Ma peau évolue, je l'accompagne avec amour !'" },
     "40s": { titre: "🌹 40-49 ans", text: "Ma belle, ta peau a une histoire — voici comment la sublimer. Priorité = anti-âge actif + fermeté + uniformisation. Routine RICHE : peptides, rétinol régulier, acide hyaluronique, vitamine C. Soins cou et décolleté indispensables. Soins contour des yeux ciblés. Massages quotidiens (5 min) → stimule collagène. Crèmes plus riches, surtout le soir. Considère un sérum aux peptides pour la fermeté. Mantra : 'Mes années d'expérience méritent une routine premium !'" },
     "50plus": { titre: "🌷 50 ans et plus", text: "Ma belle, ta peau a vécu — donnons-lui ce qu'elle mérite. Priorité = nutrition profonde + densité + confort. Routine TRÈS nourrissante : huiles précieuses (rose musquée, argan), beurres. Sérums ciblés ménopause (peptides, hyaluronique haute concentration). Crèmes ultra-riches matin et soir. Soins anti-relâchement (massages, gua sha). Soins du cou et dos des mains essentiels. Hydratation interne renforcée + bonnes graisses (oméga-3, avocat, noix). Mantra : 'Ma beauté évolue, et chaque âge a sa lumière !'" }
@@ -1612,7 +1612,7 @@ const BB_CONTENT = {
     },
     // === Placeholders pour les 12 autres ===
     cicatrices_corps: { titre: "🔴 Cicatrices d'anciens boutons", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction. Reviens bientôt pour des conseils personnalisés." },
-    melasma: { titre: "🟤 Mélasma / Taches brunes", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction. En attendant : SPF 50 obligatoire chaque jour est ESSENTIEL." },
+    melasma: { titre: "🟤 Mélasma / Taches brunes", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction. En attendant : Crème solaire SPF 50 obligatoire chaque jour est ESSENTIEL." },
     cernes_corps: { titre: "⚫ Zones foncées (genoux, coudes, aisselles)", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
     quintox: { titre: "💧 Quintox", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
     dartres: { titre: "🥚 Dartres", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
@@ -1626,9 +1626,9 @@ const BB_CONTENT = {
   },
 
   soleil: {
-    low: { titre: "☀️ Exposition faible", text: "Tu es peu exposée mais le soleil reste un facteur de vieillissement et de taches. SPF 30 minimum sur les zones exposées (visage, mains, décolleté) chaque jour. Renouveler 1x si tu sors." },
-    med: { titre: "☀️ Exposition modérée", text: "SPF 50 OBLIGATOIRE sur visage, cou, décolleté, mains, bras. Renouveler toutes les 4h dehors. Chapeau et lunettes recommandés. Vêtements légers couvrants si exposition prolongée." },
-    high: { titre: "🔥 Exposition intense", text: "Protection MAXIMALE indispensable. SPF 50+ écran total sur toutes les zones exposées, à renouveler toutes les 2h. Chapeau à larges bords. Lunettes systématiquement. Vêtements couvrants UV-protect. Hydratation 3L/jour. ⚠️ Sans cette protection, taches et vergetures sont garanties." }
+    low: { titre: "☀️ Exposition faible", text: "Tu es peu exposée mais le soleil reste un facteur de vieillissement et de taches. Crème solaire SPF 30 minimum sur les zones exposées (visage, mains, décolleté) chaque jour. Renouveler 1x si tu sors." },
+    med: { titre: "☀️ Exposition modérée", text: "Crème solaire SPF 50 OBLIGATOIRE sur visage, cou, décolleté, mains, bras. Renouveler toutes les 4h dehors. Chapeau et lunettes recommandés. Vêtements légers couvrants si exposition prolongée." },
+    high: { titre: "🔥 Exposition intense", text: "Protection MAXIMALE indispensable. Crème solaire SPF 50+ écran total sur toutes les zones exposées, à renouveler toutes les 2h. Chapeau à larges bords. Lunettes systématiquement. Vêtements couvrants UV-protect. Hydratation 3L/jour. ⚠️ Sans cette crème solaire, taches et vergetures sont garanties." }
   },
 
   gommage: {
@@ -1640,13 +1640,40 @@ const BB_CONTENT = {
   age: {
     ado: { titre: "🌱 Moins de 20 ans", text: "À ton âge, ton corps est encore en pleine évolution. Priorité : poser de bonnes habitudes (hydratation quotidienne, douches courtes et tièdes, SPF). Évite les produits agressifs ou anti-âge. Les habitudes que tu prends maintenant détermineront l'état de ta peau à 40 ans." },
     "20s": { titre: "🌸 20-29 ans", text: "C'est l'âge idéal pour poser une routine solide. Hydratation quotidienne non négociable. Gommage 1x/semaine. SPF sur zones exposées. Commence à inclure des actifs doux (vitamine C). Sport régulier pour entretenir la fermeté." },
-    "30s": { titre: "🌺 30-39 ans", text: "Ta peau commence à perdre en élasticité — il est temps d'agir. Hydratation 2x/jour. Gommage 1-2x/semaine. SPF tous les jours sur visage et décolleté. Crèmes plus riches le soir. Massages quotidiens pour stimuler la circulation." },
+    "30s": { titre: "🌺 30-39 ans", text: "Ta peau commence à perdre en élasticité — il est temps d'agir. Hydratation 2x/jour. Gommage 1-2x/semaine. Crème solaire (SPF) tous les jours sur visage et décolleté. Crèmes plus riches le soir. Massages quotidiens pour stimuler la circulation." },
     "40s": { titre: "🌹 40-49 ans", text: "Routine plus riche : beurre de karité ou crèmes nourrissantes 2x/jour. Soin spécifique cou et décolleté. Massages quotidiens (5 min). Hydratation interne renforcée (2,5L/jour). Antioxydants alimentaires : baies, thé vert, légumes colorés." },
     "50plus": { titre: "🌷 50 ans et plus", text: "Ta peau a vécu, donne-lui ce qu'elle mérite. Routine ultra-nourrissante (huiles précieuses, beurres riches). Hydratation matin ET soir. Massages anti-relâchement. Soins ciblés cou, mains, décolleté. Bonnes graisses : oméga-3, avocat, noix." }
   }
 };
 
-function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod }) {
+function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
+
+  // ANIMATION CADEAU (après paiement, avant résultat)
+  if (bfShowGift) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20, position: "relative", overflow: "hidden" }}>
+        <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2s forwards", opacity: 0 }}>✨ Voici ton diagnostic ✨</div>
+        <div style={{ fontSize: 14, color: CC.textDim, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2.2s forwards", opacity: 0 }}>Préparé spécialement pour toi</div>
+        <style>{`
+          @keyframes giftShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+          }
+          @keyframes giftOpen {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5) rotate(20deg); opacity: 1; }
+            100% { transform: scale(2.5) rotate(-10deg); opacity: 0; }
+          }
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   function getSkinType(answers) {
     const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
@@ -2010,7 +2037,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfStep(6); setBfPaymentStep(1); }
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBfPaymentStep(1); setBfShowGift(true); setTimeout(() => { setBfShowGift(false); setBfStep(6); }, 2500); }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBfPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
@@ -2295,7 +2322,34 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
 // ═══════════════════════════════════════════════
 // BEAUTÉ CORPORELLE — COMPOSANT QUIZ
 // ═══════════════════════════════════════════════
-function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod }) {
+function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod, bbShowGift, setBbShowGift }) {
+
+  // ANIMATION CADEAU (après paiement, avant résultat)
+  if (bbShowGift) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20, position: "relative", overflow: "hidden" }}>
+        <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2s forwards", opacity: 0 }}>✨ Voici ton diagnostic ✨</div>
+        <div style={{ fontSize: 14, color: CC.textDim, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2.2s forwards", opacity: 0 }}>Préparé spécialement pour toi</div>
+        <style>{`
+          @keyframes giftShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+          }
+          @keyframes giftOpen {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5) rotate(20deg); opacity: 1; }
+            100% { transform: scale(2.5) rotate(-10deg); opacity: 0; }
+          }
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   function getBodySkinType(answers) {
     const counts = { A: 0, B: 0, C: 0, D: 0 };
@@ -2594,7 +2648,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
                       body: JSON.stringify({ action: "check", reference: ref })
                     });
                     const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBbStep(6); setBbPaymentStep(1); }
+                    if (checkData.status === "SUCCESSFUL") { clearInterval(interval); setBbPaymentStep(1); setBbShowGift(true); setTimeout(() => { setBbShowGift(false); setBbStep(6); }, 2500); }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
@@ -2694,7 +2748,8 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
               ))}
             </div>
             <div style={{ background: "#fdf8f8", borderRadius: 10, padding: 14, marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 8 }}>💎 Routine express (produits)</div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>💎 Routine express (produits)</div>
+              <div style={{ fontSize: 10, color: CC.textFaint, fontStyle: "italic", marginBottom: 8 }}>Choisis 1 ou plusieurs selon ton budget. Le 1er produit de chaque liste est l'essentiel.</div>
               {typeData.express.map((item, i) => (
                 <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
                   <span style={{ position: "absolute", left: 0 }}>•</span>{item}
@@ -2724,7 +2779,8 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
                         {pcontent.naturel.map((it, i) => (
                           <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
                         ))}
-                        <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginTop: 8, marginBottom: 4 }}>💎 Produits :</div>
+                        <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginTop: 8, marginBottom: 2 }}>💎 Produits :</div>
+                        <div style={{ fontSize: 9, color: CC.textFaint, fontStyle: "italic", marginBottom: 4 }}>Choisis selon ton budget — le 1er est l'essentiel</div>
                         {pcontent.express.map((it, i) => (
                           <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
                         ))}
@@ -2852,6 +2908,7 @@ export default function App() {
   const [bfPaymentStep, setBfPaymentStep] = useState(1);
   const [bfPaymentPhone, setBfPaymentPhone] = useState("");
   const [bfPaymentMethod, setBfPaymentMethod] = useState(null);
+  const [bfShowGift, setBfShowGift] = useState(false);
 
   // ─── BEAUTÉ CORPORELLE STATES ───
   const [bbStep, setBbStep] = useState(1); // 1=type, 2=problemes, 3=lifestyle, 4=suspense, 5=paiement, 6=resultat
@@ -2862,6 +2919,7 @@ export default function App() {
   const [bbPaymentStep, setBbPaymentStep] = useState(1);
   const [bbPaymentPhone, setBbPaymentPhone] = useState("");
   const [bbPaymentMethod, setBbPaymentMethod] = useState(null);
+  const [bbShowGift, setBbShowGift] = useState(false);
 
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
@@ -4424,6 +4482,7 @@ export default function App() {
                 bfPaymentStep={bfPaymentStep} setBfPaymentStep={setBfPaymentStep}
                 bfPaymentPhone={bfPaymentPhone} setBfPaymentPhone={setBfPaymentPhone}
                 bfPaymentMethod={bfPaymentMethod} setBfPaymentMethod={setBfPaymentMethod}
+                bfShowGift={bfShowGift} setBfShowGift={setBfShowGift}
               />
             )}
             {carryCarePage === "bodyQuiz" && (
@@ -4439,6 +4498,7 @@ export default function App() {
                 bbPaymentStep={bbPaymentStep} setBbPaymentStep={setBbPaymentStep}
                 bbPaymentPhone={bbPaymentPhone} setBbPaymentPhone={setBbPaymentPhone}
                 bbPaymentMethod={bbPaymentMethod} setBbPaymentMethod={setBbPaymentMethod}
+                bbShowGift={bbShowGift} setBbShowGift={setBbShowGift}
               />
             )}
           </div>
