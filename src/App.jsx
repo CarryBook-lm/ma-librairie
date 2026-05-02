@@ -2767,6 +2767,16 @@ export default function App() {
   const [bfPaymentPhone, setBfPaymentPhone] = useState("");
   const [bfPaymentMethod, setBfPaymentMethod] = useState(null);
 
+  // ─── BEAUTÉ CORPORELLE STATES ───
+  const [bbStep, setBbStep] = useState(1); // 1=type, 2=problemes, 3=lifestyle, 4=suspense, 5=paiement, 6=resultat
+  const [bbTypeAnswers, setBbTypeAnswers] = useState([]); // 3 réponses A/B/C/D
+  const [bbProblems, setBbProblems] = useState([]); // cases cochées
+  const [bbLifestyle, setBbLifestyle] = useState({ age: null, sun: null, scrub: null });
+  const [bbResult, setBbResult] = useState(null);
+  const [bbPaymentStep, setBbPaymentStep] = useState(1);
+  const [bbPaymentPhone, setBbPaymentPhone] = useState("");
+  const [bbPaymentMethod, setBbPaymentMethod] = useState(null);
+
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
     if (featuredBooks.length <= 1) return;
