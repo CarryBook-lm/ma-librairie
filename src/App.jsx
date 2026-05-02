@@ -1699,6 +1699,171 @@ const LIGNE_SUCRE = [
   { id: "tous_jours", label: "Tous les jours" }
 ];
 
+// ═══ BEAUTÉ CAPILLAIRE — DONNÉES ═══
+const CAP_TEXTURES = [
+  { id: "3A", emoji: "🌀", title: "Type 3A", subtitle: "Boucles définies, larges et en spirales", desc: "Boucles souples, brillantes naturellement" },
+  { id: "3B", emoji: "🌪️", title: "Type 3B", subtitle: "Boucles serrées en tire-bouchons", desc: "Boucles bien marquées, de la grosseur d'un crayon" },
+  { id: "3C", emoji: "🌸", title: "Type 3C", subtitle: "Boucles très serrées (mini ressorts)", desc: "Boucles très denses, de la taille d'une paille" },
+  { id: "4A", emoji: "✨", title: "Type 4A", subtitle: "Crépus définis (zigzag fin)", desc: "Boucles serrées en S, douces au toucher" },
+  { id: "4B", emoji: "🌟", title: "Type 4B", subtitle: "Crépus en Z (zigzag prononcé)", desc: "Cheveux en angles, peu de définition naturelle" },
+  { id: "4C", emoji: "👑", title: "Type 4C", subtitle: "Crépus très serrés (peu définis)", desc: "Cheveux les plus crépus, fragiles, demandent beaucoup d'amour" }
+];
+
+const CAP_PROBLEMS = [
+  { id: "secs", emoji: "💧", label: "Cheveux secs" },
+  { id: "cassants", emoji: "💔", label: "Cheveux cassants" },
+  { id: "fourchues", emoji: "✂️", label: "Pointes fourchues" },
+  { id: "lents", emoji: "🌱", label: "Cheveux qui ne poussent pas" },
+  { id: "gras", emoji: "🧴", label: "Cheveux gras" },
+  { id: "pellicules", emoji: "❄️", label: "Pellicules" },
+  { id: "cuir_sensible", emoji: "😖", label: "Cuir chevelu sensible / qui démange" },
+  { id: "frisottis", emoji: "🌀", label: "Frisottis incontrôlables" },
+  { id: "definition", emoji: "🪞", label: "Manque de définition des boucles" },
+  { id: "ternes", emoji: "✨", label: "Manque de brillance" },
+  { id: "abimes", emoji: "🔥", label: "Cheveux abîmés (chaleur, défrisage)" },
+  { id: "chute", emoji: "🌡️", label: "Chute de cheveux" },
+  { id: "clairsemes", emoji: "🌾", label: "Zones clairsemées / dégarnies" },
+  { id: "emmeles", emoji: "🪢", label: "Cheveux qui s'emmêlent" }
+];
+
+const CAP_CONTENT = {
+  textures: {
+    "3A": {
+      titre: "🌀 Type 3A — Tes boucles spirales",
+      intro: "Tu as des boucles bien définies, larges et soyeuses. C'est un type de cheveux relativement facile à entretenir, mais ils peuvent perdre leur définition et frisotter avec l'humidité.",
+      naturel: [
+        "🥥 Co-wash 1-2x/semaine avec après-shampoing doux (sans sulfates)",
+        "🌿 Masque hebdomadaire à l'avocat + huile d'olive (laisse 30 min)",
+        "💧 Vaporise eau + glycérine végétale chaque matin pour réveiller les boucles",
+        "🌙 Le soir : tresse lâche ou bonnet en satin pour préserver les boucles"
+      ],
+      express: [
+        "Shampoing hydratant doux : Cantu Sulfate-Free, As I Am Coconut Cowash, Shea Moisture Curl & Shine",
+        "Crème démêlante leave-in : Cantu Curl Activator, Kinky-Curly Knot Today",
+        "Gel définition boucles : Eco Styler Argan, Cantu Define & Shine",
+        "Huile finition : huile de jojoba, huile d'argan, sérum capillaire anti-frisottis"
+      ],
+      conseils: "Hydratation = ton mot d'ordre. Évite les shampoings sulfatés qui assèchent. Adopte la méthode LOC (Liquid Oil Cream) : eau → huile → crème, dans cet ordre. Coupe les pointes tous les 3 mois pour garder la forme."
+    },
+    "3B": {
+      titre: "🌪️ Type 3B — Tes boucles tire-bouchons",
+      intro: "Tu as des boucles serrées en tire-bouchons, denses et volumineuses. Tes cheveux peuvent paraître secs mais ils sont juste assoiffés d'hydratation. Ils ont besoin de produits riches.",
+      naturel: [
+        "🥑 Masque profond hebdomadaire : avocat + miel + huile de coco (1h sous bonnet chauffant)",
+        "💧 Vaporisateur eau + glycérine + huile de jojoba chaque matin",
+        "🌿 Co-wash 2x/semaine, shampoing clarifiant 1x/mois seulement",
+        "🌙 Méthode pineapple le soir (cheveux en chignon haut) + bonnet satin"
+      ],
+      express: [
+        "Shampoing crémeux hydratant : Shea Moisture Manuka Honey, Cantu Coconut Curling Cream, Mizani Moisturizing",
+        "Conditioner profond : SheaMoisture Jamaican Black Castor Oil, Aussie Moist 3-Min Miracle, Mielle Pomegranate & Honey",
+        "Crème coiffante : Cantu Curl Activator, Camille Rose Curl Maker",
+        "Mousse définition : Mielle Honey Foam, Eco Styler Mousse"
+      ],
+      conseils: "Tes cheveux adorent les masques nourrissants chaque semaine. La méthode LCO (Liquid Cream Oil) fonctionne mieux pour toi. Évite trop de manipulation, fais des coiffures protectrices 2-3 jours par semaine. Hydrate ET nourris (eau + huile, c'est différent)."
+    },
+    "3C": {
+      titre: "🌸 Type 3C — Tes mini-ressorts",
+      intro: "Tu as des boucles très serrées en mini ressorts. Tes cheveux sont denses, volumineux et magnifiques mais demandent beaucoup d'hydratation. Tu es à la frontière entre cheveux bouclés et crépus.",
+      naturel: [
+        "🥥 Masque hebdomadaire au beurre de karité + huile de coco + miel",
+        "💧 Bain d'huile mensuel : huile de ricin + olive (laisse 1 nuit, lave le matin)",
+        "🌿 Co-wash 2x/semaine, shampoing doux 1x toutes les 2 semaines",
+        "🌙 Twist-out ou bantu knots le soir pour préserver les boucles"
+      ],
+      express: [
+        "Shampoing très hydratant : Shea Moisture Raw Shea Butter, Cantu Shea Butter, Mielle Honey & Ginger",
+        "Masque réparateur : SheaMoisture Manuka Honey & Mafura Oil Masque, ORS Hair Mayonnaise",
+        "Crème leave-in : Cantu Leave-In, Camille Rose Almond Jai, Eden BodyWorks Coconut Shea Leave-In",
+        "Beurre coiffant : Carol's Daughter Hair Milk, Shea Moisture Curl Enhancing Smoothie"
+      ],
+      conseils: "Tes cheveux ont besoin d'hydratation profonde 2x par semaine. Limite les outils chauffants. Coiffures protectrices recommandées (vanilles, twists, tresses) 60% du temps. Pré-poo (huile avant shampoing) obligatoire pour éviter le dessèchement."
+    },
+    "4A": {
+      titre: "✨ Type 4A — Tes spirales serrées",
+      intro: "Tu as des cheveux crépus avec des boucles définies en S. Doux au toucher, ils gardent bien l'humidité quand on les hydrate correctement. Tu peux porter ton naturel facilement avec les bons soins.",
+      naturel: [
+        "🥥 Pré-poo systématique avant chaque lavage : huile de coco ou olive (30 min)",
+        "🌿 Masque profond hebdomadaire : beurre de karité + miel + huile de ricin",
+        "💧 Vaporisateur quotidien : eau + glycérine + huile de jojoba",
+        "🌙 Coiffures protectrices : twists, vanilles, bantu knots — change toutes les 2 semaines"
+      ],
+      express: [
+        "Shampoing crémeux ultra-hydratant : Shea Moisture Jamaican Black Castor Oil, Mielle Babassu Oil & Mint, Cantu Sulfate-Free",
+        "Conditionner profond : SheaMoisture Manuka Honey & Mafura Masque, ORS Hair Mayonnaise, Aphogee 2-Step Treatment",
+        "Crème leave-in riche : Cantu Shea Butter Leave-In, Camille Rose Aloe Whipped Butter Gel",
+        "Beurre scellant : beurre de karité brut, mélange karité + huile d'avocat"
+      ],
+      conseils: "Méthode LOC obligatoire (eau, huile, crème). Évite les démêlages secs (toujours sur cheveux mouillés avec après-shampoing). Trim les pointes tous les 3-4 mois. Coiffures protectrices 70% du temps pour favoriser la pousse. Patience : les résultats viennent en 6-12 mois."
+    },
+    "4B": {
+      titre: "🌟 Type 4B — Tes cheveux en Z",
+      intro: "Tu as des cheveux crépus en zigzag prononcé, très volumineux et fragiles. Ils ont besoin de beaucoup d'amour et de patience. Bien entretenus, ils sont magnifiques et puissants.",
+      naturel: [
+        "🥥 Pré-poo OBLIGATOIRE 1-2h avant chaque lavage (huile coco + olive + ricin)",
+        "🌿 Masque profond hebdo : avocat + huile + miel sous bonnet chauffant 1h",
+        "💧 Hydratation quotidienne : eau, leave-in, beurre — méthode LCO",
+        "🌙 Toujours dormir avec bonnet satin OU taie d'oreiller satin",
+        "✋ Démêlage uniquement sur cheveux trempés + après-shampoing — peigne large doigts d'abord"
+      ],
+      express: [
+        "Shampoing crémeux ultra-doux : Shea Moisture Manuka Honey, ORS Coconut Oil, Mielle Pomegranate & Honey",
+        "Conditionner reconstructeur : Aphogee 2-Min Reconstructor, Mielle Babassu Conditionning, Camille Rose Algae Mask",
+        "Leave-in crémeux : Cantu Leave-In, Kinky-Curly Knot Today, Camille Rose Honey Hydrate Leave-In",
+        "Beurre/huile scellante : beurre de karité brut, huile de ricin, huile de jojoba"
+      ],
+      conseils: "Tes cheveux cassent facilement — manipule-les avec une douceur extrême. Coiffures protectrices indispensables 80% du temps (twists, vanilles, tissages avec leave-out minimal). Évite chaleur et défrisage. Pousse moyenne : 1cm/mois avec une bonne routine — sois patiente !"
+    },
+    "4C": {
+      titre: "👑 Type 4C — Tes cheveux royaux",
+      intro: "Tu as les cheveux les plus crépus, denses et magnifiques. Ils sont fragiles mais peuvent atteindre des longueurs incroyables avec les bons soins. Patience et hydratation sont tes meilleurs alliés.",
+      naturel: [
+        "🥥 Pré-poo OBLIGATOIRE 2h avant chaque lavage : huile de ricin + coco + olive",
+        "🌿 Masque profond 1x/semaine sous bonnet chauffant 1-2h (jamais skip)",
+        "💧 Hydratation quotidienne : vaporisateur eau + glycérine + leave-in + beurre",
+        "🌙 OBLIGATOIRE : bonnet satin ou taie d'oreiller satin chaque nuit",
+        "✋ Manipule comme de la dentelle — démêlage uniquement aux doigts ou peigne très large sur cheveux trempés"
+      ],
+      express: [
+        "Shampoing crémeux ultra-doux : Shea Moisture Jamaican Black Castor Oil, Cantu Cleansing Cream, Mielle Babassu Oil",
+        "Masque reconstructeur PROTÉINÉ : Aphogee 2-Step Treatment, ORS Hair Mayonnaise, SheaMoisture Manuka Honey Masque",
+        "Leave-in ultra-riche : Cantu Curl Activator Cream, Camille Rose Aloe Whipped Butter, Eden BodyWorks Coconut Shea",
+        "Beurre nourrissant : beurre de karité brut, beurre de mangue, huile de ricin de la Jamaïque (JBCO)"
+      ],
+      conseils: "Tes cheveux sont précieux : zéro chaleur, zéro défrisage, manipulation minimale. Coiffures protectrices indispensables 90% du temps. Trim juste les pointes tous les 4 mois. Pousse en longueur : 0.5-1cm/mois mais elle EST là — la rétention de longueur est ton défi. Sois fière de tes cheveux, ils sont une couronne."
+    }
+  },
+  problems: {
+    secs: { titre: "💧 Cheveux secs", naturel: ["Bain d'huile hebdomadaire (huile de ricin + olive + coco) — laisse 1h sous bonnet", "Masque hydratant à l'avocat + miel + huile de jojoba (30 min)", "Vaporisateur quotidien : eau distillée + glycérine végétale + huile légère"], express: ["Masque hydratant intense : SheaMoisture Manuka Honey Masque, Mielle Babassu Conditioning Mask", "Leave-in crémeux : Cantu Leave-In, Camille Rose Almond Jai", "Beurre scellant : beurre de karité brut, JBCO (Jamaican Black Castor Oil)"], conseils: "L'hydratation se fait avec de l'eau (pas juste de l'huile !). Méthode LOC : Liquid (eau) → Oil (huile) → Cream (crème). À répéter chaque jour ou tous les 2 jours." },
+    cassants: { titre: "💔 Cheveux cassants", naturel: ["Masque protéiné mensuel : œuf + yaourt nature + miel + huile (30 min)", "Bain d'huile hebdo à l'huile de ricin (renforce la fibre)", "Tisane de prêle / ortie comme dernier rinçage"], express: ["Masque protéiné : Aphogee 2-Step Protein Treatment (mensuel), ORS Hair Mayonnaise (hebdo)", "Leave-in fortifiant : Mielle Babassu Conditioning, Camille Rose Honey Hydrate", "Soin sans rinçage protéiné : SheaMoisture JBCO Strengthen Grow & Restore"], conseils: "Alternance protéines/hydratation : 1 masque protéiné par mois, masques hydratants chaque semaine. Coiffures protectrices indispensables. Coupe les pointes abîmées tous les 2-3 mois." },
+    fourchues: { titre: "✂️ Pointes fourchues", naturel: ["Massage des pointes avec huile de ricin chaque soir", "Bain d'huile hebdomadaire concentré sur les pointes", "Trim régulier au ciseau de coiffure (jamais de ciseau classique)"], express: ["Sérum réparateur pointes : Garnier Hair Food Banane, Mizani 25 Miracle Milk", "Beurre scellant pour les pointes : JBCO, beurre de karité brut", "Soins sans rinçage anti-pointes : Cantu Strengthening Smoothie"], conseils: "Une fois fourchues, les pointes ne se réparent jamais — il FAUT les couper. Coupe au ciseau les pointes tous les 3 mois (1-2 cm). Sois minutieuse avec tes pointes : huile, beurre, manipulation douce." },
+    lents: { titre: "🌱 Cheveux qui ne poussent pas", naturel: ["Massage cuir chevelu 5 min/jour à l'huile de ricin (stimule pousse)", "Tisane de prêle, ortie, romarin (1L/jour à boire ou en rinçage)", "Alimentation : protéines, biotine (œufs, avocat, noix), fer"], express: ["Sérum stimulant pousse : Wild Growth Hair Oil, Mielle Rosemary Mint Scalp & Hair Oil, Hairfinity vitamines", "Compléments : biotine, MSM, fer (consulte médecin avant)", "Sérum spécifique cuir chevelu : Briogeo Scalp Revival, The Mane Choice Manuka Honey"], conseils: "Tes cheveux POUSSENT ! Le vrai souci est souvent la rétention (cassure aux pointes). Coiffures protectrices 70% du temps + vraies coupes des pointes = longueur visible. Patience : 6-12 mois pour des résultats spectaculaires." },
+    gras: { titre: "🧴 Cheveux gras", naturel: ["Argile verte ou rhassoul 1x/sem en masque cuir chevelu (avant shampoing)", "Vinaigre de cidre dilué (1 cuillère dans 500ml d'eau) en dernier rinçage", "Huile essentielle de tea tree (3 gouttes dans shampoing)"], express: ["Shampoing purifiant : SheaMoisture African Black Soap, Garnier Whole Blends Honey Treasures", "Shampoing sec entre lavages : Batiste, Klorane Avoine", "Sérum équilibrant cuir chevelu : Briogeo Scalp Revival"], conseils: "Cheveux gras = cuir chevelu déséquilibré. Lavage 2x/sem MAX (plus souvent stimule encore plus la production de sébum). Évite les produits trop riches sur le cuir chevelu, mets-les sur les longueurs." },
+    pellicules: { titre: "❄️ Pellicules", naturel: ["Masque cuir chevelu : huile de tea tree + huile de coco (15 min avant shampoing)", "Rinçage final au vinaigre de cidre dilué", "Évite eau trop chaude (assèche le cuir chevelu)"], express: ["Shampoing antipelliculaire doux : Head & Shoulders Apple Fresh, SheaMoisture African Black Soap", "Sérum cuir chevelu : Mielle Rosemary Mint, Briogeo Scalp Revival Charcoal", "Tonique anti-pellicules : SheaMoisture Tea Tree & Lavender"], conseils: "Pellicules = champignon ou sécheresse. Lave régulièrement (mais pas trop). Si les pellicules persistent +6 semaines malgré les soins → consulte un dermato (peut être un eczéma)." },
+    cuir_sensible: { titre: "😖 Cuir chevelu sensible / qui démange", naturel: ["Aloe vera pur en massage cuir chevelu (15 min avant lavage)", "Huile de coco + tea tree pour apaiser", "Rinçage tisane de camomille apaisante"], express: ["Shampoing cuir chevelu sensible : Klorane Calendula, Eucerin Dermo Capillaire, Bioderma Node DS+", "Sérum apaisant : Briogeo Scalp Revival, Mielle Rosemary Mint Scalp", "Tonique apaisant : Eau micellaire La Roche-Posay"], conseils: "Évite tout produit avec parfum, alcool, sulfates. Lave à l'eau tiède (jamais chaude). Si démangeaisons + rougeurs/croûtes → consulte un dermato." },
+    frisottis: { titre: "🌀 Frisottis incontrôlables", naturel: ["Sérum maison : huile de jojoba + 2 gouttes huile essentielle d'ylang-ylang", "Vaporise eau + glycérine + huile sur cheveux mouillés", "Sèche en plopping (avec t-shirt en coton, pas serviette)"], express: ["Sérum anti-frisottis : Mizani 25 Miracle Milk, Garnier Hair Food Banane Sérum", "Crème lissante : Cantu Smoothing Custard, Camille Rose Curl Maker", "Spray fixateur : Eco Styler Argan Spray, Mielle Mongongo Oil Hair Polisher"], conseils: "Frisottis = manque d'hydratation ou humidité ambiante. Méthode LOC obligatoire. Évite de toucher tes cheveux (le contact crée plus de frisottis). Termine ta routine avec une huile/sérum de finition." },
+    definition: { titre: "🪞 Manque de définition des boucles", naturel: ["Twist-out ou braid-out la nuit pour réveiller les boucles", "Masque hydratant hebdomadaire (boucles bien hydratées = boucles définies)", "Méthode squish-to-condish (pression de l'après-shampoing dans cheveux trempés)"], express: ["Crème définition : Cantu Curl Activator, Eco Styler Argan Gel, Camille Rose Curl Maker", "Mousse boucles : Mielle Honey Foam, Carol's Daughter Wash Day Delight Mousse", "Sérum définition : Kinky-Curly Curling Custard, As I Am Curling Jelly"], conseils: "Bien définir tes boucles demande de la pratique : essaie le finger coiling, twist-out, plopping. Tes boucles ont besoin de 1-3 jours pour bien se former après lavage." },
+    ternes: { titre: "✨ Manque de brillance", naturel: ["Rinçage final eau + cuillère de vinaigre de cidre (referme les écailles)", "Masque miel + huile d'olive (le miel est un humectant qui apporte brillance)", "Huile de finition légère : argan, camélia, jojoba"], express: ["Sérum brillance : Mizani 25 Miracle Milk, Mielle Mongongo Oil Hair Polisher", "Spray finition : Aussie Miraculous Smooth Shine, John Frieda Frizz Ease", "Sérum huileux : Garnier Hair Food Argan, Aveda Shampure"], conseils: "Cheveux ternes = écailles ouvertes ou cheveux secs. Hydrate bien et termine ta routine avec une huile légère. Évite les produits avec silicones lourds qui finissent par étouffer le cheveu." },
+    abimes: { titre: "🔥 Cheveux abîmés (chaleur, défrisage)", naturel: ["STOP la chaleur et le défrisage IMMÉDIATEMENT", "Bains d'huile riches hebdomadaires (ricin + coco + olive)", "Masque protéiné mensuel + masques hydratants chaque semaine"], express: ["Masque réparateur intense : Olaplex No.3, Aphogee 2-Step Protein Treatment", "Leave-in réparateur : Mizani Renew Strength Conditionning, Mielle Babassu", "Beurre nourrissant : SheaMoisture JBCO Strengthen Grow & Restore"], conseils: "Cheveux trop abîmés ne se réparent jamais à 100% — la solution est de COUPER les parties mortes et faire pousser sain. Big Chop ou trim progressif pendant 6-12 mois. Sois patiente avec toi-même." },
+    chute: { titre: "🌡️ Chute de cheveux", naturel: ["Massage cuir chevelu quotidien (active la circulation)", "Huile de ricin + romarin sur cuir chevelu (laisse toute la nuit 2x/sem)", "Alimentation : fer, zinc, biotine, oméga-3 (vérifie carences avec médecin)"], express: ["Sérum anti-chute : The Mane Choice Manuka Honey, Hairfinity, Mielle Rosemary Mint", "Compléments : Forticil, Cystine B6, Vitalfan", "Lotion stimulante : Klorane Quinine, Réné Furterer Triphasic"], conseils: "Chute soudaine = consulte un médecin (carences, hormones, stress). Chute saisonnière (printemps/automne) = normale. Chute chronique = bilan sang + dermato. Le stress est cause majeure : repos, sommeil, calme." },
+    clairsemes: { titre: "🌾 Zones clairsemées / dégarnies", naturel: ["Massage huile de ricin sur les zones 2x/jour, 5 minutes minimum", "Mélange : huile de ricin + huile de romarin + huile de menthe poivrée", "Stop coiffures qui tirent (tresses trop serrées, queues hautes)"], express: ["Sérum repousse zones dégarnies : Wild Growth Hair Oil, JBCO + Rosemary, Mielle Rosemary Mint Scalp Oil", "Sérum minoxidil 2-5% (à demander en pharmacie)", "Compléments biotine + fer"], conseils: "Zones dégarnies souvent dues à : tresses trop serrées (alopécie de traction), défrisage, manipulation. Repousse possible sur 6-18 mois si les follicules sont vivants. Si zones lisses sans aucun cheveu → consulte dermato (alopécie cicatricielle)." },
+    emmeles: { titre: "🪢 Cheveux qui s'emmêlent", naturel: ["Démêlage UNIQUEMENT sur cheveux trempés + après-shampoing généreux", "Démêle aux doigts d'abord, puis peigne large", "Bonnet satin la nuit + 2 grosses tresses pour éviter nœuds"], express: ["Démêlant intensif : Cantu Detangling Conditioner, Kinky-Curly Knot Today", "Spray démêlant : Mielle Mongongo Oil Detangler, As I Am Cocopudding", "Crème démêlante : Camille Rose Almond Jai Twisting Butter"], conseils: "Tes cheveux s'emmêlent = ils manquent d'hydratation ou de scellement. Méthode LOC, brossage régulier (peigne large), coiffures protectrices. Toujours démêler de la pointe vers la racine, jamais l'inverse." }
+  },
+  age: {
+    "ado": { titre: "🌸 Moins de 20 ans", text: "Tes cheveux sont à leur apogée — profite ! Soins simples : hydratation 2x/sem, pré-poo avant lavage, coiffures protectrices régulières. Évite la chaleur et le défrisage qui abîmeront tes cheveux à long terme." },
+    "20s": { titre: "🌺 20-29 ans", text: "C'est le moment idéal pour bâtir une routine durable. Hydratation profonde hebdomadaire, masques protéinés mensuels, coupe des pointes tous les 3 mois. Si tu as fait du défrisage : transition naturelle ou Big Chop pour partir sur des bases saines." },
+    "30s": { titre: "🌹 30-39 ans", text: "Tes cheveux peuvent commencer à changer (plus secs, moins denses). Augmente la nutrition : huiles riches (ricin, JBCO), masques hebdomadaires obligatoires. Surveille les hormones (post-grossesse, contraception). Coiffures protectrices 70% du temps." },
+    "40s": { titre: "🌷 40-49 ans", text: "Routine ultra-nourrissante : bains d'huile + masques chaque semaine. Tu peux voir apparaître des cheveux plus fins, blancs. C'est normal. Soins anti-âge capillaire : huile d'argan, soins reconstituants. Sois douce." },
+    "50plus": { titre: "👑 50 ans et plus", text: "Tes cheveux ont vécu et méritent les meilleurs soins. Hydratation et nutrition profondes 2x/sem. Évite chaleur et défrisage. Compléments alimentaires (biotine, fer) si recommandés par médecin. Embrasse tes cheveux blancs s'ils apparaissent — ils sont une couronne." }
+  },
+  routine: {
+    "1_sem": { titre: "🧴 1 lavage/semaine", text: "Bonne fréquence pour cheveux crépus/bouclés (3C-4C). Continue ! Profites-en pour faire un masque profond à chaque lavage." },
+    "2_sem": { titre: "🧴 2 lavages/semaine", text: "Idéal pour cheveux 3A-3B ou cuir chevelu plus gras. Alterne : 1 lavage shampoing + 1 co-wash. Pas de masque profond chaque fois." },
+    "3plus_sem": { titre: "🧴 Plus de 2 lavages/semaine", text: "Trop fréquent pour cheveux crépus/bouclés ! Tu assèches tes cheveux et déséquilibres ton cuir chevelu. Réduis à 2x/sem max, et utilise des co-wash entre les vrais lavages." },
+    "rare": { titre: "🧴 Moins d'1 lavage/semaine", text: "Si ça te convient et que ton cuir chevelu va bien, ok. Mais sache que les cheveux ont besoin d'être lavés régulièrement pour éliminer accumulation produits + sébum. Vise 1x/sem minimum." }
+  }
+};
+
 function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
 
   // ANIMATION CADEAU (après paiement, avant résultat)
