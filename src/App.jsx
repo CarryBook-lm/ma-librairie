@@ -1190,7 +1190,7 @@ const CC = {
 };
 
 // ─── PAGE D'ACCUEIL CARRYCARE ───
-function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult }) {
+function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData }) {
 
   function startFacial() {
     setBfStep(1);
@@ -1210,11 +1210,17 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     setCarryCarePage("bodyQuiz");
   }
 
+  function startLine() {
+    setLgStep(1);
+    setLgData({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
+    setCarryCarePage("lineQuiz");
+  }
+
   const quizCards = [
     { id: "facial", emoji: "💄", title: "Beauté Faciale", subtitle: "Diagnostic peau + routine personnalisée", available: true, action: startFacial, gradient: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)" },
     { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: true, action: startBody, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
     { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: false, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
-    { id: "weight", emoji: "⚖️", title: "Garde la Ligne", subtitle: "Plan nutrition personnalisé", available: false, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
+    { id: "weight", emoji: "⚖️", title: "Garde la Ligne", subtitle: "Plan nutrition personnalisé", available: true, action: startLine, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
   ];
 
   return (
@@ -3231,6 +3237,14 @@ export default function App() {
   const [bbPaymentMethod, setBbPaymentMethod] = useState(null);
   const [bbShowGift, setBbShowGift] = useState(false);
 
+  // ─── GARDE LA LIGNE STATES ───
+  const [lgStep, setLgStep] = useState(1);
+  const [lgData, setLgData] = useState({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
+  const [lgPaymentStep, setLgPaymentStep] = useState(1);
+  const [lgPaymentPhone, setLgPaymentPhone] = useState("");
+  const [lgPaymentMethod, setLgPaymentMethod] = useState(null);
+  const [lgShowGift, setLgShowGift] = useState(false);
+
   useEffect(() => {
     const featuredBooks = books.filter(b => b.featured);
     if (featuredBooks.length <= 1) return;
@@ -4778,6 +4792,8 @@ export default function App() {
                 setBbProblems={setBbProblems}
                 setBbLifestyle={setBbLifestyle}
                 setBbResult={setBbResult}
+                setLgStep={setLgStep}
+                setLgData={setLgData}
               />
             )}
             {carryCarePage === "facialQuiz" && (
@@ -4810,6 +4826,19 @@ export default function App() {
                 bbPaymentPhone={bbPaymentPhone} setBbPaymentPhone={setBbPaymentPhone}
                 bbPaymentMethod={bbPaymentMethod} setBbPaymentMethod={setBbPaymentMethod}
                 bbShowGift={bbShowGift} setBbShowGift={setBbShowGift}
+              />
+            )}
+            {carryCarePage === "lineQuiz" && (
+              <LigneQuiz
+                setPage={setPage}
+                setCarryCarePage={setCarryCarePage}
+                lgStep={lgStep} setLgStep={setLgStep}
+                lgData={lgData} setLgData={setLgData}
+                lgPaymentStep={lgPaymentStep} setLgPaymentStep={setLgPaymentStep}
+                lgPaymentPhone={lgPaymentPhone} setLgPaymentPhone={setLgPaymentPhone}
+                lgPaymentMethod={lgPaymentMethod} setLgPaymentMethod={setLgPaymentMethod}
+                lgShowGift={lgShowGift} setLgShowGift={setLgShowGift}
+                beautyQuizPrice={beautyQuizPrice}
               />
             )}
           </div>
