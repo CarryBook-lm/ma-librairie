@@ -3133,14 +3133,114 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
     );
   }
 
-  // ÉTAPES 5-6 + RÉSULTAT à coder dans la prochaine session
+  // ÉTAPE 5 — Blocages (multi-sélection)
+  if (lgStep === 5) {
+    function toggleBlocage(id) {
+      const blocages = lgData.blocages || [];
+      if (blocages.includes(id)) setLgData({ ...lgData, blocages: blocages.filter(b => b !== id) });
+      else setLgData({ ...lgData, blocages: [...blocages, id] });
+    }
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Mes blocages" onBack={() => setLgStep(4)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 5 / 6</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Qu'est-ce qui te bloque ?</div>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Coche tout ce qui s'applique (ou aucun)</div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {LIGNE_BLOCAGES.map(b => {
+              const checked = (lgData.blocages || []).includes(b.id);
+              return (
+                <button key={b.id} onClick={() => toggleBlocage(b.id)}
+                  style={{ padding: 12, border: "1.5px solid " + (checked ? LG.vert : LG.border), borderRadius: 10, background: checked ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 22 }}>{b.emoji}</span>
+                  <span style={{ flex: 1 }}>{b.label}</span>
+                  {checked && <span style={{ color: LG.vert, fontSize: 18 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          <button onClick={() => setLgStep(6)}
+            style={{ width: "100%", padding: 16, background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>
+            Suivant — Mon mode de vie ✨
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 6 — Mode de vie (sommeil + stress)
+  if (lgStep === 6) {
+    const sommeilOpts = [
+      { v: "moins_6h", label: "😴 Moins de 6h" },
+      { v: "6-7h", label: "🙂 6-7h" },
+      { v: "7-8h", label: "✨ 7-8h (idéal)" },
+      { v: "plus_8h", label: "💤 Plus de 8h" }
+    ];
+    const stressOpts = [
+      { v: "faible", label: "😌 Faible — Je suis assez serein(e)" },
+      { v: "modere", label: "😐 Modéré — Stress normal du quotidien" },
+      { v: "eleve", label: "😟 Élevé — Souvent stressé(e)" },
+      { v: "tres_eleve", label: "😰 Très élevé — Stress chronique" }
+    ];
+    const allDone = lgData.sommeil && lgData.stress;
+    return (
+      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <Header title="Mon mode de vie" onBack={() => setLgStep(5)} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 6 / 6</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Sommeil & stress</div>
+            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Le sommeil et le stress impactent ton poids</div>
+          </div>
+
+          {/* SOMMEIL */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>💤 Combien d'heures de sommeil par nuit ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {sommeilOpts.map(opt => (
+                <button key={opt.v} onClick={() => setLgData({ ...lgData, sommeil: opt.v })}
+                  style={{ padding: 12, border: "1.5px solid " + (lgData.sommeil === opt.v ? LG.vert : LG.border), borderRadius: 10, background: lgData.sommeil === opt.v ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* STRESS */}
+          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>😰 Niveau de stress quotidien ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {stressOpts.map(opt => (
+                <button key={opt.v} onClick={() => setLgData({ ...lgData, stress: opt.v })}
+                  style={{ padding: 12, border: "1.5px solid " + (lgData.stress === opt.v ? LG.vert : LG.border), borderRadius: 10, background: lgData.stress === opt.v ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => allDone && setLgStep(7)} disabled={!allDone}
+            style={{ width: "100%", padding: 16, background: allDone ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allDone ? "pointer" : "not-allowed" }}>
+            {allDone ? "Voir mon plan personnalisé ✨" : "Réponds aux 2 questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ÉTAPE 7 — SUSPENSE/PAIEMENT/RÉSULTAT à coder prochaine session
 
   return (
     <div style={{ minHeight: "100vh", background: LG.blanc, padding: 20, textAlign: "center" }}>
       <div style={{ marginTop: 100 }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>Cette partie arrive bientôt</div>
-        <div style={{ fontSize: 13, color: LG.textDim, marginBottom: 20 }}>Le quiz "Garde la Ligne" est en cours de finalisation</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>Page paiement et résultat arrivent bientôt</div>
+        <div style={{ fontSize: 13, color: LG.textDim, marginBottom: 20 }}>Calcul calories + plan personnalisé en cours de finalisation</div>
         <button onClick={() => { setCarryCarePage("home"); setLgStep(1); }}
           style={{ padding: "12px 24px", background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
           ← Retour à CarryCare
