@@ -1483,6 +1483,160 @@ const BF_CONTENT = {
   }
 };
 
+// ═══ BEAUTÉ CORPORELLE — DONNÉES ═══
+const BB_TYPE_QUESTIONS = [
+  {
+    id: "after_shower",
+    q: "Comment ta peau réagit après la douche ?",
+    options: [
+      { value: "A", label: "Tirée, sèche, parfois irritée" },
+      { value: "B", label: "Plutôt normale, confortable" },
+      { value: "C", label: "Brillante, surtout dos et poitrine" },
+      { value: "D", label: "Très sèche, parfois rouge ou qui démange" }
+    ]
+  },
+  {
+    id: "hydration",
+    q: "À quelle fréquence tu hydrates ton corps ?",
+    options: [
+      { value: "A", label: "Tous les jours, parfois 2x" },
+      { value: "B", label: "Plusieurs fois par semaine" },
+      { value: "C", label: "Rarement, j'oublie souvent" },
+      { value: "D", label: "Jamais ou presque" }
+    ]
+  },
+  {
+    id: "reactivity",
+    q: "Tu remarques des plaques, rougeurs ou démangeaisons ?",
+    options: [
+      { value: "A", label: "Non, jamais" },
+      { value: "B", label: "Parfois, en hiver ou avec un produit nouveau" },
+      { value: "C", label: "Souvent, ma peau réagit à beaucoup de choses" },
+      { value: "D", label: "Très souvent, je dois faire très attention" }
+    ]
+  }
+];
+
+const BB_PROBLEMS = [
+  { id: "vergetures", emoji: "🌊", label: "Vergetures (ventre, hanches, cuisses)" },
+  { id: "cellulite", emoji: "🟡", label: "Cellulite (peau d'orange)" },
+  { id: "pieds_sombres", emoji: "🦶", label: "Pieds sombres / talons foncés" },
+  { id: "peau_terne", emoji: "🌫️", label: "Peau terne, manque d'éclat" },
+  { id: "boutons_corps", emoji: "💢", label: "Boutons sur le corps (dos, fesses, épaules)" },
+  { id: "cicatrices_corps", emoji: "🔴", label: "Cicatrices d'anciens boutons" },
+  { id: "melasma", emoji: "🟤", label: "Mélasma / taches brunes" },
+  { id: "cernes_corps", emoji: "⚫", label: "Zones foncées (genoux, coudes, aisselles)" },
+  { id: "quintox", emoji: "💧", label: "Quintox (peau qui pèle, démangeaisons)" },
+  { id: "dartres", emoji: "🥚", label: "Dartres (plaques blanches qui pèlent)" },
+  { id: "veines", emoji: "🌿", label: "Veines apparentes (jambes)" },
+  { id: "mains_seches", emoji: "🤲", label: "Mains très sèches" },
+  { id: "demangeaisons", emoji: "🦵", label: "Peau qui démange" },
+  { id: "coups_soleil", emoji: "🔥", label: "Coups de soleil fréquents" },
+  { id: "vergetures_muscle", emoji: "💪", label: "Vergetures musculaires (bras, épaules)" },
+  { id: "mycoses", emoji: "🍄", label: "Mycoses (entre les orteils)" },
+  { id: "poils_incarnes", emoji: "🌸", label: "Poils incarnés (bikini, jambes)" }
+];
+
+// ─── BASE DE CONTENU BEAUTÉ CORPORELLE ───
+const BB_CONTENT = {
+  types: {
+    seche: {
+      titre: "🌵 Peau Corporelle Sèche",
+      intro: "Ma belle, ta peau corporelle manque cruellement d'hydratation. Elle tire après la douche, parfois pèle, et a besoin de soins riches au quotidien. Bonne nouvelle : avec une routine adaptée, elle devient souple et confortable en quelques semaines.",
+      naturel: ["Beurre de karité pur appliqué sur peau encore humide après la douche", "Huile de coco ou d'amande douce en massage le soir, surtout sur jambes et bras", "Mélange maison : 2 cuillères de miel + 1 cuillère d'huile d'olive en masque corporel 1x/semaine"],
+      express: ["Lait corporel ultra-nourrissant aux céramides : CeraVe, Eucerin Atocontrol, Mixa Intensif Peaux Sèches", "Beurre corporel riche : Nivea Beurre Riche, Garnier Body Beurre Karité (soir)", "Huile sèche pour entretien : Nivea Q10, Mustela Stretch Marks Oil"],
+      conseils: "Douches TIÈDES (jamais chaudes), 5-10 min max. Sèche-toi en TAPOTANT, jamais frotter. Hydrate dans les 3 min après la douche (peau encore humide = meilleure absorption). Bois 2,5L d'eau/jour. Évite savons agressifs : préfère savon noir africain, savon de Marseille ou pain dermatologique."
+    },
+    mixte: {
+      titre: "🌸 Peau Corporelle Mixte",
+      intro: "Ma belle, ton corps a des zones qui réagissent différemment : certaines sèches (jambes, bras, coudes), d'autres plus grasses (dos, poitrine). C'est tout à fait normal — il suffit d'adapter tes soins par zone.",
+      naturel: ["Huile de jojoba (proche du sébum) sur tout le corps après la douche", "Gel d'aloe vera pur sur les zones grasses (dos, poitrine)", "Beurre de karité fondu sur jambes, bras et coudes seulement"],
+      express: ["Lait corporel léger pour zones mixtes : Mixa Hydratation Intense, Garnier Hydra+", "Crème ciblée pour zones sèches : Atrix Mains, Nivea Q10 Body", "Gel hydratant pour zones grasses : Garnier Pure Active, gel d'aloe vera Forever"],
+      conseils: "Adapte tes produits selon la zone : léger pour le dos, riche pour les jambes. Douches tièdes 5-10 min. Hydratation interne 2L/jour. Gommage doux 1x/semaine pour équilibrer."
+    },
+    grasse: {
+      titre: "✨ Peau Corporelle Grasse",
+      intro: "Ma belle, ton corps produit beaucoup de sébum, surtout dos, poitrine et fesses. Ce n'est pas une mauvaise chose : ta peau vieillira plus lentement. Mais il faut bien la nettoyer pour éviter boutons et brillance.",
+      naturel: ["Savon noir africain pour la douche (purifiant doux et naturel)", "Gel d'aloe vera sur tout le corps après la douche", "Argile verte en masque sur le dos 1x/semaine (15 min)"],
+      express: ["Gel douche purifiant à l'acide salicylique : Cerave SA, Sebamed Clear Face (1-2x/semaine)", "Lait corporel léger non comédogène : Mixa Hydratation Légère, Eucerin Body", "Spray purifiant pour le dos : Bioderma Sebium Spray"],
+      conseils: "Douche après chaque séance de sport (sueur = boutons). Vêtements amples en coton. Lessive douce sans parfum. Évite les huiles lourdes (coco, karité) sur dos et poitrine. Hydrate quand même — peau grasse ≠ peau hydratée."
+    },
+    sensible: {
+      titre: "🌷 Peau Corporelle Très Sensible",
+      intro: "Ma belle, ta peau réagit à beaucoup de choses : produits, parfums, frottements. Elle a besoin de douceur extrême. La règle d'or : MOINS = MIEUX. Choisis peu de produits mais de qualité, sans parfum ni alcool.",
+      naturel: ["Lait d'avoine fait maison (avoine moulue + eau tiède) en compresse apaisante", "Huile de calendula en application ciblée sur zones réactives", "Beurre de karité pur (sans parfum) en hydratation principale"],
+      express: ["Crème corporelle hypoallergénique : Avène Trixera, La Roche-Posay Lipikar, CeraVe", "Baume réparateur pour zones très sèches : Cicaplast Baume B5, Bepanthen", "Eau thermale en spray pour apaiser : Avène, La Roche-Posay"],
+      conseils: "AUCUN parfum, AUCUN alcool dans tes produits. Évite gels douches colorés/parfumés. Lessive hypoallergénique. Vêtements 100% coton. Eau de douche TIÈDE uniquement. Si crise persistante (rougeurs, démangeaisons fortes) → consulte un dermato."
+    }
+  },
+
+  problems: {
+    vergetures: {
+      titre: "🌊 Vergetures",
+      naturel: ["Massage quotidien à l'huile de rose musquée pure (matin et soir, 5 min) : la championne anti-vergetures", "Beurre de karité fondu + quelques gouttes d'huile de germe de blé en cure intensive", "Mélange maison : 1 jaune d'œuf + 1 cuillère de miel + 1 cuillère d'huile d'olive en masque ciblé 2x/semaine"],
+      express: ["Bi-Oil Huile Soin (la référence anti-vergetures)", "Mustela Stretch Marks Cream (idéal grossesse et post-grossesse)", "Mixa Vergetures, Cicalfate+ La Roche-Posay pour zones rouges récentes"],
+      conseils: "Les vergetures ROUGES ou VIOLETTES sont récentes — c'est le moment d'agir, elles peuvent encore s'estomper considérablement. Les BLANCHES sont anciennes — plus difficiles à effacer mais on peut les atténuer. Hydratation interne (2,5L d'eau) + alimentation riche en protéines, vitamine C et zinc. Massage essentiel — c'est lui qui stimule la régénération du collagène. ⚠️ Pendant grossesse : préfère huiles douces (amande, karité) et évite huiles essentielles."
+    },
+    cellulite: {
+      titre: "🟡 Cellulite",
+      naturel: ["Massage palper-rouler 10 min/jour avec huile de pamplemousse + huile de noisette", "Bain au sel d'Epsom 2x/semaine (20 min) pour drainage", "Marc de café + huile d'olive en gommage anti-cellulite 2x/semaine"],
+      express: ["Sérum minceur à la caféine : Somatoline Cosmetic, Elancyl Slim Design", "Crème anti-cellulite Cellublue, Garnier Body Tonic, Nivea Q10 Firming", "Ventouse anti-cellulite (à utiliser avec une huile de massage)"],
+      conseils: "La cellulite n'est PAS une fatalité — toutes les femmes en ont à des degrés divers, même les mannequins. Sport régulier (cardio + renforcement) = ton meilleur allié. Hydratation 2,5L/jour minimum. Réduis sel, sucres rapides, alcool. Augmente protéines et fibres. Massages QUOTIDIENS = obligatoire pour résultats visibles. Patience : 2-3 mois minimum pour voir une vraie différence."
+    },
+    pieds_sombres: {
+      titre: "🦶 Pieds sombres / Talons foncés",
+      naturel: ["Bain de pieds : eau tiède + 2 cuillères de bicarbonate + jus de citron (15 min, 2x/semaine)", "Gommage maison : sucre + miel + huile d'olive sur talons après le bain", "Citron coupé en deux frotté directement sur les zones foncées (le SOIR uniquement, jamais avant le soleil)"],
+      express: ["Crème éclaircissante à base d'arbutine ou de niacinamide : Garnier Anti-Spots", "Crème exfoliante à l'urée 10% pour talons : Eucerin UreaRepair, Mixa Crème Pieds", "Râpe de pédicure + chaussettes hydratantes pour la nuit (Scholl, Akileïne)"],
+      conseils: "Les pieds noircissent à cause des frottements (sandales, chaussures fermées sans chaussette), du soleil direct et de la peau morte accumulée. Lave et exfolie tes pieds régulièrement. Hydrate avec une crème riche tous les soirs. Porte des chaussettes la nuit après crème pour booster l'effet. Évite de marcher pieds nus dehors. SPF aussi sur les pieds quand tu portes des sandales !"
+    },
+    peau_terne: {
+      titre: "🌫️ Peau corporelle terne",
+      naturel: ["Gommage corps maison : marc de café + huile de coco + miel, 2x/semaine", "Brossage à sec avant la douche (5 min, mouvements vers le cœur) — booste la circulation", "Masque corps : yaourt nature + jus de citron + miel, 1x/semaine"],
+      express: ["Lait corporel à la vitamine C : Garnier Body Vitamine C, Nivea Q10 Body", "Gommage exfoliant chimique aux AHA : Soap & Glory Sugar Crush, The Ordinary Glycolic 7%", "Sérum corporel illuminateur : Sol de Janeiro Brazilian Bum Bum"],
+      conseils: "Une peau terne = peau qui a besoin d'oxygène et de cellules neuves. Le GOMMAGE est ton allié n°1 : il enlève les peaux mortes pour révéler la peau lumineuse en dessous. Mais attention, pas tous les jours : 2x/semaine maximum. Hydratation interne et externe. Alimentation riche en antioxydants : fruits rouges, mangue, papaye, légumes verts. Sommeil de qualité. Évite tabac et alcool qui ternissent la peau."
+    },
+    boutons_corps: {
+      titre: "💢 Boutons sur le corps",
+      naturel: ["Savon noir africain à la douche (purifiant et antibactérien naturel)", "Application de gel d'aloe vera sur zones à boutons", "Compresse au tea tree dilué (3 gouttes dans 1 cuillère d'huile végétale) sur boutons isolés"],
+      express: ["Gel douche à l'acide salicylique : CeraVe SA Body Wash, Sebamed Clear Face", "Lotion à la niacinamide pour réduire inflammation : The Ordinary Niacinamide", "Spray traitant à base de zinc et acide salicylique : Bioderma Sebium Spray"],
+      conseils: "Les boutons du corps (dos, fesses, épaules, poitrine) sont souvent dus à : sueur, frottements vêtements, lessive trop parfumée, hormones, sébum. Douche IMMÉDIATEMENT après le sport. Vêtements amples en coton. Change de drap toutes les semaines. Lessive hypoallergénique. NE PRESSE PAS les boutons — ça aggrave et laisse des cicatrices. Si très sévère ou hormonal → consulte un dermato."
+    },
+    // === Placeholders pour les 12 autres ===
+    cicatrices_corps: { titre: "🔴 Cicatrices d'anciens boutons", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction. Reviens bientôt pour des conseils personnalisés." },
+    melasma: { titre: "🟤 Mélasma / Taches brunes", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction. En attendant : SPF 50 obligatoire chaque jour est ESSENTIEL." },
+    cernes_corps: { titre: "⚫ Zones foncées (genoux, coudes, aisselles)", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    quintox: { titre: "💧 Quintox", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    dartres: { titre: "🥚 Dartres", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    veines: { titre: "🌿 Veines apparentes", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    mains_seches: { titre: "🤲 Mains très sèches", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    demangeaisons: { titre: "🦵 Peau qui démange", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    coups_soleil: { titre: "🔥 Coups de soleil", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    vergetures_muscle: { titre: "💪 Vergetures musculaires", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    mycoses: { titre: "🍄 Mycoses", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." },
+    poils_incarnes: { titre: "🌸 Poils incarnés", naturel: ["🚧 Conseils détaillés bientôt"], express: ["🚧 Routine produits bientôt"], conseils: "🚧 Diagnostic complet en cours de rédaction." }
+  },
+
+  soleil: {
+    low: { titre: "☀️ Exposition faible", text: "Tu es peu exposée mais le soleil reste un facteur de vieillissement et de taches. SPF 30 minimum sur les zones exposées (visage, mains, décolleté) chaque jour. Renouveler 1x si tu sors." },
+    med: { titre: "☀️ Exposition modérée", text: "SPF 50 OBLIGATOIRE sur visage, cou, décolleté, mains, bras. Renouveler toutes les 4h dehors. Chapeau et lunettes recommandés. Vêtements légers couvrants si exposition prolongée." },
+    high: { titre: "🔥 Exposition intense", text: "Protection MAXIMALE indispensable. SPF 50+ écran total sur toutes les zones exposées, à renouveler toutes les 2h. Chapeau à larges bords. Lunettes systématiquement. Vêtements couvrants UV-protect. Hydratation 3L/jour. ⚠️ Sans cette protection, taches et vergetures sont garanties." }
+  },
+
+  gommage: {
+    yes: { titre: "✨ Tu te gommes régulièrement — Bravo !", text: "C'est parfait, continue ! Le gommage est essentiel pour : éliminer les peaux mortes, révéler une peau lumineuse, permettre aux soins de mieux pénétrer. Continue à 1-2x/semaine, pas plus." },
+    sometimes: { titre: "💡 Augmente la fréquence du gommage", text: "Un gommage occasionnel c'est bien, mais 1-2 fois par semaine c'est mieux. Le gommage régulier transformera ta peau en quelques semaines : plus lumineuse, plus douce, et surtout tes produits d'hydratation pénètreront BEAUCOUP mieux." },
+    no: { titre: "⚠️ Le gommage est ESSENTIEL", text: "Ma belle, sans gommage, tes peaux mortes s'accumulent et BLOQUENT l'absorption de tes soins. Tu peux mettre la meilleure crème du monde — elle ne pénètrera pas. Le gommage exfolie les peaux mortes pour permettre aux produits de bien agir. Commence dès cette semaine : 1x/semaine sous la douche, gommage doux (sucre + miel + huile). Tu verras la différence en 2 semaines : peau plus douce, plus lumineuse, mieux hydratée." }
+  },
+
+  age: {
+    ado: { titre: "🌱 Moins de 20 ans", text: "À ton âge, ton corps est encore en pleine évolution. Priorité : poser de bonnes habitudes (hydratation quotidienne, douches courtes et tièdes, SPF). Évite les produits agressifs ou anti-âge. Les habitudes que tu prends maintenant détermineront l'état de ta peau à 40 ans." },
+    "20s": { titre: "🌸 20-29 ans", text: "C'est l'âge idéal pour poser une routine solide. Hydratation quotidienne non négociable. Gommage 1x/semaine. SPF sur zones exposées. Commence à inclure des actifs doux (vitamine C). Sport régulier pour entretenir la fermeté." },
+    "30s": { titre: "🌺 30-39 ans", text: "Ta peau commence à perdre en élasticité — il est temps d'agir. Hydratation 2x/jour. Gommage 1-2x/semaine. SPF tous les jours sur visage et décolleté. Crèmes plus riches le soir. Massages quotidiens pour stimuler la circulation." },
+    "40s": { titre: "🌹 40-49 ans", text: "Routine plus riche : beurre de karité ou crèmes nourrissantes 2x/jour. Soin spécifique cou et décolleté. Massages quotidiens (5 min). Hydratation interne renforcée (2,5L/jour). Antioxydants alimentaires : baies, thé vert, légumes colorés." },
+    "50plus": { titre: "🌷 50 ans et plus", text: "Ta peau a vécu, donne-lui ce qu'elle mérite. Routine ultra-nourrissante (huiles précieuses, beurres riches). Hydratation matin ET soir. Massages anti-relâchement. Soins ciblés cou, mains, décolleté. Bonnes graisses : oméga-3, avocat, noix." }
+  }
+};
+
 function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod }) {
 
   function getSkinType(answers) {
