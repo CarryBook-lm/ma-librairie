@@ -4363,21 +4363,129 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
     }
   }
 
-  // ÉTAPE 7 — RÉSULTAT (à coder dans étape 4)
+  // ÉTAPE 7 — RÉSULTAT FINAL
+  if (capStep === 7 && capResult) {
+    const textureCode = capResult.texture?.id || capTexture;
+    const textureData = CAP_CONTENT.textures[textureCode] || CAP_CONTENT.textures["4A"];
+    const ageData = CAP_CONTENT.age[capLifestyle.age] || CAP_CONTENT.age["20s"];
+    const lavageData = CAP_CONTENT.routine[capLifestyle.lavage] || CAP_CONTENT.routine["1_sem"];
+    const problemLabels = capResult.problems.map(pid => CAP_PROBLEMS.find(p => p.id === pid)).filter(Boolean);
 
-  return (
-    <div style={{ minHeight: "100vh", background: CAP.blanc, padding: 20, textAlign: "center" }}>
-      <div style={{ marginTop: 100 }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>Page résultat arrive bientôt</div>
-        <div style={{ fontSize: 13, color: CAP.textDim, marginBottom: 20 }}>Diagnostic capillaire complet en cours de finalisation</div>
-        <button onClick={() => { setCarryCarePage("home"); setCapStep(1); }}
-          style={{ padding: "12px 24px", background: CAP.orDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
-          ← Retour à CarryCare
-        </button>
+    function restart() {
+      setCapStep(1);
+      setCapTexture(null);
+      setCapProblems([]);
+      setCapLifestyle({ lavage: null, age: null });
+      setCapResult(null);
+      setCapPaymentStep(1);
+      setCapPaymentMethod(null);
+      setCapPaymentPhone("");
+    }
+
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Ton diagnostic capillaire" onBack={() => { setCarryCarePage("home"); setCapStep(1); }} />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          {/* TYPE DE CHEVEUX */}
+          <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f5d7a3 100%)", border: "1px solid " + CAP.or, borderRadius: 14, padding: 20, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 50, marginBottom: 8 }}>{capResult.texture?.emoji || "💇🏾‍♀️"}</div>
+            <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Ton type de cheveux</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>{capResult.texture?.title || "Tes cheveux"}</div>
+            <div style={{ fontSize: 13, color: CAP.textDim }}>{capResult.texture?.subtitle}</div>
+          </div>
+
+          {/* ROUTINE PRINCIPALE */}
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>{textureData.titre}</div>
+            <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.6, marginBottom: 14, fontStyle: "italic" }}>{textureData.intro}</div>
+
+            <div style={{ background: "#f5f9f0", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5d2d", marginBottom: 8 }}>🌿 Routine naturelle</div>
+              {textureData.naturel.map((item, i) => (
+                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
+                  <span style={{ position: "absolute", left: 0 }}>•</span>{item}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "#fdf6e3", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.orDeep, marginBottom: 4 }}>💎 Routine express (produits)</div>
+              <div style={{ fontSize: 10, color: CAP.textFaint, fontStyle: "italic", marginBottom: 8 }}>Choisis 1 ou plusieurs selon ton budget. Le 1er produit de chaque liste est l'essentiel.</div>
+              {textureData.express.map((item, i) => (
+                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
+                  <span style={{ position: "absolute", left: 0 }}>•</span>{item}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "#fef9e7", borderRadius: 10, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "#8a6d00", marginBottom: 8 }}>💡 Mes conseils</div>
+              <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{textureData.conseils}</div>
+            </div>
+          </div>
+
+          {/* PROBLÈMES CIBLÉS */}
+          {problemLabels.length > 0 && (
+            <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: "bold", color: CAP.noir, marginBottom: 14 }}>🎯 Tes préoccupations ciblées</div>
+              {problemLabels.map(p => {
+                const pcontent = CAP_CONTENT.problems[p.id];
+                if (!pcontent) return null;
+                return (
+                  <div key={p.id} style={{ background: "#fafafa", border: "1px solid " + CAP.border, borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                    <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>{pcontent.titre}</div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: "#2d5d2d", marginBottom: 4 }}>🌿 Naturel :</div>
+                      {pcontent.naturel.map((it, i) => (
+                        <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
+                      ))}
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.orDeep, marginTop: 8, marginBottom: 2 }}>💎 Produits :</div>
+                      <div style={{ fontSize: 9, color: CAP.textFaint, fontStyle: "italic", marginBottom: 4 }}>Choisis selon ton budget — le 1er est l'essentiel</div>
+                      {pcontent.express.map((it, i) => (
+                        <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#5a5a5a", lineHeight: 1.5, marginTop: 8, fontStyle: "italic" }}>{pcontent.conseils}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* SECTION ROUTINE LAVAGE */}
+          <div style={{ background: "#f0f8ff", border: "1px solid #87ceeb", borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#2c5d8a", marginBottom: 8 }}>{lavageData.titre}</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{lavageData.text}</div>
+          </div>
+
+          {/* SECTION ÂGE */}
+          <div style={{ background: "#fdf6e3", border: "1px solid " + CAP.or, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.orDeep, marginBottom: 8 }}>{ageData.titre}</div>
+            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{ageData.text}</div>
+          </div>
+
+          {/* CTA bas */}
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <button onClick={restart}
+              style={{ padding: "12px 24px", background: "#fff", color: CAP.noir, border: "1.5px solid " + CAP.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
+              🔄 Refaire le test
+            </button>
+            <button onClick={() => { setCarryCarePage("home"); setCapStep(1); }}
+              style={{ padding: "12px 24px", background: CAP.orDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
+              🌸 Autre quiz CarryCare
+            </button>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 30, paddingTop: 20, borderTop: "1px solid " + CAP.border }}>
+            <div style={{ fontSize: 11, color: CAP.textFaint, fontStyle: "italic" }}>💝 Merci de faire confiance à CarryCare</div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
 
 
