@@ -2951,6 +2951,7 @@ export default function App() {
       if (data && data.length > 0) {
         setSubSettings(data[0]);
         if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
+        if (data[0].carrycare_price) setBeautyQuizPrice(data[0].carrycare_price);
       }
     });
     // Load all book ratings for catalog display
@@ -4919,6 +4920,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
