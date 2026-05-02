@@ -4163,14 +4163,214 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
     );
   }
 
-  // ÉTAPES 5+ (suspense, paiement, résultat) — à coder dans étape 3 et 4
+  // ÉTAPE 5 — Suspense (feu d'artifice doré)
+  if (capStep === 5) {
+    setTimeout(() => { if (capStep === 5) setCapStep(6); }, 2500);
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {[
+          { left: "20%", top: "30%", delay: "0s", color: "#ffd700" },
+          { left: "70%", top: "25%", delay: "0.3s", color: "#c9a66b" },
+          { left: "45%", top: "55%", delay: "0.5s", color: "#ffb74d" },
+          { left: "30%", top: "65%", delay: "0.7s", color: "#fff176" },
+          { left: "75%", top: "60%", delay: "0.9s", color: "#ff9800" },
+          { left: "55%", top: "20%", delay: "1.1s", color: "#ffe082" }
+        ].map((fw, i) => (
+          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
+            {[0,1,2,3,4,5,6,7].map(angle => (
+              <div key={angle} style={{
+                position: "absolute", width: 6, height: 6, borderRadius: "50%",
+                background: fw.color, boxShadow: "0 0 12px " + fw.color,
+                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
+                transform: "rotate(" + (angle * 45) + "deg)", transformOrigin: "center"
+              }} />
+            ))}
+          </div>
+        ))}
+        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
+          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffd700", animation: "fadeIn 0.5s ease-out" }}>Ton diagnostic est prêt !</div>
+        </div>
+        <style>{`
+          @keyframes fwExplode { 0% { transform: translate(0, 0) scale(0.5); opacity: 1; } 100% { transform: translate(60px, 0) scale(0.2); opacity: 0; } }
+          @keyframes rocketBounce { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.3) rotate(10deg); } 100% { transform: scale(1) rotate(0deg); } }
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ÉTAPE 6 — Paiement (5 sous-étapes : info → operator → phone → wait → fail/success)
+  if (capStep === 6) {
+    if (capPaymentStep === 1) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title="Diagnostic prêt !" onBack={() => setCapStep(4)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 60, marginBottom: 16 }}>💇🏾‍♀️</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CAP.noir, marginBottom: 12 }}>Ton diagnostic capillaire est prêt</div>
+            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20, lineHeight: 1.6 }}>
+              Type de cheveux identifié, problèmes ciblés, routine adaptée.<br/>
+              Reçois ton plan complet avec produits naturels et routines personnalisées.
+            </div>
+            <div style={{ background: "#fdf6e3", border: "1px solid " + CAP.or, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>📋 Tu vas recevoir :</div>
+              <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.8 }}>
+                ✅ Ton type de cheveux expliqué<br/>
+                ✅ Routine naturelle complète<br/>
+                ✅ Produits adaptés (marques précises)<br/>
+                ✅ Conseils sur tes problèmes ciblés<br/>
+                ✅ Conseils selon ton âge
+              </div>
+            </div>
+            <button onClick={() => setCapPaymentStep(2)} style={{
+              width: "100%", padding: 16, background: CAP.orDeep, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 2) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title="Méthode de paiement" onBack={() => setCapPaymentStep(1)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            <button onClick={() => { setCapPaymentMethod("MTN"); setCapPaymentStep(3); }} style={{
+              width: "100%", padding: 16, background: "#FFCC00", color: "#000",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", marginBottom: 12, cursor: "pointer"
+            }}>📱 MTN Mobile Money</button>
+            <button onClick={() => { setCapPaymentMethod("ORANGE"); setCapPaymentStep(3); }} style={{
+              width: "100%", padding: 16, background: "#FF6600", color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>📱 Orange Money</button>
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 3) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title={"Ton numéro " + capPaymentMethod} onBack={() => setCapPaymentStep(2)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 16, textAlign: "center" }}>
+              Entre ton numéro {capPaymentMethod} (9 chiffres, sans +237)
+            </div>
+            <input type="tel" value={capPaymentPhone} onChange={(e) => setCapPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="6XXXXXXXX" style={{
+                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CAP.border,
+                borderRadius: 12, marginBottom: 16, outline: "none"
+              }} />
+            <button onClick={async () => {
+              if (capPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
+              setCapPaymentStep(4);
+              const fullPhone = "237" + capPaymentPhone;
+              const userResp = await supabase.auth.getUser();
+              const userId = userResp.data.user?.id;
+              try {
+                const collect = await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Capillaire", external_reference: "carrycare_hair_" + Date.now() })
+                });
+                const data = await collect.json();
+                if (!data.reference) { setCapPaymentStep(5); return; }
+                const ref = data.reference;
+                let attempts = 0;
+                const maxAttempts = 25;
+                const interval = setInterval(async () => {
+                  attempts++;
+                  if (attempts >= maxAttempts) { clearInterval(interval); setCapPaymentStep(5); return; }
+                  try {
+                    const checkRes = await fetch("/api/campay", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "check", reference: ref })
+                    });
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "SUCCESSFUL") {
+                      clearInterval(interval);
+                      setCapPaymentStep(1);
+                      setCapShowGift(true);
+                      if (userId) {
+                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                          user_id: userId,
+                          quiz_type: "hair",
+                          result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult }
+                        }]);
+                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
+                        else console.log("Résultat CarryCare hair sauvegardé !");
+                      }
+                      setTimeout(() => { setCapShowGift(false); setCapStep(7); }, 2500);
+                    }
+                    else if (checkData.status === "FAILED") { clearInterval(interval); setCapPaymentStep(5); }
+                  } catch (e) {}
+                }, 3000);
+              } catch (e) { setCapPaymentStep(5); }
+            }} style={{
+              width: "100%", padding: 16, background: CAP.orDeep, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Payer {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 4) {
+      return (
+        <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf6e3 0%, #f5d7a3 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 80, marginBottom: 20 }}>⏳</div>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: CAP.noir, marginBottom: 8, textAlign: "center" }}>Paiement en cours...</div>
+          <div style={{ fontSize: 13, color: CAP.textFaint, textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
+            📱 Vérifie ton téléphone et valide le paiement {capPaymentMethod}.<br/>
+            Patiente un instant, on te montre ton diagnostic dès que c'est validé.
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 5) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title="Paiement non finalisé" onBack={() => setCapPaymentStep(2)} />
+          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
+            <div style={{ fontSize: 20, fontWeight: "bold", color: "#d32f2f", marginBottom: 12 }}>Paiement non finalisé</div>
+            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20 }}>Le réseau de l'opérateur est peut-être occupé.</div>
+            <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
+              <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.8, textAlign: "center" }}>
+                ✅ Vérifie ton solde Mobile Money<br/>
+                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                ✅ Patiente quelques minutes et réessaie<br/>
+                ✅ Vérifie ta connexion internet
+              </div>
+            </div>
+            <button onClick={() => { setCapPaymentStep(2); setCapPaymentMethod(null); setCapPaymentPhone(""); }} style={{
+              width: "100%", padding: 16, background: CAP.orDeep, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>🔄 Réessayer</button>
+            <button onClick={() => { setCapPaymentStep(1); setCapPaymentMethod(null); setCapPaymentPhone(""); }} style={{
+              width: "100%", padding: 14, background: "#fff", color: CAP.noir,
+              border: "1.5px solid " + CAP.border, borderRadius: 12, fontSize: 14, cursor: "pointer"
+            }}>Annuler</button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // ÉTAPE 7 — RÉSULTAT (à coder dans étape 4)
 
   return (
     <div style={{ minHeight: "100vh", background: CAP.blanc, padding: 20, textAlign: "center" }}>
       <div style={{ marginTop: 100 }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>🚧</div>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>Cette partie arrive bientôt</div>
-        <div style={{ fontSize: 13, color: CAP.textDim, marginBottom: 20 }}>Diagnostic capillaire en cours de finalisation</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>Page résultat arrive bientôt</div>
+        <div style={{ fontSize: 13, color: CAP.textDim, marginBottom: 20 }}>Diagnostic capillaire complet en cours de finalisation</div>
         <button onClick={() => { setCarryCarePage("home"); setCapStep(1); }}
           style={{ padding: "12px 24px", background: CAP.orDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
           ← Retour à CarryCare
