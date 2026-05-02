@@ -1190,7 +1190,7 @@ const CC = {
 };
 
 // ─── PAGE D'ACCUEIL CARRYCARE ───
-function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult }) {
+function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult }) {
 
   function startFacial() {
     setBfStep(1);
@@ -1201,9 +1201,18 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     setCarryCarePage("facialQuiz");
   }
 
+  function startBody() {
+    setBbStep(1);
+    setBbTypeAnswers([]);
+    setBbProblems([]);
+    setBbLifestyle({ age: null, sun: null, scrub: null });
+    setBbResult(null);
+    setCarryCarePage("bodyQuiz");
+  }
+
   const quizCards = [
     { id: "facial", emoji: "💄", title: "Beauté Faciale", subtitle: "Diagnostic peau + routine personnalisée", available: true, action: startFacial, gradient: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)" },
-    { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: false, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
+    { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: true, action: startBody, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
     { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: false, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
     { id: "weight", emoji: "⚖️", title: "Garde la Ligne", subtitle: "Plan nutrition personnalisé", available: false, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
   ];
@@ -1851,11 +1860,49 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
   // ÉTAPE 4 — Suspense
   if (bfStep === 4) {
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
-        <div style={{ fontSize: 80, marginBottom: 20, animation: "spin 2s linear infinite" }}>✨</div>
-        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse en cours...</div>
-        <div style={{ fontSize: 14, color: CC.textFaint, textAlign: "center" }}>Préparation de ton diagnostic personnalisé</div>
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {[
+          { left: "20%", top: "30%", delay: "0s", color: "#ffd700" },
+          { left: "70%", top: "25%", delay: "0.3s", color: "#ff4081" },
+          { left: "45%", top: "55%", delay: "0.5s", color: "#00e5ff" },
+          { left: "30%", top: "65%", delay: "0.7s", color: "#76ff03" },
+          { left: "75%", top: "60%", delay: "0.9s", color: "#ff9100" },
+          { left: "55%", top: "20%", delay: "1.1s", color: "#e040fb" }
+        ].map((fw, i) => (
+          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
+            {[0,1,2,3,4,5,6,7].map(angle => (
+              <div key={angle} style={{
+                position: "absolute",
+                width: 6, height: 6,
+                borderRadius: "50%",
+                background: fw.color,
+                boxShadow: "0 0 12px " + fw.color,
+                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
+                transform: "rotate(" + (angle * 45) + "deg)",
+                transformOrigin: "center"
+              }} />
+            ))}
+          </div>
+        ))}
+        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
+          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ff4081", animation: "fadeIn 0.5s ease-out" }}>Ton diagnostic est prêt !</div>
+        </div>
+        <style>{`
+          @keyframes fwExplode {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+            100% { transform: translate(60px, 0) scale(0.2); opacity: 0; }
+          }
+          @keyframes rocketBounce {
+            0% { transform: scale(0) rotate(-30deg); }
+            60% { transform: scale(1.3) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -2411,10 +2458,49 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
   // ÉTAPE 4 — Suspense
   if (bbStep === 4) {
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
-        <div style={{ fontSize: 80, marginBottom: 20 }}>✨</div>
-        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse en cours...</div>
-        <div style={{ fontSize: 14, color: CC.textFaint, textAlign: "center" }}>Préparation de ton diagnostic personnalisé</div>
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {[
+          { left: "20%", top: "30%", delay: "0s", color: "#ffd700" },
+          { left: "70%", top: "25%", delay: "0.3s", color: "#ff4081" },
+          { left: "45%", top: "55%", delay: "0.5s", color: "#00e5ff" },
+          { left: "30%", top: "65%", delay: "0.7s", color: "#76ff03" },
+          { left: "75%", top: "60%", delay: "0.9s", color: "#ff9100" },
+          { left: "55%", top: "20%", delay: "1.1s", color: "#e040fb" }
+        ].map((fw, i) => (
+          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
+            {[0,1,2,3,4,5,6,7].map(angle => (
+              <div key={angle} style={{
+                position: "absolute",
+                width: 6, height: 6,
+                borderRadius: "50%",
+                background: fw.color,
+                boxShadow: "0 0 12px " + fw.color,
+                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
+                transform: "rotate(" + (angle * 45) + "deg)",
+                transformOrigin: "center"
+              }} />
+            ))}
+          </div>
+        ))}
+        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
+          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ff4081", animation: "fadeIn 0.5s ease-out" }}>Ton diagnostic est prêt !</div>
+        </div>
+        <style>{`
+          @keyframes fwExplode {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+            100% { transform: translate(60px, 0) scale(0.2); opacity: 0; }
+          }
+          @keyframes rocketBounce {
+            0% { transform: scale(0) rotate(-30deg); }
+            60% { transform: scale(1.3) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -4318,6 +4404,11 @@ export default function App() {
                 setBfProblems={setBfProblems}
                 setBfLifestyle={setBfLifestyle}
                 setBfResult={setBfResult}
+                setBbStep={setBbStep}
+                setBbTypeAnswers={setBbTypeAnswers}
+                setBbProblems={setBbProblems}
+                setBbLifestyle={setBbLifestyle}
+                setBbResult={setBbResult}
               />
             )}
             {carryCarePage === "facialQuiz" && (
