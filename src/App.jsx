@@ -526,6 +526,37 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
   );
 }
 
+// ═══════════════════════════════════════════════
+// COMPOSANT PARTAGE RÉUTILISABLE
+// ═══════════════════════════════════════════════
+function ShareButtons({ quizName, quizType }) {
+  const url = "https://carrybooks.com";
+  const text = quizType === "carrycare"
+    ? "🌸 Je viens de faire mon diagnostic " + quizName + " sur CarryCare ! Tu veux savoir ton type de peau et avoir une routine personnalisée ? Découvre CarryCare 👉 " + url
+    : "🎯 Je viens de faire le quiz " + quizName + " sur Carry'Quiz ! Découvre la vérité sur toi-même 👉 " + url;
+
+  function shareWhatsApp() {
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  }
+  function shareFacebook() {
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url) + "&quote=" + encodeURIComponent(text), "_blank");
+  }
+  function copyLink() {
+    navigator.clipboard?.writeText(text).then(() => alert("✅ Lien copié ! Partage-le où tu veux.")).catch(() => alert("Impossible de copier. Utilise WhatsApp ou Facebook."));
+  }
+
+  return (
+    <div style={{ background: "#fff", border: "1px solid #e0e0e0", borderRadius: 12, padding: 16, marginTop: 20, marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a1a1a", marginBottom: 12, textAlign: "center" }}>📤 Partage avec tes amies</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
+        <button onClick={shareFacebook} style={{ background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
+        <button onClick={copyLink} style={{ background: "#666", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>🔗 Copier</button>
+      </div>
+    </div>
+  );
+}
+
 function QuizPlay({ quiz, answers, setAnswers, currentQ, setCurrentQ, setQuizPage, setQuizResult, G, setPage }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentQ]);
@@ -897,14 +928,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
         )}
 
         {/* Share buttons */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-          <button onClick={shareResult} style={{ flex: 1, padding: "13px", background: "#25D366", border: "none", borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>
-            📲 Partager mon résultat
-          </button>
-          <button onClick={shareWithPartner} style={{ flex: 1, padding: "13px", background: "transparent", border: "2px solid " + G.gold, borderRadius: 12, color: G.gold, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
-            👯 Partager avec un(e) ami(e)
-          </button>
-        </div>
+        <ShareButtons quizName={quiz.title} quizType="carryquiz" />
 
         {/* Related quizzes */}
         {related.length > 0 && (
@@ -2652,6 +2676,8 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
             </div>
           </div>
 
+          <ShareButtons quizName="Beauté Faciale" quizType="carrycare" />
+
           {/* BOUTON RETOUR */}
           <button onClick={reset} style={{
             width: "100%", padding: 14, background: CC.noir, color: "#fff",
@@ -3183,6 +3209,8 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.rose, marginBottom: 8 }}>{ageData.titre}</div>
             <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{ageData.text}</div>
           </div>
+
+          <ShareButtons quizName="Beauté Corporelle" quizType="carrycare" />
 
           {/* CTA bas */}
           <div style={{ textAlign: "center", marginTop: 20 }}>
@@ -4054,6 +4082,8 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
             </div>
           </div>
 
+          <ShareButtons quizName="Garde la Ligne" quizType="carrycare" />
+
           {/* CTA bas */}
           <div style={{ textAlign: "center", marginTop: 20 }}>
             <button onClick={restart}
@@ -4575,6 +4605,8 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.orDeep, marginBottom: 8 }}>{ageData.titre}</div>
             <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{ageData.text}</div>
           </div>
+
+          <ShareButtons quizName="Beauté Capillaire" quizType="carrycare" />
 
           {/* CTA bas */}
           <div style={{ textAlign: "center", marginTop: 20 }}>
