@@ -6312,7 +6312,51 @@ export default function App() {
                   const ql = quizLabels[r.quiz_type] || { emoji: "💎", name: r.quiz_type, color: G.gold };
                   const dateStr = new Date(r.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
                   return (
-                    <div key={r.id} onClick={() => { setSelectedResult(r); setPage("myResultDetail"); }} style={{ background: G.surface, border: "1px solid " + G.border, borderLeft: "4px solid " + ql.color, borderRadius: 10, padding: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                    <div key={r.id} onClick={() => {
+                      // Ré-injecter les données et ouvrir le résultat complet
+                      const data = r.result_data || {};
+                      if (r.quiz_type === "line") {
+                        setLgData(data);
+                        setLgStep(9);
+                        setLgPaymentStep(1);
+                        setLgShowGift(false);
+                        setCarryCarePage("lineQuiz");
+                        setPage("home");
+                      } else if (r.quiz_type === "facial") {
+                        if (data.typeAnswers) setBfTypeAnswers(data.typeAnswers);
+                        if (data.problems) setBfProblems(data.problems);
+                        if (data.lifestyle) setBfLifestyle(data.lifestyle);
+                        if (data.result) setBfResult(data.result);
+                        setBfStep(6);
+                        setBfPaymentStep(1);
+                        setBfShowGift(false);
+                        setCarryCarePage("facialQuiz");
+                        setPage("home");
+                      } else if (r.quiz_type === "body") {
+                        if (data.typeAnswers) setBbTypeAnswers(data.typeAnswers);
+                        if (data.problems) setBbProblems(data.problems);
+                        if (data.lifestyle) setBbLifestyle(data.lifestyle);
+                        if (data.result) setBbResult(data.result);
+                        setBbStep(6);
+                        setBbPaymentStep(1);
+                        setBbShowGift(false);
+                        setCarryCarePage("bodyQuiz");
+                        setPage("home");
+                      } else if (r.quiz_type === "hair") {
+                        if (data.texture) setCapTexture(data.texture);
+                        if (data.problems) setCapProblems(data.problems);
+                        if (data.lifestyle) setCapLifestyle(data.lifestyle);
+                        if (data.result) setCapResult(data.result);
+                        setCapStep(7);
+                        setCapPaymentStep(1);
+                        setCapShowGift(false);
+                        setCarryCarePage("hairQuiz");
+                        setPage("home");
+                      } else {
+                        setSelectedResult(r);
+                        setPage("myResultDetail");
+                      }
+                    }} style={{ background: G.surface, border: "1px solid " + G.border, borderLeft: "4px solid " + ql.color, borderRadius: 10, padding: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
                       <div style={{ fontSize: 32 }}>{ql.emoji}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 15, color: G.text, fontWeight: "bold", marginBottom: 4 }}>{ql.name}</div>
