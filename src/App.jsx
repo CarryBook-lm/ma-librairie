@@ -4678,6 +4678,23 @@ export default function App() {
     if (c) setCachedBooks(JSON.parse(c));
   }, []);
 
+  // Mémorisation position scroll en mode lecture scroll
+  useEffect(() => {
+    if (page !== "reader" || !reading || !readerScrollMode || excerptMode) return;
+    if (reading.pdf_url && reading.pdf_url !== "pending") return; // PDF a son propre système
+    // Restaurer position au chargement
+    const savedScroll = parseInt(localStorage.getItem("scrollProgress_" + reading.id) || "0");
+    if (savedScroll > 0) {
+      setTimeout(() => window.scrollTo(0, savedScroll), 100);
+    }
+    // Sauvegarder position pendant scroll
+    const handler = () => {
+      localStorage.setItem("scrollProgress_" + reading.id, String(window.scrollY));
+    };
+    window.addEventListener("scroll", handler);
+    return () => window.removeEventListener("scroll", handler);
+  }, [page, reading, readerScrollMode, excerptMode]);
+
   // Auth listener
   useEffect(() => {
     // Enregistrement du Service Worker
@@ -5196,22 +5213,6 @@ export default function App() {
     const allPages = getPages(translatedContent || reading.content);
     const pages = excerptMode ? allPages.slice(0, 2) : allPages;
     const total = pages.length;
-
-    // Mémorisation du scroll en mode scroll
-    useEffect(() => {
-      if (!readerScrollMode || excerptMode) return;
-      // Restaurer position au chargement
-      const savedScroll = parseInt(localStorage.getItem("scrollProgress_" + reading.id) || "0");
-      if (savedScroll > 0) {
-        setTimeout(() => window.scrollTo(0, savedScroll), 100);
-      }
-      // Sauvegarder position pendant scroll
-      const handler = () => {
-        localStorage.setItem("scrollProgress_" + reading.id, String(window.scrollY));
-      };
-      window.addEventListener("scroll", handler);
-      return () => window.removeEventListener("scroll", handler);
-    }, [readerScrollMode, reading.id, excerptMode]);
 
     // In scroll mode, show all paragraphs; in page mode show current page only
     const scrollAllParagraphs = readerScrollMode
