@@ -998,8 +998,9 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                     <div style={{ fontSize: 10, color: G.textDim, marginBottom: 6 }}>{book.author}</div>
                     {(() => {
                       const pdfProg = parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0");
-                      const showProg = book.pdf_url ? pdfProg > 1 : prog > 0;
-                      const label = book.pdf_url ? (pdfProg > 1 ? "P." + pdfProg : "") : (prog > 0 ? "P." + prog : "");
+                      const scrollProg = parseInt(localStorage.getItem("scrollProgress_" + book.id) || "0");
+                      const showProg = book.pdf_url ? pdfProg > 1 : (prog > 0 || scrollProg > 0);
+                      const label = book.pdf_url ? (pdfProg > 1 ? "P." + pdfProg : "") : (prog > 0 ? "P." + prog : (scrollProg > 0 ? "📖 En cours" : ""));
                       return showProg ? (
                         <div style={{ marginBottom: 6 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: G.textFaint, marginBottom: 2 }}>
@@ -1012,7 +1013,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                       ) : null;
                     })()}
                     <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
-                      {(book.pdf_url ? parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0") > 1 : prog > 0) ? "▶ CONTINUER" : "📖 LIRE"}
+                      {(book.pdf_url ? parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0") > 1 : (prog > 0 || parseInt(localStorage.getItem("scrollProgress_" + book.id) || "0") > 0)) ? "▶ CONTINUER" : "📖 LIRE"}
                     </button>
                   </div>
                 );
@@ -5195,6 +5196,22 @@ export default function App() {
     const allPages = getPages(translatedContent || reading.content);
     const pages = excerptMode ? allPages.slice(0, 2) : allPages;
     const total = pages.length;
+
+    // Mémorisation du scroll en mode scroll
+    useEffect(() => {
+      if (!readerScrollMode || excerptMode) return;
+      // Restaurer position au chargement
+      const savedScroll = parseInt(localStorage.getItem("scrollProgress_" + reading.id) || "0");
+      if (savedScroll > 0) {
+        setTimeout(() => window.scrollTo(0, savedScroll), 100);
+      }
+      // Sauvegarder position pendant scroll
+      const handler = () => {
+        localStorage.setItem("scrollProgress_" + reading.id, String(window.scrollY));
+      };
+      window.addEventListener("scroll", handler);
+      return () => window.removeEventListener("scroll", handler);
+    }, [readerScrollMode, reading.id, excerptMode]);
 
     // In scroll mode, show all paragraphs; in page mode show current page only
     const scrollAllParagraphs = readerScrollMode
