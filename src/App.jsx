@@ -4518,8 +4518,17 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
 
 
 export default function App() {
-  const [page, setPage] = useState("home");
-  const [books, setBooks] = useState([]);
+  const [page, setPage] = useState(() => {
+    if (!navigator.onLine && localStorage.getItem("cachedBooksList")) return "library";
+    return "home";
+  });
+  const [books, setBooks] = useState(() => {
+    try {
+      const cached = localStorage.getItem("cachedBooksList");
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
@@ -4805,9 +4814,12 @@ export default function App() {
   }
 
   async function fetchBooks() {
-    setLoading(true);
+    const hasCachedBooks = books.length > 0 || localStorage.getItem("cachedBooksList");
+    if (!hasCachedBooks) setLoading(true);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000));
     try {
-      const { data } = await supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
+      const fetchPromise = supabase.from("books").select("*").eq("status", "actif").order("created_at", { ascending: false });
+      const { data } = await Promise.race([fetchPromise, timeoutPromise]);
       if (data && data.length > 0) {
         setBooks(data);
         // Sauvegarder en cache pour usage offline
@@ -4818,7 +4830,7 @@ export default function App() {
         if (cached) setBooks(JSON.parse(cached));
       }
     } catch (e) {
-      // Erreur réseau (offline) : charger depuis le cache
+      // Erreur réseau ou timeout (offline) : charger depuis le cache
       const cached = localStorage.getItem("cachedBooksList");
       if (cached) setBooks(JSON.parse(cached));
     }
