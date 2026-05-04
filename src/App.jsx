@@ -5460,6 +5460,31 @@ export default function App() {
             {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
           </button>
 
+          {/* BOUTON TÉLÉCHARGER LE PDF (si owned/free + can_download + pdf_url) */}
+          {(owned || free) && book.can_download && book.pdf_url && book.pdf_url !== "pending" && (
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch(book.pdf_url);
+                  if (!response.ok) throw new Error("Erreur téléchargement");
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = (book.title || "livre") + ".pdf";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                } catch (e) {
+                  alert("Erreur de téléchargement. Vérifie ta connexion et réessaie.");
+                }
+              }}
+              style={{ width: "100%", padding: 13, background: "#1a1a1a", border: "none", borderRadius: 6, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: "bold", marginTop: 8 }}>
+              ⬇️ TÉLÉCHARGER LE PDF
+            </button>
+          )}
+
           {(owned || free) && (
             <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
               style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 8 }}>
