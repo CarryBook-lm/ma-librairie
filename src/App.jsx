@@ -6321,7 +6321,7 @@ export default function App() {
                         setLgPaymentStep(1);
                         setLgShowGift(false);
                         setCarryCarePage("lineQuiz");
-                        setPage("home");
+                        setPage("carrycare");
                       } else if (r.quiz_type === "facial") {
                         if (data.typeAnswers) setBfTypeAnswers(data.typeAnswers);
                         if (data.problems) setBfProblems(data.problems);
@@ -6331,7 +6331,7 @@ export default function App() {
                         setBfPaymentStep(1);
                         setBfShowGift(false);
                         setCarryCarePage("facialQuiz");
-                        setPage("home");
+                        setPage("carrycare");
                       } else if (r.quiz_type === "body") {
                         if (data.typeAnswers) setBbTypeAnswers(data.typeAnswers);
                         if (data.problems) setBbProblems(data.problems);
@@ -6341,7 +6341,7 @@ export default function App() {
                         setBbPaymentStep(1);
                         setBbShowGift(false);
                         setCarryCarePage("bodyQuiz");
-                        setPage("home");
+                        setPage("carrycare");
                       } else if (r.quiz_type === "hair") {
                         if (data.texture) setCapTexture(data.texture);
                         if (data.problems) setCapProblems(data.problems);
@@ -6351,7 +6351,7 @@ export default function App() {
                         setCapPaymentStep(1);
                         setCapShowGift(false);
                         setCarryCarePage("hairQuiz");
-                        setPage("home");
+                        setPage("carrycare");
                       } else {
                         setSelectedResult(r);
                         setPage("myResultDetail");
