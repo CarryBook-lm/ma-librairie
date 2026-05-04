@@ -4604,6 +4604,9 @@ export default function App() {
   const [excerptMode, setExcerptMode] = useState(false);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
+  const [myResults, setMyResults] = useState([]);
+  const [loadingMyResults, setLoadingMyResults] = useState(false);
+  const [selectedResult, setSelectedResult] = useState(null);
   const [cachedBooks, setCachedBooks] = useState({});
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
@@ -4713,6 +4716,12 @@ export default function App() {
       window.removeEventListener("beforeinstallprompt", handleInstall);
     };
   }, []);
+
+  useEffect(() => {
+    if (page === "myResults" && user) {
+      fetchMyResults();
+    }
+  }, [page, user]);
 
   useEffect(() => {
     fetchBooks();
@@ -4895,6 +4904,31 @@ export default function App() {
       if (cached) setBooks(JSON.parse(cached));
     }
     setLoading(false);
+  }
+
+  async function fetchMyResults() {
+    if (!user) {
+      setMyResults([]);
+      return;
+    }
+    setLoadingMyResults(true);
+    try {
+      const { data, error } = await supabase
+        .from("carrycare_results")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Erreur fetch résultats:", error);
+        setMyResults([]);
+      } else {
+        setMyResults(data || []);
+      }
+    } catch (e) {
+      console.error("Erreur fetch résultats:", e);
+      setMyResults([]);
+    }
+    setLoadingMyResults(false);
   }
 
   function shareBook(book) {
@@ -5258,6 +5292,7 @@ export default function App() {
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
     { id: "quiz", label: "🎯 Quiz" },
+    { id: "myResults", label: "💎 Mes résultats" },
     { id: "contact", label: "Contact" },
   ];
 
@@ -6200,6 +6235,174 @@ export default function App() {
               <div style={{ fontSize: 13, color: G.textDim, marginBottom: 8 }}>🔄 Accès immédiat après paiement</div>
               <div style={{ fontSize: 13, color: G.textDim }}>💳 Tu peux aussi acheter des livres hors quota</div>
             </div>
+          </div>
+        )}
+
+        {/* MES RÉSULTATS */}
+        {page === "myResults" && (
+          <div style={{ padding: "32px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 8 }}>Mes résultats</div>
+            <div style={{ fontSize: 22, color: G.text, marginBottom: 6 }}>💎 Tous tes diagnostics CarryCare</div>
+            <div style={{ fontSize: 13, color: G.textDim, marginBottom: 24 }}>Retrouve à tout moment les résultats des quiz que tu as déjà payés.</div>
+
+            {!user && (
+              <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 24, textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+                <div style={{ fontSize: 15, color: G.text, marginBottom: 16 }}>Connecte-toi pour voir tes résultats sauvegardés</div>
+                <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Se connecter</button>
+              </div>
+            )}
+
+            {user && loadingMyResults && (
+              <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Chargement de tes résultats...</div>
+            )}
+
+            {user && !loadingMyResults && myResults.length === 0 && (
+              <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 24, textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+                <div style={{ fontSize: 15, color: G.text, marginBottom: 8 }}>Aucun résultat pour le moment</div>
+                <div style={{ fontSize: 13, color: G.textDim, marginBottom: 16 }}>Fais un diagnostic CarryCare pour commencer.</div>
+                <button onClick={() => setPage("home")} style={{ background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Découvrir CarryCare</button>
+              </div>
+            )}
+
+            {user && !loadingMyResults && myResults.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {myResults.map(r => {
+                  const quizLabels = { facial: { emoji: "✨", name: "Beauté Faciale", color: "#e91e63" }, body: { emoji: "🧴", name: "Beauté Corporelle", color: "#f48fb1" }, hair: { emoji: "💆", name: "Beauté Capillaire", color: "#c9a66b" }, line: { emoji: "🏃‍♀️", name: "Garde la Ligne", color: "#4caf50" } };
+                  const ql = quizLabels[r.quiz_type] || { emoji: "💎", name: r.quiz_type, color: G.gold };
+                  const dateStr = new Date(r.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+                  return (
+                    <div key={r.id} onClick={() => { setSelectedResult(r); setPage("myResultDetail"); }} style={{ background: G.surface, border: "1px solid " + G.border, borderLeft: "4px solid " + ql.color, borderRadius: 10, padding: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{ fontSize: 32 }}>{ql.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, color: G.text, fontWeight: "bold", marginBottom: 4 }}>{ql.name}</div>
+                        <div style={{ fontSize: 12, color: G.textDim }}>📅 {dateStr}</div>
+                      </div>
+                      <div style={{ fontSize: 20, color: G.gold }}>›</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* DÉTAIL RÉSULTAT */}
+        {page === "myResultDetail" && selectedResult && (
+          <div style={{ padding: "32px 16px 80px" }}>
+            <button onClick={() => { setPage("myResults"); setSelectedResult(null); }} style={{ background: "transparent", border: "1px solid " + G.border, color: G.text, padding: "8px 16px", borderRadius: 8, cursor: "pointer", marginBottom: 20, fontSize: 13 }}>← Retour à mes résultats</button>
+
+            {(() => {
+              const r = selectedResult;
+              const quizLabels = { facial: { emoji: "✨", name: "Beauté Faciale", color: "#e91e63" }, body: { emoji: "🧴", name: "Beauté Corporelle", color: "#f48fb1" }, hair: { emoji: "💆", name: "Beauté Capillaire", color: "#c9a66b" }, line: { emoji: "🏃‍♀️", name: "Garde la Ligne", color: "#4caf50" } };
+              const ql = quizLabels[r.quiz_type] || { emoji: "💎", name: r.quiz_type, color: G.gold };
+              const dateStr = new Date(r.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+              const data = r.result_data || {};
+
+              return (
+                <div>
+                  <div style={{ background: ql.color, borderRadius: 12, padding: 20, marginBottom: 20, color: "#fff", textAlign: "center" }}>
+                    <div style={{ fontSize: 40, marginBottom: 8 }}>{ql.emoji}</div>
+                    <div style={{ fontSize: 20, fontWeight: "bold", marginBottom: 4 }}>{ql.name}</div>
+                    <div style={{ fontSize: 12, opacity: 0.9 }}>📅 {dateStr}</div>
+                  </div>
+
+                  {/* Résultat principal selon le type de quiz */}
+                  {r.quiz_type === "facial" && data.result && (
+                    <div>
+                      {data.result.skinType && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 6 }}>TYPE DE PEAU</div>
+                          <div style={{ fontSize: 18, color: G.text, fontWeight: "bold" }}>{data.result.skinType.label || data.result.skinType.code}</div>
+                          {data.result.skinType.description && <div style={{ fontSize: 13, color: G.textDim, marginTop: 8, lineHeight: 1.6 }}>{data.result.skinType.description}</div>}
+                        </div>
+                      )}
+                      {data.problems && data.problems.length > 0 && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>PROBLÈMES IDENTIFIÉS</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            {data.problems.map((p, i) => <div key={i} style={{ background: G.goldDim, color: G.text, padding: "6px 12px", borderRadius: 16, fontSize: 12 }}>{p}</div>)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {r.quiz_type === "body" && data.result && (
+                    <div>
+                      {data.result.bodySkinType && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 6 }}>TYPE DE PEAU CORPORELLE</div>
+                          <div style={{ fontSize: 18, color: G.text, fontWeight: "bold" }}>{data.result.bodySkinType.label || data.result.bodySkinType.code}</div>
+                        </div>
+                      )}
+                      {data.problems && data.problems.length > 0 && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>PROBLÈMES IDENTIFIÉS</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            {data.problems.map((p, i) => <div key={i} style={{ background: G.goldDim, color: G.text, padding: "6px 12px", borderRadius: 16, fontSize: 12 }}>{p}</div>)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {r.quiz_type === "hair" && data.result && (
+                    <div>
+                      {data.texture && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 6 }}>TEXTURE CAPILLAIRE</div>
+                          <div style={{ fontSize: 18, color: G.text, fontWeight: "bold" }}>{data.texture}</div>
+                        </div>
+                      )}
+                      {data.problems && data.problems.length > 0 && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>PROBLÈMES IDENTIFIÉS</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            {data.problems.map((p, i) => <div key={i} style={{ background: G.goldDim, color: G.text, padding: "6px 12px", borderRadius: 16, fontSize: 12 }}>{p}</div>)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {r.quiz_type === "line" && (
+                    <div>
+                      {data.bmi && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 6 }}>IMC</div>
+                          <div style={{ fontSize: 22, color: G.text, fontWeight: "bold" }}>{typeof data.bmi === "number" ? data.bmi.toFixed(1) : data.bmi}</div>
+                          {data.bmiCategory && <div style={{ fontSize: 13, color: G.textDim, marginTop: 4 }}>{data.bmiCategory}</div>}
+                        </div>
+                      )}
+                      {data.targetCalories && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 6 }}>CALORIES CIBLE / JOUR</div>
+                          <div style={{ fontSize: 22, color: G.text, fontWeight: "bold" }}>{Math.round(data.targetCalories)} kcal</div>
+                        </div>
+                      )}
+                      {data.objective && (
+                        <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 6 }}>OBJECTIF</div>
+                          <div style={{ fontSize: 16, color: G.text }}>{data.objective}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bouton retour CarryCare pour refaire/accéder au diagnostic complet */}
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 20 }}>
+                    <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.6, marginBottom: 12 }}>
+                      💡 Pour refaire un nouveau diagnostic complet ou explorer plus de conseils, retourne sur CarryCare.
+                    </div>
+                    <button onClick={() => setPage("home")} style={{ background: ql.color, color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: "bold", cursor: "pointer", width: "100%" }}>
+                      Aller sur CarryCare
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
