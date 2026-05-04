@@ -1248,6 +1248,21 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <div style={{ fontSize: 13, color: CC.textFaint }}>Beauté & Santé</div>
       </div>
 
+      {/* Bouton Mes résultats */}
+      <div style={{ padding: "16px 16px 0" }}>
+        <div onClick={() => setPage("myResults")} style={{
+          background: "#fff", border: "2px solid " + CC.noir, borderRadius: 14, padding: "14px 16px",
+          cursor: "pointer", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+        }}>
+          <div style={{ fontSize: 28 }}>💎</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 2 }}>Mes résultats</div>
+            <div style={{ fontSize: 11, color: CC.textFaint }}>Retrouve tous tes diagnostics passés</div>
+          </div>
+          <div style={{ fontSize: 18, color: CC.noir }}>›</div>
+        </div>
+      </div>
+
       {/* Cartes Quiz */}
       <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
         {quizCards.map(card => (
@@ -3195,7 +3210,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
 // ═══════════════════════════════════════════════
 // GARDE LA LIGNE — COMPOSANT QUIZ
 // ═══════════════════════════════════════════════
-function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLgData, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift, beautyQuizPrice }) {
+function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLgData, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift, beautyQuizPrice, books, setSelectedBook }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [lgStep, lgPaymentStep]);
 
@@ -3984,10 +3999,18 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
               <div style={{ fontSize: 13, color: "#3a3a3a", lineHeight: 1.6, marginBottom: 14, textAlign: "center" }}>
                 Découvre <strong>"Le Programme Complet du Régime Thonon"</strong> — un guide détaillé qui complète parfaitement ton plan personnalisé avec menus, recettes et conseils pour réussir ta perte de poids.
               </div>
-              <a href="https://carrybooks.com/?book=24" target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", width: "100%", padding: 14, background: "#bf360c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", textDecoration: "none", textAlign: "center", boxSizing: "border-box" }}>
+              <button onClick={() => {
+                const thononBook = books.find(b => b.title && b.title.toLowerCase().includes("thonon"));
+                if (thononBook) {
+                  setSelectedBook(thononBook);
+                  setPage("detail");
+                } else {
+                  setPage("catalog");
+                }
+              }}
+                style={{ display: "block", width: "100%", padding: 14, background: "#bf360c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", textAlign: "center", boxSizing: "border-box" }}>
                 📖 Voir le livre
-              </a>
+              </button>
             </div>
           )}
 
@@ -4722,6 +4745,22 @@ export default function App() {
       fetchMyResults();
     }
   }, [page, user]);
+
+  // Détecter ?book=XX dans l'URL et ouvrir directement le livre
+  useEffect(() => {
+    if (books.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get("book");
+    if (bookId) {
+      const targetBook = books.find(b => String(b.id) === String(bookId));
+      if (targetBook) {
+        setSelectedBook(targetBook);
+        setPage("detail");
+        // Nettoyer l'URL pour éviter de re-déclencher au refresh
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, [books]);
 
   useEffect(() => {
     fetchBooks();
@@ -6559,6 +6598,7 @@ export default function App() {
                 lgPaymentMethod={lgPaymentMethod} setLgPaymentMethod={setLgPaymentMethod}
                 lgShowGift={lgShowGift} setLgShowGift={setLgShowGift}
                 beautyQuizPrice={beautyQuizPrice}
+                books={books} setSelectedBook={setSelectedBook}
               />
             )}
             {carryCarePage === "hairQuiz" && (
