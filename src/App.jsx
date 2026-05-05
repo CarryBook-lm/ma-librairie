@@ -6818,7 +6818,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                CarryBooks (« nous », « notre », « nos ») est une application de lecture numérique opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Maffo Tchinmogne Sylviane Landrine, basée à Yaoundé, Cameroun. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
+                CarryBooks (« nous », « notre », « nos ») est une application de lecture numérique opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Sylviane Landrine Maffo, basée à Yaoundé, Cameroun. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
               </p>
             </div>
 
@@ -6927,7 +6927,7 @@ export default function App() {
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
                 📧 <strong>E-mail :</strong> carrybooks.com@gmail.com<br />
                 🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
-                👤 <strong>Responsable :</strong> Maffo Tchinmogne Sylviane Landrine<br />
+                👤 <strong>Responsable :</strong> Sylviane Landrine Maffo<br />
                 📍 <strong>Adresse :</strong> Yaoundé, Cameroun
               </p>
             </div>
