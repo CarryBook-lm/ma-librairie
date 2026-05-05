@@ -8,9 +8,9 @@ const supabase = createClient(
 
 const CATEGORIES = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
-  "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces"],
+  "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces", "Guide pratique"],
   "Développement personnel": ["Confiance en soi", "Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
-  "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education"],
+  "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education", "Guide pratique"],
   "Formation": [],
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
