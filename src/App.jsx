@@ -6149,7 +6149,7 @@ export default function App() {
       {/* MENU */}
       {showMenu && (
         <div style={{ position: "fixed", top: 56, left: 0, right: 0, bottom: 0, zIndex: 99, background: "rgba(0,0,0,0.95)" }} onClick={() => setShowMenu(false)}>
-          <div style={{ background: G.navSurface, borderBottom: "1px solid " + G.navBorder }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: G.navSurface, borderBottom: "1px solid " + G.navBorder, maxHeight: "calc(100vh - 56px)", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
             {user && (
               <div style={{ padding: "16px 24px", borderBottom: "1px solid " + G.navBorder, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
                 <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%" }} />
