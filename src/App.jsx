@@ -587,6 +587,11 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
           ))}
         </div>
       </div>
+
+      {/* Bouton de partage Carry'Quiz */}
+      <div style={{ padding: "16px 16px 0" }}>
+        <ShareCarryQuiz />
+      </div>
     </div>
   );
 }
@@ -616,6 +621,36 @@ function ShareButtons({ quizName, quizType }) {
   return (
     <div style={{ background: "#fff", border: "1px solid #e0e0e0", borderRadius: 12, padding: 16, marginTop: 20, marginBottom: 12 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a1a1a", marginBottom: 12, textAlign: "center" }}>📤 Partage avec tes amies</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
+        <button onClick={shareFacebook} style={{ background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
+        <button onClick={copyLink} style={{ background: "#666", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>🔗 Copier</button>
+      </div>
+    </div>
+  );
+}
+
+// COMPOSANT PARTAGE CARRY'QUIZ — Bouton dédié sur la page Carry'Quiz
+// ═══════════════════════════════════════════════
+function ShareCarryQuiz() {
+  const quizUrl = "https://carrybooks.com/carry-quiz";
+  const carryCareUrl = "https://carrybooks.com/carrycare";
+  const text = "🎯 Découvre Carry'Quiz sur CarryBooks !\n\n✨ Des quiz qui révèlent la vérité sur toi :\n• ❤️ Amour & Relations\n• 🧠 Personnalité & QI\n• 💰 Argent & Succès\n• 🔥 Quiz Choc\n\n💜 Et si tu cherches un accompagnement beauté personnalisé, découvre aussi CarryCare !\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl + "\n\n👉 Carry'Quiz : " + quizUrl;
+
+  function shareWhatsApp() {
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  }
+  function shareFacebook() {
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(quizUrl) + "&quote=" + encodeURIComponent(text), "_blank");
+  }
+  function copyLink() {
+    navigator.clipboard?.writeText(text).then(() => alert("✅ Lien Carry'Quiz copié ! Partage-le où tu veux.")).catch(() => alert("Impossible de copier. Utilise WhatsApp ou Facebook."));
+  }
+
+  return (
+    <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", border: "2px solid #c9a84c", borderRadius: 14, padding: 18, marginTop: 16, marginBottom: 8 }}>
+      <div style={{ fontSize: 14, fontWeight: "bold", color: "#c9a84c", marginBottom: 6, textAlign: "center" }}>🎯 Défie tes amis</div>
+      <div style={{ fontSize: 12, color: "#ddd", marginBottom: 14, textAlign: "center", fontStyle: "italic" }}>Partage Carry'Quiz et compare vos résultats 🔥</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
         <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
         <button onClick={shareFacebook} style={{ background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
