@@ -595,16 +595,19 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
 // COMPOSANT PARTAGE RÉUTILISABLE
 // ═══════════════════════════════════════════════
 function ShareButtons({ quizName, quizType }) {
-  const url = "https://carrybooks.com";
+  const baseUrl = "https://carrybooks.com";
+  const carryCareUrl = baseUrl + "/carrycare";
+
   const text = quizType === "carrycare"
-    ? "🌸 Je viens de faire mon diagnostic " + quizName + " sur CarryCare ! Tu veux savoir ton type de peau et avoir une routine personnalisée ? Découvre CarryCare 👉 " + url
-    : "🎯 Je viens de faire le quiz " + quizName + " sur Carry'Quiz ! Découvre la vérité sur toi-même 👉 " + url;
+    ? "🌸 Je viens de faire mon diagnostic " + quizName + " sur CarryCare !\n\n💜 Toi aussi, découvre ton type de peau et reçois une routine 100% personnalisée.\n\n🔥 OFFRE DE LANCEMENT : -50% pour les 100 premières inscrites !\n\n👉 " + carryCareUrl
+    : "🎯 Je viens de faire le quiz " + quizName + " sur Carry'Quiz ! Découvre la vérité sur toi-même 👉 " + baseUrl + "\n\n💜 Bonus : essaie aussi CarryCare, le diagnostic beauté personnalisé.\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
   }
   function shareFacebook() {
-    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url) + "&quote=" + encodeURIComponent(text), "_blank");
+    const shareUrl = quizType === "carrycare" ? carryCareUrl : baseUrl;
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(shareUrl) + "&quote=" + encodeURIComponent(text), "_blank");
   }
   function copyLink() {
     navigator.clipboard?.writeText(text).then(() => alert("✅ Lien copié ! Partage-le où tu veux.")).catch(() => alert("Impossible de copier. Utilise WhatsApp ou Facebook."));
@@ -613,6 +616,35 @@ function ShareButtons({ quizName, quizType }) {
   return (
     <div style={{ background: "#fff", border: "1px solid #e0e0e0", borderRadius: 12, padding: 16, marginTop: 20, marginBottom: 12 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a1a1a", marginBottom: 12, textAlign: "center" }}>📤 Partage avec tes amies</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
+        <button onClick={shareFacebook} style={{ background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
+        <button onClick={copyLink} style={{ background: "#666", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>🔗 Copier</button>
+      </div>
+    </div>
+  );
+}
+
+// COMPOSANT PARTAGE CARRYCARE — Bouton dédié sur la page CarryCare
+// ═══════════════════════════════════════════════
+function ShareCarryCare() {
+  const carryCareUrl = "https://carrybooks.com/carrycare";
+  const text = "💜 Découvre CarryCare sur CarryBooks !\n\n🌸 Un accompagnement beauté 100% personnalisé selon ton profil :\n• 💄 Diagnostic peau du visage\n• 🧴 Soin du corps\n• 💇🏾‍♀️ Routine cheveux\n• ⚖️ Plan nutrition\n\n🔥 OFFRE DE LANCEMENT : -50% pour les 100 premières inscrites !\n\n👉 " + carryCareUrl;
+
+  function shareWhatsApp() {
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  }
+  function shareFacebook() {
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(carryCareUrl) + "&quote=" + encodeURIComponent(text), "_blank");
+  }
+  function copyLink() {
+    navigator.clipboard?.writeText(text).then(() => alert("✅ Lien CarryCare copié ! Partage-le où tu veux.")).catch(() => alert("Impossible de copier. Utilise WhatsApp ou Facebook."));
+  }
+
+  return (
+    <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "2px solid #e8b4b8", borderRadius: 14, padding: 18, marginTop: 16 }}>
+      <div style={{ fontSize: 14, fontWeight: "bold", color: "#1a1a1a", marginBottom: 6, textAlign: "center" }}>💜 Aide une amie à se révéler</div>
+      <div style={{ fontSize: 12, color: "#5a4a3a", marginBottom: 14, textAlign: "center", fontStyle: "italic" }}>Partage CarryCare et fais profiter de l'offre -50% 🔥</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
         <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
         <button onClick={shareFacebook} style={{ background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
@@ -1380,6 +1412,11 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic" }}>
           ✨ Diagnostic personnalisé propulsé par CarryCare
         </div>
+      </div>
+
+      {/* Bouton de partage CarryCare */}
+      <div style={{ padding: "0 16px 20px" }}>
+        <ShareCarryCare />
       </div>
     </div>
   );
