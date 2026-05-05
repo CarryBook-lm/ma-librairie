@@ -4977,16 +4977,32 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [books]);
 
+  // Fonction pour recharger les prix depuis Supabase (réutilisable)
+  const fetchPrices = async () => {
+    const { data } = await supabase.from("sub_settings").select("*").limit(1);
+    if (data && data.length > 0) {
+      setSubSettings(data[0]);
+      // Vérifier les prix avec !== undefined et !== null (autorise 0 comme valeur valide)
+      if (data[0].quiz_price !== undefined && data[0].quiz_price !== null) {
+        setQuizPrice(data[0].quiz_price);
+      }
+      if (data[0].carrycare_price !== undefined && data[0].carrycare_price !== null) {
+        setBeautyQuizPrice(data[0].carrycare_price);
+      }
+    }
+  };
+
+  // Recharger automatiquement les prix quand on visite Quiz ou CarryCare
+  useEffect(() => {
+    if (page === "quiz" || page === "carrycare") {
+      fetchPrices();
+    }
+  }, [page]);
+
   useEffect(() => {
     fetchBooks();
-    // Charger les paramètres d'abonnement au démarrage
-    supabase.from("sub_settings").select("*").limit(1).then(({ data }) => {
-      if (data && data.length > 0) {
-        setSubSettings(data[0]);
-        if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
-        if (data[0].carrycare_price) setBeautyQuizPrice(data[0].carrycare_price);
-      }
-    });
+    // Charger les prix au démarrage
+    fetchPrices();
     // Load all book ratings for catalog display
     supabase.from("book_reviews").select("book_id, rating").then(({ data }) => {
       if (!data) return;
