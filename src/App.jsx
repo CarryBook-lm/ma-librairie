@@ -5574,7 +5574,10 @@ export default function App() {
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
     { id: "quiz", label: "🎯 Quiz" },
     { id: "myResults", label: "💎 Mes résultats" },
+    { id: "about", label: "À propos" },
+    { id: "faq", label: "FAQ" },
     { id: "contact", label: "Contact" },
+    { id: "confidentialite", label: "🔒 Confidentialité" },
   ];
 
   // READER
@@ -6802,6 +6805,16 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textFaint }}>Afrique & Monde</div>
                 </div>
               </div>
+            </div>
+
+            {/* Lien vers la politique de confidentialité */}
+            <div style={{ textAlign: "center", marginTop: 24, padding: "20px 0" }}>
+              <button onClick={() => setPage("confidentialite")} style={{
+                background: "none", border: "none", color: G.gold, fontSize: 13,
+                cursor: "pointer", textDecoration: "underline", letterSpacing: 1
+              }}>
+                🔒 Politique de confidentialité
+              </button>
             </div>
           </div>
         )}
