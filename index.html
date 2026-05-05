@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#f5f0e8">
     <link rel="icon" type="image/jpeg" href="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <link rel="apple-touch-icon" href="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <meta name="description" content="CarryBooks — Ta librairie numérique camerounaise. Lis. Apprends. Évolue." />
@@ -20,9 +20,104 @@
     <meta name="twitter:description" content="CarryBooks — Ta librairie numérique camerounaise. Lis. Apprends. Évolue." />
     <meta name="twitter:image" content="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <title>CarryBooks</title>
+    <style>
+      /* SPLASH SCREEN — affiché instantanément avant React */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #f5f0e8;
+        font-family: Georgia, serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #f5f0e8 0%, #ede7d9 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.4s ease-out;
+      }
+      #splash-screen.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .splash-logo {
+        width: 110px;
+        height: 110px;
+        border-radius: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 32px rgba(201, 168, 76, 0.25);
+        animation: splashPulse 1.6s ease-in-out infinite;
+      }
+      .splash-title {
+        font-size: 32px;
+        font-weight: bold;
+        color: #1a1208;
+        margin: 0 0 6px 0;
+        letter-spacing: 1px;
+      }
+      .splash-tagline {
+        font-size: 12px;
+        color: #7a6a50;
+        letter-spacing: 4px;
+        margin-bottom: 36px;
+        text-transform: uppercase;
+      }
+      .splash-loader {
+        display: flex;
+        gap: 8px;
+      }
+      .splash-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #c9a84c;
+        animation: splashBounce 1.2s ease-in-out infinite;
+      }
+      .splash-dot:nth-child(2) { animation-delay: 0.15s; }
+      .splash-dot:nth-child(3) { animation-delay: 0.3s; }
+
+      @keyframes splashPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      @keyframes splashBounce {
+        0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+        40% { transform: translateY(-12px); opacity: 1; }
+      }
+    </style>
   </head>
   <body>
+    <!-- Splash screen affiché INSTANTANÉMENT pendant que React charge -->
+    <div id="splash-screen">
+      <img src="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" alt="CarryBooks" class="splash-logo" />
+      <h1 class="splash-title">CarryBooks</h1>
+      <div class="splash-tagline">LIS · APPRENDS · ÉVOLUE</div>
+      <div class="splash-loader">
+        <div class="splash-dot"></div>
+        <div class="splash-dot"></div>
+        <div class="splash-dot"></div>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Cacher le splash screen quand React a fini de charger
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          var splash = document.getElementById("splash-screen");
+          if (splash) {
+            splash.classList.add("fade-out");
+            setTimeout(function () {
+              if (splash.parentNode) splash.parentNode.removeChild(splash);
+            }, 500);
+          }
+        }, 300);
+      });
+    </script>
   </body>
 </html>
