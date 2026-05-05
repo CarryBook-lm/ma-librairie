@@ -36,6 +36,71 @@ const supabase = createClient(
   }
 );
 
+// ============================================================
+// URL ROUTING — Sync URL avec state pour partage et tracking
+// ============================================================
+
+const slugify = (str) => {
+  if (!str) return "";
+  return String(str)
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+};
+
+const PAGE_TO_PATH = {
+  home: "/",
+  library: "/ma-bibliotheque",
+  catalog: "/catalogue",
+  carrycare: "/carrycare",
+  quiz: "/carry-quiz",
+  detail: "/livre",
+  reader: "/lecture",
+  myResults: "/mes-resultats",
+  myResultDetail: "/mes-resultats",
+  about: "/a-propos",
+  faq: "/faq",
+  favorites: "/favoris",
+};
+
+const PATH_TO_PAGE = {
+  "/": "home",
+  "/ma-bibliotheque": "library",
+  "/catalogue": "catalog",
+  "/carrycare": "carrycare",
+  "/carry-quiz": "quiz",
+  "/mes-resultats": "myResults",
+  "/a-propos": "about",
+  "/faq": "faq",
+  "/favoris": "favorites",
+};
+
+const getPageFromURL = () => {
+  const path = window.location.pathname;
+  if (path.startsWith("/livre/")) return "detail";
+  if (path.startsWith("/lecture/")) return "reader";
+  if (path.startsWith("/mes-resultats/") && path.length > 16) return "myResultDetail";
+  return PATH_TO_PAGE[path] || "home";
+};
+
+const getSlugFromURL = () => {
+  const path = window.location.pathname;
+  if (path.startsWith("/livre/")) return path.replace("/livre/", "");
+  if (path.startsWith("/lecture/")) return path.replace("/lecture/", "");
+  return null;
+};
+
+const buildPath = (page, book) => {
+  const base = PAGE_TO_PATH[page] || "/";
+  if ((page === "detail" || page === "reader") && book) {
+    return `${base}/${slugify(book.title || book.id)}`;
+  }
+  return base;
+};
+
 const CATEGORIES = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
   "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education", "Guide Pratique"],
@@ -4634,8 +4699,13 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
 
 export default function App() {
   const [page, setPage] = useState(() => {
+    // Priorité 1 : Lire la page depuis l'URL (pour partage et deep links)
+    const urlPage = getPageFromURL();
+    if (urlPage && urlPage !== "home") return urlPage;
+    // Priorité 2 : Mode offline -> bibliothèque
     if (!navigator.onLine && localStorage.getItem("cachedBooksList")) return "library";
-    return "home";
+    // Par défaut : accueil
+    return urlPage || "home";
   });
   const [books, setBooks] = useState(() => {
     try {
@@ -4778,9 +4848,22 @@ export default function App() {
     }
   }, [page, user]);
 
-  // Détecter ?book=XX dans l'URL et ouvrir directement le livre
+  // Détecter livre dans l'URL (slug /livre/xxx OU ?book=XX) et ouvrir
   useEffect(() => {
     if (books.length === 0) return;
+
+    // Méthode 1 : Slug dans le path (/livre/le-quartier-silencieux)
+    const slug = getSlugFromURL();
+    if (slug) {
+      const targetBook = books.find(b => slugify(b.title || b.id) === slug);
+      if (targetBook) {
+        setSelectedBook(targetBook);
+        // page déjà mise à "detail" ou "reader" via getPageFromURL
+        return;
+      }
+    }
+
+    // Méthode 2 : Ancien format ?book=XX (pour compatibilité)
     const params = new URLSearchParams(window.location.search);
     const bookId = params.get("book");
     if (bookId) {
@@ -4788,10 +4871,36 @@ export default function App() {
       if (targetBook) {
         setSelectedBook(targetBook);
         setPage("detail");
-        // Nettoyer l'URL pour éviter de re-déclencher au refresh
-        window.history.replaceState({}, "", window.location.pathname);
+        // Rediriger vers la nouvelle URL propre
+        window.history.replaceState({}, "", buildPath("detail", targetBook));
       }
     }
+  }, [books]);
+
+  // Synchroniser l'URL à chaque changement de page (pour partage et tracking)
+  useEffect(() => {
+    const newPath = buildPath(page, selectedBook);
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({ page, bookId: selectedBook?.id }, "", newPath);
+    }
+  }, [page, selectedBook]);
+
+  // Gérer le bouton "Retour" du navigateur
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlPage = getPageFromURL();
+      const slug = getSlugFromURL();
+
+      if (slug && books.length > 0) {
+        const targetBook = books.find(b => slugify(b.title || b.id) === slug);
+        if (targetBook) {
+          setSelectedBook(targetBook);
+        }
+      }
+      setPage(urlPage);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [books]);
 
   useEffect(() => {
@@ -4891,6 +5000,25 @@ export default function App() {
         loadUserPurchases(session.user.id);
         // Sauvegarder session dans Preferences
         Preferences.set({ key: "sb-session", value: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }) }).catch(() => {});
+
+        // Restaurer la page d'origine après login OAuth (si on était ailleurs avant)
+        if (event === "SIGNED_IN") {
+          try {
+            const redirectPath = sessionStorage.getItem("carrybooks-redirect-after-login");
+            if (redirectPath && redirectPath !== "/" && window.location.pathname === "/") {
+              sessionStorage.removeItem("carrybooks-redirect-after-login");
+              // Mettre à jour l'URL et la page
+              window.history.replaceState({}, "", redirectPath);
+              // Déterminer la page cible
+              let targetPage = "home";
+              if (redirectPath.startsWith("/livre/")) targetPage = "detail";
+              else if (redirectPath.startsWith("/lecture/")) targetPage = "reader";
+              else if (redirectPath.startsWith("/mes-resultats/") && redirectPath.length > 16) targetPage = "myResultDetail";
+              else if (PATH_TO_PAGE[redirectPath]) targetPage = PATH_TO_PAGE[redirectPath];
+              setPage(targetPage);
+            }
+          } catch (e) {}
+        }
       }
       if (event === "SIGNED_OUT") {
         setPurchasedBooks([]);
@@ -4940,6 +5068,14 @@ export default function App() {
   }
 
   async function signInWithGoogle() {
+    // Sauvegarder la page actuelle avant la redirection OAuth
+    try {
+      const currentPath = window.location.pathname;
+      if (currentPath && currentPath !== "/") {
+        sessionStorage.setItem("carrybooks-redirect-after-login", currentPath);
+      }
+    } catch (e) {}
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: "https://www.carrybooks.com" }
