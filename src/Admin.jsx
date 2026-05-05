@@ -26,15 +26,25 @@ const emptyForm = {
   can_read: true, can_download: false, featured: false
 };
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "CarryBooks2026!";
+const ADMIN_PASSWORD_FALLBACK = import.meta.env.VITE_ADMIN_PASSWORD || "CarryBooks2026!";
 
 export default function Admin() {
   const [adminAuth, setAdminAuth] = useState(() => localStorage.getItem("cb_admin") === "ok");
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState(false);
+  const [adminPassword, setAdminPassword] = useState(ADMIN_PASSWORD_FALLBACK);
+
+  // Charger le mot de passe admin depuis Supabase au démarrage
+  useEffect(() => {
+    supabase.from("sub_settings").select("admin_password").limit(1).then(({ data }) => {
+      if (data && data.length > 0 && data[0].admin_password) {
+        setAdminPassword(data[0].admin_password);
+      }
+    });
+  }, []);
 
   function handleAdminLogin() {
-    if (adminInput === ADMIN_PASSWORD) {
+    if (adminInput === adminPassword) {
       localStorage.setItem("cb_admin", "ok");
       setAdminAuth(true);
       setAdminError(false);
@@ -77,6 +87,12 @@ export default function Admin() {
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
   const [carrycarePrice, setCarrycarePrice] = useState(500);
   const [carrycarePriceSaving, setCarrycarePriceSaving] = useState(false);
+  // États pour le changement de mot de passe admin
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdMessage, setPwdMessage] = useState({ type: "", text: "" });
+  const [pwdSaving, setPwdSaving] = useState(false);
   const [promoCodes, setPromoCodes] = useState([]);
   const [newPromo, setNewPromo] = useState({ code: "", discount_pct: 20, expires_at: "", uses_max: "" });
   const [stats, setStats] = useState({ totalRevenue: 0, totalPurchases: 0, totalUsers: 0, topBooks: [] });
@@ -309,6 +325,7 @@ export default function Admin() {
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
             { id: "stats", label: "Statistiques", icon: "📈" },
+            { id: "security", label: "Sécurité", icon: "🔐" },
           ].map(item => (
             <div key={item.id} onClick={() => { setView(item.id); setShowMenu(false); }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
@@ -666,6 +683,132 @@ export default function Admin() {
             <button onClick={() => { fetchStats(); }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 13, cursor: "pointer" }}>
               🔄 Rafraîchir les statistiques
             </button>
+          </div>
+        )}
+
+        {/* SECURITY - CHANGEMENT MOT DE PASSE */}
+        {view === "security" && (
+          <div>
+            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🔐 Sécurité</h2>
+
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Changer le mot de passe admin</h3>
+              <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>
+                Le mot de passe admin protège l'accès à cette interface. Choisis un mot de passe fort.
+              </p>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>Mot de passe actuel</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={e => setOldPassword(e.target.value)}
+                  placeholder="Ton mot de passe actuel"
+                  style={{ width: "100%", padding: "12px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>Nouveau mot de passe</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Au moins 8 caractères"
+                  style={{ width: "100%", padding: "12px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>Confirmer le nouveau mot de passe</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Retape le nouveau mot de passe"
+                  style={{ width: "100%", padding: "12px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }}
+                />
+              </div>
+
+              {pwdMessage.text && (
+                <div style={{
+                  padding: 12, marginBottom: 14, borderRadius: 6, fontSize: 13,
+                  background: pwdMessage.type === "success" ? "rgba(76, 175, 80, 0.1)" : "rgba(244, 67, 54, 0.1)",
+                  color: pwdMessage.type === "success" ? "#4CAF50" : "#f44336",
+                  border: "1px solid " + (pwdMessage.type === "success" ? "#4CAF50" : "#f44336")
+                }}>
+                  {pwdMessage.text}
+                </div>
+              )}
+
+              <button
+                onClick={async () => {
+                  setPwdMessage({ type: "", text: "" });
+                  // Validations
+                  if (!oldPassword || !newPassword || !confirmPassword) {
+                    setPwdMessage({ type: "error", text: "❌ Tous les champs sont obligatoires" });
+                    return;
+                  }
+                  if (oldPassword !== adminPassword) {
+                    setPwdMessage({ type: "error", text: "❌ Le mot de passe actuel est incorrect" });
+                    return;
+                  }
+                  if (newPassword.length < 8) {
+                    setPwdMessage({ type: "error", text: "❌ Le nouveau mot de passe doit faire au moins 8 caractères" });
+                    return;
+                  }
+                  if (newPassword !== confirmPassword) {
+                    setPwdMessage({ type: "error", text: "❌ Les nouveaux mots de passe ne correspondent pas" });
+                    return;
+                  }
+                  if (newPassword === oldPassword) {
+                    setPwdMessage({ type: "error", text: "❌ Le nouveau mot de passe doit être différent de l'ancien" });
+                    return;
+                  }
+                  // Sauvegarde dans Supabase
+                  setPwdSaving(true);
+                  const { data: existing } = await supabase.from("sub_settings").select("id").limit(1);
+                  let result;
+                  if (existing && existing.length > 0) {
+                    result = await supabase.from("sub_settings").update({ admin_password: newPassword }).eq("id", existing[0].id);
+                  } else {
+                    result = await supabase.from("sub_settings").insert([{ admin_password: newPassword }]);
+                  }
+                  setPwdSaving(false);
+                  if (result.error) {
+                    setPwdMessage({ type: "error", text: "❌ Erreur lors de la sauvegarde : " + result.error.message });
+                  } else {
+                    setAdminPassword(newPassword);
+                    setOldPassword("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setPwdMessage({ type: "success", text: "✅ Mot de passe modifié avec succès ! Pense à le noter en lieu sûr." });
+                  }
+                }}
+                disabled={pwdSaving}
+                style={{
+                  width: "100%", padding: 13,
+                  background: pwdSaving ? "#555" : "#c9a84c",
+                  border: "none", borderRadius: 6,
+                  color: "#000", fontWeight: "bold",
+                  cursor: pwdSaving ? "not-allowed" : "pointer",
+                  fontSize: 14
+                }}
+              >
+                {pwdSaving ? "⏳ Sauvegarde..." : "🔐 Changer le mot de passe"}
+              </button>
+            </div>
+
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20 }}>
+              <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>💡 Conseils de sécurité</h3>
+              <ul style={{ color: "#aaa", fontSize: 13, lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
+                <li>Utilise un mot de passe d'au moins <strong style={{ color: "#e8e0d0" }}>12 caractères</strong></li>
+                <li>Mélange majuscules, minuscules, chiffres et symboles</li>
+                <li>Ne le partage <strong style={{ color: "#e8e0d0" }}>jamais</strong> par email, SMS ou WhatsApp</li>
+                <li>Note-le dans un endroit sûr (gestionnaire de mots de passe, papier dans un coffre)</li>
+                <li>Change-le régulièrement (tous les 3 à 6 mois)</li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
