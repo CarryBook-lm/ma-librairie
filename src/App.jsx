@@ -64,6 +64,7 @@ const PAGE_TO_PATH = {
   about: "/a-propos",
   faq: "/faq",
   favorites: "/favoris",
+  confidentialite: "/confidentialite",
 };
 
 const PATH_TO_PAGE = {
@@ -76,6 +77,7 @@ const PATH_TO_PAGE = {
   "/a-propos": "about",
   "/faq": "faq",
   "/favoris": "favorites",
+  "/confidentialite": "confidentialite",
 };
 
 const getPageFromURL = () => {
@@ -6800,6 +6802,138 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textFaint }}>Afrique & Monde</div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {page === "confidentialite" && (
+          <div style={{ padding: "32px 16px 80px", maxWidth: 800, margin: "0 auto" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24, textAlign: "center" }}>Politique de Confidentialité</div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 12, lineHeight: 1.8, margin: 0, textAlign: "center", fontStyle: "italic" }}>
+                Dernière mise à jour : 5 mai 2026
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                CarryBooks (« nous », « notre », « nos ») est une application de lecture numérique opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Maffo Tchinmogne Sylviane Landrine, basée à Yaoundé, Cameroun. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>1. DONNÉES QUE NOUS COLLECTONS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Lorsque vous utilisez CarryBooks, nous pouvons collecter les informations suivantes :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li><strong style={{ color: G.text }}>Informations de compte</strong> : nom, prénom, adresse e-mail, photo de profil (lors de la connexion via Google).</li>
+                <li><strong style={{ color: G.text }}>Données de paiement</strong> : numéro de téléphone Mobile Money (MTN Money, Orange Money) pour finaliser les achats. Nous ne stockons aucune donnée bancaire.</li>
+                <li><strong style={{ color: G.text }}>Données d'utilisation</strong> : livres consultés, achats effectués, position de lecture, livres favoris, résultats de quiz CarryCare.</li>
+                <li><strong style={{ color: G.text }}>Données techniques</strong> : type d'appareil, navigateur, système d'exploitation, adresse IP approximative.</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>2. COMMENT NOUS UTILISONS VOS DONNÉES</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Vos données sont utilisées uniquement pour :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>Créer et gérer votre compte utilisateur.</li>
+                <li>Synchroniser vos achats et favoris entre vos appareils.</li>
+                <li>Traiter vos paiements via Mobile Money.</li>
+                <li>Vous proposer un contenu personnalisé (recommandations, résultats CarryCare).</li>
+                <li>Améliorer l'application et corriger les bugs.</li>
+                <li>Vous envoyer des informations importantes liées à votre compte.</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>3. PARTAGE AVEC DES TIERS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Nous utilisons les services tiers suivants, qui peuvent traiter une partie de vos données :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li><strong style={{ color: G.text }}>Google (Authentification)</strong> : pour vous permettre de vous connecter avec votre compte Google.</li>
+                <li><strong style={{ color: G.text }}>Supabase</strong> : pour stocker vos données de compte, achats et résultats.</li>
+                <li><strong style={{ color: G.text }}>Vercel</strong> : pour héberger l'application web.</li>
+                <li><strong style={{ color: G.text }}>Meta (Facebook Pixel)</strong> : pour mesurer l'efficacité de nos publicités et améliorer votre expérience. Vous pouvez refuser le suivi via les paramètres de votre navigateur.</li>
+                <li><strong style={{ color: G.text }}>MTN Mobile Money & Orange Money</strong> : pour traiter les paiements.</li>
+              </ul>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
+                Nous ne vendons <strong style={{ color: G.text }}>jamais</strong> vos données personnelles à des tiers.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>4. STOCKAGE LOCAL SUR VOTRE APPAREIL</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Nous stockons certaines données localement sur votre appareil (cache des livres, position de lecture, paramètres) pour vous permettre une expérience fluide même hors ligne. Ces données restent sur votre appareil et peuvent être supprimées à tout moment via les paramètres de votre navigateur ou en désinstallant l'application.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>5. SÉCURITÉ DES DONNÉES</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Nous protégeons vos données par les mesures suivantes : connexions chiffrées (HTTPS/TLS), authentification sécurisée via Google OAuth, stockage chiffré chez Supabase, et accès restreint à nos serveurs. Aucun système n'étant infaillible à 100%, nous nous engageons à vous notifier en cas de violation de données.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>6. VOS DROITS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Conformément à la réglementation, vous avez le droit de :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li><strong style={{ color: G.text }}>Accéder</strong> à vos données personnelles.</li>
+                <li><strong style={{ color: G.text }}>Corriger</strong> les informations inexactes.</li>
+                <li><strong style={{ color: G.text }}>Supprimer</strong> votre compte et toutes vos données.</li>
+                <li><strong style={{ color: G.text }}>Exporter</strong> vos données dans un format lisible.</li>
+                <li><strong style={{ color: G.text }}>Vous opposer</strong> au traitement de vos données.</li>
+              </ul>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
+                Pour exercer ces droits, contactez-nous par e-mail à <strong style={{ color: G.gold }}>carrybooks.com@gmail.com</strong>. Nous répondrons sous 30 jours maximum.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>7. PUBLIC ET MINEURS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                CarryBooks est destinée aux personnes âgées de <strong style={{ color: G.text }}>15 ans et plus</strong>. Si vous avez moins de 15 ans, vous ne devez pas utiliser cette application. Si nous découvrons qu'un compte appartient à un enfant de moins de 15 ans, nous le supprimerons immédiatement.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>8. CONSERVATION DES DONNÉES</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Nous conservons vos données aussi longtemps que votre compte est actif. Lorsque vous supprimez votre compte, nous supprimons toutes vos données dans un délai de 30 jours, sauf obligation légale de conservation (par exemple, factures pour des raisons fiscales).
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>9. MODIFICATIONS DE CETTE POLITIQUE</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Nous pouvons mettre à jour cette politique de temps en temps. La date en haut de cette page indique la dernière révision. Pour les changements importants, nous vous notifierons par e-mail ou via un message dans l'application.
+              </p>
+            </div>
+
+            <div style={{ background: G.goldDim, border: "1px solid " + G.gold, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>10. NOUS CONTACTER</div>
+              <p style={{ color: G.text, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Pour toute question concernant cette politique ou vos données personnelles :
+              </p>
+              <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
+                📧 <strong>E-mail :</strong> carrybooks.com@gmail.com<br />
+                🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
+                👤 <strong>Responsable :</strong> Maffo Tchinmogne Sylviane Landrine<br />
+                📍 <strong>Adresse :</strong> Yaoundé, Cameroun
+              </p>
+            </div>
+
+            <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
+              Merci de faire confiance à CarryBooks 💜
             </div>
           </div>
         )}
