@@ -5474,6 +5474,10 @@ export default function App() {
     setReviewComment("");
     setShowMenu(false);
     if (book.price === 0) cacheBook(book);
+    // Scroll automatique en haut de la page (UX : ne pas garder le scroll de la page précédente)
+    setTimeout(() => {
+      try { window.scrollTo({ top: 0, behavior: "instant" }); } catch (e) { window.scrollTo(0, 0); }
+    }, 0);
     // 📊 Pixel Meta : ViewContent (utile pour retargeting)
     trackPixelEvent("ViewContent", {
       content_ids: [String(book.id)],
@@ -5541,7 +5545,8 @@ export default function App() {
       await supabase.from("purchases").insert([{
         user_id: user.id,
         book_id: book.id,
-        amount: 0
+        amount: 0,
+        type: "subscription"
       }]);
       // 2) Incrémenter books_used dans subscriptions
       const newUsed = (subscription.books_used || 0) + 1;
@@ -5619,7 +5624,12 @@ export default function App() {
               const newP = [...purchasedBooks, paymentBook.id];
               setPurchasedBooks(newP);
               localStorage.setItem("purchasedBooks", JSON.stringify(newP));
-              if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
+              if (user) await supabase.from("purchases").insert([{
+                user_id: user.id,
+                book_id: paymentBook.id,
+                amount: paymentBook.price || 0,
+                type: "sale"
+              }]);
               cacheBook(paymentBook);
               // 📊 Pixel Meta : Purchase (achat réussi - événement le plus important !)
               trackPixelEvent("Purchase", {

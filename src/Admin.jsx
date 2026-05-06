@@ -246,7 +246,7 @@ export default function Admin() {
   async function fetchUsers() {
     const { data, error } = await supabase
       .from("purchases")
-      .select("user_id, book_id, created_at")
+      .select("user_id, book_id, created_at, amount, type")
       .order("created_at", { ascending: false });
     if (error) { console.error("Purchases error:", error); }
     if (data) setUsers(data);
@@ -321,12 +321,41 @@ export default function Admin() {
     setActiveTab("info");
   }
 
-  const totalRevenue = users.reduce((s, purchase) => {
+  // Calcul des stats par type d'achat
+  // Filtrage des purchases : seulement celles avec un livre existant
+  const validPurchases = users.filter(u => books.find(b => b.id === u.book_id));
+  // Ventes réelles : type "sale" OU pas de type défini ET prix > 0 (rétrocompatibilité)
+  const realSales = validPurchases.filter(u => {
+    if (u.type === "sale") return true;
+    if (u.type === "subscription" || u.type === "free") return false;
+    // Anciennes données sans type : si le livre est gratuit -> pas une vente
+    const book = books.find(b => b.id === u.book_id);
+    return book && book.price > 0;
+  });
+  // Déblocages par abonnement
+  const subscriptionUnlocks = validPurchases.filter(u => u.type === "subscription");
+  // Livres gratuits débloqués
+  const freeUnlocks = validPurchases.filter(u => {
+    if (u.type === "free") return true;
+    if (u.type === "sale" || u.type === "subscription") return false;
+    const book = books.find(b => b.id === u.book_id);
+    return book && book.price === 0;
+  });
+
+  // Revenus = uniquement les ventes RÉELLES
+  const totalRevenue = realSales.reduce((s, purchase) => {
+    if (purchase.amount !== null && purchase.amount !== undefined) {
+      return s + purchase.amount;
+    }
+    // Fallback : utiliser le prix actuel du livre (pour anciennes ventes)
     const book = books.find(b => b.id === purchase.book_id);
     return s + (book ? (book.price || 0) : 0);
   }, 0);
+
   const activeBooks = books.filter(b => b.status === "actif").length;
-  const totalSales = users.length;
+  const totalSales = realSales.length;
+  const totalSubscriptionUnlocks = subscriptionUnlocks.length;
+  const totalFreeUnlocks = freeUnlocks.length;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" }}>
@@ -386,19 +415,42 @@ export default function Admin() {
         {view === "dashboard" && (
           <div>
             <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>Tableau de bord</h1>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
-              {[
-                { label: "Revenus", value: `${totalRevenue.toLocaleString()} F`, icon: "💰" },
-                { label: "Ventes", value: totalSales, icon: "🛒" },
-                { label: "Actifs", value: activeBooks, icon: "📚" },
-              ].map((stat, i) => (
-                <div key={i} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
-                  <div style={{ fontSize: 22, marginBottom: 6 }}>{stat.icon}</div>
-                  <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{stat.value}</div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{stat.label}</div>
-                </div>
-              ))}
+
+            {/* SECTION REVENUS */}
+            <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #1f1810 100%)", border: "1.5px solid #c9a84c", borderRadius: 10, padding: 20, marginBottom: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase" }}>💰 Chiffre d'affaires (ventes réelles)</div>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", marginBottom: 4 }}>{totalRevenue.toLocaleString()} F</div>
+              <div style={{ fontSize: 12, color: "#888" }}>{totalSales} vente{totalSales !== 1 ? "s" : ""} payante{totalSales !== 1 ? "s" : ""}</div>
             </div>
+
+            {/* STATS DÉTAILLÉES */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>🎟️</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#9d7fff" }}>{totalSubscriptionUnlocks}</div>
+                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Déblocages abo</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>🎁</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#4caf50" }}>{totalFreeUnlocks}</div>
+                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Livres gratuits</div>
+              </div>
+            </div>
+
+            {/* TOTAL DISTRIBUÉS */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 24 }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>📦</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{totalSales + totalSubscriptionUnlocks + totalFreeUnlocks}</div>
+                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Total distribués</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>📚</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{activeBooks}</div>
+                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Livres actifs</div>
+              </div>
+            </div>
+
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
               <h3 style={{ color: "#c9a84c", marginBottom: 14, fontSize: 14 }}>Derniers livres ajoutés</h3>
               {books.slice(0, 5).map(book => (
