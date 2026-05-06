@@ -813,7 +813,22 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
           try {
             const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: collectData.reference }) });
             const checkData = await checkRes.json();
-            if (checkData.status === "SUCCESSFUL") { clearInterval(check); setQuizPage("quizResult"); setLoading(false); }
+            if (checkData.status === "SUCCESSFUL") {
+              clearInterval(check);
+              setQuizPage("quizResult");
+              setLoading(false);
+              // 📊 Pixel Meta : Lead (paiement quiz validé = lead converti)
+              try {
+                if (typeof window !== "undefined" && typeof window.fbq === "function") {
+                  window.fbq("track", "Lead", {
+                    content_name: quiz?.title || "Carry'Quiz",
+                    content_category: "Quiz",
+                    value: quizPrice || 0,
+                    currency: "XAF",
+                  });
+                }
+              } catch (e) {}
+            }
             else if (checkData.status === "FAILED" || attempts > 60) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
           } catch(e) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
         }, 3000);
@@ -4771,6 +4786,22 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
 }
 
 
+// Helper pour tracker les événements Meta Pixel (Facebook)
+// Vérifie que fbq existe (le Pixel peut être bloqué par AdBlock ou indisponible)
+function trackPixelEvent(eventName, params = {}) {
+  try {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      if (Object.keys(params).length > 0) {
+        window.fbq("track", eventName, params);
+      } else {
+        window.fbq("track", eventName);
+      }
+    }
+  } catch (e) {
+    // Silent fail si Pixel pas disponible
+  }
+}
+
 export default function App() {
   const [page, setPage] = useState(() => {
     // Priorité 1 : Lire la page depuis l'URL (pour partage et deep links)
@@ -5107,6 +5138,18 @@ export default function App() {
 
         // Restaurer la page d'origine après login OAuth (si on était ailleurs avant)
         if (event === "SIGNED_IN") {
+          // 📊 Pixel Meta : CompleteRegistration (inscription/connexion Google)
+          // On track seulement la première fois (pour éviter doublons à chaque session)
+          try {
+            const alreadyTracked = localStorage.getItem("pixel_registered_" + session.user.id);
+            if (!alreadyTracked) {
+              trackPixelEvent("CompleteRegistration", {
+                content_name: "Google Sign-In",
+                status: true,
+              });
+              localStorage.setItem("pixel_registered_" + session.user.id, "1");
+            }
+          } catch (e) {}
           try {
             const redirectPath = sessionStorage.getItem("carrybooks-redirect-after-login");
             if (redirectPath && redirectPath !== "/" && window.location.pathname === "/") {
@@ -5405,6 +5448,15 @@ export default function App() {
     setReviewComment("");
     setShowMenu(false);
     if (book.price === 0) cacheBook(book);
+    // 📊 Pixel Meta : ViewContent (utile pour retargeting)
+    trackPixelEvent("ViewContent", {
+      content_ids: [String(book.id)],
+      content_name: book.title || "",
+      content_type: "product",
+      content_category: book.category || "Livre",
+      value: book.price || 0,
+      currency: "XAF",
+    });
   }
 
   function startReading(book, excerpt = false) {
@@ -5426,6 +5478,14 @@ export default function App() {
       setPaymentStep(1);
       setPaymentMethod(null);
       setPhoneNumber("");
+      // 📊 Pixel Meta : AddToCart (intention d'achat)
+      trackPixelEvent("AddToCart", {
+        content_ids: [String(book.id)],
+        content_name: book.title || "",
+        content_type: "product",
+        value: book.price || 0,
+        currency: "XAF",
+      });
       return;
     }
     setExcerptMode(excerpt);
@@ -5535,6 +5595,15 @@ export default function App() {
               localStorage.setItem("purchasedBooks", JSON.stringify(newP));
               if (user) await supabase.from("purchases").insert([{ user_id: user.id, book_id: paymentBook.id }]);
               cacheBook(paymentBook);
+              // 📊 Pixel Meta : Purchase (achat réussi - événement le plus important !)
+              trackPixelEvent("Purchase", {
+                content_ids: [String(paymentBook.id)],
+                content_name: paymentBook.title || "",
+                content_type: "product",
+                value: paymentBook.price || 0,
+                currency: "XAF",
+                num_items: 1,
+              });
             } else {
               setPaymentStep(6);
             }
@@ -6152,13 +6221,22 @@ export default function App() {
                     <div style={{ fontSize: 11, color: "#7a5c00", marginBottom: 4 }}>Prix du livre</div>
                     <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{paymentBook.price?.toLocaleString()} FCFA</div>
                   </div>
-                  <button onClick={() => setPaymentStep(2)} style={{
+                  <button onClick={() => {
+                    setPaymentStep(2);
+                    // 📊 Pixel Meta : InitiateCheckout (a commencé le paiement)
+                    trackPixelEvent("InitiateCheckout", {
+                      content_ids: [String(paymentBook.id)],
+                      content_name: paymentBook.title || "",
+                      value: paymentBook.price || 0,
+                      currency: "XAF",
+                      num_items: 1,
+                    });
+                  }} style={{
                     width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
                   }}>
                     💎 Continuer vers le paiement
                   </button>
-                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>Annuler</button>
                 </>
               )}
               {paymentStep === 2 && (
