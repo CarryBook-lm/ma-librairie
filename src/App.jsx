@@ -6449,27 +6449,13 @@ export default function App() {
         }}>
           <div style={{
             background: "#ffffff", borderRadius: 16, padding: 28,
-            width: "100%", maxWidth: 360, textAlign: "center",
+            width: "100%", maxWidth: 340, textAlign: "center",
             boxShadow: "0 20px 60px rgba(0,0,0,0.5)"
           }}>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>🌐</div>
-            <h2 style={{ color: "#1a1208", fontSize: 20, marginBottom: 12, marginTop: 0 }}>
-              Ouvre dans ton navigateur
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🌐</div>
+            <h2 style={{ color: "#1a1208", fontSize: 17, marginBottom: 24, marginTop: 0, lineHeight: 1.4, fontWeight: "bold" }}>
+              Pour une meilleure expérience,<br/>ouvre dans ton navigateur
             </h2>
-            <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-              Pour profiter pleinement de CarryBooks et te connecter en 1 clic avec Google, ouvre ce lien dans <strong style={{ color: "#1a1208" }}>Chrome</strong> ou <strong style={{ color: "#1a1208" }}>Safari</strong>.
-            </p>
-
-            <div style={{ background: "#fff8e1", borderRadius: 10, padding: 14, marginBottom: 20, textAlign: "left" }}>
-              <div style={{ fontSize: 12, color: "#7a5c00", fontWeight: "bold", marginBottom: 8 }}>
-                📱 Comment faire :
-              </div>
-              <div style={{ fontSize: 12, color: "#7a5c00", lineHeight: 1.6 }}>
-                1. Clique sur les <strong>3 points ⋯</strong> en haut à droite<br />
-                2. Sélectionne <strong>"Ouvrir dans le navigateur"</strong><br />
-                3. Ou copie le lien et colle dans Chrome
-              </div>
-            </div>
 
             <button
               onClick={() => {
