@@ -4791,6 +4791,7 @@ export default function App() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
+  const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
@@ -5020,6 +5021,16 @@ export default function App() {
         ratings[id] = { avg: Math.round((arr.reduce((s,v)=>s+v,0)/arr.length)*10)/10, count: arr.length, userRating: 0 };
       });
       setBookRatings(ratings);
+    });
+    // Charger les best-sellers (livres les plus achetés)
+    supabase.from("purchases").select("book_id").then(({ data }) => {
+      if (!data) return;
+      const counts = {};
+      data.forEach(p => { counts[p.book_id] = (counts[p.book_id] || 0) + 1; });
+      const sorted = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([book_id, count]) => ({ book_id: parseInt(book_id), count }));
+      setTopPurchasedBooks(sorted);
     });
     const p = localStorage.getItem("purchasedBooks");
     if (p) setPurchasedBooks(JSON.parse(p));
@@ -6542,6 +6553,62 @@ export default function App() {
                     <span style={{ lineHeight: 1.2, textAlign: "center" }}>Carry'Quiz</span>
                   </button>
                 </div>
+
+                {/* BEST-SELLERS — Top 5 livres les plus achetés */}
+                {(() => {
+                  const bookSales = {};
+                  // Compter les ventes par livre
+                  // Note: bookRatings contient déjà count = nombre d'avis,
+                  // mais on veut vraiment les ventes. On utilise donc topPurchasedBooks
+                  // qui doit être chargé depuis Supabase
+                  const sortedBestSellers = topPurchasedBooks
+                    .map(p => books.find(b => b.id === p.book_id))
+                    .filter(Boolean)
+                    .slice(0, 5);
+                  if (sortedBestSellers.length === 0) return null;
+                  return (
+                    <div style={{ marginBottom: 28 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", marginBottom: 12 }}>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>
+                          🔥 Best-sellers
+                        </div>
+                        <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, textTransform: "uppercase" }}>
+                          Les + lus
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                        {sortedBestSellers.map((book, idx) => (
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 130, cursor: "pointer", position: "relative" }}>
+                            {/* Badge classement */}
+                            <div style={{
+                              position: "absolute", top: 6, left: 6, zIndex: 2,
+                              width: 28, height: 28, borderRadius: "50%",
+                              background: idx === 0 ? "#FFD700" : idx === 1 ? "#C0C0C0" : idx === 2 ? "#CD7F32" : G.gold,
+                              color: "#000", display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 13, fontWeight: "bold", boxShadow: "0 2px 6px rgba(0,0,0,0.3)"
+                            }}>
+                              {idx + 1}
+                            </div>
+                            <div style={{ width: 130, height: 180, background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
+                              {book.cover
+                                ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                              {book.title}
+                            </div>
+                            <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 4 }}>
+                              {book.author || "Auteur"}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold }}>
+                              {book.price === 0 ? "Gratuit" : (book.price?.toLocaleString() + " FCFA")}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* NOUVEAUTÉS */}
                 {books.slice(0, 10).length > 0 && (
