@@ -4791,6 +4791,9 @@ export default function App() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
+  const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
+  const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
+  const [reviewSaving, setReviewSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -5350,21 +5353,45 @@ export default function App() {
     }
   }
 
-  async function submitRating(bookId, rating) {
+  async function submitRating(bookId, rating, comment = null) {
     if (!user) { alert("Connecte-toi pour noter ce livre"); return; }
+    setReviewSaving(true);
     const existing = await supabase.from("book_reviews").select("id").eq("book_id", bookId).eq("user_id", user.id).limit(1);
+    const updateData = comment !== null ? { rating, comment } : { rating };
     if (existing.data && existing.data.length > 0) {
-      await supabase.from("book_reviews").update({ rating }).eq("id", existing.data[0].id);
+      await supabase.from("book_reviews").update(updateData).eq("id", existing.data[0].id);
     } else {
-      await supabase.from("book_reviews").insert([{ book_id: bookId, user_id: user.id, rating }]);
+      const insertData = comment !== null ? { book_id: bookId, user_id: user.id, rating, comment } : { book_id: bookId, user_id: user.id, rating };
+      await supabase.from("book_reviews").insert([insertData]);
     }
+    setReviewSaving(false);
     loadBookRatings(bookId);
+    loadBookReviews(bookId);
+  }
+
+  // Charger les avis textuels publics du livre (uniquement ceux approuvés)
+  async function loadBookReviews(bookId) {
+    const { data } = await supabase
+      .from("book_reviews")
+      .select("rating, comment, user_id, created_at")
+      .eq("book_id", bookId)
+      .eq("approved", true)
+      .not("comment", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (data) {
+      setBookReviews(data.filter(r => r.comment && r.comment.trim().length > 0));
+    } else {
+      setBookReviews([]);
+    }
   }
 
   function openBook(book) {
     setSelectedBook(book);
     setPage("detail");
     loadBookRatings(book.id);
+    loadBookReviews(book.id);
+    setReviewComment("");
     setShowMenu(false);
     if (book.price === 0) cacheBook(book);
   }
@@ -5916,6 +5943,107 @@ export default function App() {
               {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
             </button>
           )}
+
+          {/* SECTION AVIS DES LECTEURS */}
+          <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1px solid " + G.border }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: G.gold, textTransform: "uppercase", marginBottom: 4, textAlign: "center" }}>
+              📝 Avis des lecteurs
+            </div>
+            <div style={{ fontSize: 13, color: G.textDim, marginBottom: 18, textAlign: "center", fontStyle: "italic" }}>
+              {bookReviews.length > 0
+                ? `${bookReviews.length} ${bookReviews.length === 1 ? "lecteur a partagé" : "lecteurs ont partagé"} son expérience`
+                : "Sois le premier à partager ton expérience !"}
+            </div>
+
+            {/* Formulaire pour laisser un avis (pour les acheteurs) */}
+            {(owned || free) && user && (
+              <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>💬 Laisse un commentaire</div>
+                <textarea
+                  value={reviewComment}
+                  onChange={e => setReviewComment(e.target.value)}
+                  placeholder="Qu'as-tu pensé de ce livre ? Partage ton avis avec les autres lecteurs..."
+                  rows={3}
+                  maxLength={500}
+                  style={{
+                    width: "100%", padding: 10, background: G.bg, color: G.text,
+                    border: "1px solid " + G.border, borderRadius: 6, fontSize: 13,
+                    fontFamily: "inherit", resize: "vertical", boxSizing: "border-box"
+                  }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                  <div style={{ fontSize: 10, color: G.textFaint }}>
+                    {reviewComment.length}/500 caractères
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (reviewComment.trim().length < 3) {
+                        alert("Ton commentaire doit faire au moins 3 caractères");
+                        return;
+                      }
+                      const r = bookRatings[book.id] || { userRating: 0 };
+                      const ratingToUse = r.userRating > 0 ? r.userRating : 5;
+                      await submitRating(book.id, ratingToUse, reviewComment.trim());
+                      setReviewComment("");
+                      alert("✅ Merci pour ton avis !\n\nIl sera visible publiquement après vérification par notre équipe (sous 24h).");
+                    }}
+                    disabled={reviewSaving || reviewComment.trim().length < 3}
+                    style={{
+                      padding: "8px 16px",
+                      background: reviewSaving || reviewComment.trim().length < 3 ? G.surface2 : G.gold,
+                      color: reviewSaving || reviewComment.trim().length < 3 ? G.textFaint : "#000",
+                      border: "none", borderRadius: 6, fontSize: 12, fontWeight: "bold",
+                      cursor: reviewSaving || reviewComment.trim().length < 3 ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    {reviewSaving ? "⏳" : "Publier"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Liste des avis */}
+            {bookReviews.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {bookReviews.map((review, idx) => {
+                  const userInitial = review.user_id ? review.user_id.substring(0, 2).toUpperCase() : "??";
+                  const date = review.created_at ? new Date(review.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "";
+                  return (
+                    <div key={idx} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 14 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: G.gold, color: "#000",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 12, fontWeight: "bold"
+                          }}>
+                            {userInitial}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 12, color: G.text, fontWeight: "bold" }}>Lecteur·rice</div>
+                            <div style={{ fontSize: 10, color: G.textFaint }}>{date}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 1 }}>
+                          {[1,2,3,4,5].map(s => (
+                            <span key={s} style={{ fontSize: 12, color: s <= review.rating ? "#f5c518" : G.border }}>★</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.6, margin: 0, fontStyle: "italic" }}>
+                        « {review.comment} »
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
+                Aucun avis pour le moment.
+              </div>
+            )}
+          </div>
 
           {/* SECTION RECOMMANDATIONS — Ceci pourrait vous intéresser */}
           {(() => {

@@ -93,6 +93,10 @@ export default function Admin() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwdMessage, setPwdMessage] = useState({ type: "", text: "" });
   const [pwdSaving, setPwdSaving] = useState(false);
+  // États pour la modération des avis
+  const [pendingReviews, setPendingReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsFilter, setReviewsFilter] = useState("pending"); // pending | approved | all
   const [promoCodes, setPromoCodes] = useState([]);
   const [newPromo, setNewPromo] = useState({ code: "", discount_pct: 20, expires_at: "", uses_max: "" });
   const [stats, setStats] = useState({ totalRevenue: 0, totalPurchases: 0, totalUsers: 0, topBooks: [] });
@@ -117,6 +121,37 @@ export default function Admin() {
   async function fetchPromoCodes() {
     const { data } = await supabase.from("promo_codes").select("*").order("created_at", { ascending: false });
     if (data) setPromoCodes(data);
+  }
+
+  async function loadPendingReviews(filter = "pending") {
+    setReviewsLoading(true);
+    let query = supabase
+      .from("book_reviews")
+      .select("id, book_id, user_id, rating, comment, approved, created_at")
+      .not("comment", "is", null)
+      .order("created_at", { ascending: false });
+
+    if (filter === "pending") {
+      query = query.eq("approved", false);
+    } else if (filter === "approved") {
+      query = query.eq("approved", true);
+    }
+
+    const { data } = await query;
+    if (data && data.length > 0) {
+      // Récupérer les titres des livres
+      const bookIds = [...new Set(data.map(r => r.book_id))];
+      const { data: booksData } = await supabase.from("books").select("id, title").in("id", bookIds);
+      const titlesMap = {};
+      if (booksData) booksData.forEach(b => { titlesMap[b.id] = b.title; });
+      const enriched = data
+        .filter(r => r.comment && r.comment.trim().length > 0)
+        .map(r => ({ ...r, book_title: titlesMap[r.book_id] }));
+      setPendingReviews(enriched);
+    } else {
+      setPendingReviews([]);
+    }
+    setReviewsLoading(false);
   }
 
   async function fetchStats() {
@@ -324,10 +359,15 @@ export default function Admin() {
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
+            { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "security", label: "Sécurité", icon: "🔐" },
           ].map(item => (
-            <div key={item.id} onClick={() => { setView(item.id); setShowMenu(false); }}
+            <div key={item.id} onClick={() => { 
+              setView(item.id); 
+              setShowMenu(false);
+              if (item.id === "reviews") loadPendingReviews(reviewsFilter);
+            }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                 background: view === item.id ? "#2a2a2a" : "transparent",
                 color: view === item.id ? "#c9a84c" : "#aaa",
@@ -683,6 +723,124 @@ export default function Admin() {
             <button onClick={() => { fetchStats(); }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 13, cursor: "pointer" }}>
               🔄 Rafraîchir les statistiques
             </button>
+          </div>
+        )}
+
+        {/* MODÉRATION AVIS */}
+        {view === "reviews" && (
+          <div>
+            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>💬 Modération des avis</h2>
+
+            {/* Filtres */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+              {[
+                { id: "pending", label: "⏳ En attente", color: "#f5a623" },
+                { id: "approved", label: "✅ Approuvés", color: "#4CAF50" },
+                { id: "all", label: "📋 Tous", color: "#888" },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => { setReviewsFilter(f.id); loadPendingReviews(f.id); }}
+                  style={{
+                    padding: "8px 14px",
+                    background: reviewsFilter === f.id ? f.color : "transparent",
+                    border: "1px solid " + (reviewsFilter === f.id ? f.color : "#2a2a2a"),
+                    borderRadius: 6,
+                    color: reviewsFilter === f.id ? "#000" : "#aaa",
+                    fontSize: 12, fontWeight: "bold", cursor: "pointer"
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+              <button
+                onClick={() => loadPendingReviews(reviewsFilter)}
+                style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 12, cursor: "pointer" }}
+              >
+                🔄 Rafraîchir
+              </button>
+            </div>
+
+            {reviewsLoading ? (
+              <p style={{ color: "#888", textAlign: "center", padding: 30 }}>⏳ Chargement...</p>
+            ) : pendingReviews.length === 0 ? (
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 30, textAlign: "center" }}>
+                <p style={{ color: "#888", fontSize: 14, margin: 0 }}>
+                  {reviewsFilter === "pending" ? "✨ Aucun avis en attente de modération !" : "Aucun avis dans cette catégorie."}
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {pendingReviews.map(review => {
+                  const date = review.created_at ? new Date(review.created_at).toLocaleString("fr-FR") : "";
+                  const userInitial = review.user_id ? review.user_id.substring(0, 2).toUpperCase() : "??";
+                  return (
+                    <div key={review.id} style={{
+                      background: "#1a1a1a",
+                      border: "1px solid " + (review.approved ? "#4CAF50" : "#f5a623"),
+                      borderRadius: 10, padding: 16
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "#c9a84c", color: "#000",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 12, fontWeight: "bold"
+                          }}>{userInitial}</div>
+                          <div>
+                            <div style={{ fontSize: 12, color: "#e8e0d0" }}>📕 {review.book_title || "Livre #" + review.book_id}</div>
+                            <div style={{ fontSize: 10, color: "#888" }}>{date}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 1 }}>
+                          {[1,2,3,4,5].map(s => (
+                            <span key={s} style={{ fontSize: 14, color: s <= review.rating ? "#f5c518" : "#444" }}>★</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p style={{ color: "#aaa", fontSize: 13, lineHeight: 1.6, margin: "0 0 12px 0", fontStyle: "italic", padding: 12, background: "#111", borderRadius: 6 }}>
+                        « {review.comment} »
+                      </p>
+                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                        {!review.approved && (
+                          <button
+                            onClick={async () => {
+                              await supabase.from("book_reviews").update({ approved: true }).eq("id", review.id);
+                              loadPendingReviews(reviewsFilter);
+                            }}
+                            style={{ padding: "8px 16px", background: "#4CAF50", border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
+                          >
+                            ✅ Approuver
+                          </button>
+                        )}
+                        {review.approved && (
+                          <button
+                            onClick={async () => {
+                              await supabase.from("book_reviews").update({ approved: false }).eq("id", review.id);
+                              loadPendingReviews(reviewsFilter);
+                            }}
+                            style={{ padding: "8px 16px", background: "transparent", border: "1px solid #f5a623", borderRadius: 6, color: "#f5a623", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
+                          >
+                            ⏸️ Désapprouver
+                          </button>
+                        )}
+                        <button
+                          onClick={async () => {
+                            if (!confirm("Supprimer définitivement cet avis ?")) return;
+                            await supabase.from("book_reviews").delete().eq("id", review.id);
+                            loadPendingReviews(reviewsFilter);
+                          }}
+                          style={{ padding: "8px 16px", background: "transparent", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
+                        >
+                          🗑️ Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
