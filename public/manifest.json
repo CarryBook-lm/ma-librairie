@@ -29,10 +29,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Administration",
-      "short_name": "Admin",
-      "description": "Accéder à l'espace admin de CarryBooks",
-      "url": "/admin",
+      "name": "Ma bibliothèque",
+      "short_name": "Bibliothèque",
+      "description": "Mes livres achetés",
+      "url": "/ma-bibliotheque",
       "icons": [
         {
           "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
