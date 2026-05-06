@@ -5916,6 +5916,83 @@ export default function App() {
               {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
             </button>
           )}
+
+          {/* SECTION RECOMMANDATIONS — Ceci pourrait vous intéresser */}
+          {(() => {
+            // Algorithme intelligent : sous-catégorie + auteur, fallback catégorie
+            const sameSubAndAuthor = books.filter(b =>
+              b.id !== book.id &&
+              b.subcategory && book.subcategory && b.subcategory === book.subcategory &&
+              b.author && book.author && b.author === book.author
+            );
+            const sameSub = books.filter(b =>
+              b.id !== book.id &&
+              b.subcategory && book.subcategory && b.subcategory === book.subcategory &&
+              !sameSubAndAuthor.find(x => x.id === b.id)
+            );
+            const sameAuthor = books.filter(b =>
+              b.id !== book.id &&
+              b.author && book.author && b.author === book.author &&
+              !sameSubAndAuthor.find(x => x.id === b.id) &&
+              !sameSub.find(x => x.id === b.id)
+            );
+            const sameCat = books.filter(b =>
+              b.id !== book.id &&
+              b.category && book.category && b.category === book.category &&
+              !sameSubAndAuthor.find(x => x.id === b.id) &&
+              !sameSub.find(x => x.id === b.id) &&
+              !sameAuthor.find(x => x.id === b.id)
+            );
+            // Combine en priorité : sub+auteur > sous-cat > auteur > catégorie, max 8 livres
+            const recommendations = [...sameSubAndAuthor, ...sameSub, ...sameAuthor, ...sameCat].slice(0, 8);
+
+            if (recommendations.length === 0) return null;
+
+            return (
+              <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1px solid " + G.border }}>
+                <div style={{ fontSize: 11, letterSpacing: 2, color: G.gold, textTransform: "uppercase", marginBottom: 4, textAlign: "center" }}>
+                  🎯 Ceci pourrait vous intéresser
+                </div>
+                <div style={{ fontSize: 13, color: G.textDim, marginBottom: 18, textAlign: "center", fontStyle: "italic" }}>
+                  D'autres lecteurs ont aussi aimé...
+                </div>
+                <div style={{
+                  display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12,
+                  scrollbarWidth: "thin", WebkitOverflowScrolling: "touch"
+                }}>
+                  {recommendations.map(rec => (
+                    <div
+                      key={rec.id}
+                      onClick={() => {
+                        setSelectedBook(rec);
+                        window.scrollTo(0, 0);
+                      }}
+                      style={{
+                        flexShrink: 0, width: 130, cursor: "pointer",
+                        background: G.surface, borderRadius: 8, padding: 8,
+                        border: "1px solid " + G.border, transition: "transform 0.2s"
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                    >
+                      {rec.cover
+                        ? <img src={rec.cover} alt={rec.title} style={{ width: "100%", height: 170, objectFit: "cover", borderRadius: 4, marginBottom: 6 }} />
+                        : <div style={{ width: "100%", height: 170, background: G.surface2, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, marginBottom: 6 }}>📖</div>}
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        {rec.title}
+                      </div>
+                      <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 4 }}>
+                        {rec.author || "Auteur"}
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold }}>
+                        {rec.price === 0 ? "Gratuit" : (rec.price?.toLocaleString() + " FCFA")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* PAYMENT MODAL in detail page */}
