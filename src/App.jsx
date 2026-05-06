@@ -4786,6 +4786,19 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
 }
 
 
+// Helper pour détecter les WebViews Facebook/Instagram/TikTok
+// (où Google OAuth ne fonctionne pas)
+function isInAppBrowser() {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+  // Facebook : FB_IAB, FBAV, FBAN
+  // Instagram : Instagram
+  // TikTok : musical_ly, BytedanceWebview
+  // Snapchat : Snapchat
+  // LinkedIn : LinkedInApp
+  return /FBAN|FBAV|FB_IAB|Instagram|musical_ly|BytedanceWebview|Snapchat|LinkedInApp/i.test(ua);
+}
+
 // Helper pour tracker les événements Meta Pixel (Facebook)
 // Vérifie que fbq existe (le Pixel peut être bloqué par AdBlock ou indisponible)
 function trackPixelEvent(eventName, params = {}) {
@@ -4826,6 +4839,18 @@ export default function App() {
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
+  // État pour la popup "Ouvrir dans navigateur" (utilisateurs venus depuis Facebook/Instagram)
+  const [showOpenBrowserModal, setShowOpenBrowserModal] = useState(() => {
+    // Affiche la popup uniquement si on est dans un in-app browser
+    // ET seulement la première fois (sauvegarde dans sessionStorage pour éviter de réafficher)
+    try {
+      if (typeof window === "undefined") return false;
+      if (sessionStorage.getItem("inAppBrowserDismissed") === "1") return false;
+      return isInAppBrowser();
+    } catch (e) {
+      return false;
+    }
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -6414,6 +6439,82 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
       <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
+
+      {/* POPUP : Ouvrir dans le navigateur (pour les utilisateurs venant de Facebook/Instagram) */}
+      {showOpenBrowserModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 9999, padding: 20
+        }}>
+          <div style={{
+            background: "#ffffff", borderRadius: 16, padding: 28,
+            width: "100%", maxWidth: 360, textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5)"
+          }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>🌐</div>
+            <h2 style={{ color: "#1a1208", fontSize: 20, marginBottom: 12, marginTop: 0 }}>
+              Ouvre dans ton navigateur
+            </h2>
+            <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+              Pour profiter pleinement de CarryBooks et te connecter en 1 clic avec Google, ouvre ce lien dans <strong style={{ color: "#1a1208" }}>Chrome</strong> ou <strong style={{ color: "#1a1208" }}>Safari</strong>.
+            </p>
+
+            <div style={{ background: "#fff8e1", borderRadius: 10, padding: 14, marginBottom: 20, textAlign: "left" }}>
+              <div style={{ fontSize: 12, color: "#7a5c00", fontWeight: "bold", marginBottom: 8 }}>
+                📱 Comment faire :
+              </div>
+              <div style={{ fontSize: 12, color: "#7a5c00", lineHeight: 1.6 }}>
+                1. Clique sur les <strong>3 points ⋯</strong> en haut à droite<br />
+                2. Sélectionne <strong>"Ouvrir dans le navigateur"</strong><br />
+                3. Ou copie le lien et colle dans Chrome
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                // Tente d'ouvrir directement dans le navigateur natif
+                try {
+                  const url = window.location.href;
+                  // Sur Android : utiliser intent
+                  if (/Android/i.test(navigator.userAgent)) {
+                    window.location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end";
+                  } else {
+                    // Sur iOS : copier le lien
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(url);
+                      alert("✅ Lien copié ! Colle-le dans Safari ou Chrome.");
+                    }
+                  }
+                } catch (e) {
+                  alert("Copie ce lien : " + window.location.href);
+                }
+              }}
+              style={{
+                width: "100%", padding: 14, background: "#c9a84c", color: "#000",
+                border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold",
+                cursor: "pointer", marginBottom: 8, letterSpacing: 0.5
+              }}
+            >
+              🚀 Ouvrir dans le navigateur
+            </button>
+
+            <button
+              onClick={() => {
+                try { sessionStorage.setItem("inAppBrowserDismissed", "1"); } catch (e) {}
+                setShowOpenBrowserModal(false);
+              }}
+              style={{
+                width: "100%", padding: 12, background: "transparent",
+                border: "1px solid #ddd", borderRadius: 10,
+                color: "#888", fontSize: 12, cursor: "pointer"
+              }}
+            >
+              Continuer ici quand même
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* BANNIÈRE OFFLINE */}
       {!isOnline && (
