@@ -26,6 +26,59 @@
       "type": "image/jpeg",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Administration",
+      "short_name": "Admin",
+      "description": "Accéder à l'espace admin de CarryBooks",
+      "url": "/admin",
+      "icons": [
+        {
+          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+          "sizes": "192x192",
+          "type": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "name": "Catalogue",
+      "short_name": "Catalogue",
+      "description": "Parcourir tous les livres",
+      "url": "/catalogue",
+      "icons": [
+        {
+          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+          "sizes": "192x192",
+          "type": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "name": "CarryCare",
+      "short_name": "CarryCare",
+      "description": "Diagnostic beauté & bien-être",
+      "url": "/carrycare",
+      "icons": [
+        {
+          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+          "sizes": "192x192",
+          "type": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "name": "Carry Quiz",
+      "short_name": "Quiz",
+      "description": "Découvre la vérité sur toi",
+      "url": "/carry-quiz",
+      "icons": [
+        {
+          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+          "sizes": "192x192",
+          "type": "image/jpeg"
+        }
+      ]
+    }
   ]
 }
-
