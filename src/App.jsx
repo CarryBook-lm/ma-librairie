@@ -5334,6 +5334,7 @@ export default function App() {
   function canUseSubscriptionFor(book) {
     if (!subscription || subscription.status !== "actif") return false;
     if (book.price === 0 || purchasedBooks.includes(book.id)) return false;
+    if (book.exclude_from_subscription === true) return false; // Livre exclu de l'abonnement
     return booksLeftThisMonth() > 0;
   }
 
@@ -5959,6 +5960,26 @@ export default function App() {
           <div style={{ textAlign: "center", fontSize: 22, color: free ? G.green : G.gold, fontWeight: "bold", marginBottom: 20 }}>
             {free ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
           </div>
+          {/* Badge si livre exclu de l'abonnement (UNIQUEMENT visible pour les abonnés actifs) */}
+          {book.exclude_from_subscription === true && book.price > 0 && subscription && subscription.status === "actif" && (
+            <div style={{
+              background: "linear-gradient(135deg, #2a1a0d 0%, #3a2510 100%)",
+              border: "1.5px solid " + G.gold,
+              borderRadius: 8,
+              padding: "10px 14px",
+              marginBottom: 16,
+              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8
+            }}>
+              <span style={{ fontSize: 16 }}>⚠️</span>
+              <span style={{ fontSize: 11, color: G.gold, letterSpacing: 1.5, fontWeight: "bold", textTransform: "uppercase" }}>
+                Pas inclus dans ton abonnement
+              </span>
+            </div>
+          )}
           {book.summary && (
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Résumé</div>

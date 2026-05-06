@@ -23,7 +23,7 @@ const CATEGORIES = {
 const emptyForm = {
   title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
   summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
-  can_read: true, can_download: false, featured: false
+  can_read: true, can_download: false, featured: false, exclude_from_subscription: false
 };
 
 const ADMIN_PASSWORD_FALLBACK = import.meta.env.VITE_ADMIN_PASSWORD || "CarryBooks2026!";
@@ -1264,6 +1264,14 @@ export default function Admin() {
                     <div>
                       <div style={{ color: "#e8e0d0", fontSize: 14 }}>⭐ Mettre à la une (Hero)</div>
                       <div style={{ color: "#555", fontSize: 11 }}>Ce livre apparaîtra dans le carrousel hero de l'accueil</div>
+                    </div>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                    <input type="checkbox" checked={form.exclude_from_subscription === true} onChange={e => setForm(f => ({ ...f, exclude_from_subscription: e.target.checked }))}
+                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                    <div>
+                      <div style={{ color: "#e8e0d0", fontSize: 14 }}>🚫 Exclure de l'abonnement mensuel</div>
+                      <div style={{ color: "#555", fontSize: 11 }}>Les abonnés devront acheter ce livre individuellement (idéal pour les exclusivités)</div>
                     </div>
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
