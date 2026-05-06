@@ -1311,19 +1311,22 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
 
       {/* Save progress banner — shows after load */}
       {pdfLoaded && !excerptMode && (
-        <div style={{ background: "#1e1e10", borderBottom: "1px solid #c9a84c33", padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 11, color: "#aaa", flexShrink: 0 }}>📌 Sauvegarder ma page :</span>
+        <div style={{ background: startPage > 1 ? "#2a1f0a" : "#1e1e10", borderBottom: "1px solid " + (startPage > 1 ? "#c9a84c" : "#c9a84c33"), padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {startPage > 1 ? (
+            <span style={{ fontSize: 12, color: "#c9a84c", flexShrink: 0, fontWeight: "bold" }}>
+              📍 Reprends à la page {startPage}
+            </span>
+          ) : (
+            <span style={{ fontSize: 11, color: "#aaa", flexShrink: 0 }}>📌 Sauvegarder ma page :</span>
+          )}
           <input
             type="number" min="1" value={pageInput}
             onChange={e => { setPageInput(e.target.value); setPageSaved(false); }}
-            style={{ width: 52, background: "#2a2a1a", border: "1px solid #c9a84c55", color: "#c9a84c", borderRadius: 6, padding: "4px 8px", fontSize: 13, fontWeight: "bold", textAlign: "center" }}
+            style={{ width: 56, background: "#2a2a1a", border: "1px solid #c9a84c55", color: "#c9a84c", borderRadius: 6, padding: "4px 8px", fontSize: 13, fontWeight: "bold", textAlign: "center" }}
           />
           <button onClick={savePage} style={{ padding: "4px 12px", background: pageSaved ? "#2a4a2a" : "#c9a84c", border: "none", borderRadius: 6, color: pageSaved ? "#4caf50" : "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
-            {pageSaved ? "✅ Sauvegardé !" : "OK"}
+            {pageSaved ? "✅ Sauvegardé" : "💾 OK"}
           </button>
-          {startPage > 1 && (
-            <span style={{ fontSize: 10, color: "#666", marginLeft: "auto", flexShrink: 0 }}>Dernière: p.{startPage}</span>
-          )}
         </div>
       )}
 
@@ -5714,6 +5717,8 @@ export default function App() {
   }
 
   const filteredBooks = books.filter(b => {
+    // Hors ligne : cacher les livres PDF (ils ne fonctionnent pas hors connexion)
+    if (!isOnline && b.pdf_url) return false;
     const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.author?.toLowerCase().includes(searchQuery.toLowerCase());
     let matchCat = selectedCategory === "Tous" ||
@@ -5970,26 +5975,6 @@ export default function App() {
           <div style={{ textAlign: "center", fontSize: 22, color: free ? G.green : G.gold, fontWeight: "bold", marginBottom: 20 }}>
             {free ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
           </div>
-          {/* Badge si livre exclu de l'abonnement (UNIQUEMENT visible pour les abonnés actifs) */}
-          {book.exclude_from_subscription === true && book.price > 0 && subscription && subscription.status === "actif" && (
-            <div style={{
-              background: "linear-gradient(135deg, #2a1a0d 0%, #3a2510 100%)",
-              border: "1.5px solid " + G.gold,
-              borderRadius: 8,
-              padding: "10px 14px",
-              marginBottom: 16,
-              textAlign: "center",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8
-            }}>
-              <span style={{ fontSize: 16 }}>⚠️</span>
-              <span style={{ fontSize: 11, color: G.gold, letterSpacing: 1.5, fontWeight: "bold", textTransform: "uppercase" }}>
-                Pas inclus dans ton abonnement
-              </span>
-            </div>
-          )}
           {book.summary && (
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Résumé</div>
@@ -6042,10 +6027,30 @@ export default function App() {
               🔗 Partager
             </button>
           </div>
+          {/* Badge si livre exclu de l'abonnement (UNIQUEMENT pour les abonnés actifs ET livre pas encore acheté) */}
+          {book.exclude_from_subscription === true && book.price > 0 && !owned && !free && subscription && subscription.status === "actif" && (
+            <div style={{
+              background: "linear-gradient(135deg, #2a1a0d 0%, #3a2510 100%)",
+              border: "1.5px solid " + G.gold,
+              borderRadius: 8,
+              padding: "10px 14px",
+              marginBottom: 10,
+              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8
+            }}>
+              <span style={{ fontSize: 16 }}>⚠️</span>
+              <span style={{ fontSize: 11, color: G.gold, letterSpacing: 1.5, fontWeight: "bold", textTransform: "uppercase" }}>
+                Pas inclus dans ton abonnement
+              </span>
+            </div>
+          )}
           <button
             onClick={() => startReading(book)}
             style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
+            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
           </button>
 
           {/* BOUTON TÉLÉCHARGER LE PDF (si owned/free + can_download + pdf_url) */}
@@ -6073,7 +6078,8 @@ export default function App() {
             </button>
           )}
 
-          {(owned || free) && (
+          {/* Bouton "Télécharger hors connexion" UNIQUEMENT pour les livres TEXTE (pas les PDF) */}
+          {(owned || free) && !book.pdf_url && book.content && (
             <button onClick={() => { cacheBook(book); alert("✅ Livre sauvegardé pour la lecture hors connexion !"); }}
               style={{ width: "100%", padding: 11, background: cachedBooks[book.id] ? G.surface2 : "transparent", border: "1px solid " + (cachedBooks[book.id] ? G.border : G.gold), borderRadius: 6, color: cachedBooks[book.id] ? G.textDim : G.gold, cursor: "pointer", fontSize: 13, marginTop: 8 }}>
               {cachedBooks[book.id] ? "✅ Disponible hors connexion" : "📥 Télécharger hors connexion"}
