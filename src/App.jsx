@@ -817,6 +817,16 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
               clearInterval(check);
               setQuizPage("quizResult");
               setLoading(false);
+              // 💾 Sauvegarder le paiement quiz dans Supabase pour les stats
+              try {
+                if (userId) {
+                  await supabase.from("quiz_payments").insert([{
+                    user_id: userId,
+                    quiz_type: "carry_quiz",
+                    amount: quizPrice || 0
+                  }]);
+                }
+              } catch (e) { console.error("Erreur sauvegarde quiz_payment:", e); }
               // 📊 Pixel Meta : Lead (paiement quiz validé = lead converti)
               try {
                 if (typeof window !== "undefined" && typeof window.fbq === "function") {
@@ -2558,6 +2568,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                         const { error: saveErr } = await supabase.from("carrycare_results").insert([{
                           user_id: userId,
                           quiz_type: "facial",
+                          amount: beautyQuizPrice || 0,
                           result_data: { typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
                         }]);
                         if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
@@ -3191,6 +3202,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
                         const { error: saveErr } = await supabase.from("carrycare_results").insert([{
                           user_id: userId,
                           quiz_type: "body",
+                          amount: beautyQuizPrice || 0,
                           result_data: { typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
                         }]);
                         if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
@@ -3877,6 +3889,7 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
                         const { error: saveErr } = await supabase.from("carrycare_results").insert([{
                           user_id: userId,
                           quiz_type: "line",
+                          amount: beautyQuizPrice || 0,
                           result_data: lgData
                         }]);
                         if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
@@ -4592,6 +4605,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
                         const { error: saveErr } = await supabase.from("carrycare_results").insert([{
                           user_id: userId,
                           quiz_type: "hair",
+                          amount: beautyQuizPrice || 0,
                           result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult }
                         }]);
                         if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
@@ -5533,6 +5547,15 @@ export default function App() {
     setTranslatedContent(null);
     setTranslateLang(null);
     stopAudio();
+    // 💾 Tracker la vue du livre (pour stats admin)
+    if (!excerpt && user) {
+      try {
+        supabase.from("book_views").insert([{
+          user_id: user.id,
+          book_id: book.id
+        }]).then(() => {});
+      } catch (e) { console.error("Erreur tracking book_view:", e); }
+    }
   }
 
   // Débloquer un livre en utilisant un crédit de l'abonnement

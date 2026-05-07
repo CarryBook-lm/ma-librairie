@@ -82,6 +82,9 @@ export default function Admin() {
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
+  const [quizPayments, setQuizPayments] = useState([]);
+  const [carrycarePayments, setCarrycarePayments] = useState([]);
+  const [bookViews, setBookViews] = useState([]);
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
@@ -111,7 +114,28 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); }, []);
+
+  async function fetchQuizPayments() {
+    try {
+      const { data } = await supabase.from("quiz_payments").select("*").order("created_at", { ascending: false });
+      if (data) setQuizPayments(data);
+    } catch (e) { console.error("Erreur fetch quiz_payments:", e); }
+  }
+
+  async function fetchCarrycarePayments() {
+    try {
+      const { data } = await supabase.from("carrycare_results").select("amount, created_at, quiz_type, user_id").order("created_at", { ascending: false });
+      if (data) setCarrycarePayments(data);
+    } catch (e) { console.error("Erreur fetch carrycare:", e); }
+  }
+
+  async function fetchBookViews() {
+    try {
+      const { data } = await supabase.from("book_views").select("book_id, user_id, created_at").order("created_at", { ascending: false });
+      if (data) setBookViews(data);
+    } catch (e) { console.error("Erreur fetch book_views:", e); }
+  }
 
   async function fetchSubscribers() {
     const { data } = await supabase.from("subscriptions").select("*").order("started_at", { ascending: false });
@@ -352,6 +376,57 @@ export default function Admin() {
     return s + (book ? (book.price || 0) : 0);
   }, 0);
 
+  // CA du jour : on filtre les ventes d'aujourd'hui uniquement
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Début de la journée
+  const todaySales = realSales.filter(p => {
+    if (!p.created_at) return false;
+    const saleDate = new Date(p.created_at);
+    return saleDate >= today;
+  });
+  const todayRevenue = todaySales.reduce((s, purchase) => {
+    if (purchase.amount !== null && purchase.amount !== undefined) {
+      return s + purchase.amount;
+    }
+    const book = books.find(b => b.id === purchase.book_id);
+    return s + (book ? (book.price || 0) : 0);
+  }, 0);
+
+  // ========== REVENUS PAR SOURCE ==========
+  // 📚 Revenus livres (ventes réelles uniquement)
+  const revenueBooks = totalRevenue;
+
+  // ⭐ Revenus abonnements
+  const revenueSubscriptions = subscribers.reduce((s, sub) => s + (sub.price || 0), 0);
+
+  // 🎯 Revenus Carry'Quiz
+  const revenueQuiz = quizPayments.reduce((s, p) => s + (p.amount || 0), 0);
+
+  // 💜 Revenus CarryCare (uniquement amounts > 0)
+  const revenueCarryCare = carrycarePayments.reduce((s, p) => s + (p.amount || 0), 0);
+
+  // 💰 TOTAL CA
+  const grandTotalRevenue = revenueBooks + revenueSubscriptions + revenueQuiz + revenueCarryCare;
+
+  // 📅 CA AUJOURD'HUI (toutes sources)
+  const todayBooksRevenue = todayRevenue;
+  const todaySubsRevenue = subscribers.filter(s => {
+    if (!s.started_at) return false;
+    return new Date(s.started_at) >= today;
+  }).reduce((s, sub) => s + (sub.price || 0), 0);
+  const todayQuizRevenue = quizPayments.filter(p => {
+    if (!p.created_at) return false;
+    return new Date(p.created_at) >= today;
+  }).reduce((s, p) => s + (p.amount || 0), 0);
+  const todayCarryCareRevenue = carrycarePayments.filter(p => {
+    if (!p.created_at) return false;
+    return new Date(p.created_at) >= today;
+  }).reduce((s, p) => s + (p.amount || 0), 0);
+  const grandTodayRevenue = todayBooksRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue;
+
+  // 📖 Total lectures
+  const totalBookViews = bookViews.length;
+
   const activeBooks = books.filter(b => b.status === "actif").length;
   const totalSales = realSales.length;
   const totalSubscriptionUnlocks = subscriptionUnlocks.length;
@@ -416,38 +491,69 @@ export default function Admin() {
           <div>
             <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>Tableau de bord</h1>
 
-            {/* SECTION REVENUS */}
-            <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #1f1810 100%)", border: "1.5px solid #c9a84c", borderRadius: 10, padding: 20, marginBottom: 16, textAlign: "center" }}>
-              <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase" }}>💰 Chiffre d'affaires (ventes réelles)</div>
-              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", marginBottom: 4 }}>{totalRevenue.toLocaleString()} F</div>
-              <div style={{ fontSize: 12, color: "#888" }}>{totalSales} vente{totalSales !== 1 ? "s" : ""} payante{totalSales !== 1 ? "s" : ""}</div>
+            {/* SECTION CA TOTAL */}
+            <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #1f1810 100%)", border: "1.5px solid #c9a84c", borderRadius: 10, padding: 20, marginBottom: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase" }}>💰 Chiffre d'affaires total</div>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", marginBottom: 4 }}>{grandTotalRevenue.toLocaleString()} F</div>
+              <div style={{ fontSize: 11, color: "#888" }}>Toutes sources confondues</div>
+            </div>
+
+            {/* SECTION CA DU JOUR */}
+            <div style={{ background: "linear-gradient(135deg, #0d2a1a 0%, #103a25 100%)", border: "1.5px solid #4caf50", borderRadius: 10, padding: 18, marginBottom: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: "#4caf50", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase" }}>📅 Aujourd'hui</div>
+              <div style={{ fontSize: 28, fontWeight: "bold", color: "#4caf50", marginBottom: 4 }}>{grandTodayRevenue.toLocaleString()} F</div>
+              <div style={{ fontSize: 11, color: "#888" }}>
+                {grandTodayRevenue === 0 ? "Pas de revenus aujourd'hui" : "Revenus du jour"}
+              </div>
+            </div>
+
+            {/* SECTION DÉTAIL PAR SOURCE */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>Détail par source</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                {/* Livres */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>📚</div>
+                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueBooks.toLocaleString()} F</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Livres ({totalSales} vente{totalSales > 1 ? "s" : ""})</div>
+                </div>
+                {/* Abonnements */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>⭐</div>
+                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueSubscriptions.toLocaleString()} F</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Abonnements ({subscribers.length})</div>
+                </div>
+                {/* Carry'Quiz */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>🎯</div>
+                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueQuiz.toLocaleString()} F</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Carry'Quiz ({quizPayments.length})</div>
+                </div>
+                {/* CarryCare */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>💜</div>
+                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryCare.toLocaleString()} F</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>CarryCare ({carrycarePayments.filter(p => (p.amount || 0) > 0).length})</div>
+                </div>
+              </div>
             </div>
 
             {/* STATS DÉTAILLÉES */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, marginBottom: 6 }}>🎟️</div>
-                <div style={{ fontSize: 18, fontWeight: "bold", color: "#9d7fff" }}>{totalSubscriptionUnlocks}</div>
-                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Déblocages abo</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>📖</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#9d7fff" }}>{totalBookViews}</div>
+                <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Lectures totales</div>
               </div>
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 8px", textAlign: "center" }}>
                 <div style={{ fontSize: 22, marginBottom: 6 }}>🎁</div>
                 <div style={{ fontSize: 18, fontWeight: "bold", color: "#4caf50" }}>{totalFreeUnlocks}</div>
-                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Livres gratuits</div>
+                <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Livres gratuits</div>
               </div>
-            </div>
-
-            {/* TOTAL DISTRIBUÉS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 24 }}>
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, marginBottom: 6 }}>📦</div>
-                <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{totalSales + totalSubscriptionUnlocks + totalFreeUnlocks}</div>
-                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Total distribués</div>
-              </div>
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px", textAlign: "center" }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 8px", textAlign: "center" }}>
                 <div style={{ fontSize: 22, marginBottom: 6 }}>📚</div>
                 <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{activeBooks}</div>
-                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Livres actifs</div>
+                <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Livres actifs</div>
               </div>
             </div>
 
