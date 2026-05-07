@@ -21,7 +21,7 @@ const CATEGORIES = {
 };
 
 const emptyForm = {
-  title: "", author: "", price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
+  title: "", author: "", price: "", original_price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
   summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
   can_read: true, can_download: false, featured: false, exclude_from_subscription: false
 };
@@ -305,7 +305,11 @@ export default function Admin() {
   async function handleSave() {
     if (!form.title || !form.author || form.price === "") return;
     setSaving(true);
-    const payload = { ...form, price: parseInt(form.price) || 0 };
+    const payload = {
+      ...form,
+      price: parseInt(form.price) || 0,
+      original_price: form.original_price && form.original_price !== "" ? parseInt(form.original_price) : null
+    };
     if (editingBook) {
       await supabase.from("books").update(payload).eq("id", editingBook.id);
     } else {
@@ -333,7 +337,11 @@ export default function Admin() {
 
   function openEdit(book) {
     setEditingBook(book);
-    setForm({ ...book, price: String(book.price) });
+    setForm({
+      ...book,
+      price: String(book.price),
+      original_price: book.original_price ? String(book.original_price) : ""
+    });
     setShowForm(true);
     setActiveTab("info");
   }
@@ -1231,9 +1239,33 @@ export default function Admin() {
                     placeholder="Nom et prénom" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>PRIX (FCFA) *</label>
+                  <label style={labelStyle}>PRIX ACTUEL (FCFA) *</label>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
                     placeholder="Ex: 2500 (0 pour gratuit)" type="number" style={inputStyle} />
+                  <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                    💰 C'est le prix que paie le client
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>PRIX D'AVANT — PROMO (FCFA)</label>
+                  <input value={form.original_price || ""} onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))}
+                    placeholder="Laisser vide si pas de promo" type="number" style={inputStyle} />
+                  <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                    🔥 Mets l'ancien prix ici → Le badge "PROMO" et le prix barré apparaîtront automatiquement sur le site
+                  </div>
+                  {/* Aperçu du calcul */}
+                  {form.original_price && parseInt(form.original_price) > parseInt(form.price || 0) && parseInt(form.price || 0) > 0 && (
+                    <div style={{ marginTop: 8, padding: "8px 12px", background: "#1f1810", border: "1px solid #c9a84c", borderRadius: 6 }}>
+                      <div style={{ fontSize: 11, color: "#c9a84c", fontWeight: "bold" }}>
+                        🔥 Aperçu : -{Math.round((1 - parseInt(form.price) / parseInt(form.original_price)) * 100)}%
+                      </div>
+                      <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
+                        <span style={{ textDecoration: "line-through" }}>{parseInt(form.original_price).toLocaleString()} F</span>
+                        {" → "}
+                        <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{parseInt(form.price).toLocaleString()} F</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* COUVERTURE */}

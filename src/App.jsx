@@ -4816,6 +4816,18 @@ function isInAppBrowser() {
   return /FBAN|FBAV|FB_IAB|Instagram|musical_ly|BytedanceWebview|Snapchat|LinkedInApp/i.test(ua);
 }
 
+// Helper pour calculer le pourcentage de promo
+function getDiscountPct(book) {
+  if (!book) return 0;
+  if (!book.original_price || !book.price) return 0;
+  if (book.original_price <= book.price) return 0;
+  return Math.round((1 - book.price / book.original_price) * 100);
+}
+
+function isOnPromo(book) {
+  return getDiscountPct(book) > 0;
+}
+
 // Helper pour tracker les événements Meta Pixel (Facebook)
 // Vérifie que fbq existe (le Pixel peut être bloqué par AdBlock ou indisponible)
 function trackPixelEvent(eventName, params = {}) {
@@ -4887,6 +4899,11 @@ export default function App() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
+  // Code promo
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null); // { code, discount_pct }
+  const [promoMessage, setPromoMessage] = useState({ type: "", text: "" });
+  const [promoChecking, setPromoChecking] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(true);
@@ -5621,13 +5638,18 @@ export default function App() {
       if (phone.startsWith("0")) phone = "237" + phone.slice(1);
       if (!phone.startsWith("237")) phone = "237" + phone;
 
+      // Calcul du prix final avec code promo
+      const basePrice = paymentBook.price || 0;
+      const promoDiscount = appliedPromo ? Math.round(basePrice * appliedPromo.discount_pct / 100) : 0;
+      const finalPrice = basePrice - promoDiscount;
+
       // Appel via notre fonction serverless (évite CORS)
       const payRes = await fetch("/api/campay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "collect",
-          amount: paymentBook.price,
+          amount: finalPrice,
           phone: phone,
           description: "Achat " + paymentBook.title + " sur CarryBooks",
           external_reference: "CB_" + paymentBook.id + "_" + (user ? user.id : "guest") + "_" + Date.now()
@@ -5653,9 +5675,18 @@ export default function App() {
               if (user) await supabase.from("purchases").insert([{
                 user_id: user.id,
                 book_id: paymentBook.id,
-                amount: paymentBook.price || 0,
+                amount: finalPrice,
                 type: "sale"
               }]);
+              // Incrémenter le compteur d'utilisation du code promo
+              if (appliedPromo) {
+                try {
+                  const { data: promoData } = await supabase.from("promo_codes").select("uses_count").eq("id", appliedPromo.id).limit(1);
+                  const currentUses = (promoData && promoData[0]?.uses_count) || 0;
+                  await supabase.from("promo_codes").update({ uses_count: currentUses + 1 }).eq("id", appliedPromo.id);
+                } catch (e) { console.error("Erreur maj promo:", e); }
+                setAppliedPromo(null);
+              }
               cacheBook(paymentBook);
               // 📊 Pixel Meta : Purchase (achat réussi - événement le plus important !)
               trackPixelEvent("Purchase", {
@@ -5995,8 +6026,25 @@ export default function App() {
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
           <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 16 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
-          <div style={{ textAlign: "center", fontSize: 22, color: free ? G.green : G.gold, fontWeight: "bold", marginBottom: 20 }}>
-            {free ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            {/* Si en promo : affiche prix barré + nouveau prix + badge */}
+            {isOnPromo(book) ? (
+              <div>
+                <div style={{ display: "inline-block", padding: "4px 12px", background: "#dc3545", color: "#fff", borderRadius: 20, fontSize: 11, fontWeight: "bold", letterSpacing: 1, marginBottom: 8 }}>
+                  🔥 PROMO -{getDiscountPct(book)}%
+                </div>
+                <div style={{ fontSize: 14, color: G.textFaint, textDecoration: "line-through", marginBottom: 4 }}>
+                  {book.original_price?.toLocaleString()} FCFA
+                </div>
+                <div style={{ fontSize: 26, color: G.gold, fontWeight: "bold" }}>
+                  {book.price?.toLocaleString()} FCFA
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 22, color: free ? G.green : G.gold, fontWeight: "bold" }}>
+                {free ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
+              </div>
+            )}
           </div>
           {book.summary && (
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20 }}>
@@ -6302,10 +6350,91 @@ export default function App() {
                   )}
                   <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17, textAlign: "center" }}>{paymentBook.title}</h3>
                   <p style={{ color: "#888", fontSize: 13, marginBottom: 6, textAlign: "center" }}>par {paymentBook.author || "Auteur"}</p>
-                  <div style={{ background: "#fff8e1", padding: "10px 14px", borderRadius: 8, marginBottom: 18, textAlign: "center" }}>
-                    <div style={{ fontSize: 11, color: "#7a5c00", marginBottom: 4 }}>Prix du livre</div>
-                    <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{paymentBook.price?.toLocaleString()} FCFA</div>
-                  </div>
+                  {/* Calcul prix final avec promo */}
+                  {(() => {
+                    const basePrice = paymentBook.price || 0;
+                    const promoDiscount = appliedPromo ? Math.round(basePrice * appliedPromo.discount_pct / 100) : 0;
+                    const finalPrice = basePrice - promoDiscount;
+                    return (
+                      <div style={{ background: "#fff8e1", padding: "10px 14px", borderRadius: 8, marginBottom: 14, textAlign: "center" }}>
+                        <div style={{ fontSize: 11, color: "#7a5c00", marginBottom: 4 }}>{appliedPromo ? "Prix avec code promo" : "Prix du livre"}</div>
+                        {appliedPromo ? (
+                          <div>
+                            <div style={{ fontSize: 13, color: "#888", textDecoration: "line-through" }}>{basePrice.toLocaleString()} FCFA</div>
+                            <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{finalPrice.toLocaleString()} FCFA</div>
+                            <div style={{ fontSize: 11, color: "#22c55e", fontWeight: "bold", marginTop: 4 }}>
+                              ✅ -{promoDiscount.toLocaleString()} F économisés !
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{basePrice.toLocaleString()} FCFA</div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Champ code promo */}
+                  {!appliedPromo ? (
+                    <div style={{ marginBottom: 14, padding: "10px 14px", background: "#f5f5f5", borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: "#666", marginBottom: 6, fontWeight: "bold" }}>🎟️ As-tu un code promo ?</div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <input
+                          type="text"
+                          value={promoCodeInput}
+                          onChange={e => { setPromoCodeInput(e.target.value.toUpperCase()); setPromoMessage({ type: "", text: "" }); }}
+                          placeholder="ENTRE TON CODE"
+                          style={{ flex: 1, padding: "8px 12px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, textTransform: "uppercase", color: "#1a1a1a", background: "#fff" }}
+                        />
+                        <button
+                          onClick={async () => {
+                            if (!promoCodeInput.trim()) return;
+                            setPromoChecking(true);
+                            const code = promoCodeInput.trim().toUpperCase();
+                            const { data } = await supabase.from("promo_codes").select("*").eq("code", code).eq("active", true).limit(1);
+                            setPromoChecking(false);
+                            if (!data || data.length === 0) {
+                              setPromoMessage({ type: "error", text: "Code invalide ou expiré" });
+                              return;
+                            }
+                            const promo = data[0];
+                            // Vérifier si pas expiré
+                            if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
+                              setPromoMessage({ type: "error", text: "Ce code a expiré" });
+                              return;
+                            }
+                            // Vérifier si pas dépassé le nombre d'utilisations max
+                            if (promo.uses_max && (promo.uses_count || 0) >= promo.uses_max) {
+                              setPromoMessage({ type: "error", text: "Ce code a atteint sa limite d'utilisation" });
+                              return;
+                            }
+                            setAppliedPromo({ code: promo.code, discount_pct: promo.discount_pct, id: promo.id });
+                            setPromoMessage({ type: "success", text: `✅ Code appliqué : -${promo.discount_pct}%` });
+                            setPromoCodeInput("");
+                          }}
+                          disabled={promoChecking || !promoCodeInput.trim()}
+                          style={{ padding: "8px 14px", background: promoChecking || !promoCodeInput.trim() ? "#ddd" : "#1a1a1a", color: promoChecking || !promoCodeInput.trim() ? "#888" : "#fff", border: "none", borderRadius: 6, fontSize: 12, fontWeight: "bold", cursor: promoChecking || !promoCodeInput.trim() ? "not-allowed" : "pointer" }}
+                        >
+                          {promoChecking ? "..." : "Appliquer"}
+                        </button>
+                      </div>
+                      {promoMessage.text && (
+                        <div style={{ fontSize: 11, color: promoMessage.type === "error" ? "#dc3545" : "#22c55e", marginTop: 6, fontWeight: "bold" }}>
+                          {promoMessage.text}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ marginBottom: 14, padding: "10px 14px", background: "#dcfce7", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#15803d", fontWeight: "bold" }}>🎟️ Code appliqué : {appliedPromo.code}</div>
+                        <div style={{ fontSize: 10, color: "#15803d" }}>-{appliedPromo.discount_pct}% sur ton achat</div>
+                      </div>
+                      <button onClick={() => { setAppliedPromo(null); setPromoMessage({ type: "", text: "" }); }} style={{ padding: "6px 10px", background: "transparent", border: "1px solid #15803d", color: "#15803d", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+                        Retirer
+                      </button>
+                    </div>
+                  )}
+
                   <button onClick={() => {
                     setPaymentStep(2);
                     // 📊 Pixel Meta : InitiateCheckout (a commencé le paiement)
@@ -6937,12 +7066,24 @@ export default function App() {
                             ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
+                          {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
                         </div>
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
                         <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
-                        <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
-                          {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
-                        </div>
+                        {isOnPromo(book) ? (
+                          <div>
+                            <div style={{ fontSize: 10, color: G.textFaint, textDecoration: "line-through", lineHeight: 1.2 }}>
+                              {book.original_price?.toLocaleString()} F
+                            </div>
+                            <div style={{ fontSize: 13, color: G.gold, fontWeight: "bold" }}>
+                              {book.price?.toLocaleString()} FCFA
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
+                            {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
