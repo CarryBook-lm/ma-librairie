@@ -85,6 +85,23 @@ export default function Admin() {
   const [quizPayments, setQuizPayments] = useState([]);
   const [carrycarePayments, setCarrycarePayments] = useState([]);
   const [bookViews, setBookViews] = useState([]);
+  // Paramètres parrainage
+  const [referralSettings, setReferralSettings] = useState({
+    reward_per_referral: 500,
+    referred_discount_pct: 20,
+    min_withdrawal: 5000,
+    fraud_delay_days: 30,
+    active: true
+  });
+  const [refSettingsForm, setRefSettingsForm] = useState({
+    reward_per_referral: "500",
+    referred_discount_pct: "20",
+    min_withdrawal: "5000",
+    fraud_delay_days: "30",
+    active: true
+  });
+  const [refSettingsSaving, setRefSettingsSaving] = useState(false);
+  const [refSettingsMessage, setRefSettingsMessage] = useState({ type: "", text: "" });
   const [referralCodes, setReferralCodes] = useState([]);
   const [allReferrals, setAllReferrals] = useState([]);
   const [referralWithdrawals, setReferralWithdrawals] = useState([]);
@@ -117,7 +134,7 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); }, []);
 
   async function fetchReferralData() {
     try {
@@ -149,6 +166,54 @@ export default function Admin() {
       const { data } = await supabase.from("book_views").select("book_id, user_id, created_at").order("created_at", { ascending: false });
       if (data) setBookViews(data);
     } catch (e) { console.error("Erreur fetch book_views:", e); }
+  }
+
+  async function fetchReferralSettings() {
+    try {
+      const { data } = await supabase.from("referral_settings").select("*").order("id", { ascending: true }).limit(1);
+      if (data && data.length > 0) {
+        setReferralSettings(data[0]);
+        setRefSettingsForm({
+          reward_per_referral: String(data[0].reward_per_referral || 500),
+          referred_discount_pct: String(data[0].referred_discount_pct || 20),
+          min_withdrawal: String(data[0].min_withdrawal || 5000),
+          fraud_delay_days: String(data[0].fraud_delay_days || 30),
+          active: data[0].active !== false
+        });
+      }
+    } catch (e) { console.error("Erreur fetch referral_settings:", e); }
+  }
+
+  async function saveReferralSettings() {
+    if (!referralSettings || !referralSettings.id) {
+      setRefSettingsMessage({ type: "error", text: "Erreur : paramètres non chargés" });
+      return;
+    }
+    const reward = parseInt(refSettingsForm.reward_per_referral);
+    const discount = parseInt(refSettingsForm.referred_discount_pct);
+    const minWd = parseInt(refSettingsForm.min_withdrawal);
+    const delay = parseInt(refSettingsForm.fraud_delay_days);
+    if (!reward || reward < 0) { setRefSettingsMessage({ type: "error", text: "Récompense invalide" }); return; }
+    if (!discount || discount < 0 || discount > 100) { setRefSettingsMessage({ type: "error", text: "Réduction entre 0 et 100%" }); return; }
+    if (!minWd || minWd < 100) { setRefSettingsMessage({ type: "error", text: "Minimum retrait au moins 100 F" }); return; }
+    if (delay < 0) { setRefSettingsMessage({ type: "error", text: "Délai ne peut pas être négatif" }); return; }
+    setRefSettingsSaving(true);
+    const { error } = await supabase.from("referral_settings").update({
+      reward_per_referral: reward,
+      referred_discount_pct: discount,
+      min_withdrawal: minWd,
+      fraud_delay_days: delay,
+      active: refSettingsForm.active,
+      updated_at: new Date().toISOString()
+    }).eq("id", referralSettings.id);
+    setRefSettingsSaving(false);
+    if (error) {
+      setRefSettingsMessage({ type: "error", text: "Erreur : " + error.message });
+    } else {
+      setRefSettingsMessage({ type: "success", text: "✅ Paramètres enregistrés !" });
+      fetchReferralSettings();
+      setTimeout(() => setRefSettingsMessage({ type: "", text: "" }), 3000);
+    }
   }
 
   async function fetchSubscribers() {
@@ -499,6 +564,7 @@ export default function Admin() {
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
             { id: "referrals", label: "Parrainages", icon: "🎁" },
+            { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "security", label: "Sécurité", icon: "🔐" },
@@ -1043,6 +1109,147 @@ export default function Admin() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {/* PARAMÈTRES PARRAINAGE */}
+        {view === "referral_settings" && (
+          <div style={{ paddingBottom: 80 }}>
+            <h1 style={{ fontSize: 18, color: "#c9a84c", marginBottom: 8, textAlign: "center" }}>⚙️ Paramètres parrainage</h1>
+            <p style={{ color: "#888", fontSize: 12, textAlign: "center", marginBottom: 24 }}>Configure les règles de ton programme de parrainage</p>
+
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              {/* Statut programme */}
+              <div style={{ marginBottom: 20, padding: 14, background: refSettingsForm.active ? "#0d2a1a" : "#2a1a0d", border: "1px solid " + (refSettingsForm.active ? "#4caf50" : "#f5a623"), borderRadius: 8 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={refSettingsForm.active}
+                    onChange={e => setRefSettingsForm(f => ({ ...f, active: e.target.checked }))}
+                    style={{ width: 18, height: 18, cursor: "pointer" }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13, color: refSettingsForm.active ? "#4caf50" : "#f5a623", fontWeight: "bold" }}>
+                      {refSettingsForm.active ? "✅ Programme ACTIF" : "⏸️ Programme désactivé"}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
+                      {refSettingsForm.active ? "Les utilisateurs peuvent parrainer" : "Aucun parrainage ne sera pris en compte"}
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Récompense parrain */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                  💰 Récompense PARRAIN par filleul
+                </label>
+                <input
+                  type="number"
+                  value={refSettingsForm.reward_per_referral}
+                  onChange={e => setRefSettingsForm(f => ({ ...f, reward_per_referral: e.target.value }))}
+                  style={{ width: "100%", padding: "12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
+                />
+                <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                  💡 Montant en FCFA que reçoit le parrain quand son filleul achète (ex: 500)
+                </div>
+              </div>
+
+              {/* Réduction filleul */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                  🎁 Réduction FILLEUL (1er achat)
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="number"
+                    value={refSettingsForm.referred_discount_pct}
+                    onChange={e => setRefSettingsForm(f => ({ ...f, referred_discount_pct: e.target.value }))}
+                    min="0" max="100"
+                    style={{ width: "100%", padding: "12px 38px 12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
+                  />
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#c9a84c", fontWeight: "bold" }}>%</span>
+                </div>
+                <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                  💡 Pourcentage de réduction sur le 1er achat du filleul (ex: 20)
+                </div>
+              </div>
+
+              {/* Minimum retrait */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                  💸 Montant minimum pour RETIRER
+                </label>
+                <input
+                  type="number"
+                  value={refSettingsForm.min_withdrawal}
+                  onChange={e => setRefSettingsForm(f => ({ ...f, min_withdrawal: e.target.value }))}
+                  style={{ width: "100%", padding: "12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
+                />
+                <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                  💡 Le parrain doit accumuler ce montant avant de pouvoir retirer (ex: 5000)
+                </div>
+              </div>
+
+              {/* Délai anti-fraude */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                  ⏳ Délai anti-fraude (jours)
+                </label>
+                <input
+                  type="number"
+                  value={refSettingsForm.fraud_delay_days}
+                  onChange={e => setRefSettingsForm(f => ({ ...f, fraud_delay_days: e.target.value }))}
+                  min="0"
+                  style={{ width: "100%", padding: "12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
+                />
+                <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                  💡 Nombre de jours avant que les gains soient disponibles pour retrait (ex: 30)
+                </div>
+              </div>
+
+              {/* Aperçu */}
+              <div style={{ background: "#0d1f2a", border: "1px solid #1976d2", borderRadius: 8, padding: 14, marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: "#64b5f6", marginBottom: 8, fontWeight: "bold" }}>📊 Aperçu du programme actuel :</div>
+                <div style={{ fontSize: 12, color: "#e8e0d0", lineHeight: 1.7 }}>
+                  💰 Le parrain gagne <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{(parseInt(refSettingsForm.reward_per_referral) || 0).toLocaleString()} F</span> par filleul qui achète
+                  <br />
+                  🎁 Le filleul reçoit <span style={{ color: "#c9a84c", fontWeight: "bold" }}>-{refSettingsForm.referred_discount_pct || 0}%</span> sur son 1er achat
+                  <br />
+                  💸 Retrait possible à partir de <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{(parseInt(refSettingsForm.min_withdrawal) || 0).toLocaleString()} F</span>
+                  <br />
+                  ⏳ Délai d'attente : <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.fraud_delay_days || 0} jours</span>
+                </div>
+              </div>
+
+              {refSettingsMessage.text && (
+                <div style={{ padding: 12, marginBottom: 12, background: refSettingsMessage.type === "error" ? "#2a0d0d" : "#0d2a1a", border: "1px solid " + (refSettingsMessage.type === "error" ? "#dc3545" : "#4caf50"), borderRadius: 6, color: refSettingsMessage.type === "error" ? "#f44336" : "#4caf50", fontSize: 12, textAlign: "center", fontWeight: "bold" }}>
+                  {refSettingsMessage.text}
+                </div>
+              )}
+
+              <button
+                onClick={saveReferralSettings}
+                disabled={refSettingsSaving}
+                style={{
+                  width: "100%", padding: 14, background: refSettingsSaving ? "#666" : "#c9a84c", color: "#1a1a1a",
+                  border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: refSettingsSaving ? "not-allowed" : "pointer",
+                  letterSpacing: 1
+                }}
+              >
+                {refSettingsSaving ? "⏳ Enregistrement..." : "💾 Enregistrer les paramètres"}
+              </button>
+            </div>
+
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16 }}>
+              <div style={{ fontSize: 12, color: "#c9a84c", fontWeight: "bold", marginBottom: 8 }}>💡 Conseils stratégiques</div>
+              <div style={{ fontSize: 11, color: "#aaa", lineHeight: 1.6 }}>
+                <div style={{ marginBottom: 6 }}>📈 <strong style={{ color: "#e8e0d0" }}>Récompense parrain</strong> : Plus elle est élevée, plus les parrains sont motivés. Standard : 500-1000 F.</div>
+                <div style={{ marginBottom: 6 }}>🎯 <strong style={{ color: "#e8e0d0" }}>Réduction filleul</strong> : 20% est le standard de l'industrie. Tu peux monter à 30% pour booster.</div>
+                <div style={{ marginBottom: 6 }}>💸 <strong style={{ color: "#e8e0d0" }}>Minimum retrait</strong> : 5000 F évite les petits versements. Bon équilibre.</div>
+                <div>⏳ <strong style={{ color: "#e8e0d0" }}>Délai anti-fraude</strong> : 30 jours = sécurité maximale. Tu peux réduire à 7-14 jours pour plus de motivation.</div>
+              </div>
             </div>
           </div>
         )}

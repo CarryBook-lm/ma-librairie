@@ -4918,6 +4918,14 @@ export default function App() {
   const [referralCode, setReferralCode] = useState(null); // mon code parrainage
   const [referralData, setReferralData] = useState(null); // mon solde, gains
   const [myReferrals, setMyReferrals] = useState([]); // mes filleuls
+  // Paramètres globaux du programme parrainage (dynamiques depuis Supabase)
+  const [appReferralSettings, setAppReferralSettings] = useState({
+    reward_per_referral: 500,
+    referred_discount_pct: 20,
+    min_withdrawal: 5000,
+    fraud_delay_days: 30,
+    active: true
+  });
   const [myWithdrawals, setMyWithdrawals] = useState([]); // mes retraits
   const [signupReferralCode, setSignupReferralCode] = useState(""); // code utilisé à l'inscription
   const [createReferralInput, setCreateReferralInput] = useState("");
@@ -5121,6 +5129,13 @@ export default function App() {
         setBeautyQuizPrice(data[0].carrycare_price);
       }
     }
+    // Charger aussi les paramètres parrainage
+    try {
+      const { data: refData } = await supabase.from("referral_settings").select("*").order("id", { ascending: true }).limit(1);
+      if (refData && refData.length > 0) {
+        setAppReferralSettings(refData[0]);
+      }
+    } catch (e) { console.error("Erreur chargement referral_settings:", e); }
   };
 
   // Recharger automatiquement les prix quand on visite Quiz ou CarryCare
@@ -5331,9 +5346,10 @@ export default function App() {
 
   async function requestWithdrawal() {
     if (!user || !referralData) return;
+    const minWithdraw = appReferralSettings?.min_withdrawal || 5000;
     const amount = parseInt(withdrawAmount);
-    if (!amount || amount < 5000) {
-      setWithdrawMessage({ type: "error", text: "Le minimum de retrait est 5 000 F" });
+    if (!amount || amount < minWithdraw) {
+      setWithdrawMessage({ type: "error", text: "Le minimum de retrait est " + minWithdraw.toLocaleString() + " F" });
       return;
     }
     if (amount > (referralData.available_amount || 0)) {
@@ -5423,12 +5439,15 @@ export default function App() {
           // Trouver le parrain via le code
           const { data: parrainCode } = await supabase.from("referral_codes").select("user_id, code").eq("code", pendingCode).limit(1);
           if (parrainCode && parrainCode.length > 0 && parrainCode[0].user_id !== userId) {
+            // Récupérer la récompense actuelle depuis les paramètres
+            const { data: rewardSettings } = await supabase.from("referral_settings").select("reward_per_referral").order("id", { ascending: true }).limit(1);
+            const currentReward = (rewardSettings && rewardSettings[0]?.reward_per_referral) || 500;
             // Créer le lien parrain-filleul
             await supabase.from("referrals").insert([{
               referrer_id: parrainCode[0].user_id,
               referred_id: userId,
               code_used: pendingCode,
-              reward_amount: 500,
+              reward_amount: currentReward,
               status: "pending"
             }]);
             // Marquer comme filleul (pour appliquer -20% au 1er achat)
@@ -5884,8 +5903,9 @@ export default function App() {
                     if (refRecord && refRecord.length > 0) {
                       const ref = refRecord[0];
                       const reward = ref.reward_amount || 500;
+                      const delayDays = appReferralSettings?.fraud_delay_days || 30;
                       const availableAt = new Date();
-                      availableAt.setDate(availableAt.getDate() + 30);
+                      availableAt.setDate(availableAt.getDate() + delayDays);
                       // Marquer le parrainage comme actif
                       await supabase.from("referrals").update({
                         status: "pending",
@@ -7359,7 +7379,7 @@ export default function App() {
         {page === "referral" && (
           <div style={{ padding: "20px 16px 80px" }}>
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>🎁 Mon parrainage</div>
-            <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>Gagne 500 F par filleul - retrait dès 5 000 F</p>
+            <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>Gagne {(appReferralSettings?.reward_per_referral || 500).toLocaleString()} F par filleul - retrait dès {(appReferralSettings?.min_withdrawal || 5000).toLocaleString()} F</p>
 
             {!user ? (
               <div style={{ textAlign: "center", padding: "40px 20px", border: "1px dashed " + G.border, borderRadius: 12 }}>
@@ -7405,12 +7425,12 @@ export default function App() {
                   <div style={{ fontSize: 36, fontWeight: "bold", color: G.gold, marginBottom: 12 }}>{(referralData?.available_amount || 0).toLocaleString()} F</div>
                   <button
                     onClick={() => setShowWithdrawModal(true)}
-                    disabled={(referralData?.available_amount || 0) < 5000}
-                    style={{ padding: "10px 20px", background: (referralData?.available_amount || 0) >= 5000 ? G.gold : G.surface2, color: (referralData?.available_amount || 0) >= 5000 ? "#1a1a1a" : G.textFaint, border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: (referralData?.available_amount || 0) >= 5000 ? "pointer" : "not-allowed" }}
+                    disabled={(referralData?.available_amount || 0) < (appReferralSettings?.min_withdrawal || 5000)}
+                    style={{ padding: "10px 20px", background: (referralData?.available_amount || 0) >= (appReferralSettings?.min_withdrawal || 5000) ? G.gold : G.surface2, color: (referralData?.available_amount || 0) >= (appReferralSettings?.min_withdrawal || 5000) ? "#1a1a1a" : G.textFaint, border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: (referralData?.available_amount || 0) >= (appReferralSettings?.min_withdrawal || 5000) ? "pointer" : "not-allowed" }}
                   >
                     💸 Demander un retrait
                   </button>
-                  <div style={{ fontSize: 10, color: G.textFaint, marginTop: 8 }}>Minimum 5 000 F</div>
+                  <div style={{ fontSize: 10, color: G.textFaint, marginTop: 8 }}>Minimum {(appReferralSettings?.min_withdrawal || 5000).toLocaleString()} F</div>
                 </div>
 
                 {/* SECTION CODE */}
@@ -7428,7 +7448,7 @@ export default function App() {
                     </button>
                     <button onClick={() => {
                       const url = "https://carrybooks.com?ref=" + referralCode;
-                      const text = `Hey ! 📚 Découvre CarryBooks - des livres digitaux qui valent vraiment le coup !\n\nUtilise mon code ${referralCode} pour avoir -20% sur ton 1er livre 🎁\n\n👉 ${url}`;
+                      const text = `Hey ! 📚 Découvre CarryBooks - des livres digitaux qui valent vraiment le coup !\n\nUtilise mon code ${referralCode} pour avoir -${appReferralSettings?.referred_discount_pct || 20}% sur ton 1er livre 🎁\n\n👉 ${url}`;
                       const wa = "https://wa.me/?text=" + encodeURIComponent(text);
                       window.open(wa, "_blank");
                     }} style={{ padding: 12, background: "#25D366", color: "#fff", border: "none", borderRadius: 6, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
