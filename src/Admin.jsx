@@ -410,18 +410,31 @@ export default function Admin() {
 
   // 📅 CA AUJOURD'HUI (toutes sources)
   const todayBooksRevenue = todayRevenue;
+  const todayBooksCount = todaySales.length;
   const todaySubsRevenue = subscribers.filter(s => {
     if (!s.started_at) return false;
     return new Date(s.started_at) >= today;
   }).reduce((s, sub) => s + (sub.price || 0), 0);
+  const todaySubsCount = subscribers.filter(s => {
+    if (!s.started_at) return false;
+    return new Date(s.started_at) >= today;
+  }).length;
   const todayQuizRevenue = quizPayments.filter(p => {
     if (!p.created_at) return false;
     return new Date(p.created_at) >= today;
   }).reduce((s, p) => s + (p.amount || 0), 0);
+  const todayQuizCount = quizPayments.filter(p => {
+    if (!p.created_at) return false;
+    return new Date(p.created_at) >= today;
+  }).length;
   const todayCarryCareRevenue = carrycarePayments.filter(p => {
     if (!p.created_at) return false;
     return new Date(p.created_at) >= today;
   }).reduce((s, p) => s + (p.amount || 0), 0);
+  const todayCarryCareCount = carrycarePayments.filter(p => {
+    if (!p.created_at) return false;
+    return new Date(p.created_at) >= today && (p.amount || 0) > 0;
+  }).length;
   const grandTodayRevenue = todayBooksRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue;
 
   // 📖 Total lectures
@@ -510,30 +523,85 @@ export default function Admin() {
             {/* SECTION DÉTAIL PAR SOURCE */}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>Détail par source</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
-                {/* Livres */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>📚</div>
-                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueBooks.toLocaleString()} F</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Livres ({totalSales} vente{totalSales > 1 ? "s" : ""})</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* 📚 LIVRES */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>📚</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>Livres</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueBooks.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{totalSales} vente{totalSales > 1 ? "s" : ""}</div>
+                    </div>
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todayBooksRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todayBooksCount} vente{todayBooksCount > 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
                 </div>
-                {/* Abonnements */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>⭐</div>
-                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueSubscriptions.toLocaleString()} F</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Abonnements ({subscribers.length})</div>
+
+                {/* ⭐ ABONNEMENTS */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>⭐</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>Abonnements</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueSubscriptions.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{subscribers.length} abo{subscribers.length > 1 ? "s" : ""}</div>
+                    </div>
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todaySubsRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todaySubsCount} abo{todaySubsCount > 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
                 </div>
-                {/* Carry'Quiz */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>🎯</div>
-                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueQuiz.toLocaleString()} F</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Carry'Quiz ({quizPayments.length})</div>
+
+                {/* 🎯 CARRY'QUIZ */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>🎯</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>Carry'Quiz</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueQuiz.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{quizPayments.length} achat{quizPayments.length > 1 ? "s" : ""}</div>
+                    </div>
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todayQuizRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todayQuizCount} achat{todayQuizCount > 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
                 </div>
-                {/* CarryCare */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 12px" }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>💜</div>
-                  <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryCare.toLocaleString()} F</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>CarryCare ({carrycarePayments.filter(p => (p.amount || 0) > 0).length})</div>
+
+                {/* 💜 CARRYCARE */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>💜</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryCare</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryCare.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carrycarePayments.filter(p => (p.amount || 0) > 0).length} achat{carrycarePayments.filter(p => (p.amount || 0) > 0).length > 1 ? "s" : ""}</div>
+                    </div>
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todayCarryCareRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todayCarryCareCount} achat{todayCarryCareCount > 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
