@@ -4913,6 +4913,27 @@ export default function App() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
+
+  // 🔄 Recharger le livre complet depuis Supabase quand le paiement est validé
+  // pour s'assurer d'avoir can_download et pdf_url à jour
+  useEffect(() => {
+    if (paymentStep === 5 && paymentBook && paymentBook.id) {
+      (async () => {
+        try {
+          const { data, error } = await supabase
+            .from("books")
+            .select("*")
+            .eq("id", paymentBook.id)
+            .single();
+          if (!error && data) {
+            setPaymentBook(data);
+          }
+        } catch (e) {
+          console.error("Erreur rechargement livre:", e);
+        }
+      })();
+    }
+  }, [paymentStep]);
   // Code promo
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState(null); // { code, discount_pct }
