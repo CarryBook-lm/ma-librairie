@@ -1313,11 +1313,16 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
             <div style={{ height: "100%", background: "linear-gradient(90deg, #c9a84c, #e0be7a)", borderRadius: 2, animation: "pdfLoad 1.5s ease-in-out infinite" }} />
           </div>
           {elapsed > 8 && (
-            <button onClick={() => { setKey(k => k + 1); setElapsed(0); }} style={{ padding: "10px 24px", background: "#c9a84c", border: "none", borderRadius: 8, color: "#1a1208", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-              🔄 Actualiser
-            </button>
+            <>
+              <button onClick={() => { setKey(k => k + 1); setElapsed(0); }} style={{ padding: "10px 24px", background: "#c9a84c", border: "none", borderRadius: 8, color: "#1a1208", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                🔄 Actualiser
+              </button>
+              <p style={{ marginTop: 12, marginBottom: 0, fontSize: 13, color: "#c9a84c", fontWeight: "bold", animation: "fadeBlink 1.8s ease-in-out infinite", textAlign: "center" }}>
+                👆 Cliquez pour actualiser
+              </p>
+            </>
           )}
-          <style>{`@keyframes pdfLoad { 0%{width:0%;margin-left:0} 50%{width:70%;margin-left:0} 100%{width:0%;margin-left:100%} }`}</style>
+          <style>{`@keyframes pdfLoad { 0%{width:0%;margin-left:0} 50%{width:70%;margin-left:0} 100%{width:0%;margin-left:100%} } @keyframes fadeBlink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }`}</style>
         </div>
       )}
 
@@ -6750,10 +6755,37 @@ export default function App() {
                   <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
                   <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
                   <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
-                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                    style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                    📖 Lire maintenant
-                  </button>
+                  {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
+                        style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                        📖 Lire
+                      </button>
+                      <button onClick={async () => {
+                        try {
+                          const response = await fetch(paymentBook.pdf_url);
+                          if (!response.ok) throw new Error("Erreur téléchargement");
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = (paymentBook.title || "livre") + ".pdf";
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          window.URL.revokeObjectURL(url);
+                        } catch (err) { alert("Erreur lors du téléchargement"); }
+                      }}
+                        style={{ flex: 1, padding: 14, background: "transparent", border: "2px solid " + G.gold, borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                        ⬇️ Télécharger
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
+                      style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      📖 Lire maintenant
+                    </button>
+                  )}
                 </div>
               )}
               {paymentStep === 6 && (
@@ -8521,10 +8553,37 @@ export default function App() {
                 <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
                 <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
                 <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
-                <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                  style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                  📖 Lire maintenant
-                </button>
+                {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
+                      style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      📖 Lire
+                    </button>
+                    <button onClick={async () => {
+                      try {
+                        const response = await fetch(paymentBook.pdf_url);
+                        if (!response.ok) throw new Error("Erreur téléchargement");
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = (paymentBook.title || "livre") + ".pdf";
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) { alert("Erreur lors du téléchargement"); }
+                    }}
+                      style={{ flex: 1, padding: 14, background: "transparent", border: "2px solid " + G.gold, borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      ⬇️ Télécharger
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
+                    style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                    📖 Lire maintenant
+                  </button>
+                )}
               </div>
             )}
             {paymentStep === 6 && (
