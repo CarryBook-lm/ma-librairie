@@ -85,6 +85,9 @@ export default function Admin() {
   const [quizPayments, setQuizPayments] = useState([]);
   const [carrycarePayments, setCarrycarePayments] = useState([]);
   const [bookViews, setBookViews] = useState([]);
+  const [referralCodes, setReferralCodes] = useState([]);
+  const [allReferrals, setAllReferrals] = useState([]);
+  const [referralWithdrawals, setReferralWithdrawals] = useState([]);
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
@@ -114,7 +117,18 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); }, []);
+
+  async function fetchReferralData() {
+    try {
+      const { data: codes } = await supabase.from("referral_codes").select("*").order("total_earned", { ascending: false });
+      if (codes) setReferralCodes(codes);
+      const { data: refs } = await supabase.from("referrals").select("*").order("created_at", { ascending: false });
+      if (refs) setAllReferrals(refs);
+      const { data: wds } = await supabase.from("referral_withdrawals").select("*").order("created_at", { ascending: false });
+      if (wds) setReferralWithdrawals(wds);
+    } catch (e) { console.error("Erreur fetch referrals:", e); }
+  }
 
   async function fetchQuizPayments() {
     try {
@@ -484,6 +498,7 @@ export default function Admin() {
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
+            { id: "referrals", label: "Parrainages", icon: "🎁" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "security", label: "Sécurité", icon: "🔐" },
@@ -957,6 +972,78 @@ export default function Admin() {
             <button onClick={() => { fetchStats(); }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 13, cursor: "pointer" }}>
               🔄 Rafraîchir les statistiques
             </button>
+          </div>
+        )}
+
+        {/* PARRAINAGES */}
+        {view === "referrals" && (
+          <div>
+            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🎁 Parrainages</h2>
+
+            {/* STATS */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 20 }}>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Parrains</div>
+                <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{referralCodes.length}</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Filleuls</div>
+                <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{allReferrals.length}</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Total dû</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#f0a020" }}>{referralCodes.reduce((s, c) => s + (c.available_amount || 0) + (c.pending_amount || 0), 0).toLocaleString()} F</div>
+              </div>
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Déjà versé</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#4caf50" }}>{referralCodes.reduce((s, c) => s + (c.total_paid || 0), 0).toLocaleString()} F</div>
+              </div>
+            </div>
+
+            {/* DEMANDES DE RETRAIT */}
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: "#c9a84c", fontWeight: "bold", marginBottom: 12 }}>💸 Demandes de retrait</div>
+              {referralWithdrawals.length === 0 ? (
+                <div style={{ color: "#666", textAlign: "center", padding: 16, fontSize: 12 }}>Aucune demande</div>
+              ) : (
+                referralWithdrawals.slice(0, 20).map(wd => (
+                  <div key={wd.id} style={{ padding: "10px 0", borderBottom: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>{wd.amount.toLocaleString()} F → {wd.phone_number}</div>
+                      <div style={{ fontSize: 10, color: "#888" }}>
+                        {new Date(wd.created_at).toLocaleString("fr-FR")} - 
+                        {wd.status === "paid" ? " ✅ Versé" : 
+                         wd.status === "processing" ? " ⏳ En cours" : 
+                         wd.status === "failed" ? " ❌ Échec" : " ⏳ En attente"}
+                      </div>
+                      {wd.error_message && <div style={{ fontSize: 10, color: "#ff6b6b" }}>Erreur : {wd.error_message}</div>}
+                      {wd.campay_reference && <div style={{ fontSize: 9, color: "#666" }}>Ref CamPay : {wd.campay_reference}</div>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* TOP PARRAINS */}
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+              <div style={{ fontSize: 13, color: "#c9a84c", fontWeight: "bold", marginBottom: 12 }}>🏆 Top Parrains</div>
+              {referralCodes.length === 0 ? (
+                <div style={{ color: "#666", textAlign: "center", padding: 16, fontSize: 12 }}>Aucun parrain encore</div>
+              ) : (
+                referralCodes.slice(0, 10).map((c, i) => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #2a2a2a" }}>
+                    <div>
+                      <div style={{ fontSize: 13, color: "#e8e0d0" }}>#{i+1} {c.code}</div>
+                      <div style={{ fontSize: 10, color: "#888" }}>Total gagné : {(c.total_earned || 0).toLocaleString()} F</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 11, color: "#c9a84c", fontWeight: "bold" }}>{(c.available_amount || 0).toLocaleString()} F</div>
+                      <div style={{ fontSize: 9, color: "#666" }}>disponible</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 

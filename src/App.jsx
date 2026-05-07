@@ -64,6 +64,7 @@ const PAGE_TO_PATH = {
   about: "/a-propos",
   faq: "/faq",
   favorites: "/favoris",
+  referral: "/parrainage",
   confidentialite: "/confidentialite",
 };
 
@@ -77,6 +78,7 @@ const PATH_TO_PAGE = {
   "/a-propos": "about",
   "/faq": "faq",
   "/favoris": "favorites",
+  "/parrainage": "referral",
   "/confidentialite": "confidentialite",
 };
 
@@ -4828,6 +4830,13 @@ function isOnPromo(book) {
   return getDiscountPct(book) > 0;
 }
 
+// Helper pour générer un code parrainage suggéré (style PRENOM + 4 caractères)
+function generateSuggestedReferralCode(name) {
+  const cleanName = (name || "USER").replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 8);
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return cleanName + random;
+}
+
 // Helper pour tracker les événements Meta Pixel (Facebook)
 // Vérifie que fbq existe (le Pixel peut être bloqué par AdBlock ou indisponible)
 function trackPixelEvent(eventName, params = {}) {
@@ -4904,6 +4913,20 @@ export default function App() {
   const [appliedPromo, setAppliedPromo] = useState(null); // { code, discount_pct }
   const [promoMessage, setPromoMessage] = useState({ type: "", text: "" });
   const [promoChecking, setPromoChecking] = useState(false);
+
+  // PARRAINAGE
+  const [referralCode, setReferralCode] = useState(null); // mon code parrainage
+  const [referralData, setReferralData] = useState(null); // mon solde, gains
+  const [myReferrals, setMyReferrals] = useState([]); // mes filleuls
+  const [myWithdrawals, setMyWithdrawals] = useState([]); // mes retraits
+  const [signupReferralCode, setSignupReferralCode] = useState(""); // code utilisé à l'inscription
+  const [createReferralInput, setCreateReferralInput] = useState("");
+  const [referralCreateMessage, setReferralCreateMessage] = useState({ type: "", text: "" });
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawPhone, setWithdrawPhone] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawMessage, setWithdrawMessage] = useState({ type: "", text: "" });
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(true);
@@ -5042,6 +5065,20 @@ export default function App() {
         // Rediriger vers la nouvelle URL propre
         window.history.replaceState({}, "", buildPath("detail", targetBook));
       }
+    }
+
+    // PARRAINAGE : capture du code parrainage dans l'URL (?ref=CODE)
+    const refCode = params.get("ref");
+    if (refCode) {
+      setSignupReferralCode(refCode.toUpperCase());
+      // Stocker dans localStorage pour persistance
+      try { localStorage.setItem("pendingReferralCode", refCode.toUpperCase()); } catch (e) {}
+    } else {
+      // Récupérer depuis localStorage si présent
+      try {
+        const stored = localStorage.getItem("pendingReferralCode");
+        if (stored) setSignupReferralCode(stored);
+      } catch (e) {}
     }
   }, [books]);
 
@@ -5236,6 +5273,136 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // ========== PARRAINAGE - Fonctions ==========
+  async function loadReferralData(userId) {
+    try {
+      // Mon code
+      const { data: codeData } = await supabase.from("referral_codes").select("*").eq("user_id", userId).limit(1);
+      if (codeData && codeData.length > 0) {
+        setReferralCode(codeData[0].code);
+        setReferralData(codeData[0]);
+      } else {
+        setReferralCode(null);
+        setReferralData(null);
+      }
+      // Mes filleuls
+      const { data: refsData } = await supabase.from("referrals").select("*").eq("referrer_id", userId).order("created_at", { ascending: false });
+      if (refsData) setMyReferrals(refsData);
+      // Mes retraits
+      const { data: wdData } = await supabase.from("referral_withdrawals").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+      if (wdData) setMyWithdrawals(wdData);
+    } catch (e) { console.error("Erreur loadReferralData:", e); }
+  }
+
+  async function createMyReferralCode() {
+    if (!user) return;
+    const code = createReferralInput.trim().toUpperCase();
+    if (code.length < 4 || code.length > 20) {
+      setReferralCreateMessage({ type: "error", text: "Le code doit faire entre 4 et 20 caractères" });
+      return;
+    }
+    if (!/^[A-Z0-9]+$/.test(code)) {
+      setReferralCreateMessage({ type: "error", text: "Lettres et chiffres uniquement (sans espaces)" });
+      return;
+    }
+    // Vérifier si le code est déjà pris
+    const { data: existing } = await supabase.from("referral_codes").select("code").eq("code", code).limit(1);
+    if (existing && existing.length > 0) {
+      setReferralCreateMessage({ type: "error", text: "Ce code est déjà pris, choisis-en un autre" });
+      return;
+    }
+    // Créer le code
+    const { error } = await supabase.from("referral_codes").insert([{
+      user_id: user.id,
+      code: code,
+      total_earned: 0,
+      total_paid: 0,
+      pending_amount: 0,
+      available_amount: 0
+    }]);
+    if (error) {
+      setReferralCreateMessage({ type: "error", text: "Erreur : " + error.message });
+      return;
+    }
+    setReferralCreateMessage({ type: "success", text: "✅ Code créé avec succès !" });
+    setCreateReferralInput("");
+    loadReferralData(user.id);
+  }
+
+  async function requestWithdrawal() {
+    if (!user || !referralData) return;
+    const amount = parseInt(withdrawAmount);
+    if (!amount || amount < 5000) {
+      setWithdrawMessage({ type: "error", text: "Le minimum de retrait est 5 000 F" });
+      return;
+    }
+    if (amount > (referralData.available_amount || 0)) {
+      setWithdrawMessage({ type: "error", text: "Solde insuffisant" });
+      return;
+    }
+    const phone = withdrawPhone.replace(/\s+/g, "").replace(/^237/, "");
+    if (!/^6[2-9]\d{7}$/.test(phone)) {
+      setWithdrawMessage({ type: "error", text: "Numéro Cameroun invalide (ex: 6XXXXXXXX)" });
+      return;
+    }
+    setWithdrawLoading(true);
+    try {
+      // Créer la demande de retrait
+      const { data: wdData, error: wdErr } = await supabase.from("referral_withdrawals").insert([{
+        user_id: user.id,
+        amount: amount,
+        phone_number: "237" + phone,
+        operator: phone[1] === "5" || phone[1] === "0" ? "MTN" : "ORANGE",
+        status: "pending"
+      }]).select().single();
+      if (wdErr) throw new Error(wdErr.message);
+      // Appel CamPay pour faire le versement automatique
+      const payRes = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "withdraw",
+          amount: amount,
+          phone: "237" + phone,
+          description: "Récompense parrainage CarryBooks",
+          external_reference: "WD_" + wdData.id + "_" + Date.now()
+        })
+      });
+      const payData = await payRes.json();
+      if (payData.reference) {
+        // Mettre à jour la demande avec la référence CamPay
+        await supabase.from("referral_withdrawals").update({
+          campay_reference: payData.reference,
+          status: "processing"
+        }).eq("id", wdData.id);
+        // Mettre à jour le solde du parrain
+        await supabase.from("referral_codes").update({
+          available_amount: (referralData.available_amount || 0) - amount,
+          total_paid: (referralData.total_paid || 0) + amount
+        }).eq("user_id", user.id);
+        setWithdrawMessage({ type: "success", text: "✅ Demande envoyée ! Tu recevras l'argent sous quelques minutes" });
+        setTimeout(() => {
+          setShowWithdrawModal(false);
+          setWithdrawAmount("");
+          setWithdrawPhone("");
+          setWithdrawMessage({ type: "", text: "" });
+          loadReferralData(user.id);
+        }, 3000);
+      } else {
+        // Échec : marquer la demande comme failed
+        await supabase.from("referral_withdrawals").update({
+          status: "failed",
+          error_message: payData.message || "Erreur CamPay"
+        }).eq("id", wdData.id);
+        throw new Error(payData.message || "Erreur lors du versement");
+      }
+    } catch (err) {
+      setWithdrawMessage({ type: "error", text: "Erreur : " + err.message });
+    } finally {
+      setWithdrawLoading(false);
+    }
+  }
+
   async function loadUserPurchases(userId) {
     const { data } = await supabase.from("purchases").select("book_id, created_at, amount").eq("user_id", userId).order("created_at", { ascending: false });
     if (data) {
@@ -5246,6 +5413,34 @@ export default function App() {
       localStorage.setItem("purchasedBooks", JSON.stringify(merged));
       setPurchaseHistory(data);
     }
+    // PARRAINAGE : Enregistrer le code parrainage si l'user vient d'un lien de parrainage
+    try {
+      const pendingCode = localStorage.getItem("pendingReferralCode");
+      if (pendingCode) {
+        // Vérifier si déjà enregistré comme filleul
+        const { data: existing } = await supabase.from("referrals").select("id").eq("referred_id", userId).limit(1);
+        if (!existing || existing.length === 0) {
+          // Trouver le parrain via le code
+          const { data: parrainCode } = await supabase.from("referral_codes").select("user_id, code").eq("code", pendingCode).limit(1);
+          if (parrainCode && parrainCode.length > 0 && parrainCode[0].user_id !== userId) {
+            // Créer le lien parrain-filleul
+            await supabase.from("referrals").insert([{
+              referrer_id: parrainCode[0].user_id,
+              referred_id: userId,
+              code_used: pendingCode,
+              reward_amount: 500,
+              status: "pending"
+            }]);
+            // Marquer comme filleul (pour appliquer -20% au 1er achat)
+            try { localStorage.setItem("isReferred", "true"); } catch (e) {}
+          }
+        }
+        // Effacer le code en attente
+        localStorage.removeItem("pendingReferralCode");
+      }
+    } catch (e) { console.error("Erreur enregistrement parrainage:", e); }
+    // Charger les données parrainage
+    loadReferralData(userId);
     // Charger abonnement actif
     const { data: sub, error: subErr } = await supabase.from("subscriptions")
       .select("*").eq("user_id", userId).eq("status", "actif")
@@ -5678,6 +5873,37 @@ export default function App() {
                 amount: finalPrice,
                 type: "sale"
               }]);
+              // PARRAINAGE : Si c'est le 1er achat du filleul, créditer le parrain
+              if (user) {
+                try {
+                  const { data: prevPurchases } = await supabase.from("purchases").select("id").eq("user_id", user.id).limit(2);
+                  const isFirstPurchase = prevPurchases && prevPurchases.length === 1;
+                  if (isFirstPurchase) {
+                    // Vérifier si l'utilisateur a été parrainé
+                    const { data: refRecord } = await supabase.from("referrals").select("*").eq("referred_id", user.id).is("first_purchase_id", null).limit(1);
+                    if (refRecord && refRecord.length > 0) {
+                      const ref = refRecord[0];
+                      const reward = ref.reward_amount || 500;
+                      const availableAt = new Date();
+                      availableAt.setDate(availableAt.getDate() + 30);
+                      // Marquer le parrainage comme actif
+                      await supabase.from("referrals").update({
+                        status: "pending",
+                        first_purchase_amount: finalPrice,
+                        available_at: availableAt.toISOString()
+                      }).eq("id", ref.id);
+                      // Créditer le solde "en attente" du parrain
+                      const { data: parrCode } = await supabase.from("referral_codes").select("*").eq("user_id", ref.referrer_id).limit(1);
+                      if (parrCode && parrCode.length > 0) {
+                        await supabase.from("referral_codes").update({
+                          total_earned: (parrCode[0].total_earned || 0) + reward,
+                          pending_amount: (parrCode[0].pending_amount || 0) + reward
+                        }).eq("user_id", ref.referrer_id);
+                      }
+                    }
+                  }
+                } catch (e) { console.error("Erreur parrainage:", e); }
+              }
               // Incrémenter le compteur d'utilisation du code promo
               if (appliedPromo) {
                 try {
@@ -5790,6 +6016,7 @@ export default function App() {
     { id: "subscription", label: "Abonnement" },
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
+    { id: "referral", label: "🎁 Mon parrainage" },
     { id: "quiz", label: "🎯 Quiz" },
     { id: "myResults", label: "💎 Mes résultats" },
     { id: "about", label: "À propos" },
@@ -7128,7 +7355,200 @@ export default function App() {
         )}
       </div>
 
-        {/* ABONNEMENT */}
+        {/* ============== MON PARRAINAGE ============== */}
+        {page === "referral" && (
+          <div style={{ padding: "20px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>🎁 Mon parrainage</div>
+            <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 20 }}>Gagne 500 F par filleul - retrait dès 5 000 F</p>
+
+            {!user ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", border: "1px dashed " + G.border, borderRadius: 12 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
+                <div style={{ color: G.text, fontSize: 14, marginBottom: 8 }}>Connecte-toi pour parrainer</div>
+                <button onClick={signInWithGoogle} style={{ padding: "10px 24px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginTop: 12 }}>Se connecter</button>
+              </div>
+            ) : !referralCode ? (
+              <div>
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✨ Crée ton code parrainage</div>
+                  <div style={{ fontSize: 12, color: G.textFaint, marginBottom: 16 }}>Choisis un code unique (4-20 caractères, lettres et chiffres). Exemple : SANDRA, MARIE2026, LANDLOVE</div>
+                  <input
+                    type="text"
+                    value={createReferralInput}
+                    onChange={e => { setCreateReferralInput(e.target.value.toUpperCase()); setReferralCreateMessage({ type: "", text: "" }); }}
+                    placeholder="TONCODE"
+                    maxLength={20}
+                    style={{ width: "100%", padding: "12px 16px", border: "1px solid " + G.border, borderRadius: 8, fontSize: 16, color: G.text, background: G.surface2, textAlign: "center", letterSpacing: 2, fontWeight: "bold", marginBottom: 12, boxSizing: "border-box" }}
+                  />
+                  {referralCreateMessage.text && (
+                    <div style={{ fontSize: 12, color: referralCreateMessage.type === "error" ? "#dc3545" : "#22c55e", marginBottom: 12, fontWeight: "bold", textAlign: "center" }}>
+                      {referralCreateMessage.text}
+                    </div>
+                  )}
+                  <button onClick={createMyReferralCode} disabled={!createReferralInput.trim()} style={{ width: "100%", padding: 14, background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: createReferralInput.trim() ? "pointer" : "not-allowed", opacity: createReferralInput.trim() ? 1 : 0.5 }}>
+                    Créer mon code
+                  </button>
+                </div>
+                <div style={{ background: "#fff3cd", border: "1px solid #ffc107", borderRadius: 8, padding: 14, color: "#856404", fontSize: 12 }}>
+                  💡 <strong>Comment ça marche ?</strong><br/>
+                  1. Crée ton code unique<br/>
+                  2. Partage-le avec tes amies<br/>
+                  3. Quand elles achètent leur 1er livre, tu gagnes 500 F<br/>
+                  4. Retire ton argent sur Mobile Money dès 5 000 F
+                </div>
+              </div>
+            ) : (
+              <div>
+                {/* SECTION SOLDE */}
+                <div style={{ background: "linear-gradient(135deg, " + G.surface2 + " 0%, " + G.goldDim + " 100%)", border: "2px solid " + G.gold, borderRadius: 12, padding: 24, marginBottom: 16, textAlign: "center" }}>
+                  <div style={{ fontSize: 11, color: G.gold, letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>💰 Mon solde disponible</div>
+                  <div style={{ fontSize: 36, fontWeight: "bold", color: G.gold, marginBottom: 12 }}>{(referralData?.available_amount || 0).toLocaleString()} F</div>
+                  <button
+                    onClick={() => setShowWithdrawModal(true)}
+                    disabled={(referralData?.available_amount || 0) < 5000}
+                    style={{ padding: "10px 20px", background: (referralData?.available_amount || 0) >= 5000 ? G.gold : G.surface2, color: (referralData?.available_amount || 0) >= 5000 ? "#1a1a1a" : G.textFaint, border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: (referralData?.available_amount || 0) >= 5000 ? "pointer" : "not-allowed" }}
+                  >
+                    💸 Demander un retrait
+                  </button>
+                  <div style={{ fontSize: 10, color: G.textFaint, marginTop: 8 }}>Minimum 5 000 F</div>
+                </div>
+
+                {/* SECTION CODE */}
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: 18, marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, color: G.textFaint, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>🎟️ Mon code parrainage</div>
+                  <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold, textAlign: "center", letterSpacing: 3, padding: "12px 0", border: "1px dashed " + G.gold, borderRadius: 8, marginBottom: 12 }}>
+                    {referralCode}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <button onClick={() => {
+                      navigator.clipboard.writeText(referralCode);
+                      alert("✅ Code copié !");
+                    }} style={{ padding: 12, background: G.surface2, color: G.text, border: "1px solid " + G.border, borderRadius: 6, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                      📋 Copier
+                    </button>
+                    <button onClick={() => {
+                      const url = "https://carrybooks.com?ref=" + referralCode;
+                      const text = `Hey ! 📚 Découvre CarryBooks - des livres digitaux qui valent vraiment le coup !\n\nUtilise mon code ${referralCode} pour avoir -20% sur ton 1er livre 🎁\n\n👉 ${url}`;
+                      const wa = "https://wa.me/?text=" + encodeURIComponent(text);
+                      window.open(wa, "_blank");
+                    }} style={{ padding: 12, background: "#25D366", color: "#fff", border: "none", borderRadius: 6, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                      📤 WhatsApp
+                    </button>
+                  </div>
+                </div>
+
+                {/* STATS */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, textAlign: "center" }}>
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>👥</div>
+                    <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold }}>{myReferrals.length}</div>
+                    <div style={{ fontSize: 10, color: G.textFaint }}>Filleuls</div>
+                  </div>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, textAlign: "center" }}>
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>💎</div>
+                    <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold }}>{(referralData?.total_earned || 0).toLocaleString()} F</div>
+                    <div style={{ fontSize: 10, color: G.textFaint }}>Total gagné</div>
+                  </div>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, textAlign: "center" }}>
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>⏳</div>
+                    <div style={{ fontSize: 18, fontWeight: "bold", color: "#f0a020" }}>{(referralData?.pending_amount || 0).toLocaleString()} F</div>
+                    <div style={{ fontSize: 10, color: G.textFaint }}>En attente (30j)</div>
+                  </div>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, textAlign: "center" }}>
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>💸</div>
+                    <div style={{ fontSize: 18, fontWeight: "bold", color: G.text }}>{(referralData?.total_paid || 0).toLocaleString()} F</div>
+                    <div style={{ fontSize: 10, color: G.textFaint }}>Déjà retiré</div>
+                  </div>
+                </div>
+
+                {/* HISTORIQUE FILLEULS */}
+                {myReferrals.length > 0 && (
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>📋 Mes filleuls</div>
+                    {myReferrals.slice(0, 10).map(ref => (
+                      <div key={ref.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + G.border }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: G.text }}>{new Date(ref.created_at).toLocaleDateString("fr-FR")}</div>
+                          <div style={{ fontSize: 10, color: G.textFaint }}>
+                            {ref.first_purchase_id ? "✅ A acheté" : "⏳ Inscrit, pas encore acheté"}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: ref.first_purchase_id ? G.gold : G.textFaint }}>
+                          {ref.first_purchase_id ? "+" + (ref.reward_amount || 500) + " F" : "—"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* HISTORIQUE RETRAITS */}
+                {myWithdrawals.length > 0 && (
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16 }}>
+                    <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>💸 Mes retraits</div>
+                    {myWithdrawals.slice(0, 5).map(wd => (
+                      <div key={wd.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid " + G.border }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: G.text }}>{new Date(wd.created_at).toLocaleDateString("fr-FR")}</div>
+                          <div style={{ fontSize: 10, color: G.textFaint }}>
+                            {wd.status === "paid" ? "✅ Versé" : wd.status === "processing" ? "⏳ En traitement" : wd.status === "failed" ? "❌ Échec" : "⏳ En attente"}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: wd.status === "paid" ? G.gold : G.text }}>
+                          {wd.amount.toLocaleString()} F
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODAL DEMANDE DE RETRAIT */}
+        {showWithdrawModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
+            <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 12, padding: 24, maxWidth: 400, width: "100%" }}>
+              <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold, marginBottom: 4 }}>💸 Demande de retrait</div>
+              <div style={{ fontSize: 12, color: G.textFaint, marginBottom: 16 }}>L'argent sera envoyé sur ton numéro Mobile Money</div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 11, color: G.textDim, marginBottom: 6, display: "block" }}>MONTANT (FCFA)</label>
+                <input
+                  type="number"
+                  value={withdrawAmount}
+                  onChange={e => setWithdrawAmount(e.target.value)}
+                  placeholder="Min 5000"
+                  style={{ width: "100%", padding: "12px 14px", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, color: G.text, background: G.surface2, boxSizing: "border-box" }}
+                />
+                <div style={{ fontSize: 10, color: G.textFaint, marginTop: 4 }}>Solde dispo : {(referralData?.available_amount || 0).toLocaleString()} F</div>
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 11, color: G.textDim, marginBottom: 6, display: "block" }}>📞 NUMÉRO MOBILE MONEY (sans 237)</label>
+                <input
+                  type="tel"
+                  value={withdrawPhone}
+                  onChange={e => setWithdrawPhone(e.target.value)}
+                  placeholder="6XXXXXXXX"
+                  style={{ width: "100%", padding: "12px 14px", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, color: G.text, background: G.surface2, boxSizing: "border-box" }}
+                />
+                <div style={{ fontSize: 10, color: G.textFaint, marginTop: 4 }}>Orange ou MTN, 9 chiffres</div>
+              </div>
+              {withdrawMessage.text && (
+                <div style={{ padding: 10, background: withdrawMessage.type === "error" ? "#3a1a1a" : "#1a3a1a", borderRadius: 6, marginBottom: 12 }}>
+                  <div style={{ fontSize: 12, color: withdrawMessage.type === "error" ? "#ff6b6b" : "#4caf50" }}>{withdrawMessage.text}</div>
+                </div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <button onClick={() => { setShowWithdrawModal(false); setWithdrawMessage({ type: "", text: "" }); }} disabled={withdrawLoading} style={{ padding: 12, background: G.surface2, color: G.text, border: "1px solid " + G.border, borderRadius: 8, fontSize: 13, cursor: withdrawLoading ? "not-allowed" : "pointer" }}>
+                  Annuler
+                </button>
+                <button onClick={requestWithdrawal} disabled={withdrawLoading} style={{ padding: 12, background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: withdrawLoading ? "not-allowed" : "pointer" }}>
+                  {withdrawLoading ? "..." : "Confirmer"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {page === "subscription" && (
           <div style={{ padding: "24px 16px 80px" }}>
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Abonnement</div>
