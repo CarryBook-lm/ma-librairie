@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 .vercel
+carrybooks.jks 
+android/app/release/ 
