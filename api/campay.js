@@ -1,8 +1,9 @@
-// Fonction serverless Vercel : /api/campay
-// Gère collect (recevoir) ET withdraw (envoyer)
+// api/campay.js
+// Fonction serverless Vercel : gère collect, check, withdraw + record_purchase (bypass RLS)
+
+import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -17,51 +18,129 @@ export default async function handler(req, res) {
   const { action, ...params } = req.body;
 
   try {
-    let url, body;
-
+    // ========== ACTION : COLLECT ==========
     if (action === "collect") {
-      // Recevoir un paiement (achat livre, abo, quiz, carrycare)
-      url = "https://www.campay.net/api/collect/";
-      body = {
-        amount: String(params.amount),
-        currency: "XAF",
-        from: params.phone,
-        description: params.description,
-        external_reference: params.external_reference,
-      };
-    } else if (action === "check") {
-      // Vérifier le statut d'une transaction
+      const response = await fetch("https://www.campay.net/api/collect/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + CAMPAY_TOKEN,
+        },
+        body: JSON.stringify({
+          amount: String(params.amount),
+          currency: "XAF",
+          from: params.phone,
+          description: params.description,
+          external_reference: params.external_reference,
+        }),
+      });
+      const data = await response.json();
+      return res.status(response.status).json(data);
+    }
+
+    // ========== ACTION : CHECK ==========
+    if (action === "check") {
       const checkUrl = `https://www.campay.net/api/transaction/${params.reference}/`;
       const checkRes = await fetch(checkUrl, {
         headers: { Authorization: "Token " + CAMPAY_TOKEN },
       });
       const checkData = await checkRes.json();
       return res.status(200).json(checkData);
-    } else if (action === "withdraw") {
-      // ENVOYER un paiement (récompense parrainage)
-      url = "https://www.campay.net/api/withdraw/";
-      body = {
-        amount: String(params.amount),
-        currency: "XAF",
-        to: params.phone,
-        description: params.description,
-        external_reference: params.external_reference,
-      };
-    } else {
-      return res.status(400).json({ error: "Action inconnue" });
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Token " + CAMPAY_TOKEN,
-      },
-      body: JSON.stringify(body),
-    });
+    // ========== ACTION : WITHDRAW ==========
+    if (action === "withdraw") {
+      const response = await fetch("https://www.campay.net/api/withdraw/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Token " + CAMPAY_TOKEN,
+        },
+        body: JSON.stringify({
+          amount: String(params.amount),
+          currency: "XAF",
+          to: params.phone,
+          description: params.description,
+          external_reference: params.external_reference,
+        }),
+      });
+      const data = await response.json();
+      return res.status(response.status).json(data);
+    }
 
-    const data = await response.json();
-    return res.status(response.status).json(data);
+    // ========== ACTION : RECORD_PURCHASE (NOUVELLE) ==========
+    // Enregistre un achat dans Supabase APRÈS vérification du paiement CamPay
+    // Utilise service_role pour bypass RLS — GARANTIT l'INSERT
+    if (action === "record_purchase") {
+      const { reference, user_id, book_id, amount, phone, external_reference } = params;
+
+      // 1. VÉRIFIER auprès de CamPay que le paiement est bien SUCCESSFUL
+      const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
+      const verifyRes = await fetch(verifyUrl, {
+        headers: { Authorization: "Token " + CAMPAY_TOKEN },
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.status !== "SUCCESSFUL") {
+        return res.status(400).json({
+          error: "Paiement non confirmé par CamPay",
+          status: verifyData.status,
+        });
+      }
+
+      // 2. Créer un client Supabase avec service_role (bypass RLS)
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // 3. Vérifier si l'achat n'existe pas déjà (idempotence)
+      const { data: existing } = await supabaseAdmin
+        .from("purchases")
+        .select("id")
+        .eq("external_reference", external_reference)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        return res.status(200).json({
+          success: true,
+          message: "Achat déjà enregistré",
+          purchase_id: existing[0].id,
+          duplicate: true,
+        });
+      }
+
+      // 4. INSERT dans purchases avec service_role
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from("purchases")
+        .insert([
+          {
+            user_id,
+            book_id,
+            amount,
+            phone,
+            external_reference,
+            type: "sale",
+          },
+        ])
+        .select();
+
+      if (insertError) {
+        console.error("[RECORD_PURCHASE] Insert error:", insertError);
+        return res.status(500).json({
+          error: "Erreur enregistrement achat",
+          details: insertError.message,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        purchase: inserted[0],
+      });
+    }
+
+    return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);
     return res.status(500).json({ error: err.message });

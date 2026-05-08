@@ -5883,6 +5883,8 @@ export default function App() {
       const promoDiscount = appliedPromo ? Math.round(basePrice * appliedPromo.discount_pct / 100) : 0;
       const finalPrice = basePrice - promoDiscount;
 
+      const externalRef = "CB_" + paymentBook.id + "_" + (user ? user.id : "guest") + "_" + Date.now();
+
       // Appel via notre fonction serverless (évite CORS)
       const payRes = await fetch("/api/campay", {
         method: "POST",
@@ -5892,94 +5894,147 @@ export default function App() {
           amount: finalPrice,
           phone: phone,
           description: "Achat " + paymentBook.title + " sur CarryBooks",
-          external_reference: "CB_" + paymentBook.id + "_" + (user ? user.id : "guest") + "_" + Date.now()
+          external_reference: externalRef
         })
       });
       const payData = await payRes.json();
 
-      if (payData.reference) {
-        // Vérifier le statut après 25 secondes
-        setTimeout(async () => {
-          try {
-            const checkRes = await fetch("/api/campay", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "check", reference: payData.reference })
-            });
-            const checkData = await checkRes.json();
-            if (checkData.status === "SUCCESSFUL") {
-              setPaymentStep(5);
-              const newP = [...purchasedBooks, paymentBook.id];
-              setPurchasedBooks(newP);
-              localStorage.setItem("purchasedBooks", JSON.stringify(newP));
-              if (user) await supabase.from("purchases").insert([{
-                user_id: user.id,
-                book_id: paymentBook.id,
-                amount: finalPrice,
-                type: "sale"
-              }]);
-              // PARRAINAGE : Si c'est le 1er achat du filleul, créditer le parrain
-              if (user) {
-                try {
-                  const { data: prevPurchases } = await supabase.from("purchases").select("id").eq("user_id", user.id).limit(2);
-                  const isFirstPurchase = prevPurchases && prevPurchases.length === 1;
-                  if (isFirstPurchase) {
-                    // Vérifier si l'utilisateur a été parrainé
-                    const { data: refRecord } = await supabase.from("referrals").select("*").eq("referred_id", user.id).is("first_purchase_id", null).limit(1);
-                    if (refRecord && refRecord.length > 0) {
-                      const ref = refRecord[0];
-                      const reward = ref.reward_amount || 500;
-                      const delayDays = appReferralSettings?.fraud_delay_days || 30;
-                      const availableAt = new Date();
-                      availableAt.setDate(availableAt.getDate() + delayDays);
-                      // Marquer le parrainage comme actif
-                      await supabase.from("referrals").update({
-                        status: "pending",
-                        first_purchase_amount: finalPrice,
-                        available_at: availableAt.toISOString()
-                      }).eq("id", ref.id);
-                      // Créditer le solde "en attente" du parrain
-                      const { data: parrCode } = await supabase.from("referral_codes").select("*").eq("user_id", ref.referrer_id).limit(1);
-                      if (parrCode && parrCode.length > 0) {
-                        await supabase.from("referral_codes").update({
-                          total_earned: (parrCode[0].total_earned || 0) + reward,
-                          pending_amount: (parrCode[0].pending_amount || 0) + reward
-                        }).eq("user_id", ref.referrer_id);
-                      }
+      if (!payData.reference) {
+        setPaymentStep(6);
+        return;
+      }
+
+      // ✅ POLLING : on vérifie toutes les 5 secondes pendant max 3 minutes (36 tentatives)
+      let attempts = 0;
+      const maxAttempts = 36;
+      const pollInterval = 5000;
+
+      const pollPayment = async () => {
+        attempts++;
+        try {
+          const checkRes = await fetch("/api/campay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check", reference: payData.reference })
+          });
+          const checkData = await checkRes.json();
+
+          if (checkData.status === "SUCCESSFUL") {
+            // ✅ Paiement confirmé — on enregistre l'achat CÔTÉ SERVEUR (bypass RLS)
+            if (user) {
+              const recordRes = await fetch("/api/campay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "record_purchase",
+                  reference: payData.reference,
+                  user_id: user.id,
+                  book_id: paymentBook.id,
+                  amount: finalPrice,
+                  phone: phone,
+                  external_reference: externalRef
+                })
+              });
+              const recordData = await recordRes.json();
+
+              if (!recordData.success) {
+                // 🚨 Paiement reçu mais INSERT échoué — alerte critique
+                console.error("[CRITICAL] Paiement reçu mais enregistrement échoué:", recordData);
+                alert("⚠️ Paiement reçu mais erreur lors de l'enregistrement. Contactez le support avec la référence : " + payData.reference);
+                setPaymentStep(6);
+                return;
+              }
+            }
+
+            // ✅ Tout est OK : afficher succès et mettre à jour la lib locale
+            setPaymentStep(5);
+            const newP = [...purchasedBooks, paymentBook.id];
+            setPurchasedBooks(newP);
+            localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+
+            // PARRAINAGE : Si c'est le 1er achat du filleul, créditer le parrain
+            if (user) {
+              try {
+                const { data: prevPurchases } = await supabase.from("purchases").select("id").eq("user_id", user.id).limit(2);
+                const isFirstPurchase = prevPurchases && prevPurchases.length === 1;
+                if (isFirstPurchase) {
+                  const { data: refRecord } = await supabase.from("referrals").select("*").eq("referred_id", user.id).is("first_purchase_id", null).limit(1);
+                  if (refRecord && refRecord.length > 0) {
+                    const ref = refRecord[0];
+                    const reward = ref.reward_amount || 500;
+                    const delayDays = appReferralSettings?.fraud_delay_days || 30;
+                    const availableAt = new Date();
+                    availableAt.setDate(availableAt.getDate() + delayDays);
+                    await supabase.from("referrals").update({
+                      status: "pending",
+                      first_purchase_amount: finalPrice,
+                      available_at: availableAt.toISOString()
+                    }).eq("id", ref.id);
+                    const { data: parrCode } = await supabase.from("referral_codes").select("*").eq("user_id", ref.referrer_id).limit(1);
+                    if (parrCode && parrCode.length > 0) {
+                      await supabase.from("referral_codes").update({
+                        total_earned: (parrCode[0].total_earned || 0) + reward,
+                        pending_amount: (parrCode[0].pending_amount || 0) + reward
+                      }).eq("user_id", ref.referrer_id);
                     }
                   }
-                } catch (e) { console.error("Erreur parrainage:", e); }
-              }
-              // Incrémenter le compteur d'utilisation du code promo
-              if (appliedPromo) {
-                try {
-                  const { data: promoData } = await supabase.from("promo_codes").select("uses_count").eq("id", appliedPromo.id).limit(1);
-                  const currentUses = (promoData && promoData[0]?.uses_count) || 0;
-                  await supabase.from("promo_codes").update({ uses_count: currentUses + 1 }).eq("id", appliedPromo.id);
-                } catch (e) { console.error("Erreur maj promo:", e); }
-                setAppliedPromo(null);
-              }
-              cacheBook(paymentBook);
-              // 📊 Pixel Meta : Purchase (achat réussi - événement le plus important !)
-              trackPixelEvent("Purchase", {
-                content_ids: [String(paymentBook.id)],
-                content_name: paymentBook.title || "",
-                content_type: "product",
-                value: paymentBook.price || 0,
-                currency: "XAF",
-                num_items: 1,
-              });
-            } else {
-              setPaymentStep(6);
+                }
+              } catch (e) { console.error("Erreur parrainage:", e); }
             }
-          } catch(e) {
-            setPaymentStep(6);
+
+            // Code promo
+            if (appliedPromo) {
+              try {
+                const { data: promoData } = await supabase.from("promo_codes").select("uses_count").eq("id", appliedPromo.id).limit(1);
+                const currentUses = (promoData && promoData[0]?.uses_count) || 0;
+                await supabase.from("promo_codes").update({ uses_count: currentUses + 1 }).eq("id", appliedPromo.id);
+              } catch (e) { console.error("Erreur maj promo:", e); }
+              setAppliedPromo(null);
+            }
+            cacheBook(paymentBook);
+
+            // 📊 Pixel Meta : Purchase
+            trackPixelEvent("Purchase", {
+              content_ids: [String(paymentBook.id)],
+              content_name: paymentBook.title || "",
+              content_type: "product",
+              value: paymentBook.price || 0,
+              currency: "XAF",
+              num_items: 1,
+            });
+            return; // Stop le polling
           }
-        }, 25000);
-      } else {
-        setPaymentStep(6);
-      }
+
+          if (checkData.status === "FAILED") {
+            setPaymentStep(6);
+            return; // Stop le polling
+          }
+
+          // Toujours PENDING : on continue le polling
+          if (attempts >= maxAttempts) {
+            // Timeout : on affiche un message clair (pas "échec" car le paiement peut encore arriver)
+            alert("⏱️ Délai dépassé. Si vous avez confirmé le paiement, contactez le support avec la référence : " + payData.reference);
+            setPaymentStep(6);
+            return;
+          }
+
+          // Continuer le polling
+          setTimeout(pollPayment, pollInterval);
+        } catch (e) {
+          console.error("Erreur polling paiement:", e);
+          if (attempts >= maxAttempts) {
+            setPaymentStep(6);
+            return;
+          }
+          // Erreur réseau → on retente
+          setTimeout(pollPayment, pollInterval);
+        }
+      };
+
+      // Lance le polling après 8 secondes (laisse le temps à l'utilisateur de confirmer)
+      setTimeout(pollPayment, 8000);
     } catch(e) {
+      console.error("Erreur handlePurchase:", e);
       setPaymentStep(6);
     }
   }
