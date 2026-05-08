@@ -27,107 +27,11 @@ const emptyForm = {
 };
 
 export default function Admin() {
-  // ===== NOUVEAU SYSTÈME D'AUTH SÉCURISÉ (basé sur Supabase + table admins) =====
+  // ===== AUTH ADMIN : États (les hooks vont plus bas, avant les early returns) =====
   const [adminAuth, setAdminAuth] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
-
-  // Vérification automatique au chargement
-  useEffect(() => {
-    checkAdminAccess();
-    // Re-vérifier si l'utilisateur change (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAdminAccess();
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function checkAdminAccess() {
-    setAuthChecking(true);
-    setAuthError("");
-
-    // 1. Vérifier que l'utilisateur est connecté à Supabase
-    const { data: { user }, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !user) {
-      setCurrentUser(null);
-      setAdminAuth(false);
-      setAuthError("Vous devez être connecté à CarryBooks pour accéder à l'admin");
-      setAuthChecking(false);
-      return;
-    }
-
-    setCurrentUser(user);
-
-    // 2. Vérifier qu'il est admin via is_admin() côté Supabase
-    const { data: isAdminResult, error: rpcErr } = await supabase.rpc('is_admin');
-    if (rpcErr) {
-      console.error("Erreur vérification admin:", rpcErr);
-      setAdminAuth(false);
-      setAuthError("Erreur lors de la vérification des droits");
-      setAuthChecking(false);
-      return;
-    }
-
-    if (!isAdminResult) {
-      setAdminAuth(false);
-      setAuthError("Accès refusé. Ce compte n'a pas les droits administrateur.");
-      setAuthChecking(false);
-      return;
-    }
-
-    // ✅ Tout OK : utilisateur connecté ET admin
-    setAdminAuth(true);
-    setAuthChecking(false);
-  }
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    setAdminAuth(false);
-    setCurrentUser(null);
-    window.location.href = "/";
-  }
-
-  // Pendant la vérification : écran de chargement
-  if (authChecking) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-        <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 320, textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: "3px solid #2a2a2a", borderTop: "3px solid #c9a84c", borderRadius: "50%", margin: "0 auto 16px", animation: "spin 0.9s linear infinite" }} />
-          <p style={{ color: "#888", fontSize: 13 }}>Vérification des droits…</p>
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        </div>
-      </div>
-    );
-  }
-
-  // Pas connecté ou pas admin : écran de refus
-  if (!adminAuth) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-        <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, textAlign: "center" }}>
-          <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
-          <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>Administration</h2>
-          <p style={{ color: "#f44336", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>{authError}</p>
-          {currentUser && (
-            <p style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
-              Connecté en tant que :<br /><span style={{ color: "#c9a84c" }}>{currentUser.email}</span>
-            </p>
-          )}
-          {currentUser ? (
-            <button onClick={handleSignOut}
-              style={{ width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, marginBottom: 8 }}>
-              Se déconnecter
-            </button>
-          ) : (
-            <a href="/" style={{ display: "block", width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, textDecoration: "none", boxSizing: "border-box" }}>
-              Aller à la connexion
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  }
   const [view, setView] = useState("dashboard");
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -184,7 +88,92 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ===== AUTH ADMIN : useEffect (DOIT être AVANT tout early return) =====
+  useEffect(() => {
+    checkAdminAccess();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAdminAccess();
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); }, []);
+
+  // ===== AUTH ADMIN : Fonctions + early returns (APRÈS tous les hooks) =====
+  async function checkAdminAccess() {
+    setAuthChecking(true);
+    setAuthError("");
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) {
+      setCurrentUser(null);
+      setAdminAuth(false);
+      setAuthError("Vous devez être connecté à CarryBooks pour accéder à l'admin");
+      setAuthChecking(false);
+      return;
+    }
+    setCurrentUser(user);
+    const { data: isAdminResult, error: rpcErr } = await supabase.rpc('is_admin');
+    if (rpcErr) {
+      console.error("Erreur vérification admin:", rpcErr);
+      setAdminAuth(false);
+      setAuthError("Erreur lors de la vérification des droits");
+      setAuthChecking(false);
+      return;
+    }
+    if (!isAdminResult) {
+      setAdminAuth(false);
+      setAuthError("Accès refusé. Ce compte n'a pas les droits administrateur.");
+      setAuthChecking(false);
+      return;
+    }
+    setAdminAuth(true);
+    setAuthChecking(false);
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setAdminAuth(false);
+    setCurrentUser(null);
+    window.location.href = "/";
+  }
+
+  if (authChecking) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 320, textAlign: "center" }}>
+          <div style={{ width: 40, height: 40, border: "3px solid #2a2a2a", borderTop: "3px solid #c9a84c", borderRadius: "50%", margin: "0 auto 16px", animation: "spin 0.9s linear infinite" }} />
+          <p style={{ color: "#888", fontSize: 13 }}>Verification des droits...</p>
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      </div>
+    );
+  }
+
+  if (!adminAuth) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, textAlign: "center" }}>
+          <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
+          <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>Administration</h2>
+          <p style={{ color: "#f44336", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>{authError}</p>
+          {currentUser && (
+            <p style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
+              Connecte en tant que :<br /><span style={{ color: "#c9a84c" }}>{currentUser.email}</span>
+            </p>
+          )}
+          {currentUser ? (
+            <button onClick={handleSignOut}
+              style={{ width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, marginBottom: 8 }}>
+              Se deconnecter
+            </button>
+          ) : (
+            <a href="/" style={{ display: "block", width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, textDecoration: "none", boxSizing: "border-box" }}>
+              Aller a la connexion
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   async function fetchReferralData() {
     try {
@@ -593,7 +582,7 @@ export default function Admin() {
             style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
             🌐 Site
           </button>
-          <button onClick={handleSignOut}
+          <button onClick={() => { handleSignOut(); }}
             style={{ background: "none", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
             🔒 Déco
           </button>
