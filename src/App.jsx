@@ -5625,6 +5625,9 @@ export default function App() {
       if (phone.startsWith("0")) phone = "237" + phone.slice(1);
       if (!phone.startsWith("237")) phone = "237" + phone;
       const price = subPlan === "annuel" ? subSettings.annual_price : subSettings.monthly_price;
+
+      const externalRef = "SUB_" + subPlan + "_" + (user ? user.id : "guest") + "_" + Date.now();
+
       const payRes = await fetch("/api/campay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -5633,50 +5636,96 @@ export default function App() {
           amount: price,
           phone,
           description: "Abonnement CarryBooks " + subPlan,
-          external_reference: "SUB_" + subPlan + "_" + (user ? user.id : "guest") + "_" + Date.now()
+          external_reference: externalRef
         })
       });
       const payData = await payRes.json();
-      if (payData.reference) {
-        setTimeout(async () => {
-          try {
-            const checkRes = await fetch("/api/campay", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "check", reference: payData.reference })
-            });
-            const checkData = await checkRes.json();
-            if (checkData.status === "SUCCESSFUL") {
-              const now = new Date();
-              const expires = new Date(now);
-              if (subPlan === "mensuel") expires.setMonth(expires.getMonth() + 1);
-              else expires.setFullYear(expires.getFullYear() + 1);
-              if (user) {
-                // Désactiver les anciens abonnements actifs de cet utilisateur
-                await supabase.from("subscriptions").update({ status: "expire" }).eq("user_id", user.id).eq("status", "actif");
-                // Créer le nouveau
-                const { data: newSub } = await supabase.from("subscriptions").insert([{
+
+      if (!payData.reference) {
+        setSubPaymentStep(6);
+        return;
+      }
+
+      // ✅ POLLING : on vérifie toutes les 5 secondes pendant max 3 minutes
+      let attempts = 0;
+      const maxAttempts = 36;
+      const pollInterval = 5000;
+
+      const pollPayment = async () => {
+        attempts++;
+        try {
+          const checkRes = await fetch("/api/campay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check", reference: payData.reference })
+          });
+          const checkData = await checkRes.json();
+
+          if (checkData.status === "SUCCESSFUL") {
+            // ✅ Paiement confirmé — on enregistre l'abonnement CÔTÉ SERVEUR (bypass RLS)
+            if (user) {
+              const recordRes = await fetch("/api/campay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "record_subscription",
+                  reference: payData.reference,
                   user_id: user.id,
                   plan: subPlan,
                   books_per_month: subSettings.books_per_month,
-                  books_used: 0,
                   price,
-                  started_at: now.toISOString(),
-                  expires_at: expires.toISOString(),
-                  status: "actif"
-                }]).select().single();
-                if (newSub) setSubscription(newSub);
+                  external_reference: externalRef
+                })
+              });
+              const recordData = await recordRes.json();
+
+              if (!recordData.success) {
+                // 🚨 Paiement reçu mais INSERT échoué — alerte critique
+                console.error("[CRITICAL] Paiement abonnement reçu mais enregistrement échoué:", recordData);
+                alert("⚠️ Paiement reçu mais erreur lors de l'enregistrement de l'abonnement. Contactez le support avec la référence : " + payData.reference);
+                setSubPaymentStep(6);
+                return;
               }
-              setSubPaymentStep(5);
-            } else {
-              setSubPaymentStep(6);
+
+              // Mettre à jour l'état local avec le nouvel abonnement
+              if (recordData.subscription) {
+                setSubscription(recordData.subscription);
+              }
             }
-          } catch(e) { setSubPaymentStep(6); }
-        }, 25000);
-      } else {
-        setSubPaymentStep(6);
-      }
-    } catch(e) { setSubPaymentStep(6); }
+
+            setSubPaymentStep(5);
+            return; // Stop le polling
+          }
+
+          if (checkData.status === "FAILED") {
+            setSubPaymentStep(6);
+            return; // Stop le polling
+          }
+
+          // Toujours PENDING : on continue le polling
+          if (attempts >= maxAttempts) {
+            alert("⏱️ Délai dépassé. Si vous avez confirmé le paiement, contactez le support avec la référence : " + payData.reference);
+            setSubPaymentStep(6);
+            return;
+          }
+
+          setTimeout(pollPayment, pollInterval);
+        } catch (e) {
+          console.error("Erreur polling abonnement:", e);
+          if (attempts >= maxAttempts) {
+            setSubPaymentStep(6);
+            return;
+          }
+          setTimeout(pollPayment, pollInterval);
+        }
+      };
+
+      // Lance le polling après 8 secondes
+      setTimeout(pollPayment, 8000);
+    } catch(e) {
+      console.error("Erreur handleSubscribe:", e);
+      setSubPaymentStep(6);
+    }
   }
 
   function cacheBook(book) {
