@@ -6689,7 +6689,7 @@ export default function App() {
                     </h3>
                     <ul style={{ fontSize: 13, lineHeight: 1.6, color: readerDark ? "#ccc" : "#555", listStyle: "none", padding: 0, margin: 0 }}>
                       <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Partagez votre code avec vos amis</li>
-                      <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Pour le premier livre vendu avec votre code, vous touchez entre <strong>10% à 30%</strong></li>
+                      <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Pour chaque nouveau client qui achète son premier livre avec votre code, vous touchez <strong>30% du prix</strong></li>
                       <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Plus vous parrainez, plus vous gagnez</li>
                     </ul>
                   </div>
