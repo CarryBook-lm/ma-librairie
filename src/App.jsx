@@ -6597,16 +6597,19 @@ export default function App() {
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
-                color: readerDark ? "rgba(200,200,200,0.7)" : "rgba(120,120,120,0.7)",
-                fontSize: 32,
+                background: readerDark ? "rgba(40,40,40,0.85)" : "rgba(255,255,255,0.92)",
+                color: readerDark ? "#e0e0e0" : "#555",
+                fontSize: 22,
                 fontWeight: "bold",
                 fontFamily: "Georgia, serif",
-                letterSpacing: 3,
+                letterSpacing: 2.5,
                 textTransform: "uppercase",
                 whiteSpace: "nowrap",
+                padding: "12px 28px",
+                borderRadius: 50,
+                boxShadow: readerDark ? "0 4px 20px rgba(0,0,0,0.5)" : "0 4px 20px rgba(0,0,0,0.15)",
                 zIndex: 300,
                 pointerEvents: "none",
-                textShadow: readerDark ? "0 2px 8px rgba(0,0,0,0.6)" : "0 2px 8px rgba(255,255,255,0.6)",
                 animation: "pageIndicatorAppear 0.7s ease-out"
               }}>
                 {pageIndicator}
