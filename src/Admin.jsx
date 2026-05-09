@@ -57,8 +57,7 @@ export default function Admin() {
     referred_discount_pct: "20",
     min_withdrawal: "5000",
     fraud_delay_days: "30",
-    active: true,
-    promo_codes_active: true
+    active: true
   });
   const [refSettingsSaving, setRefSettingsSaving] = useState(false);
   const [refSettingsMessage, setRefSettingsMessage] = useState({ type: "", text: "" });
@@ -299,8 +298,7 @@ export default function Admin() {
           referred_discount_pct: String(data[0].referred_discount_pct || 20),
           min_withdrawal: String(data[0].min_withdrawal || 5000),
           fraud_delay_days: String(data[0].fraud_delay_days || 30),
-          active: data[0].active !== false,
-          promo_codes_active: data[0].promo_codes_active !== false
+          active: data[0].active !== false
         });
       }
     } catch (e) { console.error("Erreur fetch referral_settings:", e); }
@@ -326,7 +324,6 @@ export default function Admin() {
       min_withdrawal: minWd,
       fraud_delay_days: delay,
       active: refSettingsForm.active,
-      promo_codes_active: refSettingsForm.promo_codes_active,
       updated_at: new Date().toISOString()
     }).eq("id", referralSettings.id);
     setRefSettingsSaving(false);
@@ -1284,8 +1281,8 @@ export default function Admin() {
             <p style={{ color: "#888", fontSize: 12, textAlign: "center", marginBottom: 24 }}>Configure les règles de ton programme de parrainage</p>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16 }}>
-              {/* Statut programme parrainage */}
-              <div style={{ marginBottom: 14, padding: 14, background: refSettingsForm.active ? "#0d2a1a" : "#2a1a0d", border: "1px solid " + (refSettingsForm.active ? "#4caf50" : "#f5a623"), borderRadius: 8 }}>
+              {/* Statut programme */}
+              <div style={{ marginBottom: 20, padding: 14, background: refSettingsForm.active ? "#0d2a1a" : "#2a1a0d", border: "1px solid " + (refSettingsForm.active ? "#4caf50" : "#f5a623"), borderRadius: 8 }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                   <input
                     type="checkbox"
@@ -1295,30 +1292,10 @@ export default function Admin() {
                   />
                   <div>
                     <div style={{ fontSize: 13, color: refSettingsForm.active ? "#4caf50" : "#f5a623", fontWeight: "bold" }}>
-                      {refSettingsForm.active ? "✅ Programme parrainage ACTIF" : "⏸️ Programme parrainage désactivé"}
+                      {refSettingsForm.active ? "✅ Programme ACTIF" : "⏸️ Programme désactivé"}
                     </div>
                     <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
-                      {refSettingsForm.active ? "Les utilisateurs voient le bouton Mon Parrainage" : "Le bouton Mon Parrainage est caché du menu"}
-                    </div>
-                  </div>
-                </label>
-              </div>
-
-              {/* Statut codes promo */}
-              <div style={{ marginBottom: 20, padding: 14, background: refSettingsForm.promo_codes_active ? "#0d2a1a" : "#2a1a0d", border: "1px solid " + (refSettingsForm.promo_codes_active ? "#4caf50" : "#f5a623"), borderRadius: 8 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={refSettingsForm.promo_codes_active}
-                    onChange={e => setRefSettingsForm(f => ({ ...f, promo_codes_active: e.target.checked }))}
-                    style={{ width: 18, height: 18, cursor: "pointer" }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 13, color: refSettingsForm.promo_codes_active ? "#4caf50" : "#f5a623", fontWeight: "bold" }}>
-                      {refSettingsForm.promo_codes_active ? "🎟️ Codes promo ACTIFS" : "⏸️ Codes promo désactivés"}
-                    </div>
-                    <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
-                      {refSettingsForm.promo_codes_active ? "Le champ code promo s'affiche dans le modal de paiement" : "Le champ code promo est caché du modal de paiement"}
+                      {refSettingsForm.active ? "Les utilisateurs peuvent parrainer" : "Aucun parrainage ne sera pris en compte"}
                     </div>
                   </div>
                 </label>

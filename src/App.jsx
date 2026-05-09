@@ -4950,8 +4950,7 @@ export default function App() {
     referred_discount_pct: 20,
     min_withdrawal: 5000,
     fraud_delay_days: 30,
-    active: true,
-    promo_codes_active: true
+    active: true
   });
   const [myWithdrawals, setMyWithdrawals] = useState([]); // mes retraits
   const [signupReferralCode, setSignupReferralCode] = useState(""); // code utilisé à l'inscription
@@ -6201,8 +6200,7 @@ export default function App() {
     { id: "subscription", label: "Abonnement" },
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
-    // Bouton parrainage : visible UNIQUEMENT si le programme est actif (toggle admin)
-    ...(appReferralSettings?.active ? [{ id: "referral", label: "🎁 Mon parrainage" }] : []),
+    { id: "referral", label: "🎁 Mon parrainage" },
     { id: "quiz", label: "🎯 Quiz" },
     { id: "myResults", label: "💎 Mes résultats" },
     { id: "about", label: "À propos" },
@@ -7135,8 +7133,8 @@ export default function App() {
                     );
                   })()}
 
-                  {/* Champ code promo : visible UNIQUEMENT si le toggle admin est activé */}
-                  {appReferralSettings?.promo_codes_active && !appliedPromo ? (
+                  {/* Champ code promo */}
+                  {!appliedPromo ? (
                     <div style={{ marginBottom: 14, padding: "10px 14px", background: "#f5f5f5", borderRadius: 8 }}>
                       <div style={{ fontSize: 11, color: "#666", marginBottom: 6, fontWeight: "bold" }}>🎟️ As-tu un code promo ?</div>
                       <div style={{ display: "flex", gap: 6 }}>
