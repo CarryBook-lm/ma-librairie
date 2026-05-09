@@ -4972,6 +4972,7 @@ export default function App() {
   const [readerScrollMode, setReaderScrollMode] = useState(false);
   const [pageSlideDir, setPageSlideDir] = useState(0); // -1 = retour, 0 = idle, 1 = avance
   const [touchStart, setTouchStart] = useState(null);
+  const [pageIndicator, setPageIndicator] = useState(null); // Affiche "PAGE 3/85" temporairement
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translateLang, setTranslateLang] = useState(null);
   const [translating, setTranslating] = useState(false);
@@ -6278,6 +6279,9 @@ export default function App() {
         setReadingPage(p => {
           const np = Math.min(total - 1, p + 1);
           if (reading) localStorage.setItem("readingProgress_" + reading.id, np);
+          // Afficher l'indicateur "PAGE X/Y" en gros
+          setPageIndicator("PAGE " + (np + 1) + " / " + total);
+          setTimeout(() => setPageIndicator(null), 700);
           return np;
         });
         setPageSlideDir(0);
@@ -6295,6 +6299,9 @@ export default function App() {
         setReadingPage(p => {
           const np = Math.max(0, p - 1);
           if (reading) localStorage.setItem("readingProgress_" + reading.id, np);
+          // Afficher l'indicateur "PAGE X/Y" en gros
+          setPageIndicator("PAGE " + (np + 1) + " / " + total);
+          setTimeout(() => setPageIndicator(null), 700);
           return np;
         });
         setPageSlideDir(0);
@@ -6569,6 +6576,31 @@ export default function App() {
             <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
+            {/* Indicateur de page en GROS qui apparait temporairement */}
+            {pageIndicator && (
+              <div style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                background: readerDark ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.95)",
+                color: readerDark ? "#c9a84c" : "#1a1a1a",
+                padding: "20px 36px",
+                borderRadius: 12,
+                fontSize: 28,
+                fontWeight: "bold",
+                fontFamily: "Georgia, serif",
+                letterSpacing: 2,
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                border: "2px solid " + (readerDark ? "#c9a84c" : "#c9a84c"),
+                zIndex: 300,
+                pointerEvents: "none",
+                animation: "pageIndicatorAppear 0.7s ease-out"
+              }}>
+                {pageIndicator}
+                <style>{`@keyframes pageIndicatorAppear{0%{opacity:0;transform:translate(-50%,-50%) scale(0.7)}30%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}`}</style>
+              </div>
+            )}
           </div>
         )}
 
