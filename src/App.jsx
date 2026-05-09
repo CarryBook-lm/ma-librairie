@@ -4970,6 +4970,8 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [readerScrollMode, setReaderScrollMode] = useState(false);
+  const [pageSlideDir, setPageSlideDir] = useState(0); // -1 = retour, 0 = idle, 1 = avance
+  const [touchStart, setTouchStart] = useState(null);
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translateLang, setTranslateLang] = useState(null);
   const [translating, setTranslating] = useState(false);
@@ -6268,6 +6270,51 @@ export default function App() {
       ? pages.flatMap(p => p.split(/\n\n+/).filter(x => x.trim()))
       : (pages[readingPage] ? pages[readingPage].split(/\n\n+/).filter(p => p.trim().length > 0) : []);
 
+    // ========== NAVIGATION PAGES (avec animation slide) ==========
+    function goToNextPage() {
+      if (readingPage >= total - 1) return;
+      setPageSlideDir(1);
+      setTimeout(() => {
+        setReadingPage(p => {
+          const np = Math.min(total - 1, p + 1);
+          if (reading) localStorage.setItem("readingProgress_" + reading.id, np);
+          return np;
+        });
+        setPageSlideDir(0);
+      }, 180);
+    }
+    function goToPrevPage() {
+      if (readingPage <= 0) return;
+      setPageSlideDir(-1);
+      setTimeout(() => {
+        setReadingPage(p => {
+          const np = Math.max(0, p - 1);
+          if (reading) localStorage.setItem("readingProgress_" + reading.id, np);
+          return np;
+        });
+        setPageSlideDir(0);
+      }, 180);
+    }
+
+    // ========== GESTES SWIPE (mobile) ==========
+    function handleTouchStart(e) {
+      if (readerScrollMode) return;
+      setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() });
+    }
+    function handleTouchEnd(e) {
+      if (readerScrollMode || !touchStart) return;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const dx = endX - touchStart.x;
+      const dy = endY - touchStart.y;
+      const dt = Date.now() - touchStart.time;
+      if (Math.abs(dx) > 50 && Math.abs(dy) < 80 && dt < 600) {
+        if (dx < 0) goToNextPage();
+        else goToPrevPage();
+      }
+      setTouchStart(null);
+    }
+
     const FONTS = [
       { label: "Georgia", value: "Georgia, serif" },
       { label: "Arial", value: "Arial, sans-serif" },
@@ -6409,59 +6456,123 @@ export default function App() {
             </div>
                       </div>
           </>
-        )}
-
-        {/* Contenu */}
-        <div
-          onContextMenu={e => e.preventDefault()}
-          style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden", userSelect: "none", WebkitUserSelect: "none", MozUserSelect: "none", msUserSelect: "none" }}>
-          {scrollAllParagraphs.map(function(para, i) {
-            return (
-              <p key={i} style={{
-                fontFamily: readerFont,
-                fontSize: readerSize + "px",
-                lineHeight: "1.9",
-                color: readerDark ? "#e0e0e0" : "#1a1a1a",
-                textAlign: "justify",
-                margin: 0,
-                marginBottom: "1em",
-                textIndent: i === 0 ? "0" : "1.5em",
-                wordBreak: "break-word",
-                overflowWrap: "break-word",
-                userSelect: "none",
-                WebkitUserSelect: "none"
-              }} dangerouslySetInnerHTML={{ __html: para.trim() }} />
-            );
-          })}
-
-          {excerptMode && readingPage === total - 1 && (
-            <div style={{ marginTop: 48, padding: 24, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
-              <div style={{ color: G.gold, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
-              <div style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>Achetez le livre pour lire la suite</div>
-              <button onClick={() => { setPage("detail"); setReading(null); }}
-                style={{ padding: "11px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
-                Acheter ce livre
-              </button>
-            </div>
-          )}
-
-          <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 13, marginTop: 40, fontFamily: readerFont }}>
-            — {readingPage + 1} —
+        )}        {/* Contenu */}
+        {readerScrollMode ? (
+          // === MODE SCROLL : tout le livre en continu (inchangé) ===
+          <div
+            onContextMenu={e => e.preventDefault()}
+            style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden", userSelect: "none", WebkitUserSelect: "none", MozUserSelect: "none", msUserSelect: "none" }}>
+            {scrollAllParagraphs.map(function(para, i) {
+              return (
+                <p key={i} style={{
+                  fontFamily: readerFont,
+                  fontSize: readerSize + "px",
+                  lineHeight: "1.9",
+                  color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                  textAlign: "justify",
+                  margin: 0,
+                  marginBottom: "1em",
+                  textIndent: i === 0 ? "0" : "1.5em",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                  userSelect: "none",
+                  WebkitUserSelect: "none"
+                }} dangerouslySetInnerHTML={{ __html: para.trim() }} />
+              );
+            })}
+            {excerptMode && (
+              <div style={{ marginTop: 48, padding: 24, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
+                <div style={{ color: G.gold, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
+                <div style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>Achetez le livre pour lire la suite</div>
+                <button onClick={() => { setPage("detail"); setReading(null); }}
+                  style={{ padding: "11px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                  Acheter ce livre
+                </button>
+              </div>
+            )}
           </div>
+        ) : (
+          // === MODE PAGE A PAGE : page qui remplit l'ecran + swipe + animation slide ===
+          <div
+            onContextMenu={e => e.preventDefault()}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onClick={(e) => {
+              const x = e.clientX;
+              const w = window.innerWidth;
+              if (x > w * 0.7) goToNextPage();
+              else if (x < w * 0.3) goToPrevPage();
+            }}
+            style={{
+              flex: 1,
+              padding: "16px 18px 80px 18px",
+              maxWidth: "100%",
+              width: "100%",
+              boxSizing: "border-box",
+              overflow: "hidden",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              MozUserSelect: "none",
+              msUserSelect: "none",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start"
+            }}>
+            <div style={{
+              flex: 1,
+              overflowY: "auto",
+              transition: "transform 0.18s ease, opacity 0.18s ease",
+              transform: pageSlideDir === 1 ? "translateX(-30px)" : pageSlideDir === -1 ? "translateX(30px)" : "translateX(0)",
+              opacity: pageSlideDir !== 0 ? 0.3 : 1
+            }}>
+              {scrollAllParagraphs.map(function(para, i) {
+                return (
+                  <p key={i} style={{
+                    fontFamily: readerFont,
+                    fontSize: readerSize + "px",
+                    lineHeight: "1.7",
+                    color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                    textAlign: "justify",
+                    margin: 0,
+                    marginBottom: "0.9em",
+                    textIndent: i === 0 ? "0" : "1.5em",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word",
+                    userSelect: "none",
+                    WebkitUserSelect: "none"
+                  }} dangerouslySetInnerHTML={{ __html: para.trim() }} />
+                );
+              })}
 
-        </div>
+              {excerptMode && readingPage === total - 1 && (
+                <div style={{ marginTop: 24, padding: 20, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
+                  <div style={{ color: G.gold, fontSize: 14, marginBottom: 6, fontStyle: "italic" }}>Fin de l'extrait</div>
+                  <div style={{ color: "#888", fontSize: 13, marginBottom: 14 }}>Achetez le livre pour lire la suite</div>
+                  <button onClick={(e) => { e.stopPropagation(); setPage("detail"); setReading(null); }}
+                    style={{ padding: "10px 24px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                    Acheter ce livre
+                  </button>
+                </div>
+              )}
+            </div>
+            <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
+              {readingPage + 1} / {total}
+            </div>
+          </div>
+        )}
 
         {/* Navigation - cachée en mode scroll */}
         {!readerScrollMode && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <button onClick={() => { setReadingPage(function(p) { const np = Math.max(0, p - 1); if(reading) localStorage.setItem("readingProgress_" + reading.id, np); return np; }); window.scrollTo(0,0); }} disabled={readingPage === 0}
+          <button onClick={goToPrevPage} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === 0 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === 0 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
           </button>
           <input type="range" min={0} max={total - 1} value={readingPage}
             onChange={function(e) { setReadingPage(Number(e.target.value)); window.scrollTo(0,0); }}
             style={{ flex: 1, accentColor: G.gold }} />
-          <button onClick={() => { setReadingPage(function(p) { const np = Math.min(total - 1, p + 1); if(reading) localStorage.setItem("readingProgress_" + reading.id, np); return np; }); window.scrollTo(0,0); }} disabled={readingPage === total - 1}
+          <button onClick={goToNextPage} disabled={readingPage === total - 1}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === total - 1 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === total - 1 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
             ›
           </button>
