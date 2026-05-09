@@ -6286,10 +6286,6 @@ export default function App() {
           <span style={{ color: readerDark ? "#ccc" : "#555", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {reading.title}
           </span>
-          <button onClick={() => setShowReaderSettings(s => !s)}
-            style={{ background: "none", border: "1px solid " + (readerDark ? "#444" : "#ddd"), borderRadius: 6, color: readerDark ? "#ccc" : "#888", cursor: "pointer", fontSize: 13, padding: "4px 10px", fontWeight: "bold" }}>
-            Aa
-          </button>
           {reading.audio_url && (
           <button onClick={() => {
             if (audioPlaying) { stopAudio(); }
@@ -6330,7 +6326,15 @@ export default function App() {
 
         {/* Panneau paramètres */}
         {showReaderSettings && (
-          <div style={{ background: readerDark ? "#222" : "#fafafa", borderBottom: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "14px 16px" }}>
+          <>
+            {/* Backdrop : ferme au clic en dehors */}
+            <div onClick={() => setShowReaderSettings(false)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, animation: "rsFadeIn 0.2s ease" }} />
+            <style>{`@keyframes rsFadeIn{from{opacity:0}to{opacity:1}}@keyframes rsSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+            {/* Bottom sheet : panneau qui glisse depuis le bas */}
+            <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: readerDark ? "#222" : "#fafafa", borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: "14px 16px 24px", zIndex: 201, maxHeight: "85vh", overflowY: "auto", boxShadow: "0 -8px 24px rgba(0,0,0,0.3)", animation: "rsSlideUp 0.25s ease-out" }}>
+              {/* Poignée drag */}
+              <div style={{ width: 40, height: 4, background: readerDark ? "#444" : "#ccc", borderRadius: 2, margin: "0 auto 14px" }} />
             {/* Mode jour/nuit */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Mode</div>
@@ -6403,7 +6407,8 @@ export default function App() {
               </div>
               {translating && <p style={{ color: G.gold, fontSize: 12, marginTop: 6, textAlign: "center" }}>Traduction en cours...</p>}
             </div>
-          </div>
+                      </div>
+          </>
         )}
 
         {/* Contenu */}
