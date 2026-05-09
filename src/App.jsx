@@ -6285,10 +6285,17 @@ export default function App() {
           return np;
         });
         setPageSlideDir(0);
-        // Remonter en haut de la page
+        // Remonter en haut de la page (essayer plusieurs cibles pour fiabilité)
         setTimeout(() => {
           const el = document.getElementById("reader-page-scroll");
           if (el) el.scrollTop = 0;
+          window.scrollTo(0, 0);
+          // Re-essayer après 100ms au cas où le DOM n'est pas prêt
+          setTimeout(() => {
+            const el2 = document.getElementById("reader-page-scroll");
+            if (el2) el2.scrollTop = 0;
+            window.scrollTo(0, 0);
+          }, 100);
         }, 20);
       }, 180);
     }
@@ -6305,10 +6312,17 @@ export default function App() {
           return np;
         });
         setPageSlideDir(0);
-        // Remonter en haut de la page
+        // Remonter en haut de la page (essayer plusieurs cibles pour fiabilité)
         setTimeout(() => {
           const el = document.getElementById("reader-page-scroll");
           if (el) el.scrollTop = 0;
+          window.scrollTo(0, 0);
+          // Re-essayer après 100ms au cas où le DOM n'est pas prêt
+          setTimeout(() => {
+            const el2 = document.getElementById("reader-page-scroll");
+            if (el2) el2.scrollTop = 0;
+            window.scrollTo(0, 0);
+          }, 100);
         }, 20);
       }, 180);
     }
@@ -6576,29 +6590,27 @@ export default function App() {
             <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
-            {/* Indicateur de page en GROS qui apparait temporairement */}
+            {/* Indicateur de page : gris clair, transparent, MAJUSCULES, sans cadre */}
             {pageIndicator && (
               <div style={{
                 position: "fixed",
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
-                background: readerDark ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.95)",
-                color: readerDark ? "#c9a84c" : "#1a1a1a",
-                padding: "20px 36px",
-                borderRadius: 12,
-                fontSize: 28,
+                color: readerDark ? "rgba(200,200,200,0.7)" : "rgba(120,120,120,0.7)",
+                fontSize: 32,
                 fontWeight: "bold",
                 fontFamily: "Georgia, serif",
-                letterSpacing: 2,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-                border: "2px solid " + (readerDark ? "#c9a84c" : "#c9a84c"),
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
                 zIndex: 300,
                 pointerEvents: "none",
+                textShadow: readerDark ? "0 2px 8px rgba(0,0,0,0.6)" : "0 2px 8px rgba(255,255,255,0.6)",
                 animation: "pageIndicatorAppear 0.7s ease-out"
               }}>
                 {pageIndicator}
-                <style>{`@keyframes pageIndicatorAppear{0%{opacity:0;transform:translate(-50%,-50%) scale(0.7)}30%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}`}</style>
+                <style>{`@keyframes pageIndicatorAppear{0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)}30%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}`}</style>
               </div>
             )}
           </div>
