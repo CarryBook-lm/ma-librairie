@@ -4939,6 +4939,31 @@ export default function App() {
   const [appliedPromo, setAppliedPromo] = useState(null); // { code, discount_pct }
   const [promoMessage, setPromoMessage] = useState({ type: "", text: "" });
   const [promoChecking, setPromoChecking] = useState(false);
+  // Détection automatique : y a-t-il au moins 1 code promo actif en base ? (cache le champ si non)
+  const [hasActivePromoCodes, setHasActivePromoCodes] = useState(false);
+
+  // Vérifier au chargement s'il y a des codes promo actifs (sinon on cache le champ dans le modal)
+  useEffect(() => {
+    async function checkPromoCodesAvailability() {
+      try {
+        const { data, error } = await supabase
+          .from("promo_codes")
+          .select("id")
+          .eq("active", true)
+          .limit(1);
+        if (error) {
+          console.error("Erreur check promo codes:", error);
+          setHasActivePromoCodes(false);
+          return;
+        }
+        setHasActivePromoCodes(data && data.length > 0);
+      } catch (e) {
+        console.error("Erreur check promo codes:", e);
+        setHasActivePromoCodes(false);
+      }
+    }
+    checkPromoCodesAvailability();
+  }, []);
 
   // PARRAINAGE
   const [referralCode, setReferralCode] = useState(null); // mon code parrainage
@@ -7133,8 +7158,8 @@ export default function App() {
                     );
                   })()}
 
-                  {/* Champ code promo */}
-                  {!appliedPromo ? (
+                  {/* Champ code promo : visible uniquement s'il y a au moins 1 code actif en base, OU si un code est déjà appliqué */}
+                  {(hasActivePromoCodes || appliedPromo) && (!appliedPromo ? (
                     <div style={{ marginBottom: 14, padding: "10px 14px", background: "#f5f5f5", borderRadius: 8 }}>
                       <div style={{ fontSize: 11, color: "#666", marginBottom: 6, fontWeight: "bold" }}>🎟️ As-tu un code promo ?</div>
                       <div style={{ display: "flex", gap: 6 }}>
@@ -7193,7 +7218,7 @@ export default function App() {
                         Retirer
                       </button>
                     </div>
-                  )}
+                  ))}
 
                   <button onClick={() => {
                     setPaymentStep(2);
