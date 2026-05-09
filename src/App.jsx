@@ -5314,6 +5314,55 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // ========== HEARTBEAT PRESENCE (lecteurs en ligne) ==========
+  // Envoie un ping toutes les 30 secondes pour signaler "je suis en ligne"
+  useEffect(() => {
+    if (!user) return;
+
+    let mounted = true;
+
+    async function sendHeartbeat() {
+      if (!mounted) return;
+      try {
+        await supabase.from("presence").upsert({
+          user_id: user.id,
+          last_seen: new Date().toISOString(),
+          current_book_id: reading ? reading.id : null,
+          page: page || "home"
+        }, { onConflict: "user_id" });
+      } catch (e) {
+        console.error("Heartbeat error:", e);
+      }
+    }
+
+    // Premier ping immédiat
+    sendHeartbeat();
+
+    // Puis toutes les 30 secondes
+    const interval = setInterval(sendHeartbeat, 30000);
+
+    // Quand l'utilisateur se déconnecte / ferme la page → supprimer la présence
+    const handleUnload = () => {
+      try {
+        // Utilise sendBeacon pour fiabilité au moment de la fermeture
+        const url = supabase.supabaseUrl + "/rest/v1/presence?user_id=eq." + user.id;
+        const headers = {
+          "apikey": supabase.supabaseKey,
+          "Authorization": "Bearer " + (supabase.auth.getSession ? "" : supabase.supabaseKey)
+        };
+        // Fallback simple : on essaye une suppression best-effort
+        supabase.from("presence").delete().eq("user_id", user.id).then(() => {});
+      } catch (e) {}
+    };
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [user, reading, page]);
+
   // ========== PARRAINAGE - Fonctions ==========
   async function loadReferralData(userId) {
     try {

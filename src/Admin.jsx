@@ -32,6 +32,11 @@ export default function Admin() {
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Lecteurs en direct (présence + activité)
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [recentReads, setRecentReads] = useState(0);
+  const [topBooks, setTopBooks] = useState([]);
   const [view, setView] = useState("dashboard");
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -96,7 +101,15 @@ export default function Admin() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); }, []);
+
+  // Auto-refresh des données de présence toutes les 10 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPresence();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ===== AUTH ADMIN : Fonctions + early returns (APRÈS tous les hooks) =====
   async function checkAdminAccess() {
@@ -205,6 +218,74 @@ export default function Admin() {
       const { data } = await supabase.from("book_views").select("book_id, user_id, created_at").order("created_at", { ascending: false });
       if (data) setBookViews(data);
     } catch (e) { console.error("Erreur fetch book_views:", e); }
+  }
+
+  async function fetchPresence() {
+    try {
+      // 1) Lecteurs en ligne (ping < 90 secondes = considéré en ligne)
+      const cutoff = new Date(Date.now() - 90 * 1000).toISOString();
+      const { data: presenceData, error: presErr } = await supabase
+        .from("presence")
+        .select("user_id, current_book_id, last_seen, page")
+        .gte("last_seen", cutoff);
+
+      if (!presErr && presenceData) {
+        setOnlineCount(presenceData.length);
+
+        // Calcul du Top livres en cours de lecture (uniquement ceux qui sont sur un livre)
+        const bookCounts = {};
+        presenceData.forEach(p => {
+          if (p.current_book_id) {
+            bookCounts[p.current_book_id] = (bookCounts[p.current_book_id] || 0) + 1;
+          }
+        });
+        // Trier et prendre top 5
+        const sortedBooks = Object.entries(bookCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+
+        // Récupérer les titres des livres
+        if (sortedBooks.length > 0) {
+          const bookIds = sortedBooks.map(([id]) => id);
+          const { data: booksData } = await supabase
+            .from("books")
+            .select("id, title, cover")
+            .in("id", bookIds);
+
+          const topList = sortedBooks.map(([id, count]) => {
+            const bk = (booksData || []).find(b => String(b.id) === String(id));
+            return {
+              id,
+              count,
+              title: bk?.title || "Livre inconnu",
+              cover: bk?.cover
+            };
+          });
+          setTopBooks(topList);
+        } else {
+          setTopBooks([]);
+        }
+      }
+
+      // 2) Lectures dans les 10 dernières minutes (depuis book_views)
+      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { data: recentData, error: recentErr } = await supabase
+        .from("book_views")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", tenMinAgo);
+
+      if (!recentErr) {
+        // Quand on utilise head:true, le count est dans la réponse
+        // Le client renvoie { count } directement
+        const { count } = await supabase
+          .from("book_views")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", tenMinAgo);
+        setRecentReads(count || 0);
+      }
+    } catch (e) {
+      console.error("Erreur fetch presence:", e);
+    }
   }
 
   async function fetchReferralSettings() {
@@ -732,6 +813,47 @@ export default function Admin() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* LECTEURS EN DIRECT */}
+            <div style={{ background: "linear-gradient(135deg, #0d2818 0%, #1a3a1a 100%)", border: "1px solid #2a4a2a", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 8, height: 8, background: "#4caf50", borderRadius: "50%", animation: "pulse 2s ease-in-out infinite" }} />
+                <h3 style={{ color: "#4caf50", fontSize: 13, margin: 0, letterSpacing: 1, textTransform: "uppercase" }}>Lecteurs en direct</h3>
+              </div>
+              <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: 8, padding: "14px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#4caf50" }}>{onlineCount}</div>
+                  <div style={{ fontSize: 10, color: "#aaa", marginTop: 2, letterSpacing: 1, textTransform: "uppercase" }}>En ligne maintenant</div>
+                </div>
+                <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: 8, padding: "14px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#9d7fff" }}>{recentReads}</div>
+                  <div style={{ fontSize: 10, color: "#aaa", marginTop: 2, letterSpacing: 1, textTransform: "uppercase" }}>Lectures (10 min)</div>
+                </div>
+              </div>
+
+              {topBooks.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Livres en cours de lecture</div>
+                  {topBooks.map((book, idx) => (
+                    <div key={book.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: idx < topBooks.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                      {book.cover
+                        ? <img src={book.cover} alt="" style={{ width: 28, height: 38, objectFit: "cover", borderRadius: 3 }} />
+                        : <div style={{ width: 28, height: 38, background: "#2a2a2a", borderRadius: 3 }} />}
+                      <div style={{ flex: 1, fontSize: 12, color: "#e8e0d0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{book.title}</div>
+                      <div style={{ fontSize: 11, color: "#4caf50", fontWeight: "bold", padding: "3px 8px", background: "rgba(76,175,80,0.15)", borderRadius: 10 }}>{book.count} 👁️</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {topBooks.length === 0 && onlineCount > 0 && (
+                <div style={{ fontSize: 11, color: "#888", textAlign: "center", padding: 8 }}>Personne ne lit en ce moment, mais {onlineCount} {onlineCount > 1 ? "personnes sont" : "personne est"} sur le site</div>
+              )}
+              {onlineCount === 0 && (
+                <div style={{ fontSize: 11, color: "#666", textAlign: "center", padding: 8 }}>Aucun lecteur en ligne actuellement</div>
+              )}
             </div>
 
             {/* STATS DÉTAILLÉES */}
