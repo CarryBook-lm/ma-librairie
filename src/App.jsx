@@ -6281,6 +6281,11 @@ export default function App() {
           return np;
         });
         setPageSlideDir(0);
+        // Remonter en haut de la page
+        setTimeout(() => {
+          const el = document.getElementById("reader-page-scroll");
+          if (el) el.scrollTop = 0;
+        }, 20);
       }, 180);
     }
     function goToPrevPage() {
@@ -6293,6 +6298,11 @@ export default function App() {
           return np;
         });
         setPageSlideDir(0);
+        // Remonter en haut de la page
+        setTimeout(() => {
+          const el = document.getElementById("reader-page-scroll");
+          if (el) el.scrollTop = 0;
+        }, 20);
       }, 180);
     }
 
@@ -6519,7 +6529,7 @@ export default function App() {
               flexDirection: "column",
               justifyContent: "flex-start"
             }}>
-            <div style={{
+            <div id="reader-page-scroll" style={{
               flex: 1,
               overflowY: "auto",
               transition: "transform 0.18s ease, opacity 0.18s ease",
