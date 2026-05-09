@@ -6263,13 +6263,20 @@ export default function App() {
     }
 
     const allPages = getPages(translatedContent || reading.content);
-    const pages = excerptMode ? allPages.slice(0, 2) : allPages;
+    // Pages spéciales : ajoutées seulement en mode lecture complète (pas extrait)
+    const fullPages = excerptMode 
+      ? allPages.slice(0, 2)
+      : ["__SPECIAL_INTRO__", "__SPECIAL_TITLE__", ...allPages, "__SPECIAL_COPYRIGHT__"];
+    const pages = fullPages;
     const total = pages.length;
+    const currentPageContent = pages[readingPage] || "";
+    const isSpecialPage = currentPageContent === "__SPECIAL_INTRO__" || currentPageContent === "__SPECIAL_TITLE__" || currentPageContent === "__SPECIAL_COPYRIGHT__";
 
     // In scroll mode, show all paragraphs; in page mode show current page only
+    // En scroll, on filtre les marqueurs spéciaux (qui ne sont pas du texte affichable)
     const scrollAllParagraphs = readerScrollMode
-      ? pages.flatMap(p => p.split(/\n\n+/).filter(x => x.trim()))
-      : (pages[readingPage] ? pages[readingPage].split(/\n\n+/).filter(p => p.trim().length > 0) : []);
+      ? pages.filter(p => !p.startsWith("__SPECIAL_")).flatMap(p => p.split(/\n\n+/).filter(x => x.trim()))
+      : (pages[readingPage] && !isSpecialPage ? pages[readingPage].split(/\n\n+/).filter(p => p.trim().length > 0) : []);
 
     // ========== NAVIGATION PAGES (avec animation slide) ==========
     function goToNextPage() {
@@ -6557,6 +6564,91 @@ export default function App() {
               transform: pageSlideDir === 1 ? "translateX(-30px)" : pageSlideDir === -1 ? "translateX(30px)" : "translateX(0)",
               opacity: pageSlideDir !== 0 ? 0.3 : 1
             }}>
+              {currentPageContent === "__SPECIAL_INTRO__" ? (
+                // ===== PAGE 1 : Instructions =====
+                <div style={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "20px 8px",
+                  textAlign: "center",
+                  color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                  fontFamily: readerFont
+                }}>
+                  <h2 style={{ fontSize: 22, fontWeight: "bold", color: readerDark ? "#c9a84c" : "#c9a84c", marginBottom: 24, letterSpacing: 1 }}>Important</h2>
+                  <p style={{ fontSize: readerSize + "px", lineHeight: 1.7, marginBottom: 18, maxWidth: 480 }}>
+                    Personnalisez votre lecture en cliquant sur le bouton <strong>Aa</strong>, situé en bas à droite, pour :
+                  </p>
+                  <ul style={{ fontSize: (readerSize - 1) + "px", lineHeight: 1.9, textAlign: "left", listStyle: "none", padding: 0, marginBottom: 24, maxWidth: 420 }}>
+                    <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Agrandir ou réduire la taille du texte</li>
+                    <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Changer la police d'écriture</li>
+                    <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Activer le mode jour ou nuit</li>
+                    <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Lire en mode page ou en mode scroll</li>
+                    <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Traduire le roman en anglais</li>
+                  </ul>
+                  <p style={{ fontSize: (readerSize - 1) + "px", lineHeight: 1.7, marginBottom: 24, maxWidth: 480, fontStyle: "italic", color: readerDark ? "#aaa" : "#555" }}>
+                    Tous vos romans achetés sont dans le menu <strong>Ma Bibliothèque</strong> sur l'accueil du site, et vous pouvez continuer à les lire même sans connexion internet.
+                  </p>
+                  <div style={{ fontSize: (readerSize + 2) + "px", color: "#c9a84c", letterSpacing: 2, fontStyle: "italic" }}>
+                    Bonne lecture
+                  </div>
+                </div>
+              ) : currentPageContent === "__SPECIAL_TITLE__" ? (
+                // ===== PAGE 2 : Titre du roman + Editeur =====
+                <div style={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "20px 16px",
+                  textAlign: "center",
+                  color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                  fontFamily: readerFont
+                }}>
+                  <div style={{ width: 60, height: 1, background: "#c9a84c", marginBottom: 28 }} />
+                  <h1 style={{ fontSize: 28, fontWeight: "bold", lineHeight: 1.3, marginBottom: 24, letterSpacing: 1, textTransform: "uppercase", maxWidth: "100%" }}>
+                    {reading.title}
+                  </h1>
+                  <div style={{ width: 60, height: 1, background: "#c9a84c", marginBottom: 28 }} />
+                  <p style={{ fontSize: 17, color: readerDark ? "#bbb" : "#666", marginBottom: 60, fontStyle: "italic" }}>
+                    {reading.author}
+                  </p>
+                  <div style={{ fontSize: 24, color: "#c9a84c", marginBottom: 12 }}>❦</div>
+                  <p style={{ fontSize: 13, color: readerDark ? "#888" : "#888", letterSpacing: 3, textTransform: "uppercase" }}>
+                    CarryBooks
+                  </p>
+                </div>
+              ) : currentPageContent === "__SPECIAL_COPYRIGHT__" ? (
+                // ===== DERNIERE PAGE : Copyright =====
+                <div style={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "20px 16px",
+                  textAlign: "center",
+                  color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                  fontFamily: readerFont
+                }}>
+                  <div style={{ fontSize: 36, color: "#c9a84c", marginBottom: 24 }}>❦</div>
+                  <p style={{ fontSize: (readerSize - 1) + "px", lineHeight: 1.8, maxWidth: 420, marginBottom: 36, fontStyle: "italic", color: readerDark ? "#bbb" : "#555" }}>
+                    Toute reproduction partielle ou intégrale, photocopie ou contrefaçon est strictement interdite.
+                  </p>
+                  <div style={{ width: 50, height: 1, background: readerDark ? "#444" : "#ddd", marginBottom: 24 }} />
+                  <p style={{ fontSize: 14, color: readerDark ? "#888" : "#888", marginBottom: 8 }}>
+                    Copyright © {new Date().getFullYear()}
+                  </p>
+                  <p style={{ fontSize: 13, color: "#c9a84c", letterSpacing: 3, textTransform: "uppercase", fontWeight: "bold" }}>
+                    CarryBooks
+                  </p>
+                </div>
+              ) : (
+                // ===== PAGES NORMALES (texte du roman) =====
+                <>
               {scrollAllParagraphs.map(function(para, i) {
                 return (
                   <p key={i} style={{
@@ -6585,6 +6677,8 @@ export default function App() {
                     Acheter ce livre
                   </button>
                 </div>
+              )}
+                </>
               )}
             </div>
             <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
