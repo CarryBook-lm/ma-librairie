@@ -6266,11 +6266,11 @@ export default function App() {
     // Pages spéciales : ajoutées seulement en mode lecture complète (pas extrait)
     const fullPages = excerptMode 
       ? allPages.slice(0, 2)
-      : ["__SPECIAL_INTRO__", "__SPECIAL_TITLE__", ...allPages, "__SPECIAL_COPYRIGHT__"];
+      : ["__SPECIAL_INTRO__", "__SPECIAL_TITLE__", ...allPages, "__SPECIAL_COPYRIGHT__", "__SPECIAL_REFERRAL__"];
     const pages = fullPages;
     const total = pages.length;
     const currentPageContent = pages[readingPage] || "";
-    const isSpecialPage = currentPageContent === "__SPECIAL_INTRO__" || currentPageContent === "__SPECIAL_TITLE__" || currentPageContent === "__SPECIAL_COPYRIGHT__";
+    const isSpecialPage = currentPageContent === "__SPECIAL_INTRO__" || currentPageContent === "__SPECIAL_TITLE__" || currentPageContent === "__SPECIAL_COPYRIGHT__" || currentPageContent === "__SPECIAL_REFERRAL__";
 
     // In scroll mode, show all paragraphs; in page mode show current page only
     // En scroll, on filtre les marqueurs spéciaux (qui ne sont pas du texte affichable)
@@ -6622,7 +6622,7 @@ export default function App() {
                   </p>
                 </div>
               ) : currentPageContent === "__SPECIAL_COPYRIGHT__" ? (
-                // ===== DERNIERE PAGE : Copyright =====
+                // ===== AVANT-DERNIERE PAGE : FIN + Copyright + Abonnement =====
                 <div style={{
                   height: "100%",
                   display: "flex",
@@ -6634,17 +6634,75 @@ export default function App() {
                   color: readerDark ? "#e0e0e0" : "#1a1a1a",
                   fontFamily: readerFont
                 }}>
-                  <div style={{ fontSize: 36, color: "#c9a84c", marginBottom: 24 }}>❦</div>
-                  <p style={{ fontSize: (readerSize - 1) + "px", lineHeight: 1.8, maxWidth: 420, marginBottom: 36, fontStyle: "italic", color: readerDark ? "#bbb" : "#555" }}>
-                    Toute reproduction partielle ou intégrale, photocopie ou contrefaçon est strictement interdite.
+                  <h2 style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", marginBottom: 24, letterSpacing: 6, textTransform: "uppercase" }}>FIN</h2>
+                  <div style={{ fontSize: 28, color: "#c9a84c", marginBottom: 20 }}>❦</div>
+                  <p style={{ fontSize: (readerSize - 2) + "px", lineHeight: 1.7, maxWidth: 420, marginBottom: 24, fontStyle: "italic", color: readerDark ? "#bbb" : "#555" }}>
+                    Toute reproduction partielle ou intégrale, photocopie, contrefaçon ou traduction est strictement interdite.
                   </p>
-                  <div style={{ width: 50, height: 1, background: readerDark ? "#444" : "#ddd", marginBottom: 24 }} />
-                  <p style={{ fontSize: 14, color: readerDark ? "#888" : "#888", marginBottom: 8 }}>
+                  <div style={{ width: 50, height: 1, background: readerDark ? "#444" : "#ddd", marginBottom: 18 }} />
+                  <p style={{ fontSize: 13, color: readerDark ? "#888" : "#888", marginBottom: 4 }}>
                     Copyright © {new Date().getFullYear()}
                   </p>
-                  <p style={{ fontSize: 13, color: "#c9a84c", letterSpacing: 3, textTransform: "uppercase", fontWeight: "bold" }}>
+                  <p style={{ fontSize: 13, color: "#c9a84c", letterSpacing: 3, textTransform: "uppercase", fontWeight: "bold", marginBottom: 18 }}>
                     CarryBooks
                   </p>
+                  <a href="https://www.carrybooks.com" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                    style={{ fontSize: 12, color: "#c9a84c", marginBottom: 22, textDecoration: "underline" }}>
+                    www.carrybooks.com
+                  </a>
+                  <div style={{ width: 50, height: 1, background: readerDark ? "#444" : "#ddd", marginBottom: 18 }} />
+                  <p style={{ fontSize: (readerSize - 2) + "px", lineHeight: 1.6, maxWidth: 360, color: readerDark ? "#aaa" : "#666", fontStyle: "italic" }}>
+                    Souscrivez à notre <strong>abonnement mensuel</strong> et profitez de plus de livres encore.
+                  </p>
+                </div>
+              ) : currentPageContent === "__SPECIAL_REFERRAL__" ? (
+                // ===== DERNIERE PAGE : Parrainage =====
+                <div style={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-start",
+                  alignItems: "center",
+                  padding: "16px 18px 30px 18px",
+                  textAlign: "center",
+                  color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                  fontFamily: readerFont,
+                  overflowY: "auto"
+                }}>
+                  <h2 style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c", marginBottom: 14, letterSpacing: 2, textTransform: "uppercase", marginTop: 8 }}>
+                    Gagnez de l'argent<br/>en parrainant
+                  </h2>
+                  <div style={{ fontSize: 22, color: "#c9a84c", marginBottom: 18 }}>❦</div>
+                  
+                  <div style={{ width: "100%", maxWidth: 380, marginBottom: 18, textAlign: "left" }}>
+                    <h3 style={{ fontSize: 13, color: readerDark ? "#c9a84c" : "#c9a84c", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8, fontWeight: "bold" }}>
+                      Comment souscrire
+                    </h3>
+                    <p style={{ fontSize: 13, lineHeight: 1.6, color: readerDark ? "#ccc" : "#555", marginBottom: 0 }}>
+                      Sur la page d'accueil du site, cliquez sur le menu, puis sur <strong>Mon parrainage</strong>, et suivez les instructions pour activer votre code.
+                    </p>
+                  </div>
+
+                  <div style={{ width: "100%", maxWidth: 380, marginBottom: 18, textAlign: "left" }}>
+                    <h3 style={{ fontSize: 13, color: readerDark ? "#c9a84c" : "#c9a84c", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8, fontWeight: "bold" }}>
+                      Comment ça marche
+                    </h3>
+                    <ul style={{ fontSize: 13, lineHeight: 1.6, color: readerDark ? "#ccc" : "#555", listStyle: "none", padding: 0, margin: 0 }}>
+                      <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Partagez votre code avec vos amis</li>
+                      <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Pour le premier livre vendu avec votre code, vous touchez entre <strong>10% à 30%</strong></li>
+                      <li style={{ paddingLeft: 16, position: "relative", marginBottom: 6 }}><span style={{ position: "absolute", left: 0, color: "#c9a84c" }}>•</span> Plus vous parrainez, plus vous gagnez</li>
+                    </ul>
+                  </div>
+
+                  <div style={{ width: 40, height: 1, background: readerDark ? "#444" : "#ddd", marginBottom: 14 }} />
+                  
+                  <p style={{ fontSize: 11, color: readerDark ? "#888" : "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                    Une question ?
+                  </p>
+                  <a href="mailto:carrybooks.com@gmail.com" onClick={(e) => e.stopPropagation()}
+                    style={{ fontSize: 13, color: "#c9a84c", textDecoration: "underline", marginBottom: 14 }}>
+                    carrybooks.com@gmail.com
+                  </a>
                 </div>
               ) : (
                 // ===== PAGES NORMALES (texte du roman) =====
