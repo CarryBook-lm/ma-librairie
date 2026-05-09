@@ -5363,6 +5363,20 @@ export default function App() {
     };
   }, [user, reading, page]);
 
+  // ========== FERMER PANNEAU RÉGLAGES LECTEUR AU SCROLL ==========
+  useEffect(() => {
+    if (!showReaderSettings) return;
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      // Ferme si l'utilisateur scrolle (différence > 5px pour éviter les faux positifs)
+      if (Math.abs(window.scrollY - lastScrollY) > 5) {
+        setShowReaderSettings(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [showReaderSettings]);
+
   // ========== PARRAINAGE - Fonctions ==========
   async function loadReferralData(userId) {
     try {
@@ -6286,6 +6300,33 @@ export default function App() {
           </button>
           )}
         </div>
+
+        {/* Bouton Aa flottant : visible partout dans le reader */}
+        <button
+          onClick={() => setShowReaderSettings(s => !s)}
+          aria-label="Réglages de lecture"
+          style={{
+            position: "fixed",
+            bottom: 80,
+            right: 16,
+            width: 52,
+            height: 52,
+            borderRadius: "50%",
+            background: showReaderSettings ? G.gold : (readerDark ? "#222" : "#fff"),
+            color: showReaderSettings ? "#000" : (readerDark ? "#ccc" : "#555"),
+            border: "1.5px solid " + (showReaderSettings ? G.gold : (readerDark ? "#444" : "#ddd")),
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            fontSize: 18,
+            fontWeight: "bold",
+            cursor: "pointer",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.2s ease"
+          }}>
+          Aa
+        </button>
 
         {/* Panneau paramètres */}
         {showReaderSettings && (
