@@ -1,5 +1,5 @@
 // api/campay.js
-// Fonction serverless Vercel : gère collect, check, withdraw + record_purchase + record_subscription (bypass RLS)
+// Fonction serverless Vercel : gère collect, check, withdraw + record_purchase + record_subscription + record_carrycare (bypass RLS)
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -38,8 +38,9 @@ export default async function handler(req, res) {
       return res.status(response.status).json(data);
     }
 
-    // ========== ACTION : CHECK ==========
-    if (action === "check") {
+    // ========== ACTION : CHECK / STATUS ==========
+    // Accepte les deux noms (check pour ancienne compat, status pour nouveau)
+    if (action === "check" || action === "status") {
       const checkUrl = `https://www.campay.net/api/transaction/${params.reference}/`;
       const checkRes = await fetch(checkUrl, {
         headers: { Authorization: "Token " + CAMPAY_TOKEN },
@@ -69,12 +70,9 @@ export default async function handler(req, res) {
     }
 
     // ========== ACTION : RECORD_PURCHASE ==========
-    // Enregistre un achat de livre dans Supabase APRÈS vérification du paiement CamPay
-    // Utilise service_role pour bypass RLS — GARANTIT l'INSERT
     if (action === "record_purchase") {
       const { reference, user_id, book_id, amount, phone, external_reference } = params;
 
-      // 1. VÉRIFIER auprès de CamPay que le paiement est bien SUCCESSFUL
       const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
       const verifyRes = await fetch(verifyUrl, {
         headers: { Authorization: "Token " + CAMPAY_TOKEN },
@@ -88,14 +86,12 @@ export default async function handler(req, res) {
         });
       }
 
-      // 2. Créer un client Supabase avec service_role (bypass RLS)
       const supabaseAdmin = createClient(
         process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
 
-      // 3. Vérifier si l'achat n'existe pas déjà (idempotence)
       const { data: existing } = await supabaseAdmin
         .from("purchases")
         .select("id")
@@ -111,7 +107,6 @@ export default async function handler(req, res) {
         });
       }
 
-      // 4. INSERT dans purchases avec service_role
       const { data: inserted, error: insertError } = await supabaseAdmin
         .from("purchases")
         .insert([
@@ -141,8 +136,6 @@ export default async function handler(req, res) {
     }
 
     // ========== ACTION : RECORD_SUBSCRIPTION ==========
-    // Enregistre un abonnement dans Supabase APRÈS vérification du paiement CamPay
-    // Utilise service_role pour bypass RLS — GARANTIT l'INSERT
     if (action === "record_subscription") {
       const {
         reference,
@@ -153,7 +146,6 @@ export default async function handler(req, res) {
         external_reference,
       } = params;
 
-      // 1. VÉRIFIER auprès de CamPay que le paiement est bien SUCCESSFUL
       const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
       const verifyRes = await fetch(verifyUrl, {
         headers: { Authorization: "Token " + CAMPAY_TOKEN },
@@ -167,22 +159,18 @@ export default async function handler(req, res) {
         });
       }
 
-      // 2. Créer un client Supabase avec service_role (bypass RLS)
       const supabaseAdmin = createClient(
         process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
 
-      // 3. Vérifier si l'abonnement n'existe pas déjà (idempotence)
-      // On suppose que la table subscriptions a une colonne external_reference
-      // Si elle ne l'a pas, on peut quand même check par user_id + plan + date proche
       const { data: existing } = await supabaseAdmin
         .from("subscriptions")
         .select("id")
         .eq("user_id", user_id)
         .eq("status", "actif")
-        .gte("started_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()) // créé dans les 5 dernières min
+        .gte("started_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
         .limit(1);
 
       if (existing && existing.length > 0) {
@@ -194,20 +182,17 @@ export default async function handler(req, res) {
         });
       }
 
-      // 4. Calculer la date d'expiration
       const now = new Date();
       const expires = new Date(now);
       if (plan === "mensuel") expires.setMonth(expires.getMonth() + 1);
       else expires.setFullYear(expires.getFullYear() + 1);
 
-      // 5. Désactiver les anciens abonnements actifs de cet utilisateur
       await supabaseAdmin
         .from("subscriptions")
         .update({ status: "expire" })
         .eq("user_id", user_id)
         .eq("status", "actif");
 
-      // 6. INSERT du nouveau abonnement
       const { data: inserted, error: insertError } = await supabaseAdmin
         .from("subscriptions")
         .insert([
@@ -236,6 +221,87 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         subscription: inserted,
+      });
+    }
+
+    // ========== ACTION : RECORD_CARRYCARE ==========
+    // Enregistre un paiement CarryCare (diagnostic) dans Supabase APRÈS vérification CamPay
+    if (action === "record_carrycare") {
+      const {
+        reference,
+        external_reference,
+        quiz_type,
+        amount,
+        phone,
+        result_data,
+      } = params;
+
+      // 1. VÉRIFIER auprès de CamPay
+      const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
+      const verifyRes = await fetch(verifyUrl, {
+        headers: { Authorization: "Token " + CAMPAY_TOKEN },
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.status !== "SUCCESSFUL") {
+        return res.status(400).json({
+          error: "Paiement non confirmé par CamPay",
+          status: verifyData.status,
+        });
+      }
+
+      // 2. Supabase admin
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // 3. Idempotence : si déjà enregistré, retourner
+      const { data: existing } = await supabaseAdmin
+        .from("carrycare_results")
+        .select("id")
+        .eq("external_reference", external_reference)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        return res.status(200).json({
+          success: true,
+          message: "Diagnostic déjà enregistré",
+          result_id: existing[0].id,
+          duplicate: true,
+        });
+      }
+
+      // 4. INSERT dans carrycare_results
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from("carrycare_results")
+        .insert([
+          {
+            external_reference,
+            quiz_type: quiz_type || "body",
+            amount,
+            phone,
+            result_data,
+          },
+        ])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("[RECORD_CARRYCARE] Insert error:", insertError);
+        // On retourne quand même success pour ne pas bloquer le client
+        // (le résultat est en local dans le state, l'utilisateur pourra le voir)
+        return res.status(200).json({
+          success: true,
+          warning: "Erreur enregistrement BD mais paiement OK",
+          details: insertError.message,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        result: inserted,
       });
     }
 

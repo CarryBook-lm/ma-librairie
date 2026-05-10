@@ -3410,6 +3410,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
               lifestyle: bbLifestyle
             });
             setBbStep(6);
+            setBbPaymentStep(1); // Reset au début du paiement
             setTimeout(() => setBbStep(7), 2500);
           }} disabled={!allAnswered}
             style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed" }}>
@@ -3437,114 +3438,205 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
     );
   }
 
-  // ═══════════ ÉTAPE 7 : PAIEMENT ═══════════
+  // ═══════════ ÉTAPE 7 : PAIEMENT (multi-étapes — comme Quiz Facial) ═══════════
   if (bbStep === 7) {
-    return (
-      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Ton diagnostic est prêt !" onBack={() => setBbStep(5)} />
-        <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 16, padding: 24, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>🎁</div>
-            <div style={{ fontSize: 20, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Ton diagnostic est prêt</div>
-            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 16 }}>Type de peau : <strong>{bbResult?.skinType?.name}</strong></div>
-            <div style={{ background: "#fff", borderRadius: 12, padding: 16, marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>PRIX</div>
-              <div style={{ fontSize: 28, fontWeight: "bold", color: CC.rose }}>{beautyQuizPrice} FCFA</div>
-              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 4, fontStyle: "italic" }}>Diagnostic complet et personnalisé</div>
+    // ÉTAPE 7.1 — Présentation du prix
+    if (bbPaymentStep === 1) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Ton diagnostic est prêt ✨" onBack={() => setBbStep(5)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton diagnostic personnalisé</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Type de peau identifié : <strong>{bbResult?.skinType?.name}</strong></div>
             </div>
+
+            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton diagnostic complet inclut :</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
+                ✅ Ton type de peau corporelle exact<br/>
+                ✅ Une routine matin et soir adaptée<br/>
+                ✅ Des produits précis avec lieux d\'achat<br/>
+                ✅ Soins ciblés pour chacun de tes problèmes<br/>
+                ✅ Tes résultats attendus dans le temps<br/>
+                ✅ Liste des produits à éviter<br/>
+                ✅ 5 conseils pro pour toi
+              </div>
+            </div>
+
+            <button onClick={() => setBbPaymentStep(2)} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
+            </button>
           </div>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 14 }}>📞 Choisis ton mode de paiement</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { id: "OM", label: "🟠 Orange Money", desc: "MTN OM" },
-                { id: "MOMO", label: "🟡 MTN Mobile Money", desc: "MoMo" }
-              ].map(m => (
-                <button key={m.id} onClick={() => setBbPaymentMethod(m.id)}
-                  style={{ padding: 14, border: "1.5px solid " + (bbPaymentMethod === m.id ? CC.rose : CC.border), borderRadius: 10, background: bbPaymentMethod === m.id ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 14, cursor: "pointer", textAlign: "left", fontWeight: "bold" }}>
-                  {m.label}
-                </button>
-              ))}
+        </div>
+      );
+    }
+
+    // ÉTAPE 7.2 — Choix méthode paiement
+    if (bbPaymentStep === 2) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Méthode de paiement" onBack={() => setBbPaymentStep(1)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CC.noir, marginBottom: 16, textAlign: "center" }}>
+              Choisis ta méthode de paiement
             </div>
+            <button onClick={() => { setBbPaymentMethod("MTN"); setBbPaymentStep(3); }} style={{
+              width: "100%", padding: 18, background: "#FFCC00", color: "#000",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12
+            }}>
+              📱 MTN Mobile Money
+            </button>
+            <button onClick={() => { setBbPaymentMethod("ORANGE"); setBbPaymentStep(3); }} style={{
+              width: "100%", padding: 18, background: "#FF6600", color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              📱 Orange Money
+            </button>
           </div>
-          {bbPaymentMethod && (
-            <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>📱 Numéro de paiement</div>
-              <input
-                type="tel"
-                value={bbPaymentPhone}
-                onChange={e => setBbPaymentPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="6XXXXXXXX"
-                maxLength={9}
-                style={{ width: "100%", padding: 14, border: "1.5px solid " + CC.border, borderRadius: 10, fontSize: 15, color: CC.noir, background: "#fff" }}
-              />
-              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 6, fontStyle: "italic" }}>9 chiffres, sans le +237</div>
+        </div>
+      );
+    }
+
+    // ÉTAPE 7.3 — Saisie numéro
+    if (bbPaymentStep === 3) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title={"Ton numéro " + bbPaymentMethod} onBack={() => setBbPaymentStep(2)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 12 }}>
+              Entre ton numéro {bbPaymentMethod} (9 chiffres, sans +237)
             </div>
-          )}
-          <button onClick={async () => {
-            if (!bbPaymentMethod || bbPaymentPhone.length !== 9) {
-              alert("Choisis un mode de paiement et entre ton numéro complet (9 chiffres).");
-              return;
-            }
-            // Lancer le paiement Campay
-            try {
-              const externalReference = "carrycare_body_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-              const operator = bbPaymentMethod === "OM" ? "ORANGE" : "MTN";
-              const r = await fetch("/api/campay", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "collect", phone: "237" + bbPaymentPhone, amount: beautyQuizPrice, reference: externalReference, operator })
-              });
-              const d = await r.json();
-              if (!d.reference) { alert("Erreur de paiement. Réessaie."); return; }
-              alert("📞 Une demande de paiement a été envoyée sur ton téléphone. Confirme-la, puis attends quelques secondes.");
-              // Polling
-              let attempts = 0;
-              const checkPayment = async () => {
-                attempts++;
-                if (attempts > 36) { alert("⏱️ Le paiement n'a pas été confirmé. Réessaie."); return; }
-                try {
-                  const c = await fetch("/api/campay", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "status", reference: d.reference })
-                  });
-                  const cd = await c.json();
-                  if (cd.status === "SUCCESSFUL") {
-                    // Enregistrer le paiement
-                    await fetch("/api/campay", {
+            <input type="tel" value={bbPaymentPhone} onChange={(e) => setBbPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
+              placeholder="6XXXXXXXX" style={{
+                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border,
+                borderRadius: 12, marginBottom: 16, outline: "none"
+              }} />
+            <button onClick={async () => {
+              if (bbPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
+              setBbPaymentStep(4);
+              const fullPhone = "237" + bbPaymentPhone;
+              // Récupérer user_id pour la sauvegarde
+              const userResp = await supabase.auth.getUser();
+              const userId = userResp.data.user?.id;
+              try {
+                const collect = await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Corporelle", external_reference: "carrycare_body_" + Date.now() })
+                });
+                const data = await collect.json();
+                if (!data.reference) { setBbPaymentStep(5); return; }
+                // Polling check
+                const ref = data.reference;
+                let attempts = 0;
+                const maxAttempts = 60;
+                const interval = setInterval(async () => {
+                  attempts++;
+                  if (attempts >= maxAttempts) { clearInterval(interval); setBbPaymentStep(5); return; }
+                  try {
+                    const checkRes = await fetch("/api/campay", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        action: "record_carrycare",
-                        external_reference: externalReference,
-                        quiz_type: "body",
-                        amount: beautyQuizPrice,
-                        phone: bbPaymentPhone,
-                        result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
-                      })
+                      body: JSON.stringify({ action: "check", reference: ref })
                     });
-                    setBbShowGift(true);
-                    setTimeout(() => { setBbShowGift(false); setBbStep(8); }, 3500);
-                  } else if (cd.status === "FAILED" || cd.status === "CANCELLED") {
-                    alert("❌ Paiement échoué ou annulé. Réessaie.");
-                  } else {
-                    setTimeout(checkPayment, 5000);
-                  }
-                } catch (e) { setTimeout(checkPayment, 5000); }
-              };
-              setTimeout(checkPayment, 5000);
-            } catch (e) {
-              alert("Erreur réseau. Réessaie.");
-            }
-          }}
-            disabled={!bbPaymentMethod || bbPaymentPhone.length !== 9}
-            style={{ width: "100%", padding: 18, background: (bbPaymentMethod && bbPaymentPhone.length === 9) ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: (bbPaymentMethod && bbPaymentPhone.length === 9) ? "pointer" : "not-allowed", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-            🎁 Recevoir mon diagnostic
-          </button>
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "SUCCESSFUL") {
+                      clearInterval(interval);
+                      setBbPaymentStep(1);
+                      setBbShowGift(true);
+                      // Sauvegarde du résultat
+                      if (userId) {
+                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                          user_id: userId,
+                          quiz_type: "body",
+                          amount: beautyQuizPrice || 0,
+                          result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
+                        }]);
+                        if (saveErr) console.error("Erreur sauvegarde CarryCare body:", saveErr);
+                        else console.log("Résultat CarryCare body sauvegardé !");
+                      } else {
+                        console.warn("Pas de user_id, sauvegarde impossible");
+                      }
+                      setTimeout(() => { setBbShowGift(false); setBbStep(8); }, 2500);
+                    }
+                    else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
+                  } catch (e) {}
+                }, 3000);
+              } catch (e) {
+                setBbPaymentStep(5);
+              }
+            }} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
+            }}>
+              💎 Payer {beautyQuizPrice} FCFA
+            </button>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+
+    // ÉTAPE 7.4 — Paiement en cours (loading)
+    if (bbPaymentStep === 4) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
+          <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>
+              ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu\'à la finalisation.
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>
+            Confirme la transaction sur ton téléphone {bbPaymentMethod}.<br/>
+            Cela peut prendre jusqu\'à 30 secondes.
+          </div>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
+        </div>
+      );
+    }
+
+    // ÉTAPE 7.5 — Échec
+    if (bbPaymentStep === 5) {
+      return (
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Paiement non finalisé" onBack={() => setBbPaymentStep(2)} />
+          <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
+              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>Paiement non finalisé</h3>
+              <p style={{ color: CC.textFaint, fontSize: 14 }}>Le réseau de l\'opérateur est peut-être occupé.</p>
+            </div>
+            <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 16, borderRadius: 10, marginBottom: 20 }}>
+              <p style={{ color: "#7a4a00", fontSize: 13, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
+              <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.7, margin: 0 }}>
+                ✅ Vérifie ton solde Mobile Money<br/>
+                ✅ Réessaie avec l\'autre opérateur (MTN/Orange)<br/>
+                ✅ Patiente quelques minutes et réessaie<br/>
+                ✅ Vérifie ta connexion internet
+              </p>
+            </div>
+            <button onClick={() => { setBbPaymentStep(2); setBbPaymentMethod(null); setBbPaymentPhone(""); }} style={{
+              width: "100%", padding: 16, background: CC.noir, color: "#fff",
+              border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+            }}>
+              🔁 Réessayer
+            </button>
+            <button onClick={() => { setBbPaymentStep(1); setBbPaymentMethod(null); setBbPaymentPhone(""); }} style={{
+              width: "100%", padding: 14, background: "transparent", color: CC.textFaint,
+              border: "1px solid " + CC.border, borderRadius: 12, fontSize: 13, cursor: "pointer"
+            }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      );
+    }
   }
 
   // ═══════════ ÉTAPE 8 : RÉSULTAT ═══════════
