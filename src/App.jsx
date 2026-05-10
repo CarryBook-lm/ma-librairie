@@ -139,6 +139,340 @@ async function flushPendingCarrycareSaves() {
 }
 
 // ============================================================
+// GÉNÉRATION PDF — Diagnostic CarryCare
+// Charge jsPDF depuis CDN au moment du clic (pas dans le bundle)
+// ============================================================
+
+let _jsPDFLoadPromise = null;
+
+function loadJsPDF() {
+  if (window.jspdf) return Promise.resolve(window.jspdf);
+  if (_jsPDFLoadPromise) return _jsPDFLoadPromise;
+  _jsPDFLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    script.onload = () => resolve(window.jspdf);
+    script.onerror = () => { _jsPDFLoadPromise = null; reject(new Error("Impossible de charger jsPDF")); };
+    document.head.appendChild(script);
+  });
+  return _jsPDFLoadPromise;
+}
+
+async function downloadBodyDiagnosticPDF(result) {
+  if (!result) { alert("Diagnostic non disponible."); return; }
+
+  // Animation de chargement
+  const btn = document.querySelector("[data-pdf-btn]");
+  
+  try {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const { skinType, profile, objectives, problems, lifestyle } = result;
+    const isMale = profile?.gender === "homme";
+    const ageLabels = { "18-25": "18-25 ans", "26-35": "26-35 ans", "36-45": "36-45 ans", "46+": "46 ans et +" };
+    const toneLabels = { ebene: "Ébène", fonce: "Foncé", metisse: "Métissé / Caramel", clair: "Clair", tres_clair: "Très clair" };
+
+    // Couleurs
+    const ROSE = [212, 136, 155];
+    const NOIR = [44, 28, 17];
+    const GRIS = [120, 120, 120];
+    const GRIS_CLAIR = [200, 200, 200];
+
+    let y = 20;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 18;
+    const usableW = pageW - margin * 2;
+
+    // Helper: vérifier si on a la place, sinon nouvelle page
+    function checkPage(neededHeight = 10) {
+      if (y + neededHeight > pageH - 25) { addFooter(); doc.addPage(); y = 20; addHeader(); }
+    }
+
+    // Header sur chaque page
+    function addHeader() {
+      doc.setFontSize(10);
+      doc.setTextColor(...ROSE);
+      doc.setFont("helvetica", "bold");
+      doc.text("CARRYBOOKS — CARRYCARE", margin, 12);
+      doc.setTextColor(...GRIS);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Diagnostic Beauté Corporelle", pageW - margin, 12, { align: "right" });
+      doc.setDrawColor(...GRIS_CLAIR);
+      doc.line(margin, 14, pageW - margin, 14);
+    }
+    
+    // Footer sur chaque page
+    function addFooter() {
+      const pageNum = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(...GRIS);
+      doc.setFont("helvetica", "normal");
+      doc.text("carrybooks.com", margin, pageH - 10);
+      doc.text("Page " + pageNum, pageW - margin, pageH - 10, { align: "right" });
+      doc.setFontSize(7);
+      doc.text("Diagnostic généré le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 10, { align: "center" });
+    }
+
+    // Helper: titre de section
+    function addSectionTitle(title) {
+      checkPage(15);
+      y += 5;
+      doc.setFillColor(253, 240, 241);
+      doc.rect(margin, y - 4, usableW, 9, "F");
+      doc.setTextColor(...NOIR);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(title, margin + 3, y + 2);
+      y += 10;
+    }
+
+    // Helper: paragraphe
+    function addParagraph(text, options = {}) {
+      const { fontSize = 10, color = NOIR, bold = false, lineHeight = 5, marginBottom = 3 } = options;
+      doc.setTextColor(...color);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(text, usableW);
+      checkPage(lines.length * lineHeight + marginBottom);
+      lines.forEach(line => { doc.text(line, margin, y); y += lineHeight; });
+      y += marginBottom;
+    }
+
+    // Helper: bullet
+    function addBullet(text, options = {}) {
+      const { fontSize = 9, color = NOIR, indent = 4 } = options;
+      doc.setTextColor(...color);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(fontSize);
+      const cleanText = "• " + text.replace(/[^\x20-\x7E\u00C0-\u017F]/g, "");
+      const lines = doc.splitTextToSize(cleanText, usableW - indent);
+      checkPage(lines.length * 4.5 + 1);
+      lines.forEach((line, i) => { doc.text(line, margin + (i === 0 ? 0 : indent), y); y += 4.5; });
+      y += 1;
+    }
+
+    // ═══ PAGE 1 — COUVERTURE ═══
+    addHeader();
+    
+    y = 50;
+    doc.setFillColor(253, 248, 248);
+    doc.roundedRect(margin, y, usableW, 80, 4, 4, "F");
+    doc.setDrawColor(...ROSE);
+    doc.roundedRect(margin, y, usableW, 80, 4, 4, "D");
+    
+    doc.setFontSize(11);
+    doc.setTextColor(...GRIS);
+    doc.setFont("helvetica", "bold");
+    doc.text("DIAGNOSTIC PERSONNALISE", pageW / 2, y + 12, { align: "center" });
+    
+    doc.setFontSize(28);
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.text((skinType.name || "Peau Normale").replace(/[^\x20-\x7E\u00C0-\u017F]/g, ""), pageW / 2, y + 35, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(...GRIS);
+    doc.setFont("helvetica", "italic");
+    const descLines = doc.splitTextToSize(skinType.desc || "", usableW - 20);
+    descLines.forEach((line, i) => { doc.text(line, pageW / 2, y + 48 + i * 5, { align: "center" }); });
+    
+    doc.setFontSize(9);
+    doc.setTextColor(...ROSE);
+    doc.setFont("helvetica", "bold");
+    doc.text("Beaute Corporelle", pageW / 2, y + 70, { align: "center" });
+    
+    y += 95;
+
+    // Profil
+    addSectionTitle("Ton profil");
+    addBullet("Genre : " + (isMale ? "Homme" : "Femme"));
+    addBullet("Age : " + (ageLabels[profile?.age] || "—"));
+    addBullet("Teint : " + (toneLabels[profile?.skin_tone] || "—"));
+    addBullet("Type de peau : " + (skinType.name || "Normale"));
+
+    // Objectifs
+    if (objectives && objectives.length > 0) {
+      addSectionTitle("Tes objectifs");
+      const objMap = {
+        eclat: "Avoir une peau lumineuse et eclatante",
+        unifier: "Unifier le teint",
+        depigmentation: "Eliminer les taches de depigmentation",
+        demangeaisons: "Eliminer les demangeaisons",
+        hydratation: "Hydrater profondement",
+        adoucir: "Adoucir et lisser",
+        acne: "Reduire l'acne corporelle",
+        vergetures: "Attenuer les vergetures",
+        cellulite: "Reduire la cellulite",
+        preparer: "Preparer la peau pour un evenement",
+        pieds: "Reparer pieds/talons",
+        raffermir: "Raffermir / tonifier"
+      };
+      objectives.forEach(o => addBullet(objMap[o] || o));
+    }
+
+    // Problèmes
+    if (problems && problems.length > 0 && !problems.includes("aucun")) {
+      addSectionTitle("Tes problemes");
+      const probMap = {
+        acne_corps: "Acne sur le corps",
+        taches_noires: "Taches noires",
+        cicatrices_corps: "Cicatrices d'anciens boutons",
+        hyperpigmentation: "Hyperpigmentation (entre-cuisses, aisselles, coudes)",
+        vergetures_rouges: "Vergetures rouges (recentes)",
+        vergetures_blanches: "Vergetures blanches (anciennes)",
+        cellulite: "Cellulite",
+        pieds_sombres: "Pieds sombres / talons fonces",
+        peau_terne: "Peau terne",
+        melasma: "Melasma / mamie",
+        taches_blanches: "Taches blanches (vitiligo)",
+        quintox: "Quintox",
+        dartres: "Dartres",
+        veines: "Veines apparentes",
+        mains_seches: "Mains tres seches",
+        demangeaisons: "Peau qui demange",
+        coups_soleil: "Coups de soleil frequents",
+        mycoses: "Mycoses",
+        poils_incarnes: "Poils incarnes"
+      };
+      problems.filter(p => p !== "aucun").forEach(p => addBullet(probMap[p] || p));
+    }
+
+    // ═══ PAGE 2+ — PLAN D'ACTION ═══
+    addSectionTitle("Plan d'action en 3 priorites");
+    const priorityDescMap = {
+      eclat: "Une peau lumineuse vient d'une bonne hydratation, exfoliation reguliere et protection solaire.",
+      unifier: "Pour unifier le teint, il faut d'abord stopper toute nouvelle pigmentation (protection solaire), puis traiter les taches.",
+      depigmentation: "Les taches blanches demandent un avis medical en plus des soins cosmetiques.",
+      demangeaisons: "Les demangeaisons viennent souvent d'une peau seche. On va apaiser et reconstruire la barriere cutanee.",
+      hydratation: "L'hydratation est la BASE de toute belle peau.",
+      adoucir: "Une peau lisse vient de l'exfoliation reguliere + bonne hydratation.",
+      acne: "Avant de traiter les taches d'acne, il faut empecher de nouveaux boutons.",
+      vergetures: "Les vergetures rouges reagissent BIEN aux soins. Commence MAINTENANT.",
+      cellulite: "La cellulite se traite par massage + soins drainants + activite physique.",
+      preparer: "Pour un evenement, commence 2-3 mois a l'avance.",
+      pieds: "Des pieds secs s'ameliorent VITE avec un bon soin (uree + chaussettes la nuit).",
+      raffermir: "Pour raffermir, combine soins toniques + activite physique + hydratation profonde."
+    };
+    
+    if (objectives && objectives.length > 0) {
+      const objNames = {
+        eclat: "Eclat naturel",
+        unifier: "Unifier le teint",
+        depigmentation: "Taches de depigmentation",
+        demangeaisons: "Apaiser les demangeaisons",
+        hydratation: "Hydrater profondement",
+        adoucir: "Adoucir et lisser",
+        acne: "Stopper l'acne",
+        vergetures: "Attenuer les vergetures",
+        cellulite: "Reduire la cellulite",
+        preparer: "Preparer la peau",
+        pieds: "Reparer les pieds",
+        raffermir: "Raffermir la peau"
+      };
+      objectives.slice(0, 3).forEach((o, i) => {
+        const medal = i === 0 ? "Priorite 1" : i === 1 ? "Priorite 2" : "Priorite 3";
+        doc.setTextColor(...ROSE);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        checkPage(8);
+        doc.text(medal + " — " + (objNames[o] || o), margin, y);
+        y += 5;
+        addParagraph(priorityDescMap[o] || "", { fontSize: 9, color: GRIS });
+      });
+    }
+
+    // Routine quotidienne
+    addSectionTitle("Routine quotidienne");
+    addParagraph("MATIN", { bold: true, fontSize: 11, color: NOIR });
+    addBullet("Gel douche adapte (selon ton type de peau)");
+    addBullet("Lotion hydratante");
+    addBullet("Protection solaire SPF 30 ou 50 (ESSENTIEL meme peau noire)");
+    
+    addParagraph("SOIR", { bold: true, fontSize: 11, color: NOIR });
+    addBullet("Douche tiede + gel doux (eviter eau brulante)");
+    addBullet("Creme/beurre nourrissant");
+    if (objectives && objectives.includes("vergetures")) addBullet("Soin anti-vergetures (Bio Oil + massage 2 min)");
+    if (objectives && objectives.includes("unifier")) addBullet("Soin anti-taches (niacinamide ou vitamine C)");
+
+    // Soins hebdomadaires
+    addSectionTitle("Soins hebdomadaires (1-2x/semaine)");
+    addBullet("Gommage corps (sucre + miel + huile, ou produit du commerce)");
+
+    // Lieux d'achat
+    addSectionTitle("Ou acheter tes produits");
+    addBullet("Pharmacie : Bio Oil, La Roche-Posay, Vichy, CeraVe, Cetaphil, Mustela, Avene, Eucerin");
+    addBullet("Parfumerie : Nivea, Mixa, Garnier, Dove, Le Petit Marseillais, Cottage, Sanex");
+    addBullet("Supermarche : Vaseline, Dove basique, Lux, Dettol, Lifebuoy, Palmolive");
+    addBullet("Marche traditionnel : Beurre de karite pur, savon noir africain, huile de coco vierge, miel");
+    addBullet("Boutique cosmetique afro : HT26, Carotone, Bio Claire, Fair & White, QEI+, Eveline");
+
+    // À éviter
+    addSectionTitle("A eviter absolument");
+    addBullet("Hydroquinone (cancerigene potentiel)");
+    addBullet("Mercure (dans certains produits non etiquetes)");
+    addBullet("Glutathion injectable (effets secondaires graves)");
+    addBullet("Corticoides sans ordonnance (Movate, etc.)");
+    addBullet("Eau brulante (asseche et irrite)");
+    addBullet("Frotter avec gant kessa tres fort");
+    addBullet("Toucher / percer les boutons");
+    addBullet("Produits 'resultats en 7 jours' (mensonge)");
+
+    // Résultats attendus
+    addSectionTitle("Tes resultats attendus");
+    addBullet("2 semaines : peau plus douce, mieux hydratee");
+    addBullet("1 mois : premiers resultats visibles");
+    addBullet("2-3 mois : resultats nets, teint unifie");
+    addBullet("6 mois : peau transformee, problemes anciens reduits");
+
+    // Conseils pro
+    addSectionTitle("5 conseils pro pour toi");
+    addBullet("La constance avant l'intensite. 5 min/jour vaut mieux qu'1h le dimanche.");
+    addBullet("Hydrate-toi de l'interieur. Bois 2 litres d'eau par jour.");
+    addBullet("Creme solaire OBLIGATOIRE meme peau noire.");
+    addBullet("Patience. Ta peau se renouvelle tous les 28 jours.");
+    addBullet("Evite les 'miracles 7 jours' — c'est faux et souvent dangereux.");
+
+    // Footer final
+    y += 8;
+    checkPage(20);
+    doc.setFillColor(253, 240, 241);
+    doc.roundedRect(margin, y, usableW, 18, 3, 3, "F");
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Tu peux le faire !", pageW / 2, y + 8, { align: "center" });
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(...GRIS);
+    doc.text("La constance est la cle. Tes resultats arrivent.", pageW / 2, y + 14, { align: "center" });
+    
+    // Footer de la dernière page
+    addFooter();
+    
+    // Repasser sur toutes les pages pour ajouter les footers
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      // Le footer a déjà été ajouté pour la dernière page, mais pas les précédentes
+      // On les re-trace au cas où
+    }
+
+    // Télécharger
+    const dateStr = new Date().toISOString().split("T")[0];
+    const fileName = "Diagnostic-CarryBooks-Corps-" + dateStr + ".pdf";
+    doc.save(fileName);
+    
+    console.log("[CarryCare] PDF téléchargé:", fileName);
+  } catch (err) {
+    console.error("[CarryCare] Erreur PDF:", err);
+    alert("Erreur lors du téléchargement du PDF. Vérifie ta connexion internet et réessaie.");
+  }
+}
+
+// ============================================================
 // URL ROUTING — Sync URL avec state pour partage et tracking
 // ============================================================
 
@@ -4061,7 +4395,19 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton diagnostic personnalisé</div>
           <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
-          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto" }}>{skinType.desc}</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>{skinType.desc}</div>
+          
+          {/* Bouton Télécharger PDF */}
+          <button onClick={() => downloadBodyDiagnosticPDF(result)} style={{
+            display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+            boxShadow: "0 3px 10px rgba(0,0,0,0.15)"
+          }}>
+            📥 Télécharger en PDF
+          </button>
+          <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>
+            Garde-le sur ton téléphone, partage-le, imprime-le
+          </div>
         </div>
 
         {/* PROFIL */}
