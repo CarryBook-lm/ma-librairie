@@ -1943,7 +1943,7 @@ const BB_PROBLEMS = [
   { id: "acne_corps", emoji: "🔴", label: "Acné sur le corps (dos, épaules, fesses)" },
   { id: "taches_noires", emoji: "🟤", label: "Taches noires (anciens boutons, blessures)" },
   { id: "cicatrices_corps", emoji: "⚪", label: "Cicatrices d'anciens boutons" },
-  { id: "hyperpigmentation", emoji: "🟫", label: "Hyperpigmentation (aisselles, coudes, genoux foncés)" },
+  { id: "hyperpigmentation", emoji: "🟫", label: "Hyperpigmentation (entre-cuisses, aisselles, coudes, genoux sombres)" },
   { id: "vergetures_rouges", emoji: "🌊", label: "Vergetures rouges/violettes (récentes)" },
   { id: "vergetures_blanches", emoji: "⚡", label: "Vergetures blanches (anciennes)" },
   { id: "cellulite", emoji: "🟡", label: "Cellulite (peau d'orange)" },
@@ -3739,7 +3739,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
 
   // ═══════════ ÉTAPE 8 : RÉSULTAT ═══════════
   if (bbStep === 8 && bbResult) {
-    return <BodyDiagnosticResult result={bbResult} onBack={() => setCarryCarePage("home")} />;
+    return <BodyDiagnosticResult result={bbResult} onBack={() => setCarryCarePage("home")} setCarryCarePage={setCarryCarePage} />;
   }
 
   return null;
@@ -4009,7 +4009,7 @@ function ProductList({ category, budgetPref, count = 5 }) {
 }
 
 // COMPOSANT PRINCIPAL — Affichage du diagnostic complet
-function BodyDiagnosticResult({ result, onBack }) {
+function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
   if (!result) return null;
   const { skinType, profile, objectives, problems, lifestyle } = result;
   const isMale = profile?.gender === "homme";
@@ -4305,7 +4305,51 @@ function BodyDiagnosticResult({ result, onBack }) {
           </ol>
         </Section>
 
-        <div style={{ marginTop: 24, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 14, textAlign: "center" }}>
+        {/* ═══ OÙ RETROUVER SES RÉSULTATS ═══ */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 28 }}>📂</div>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir }}>Garde ton diagnostic à portée de main</div>
+          </div>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, marginBottom: 10 }}>
+            Tu peux <strong>retrouver ce diagnostic à tout moment</strong> dans :
+          </div>
+          <div style={{ background: "#fdf8f8", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
+              📱 <strong>Menu</strong> (en haut à droite) → <strong>Mes résultats</strong>
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", lineHeight: 1.5 }}>
+            💡 Tu peux y revenir aussi souvent que tu veux pour suivre ta routine, sans repayer.
+          </div>
+        </div>
+
+        {/* ═══ CROSS-SELL : Quiz Facial ═══ */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 14 }}>
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>✨ POUR ALLER PLUS LOIN</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Et ton visage, comment va-t-il ?</div>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, fontStyle: "italic" }}>
+              Acné, points noirs, pores dilatés, cernes, taches...<br/>Découvre une routine sur mesure pour ton visage.
+            </div>
+          </div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+            <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
+              ✓ Diagnostic <strong>complet et personnalisé</strong><br/>
+              ✓ Routine matin et soir adaptée<br/>
+              ✓ Produits précis avec lieux d'achat<br/>
+              ✓ Soins ciblés pour tes problèmes
+            </div>
+          </div>
+          <button onClick={() => { if (setCarryCarePage) setCarryCarePage("facialQuiz"); }} style={{
+            width: "100%", padding: 16, background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+          }}>
+            🌸 Faire le diagnostic visage →
+          </button>
+        </div>
+
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 14, textAlign: "center" }}>
           <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>💪 Tu peux le faire !</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", lineHeight: 1.6 }}>La constance est la clé. Tes résultats arrivent.</div>
         </div>
