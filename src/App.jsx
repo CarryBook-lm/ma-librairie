@@ -7293,262 +7293,152 @@ const LG_ACTIVITY_LEVELS = [
 // ═══════════════════════════════════════════════════
 // QUIZ GARDE LA LIGNE — COMPOSANT (refonte)
 // ═══════════════════════════════════════════════════
+// CATALOGUES DE REPAS — GARDE LA LIGNE (Phase 3)
+// 30 options par catégorie, calories, allergies
 // ═══════════════════════════════════════════════════
-// MENUS 7 JOURS — GARDE LA LIGNE (Phase 2)
-// Adaptés selon objectif et conditions
-// ═══════════════════════════════════════════════════
 
-// Templates de repas de base (Cameroun + équilibrés)
-const LG_MEAL_TEMPLATES = {
-  // ═══ PETIT-DÉJEUNERS (matin) — 8 options ═══
-  petit_dej: [
-    {
-      id: "pd1",
-      titre: "Bouillie de maïs + fruit",
-      desc: "Bouillie de maïs sans sucre (1 bol) + 1 banane + 1 cuillère d'arachides grillées",
-      kcal: 350, prot: 10, allerg: ["arachides"]
-    },
-    {
-      id: "pd2",
-      titre: "Pain complet + œuf + fruit",
-      desc: "2 tranches de pain complet + 2 œufs brouillés + 1/2 avocat + 1 orange",
-      kcal: 420, prot: 18, allerg: []
-    },
-    {
-      id: "pd3",
-      titre: "Bouillie de mil + lait",
-      desc: "Bouillie de mil (1 bol) + 1 verre de lait + 1 banane",
-      kcal: 380, prot: 12, allerg: ["lactose"]
-    },
-    {
-      id: "pd4",
-      titre: "Pap (bouillie de maïs) traditionnel",
-      desc: "Pap (1 bol) + omelette aux légumes (1 œuf + tomate + oignon) + 1 mangue",
-      kcal: 400, prot: 14, allerg: []
-    },
-    {
-      id: "pd5",
-      titre: "Plantain bouilli + œufs",
-      desc: "1 plantain bouilli + 2 œufs durs + 1/4 d'avocat + thé sans sucre",
-      kcal: 380, prot: 16, allerg: []
-    },
-    {
-      id: "pd6",
-      titre: "Beignets haricot + thé (occasionnel)",
-      desc: "2 beignets haricots (à limiter) + thé léger + 1 fruit. Plutôt 1x/sem",
-      kcal: 450, prot: 12, allerg: ["gluten"]
-    },
-    {
-      id: "pd7",
-      titre: "Haricot rouge + plantain",
-      desc: "1/2 bol de haricot rouge cuit + 1 plantain bouilli + 1 verre d'eau",
-      kcal: 380, prot: 14, allerg: []
-    },
-    {
-      id: "pd8",
-      titre: "Yaourt + fruits + noix",
-      desc: "1 yaourt nature + 1 banane + 1 mangue + 1 cuillère de noix",
-      kcal: 320, prot: 10, allerg: ["lactose"]
-    }
-  ],
-
-  // ═══ DÉJEUNERS (midi) — 10 options ═══
-  dejeuner: [
-    {
-      id: "dj1",
-      titre: "Ndolé + plantain + poisson",
-      desc: "Ndolé sans trop d'huile (1 louche) + plantain mûr (2 morceaux) + 1 poisson grillé",
-      kcal: 550, prot: 30, allerg: ["arachides"]
-    },
-    {
-      id: "dj2",
-      titre: "Riz + poisson sauce tomate + légumes",
-      desc: "Riz blanc (1 louche) + 1 morceau poisson + sauce tomate maison + ndolè ou folong",
-      kcal: 480, prot: 25, allerg: []
-    },
-    {
-      id: "dj3",
-      titre: "Haricot rouge + plantain + légumes",
-      desc: "Haricot rouge cuit (1 bol) + plantain mûr bouilli + sauce tomate + crudités",
-      kcal: 500, prot: 20, allerg: []
-    },
-    {
-      id: "dj4",
-      titre: "Eru + waterfufu (ou manioc bouilli)",
-      desc: "Eru avec viande/poisson (1 louche) + waterfufu OU 1 morceau manioc bouilli",
-      kcal: 520, prot: 22, allerg: []
-    },
-    {
-      id: "dj5",
-      titre: "Poulet braisé + igname + légumes",
-      desc: "1/4 poulet braisé (peau enlevée) + igname bouilli (2 morceaux) + salade verte",
-      kcal: 530, prot: 35, allerg: []
-    },
-    {
-      id: "dj6",
-      titre: "Sauce gombo + couscous de maïs + poisson",
-      desc: "Sauce gombo (1 louche) + couscous de maïs (1 louche) + 1 poisson grillé",
-      kcal: 510, prot: 28, allerg: []
-    },
-    {
-      id: "dj7",
-      titre: "Mbongo tchobi + plantain",
-      desc: "Mbongo tchobi de poisson (1 louche) + 2 plantains bouillis",
-      kcal: 540, prot: 26, allerg: []
-    },
-    {
-      id: "dj8",
-      titre: "Sauce arachide + igname + viande",
-      desc: "Sauce arachide légère + igname bouilli + viande maigre (poulet/poisson)",
-      kcal: 580, prot: 28, allerg: ["arachides"]
-    },
-    {
-      id: "dj9",
-      titre: "Achu + sauce jaune (modéré)",
-      desc: "Achu (1 boule moyenne) + sauce jaune (peu d'huile) + viande/poisson",
-      kcal: 600, prot: 25, allerg: []
-    },
-    {
-      id: "dj10",
-      titre: "Salade complète + œuf + pain",
-      desc: "Grande salade (folong + tomate + concombre + carotte) + 2 œufs durs + pain complet",
-      kcal: 450, prot: 20, allerg: ["gluten"]
-    }
-  ],
-
-  // ═══ GOÛTERS (collation 16h) — 8 options ═══
-  gouter: [
-    { id: "g1", titre: "Fruit + amandes", desc: "1 banane ou mangue + 1 cuillère d'amandes", kcal: 200, prot: 5, allerg: [] },
-    { id: "g2", titre: "Yaourt + fruit", desc: "1 yaourt nature sans sucre + 1 fruit", kcal: 150, prot: 6, allerg: ["lactose"] },
-    { id: "g3", titre: "Avocat sur pain", desc: "1/2 avocat écrasé sur 1 tranche de pain complet", kcal: 220, prot: 6, allerg: ["gluten"] },
-    { id: "g4", titre: "Lait de soja + fruit", desc: "1 verre de lait de soja + 1 banane", kcal: 180, prot: 8, allerg: [] },
-    { id: "g5", titre: "Maïs grillé + jus naturel", desc: "1 épi de maïs grillé + 1 verre de jus d'orange naturel", kcal: 200, prot: 5, allerg: [] },
-    { id: "g6", titre: "Bissap sans sucre + fruit", desc: "1 verre de bissap sans sucre + 1 fruit", kcal: 80, prot: 1, allerg: [] },
-    { id: "g7", titre: "Œuf dur + tomate", desc: "1 œuf dur + 1 tomate + un peu de sel", kcal: 120, prot: 8, allerg: [] },
-    { id: "g8", titre: "Eau de coco + fruits secs", desc: "1 verre d'eau de coco + 5 amandes ou noix", kcal: 150, prot: 4, allerg: [] }
-  ],
-
-  // ═══ DÎNERS (soir) — 10 options (plus légers que midi) ═══
-  diner: [
-    { id: "dn1", titre: "Sauce gombo légère + manioc", desc: "Sauce gombo (peu d'huile) + 1 morceau manioc bouilli", kcal: 380, prot: 15, allerg: [] },
-    { id: "dn2", titre: "Soupe de poisson + plantain", desc: "Soupe de poisson maison + 1 plantain bouilli", kcal: 350, prot: 22, allerg: [] },
-    { id: "dn3", titre: "Légumes sautés + œufs", desc: "Légumes sautés (folong, tomate, oignon) + 2 œufs", kcal: 320, prot: 18, allerg: [] },
-    { id: "dn4", titre: "Salade complète + poisson grillé", desc: "Salade verte + concombre + tomate + 1 poisson grillé", kcal: 350, prot: 25, allerg: [] },
-    { id: "dn5", titre: "Sauce arachide + manioc (léger)", desc: "Sauce arachide (peu) + 1 morceau manioc + légumes", kcal: 400, prot: 14, allerg: ["arachides"] },
-    { id: "dn6", titre: "Folong à l'huile rouge + igname", desc: "Folong sauté à l'huile rouge + igname bouilli", kcal: 380, prot: 12, allerg: [] },
-    { id: "dn7", titre: "Poulet bouilli + légumes", desc: "1/4 poulet bouilli + courge + carotte + petit pois", kcal: 380, prot: 30, allerg: [] },
-    { id: "dn8", titre: "Lentilles + riz brun", desc: "Lentilles cuites + riz complet + légumes vapeur", kcal: 420, prot: 18, allerg: [] },
-    { id: "dn9", titre: "Omelette légumes + plantain", desc: "Omelette (2 œufs) avec tomate, oignon, poivron + 1 plantain bouilli", kcal: 400, prot: 18, allerg: [] },
-    { id: "dn10", titre: "Légumes vapeur + tofu/poisson", desc: "Légumes vapeur (haricot vert, brocoli) + tofu OU poisson grillé", kcal: 350, prot: 22, allerg: [] }
-  ]
-};
-
-// HELPER : Génère 7 jours de menus selon profil
-function generateWeekMenus(result) {
-  const { profile, objective, conditions, habits } = result;
-  const allergies = conditions.allergies; // "aucune", "lactose", "gluten", "arachides", "autre"
-  const isPregnant = conditions.pregnancy === "enceinte" || conditions.pregnancy === "allaite";
-
-  // Filtre selon allergies
-  function filterByAllergies(meals) {
-    if (allergies === "aucune" || allergies === "autre" || !allergies) return meals;
-    return meals.filter(m => !m.allerg.includes(allergies));
-  }
-
-  const petits_dej = filterByAllergies(LG_MEAL_TEMPLATES.petit_dej);
-  const dejeuners = filterByAllergies(LG_MEAL_TEMPLATES.dejeuner);
-  const gouters = filterByAllergies(LG_MEAL_TEMPLATES.gouter);
-  const diners = filterByAllergies(LG_MEAL_TEMPLATES.diner);
-
-  const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
-  const week = [];
-
-  // Pour varier, on ne répète pas le même repas 2 fois consécutives
-  let lastPD = -1, lastDJ = -1, lastG = -1, lastDN = -1;
-  function pickNext(arr, lastIdx) {
-    if (arr.length === 0) return null;
-    let idx = (lastIdx + 1) % arr.length;
-    return { item: arr[idx], idx };
-  }
-
-  for (let i = 0; i < 7; i++) {
-    const pd = pickNext(petits_dej, lastPD);
-    const dj = pickNext(dejeuners, lastDJ);
-    const g = pickNext(gouters, lastG);
-    const dn = pickNext(diners, lastDN);
-    if (pd) lastPD = pd.idx;
-    if (dj) lastDJ = dj.idx;
-    if (g) lastG = g.idx;
-    if (dn) lastDN = dn.idx;
-    week.push({
-      day: days[i],
-      petit_dej: pd ? pd.item : null,
-      dejeuner: dj ? dj.item : null,
-      gouter: g ? g.item : null,
-      diner: dn ? dn.item : null
-    });
-  }
-  return week;
+// HELPER : Filtrer selon allergies
+function filterByAllergies(meals, allergies) {
+  if (!allergies || allergies === "aucune" || allergies === "autre") return meals;
+  return meals.filter(m => !m.allerg.includes(allergies));
 }
 
-// HELPER : Génère liste de courses pour la semaine
-function generateShoppingList(result) {
-  const { profile } = result;
-  const familySize = profile.family_size || 1;
-  const m = familySize; // multiplicateur portions
+// ═══ 30 PETITS-DÉJEUNERS ═══
+const LG_PETITS_DEJ_30 = [
+  { id: "pd1", titre: "Bouillie de maïs traditionnelle", desc: "1 bol de bouillie de maïs sans sucre, 1 banane, 1 c. à soupe d'arachides grillées", kcal: 350, allerg: ["arachides"] },
+  { id: "pd2", titre: "Pain complet, œuf et avocat", desc: "2 tranches de pain complet, 2 œufs brouillés, 1/2 avocat, 1 orange", kcal: 420, allerg: ["gluten"] },
+  { id: "pd3", titre: "Bouillie de mil au lait", desc: "1 bol de bouillie de mil au lait, 1 banane", kcal: 380, allerg: ["lactose"] },
+  { id: "pd4", titre: "Pap traditionnel et omelette", desc: "1 bol de pap, omelette aux légumes (1 œuf, tomate, oignon), 1 mangue", kcal: 400, allerg: [] },
+  { id: "pd5", titre: "Plantain bouilli et œufs durs", desc: "1 plantain bouilli, 2 œufs durs, 1/4 avocat, thé sans sucre", kcal: 380, allerg: [] },
+  { id: "pd6", titre: "Beignets haricot et thé", desc: "2 beignets haricot, thé léger sans sucre, 1 fruit. À limiter (1x/sem)", kcal: 450, allerg: ["gluten"] },
+  { id: "pd7", titre: "Haricot rouge et plantain", desc: "1/2 bol de haricot rouge cuit, 1 plantain bouilli, 1 verre d'eau", kcal: 380, allerg: [] },
+  { id: "pd8", titre: "Yaourt aux fruits et noix", desc: "1 yaourt nature, 1 banane, 1 mangue, 1 c. à soupe de noix", kcal: 320, allerg: ["lactose"] },
+  { id: "pd9", titre: "Tartine d'avocat", desc: "2 tranches de pain complet, 1 avocat écrasé, sel et citron, 1 œuf dur", kcal: 360, allerg: ["gluten"] },
+  { id: "pd10", titre: "Bouillie de maïs au lait de soja", desc: "1 bol de bouillie de maïs au lait de soja, 1 fruit", kcal: 340, allerg: [] },
+  { id: "pd11", titre: "Salade de fruits et yaourt", desc: "Bol de fruits variés (banane, papaye, mangue, ananas), 1 yaourt nature", kcal: 280, allerg: ["lactose"] },
+  { id: "pd12", titre: "Riz au lait sans sucre", desc: "1 bol de riz au lait, cannelle, 1 banane", kcal: 380, allerg: ["lactose"] },
+  { id: "pd13", titre: "Tapioca aux fruits", desc: "Tapioca cuit (1 portion), 1 fruit, 1 c. à café de miel", kcal: 320, allerg: [] },
+  { id: "pd14", titre: "Œufs brouillés et tomate", desc: "2 œufs brouillés à la tomate et oignon, 1 tranche de pain complet, 1 fruit", kcal: 380, allerg: ["gluten"] },
+  { id: "pd15", titre: "Bouillie de mil sans sucre", desc: "1 bol de bouillie de mil sans sucre, 1 banane, quelques amandes", kcal: 350, allerg: [] },
+  { id: "pd16", titre: "Crêpes maison à la banane", desc: "2 crêpes maison (sans sucre) garnies de banane écrasée, 1 verre de lait", kcal: 400, allerg: ["lactose", "gluten"] },
+  { id: "pd17", titre: "Pap au lait et fruit", desc: "Pap au lait nature (1 bol), 1 banane ou mangue", kcal: 360, allerg: ["lactose"] },
+  { id: "pd18", titre: "Couscous de maïs et lait", desc: "Couscous de maïs au lait, 1 fruit, quelques cacahuètes", kcal: 380, allerg: ["lactose", "arachides"] },
+  { id: "pd19", titre: "Smoothie banane-papaye", desc: "Smoothie maison : 1 banane, 1/4 papaye, 1 yaourt, 1 c. de noix", kcal: 280, allerg: ["lactose"] },
+  { id: "pd20", titre: "Œuf dur, fruit et thé", desc: "2 œufs durs, 1 grosse mangue ou 2 oranges, thé sans sucre", kcal: 280, allerg: [] },
+  { id: "pd21", titre: "Pain à la confiture maison", desc: "2 tranches pain complet, confiture maison sans sucre ajouté, 1 fruit", kcal: 380, allerg: ["gluten"] },
+  { id: "pd22", titre: "Tofu brouillé et plantain", desc: "Tofu brouillé aux légumes (oignon, tomate), 1 plantain bouilli", kcal: 350, allerg: [] },
+  { id: "pd23", titre: "Bouillie de maïs et beurre d'arachide", desc: "Bouillie de maïs avec 1 c. de beurre d'arachide naturel, 1 banane", kcal: 380, allerg: ["arachides"] },
+  { id: "pd24", titre: "Soupe légère du matin", desc: "Soupe de légumes maison (carotte, courge), 1 tranche pain complet", kcal: 250, allerg: ["gluten"] },
+  { id: "pd25", titre: "Salade de mangue et avocat", desc: "Salade de mangue + avocat + citron + sel, 1 œuf dur", kcal: 320, allerg: [] },
+  { id: "pd26", titre: "Quinoa aux fruits", desc: "Quinoa cuit avec lait végétal, fruits coupés, miel léger", kcal: 360, allerg: [] },
+  { id: "pd27", titre: "Pap aux noix de cajou", desc: "Pap nature (1 bol), 5-6 noix de cajou, 1 mangue", kcal: 400, allerg: [] },
+  { id: "pd28", titre: "Patate douce bouillie et œufs", desc: "1 patate douce orange bouillie, 2 œufs durs, salade de tomate", kcal: 380, allerg: [] },
+  { id: "pd29", titre: "Lait de soja et fruits", desc: "1 grand verre de lait de soja, 2 bananes, 1 c. à soupe d'amandes", kcal: 320, allerg: [] },
+  { id: "pd30", titre: "Bissap et œufs aux légumes", desc: "Bissap sans sucre, 2 œufs aux légumes (folong, tomate), 1 plantain bouilli", kcal: 360, allerg: [] }
+];
 
-  const ml = (n) => Math.round(n * m); // round multiplied
-  const list = {
-    "🌾 Féculents": [
-      `${ml(2)} kg de riz`,
-      `${ml(1)} kg de manioc (boules ou tubercule)`,
-      `${ml(2)} régimes de plantain (mûrs et verts)`,
-      `${ml(1)} kg d'igname`,
-      `${ml(1)} kg de farine de maïs (pour bouillie)`,
-      `${ml(1)} pain complet`
-    ],
-    "🍗 Protéines": [
-      `${ml(1)} kg de poisson frais (capitaine, machoiron, sole)`,
-      `${ml(1)} poulet entier (~1.5 kg)`,
-      `${ml(2)} dizaines d'œufs`,
-      `${ml(500)} g de haricot rouge sec`,
-      `${ml(500)} g de niébé / lentilles`,
-      `${ml(200)} g d'arachides nature`
-    ],
-    "🥬 Légumes (le plus possible)": [
-      `${ml(1)} bouquet de folong / morelle`,
-      `${ml(1)} bouquet de ndolè (frais ou séché)`,
-      `${ml(1)} kg de tomates`,
-      `${ml(1)} kg d'oignons`,
-      `${ml(500)} g de carottes`,
-      `${ml(500)} g de gombos`,
-      `${ml(500)} g de poivrons`,
-      `${ml(2)} têtes d'ail`,
-      `${ml(1)} bouquet de basilic / persil`
-    ],
-    "🍌 Fruits (au moins 2/jour)": [
-      `${ml(7)} bananes`,
-      `${ml(3)} mangues`,
-      `${ml(1)} papaye`,
-      `${ml(1)} ananas`,
-      `${ml(5)} oranges`,
-      `${ml(2)} avocats`
-    ],
-    "🥥 Bonnes graisses": [
-      `${ml(1)} bouteille d'huile d'olive`,
-      `${ml(1)} bouteille d'huile de palme rouge non raffinée (à utiliser modérément)`,
-      `${ml(100)} g de noix / amandes`
-    ],
-    "💧 Boissons & autres": [
-      `Eau (objectif : 2-2,5 L/jour/personne)`,
-      `Bissap séché (à infuser sans sucre)`,
-      `Tisanes : citronnelle, gingembre, menthe`,
-      `Sel (avec modération)`,
-      `Cubes Maggi (max 1/jour - ou remplacer par herbes)`
-    ]
-  };
-  return list;
-}
+// ═══ 30 DÉJEUNERS ═══
+const LG_DEJEUNERS_30 = [
+  { id: "dj1", titre: "Ndolè aux arachides, plantain, poisson", desc: "Ndolè aux arachides (modérément gras), plantain mûr bouilli, poisson grillé", kcal: 550, allerg: ["arachides"] },
+  { id: "dj2", titre: "Riz, poisson sauce tomate, légumes", desc: "Riz blanc (1 louche), 1 morceau de poisson, sauce tomate maison, ndolè ou folong", kcal: 480, allerg: [] },
+  { id: "dj3", titre: "Haricot rouge, plantain, légumes", desc: "Haricot rouge cuit, plantain mûr bouilli, sauce tomate, crudités (carotte, concombre)", kcal: 500, allerg: [] },
+  { id: "dj4", titre: "Eru et waterfufu", desc: "Eru avec viande ou poisson, waterfufu ou manioc bouilli", kcal: 520, allerg: [] },
+  { id: "dj5", titre: "Poulet braisé, igname, salade", desc: "1/4 de poulet braisé (peau retirée), igname bouilli, salade verte fraîche", kcal: 530, allerg: [] },
+  { id: "dj6", titre: "Sauce gombo, couscous de maïs, poisson", desc: "Sauce gombo, couscous de maïs, 1 poisson grillé", kcal: 510, allerg: [] },
+  { id: "dj7", titre: "Mbongo tchobi de poisson, plantain", desc: "Mbongo tchobi de poisson, 2 plantains bouillis", kcal: 540, allerg: [] },
+  { id: "dj8", titre: "Sauce arachide, igname, poulet", desc: "Sauce arachide légère, igname bouilli, viande de poulet maigre", kcal: 580, allerg: ["arachides"] },
+  { id: "dj9", titre: "Achu et sauce jaune", desc: "Achu (1 boule moyenne), sauce jaune avec peu d'huile, viande ou poisson", kcal: 600, allerg: [] },
+  { id: "dj10", titre: "Salade complète et œufs", desc: "Grande salade (folong, tomate, concombre, carotte), 2 œufs durs, pain complet", kcal: 450, allerg: ["gluten"] },
+  { id: "dj11", titre: "Sauce feuille de manioc, riz", desc: "Sauce feuille de manioc (Mpondu) avec poisson, riz blanc", kcal: 520, allerg: [] },
+  { id: "dj12", titre: "Koki de haricot, plantain mûr", desc: "Koki de haricot, plantain mûr bouilli, sauce tomate", kcal: 480, allerg: [] },
+  { id: "dj13", titre: "Sauce pistache, riz, poisson", desc: "Sauce pistache (Nkui), riz blanc, 1 morceau de poisson", kcal: 540, allerg: [] },
+  { id: "dj14", titre: "Spaghetti et sauce tomate au poisson", desc: "Spaghetti (modérément), sauce tomate maison, sardines ou poisson", kcal: 480, allerg: ["gluten"] },
+  { id: "dj15", titre: "Riz sauté aux légumes et œuf", desc: "Riz sauté avec légumes (carotte, petit pois, oignon), 1 œuf, peu d'huile", kcal: 460, allerg: [] },
+  { id: "dj16", titre: "Soja viande, plantain, salade", desc: "Soja-viande grillée, plantain bouilli, salade verte", kcal: 500, allerg: [] },
+  { id: "dj17", titre: "Sanga maïs aux légumes", desc: "Sanga maïs (mais + ndolè), poisson ou viande maigre, 1 fruit", kcal: 480, allerg: [] },
+  { id: "dj18", titre: "Kondrè plantain et viande", desc: "Kondrè de plantain (peu d'huile rouge), viande de bœuf maigre", kcal: 540, allerg: [] },
+  { id: "dj19", titre: "Brochettes de bœuf et plantain", desc: "Brochettes de bœuf grillées, 2 plantains bouillis, salade", kcal: 520, allerg: [] },
+  { id: "dj20", titre: "Poisson braisé et bâton de manioc", desc: "Poisson braisé, bâton de manioc (Bobolo), salade de tomate", kcal: 480, allerg: [] },
+  { id: "dj21", titre: "Lentilles, riz brun, légumes", desc: "Lentilles cuites avec oignon, riz complet, légumes vapeur", kcal: 460, allerg: [] },
+  { id: "dj22", titre: "Riz à l'huile rouge et poisson", desc: "Riz à l'huile rouge (modérément), poisson en sauce tomate, ndolè", kcal: 500, allerg: [] },
+  { id: "dj23", titre: "Soupe de poisson complète, riz", desc: "Soupe de poisson épicée maison, 1 louche de riz, légumes verts", kcal: 460, allerg: [] },
+  { id: "dj24", titre: "Niébé aux légumes et plantain", desc: "Niébé cuit aux légumes, plantain bouilli", kcal: 470, allerg: [] },
+  { id: "dj25", titre: "Macabo bouilli, sauce arachide", desc: "Macabo bouilli, sauce arachide légère, poisson", kcal: 540, allerg: ["arachides"] },
+  { id: "dj26", titre: "Couscous de maïs au poulet", desc: "Couscous de maïs, poulet en sauce tomate, légumes", kcal: 500, allerg: [] },
+  { id: "dj27", titre: "Okok et waterfufu", desc: "Okok (sauce gnetum), waterfufu ou manioc, viande ou poisson", kcal: 530, allerg: [] },
+  { id: "dj28", titre: "Tilapia grillé et patate douce", desc: "Tilapia entier grillé, patate douce bouillie, salade", kcal: 480, allerg: [] },
+  { id: "dj29", titre: "Riz sauce gombo et viande", desc: "Riz blanc, sauce gombo, viande de bœuf en sauce", kcal: 510, allerg: [] },
+  { id: "dj30", titre: "Plat végétarien complet", desc: "Mélange haricot + maïs + plantain + légumes verts (folong) en sauce tomate", kcal: 520, allerg: [] }
+];
+
+// ═══ 30 GOÛTERS ═══
+const LG_GOUTERS_30 = [
+  { id: "g1", titre: "Banane et amandes", desc: "1 banane, 1 c. à soupe d'amandes ou noix", kcal: 200, allerg: [] },
+  { id: "g2", titre: "Yaourt nature et fruit", desc: "1 yaourt nature sans sucre, 1 fruit (mangue, orange...)", kcal: 150, allerg: ["lactose"] },
+  { id: "g3", titre: "Tartine d'avocat", desc: "1/2 avocat écrasé sur 1 tranche de pain complet, sel et citron", kcal: 220, allerg: ["gluten"] },
+  { id: "g4", titre: "Lait de soja et banane", desc: "1 verre de lait de soja sans sucre, 1 banane", kcal: 180, allerg: [] },
+  { id: "g5", titre: "Maïs grillé et jus naturel", desc: "1 épi de maïs grillé, 1 verre de jus d'orange naturel", kcal: 200, allerg: [] },
+  { id: "g6", titre: "Bissap sans sucre et fruit", desc: "1 verre de bissap sans sucre, 1 fruit (mangue, papaye)", kcal: 80, allerg: [] },
+  { id: "g7", titre: "Œuf dur et tomate", desc: "1 œuf dur, 1 tomate fraîche, sel et poivre", kcal: 120, allerg: [] },
+  { id: "g8", titre: "Eau de coco et fruits secs", desc: "1 verre d'eau de coco, 5-6 amandes ou noix", kcal: 150, allerg: [] },
+  { id: "g9", titre: "Pomme et beurre d'arachide", desc: "1 pomme tranchée, 1 c. à café de beurre d'arachide naturel", kcal: 180, allerg: ["arachides"] },
+  { id: "g10", titre: "Mangue fraîche", desc: "1 grosse mangue mûre coupée", kcal: 120, allerg: [] },
+  { id: "g11", titre: "Papaye et noix de coco", desc: "1/2 papaye, 1 c. à soupe de noix de coco râpée", kcal: 150, allerg: [] },
+  { id: "g12", titre: "Carottes crues et houmous", desc: "Bâtonnets de carotte, 2 c. de houmous (purée de pois chiches)", kcal: 180, allerg: [] },
+  { id: "g13", titre: "Yaourt et noix", desc: "1 yaourt nature, 1 c. à soupe de noix mélangées", kcal: 200, allerg: ["lactose"] },
+  { id: "g14", titre: "Goyave fraîche", desc: "2 goyaves fraîches", kcal: 100, allerg: [] },
+  { id: "g15", titre: "Beignet plantain (occasionnel)", desc: "1 beignet plantain, eau ou tisane sans sucre. À limiter", kcal: 280, allerg: [] },
+  { id: "g16", titre: "Salade de fruits", desc: "Bol de salade de fruits frais sans sucre ajouté", kcal: 120, allerg: [] },
+  { id: "g17", titre: "Tisane et 2 dattes", desc: "Tisane gingembre ou citronnelle, 2 dattes", kcal: 100, allerg: [] },
+  { id: "g18", titre: "Concombre et yaourt", desc: "1 concombre tranché, 1 yaourt nature avec menthe", kcal: 130, allerg: ["lactose"] },
+  { id: "g19", titre: "Pain complet et fromage frais", desc: "1 tranche de pain complet, fromage frais (peu)", kcal: 200, allerg: ["lactose", "gluten"] },
+  { id: "g20", titre: "Banane et chocolat noir", desc: "1 banane, 2 carrés de chocolat noir 70%+", kcal: 180, allerg: [] },
+  { id: "g21", titre: "Smoothie vert", desc: "Smoothie : épinards + banane + lait végétal + citron", kcal: 150, allerg: [] },
+  { id: "g22", titre: "Galette de riz et avocat", desc: "2 galettes de riz, 1/4 avocat écrasé", kcal: 180, allerg: [] },
+  { id: "g23", titre: "Ananas et menthe", desc: "Tranches d'ananas frais avec feuilles de menthe", kcal: 90, allerg: [] },
+  { id: "g24", titre: "Lait fermenté nature", desc: "1 grand verre de lait fermenté nature (kossam ou similaire)", kcal: 100, allerg: ["lactose"] },
+  { id: "g25", titre: "Œuf et avocat", desc: "1 œuf dur, 1/4 avocat, 1 tomate", kcal: 200, allerg: [] },
+  { id: "g26", titre: "Foléré et noix", desc: "1 verre de foléré sans sucre, 5 noix de cajou", kcal: 130, allerg: [] },
+  { id: "g27", titre: "Patate douce bouillie", desc: "1 petite patate douce orange bouillie", kcal: 100, allerg: [] },
+  { id: "g28", titre: "Smoothie banane-cacao", desc: "Banane + cacao en poudre + lait végétal sans sucre", kcal: 150, allerg: [] },
+  { id: "g29", titre: "Crudités et œuf", desc: "Salade de crudités (carotte, tomate, concombre), 1 œuf dur", kcal: 150, allerg: [] },
+  { id: "g30", titre: "Jus de gingembre frais", desc: "1 verre de jus de gingembre frais sans sucre, 1 fruit", kcal: 80, allerg: [] }
+];
+
+// ═══ 30 DÎNERS ═══
+const LG_DINERS_30 = [
+  { id: "dn1", titre: "Sauce gombo légère et manioc", desc: "Sauce gombo (peu d'huile), 1 morceau de manioc bouilli", kcal: 380, allerg: [] },
+  { id: "dn2", titre: "Soupe de poisson et plantain", desc: "Soupe de poisson maison épicée, 1 plantain bouilli", kcal: 350, allerg: [] },
+  { id: "dn3", titre: "Légumes sautés et œufs", desc: "Légumes sautés (folong, tomate, oignon), 2 œufs", kcal: 320, allerg: [] },
+  { id: "dn4", titre: "Salade verte et poisson grillé", desc: "Grande salade verte (laitue, concombre, tomate), 1 poisson grillé", kcal: 350, allerg: [] },
+  { id: "dn5", titre: "Sauce arachide légère et manioc", desc: "Sauce arachide légère (peu), 1 morceau de manioc, légumes verts", kcal: 400, allerg: ["arachides"] },
+  { id: "dn6", titre: "Folong à l'huile rouge, igname", desc: "Folong sauté à l'huile rouge (peu), igname bouilli", kcal: 380, allerg: [] },
+  { id: "dn7", titre: "Poulet bouilli et légumes", desc: "1/4 poulet bouilli, courge + carotte + petit pois", kcal: 380, allerg: [] },
+  { id: "dn8", titre: "Lentilles, riz complet, légumes", desc: "Lentilles cuites, riz complet, légumes vapeur (haricot vert)", kcal: 420, allerg: [] },
+  { id: "dn9", titre: "Omelette aux légumes, plantain", desc: "Omelette de 2 œufs (tomate, oignon, poivron), 1 plantain bouilli", kcal: 400, allerg: [] },
+  { id: "dn10", titre: "Légumes vapeur et tofu", desc: "Légumes vapeur (haricot vert, brocoli, carotte), tofu grillé", kcal: 350, allerg: [] },
+  { id: "dn11", titre: "Soupe de légumes complète", desc: "Soupe maison (carotte, courge, oignon, ail), 1 tranche pain complet", kcal: 280, allerg: ["gluten"] },
+  { id: "dn12", titre: "Salade niçoise africaine", desc: "Salade : laitue + œuf dur + sardines + tomate + olives, vinaigrette légère", kcal: 380, allerg: [] },
+  { id: "dn13", titre: "Poisson grillé et légumes vapeur", desc: "1 poisson grillé entier, légumes vapeur, citron", kcal: 350, allerg: [] },
+  { id: "dn14", titre: "Soupe de gombo et poisson", desc: "Soupe légère de gombo, 1 morceau de poisson, peu de manioc", kcal: 380, allerg: [] },
+  { id: "dn15", titre: "Tilapia papillote, légumes", desc: "Tilapia en papillote (citron, oignon, tomate), légumes vapeur", kcal: 320, allerg: [] },
+  { id: "dn16", titre: "Niébé en sauce et plantain", desc: "Niébé en sauce tomate, 1 plantain bouilli", kcal: 400, allerg: [] },
+  { id: "dn17", titre: "Salade composée et thon", desc: "Salade verte + tomate + concombre + 1 boîte de thon nature, vinaigrette légère", kcal: 320, allerg: [] },
+  { id: "dn18", titre: "Œufs aux épinards", desc: "2 œufs cuits dans des épinards (folong) à l'huile d'olive, pain complet", kcal: 350, allerg: ["gluten"] },
+  { id: "dn19", titre: "Poulet bouilli et salade", desc: "1/4 poulet bouilli (peau retirée), grande salade verte", kcal: 280, allerg: [] },
+  { id: "dn20", titre: "Soupe de lentilles", desc: "Soupe épaisse de lentilles avec carotte et oignon, 1 tranche pain", kcal: 380, allerg: ["gluten"] },
+  { id: "dn21", titre: "Riz brun et légumes sautés", desc: "Riz complet, légumes sautés (chou, carotte, brocoli), 1 œuf", kcal: 420, allerg: [] },
+  { id: "dn22", titre: "Crudités et fromage", desc: "Plateau crudités (carotte, concombre, tomate), morceau de fromage frais", kcal: 280, allerg: ["lactose"] },
+  { id: "dn23", titre: "Soupe de poisson aux légumes", desc: "Soupe poisson + courgette + carotte + tomate", kcal: 320, allerg: [] },
+  { id: "dn24", titre: "Brochettes poulet et salade", desc: "2 petites brochettes de poulet, salade complète", kcal: 380, allerg: [] },
+  { id: "dn25", titre: "Tofu sauté légumes asiatique", desc: "Tofu sauté avec légumes (chou chinois, carotte, gingembre)", kcal: 320, allerg: [] },
+  { id: "dn26", titre: "Soupe légère de poulet", desc: "Soupe de poulet aux légumes (carotte, oignon, céleri), peu de pâtes", kcal: 350, allerg: ["gluten"] },
+  { id: "dn27", titre: "Sardines et salade verte", desc: "1 boîte sardines à l'huile d'olive, grande salade", kcal: 380, allerg: [] },
+  { id: "dn28", titre: "Soupe de courge et œuf", desc: "Soupe de courge maison, 1 œuf dur", kcal: 300, allerg: [] },
+  { id: "dn29", titre: "Poisson aux herbes et patate douce", desc: "Poisson aux herbes (basilic, persil), 1 patate douce bouillie", kcal: 380, allerg: [] },
+  { id: "dn30", titre: "Bouillon clair et légumes", desc: "Bouillon clair de légumes, légumes vapeur, 1 œuf, 1 tranche pain complet", kcal: 320, allerg: ["gluten"] }
+];
+
 
 function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, setLgProfile, lgObjective, setLgObjective, lgConditions, setLgConditions, lgHabits, setLgHabits, lgActivity, setLgActivity, lgResult, setLgResult, beautyQuizPrice, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift }) {
 
@@ -7615,7 +7505,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
   );
 
   // Compteur de questions
-  const totalQuestions = 18;
+  const totalQuestions = 17;
   function getCurrentQ() {
     let n = 0;
     if (lgStep >= 1) {
@@ -7624,7 +7514,6 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
       if (lgProfile.age) n++;
       if (lgProfile.height) n++;
       if (lgProfile.weight) n++;
-      if (lgProfile.family_size) n++;
     }
     if (lgStep >= 2 && lgObjective) n++;
     if (lgStep >= 3) {
@@ -7735,7 +7624,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
 
   // ═══ ÉTAPE 1 : PROFIL ═══
   if (lgStep === 1) {
-    const ok = lgProfile.gender && lgProfile.age && lgProfile.height && lgProfile.weight && lgProfile.family_size;
+    const ok = lgProfile.gender && lgProfile.age && lgProfile.height && lgProfile.weight;
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
         <Header title="Étape 1 / 5 — Ton profil" onBack={() => setLgStep(0)} />
@@ -7777,22 +7666,6 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quel est ton poids actuel ? (en kg)</div>
             <input type="number" min="20" max="250" value={lgProfile.weight || ""} onChange={(e) => setLgProfile({ ...lgProfile, weight: parseInt(e.target.value) || 0 })} placeholder="Ex: 65" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
-          </div>
-
-          {/* Composition foyer */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Combien êtes-vous à la maison ?</div>
-            <div style={{ fontSize: 11, color: CC.textFaint, marginBottom: 10, fontStyle: "italic" }}>Pour adapter les conseils famille</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                { v: 1, l: "👤 Je vis seul(e)" },
-                { v: 2, l: "👫 En couple (2 personnes)" },
-                { v: 3, l: "👨‍👩‍👦 Famille avec enfants (3-4)" },
-                { v: 5, l: "👨‍👩‍👧‍👦 Grande famille (5+)" }
-              ].map(o => (
-                <button key={o.v} onClick={() => setLgProfile({ ...lgProfile, family_size: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgProfile.family_size === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgProfile.family_size === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
-              ))}
-            </div>
           </div>
 
           <button onClick={() => ok && setLgStep(2)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
@@ -8532,7 +8405,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
             <li><strong>Produits ultra-transformés</strong> (chips, snacks emballés, plats préparés)</li>
             <li><strong>Bonbons et pâtisseries industrielles</strong> tous les jours</li>
             <li><strong>Alcool</strong> (calories vides, mauvais pour le foie)</li>
-            <li><strong>Glutathion injectable et compléments "minceur"</strong> non testés (dangereux)</li>
+            <li><strong>Glutathion injectable</strong> et autres injections non médicales (dangereux)</li>
           </ul>
         </Section>
 
@@ -8550,90 +8423,100 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </ul>
         </Section>
 
-        {/* MENUS 7 JOURS */}
-        {(() => {
-          const week = generateWeekMenus(result);
-          const shoppingList = generateShoppingList(result);
-          const isPregnantHere = conditions.pregnancy === "enceinte" || conditions.pregnancy === "allaite";
-          return (
-            <>
-              <Section title="🍽️ Tes menus pour 7 jours" color={CC.rose}>
-                <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 14, lineHeight: 1.5 }}>
-                  Voici une suggestion de 7 jours équilibrés avec des aliments du Cameroun. <strong>Adapte selon tes goûts</strong> et ce que tu as à la maison. Ces menus sont des <strong>exemples</strong>, pas des obligations.
-                </div>
-                {isPregnantHere && (
-                  <div style={{ marginBottom: 14, padding: 10, background: "#fff5e6", borderLeft: "3px solid #e67e22", borderRadius: 4, fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
-                    🤰 <strong>Grossesse / allaitement :</strong> Tu peux ajouter une 2ème collation pour augmenter tes apports. Évite poissons crus, charcuterie crue, fromages au lait cru.
-                  </div>
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {week.map((d, i) => (
-                    <div key={i} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 10, overflow: "hidden" }}>
-                      <div style={{ padding: "8px 14px", background: "#fdf0f1", fontSize: 14, fontWeight: "bold", color: CC.noir, borderBottom: "1px solid " + CC.border }}>
-                        📅 {d.day}
-                      </div>
-                      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                        {d.petit_dej && (
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#e67e22", marginBottom: 2 }}>☀️ Petit-déjeuner</div>
-                            <div style={{ fontSize: 13, color: CC.noir, marginBottom: 2 }}><strong>{d.petit_dej.titre}</strong></div>
-                            <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{d.petit_dej.desc}</div>
-                          </div>
-                        )}
-                        {d.dejeuner && (
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#4caf50", marginBottom: 2 }}>🍽️ Déjeuner</div>
-                            <div style={{ fontSize: 13, color: CC.noir, marginBottom: 2 }}><strong>{d.dejeuner.titre}</strong></div>
-                            <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{d.dejeuner.desc}</div>
-                          </div>
-                        )}
-                        {d.gouter && (
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginBottom: 2 }}>🥨 Goûter</div>
-                            <div style={{ fontSize: 13, color: CC.noir, marginBottom: 2 }}><strong>{d.gouter.titre}</strong></div>
-                            <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{d.gouter.desc}</div>
-                          </div>
-                        )}
-                        {d.diner && (
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#9c7ba8", marginBottom: 2 }}>🌙 Dîner</div>
-                            <div style={{ fontSize: 13, color: CC.noir, marginBottom: 2 }}><strong>{d.diner.titre}</strong></div>
-                            <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{d.diner.desc}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: 14, padding: 10, background: "#fdf8f8", borderRadius: 6, fontSize: 12, color: CC.textDim, fontStyle: "italic", lineHeight: 1.5 }}>
-                  💡 <strong>Adapte selon tes goûts et tes moyens.</strong> Si tu n'aimes pas un plat, remplace par un équivalent (poisson par poulet, riz par manioc, etc.). L'important c'est l'équilibre général.
-                </div>
-              </Section>
+        {/* CATALOGUES D'OPTIONS DE REPAS */}
+        <Section title="🍽️ Tes options de repas — Catalogue complet" color={CC.rose}>
+          <div style={{ fontSize: 13, color: CC.textDim, marginBottom: 14, lineHeight: 1.6, padding: 12, background: "#fdf8f8", borderRadius: 8 }}>
+            💡 <strong>Comment utiliser ce catalogue :</strong><br/>
+            Chaque jour, choisis librement <strong>1 petit-déjeuner</strong>, <strong>1 déjeuner</strong>, <strong>1 goûter</strong> et <strong>1 dîner</strong> dans ces listes.<br/>
+            Surveille ton total quotidien pour rester autour de <strong>{displayedCalories} kcal/jour</strong> selon ton objectif.<br/>
+            Tu peux varier chaque jour ou répéter ce que tu aimes.
+          </div>
+          {(conditions.pregnancy === "enceinte" || conditions.pregnancy === "allaite") && (
+            <div style={{ marginBottom: 14, padding: 10, background: "#fff5e6", borderLeft: "3px solid #e67e22", borderRadius: 4, fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
+              🤰 <strong>Grossesse / allaitement :</strong> Ajoute une 2ème collation. Évite poissons crus, charcuterie crue, fromages au lait cru.
+            </div>
+          )}
+        </Section>
 
-              {/* LISTE DE COURSES */}
-              <Section title="🛒 Ta liste de courses pour la semaine" color="#4caf50">
-                <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 14, lineHeight: 1.5 }}>
-                  Quantités adaptées pour <strong>{profile.family_size === 1 ? "1 personne" : profile.family_size === 2 ? "2 personnes" : profile.family_size + " personnes"}</strong> sur une semaine.
+        {/* PETITS-DÉJEUNERS */}
+        <Section title="☀️ 30 Petits-déjeuners au choix" color="#e67e22">
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>
+            Choisis 1 option chaque matin selon tes envies et ce que tu as à la maison.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filterByAllergies(LG_PETITS_DEJ_30, conditions.allergies).map((m, i) => (
+              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
+                  <div style={{ fontSize: 11, fontWeight: "bold", color: "#e67e22", background: "#fff5e6", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {Object.entries(shoppingList).map(([cat, items]) => (
-                    <div key={cat}>
-                      <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>{cat}</div>
-                      <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: CC.textDim, lineHeight: 1.7 }}>
-                        {items.map((item, i) => (
-                          <li key={i}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* DÉJEUNERS */}
+        <Section title="🍽️ 30 Déjeuners au choix" color="#4caf50">
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>
+            Choisis 1 option chaque midi. Le déjeuner doit être consistant (le repas le plus important).
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filterByAllergies(LG_DEJEUNERS_30, conditions.allergies).map((m, i) => (
+              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
+                  <div style={{ fontSize: 11, fontWeight: "bold", color: "#4caf50", background: "#f0f9f0", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
                 </div>
-                <div style={{ marginTop: 14, padding: 10, background: "#f0f9f0", borderRadius: 6, fontSize: 12, color: CC.textDim, fontStyle: "italic", lineHeight: 1.5 }}>
-                  💡 <strong>Astuce économies :</strong> Achète les fruits et légumes de saison au marché, c'est moins cher et plus frais. Achète viande/poisson pour 2-3 jours et congèle.
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* GOÛTERS */}
+        <Section title="🥨 30 Goûters au choix" color={CC.rose}>
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>
+            Pour les petites faims entre les repas (15h-17h). Reste léger.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filterByAllergies(LG_GOUTERS_30, conditions.allergies).map((m, i) => (
+              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
+                  <div style={{ fontSize: 11, fontWeight: "bold", color: CC.rose, background: "#fdf0f1", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
                 </div>
-              </Section>
-            </>
-          );
-        })()}
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* DÎNERS */}
+        <Section title="🌙 30 Dîners au choix" color="#9c7ba8">
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>
+            Le soir : repas plus léger. Évite les fritures et les gros plats.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filterByAllergies(LG_DINERS_30, conditions.allergies).map((m, i) => (
+              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
+                  <div style={{ fontSize: 11, fontWeight: "bold", color: "#9c7ba8", background: "#f0e8f3", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
+                </div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* PROCHAINEMENT */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px dashed " + CC.rose, borderRadius: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📚 Prochainement sur CarryBooks</div>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6 }}>
+            Notre futur livre <strong>"Aliments du Cameroun et leurs calories"</strong> avec plus de 400 aliments locaux détaillés (calories, protéines, glucides, lipides). Reste connectée !
+          </div>
+        </div>
 
         {/* OÙ RETROUVER */}
         <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
@@ -8883,7 +8766,7 @@ async function downloadLigneDiagnosticPDF(result) {
       addBullet("Cubes Maggi en exces (max 1/jour)", { color: ROUGE });
       addBullet("Charcuterie en grande quantite", { color: ROUGE });
       addBullet("Produits ultra-transformes (chips, snacks emballes)", { color: ROUGE });
-      addBullet("Glutathion injectable et complements minceur (dangereux)", { color: ROUGE });
+      addBullet("Glutathion injectable et autres injections non medicales (dangereux)", { color: ROUGE });
 
       // HABITUDES
       addSectionTitle("Habitudes sante a adopter");
@@ -8895,73 +8778,73 @@ async function downloadLigneDiagnosticPDF(result) {
       addBullet("Manger en pleine conscience (sans ecrans)");
       addBullet("Pas de privation totale - un plaisir 1-2x/sem est OK");
 
-      // ═══ MENUS 7 JOURS ═══
+      // ═══ CATALOGUE 30 PETITS-DÉJEUNERS ═══
       doc.addPage(); y = 22; addHeader();
-      addSectionTitle("Tes menus pour 7 jours");
-      addParagraph("Voici une suggestion de 7 jours equilibres avec aliments du Cameroun. Adapte selon tes gouts. Ce sont des exemples, pas des obligations.", { fontSize: 9, color: GRIS });
-      const week = generateWeekMenus(result);
-      week.forEach(d => {
-        checkPage(50);
-        doc.setFillColor(...BG_ROSE); doc.rect(margin, y - 4, usableW, 7, "F");
-        doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-        doc.text(clean(d.day), margin + 2, y); y += 7;
-        if (d.petit_dej) {
-          doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(230, 126, 34);
-          doc.text("Petit-dejeuner : ", margin, y);
-          doc.setFont("helvetica", "normal"); doc.setTextColor(...NOIR);
-          doc.text(clean(d.petit_dej.titre), margin + 27, y); y += 4;
-          const desc = doc.splitTextToSize(clean(d.petit_dej.desc), usableW - 4);
-          doc.setFontSize(8); doc.setTextColor(...GRIS);
-          desc.forEach(line => { doc.text(line, margin + 4, y); y += 3.6; });
-          y += 1;
-        }
-        if (d.dejeuner) {
-          doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(76, 175, 80);
-          doc.text("Dejeuner : ", margin, y);
-          doc.setFont("helvetica", "normal"); doc.setTextColor(...NOIR);
-          doc.text(clean(d.dejeuner.titre), margin + 19, y); y += 4;
-          const desc = doc.splitTextToSize(clean(d.dejeuner.desc), usableW - 4);
-          doc.setFontSize(8); doc.setTextColor(...GRIS);
-          desc.forEach(line => { doc.text(line, margin + 4, y); y += 3.6; });
-          y += 1;
-        }
-        if (d.gouter) {
-          doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...ROSE);
-          doc.text("Gouter : ", margin, y);
-          doc.setFont("helvetica", "normal"); doc.setTextColor(...NOIR);
-          doc.text(clean(d.gouter.titre), margin + 16, y); y += 4;
-          const desc = doc.splitTextToSize(clean(d.gouter.desc), usableW - 4);
-          doc.setFontSize(8); doc.setTextColor(...GRIS);
-          desc.forEach(line => { doc.text(line, margin + 4, y); y += 3.6; });
-          y += 1;
-        }
-        if (d.diner) {
-          doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(156, 123, 168);
-          doc.text("Diner : ", margin, y);
-          doc.setFont("helvetica", "normal"); doc.setTextColor(...NOIR);
-          doc.text(clean(d.diner.titre), margin + 14, y); y += 4;
-          const desc = doc.splitTextToSize(clean(d.diner.desc), usableW - 4);
-          doc.setFontSize(8); doc.setTextColor(...GRIS);
-          desc.forEach(line => { doc.text(line, margin + 4, y); y += 3.6; });
-          y += 2;
-        }
-        y += 2;
+      addSectionTitle("30 Petits-dejeuners au choix");
+      addParagraph("Choisis 1 option chaque matin. Reste autour de " + displayedCalories + " kcal/jour total.", { fontSize: 9, color: GRIS });
+      filterByAllergies(LG_PETITS_DEJ_30, conditions.allergies).forEach((m, i) => {
+        checkPage(13);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...NOIR);
+        doc.text((i + 1) + ". " + clean(m.titre), margin, y);
+        doc.setTextColor(230, 126, 34); doc.text(m.kcal + " kcal", pageW - margin, y, { align: "right" });
+        y += 4;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...GRIS);
+        const lines = doc.splitTextToSize(clean(m.desc), usableW - 4);
+        lines.forEach(l => { doc.text(l, margin + 4, y); y += 3.5; });
+        y += 1.5;
       });
 
-      // ═══ LISTE DE COURSES ═══
+      // ═══ CATALOGUE 30 DÉJEUNERS ═══
       doc.addPage(); y = 22; addHeader();
-      addSectionTitle("Ta liste de courses pour la semaine");
-      const familyTxt = profile.family_size === 1 ? "1 personne" : profile.family_size === 2 ? "2 personnes" : profile.family_size + " personnes";
-      addParagraph("Quantites adaptees pour " + familyTxt + " sur une semaine.", { fontSize: 9, color: GRIS });
-      const shoppingList = generateShoppingList(result);
-      Object.entries(shoppingList).forEach(([cat, items]) => {
-        checkPage(15 + items.length * 5);
-        doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...NOIR);
-        doc.text(clean(cat), margin, y); y += 5;
-        items.forEach(item => { addBullet(item, { fontSize: 9 }); });
-        y += 2;
+      addSectionTitle("30 Dejeuners au choix");
+      addParagraph("Choisis 1 option chaque midi. Le dejeuner est le repas principal.", { fontSize: 9, color: GRIS });
+      filterByAllergies(LG_DEJEUNERS_30, conditions.allergies).forEach((m, i) => {
+        checkPage(13);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...NOIR);
+        doc.text((i + 1) + ". " + clean(m.titre), margin, y);
+        doc.setTextColor(76, 175, 80); doc.text(m.kcal + " kcal", pageW - margin, y, { align: "right" });
+        y += 4;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...GRIS);
+        const lines = doc.splitTextToSize(clean(m.desc), usableW - 4);
+        lines.forEach(l => { doc.text(l, margin + 4, y); y += 3.5; });
+        y += 1.5;
       });
-      addInfoBox("ASTUCE ECONOMIES", "Achete les fruits et legumes de saison au marche, c'est moins cher et plus frais. Achete viande/poisson pour 2-3 jours et congele.", VERT);
+
+      // ═══ CATALOGUE 30 GOÛTERS ═══
+      doc.addPage(); y = 22; addHeader();
+      addSectionTitle("30 Gouters au choix");
+      addParagraph("Pour les petites faims entre les repas (15h-17h). Reste leger.", { fontSize: 9, color: GRIS });
+      filterByAllergies(LG_GOUTERS_30, conditions.allergies).forEach((m, i) => {
+        checkPage(13);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...NOIR);
+        doc.text((i + 1) + ". " + clean(m.titre), margin, y);
+        doc.setTextColor(...ROSE); doc.text(m.kcal + " kcal", pageW - margin, y, { align: "right" });
+        y += 4;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...GRIS);
+        const lines = doc.splitTextToSize(clean(m.desc), usableW - 4);
+        lines.forEach(l => { doc.text(l, margin + 4, y); y += 3.5; });
+        y += 1.5;
+      });
+
+      // ═══ CATALOGUE 30 DÎNERS ═══
+      doc.addPage(); y = 22; addHeader();
+      addSectionTitle("30 Diners au choix");
+      addParagraph("Le soir : repas plus leger. Evite fritures et gros plats.", { fontSize: 9, color: GRIS });
+      filterByAllergies(LG_DINERS_30, conditions.allergies).forEach((m, i) => {
+        checkPage(13);
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...NOIR);
+        doc.text((i + 1) + ". " + clean(m.titre), margin, y);
+        doc.setTextColor(156, 123, 168); doc.text(m.kcal + " kcal", pageW - margin, y, { align: "right" });
+        y += 4;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...GRIS);
+        const lines = doc.splitTextToSize(clean(m.desc), usableW - 4);
+        lines.forEach(l => { doc.text(l, margin + 4, y); y += 3.5; });
+        y += 1.5;
+      });
+
+      // Mention prochain livre
+      y += 5; checkPage(20);
+      addInfoBox("PROCHAINEMENT", "Notre futur livre 'Aliments du Cameroun et leurs calories' avec plus de 400 aliments locaux detailles. Reste connectee !", ROSE);
     }
 
     // MESSAGE FINAL
@@ -9785,7 +9668,7 @@ export default function App() {
 
   // ─── GARDE LA LIGNE STATES (refonte v2 — Mai 2026) ───
   const [lgStep, setLgStep] = useState(0); // 0=intro+avertissement, 1=profil, 2=objectif, 3=conditions, 4=habitudes, 5=activite_sommeil, 6=suspense, 7=paiement, 8=resultat
-  const [lgProfile, setLgProfile] = useState({ gender: null, age: null, height: 0, weight: 0, target_weight: 0, family_size: 1 });
+  const [lgProfile, setLgProfile] = useState({ gender: null, age: null, height: 0, weight: 0, target_weight: 0 });
   const [lgObjective, setLgObjective] = useState(null); // maintenir, perdre, prendre, sportif, sante, enfant_conseils
   const [lgConditions, setLgConditions] = useState({ pregnancy: null, breastfeeding: null, diabetes: null, allergies: null, medical: null });
   const [lgHabits, setLgHabits] = useState({ meals_per_day: null, water: null, snacking: null, breakfast: null, eating_out: null, fast_food: null, sugar: null });
