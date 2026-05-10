@@ -37,6 +37,108 @@ const supabase = createClient(
 );
 
 // ============================================================
+// SAUVEGARDE ROBUSTE — CarryCare Results
+// Avec retry + localStorage backup en cas d'échec réseau
+// ============================================================
+
+const PENDING_SAVES_KEY = "carrybooks_pending_carrycare_saves";
+
+async function saveCarrycareResultRobust(payload) {
+  // payload = { user_id, quiz_type, amount, result_data }
+  console.log("[CarryCare] Tentative de sauvegarde...", payload.quiz_type);
+  
+  // Tentative 1 : INSERT direct
+  try {
+    const { error } = await supabase.from("carrycare_results").insert([payload]);
+    if (!error) {
+      console.log("[CarryCare] ✅ Sauvegarde réussie (1ère tentative)");
+      return { success: true };
+    }
+    console.warn("[CarryCare] Échec tentative 1:", error.message);
+  } catch (e) {
+    console.warn("[CarryCare] Exception tentative 1:", e.message);
+  }
+  
+  // Tentative 2 : retry après 3s
+  await new Promise(r => setTimeout(r, 3000));
+  try {
+    const { error } = await supabase.from("carrycare_results").insert([payload]);
+    if (!error) {
+      console.log("[CarryCare] ✅ Sauvegarde réussie (2ème tentative)");
+      return { success: true };
+    }
+    console.warn("[CarryCare] Échec tentative 2:", error.message);
+  } catch (e) {
+    console.warn("[CarryCare] Exception tentative 2:", e.message);
+  }
+  
+  // Tentative 3 : retry après 10s
+  await new Promise(r => setTimeout(r, 10000));
+  try {
+    const { error } = await supabase.from("carrycare_results").insert([payload]);
+    if (!error) {
+      console.log("[CarryCare] ✅ Sauvegarde réussie (3ème tentative)");
+      return { success: true };
+    }
+    console.warn("[CarryCare] Échec tentative 3:", error.message);
+  } catch (e) {
+    console.warn("[CarryCare] Exception tentative 3:", e.message);
+  }
+  
+  // BACKUP LOCALSTORAGE — Stocke pour re-tenter au prochain login
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_SAVES_KEY) || "[]");
+    pending.push({ ...payload, saved_at: new Date().toISOString() });
+    localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(pending));
+    console.warn("[CarryCare] 💾 Backup localStorage activé. Sera re-tenté au prochain login.");
+    return { success: false, backed_up: true };
+  } catch (e) {
+    console.error("[CarryCare] ❌ Échec backup localStorage:", e);
+    return { success: false, backed_up: false };
+  }
+}
+
+// Tente de sauvegarder les résultats en attente (au login)
+async function flushPendingCarrycareSaves() {
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_SAVES_KEY) || "[]");
+    if (pending.length === 0) return;
+    
+    console.log("[CarryCare] 🔄 " + pending.length + " résultat(s) en attente. Tentative de sauvegarde...");
+    
+    const remaining = [];
+    for (const payload of pending) {
+      try {
+        const { error } = await supabase.from("carrycare_results").insert([{
+          user_id: payload.user_id,
+          quiz_type: payload.quiz_type,
+          amount: payload.amount,
+          result_data: payload.result_data
+        }]);
+        if (error) {
+          console.warn("[CarryCare] Échec re-sauvegarde:", error.message);
+          remaining.push(payload);
+        } else {
+          console.log("[CarryCare] ✅ Résultat en attente sauvegardé:", payload.quiz_type);
+        }
+      } catch (e) {
+        console.warn("[CarryCare] Exception re-sauvegarde:", e);
+        remaining.push(payload);
+      }
+    }
+    
+    if (remaining.length > 0) {
+      localStorage.setItem(PENDING_SAVES_KEY, JSON.stringify(remaining));
+    } else {
+      localStorage.removeItem(PENDING_SAVES_KEY);
+      console.log("[CarryCare] 🎉 Tous les résultats en attente ont été sauvegardés !");
+    }
+  } catch (e) {
+    console.error("[CarryCare] Erreur flush pending:", e);
+  }
+}
+
+// ============================================================
 // URL ROUTING — Sync URL avec state pour partage et tracking
 // ============================================================
 
@@ -2733,16 +2835,14 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                       clearInterval(interval);
                       setBfPaymentStep(1);
                       setBfShowGift(true);
-                      // Sauvegarde du résultat
+                      // Sauvegarde robuste avec retry + backup localStorage
                       if (userId) {
-                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                        saveCarrycareResultRobust({
                           user_id: userId,
                           quiz_type: "facial",
                           amount: beautyQuizPrice || 0,
                           result_data: { typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
-                        }]);
-                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
-                        else console.log("Résultat CarryCare facial sauvegardé !");
+                        });
                       } else {
                         console.warn("Pas de user_id, sauvegarde impossible");
                       }
@@ -3549,16 +3649,14 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
                       clearInterval(interval);
                       setBbPaymentStep(1);
                       setBbShowGift(true);
-                      // Sauvegarde du résultat
+                      // Sauvegarde robuste avec retry + backup localStorage
                       if (userId) {
-                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                        saveCarrycareResultRobust({
                           user_id: userId,
                           quiz_type: "body",
                           amount: beautyQuizPrice || 0,
                           result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
-                        }]);
-                        if (saveErr) console.error("Erreur sauvegarde CarryCare body:", saveErr);
-                        else console.log("Résultat CarryCare body sauvegardé !");
+                        });
                       } else {
                         console.warn("Pas de user_id, sauvegarde impossible");
                       }
@@ -4859,14 +4957,12 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
                       setLgPaymentStep(1);
                       setLgShowGift(true);
                       if (userId) {
-                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                        saveCarrycareResultRobust({
                           user_id: userId,
                           quiz_type: "line",
                           amount: beautyQuizPrice || 0,
                           result_data: lgData
-                        }]);
-                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
-                        else console.log("Résultat CarryCare line sauvegardé !");
+                        });
                       } else {
                         console.warn("Pas de user_id, sauvegarde impossible");
                       }
@@ -5575,14 +5671,12 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
                       setCapPaymentStep(1);
                       setCapShowGift(true);
                       if (userId) {
-                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
+                        saveCarrycareResultRobust({
                           user_id: userId,
                           quiz_type: "hair",
                           amount: beautyQuizPrice || 0,
                           result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult }
-                        }]);
-                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
-                        else console.log("Résultat CarryCare hair sauvegardé !");
+                        });
                       }
                       setTimeout(() => { setCapShowGift(false); setCapStep(7); }, 2500);
                     }
@@ -6234,7 +6328,11 @@ export default function App() {
     } else {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setUser(session?.user ?? null);
-        if (session?.user) loadUserPurchases(session.user.id);
+        if (session?.user) {
+          loadUserPurchases(session.user.id);
+          // Re-tente les sauvegardes CarryCare en attente
+          flushPendingCarrycareSaves().catch(() => {});
+        }
         else setShowAuthModal(true); // Afficher modal si non connecté
         setAuthChecked(true);
       });
@@ -6258,6 +6356,8 @@ export default function App() {
       setUser(session?.user ?? null);
       if (session?.user) {
         loadUserPurchases(session.user.id);
+        // Re-tente les sauvegardes CarryCare en attente (en cas de coupure réseau précédente)
+        flushPendingCarrycareSaves().catch(() => {});
         // Sauvegarder session dans Preferences
         Preferences.set({ key: "sb-session", value: JSON.stringify({ access_token: session.access_token, refresh_token: session.refresh_token }) }).catch(() => {});
 
