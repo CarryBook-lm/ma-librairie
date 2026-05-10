@@ -677,7 +677,53 @@ async function downloadBodyDiagnosticPDF(result) {
     doc.setFontSize(10);
     doc.setTextColor(...GRIS);
     doc.text("La constance est la cle. Tes resultats arrivent.", pageW / 2, y + 16, { align: "center" });
-    y += 25;
+    y += 28;
+
+    // ═══ ENVIE D'ALLER PLUS LOIN — Liens cliquables CarryCare ═══
+    checkPage(55);
+    const linkBoxStart = y;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(margin, linkBoxStart, usableW, 50, 3, 3, "F");
+    doc.setDrawColor(...ROSE);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(margin, linkBoxStart, usableW, 50, 3, 3, "D");
+    doc.setLineWidth(0.2);
+
+    // Titre
+    y = linkBoxStart + 7;
+    doc.setTextColor(...ROSE);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Envie d'aller plus loin ?", pageW / 2, y, { align: "center" });
+    y += 8;
+
+    // Lien 1 : Mes résultats
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("Retrouve tes resultats en ligne", margin + 5, y);
+    y += 4.5;
+    doc.setTextColor(0, 102, 204);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, {
+      url: "https://carrybooks.com/mes-resultats"
+    });
+    y += 8;
+
+    // Lien 2 : CarryCare (autres diagnostics)
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("Decouvre nos autres diagnostics (visage, cheveux, ligne)", margin + 5, y);
+    y += 4.5;
+    doc.setTextColor(0, 102, 204);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, {
+      url: "https://carrybooks.com/carrycare"
+    });
+    y = linkBoxStart + 53;
 
     // Footer de la dernière page
     addFooter();
@@ -4936,6 +4982,20 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
         <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 14, textAlign: "center" }}>
           <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>💪 Tu peux le faire !</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", lineHeight: 1.6 }}>La constance est la clé. Tes résultats arrivent.</div>
+        </div>
+
+        {/* Bouton télécharger PDF (en bas) */}
+        <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadBodyDiagnosticPDF(result)} style={{
+            display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+          }}>
+            📥 Télécharger mon diagnostic en PDF
+          </button>
+          <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>
+            Garde-le sur ton téléphone, partage-le, imprime-le
+          </div>
         </div>
 
       </div>
