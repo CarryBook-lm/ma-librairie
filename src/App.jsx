@@ -9184,11 +9184,13 @@ export default function App() {
                         setCarryCarePage("facialQuiz");
                         setPage("carrycare");
                       } else if (r.quiz_type === "body") {
+                        if (data.profile) setBbProfile(data.profile);
+                        if (data.objectives) setBbObjectives(data.objectives);
                         if (data.typeAnswers) setBbTypeAnswers(data.typeAnswers);
                         if (data.problems) setBbProblems(data.problems);
                         if (data.lifestyle) setBbLifestyle(data.lifestyle);
                         if (data.result) setBbResult(data.result);
-                        setBbStep(6);
+                        setBbStep(8); // Aller direct au résultat (pas suspense ni paiement)
                         setBbPaymentStep(1);
                         setBbShowGift(false);
                         setCarryCarePage("bodyQuiz");
