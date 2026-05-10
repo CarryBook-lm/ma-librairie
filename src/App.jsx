@@ -660,7 +660,7 @@ async function downloadBodyDiagnosticPDF(result) {
     addSectionTitle("5 conseils pro pour toi");
     addBullet("La constance avant l'intensite. 5 min/jour vaut mieux qu'1h le dimanche.", { bold: true });
     addBullet("Hydrate-toi de l'interieur. Bois 2 litres d'eau par jour, ta peau te dira merci.", { bold: true });
-    addBullet("Creme solaire OBLIGATOIRE meme peau noire. Le soleil camerounais empire les taches.", { bold: true });
+    addBullet("Creme solaire OBLIGATOIRE meme peau noire. Le soleil africain empire les taches.", { bold: true });
     addBullet("Patience. Ta peau se renouvelle tous les 28 jours. Donne-lui le temps.", { bold: true });
     addBullet("Evite les 'miracles 7 jours' - c'est faux et souvent dangereux.", { bold: true });
 
@@ -4249,7 +4249,7 @@ function KitExfoliaCard({ skinTone }) {
           <div>✅ <strong>Satisfait ou remboursé</strong></div>
           <div>✅ <strong>100% naturel</strong> (hydrolats de plantes, produits bio)</div>
           <div>✅ Efficace contre acné sévère, mélasma, cernes, rides</div>
-          <div>🚚 Livraison Cameroun (frais à la charge du client)</div>
+          <div>🚚 Livraison disponible (frais à la charge du client)</div>
         </div>
       </div>
       <a href="https://www.carrygoo.net/products/kit-visage-exfolia-1" target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: 14, background: "#c9952a", color: "#fff", textDecoration: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", boxShadow: "0 3px 10px rgba(201,149,42,0.3)" }}>
@@ -4352,30 +4352,46 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
         </Section>
 
         {/* IMPORTANCE CRÈME SOLAIRE */}
-        <Section title="🌞 L'importance VITALE de la crème solaire" color="#e67e22">
+        <Section title="🌞 L'importance VITALE de la protection solaire" color="#e67e22">
           <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
-            <div style={{ marginBottom: 10 }}>
-              La crème solaire est le <strong>produit le PLUS important</strong> de ta routine. <strong>90% du vieillissement cutané vient du soleil</strong> (UV).
+            
+            <div style={{ marginBottom: 14, fontSize: 14, fontWeight: "bold", color: CC.noir }}>💡 À retenir absolument :</div>
+            
+            <div style={{ marginBottom: 12, padding: 10, background: "#fff5e6", borderRadius: 6 }}>
+              ✅ <strong>Choisis une protection solaire SPF 30 minimum</strong> (l'indice SPF est écrit sur le tube). Le SPF 50+ est encore mieux pour le climat africain.
             </div>
-            <div style={{ marginBottom: 10 }}>
-              Au Cameroun, l'ensoleillement est intense <strong>toute l'année</strong>. Sans SPF :
+            
+            <div style={{ marginBottom: 12, padding: 10, background: "#fff5e6", borderRadius: 6 }}>
+              ✅ <strong>Mets-en assez</strong> : étale la valeur de <strong>2 doigts pleins</strong> sur tout ton visage. La plupart des gens en mettent pas assez et ce n'est pas efficace.
             </div>
-            <ul style={{ margin: 0, paddingLeft: 20, marginBottom: 10 }}>
-              <li>Les <strong>taches noires</strong> reviennent (mélanine activée)</li>
-              <li>Le <strong>mélasma</strong> empire</li>
-              <li>Apparition de <strong>rides précoces</strong></li>
-              <li>Aucun autre soin (vitamine C, niacinamide, anti-âge) ne fonctionne vraiment</li>
-            </ul>
-            <div style={{ marginTop: 12, padding: 12, background: "#fff5e6", borderLeft: "3px solid #e67e22", borderRadius: 4, fontSize: 12 }}>
-              <strong>💡 Règles d'or :</strong>
-              <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-                <li>SPF 30 minimum, idéal 50+</li>
-                <li>2 doigts pleins pour le visage (15ml)</li>
-                <li>Réapplication toutes les 2h en extérieur</li>
-                <li>Même par temps couvert (les UV traversent les nuages)</li>
-                <li>Même en intérieur près d'une fenêtre</li>
+            
+            <div style={{ marginBottom: 12, padding: 10, background: "#fff5e6", borderRadius: 6 }}>
+              ✅ <strong>Si tu sors longtemps</strong>, remets-en <strong>toutes les 2 heures</strong>. Sinon le matin avant de sortir suffit.
+            </div>
+            
+            <div style={{ marginBottom: 12, padding: 10, background: "#fff5e6", borderRadius: 6 }}>
+              ✅ <strong>Mets-en même quand le ciel est gris</strong> : les rayons du soleil passent à travers les nuages, ta peau les reçoit quand même.
+            </div>
+            
+            <div style={{ marginBottom: 16, padding: 10, background: "#fff5e6", borderRadius: 6 }}>
+              ✅ <strong>Mets-en même si tu travailles à l'intérieur près d'une fenêtre</strong> : les vitres ne bloquent pas tous les rayons UV.
+            </div>
+            
+            <div style={{ marginTop: 16, padding: 14, background: "linear-gradient(135deg, #fff5e6 0%, #ffe4c4 100%)", border: "2px solid #e67e22", borderRadius: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#e67e22", marginBottom: 8 }}>⭐ POURQUOI C'EST SI IMPORTANT ?</div>
+              <div style={{ marginBottom: 10 }}>
+                La protection solaire est <strong>le produit le plus important de toute ta routine</strong>, sans exception. Sans elle :
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 20, marginBottom: 12 }}>
+                <li>Tes taches reviendront ou empireront</li>
+                <li>Tu auras des rides plus tôt</li>
+                <li>Aucun de tes autres produits (sérum, crème anti-âge, anti-taches) ne fonctionnera vraiment</li>
               </ul>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir }}>
+                En Afrique, le soleil est intense <strong>toute l'année</strong>, même par temps couvert. Mettre de la protection solaire chaque matin, c'est <strong>le geste qui change tout</strong> pour avoir une belle peau dans 5, 10, 20 ans.
+              </div>
             </div>
+            
           </div>
         </Section>
 
@@ -4398,6 +4414,32 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
           {/* MATIN */}
           <div style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>☀️ MATIN</div>
+
+            {/* Vue d'ensemble MATIN */}
+            <div style={{ marginBottom: 16, padding: 14, background: "#fdf0f1", border: "1px solid " + CC.rose, borderRadius: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📋 Vue d'ensemble</div>
+              <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7, marginBottom: 8 }}>
+                Pour ta routine du matin, tu auras besoin de <strong>{getMatinProductsCount(skinType, problems, objectives, lifestyle, isPregnant)} produits</strong> :
+              </div>
+              <ol style={{ margin: "0 0 8px", paddingLeft: 22, fontSize: 13, color: CC.noir, lineHeight: 1.8 }}>
+                <li>Un <strong>nettoyant doux</strong>{problems.includes("acne_active") ? " anti-imperfections" : ""}</li>
+                <li>Une <strong>lotion tonique</strong></li>
+                {(objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) && (
+                  <li>Un <strong>sérum vitamine C</strong> (pour le glow)</li>
+                )}
+                {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
+                  <li>Une <strong>crème contour des yeux</strong></li>
+                )}
+                <li>Une <strong>crème hydratante</strong></li>
+                <li>Une <strong>protection solaire SPF 30+</strong></li>
+              </ol>
+              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+                💡 <strong>Bonne nouvelle pour économiser</strong> : le <strong>nettoyant</strong> et la <strong>lotion tonique</strong> seront aussi utilisés le soir (achète-en 1 seul de chaque){(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) ? ". Le contour des yeux servira aussi le soir (achète-en 1 seul)" : ""}.
+              </div>
+            </div>
+
+            {/* Détails des produits */}
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 10, marginTop: 16, letterSpacing: 0.5 }}>🛒 DÉTAILS DES PRODUITS</div>
 
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Nettoyant doux</div>
@@ -4429,14 +4471,93 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
             </div>
 
             <div style={{ marginBottom: 14, padding: 12, background: "#fff5e6", border: "2px solid #e67e22", borderRadius: 10 }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>6. 🌞 Protection solaire SPF 30+ (ÉTAPE LA PLUS IMPORTANTE)</div>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>6. 🌞 PROTECTION SOLAIRE SPF 30+ (ÉTAPE LA PLUS IMPORTANTE)</div>
               <FacialProductList category={skinType.code === "grasse" || problems.includes("acne_active") ? "spf_grasse" : (skinTone === "metisse" || skinTone === "fonce" || skinTone === "ebene" ? "spf_metisse" : "spf")} budgetPref={budgetPref} />
+            </div>
+
+            {/* Comment appliquer MATIN */}
+            <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine matin (étape par étape)</div>
+              
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 1 — Nettoyer (1 minute)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Mouille ton visage à l'eau tiède (jamais brûlante). Prends une noisette de <strong>nettoyant</strong>, fais mousser un peu avec de l'eau, puis masse ton visage en mouvements circulaires pendant <strong>30 secondes</strong>. Insiste sur la zone T (front, nez, menton). Rince à l'eau tiède et tamponne avec une serviette propre (sans frotter).</div>
+              </div>
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 2 — Tonifier (30 secondes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Imbibe un coton de <strong>lotion tonique</strong> (juste assez pour humidifier). Passe-le sur tout ton visage en tapotant doucement, sans frotter. Évite le contour des yeux. <strong>Laisse sécher 30 secondes</strong> avant l'étape suivante.</div>
+              </div>
+
+              {(objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 3 — Sérum vitamine C (2 minutes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Dépose <strong>3 à 4 gouttes</strong> de sérum dans la paume de ta main. Tapote tes doigts dans le sérum puis applique sur tout le visage en partant du centre vers l'extérieur. <strong>Attends 1 à 2 minutes</strong> que le sérum pénètre.</div>
+                </div>
+              )}
+
+              {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 4 — Contour des yeux (30 secondes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prélève une petite quantité de crème (taille d'un grain de riz). <strong>Tapote doucement avec ton annulaire</strong> (le doigt le plus délicat) autour des yeux : sous les cernes, sur les paupières, jusqu'à la tempe. Ne frotte JAMAIS cette zone, elle est très fragile.</div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 5 — Crème hydratante (1 minute)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prends une noisette de <strong>crème hydratante</strong>, chauffe-la entre tes paumes, puis applique sur le visage et le cou en mouvements ascendants (de bas en haut). <strong>Attends 2 minutes</strong> que la crème pénètre bien.</div>
+              </div>
+
+              <div style={{ marginBottom: 4, padding: 12, background: "#fff", borderRadius: 8, border: "2px solid #e67e22" }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>Étape 6 — Protection solaire (1 minute) ⭐ ÉTAPE LA PLUS IMPORTANTE</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Mets l'équivalent de <strong>2 doigts pleins</strong> de protection solaire (l'index et le majeur entiers, du bout au pli). Étale sur tout le visage, le cou, les oreilles et même les paupières si possible. N'oublie pas le dessous du menton.</div>
+              </div>
+
+              <div style={{ marginTop: 12, fontSize: 12, color: CC.noir, fontWeight: "bold", textAlign: "center" }}>⏱️ Temps total : 6-8 minutes</div>
+              <div style={{ marginTop: 6, fontSize: 11, color: CC.textFaint, fontStyle: "italic", textAlign: "center" }}>💡 Astuce : Fais ta routine après ton réveil et avant le petit-déjeuner. Le temps que tu manges, tous tes produits sont absorbés.</div>
             </div>
           </div>
 
           {/* SOIR */}
           <div>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>🌙 SOIR</div>
+
+            {/* Vue d'ensemble SOIR */}
+            <div style={{ marginBottom: 16, padding: 14, background: "#fdf0f1", border: "1px solid " + CC.rose, borderRadius: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📋 Vue d'ensemble</div>
+              <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7, marginBottom: 8 }}>
+                Pour ta routine du soir, tu auras besoin de <strong>{getSoirProductsCount(skinType, problems, objectives, lifestyle, isPregnant)} produits</strong> :
+              </div>
+              <ol style={{ margin: "0 0 8px", paddingLeft: 22, fontSize: 13, color: CC.noir, lineHeight: 1.8 }}>
+                {(lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") && (
+                  <li>Un <strong>démaquillant</strong> (eau micellaire ou huile démaquillante)</li>
+                )}
+                <li>Un <strong>nettoyant</strong> (le même que le matin ✅)</li>
+                <li>Une <strong>lotion tonique</strong> (la même que le matin ✅)</li>
+                {!isPregnant && problems.includes("acne_active") && (
+                  <li>Un <strong>sérum acide salicylique</strong> (anti-acné)</li>
+                )}
+                {!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides")) && (
+                  <li>Un <strong>sérum rétinol</strong> (anti-âge)</li>
+                )}
+                {(problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant && (
+                  <li>Un <strong>sérum anti-taches</strong> (niacinamide)</li>
+                )}
+                {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
+                  <li>Une <strong>crème contour des yeux</strong> (la même que le matin ✅)</li>
+                )}
+                <li>Une <strong>crème nuit</strong> régénérante</li>
+                {problems.includes("acne_active") && (
+                  <li>Un <strong>soin localisé</strong> sur les boutons</li>
+                )}
+              </ol>
+              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+                💡 <strong>Économies</strong> : Plusieurs produits sont déjà ceux du matin (nettoyant, lotion tonique{(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) ? ", contour des yeux" : ""}). Tu n'as pas besoin de tout racheter !
+              </div>
+            </div>
+
+            {/* Détails des produits SOIR */}
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 10, marginTop: 16, letterSpacing: 0.5 }}>🛒 DÉTAILS DES PRODUITS</div>
 
             {(lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") && (
               <div style={{ marginBottom: 14 }}>
@@ -4447,12 +4568,12 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{(lifestyle.makeup === "never" ? "1" : "2")}. Nettoyant doux (double nettoyage)</div>
-              <FacialProductList category={problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale")} budgetPref={budgetPref} />
+              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>✅ Tu peux utiliser le même produit que le matin</div>
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{(lifestyle.makeup === "never" ? "2" : "3")}. Tonique / Lotion</div>
-              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>Idem matin (utilise le même produit)</div>
+              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>✅ Tu peux utiliser le même produit que le matin</div>
             </div>
 
             {!isPregnant && problems.includes("acne_active") && (
@@ -4466,7 +4587,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>4. Sérum rétinol (anti-âge)</div>
                 <FacialProductList category="serum_anti_age" budgetPref={budgetPref} />
-                <div style={{ marginTop: 6, fontSize: 11, color: "#dc3545", fontStyle: "italic" }}>⚠️ Le rétinol = SPF OBLIGATOIRE le matin. Commence 2x/sem puis augmente.</div>
+                <div style={{ marginTop: 6, fontSize: 11, color: "#dc3545", fontStyle: "italic" }}>⚠️ Le rétinol = PROTECTION SOLAIRE OBLIGATOIRE le matin. Commence 2x/sem puis augmente.</div>
               </div>
             )}
 
@@ -4480,7 +4601,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
             {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>6. Contour des yeux nuit</div>
-                <FacialProductList category="contour_yeux" budgetPref={budgetPref} />
+                <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>✅ Tu peux utiliser le même produit que le matin</div>
               </div>
             )}
 
@@ -4495,6 +4616,73 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
                 <FacialProductList category="spot_acne" budgetPref={budgetPref} />
               </div>
             )}
+
+            {/* Comment appliquer SOIR */}
+            <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #f0e8f3 0%, #d8c5dc 100%)", border: "1px solid #9c7ba8", borderRadius: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine soir (étape par étape)</div>
+
+              {(lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 1 — Démaquiller (1 minute)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Imbibe un coton de <strong>démaquillant</strong> et passe-le sur tes yeux, ta bouche et tout ton visage. Répète jusqu'à ce que le coton soit propre. Le démaquillage est <strong>essentiel</strong> avant le nettoyage.</div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape {lifestyle.makeup === "never" ? "1" : "2"} — Nettoyer en profondeur (1-2 minutes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Le soir, ton visage a accumulé pollution, sébum et résidus. Utilise le même <strong>nettoyant</strong> que le matin mais <strong>double la durée du massage</strong> : 1 minute au lieu de 30 secondes.</div>
+              </div>
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape {lifestyle.makeup === "never" ? "2" : "3"} — Tonifier (30 secondes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Identique au matin avec ta <strong>lotion tonique</strong>. Imbibe un coton et tapote sur le visage.</div>
+              </div>
+
+              {!isPregnant && problems.includes("acne_active") && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8, border: "1px solid #ffc107" }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 4 — Sérum acide salicylique (2 minutes) ⚠️</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Le SOIR uniquement (jamais le matin avec la vitamine C). Dépose 3-4 gouttes, applique sur le visage en évitant le contour des yeux. <strong>Concentre sur les zones avec acné</strong>. Laisse pénétrer 1-2 minutes.</div>
+                </div>
+              )}
+
+              {!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides")) && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8, border: "1px solid #ffc107" }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 4 — Sérum rétinol (2 minutes) ⚠️</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Dépose 2-3 gouttes seulement (très puissant). Applique en évitant contour des yeux et bouche. <strong>Commence 2x/semaine</strong> pour habituer ta peau, puis augmente progressivement.</div>
+                </div>
+              )}
+
+              {(problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 5 — Sérum anti-taches (1 minute)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Dépose 3-4 gouttes, applique sur le visage en insistant sur les zones avec taches.</div>
+                </div>
+              )}
+
+              {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 6 — Contour des yeux (30 secondes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Identique au matin. Tapote doucement avec ton annulaire.</div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 7 — Crème nuit (1 minute)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Plus riche que la crème de jour. Étale généreusement sur tout le visage et le cou. Tu peux laisser un léger excès, ta peau l'absorbera pendant la nuit.</div>
+              </div>
+
+              {problems.includes("acne_active") && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 8 — Soin localisé sur les boutons (30 secondes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>En dernier, applique <strong>une petite goutte uniquement sur les boutons</strong> (pas tout le visage). Patches anti-acné en option pour la nuit.</div>
+                </div>
+              )}
+
+              <div style={{ marginTop: 12, fontSize: 12, color: CC.noir, fontWeight: "bold", textAlign: "center" }}>⏱️ Temps total : 6-10 minutes</div>
+              <div style={{ marginTop: 6, fontSize: 11, color: CC.textFaint, fontStyle: "italic", textAlign: "center", lineHeight: 1.5 }}>
+                💡 Astuces : Fais ta routine au moins 1 heure avant de dormir.<br/>Change ta taie d'oreiller 2 fois par semaine (les bactéries empirent l'acné).
+              </div>
+            </div>
           </div>
         </Section>
 
@@ -4701,6 +4889,26 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
   );
 }
 
+// HELPER : Compte le nombre de produits dans la routine matin
+function getMatinProductsCount(skinType, problems, objectives, lifestyle, isPregnant) {
+  let count = 4; // base : nettoyant + lotion + crème + SPF
+  if (objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) count++;
+  if (problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) count++;
+  return count;
+}
+
+// HELPER : Compte le nombre de produits dans la routine soir
+function getSoirProductsCount(skinType, problems, objectives, lifestyle, isPregnant) {
+  let count = 3; // base : nettoyant + lotion + crème nuit
+  if (lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") count++;
+  if (!isPregnant && problems.includes("acne_active")) count++;
+  if (!isPregnant && (objectives.includes("anti_age") || (skinType && (skinType.code === "normale" || skinType.code === "seche")) || problems.includes("rides"))) count++;
+  if ((problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant) count++;
+  if (problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) count++;
+  if (problems.includes("acne_active")) count++; // soin localisé
+  return count;
+}
+
 // HELPER : Génère le texte explicatif facial
 function generateFacialExplanation(skinType, profile, problems, lifestyle) {
   const parts = [];
@@ -4715,7 +4923,7 @@ function generateFacialExplanation(skinType, profile, problems, lifestyle) {
   } else {
     parts.push("Ton visage est globalement équilibré — c'est une excellente base de travail !");
   }
-  parts.push("Au Cameroun, le climat chaud et humide combiné à un ensoleillement intense toute l'année met ta peau à rude épreuve. Une routine adaptée est essentielle.");
+  parts.push("En Afrique, le climat chaud et humide combiné à un ensoleillement intense toute l'année met ta peau à rude épreuve. Une routine adaptée est essentielle.");
   if (problems.includes("acne_active")) parts.push("Pour ton acné : sébum + bactéries + inflammation. Le rythme de vie, le stress et les hormones aggravent souvent.");
   if (problems.includes("melasma")) parts.push("Pour ton mélasma : c'est principalement causé par les hormones (grossesse, contraception) combinées au soleil. La protection solaire est NON négociable.");
   if (problems.includes("cernes")) parts.push("Pour tes cernes : sommeil, fatigue, écrans, génétique et déshydratation s'additionnent. La crème solaire et le contour des yeux sont tes meilleurs alliés.");
@@ -5164,7 +5372,7 @@ async function downloadFacialDiagnosticPDF(result) {
 
     // IMPORTANCE SPF
     addSectionTitle("L'importance VITALE de la creme solaire");
-    addParagraph("La creme solaire est le produit le PLUS important de ta routine. 90% du vieillissement cutane vient du soleil (UV). Au Cameroun, l'ensoleillement est intense toute l'annee.");
+    addParagraph("La creme solaire est le produit le PLUS important de ta routine. 90% du vieillissement cutane vient du soleil (UV). En Afrique, l'ensoleillement est intense toute l'annee.");
     addBullet("Sans SPF : taches reviennent, melasma empire, rides precoces");
     addBullet("Aucun autre soin (vit C, niacinamide, anti-age) ne fonctionne sans SPF");
     addBullet("SPF 30 minimum, ideal SPF 50+");
@@ -6223,7 +6431,7 @@ const BB_PRODUCT_EXPLAINS = {
   anti_taches: "Ces produits contiennent de la NIACINAMIDE (vitamine B3), de la VITAMINE C et des ACIDES DOUX qui inhibent la production de mélanine en excès et accélèrent le renouvellement cellulaire pour estomper les taches.",
   deodorant: "Ces déodorants sont SANS ALCOOL ni sels d'aluminium agressifs. Ils respectent la peau fragile des aisselles et n'aggravent pas l'hyperpigmentation.",
   gommage: "Les exfoliants éliminent les cellules mortes en surface. Le sucre est doux et fond dans l'eau (pas d'irritation), tandis que le marc de café stimule la microcirculation.",
-  spf: "La protection solaire est ESSENTIELLE même sur peau noire. Au Cameroun, l'ensoleillement est intense toute l'année. Sans SPF, les taches noires reviennent et la peau vieillit prématurément.",
+  spf: "La protection solaire est ESSENTIELLE même sur peau noire. En Afrique, l'ensoleillement est intense toute l'année. Sans SPF, les taches noires reviennent et la peau vieillit prématurément.",
   pieds: "Ces crèmes contiennent de l'URÉE (10-25%) qui exfolie la corne et hydrate en profondeur, ainsi que du PANTHÉNOL réparateur.",
   anti_cellulite: "La caféine en application locale améliore la microcirculation et aide à déstocker les graisses. Le massage circulaire (le plus important !) stimule le drainage lymphatique."
 };
@@ -6489,7 +6697,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
                               <div>✅ Résultats visibles en <strong>2 semaines</strong></div>
                               <div>✅ Sans risque de vergetures ni brûlures</div>
                               <div>✅ Compatible exposition au soleil</div>
-                              <div>🚚 Livraison Cameroun (frais à la charge du client)</div>
+                              <div>🚚 Livraison disponible (frais à la charge du client)</div>
                             </div>
                           </div>
                           <a href="https://www.carrygoo.net/products/creme-bio-exfolia-contre-les-zones-sombres" target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: 14, background: "#c9952a", color: "#fff", textDecoration: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", boxShadow: "0 3px 10px rgba(201,149,42,0.3)" }}>
@@ -6573,7 +6781,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
             <li><strong>La constance avant l'intensité.</strong> 5 min par jour vaut mieux qu'1h le dimanche.</li>
             <li><strong>Hydrate-toi de l'intérieur.</strong> Bois 2 litres d'eau par jour, ta peau te dira merci.</li>
-            <li><strong>Crème solaire OBLIGATOIRE</strong> même peau noire. Le soleil camerounais empire les taches.</li>
+            <li><strong>Crème solaire OBLIGATOIRE</strong> même peau noire. Le soleil africain empire les taches.</li>
             <li><strong>Patience.</strong> Ta peau se renouvelle tous les 28 jours. Donne-lui le temps.</li>
             <li><strong>Évite les "miracles 7 jours"</strong> — c'est faux et souvent dangereux.</li>
           </ol>
@@ -6665,7 +6873,7 @@ function generateExplanation(skinType, profile, problems, lifestyle) {
   }
 
   // Climat camerounais
-  parts.push("Au Cameroun, le climat chaud et humide amplifie la transpiration et la production de sébum. C'est pour ça qu'une routine adaptée est essentielle.");
+  parts.push("En Afrique, le climat chaud et humide amplifie la transpiration et la production de sébum. C'est pour ça qu'une routine adaptée est essentielle.");
 
   // Problèmes spécifiques
   if (problems.includes("acne_corps")) {
@@ -6709,7 +6917,7 @@ function getPriorityDesc(objId, skinCode) {
 function getTargetedAdvice(pid, skinCode, isPregnant) {
   const map = {
     acne_corps: {
-      cause: "Sébum + transpiration + vêtements serrés bouchent les pores. La chaleur du Cameroun amplifie ça.",
+      cause: "Sébum + transpiration + vêtements serrés bouchent les pores. La chaleur africaine amplifie ça.",
       category: "anti_acne_dos",
       tips: ["Vêtements amples en coton", "Lave tes draps 1x/semaine", "Évite les sacs à dos lourds longtemps", "Douche après le sport"],
       delai: "4-8 semaines",
