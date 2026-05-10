@@ -6376,16 +6376,27 @@ const BB_PRODUCTS = {
   // ═══ PROTECTION SOLAIRE ═══
   spf: {
     eco: [
-      { name: "Nivea Sun Protect SPF 30", lieu: "supermarché" },
-      { name: "Garnier Ambre Solaire SPF 30", lieu: "supermarché" }
+      { name: "Nivea Sun SPF 30 (corps + visage)", lieu: "supermarché" },
+      { name: "Garnier Ambre Solaire SPF 30/50", lieu: "supermarché" },
+      { name: "Banana Boat SPF 50 corps", lieu: "supermarché" },
+      { name: "Disaar Whitening Sunscreen", lieu: "boutique cosmétique" }
     ],
     med: [
       { name: "Mixa Solaire SPF 50", lieu: "parfumerie" },
-      { name: "Avène Solaire SPF 50+", lieu: "pharmacie" }
+      { name: "Hawaiian Tropic SPF 50", lieu: "parfumerie" },
+      { name: "Sun Bum SPF 50", lieu: "parfumerie" },
+      { name: "Bioaqua SPF 50 Sun Cream", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Sun Cream SPF 60", lieu: "boutique cosmétique" },
+      { name: "Beauty of Joseon Relief Sun SPF 50+ (peaux foncées)", lieu: "boutique K-Beauty" },
+      { name: "COSRX Aloe Soothing Sun Cream", lieu: "boutique K-Beauty" }
     ],
     premium: [
       { name: "La Roche-Posay Anthelios SPF 50+", lieu: "pharmacie" },
-      { name: "Bioderma Photoderm SPF 50+", lieu: "pharmacie" }
+      { name: "Bioderma Photoderm SPF 50+", lieu: "pharmacie" },
+      { name: "Avène Solaire SPF 50+ corps", lieu: "pharmacie" },
+      { name: "Eucerin Sun corps SPF 50", lieu: "pharmacie" },
+      { name: "Black Girl Sunscreen (peaux noires)", lieu: "boutique cosmétique" },
+      { name: "Neutrogena Beach Defense SPF 50", lieu: "parfumerie" }
     ]
   },
   // ═══ SOIN PIEDS ═══
@@ -6431,7 +6442,7 @@ const BB_PRODUCT_EXPLAINS = {
   anti_taches: "Ces produits contiennent de la NIACINAMIDE (vitamine B3), de la VITAMINE C et des ACIDES DOUX qui inhibent la production de mélanine en excès et accélèrent le renouvellement cellulaire pour estomper les taches.",
   deodorant: "Ces déodorants sont SANS ALCOOL ni sels d'aluminium agressifs. Ils respectent la peau fragile des aisselles et n'aggravent pas l'hyperpigmentation.",
   gommage: "Les exfoliants éliminent les cellules mortes en surface. Le sucre est doux et fond dans l'eau (pas d'irritation), tandis que le marc de café stimule la microcirculation.",
-  spf: "La protection solaire est ESSENTIELLE même sur peau noire. En Afrique, l'ensoleillement est intense toute l'année. Sans SPF, les taches noires reviennent et la peau vieillit prématurément.",
+  spf: "La protection solaire est ESSENTIELLE même sur peau noire. En Afrique, l'ensoleillement est intense toute l'année. Sans protection solaire, les taches noires reviennent et la peau vieillit prématurément. Pour les peaux noires et métissées, choisis des produits sans fini blanc (Beauty of Joseon, Black Girl Sunscreen).",
   pieds: "Ces crèmes contiennent de l'URÉE (10-25%) qui exfolie la corne et hydrate en profondeur, ainsi que du PANTHÉNOL réparateur.",
   anti_cellulite: "La caféine en application locale améliore la microcirculation et aide à déstocker les graisses. Le massage circulaire (le plus important !) stimule le drainage lymphatique."
 };
@@ -6589,7 +6600,29 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           {/* MATIN */}
           <div style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>☀️ MATIN</div>
-            
+
+            {/* Vue d'ensemble MATIN Body */}
+            <div style={{ marginBottom: 16, padding: 14, background: "#fdf0f1", border: "1px solid " + CC.rose, borderRadius: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📋 Vue d'ensemble</div>
+              <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7, marginBottom: 8 }}>
+                Pour ta routine du matin, tu auras besoin de <strong>{3 + (problems.includes("hyperpigmentation") || problems.includes("aisselles") ? 1 : 0)} produits</strong> :
+              </div>
+              <ol style={{ margin: "0 0 8px", paddingLeft: 22, fontSize: 13, color: CC.noir, lineHeight: 1.8 }}>
+                <li>Un <strong>gel douche</strong>{problems.includes("acne_corps") ? " anti-imperfections" : " doux"}</li>
+                <li>Une <strong>lotion hydratante</strong></li>
+                {(problems.includes("hyperpigmentation") || problems.includes("aisselles")) && (
+                  <li>Un <strong>déodorant doux</strong> (sans alcool)</li>
+                )}
+                <li>Une <strong>protection solaire SPF 30+</strong> (essentiel)</li>
+              </ol>
+              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+                💡 <strong>Bonne nouvelle pour économiser</strong> : le <strong>gel douche</strong> servira aussi pour la douche du soir (achète-en 1 seul).
+              </div>
+            </div>
+
+            {/* Détails des produits MATIN Body */}
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 10, marginTop: 16, letterSpacing: 0.5 }}>🛒 DÉTAILS DES PRODUITS</div>
+
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Gel douche</div>
               <ProductList category={problems.includes("acne_corps") ? "gel_douche_acne" : "gel_douche_normal"} budgetPref={budgetPref} />
@@ -6607,26 +6640,78 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
               </div>
             )}
 
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{problems.includes("hyperpigmentation") ? "4" : "3"}. Protection solaire ⚠️ ESSENTIEL</div>
+            <div style={{ marginBottom: 14, padding: 12, background: "#fff5e6", border: "2px solid #e67e22", borderRadius: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>{problems.includes("hyperpigmentation") || problems.includes("aisselles") ? "4" : "3"}. 🌞 PROTECTION SOLAIRE SPF 30+ (ÉTAPE LA PLUS IMPORTANTE)</div>
               <ProductList category="spf" budgetPref={budgetPref} />
+            </div>
+
+            {/* Comment appliquer MATIN Body */}
+            <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine matin (étape par étape)</div>
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 1 — Douche (5-7 minutes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prends une douche à l'eau <strong>tiède</strong> (jamais brûlante). Applique le <strong>gel douche</strong> avec tes mains ou un gant doux. Insiste sur les zones sensibles (acné, hyperpigmentation). Rince bien et tamponne avec une serviette propre (sans frotter).</div>
+              </div>
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 2 — Lotion hydratante (2 minutes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Sur peau encore légèrement humide, applique généreusement la <strong>lotion hydratante</strong> sur tout le corps en mouvements ascendants (de bas en haut). N'oublie pas le cou, les coudes, les genoux et les pieds. <strong>Attends 2 minutes</strong> que ça pénètre.</div>
+              </div>
+
+              {(problems.includes("hyperpigmentation") || problems.includes("aisselles")) && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 3 — Déodorant (30 secondes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique ton <strong>déodorant doux</strong> sur des aisselles propres et sèches. Évite ceux à base d'alcool ou avec des sels d'aluminium agressifs qui empirent l'hyperpigmentation.</div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 4, padding: 12, background: "#fff", borderRadius: 8, border: "2px solid #e67e22" }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>Étape {problems.includes("hyperpigmentation") || problems.includes("aisselles") ? "4" : "3"} — Protection solaire (2 minutes) ⭐ ÉTAPE LA PLUS IMPORTANTE</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique généreusement la <strong>protection solaire</strong> sur toutes les zones exposées : visage, cou, bras, jambes, mains. Renouvelle toutes les 2 heures si tu restes longtemps au soleil.</div>
+              </div>
+
+              <div style={{ marginTop: 12, fontSize: 12, color: CC.noir, fontWeight: "bold", textAlign: "center" }}>⏱️ Temps total : 10-12 minutes (douche incluse)</div>
             </div>
           </div>
 
           {/* SOIR */}
           <div style={{ marginBottom: 6 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>🌙 SOIR</div>
-            
+
+            {/* Vue d'ensemble SOIR Body */}
+            <div style={{ marginBottom: 16, padding: 14, background: "#fdf0f1", border: "1px solid " + CC.rose, borderRadius: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📋 Vue d'ensemble</div>
+              <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7, marginBottom: 8 }}>
+                Pour ta routine du soir, tu auras besoin de <strong>{2 + ((objectives.includes("vergetures") || problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")) && !isPregnant ? 1 : 0) + ((objectives.includes("unifier") || problems.includes("taches_noires") || problems.includes("hyperpigmentation")) && !isPregnant ? 1 : 0)} produits</strong> :
+              </div>
+              <ol style={{ margin: "0 0 8px", paddingLeft: 22, fontSize: 13, color: CC.noir, lineHeight: 1.8 }}>
+                <li>Le <strong>même gel douche</strong> que le matin ✅</li>
+                {(objectives.includes("vergetures") || problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")) && !isPregnant && (
+                  <li>Un <strong>soin anti-vergetures</strong></li>
+                )}
+                {(objectives.includes("unifier") || problems.includes("taches_noires") || problems.includes("hyperpigmentation")) && !isPregnant && (
+                  <li>Un <strong>soin anti-taches</strong> / unification du teint</li>
+                )}
+                <li>Une <strong>crème ou beurre nourrissant</strong></li>
+              </ol>
+              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+                💡 <strong>Économies</strong> : Le <strong>gel douche</strong> est le même que le matin. Pas besoin de protection solaire le soir !
+              </div>
+            </div>
+
+            {/* Détails des produits SOIR Body */}
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 10, marginTop: 16, letterSpacing: 0.5 }}>🛒 DÉTAILS DES PRODUITS</div>
+
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Douche tiède + gel doux</div>
-              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>Utilise les mêmes gels douche que le matin. Évite l'eau brûlante, elle assèche la peau.</div>
+              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>✅ Utilise le même gel douche que le matin. Évite l'eau brûlante, elle assèche la peau.</div>
             </div>
 
             {(objectives.includes("vergetures") || problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")) && !isPregnant && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>2. Soin anti-vergetures</div>
                 <ProductList category="anti_vergetures" budgetPref={budgetPref} />
-                <div style={{ marginTop: 8, padding: 8, background: "#fff", borderLeft: "3px solid " + CC.rose, borderRadius: 4, fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>💡 Application : Masse en cercles pendant 2 minutes — c'est le massage qui aide la peau à reformer ses fibres de collagène.</div>
               </div>
             )}
 
@@ -6640,6 +6725,38 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{(objectives.includes("vergetures") || problems.includes("vergetures_rouges")) ? "4" : "2"}. Crème / beurre nourrissant</div>
               <ProductList category={skinType.code === "seche" ? "lotion_seche" : "lotion_normale"} budgetPref={budgetPref} />
+            </div>
+
+            {/* Comment appliquer SOIR Body */}
+            <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #f0e8f3 0%, #d8c5dc 100%)", border: "1px solid #9c7ba8", borderRadius: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine soir (étape par étape)</div>
+
+              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 1 — Douche douce (5-7 minutes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prends ta douche du soir avec ton <strong>gel douche</strong> du matin. Eau tiède, jamais brûlante. C'est le moment idéal pour bien nettoyer après une journée de chaleur.</div>
+              </div>
+
+              {(objectives.includes("vergetures") || problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")) && !isPregnant && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 2 — Soin anti-vergetures (3 minutes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Sur peau légèrement humide, applique le soin sur les zones concernées (ventre, cuisses, hanches, poitrine, bras). <strong>Masse en cercles pendant 2 minutes</strong> — c'est le massage qui aide la peau à reformer ses fibres de collagène.</div>
+                </div>
+              )}
+
+              {(objectives.includes("unifier") || problems.includes("taches_noires") || problems.includes("hyperpigmentation")) && !isPregnant && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 3 — Soin anti-taches (2 minutes)</div>
+                  <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique le soin anti-taches sur les zones concernées (entre-cuisses, aisselles, coudes, genoux). Laisse pénétrer 1-2 minutes avant la crème nourrissante.</div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 4, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape {(objectives.includes("vergetures") || problems.includes("vergetures_rouges")) ? "4" : "2"} — Crème ou beurre nourrissant (3 minutes)</div>
+                <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique généreusement sur tout le corps. Le soir, ta peau a besoin de <strong>plus d'hydratation</strong> car elle se régénère pendant la nuit. N'oublie pas les pieds et les talons.</div>
+              </div>
+
+              <div style={{ marginTop: 12, fontSize: 12, color: CC.noir, fontWeight: "bold", textAlign: "center" }}>⏱️ Temps total : 10-15 minutes (douche incluse)</div>
+              <div style={{ marginTop: 6, fontSize: 11, color: CC.textFaint, fontStyle: "italic", textAlign: "center" }}>💡 Astuce : Fais ta routine 1h avant de dormir pour que les produits pénètrent bien.</div>
             </div>
           </div>
         </Section>
