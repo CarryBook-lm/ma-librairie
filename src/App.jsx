@@ -4358,14 +4358,6 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>{skinType.desc}</div>
-          <button onClick={() => downloadFacialDiagnosticPDF(result)} style={{
-            display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CC.noir, color: "#fff",
-            border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
-            boxShadow: "0 3px 10px rgba(0,0,0,0.15)"
-          }}>
-            📥 Télécharger en PDF
-          </button>
-          <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>Garde-le sur ton téléphone, partage-le, imprime-le</div>
         </div>
 
         {/* PROFIL */}
@@ -6649,18 +6641,6 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>{skinType.desc}</div>
-          
-          {/* Bouton Télécharger PDF */}
-          <button onClick={() => downloadBodyDiagnosticPDF(result)} style={{
-            display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CC.noir, color: "#fff",
-            border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
-            boxShadow: "0 3px 10px rgba(0,0,0,0.15)"
-          }}>
-            📥 Télécharger en PDF
-          </button>
-          <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>
-            Garde-le sur ton téléphone, partage-le, imprime-le
-          </div>
         </div>
 
         {/* PROFIL */}
@@ -8162,7 +8142,6 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
             <div style={{ fontSize: 56, marginBottom: 12 }}>👨‍👩‍👧</div>
             <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>Alimentation Famille / Enfants</div>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Principes pour bien nourrir tes enfants</div>
-            <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ marginTop: 14, padding: "10px 20px", background: CC.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>📥 Télécharger en PDF</button>
           </div>
 
           <Section title="🌱 Principes pour les enfants" color={CC.noir}>
@@ -8266,7 +8245,6 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <div style={{ fontSize: 56, marginBottom: 12 }}>🥗</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{displayedCalories} kcal/jour</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>Tes besoins énergétiques approximatifs</div>
-          <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CC.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer", boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>📥 Télécharger en PDF</button>
         </div>
 
         {/* Avertissement haut */}
@@ -9574,7 +9552,6 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <div style={{ fontSize: 48, marginBottom: 12 }}>💆</div>
           <div style={{ fontSize: 22, fontWeight: "bold", color: CAP.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{textureLabel}</div>
           <div style={{ fontSize: 13, color: CAP.noirSoft, fontStyle: "italic", marginBottom: 14 }}>{etatLabel} · {longueurLabel}</div>
-          <button onClick={() => downloadCapDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CAP.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer", boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>📥 Télécharger en PDF</button>
         </div>
 
         {/* CE QUI SE PASSE */}
@@ -10083,45 +10060,190 @@ async function downloadCapDiagnosticPDF(result) {
       const obj = CAP_OBJECTIVES.find(x => x.id === o);
       if (obj) addBullet(clean(obj.label));
     });
+
+    // ═══ LEXIQUE PÉDAGOGIQUE ═══
+    addSectionTitle("Petit lexique avant de commencer");
+    addParagraph("Tu vas voir des termes que tu ne connais peut-etre pas. On t'explique tout :", { fontSize: 9, color: GRIS });
+    addSubTitle("Shampoing");
+    addParagraph("Tu connais ! C'est le produit qui lave tes cheveux. Choisis-le sans sulfates pour les cheveux secs/crepus.", { fontSize: 9 });
+    addSubTitle("Apres-shampoing (ou demelant)");
+    addParagraph("C'est ce que tu mets APRES le shampoing pour demeler et adoucir. Tu rinces. Indispensable pour cheveux crepus / longs.", { fontSize: 9 });
+    addSubTitle("Leave-in (sans rincage)");
+    addParagraph("'Leave-in' veut dire 'laisser dedans'. C'est une creme ou un spray hydratant qu'on applique sur cheveux mouilles ou secs et qu'on NE RINCE PAS. C'est l'hydratation du quotidien.", { fontSize: 9 });
+    addSubTitle("Huile / Beurre");
+    addParagraph("Huile de coco, ricin, karite... Sert a 'sceller' l'hydratation : tu la mets APRES le leave-in pour que l'eau ne s'evapore pas. Une noisette suffit.", { fontSize: 9 });
+    addSubTitle("Masque capillaire");
+    addParagraph("Soin nourrissant intense, a faire 1x par semaine. Tu l'appliques apres le shampoing, tu laisses 15-30 min, puis tu rinces. Hydratation profonde garantie.", { fontSize: 9 });
+    addSubTitle("Soin proteine");
+    addParagraph("Soin qui repare la structure du cheveu (la 'fibre'). A faire 1x PAR MOIS maximum. Indispensable pour cheveux defrises ou cassants.", { fontSize: 9 });
+    addSubTitle("Gel coiffant");
+    addParagraph("Pour definir tes boucles (les rendre nettes et non frisottees). A appliquer sur cheveux mouilles en 'ecrasant doucement' (methode priere).", { fontSize: 9 });
+
+    // ═══ VUE D'ENSEMBLE ═══
+    let totalProducts = 5;
+    if (isFra) totalProducts++;
+    if (problems.includes("frisottis") || problems.includes("no_definition")) totalProducts++;
+    if (etat === "defrise" || objectives.includes("reparer") || problems.includes("cassants")) totalProducts++;
+    if (objectives.includes("pousse") || objectives.includes("anti_chute") || problems.includes("lents")) totalProducts++;
+    
+    addSectionTitle("Ta routine en resume");
+    addParagraph("Pour bien t'occuper de tes cheveux, tu auras besoin d'environ " + totalProducts + " produits. Pas plus !", { fontSize: 10, bold: true });
+    addParagraph("Ce qu'il te faut :", { fontSize: 10, bold: true });
+    let n = 1;
+    addBullet(n++ + ". Un shampoing " + (problems.includes("pellicules") ? "anti-pelliculaire" : "hydratant") + " (lavage)");
+    addBullet(n++ + ". Un apres-shampoing (a utiliser apres chaque shampoing)");
+    addBullet(n++ + ". Un leave-in (hydratation quotidienne, sans rincage)");
+    if (isFra) addBullet(n++ + ". Une huile ou un beurre (pour sceller l'hydratation)");
+    addBullet(n++ + ". Un masque capillaire (1x par semaine)");
+    addBullet(n++ + ". Une huile de massage (cuir chevelu, 1x par semaine avant lavage)");
+    if (etat === "defrise" || objectives.includes("reparer") || problems.includes("cassants")) addBullet(n++ + ". Un soin proteine (1x par mois)");
+    if (problems.includes("frisottis") || problems.includes("no_definition")) addBullet(n++ + ". Un gel coiffant (pour definir les boucles)");
+    if (objectives.includes("pousse") || objectives.includes("anti_chute") || problems.includes("lents")) addBullet(n++ + ". Une huile speciale pousse (massage cuir chevelu)");
+    addParagraph("Important : Pour chaque type de produit, tu choisis 1 SEUL dans la liste qu'on te propose. Pas besoin d'acheter toutes les marques !", { fontSize: 9, color: ORANGE, bold: true });
+    addParagraph("Astuce economies : Achete d'abord le shampoing + apres-shampoing + leave-in. C'est la base. Ajoute progressivement les autres produits.", { fontSize: 9, color: GRIS });
+
+    // ═══ EXPLICATIONS PRODUITS ═══
+    addSectionTitle("Tes produits - Explications completes");
+    addParagraph("Ne sois pas effrayee par les noms anglais ! On t'explique chaque produit en detail. Pour chaque produit, tu n'achetes qu'UN SEUL dans la liste.", { fontSize: 9, color: GRIS });
+
+    // Helper pour afficher un produit avec explications
+    function addProductSection(titre, description, pourquoi, comment, category, budget) {
+      addSubTitle(titre, OR);
+      addParagraph("C'est quoi ? " + description, { fontSize: 9 });
+      addParagraph("Pourquoi tu en as besoin : " + pourquoi, { fontSize: 9 });
+      addParagraph("Comment l'utiliser : " + comment, { fontSize: 9 });
+      addParagraph("Choisis UN SEUL produit dans cette liste :", { fontSize: 9, bold: true, color: ORANGE });
+      addProductsList(category, budget);
+      addParagraph("Pourquoi ces marques ? Reconnues pour les cheveux africains, faciles a trouver au Cameroun et en Afrique. Si tu trouves une marque equivalente, verifie qu'elle contient des ingredients similaires.", { fontSize: 8, color: GRIS });
+      y += 2;
+    }
+
+    addProductSection(
+      problems.includes("pellicules") ? "Shampoing anti-pelliculaire" : "Shampoing hydratant (sans sulfates)",
+      problems.includes("pellicules") ? "Un shampoing special qui contient des actifs antifongiques pour combattre les pellicules a la racine du probleme." : "Un shampoing doux qui lave SANS assecher tes cheveux. Le mot 'sulfates' designe des detergents agressifs a eviter pour les cheveux crepus / defrises.",
+      problems.includes("pellicules") ? "Les pellicules sont causees par un champignon. Sans shampoing antifongique, elles reviendront toujours." : "Les shampoings classiques sont trop agressifs pour les cheveux africains : ils lavent trop fort et assechent. Tu finis avec des cheveux cassants.",
+      "Mouille bien tes cheveux. Mets une noisette de shampoing dans les paumes, fais mousser, applique sur le cuir chevelu (pas les longueurs), masse 1 minute. Rince. " + (problems.includes("pellicules") ? "Utilise 2-3 fois par semaine au debut, puis 1x/sem." : isFra ? "Pas plus d'1-2 fois par semaine." : "2-3 fois par semaine."),
+      problems.includes("pellicules") ? "shampoing_pellicules" : "shampoing_hydratant",
+      budgetUsed
+    );
+
+    addProductSection(
+      "Apres-shampoing (demelant)",
+      "Une creme qui s'utilise APRES le shampoing pour demeler et adoucir. Tu rinces a l'eau tiede.",
+      "Sans apres-shampoing, tes cheveux mouilles sont rugueux et s'emmelent en sechant. Avec, ils deviennent doux et faciles a coiffer. OBLIGATOIRE pour cheveux crepus, longs ou cassants.",
+      "Apres le shampoing, essore tes cheveux. Applique l'apres-shampoing UNIQUEMENT sur les longueurs. Demele avec tes doigts ou un peigne large. Laisse 2-5 min, rince a l'eau tiede.",
+      "apres_shampoing",
+      budgetUsed
+    );
+
+    addProductSection(
+      "Leave-in (creme hydratante sans rincage)",
+      "Une creme ou un spray qu'on applique sur cheveux humides ou secs et qu'on NE RINCE PAS. C'est l'hydratation du quotidien.",
+      "Tes cheveux ont besoin d'eau tous les jours, comme ta peau. Sans leave-in, les cheveux crepus deviennent secs et cassants en quelques heures.",
+      "Mets une noisette dans les paumes, frotte tes mains, applique sur cheveux humides ou secs, des longueurs vers les pointes. Tu peux aussi vaporiser un melange eau + leave-in (50/50) le matin.",
+      "leave_in",
+      budgetUsed
+    );
+
+    if (isFra) {
+      addProductSection(
+        problems.includes("secs") ? "Beurre capillaire (pour cheveux tres secs)" : "Huile capillaire",
+        problems.includes("secs") ? "Une creme epaisse a base de beurre de karite, mangue ou cacao. Tres nourrissante." : "Huile de coco, ricin, jojoba ou olive. Une couche fine sur tes cheveux apres l'hydratation.",
+        "Tes cheveux crepus / defrises sont naturellement secs. Apres le leave-in (eau), tu dois 'sceller' avec une huile ou un beurre. C'est comme mettre un couvercle sur ta marmite : ca empeche l'eau de s'evaporer.",
+        "APRES avoir applique le leave-in, prends une petite quantite (taille d'un grain de riz). Frotte tes mains, applique sur les longueurs et pointes. Pas trop, sinon les cheveux deviennent gras.",
+        problems.includes("secs") ? "beurre" : "huiles",
+        budgetUsed
+      );
+    }
+
+    addProductSection(
+      "Masque capillaire (1x par semaine)",
+      "Un soin intensif super hydratant ou nourrissant. Tu l'appliques apres le shampoing, tu laisses agir 15-30 min, puis tu rinces.",
+      "Le shampoing + apres-shampoing nettoient et demelent, mais ne nourrissent pas en profondeur. Le masque, c'est ton 'soin spa' hebdomadaire qui repare et hydrate vraiment.",
+      "Apres le shampoing, applique le masque sur cheveux essores. Couvre avec une charlotte ou serviette tiede. Laisse 15-30 min. Rince a l'eau tiede.",
+      "masque",
+      budgetUsed
+    );
+
+    if (etat === "defrise" || objectives.includes("reparer") || problems.includes("cassants")) {
+      addProductSection(
+        "Soin proteine (1x par MOIS, pas plus)",
+        "Un soin qui contient des proteines (keratine, soie, ble...) qui REMPLISSENT et REPARENT la fibre du cheveu la ou elle est cassee.",
+        "Tes cheveux defrises ou tres cassants ont des 'trous' dans leur structure. Le soin proteine rebouche ces trous. ATTENTION : SEULEMENT 1x par MOIS sinon tes cheveux deviennent rigides.",
+        "Sur cheveux propres et essores, applique le soin meche par meche. Laisse agir le temps indique (15-20 min). Rince. Finis TOUJOURS par un masque hydratant pour reequilibrer.",
+        "proteines",
+        budgetUsed
+      );
+    }
+
+    addProductSection(
+      "Huile de massage cuir chevelu",
+      "Une huile que tu masses sur ton cuir chevelu (pas tes cheveux !) pour stimuler la circulation et nourrir tes racines.",
+      "Un cuir chevelu mal irrigue = pousse lente. Le massage avec une huile stimule les follicules pileux et favorise la pousse. C'est aussi tres relaxant !",
+      "Rechauffe quelques gouttes d'huile entre tes paumes. Separe tes cheveux en raies. Avec le bout des doigts (pas les ongles !), masse en petits cercles 5-10 min. Laisse agir 30 min a 1h, puis fais ton shampoing.",
+      "huiles",
+      budgetUsed
+    );
+
+    if (problems.includes("frisottis") || problems.includes("no_definition")) {
+      addProductSection(
+        "Gel coiffant (pour definir les boucles)",
+        "Un gel transparent qu'on applique sur cheveux mouilles pour definir nettement les boucles et lutter contre les frisottis.",
+        "Sans gel, tes boucles peuvent etre 'cotonneuses' (frisottees, peu definies). Avec un gel adapte, elles deviennent nettes, brillantes, et tiennent toute la journee.",
+        "Sur cheveux MOUILLES et imbibes de leave-in, prends une noisette de gel. Avec tes mains, ecrase doucement chaque meche (methode 'priere'). Laisse secher a l'air libre. Casse delicatement la couche dure avec tes doigts pour assouplir.",
+        "gel",
+        budgetUsed
+      );
+    }
+
+    if (objectives.includes("pousse") || objectives.includes("anti_chute") || objectives.includes("longueur_max") || problems.includes("lents") || problems.includes("chute")) {
+      addProductSection(
+        "Huile speciale pousse",
+        "Une huile contenant des actifs stimulants : romarin, gingembre, menthe poivree, ricin noir de Jamaique...",
+        "Si tu veux que tes cheveux poussent plus vite, l'huile speciale pousse appliquee en massage 3-5 fois par semaine fait des miracles (avec patience : 3-6 mois pour voir les resultats).",
+        "3-5 fois par semaine, applique quelques gouttes sur ton cuir chevelu. Masse en petits cercles 5-10 min. Tu peux laisser toute la nuit (avec un bonnet pour ne pas tacher l'oreiller), puis laver le lendemain matin.",
+        "pousse",
+        budgetUsed
+      );
+    }
     
     // ROUTINE MATIN
-    addSectionTitle("Ta routine matin");
-    addParagraph("5-10 minutes pour reveiller tes cheveux", { fontSize: 9, color: GRIS });
+    addSectionTitle("Ta routine matin (5-10 minutes)");
+    addParagraph("Au reveil, voici ce que tu fais :", { fontSize: 9, color: GRIS });
     const morningSteps = getCapMorningRoutine(texture, etat, problems, objectives);
     morningSteps.forEach((s, i) => {
       addSubTitle("Etape " + (i + 1) + " - " + clean(s.titre), ORANGE);
       addParagraph(s.desc, { fontSize: 9 });
     });
-    addSubTitle("Produits matin recommandes", ORANGE);
-    addBullet("Leave-in (sans rincage) :");
-    addProductsList("leave_in", budgetUsed);
-    if (isFra) {
-      addBullet("Huile / Beurre :");
-      addProductsList(problems.includes("secs") ? "beurre" : "huiles", budgetUsed);
-    }
-    if (problems.includes("frisottis") || problems.includes("no_definition")) {
-      addBullet("Gel definissant :");
-      addProductsList("gel", budgetUsed);
-    }
     
     // ROUTINE SOIR
-    addSectionTitle("Ta routine soir");
-    addParagraph("5 minutes pour preparer la nuit", { fontSize: 9, color: GRIS });
+    addSectionTitle("Ta routine soir (5 minutes avant de dormir)");
+    addParagraph("Avant de te coucher :", { fontSize: 9, color: GRIS });
     const eveningSteps = getCapEveningRoutine(texture, etat, problems);
     eveningSteps.forEach((s, i) => {
       addSubTitle("Etape " + (i + 1) + " - " + clean(s.titre), VIOLET);
       addParagraph(s.desc, { fontSize: 9 });
     });
-    addParagraph("INVESTISSEMENT NUMERO 1 : Achete une taie d'oreiller en satin ou soie. Ca change tout : moins de casse, moins de frizz au reveil. C'est le meilleur investissement capillaire que tu peux faire.", { fontSize: 9, color: VIOLET, bold: true });
-    
-    // LAVAGE
-    addSectionTitle("Lavage et apres-shampoing");
-    addParagraph("Frequence : " + (isFra ? "1 a 2 fois par semaine maximum" : "2 a 3 fois par semaine"));
-    addSubTitle("Shampoing :", OR);
-    addProductsList(problems.includes("pellicules") ? "shampoing_pellicules" : "shampoing_hydratant", budgetUsed);
-    addSubTitle("Apres-shampoing :", OR);
-    addProductsList("apres_shampoing", budgetUsed);
-    addParagraph("Astuce : demele toujours sur cheveux mouilles avec apres-shampoing. Demeler a sec = casse garantie.", { fontSize: 9, color: GRIS });
+    addSubTitle("INVESTISSEMENT NUMERO 1", VIOLET);
+    addParagraph("Achete une taie d'oreiller en satin ou soie (5000-10000 FCFA dans les marches ou en ligne). Ca change tout : moins de casse pendant la nuit, moins de frizz au reveil.", { fontSize: 9, bold: true });
+    addParagraph("Pourquoi ? Le coton de tes oreillers absorbe l'hydratation et frotte tes cheveux toute la nuit (= casse, frisottis). Le satin/soie glisse, sans assecher.", { fontSize: 9 });
+    addParagraph("Alternative : Si tu n'as pas de taie satin, mets un bonnet en satin sur tes cheveux pour dormir.", { fontSize: 9 });
+
+    // RITUEL DE LAVAGE
+    addSectionTitle("Ton rituel de lavage");
+    addParagraph("Frequence : " + (isFra ? "1 a 2 fois par semaine maximum (pas plus, sinon tu asseches)" : "2 a 3 fois par semaine"), { fontSize: 10, bold: true });
+    addParagraph("Etapes du lavage parfait :", { fontSize: 10, bold: true });
+    addBullet("1. Mouille bien tes cheveux a l'eau tiede (pas brulante !)");
+    addBullet("2. Si tu as fait un bain d'huile avant, applique le shampoing maintenant");
+    addBullet("3. Shampoing : noisette dans les paumes, fais mousser, applique sur le CUIR CHEVELU (pas les longueurs), masse 1 min");
+    addBullet("4. Rince bien a l'eau tiede");
+    addBullet("5. Essore tes cheveux (pas trop fort)");
+    addBullet("6. Apres-shampoing : applique sur les LONGUEURS, demele avec les doigts, laisse 2-5 min");
+    addBullet("7. Si c'est ton jour de masque : applique-le maintenant et laisse 15-30 min");
+    addBullet("8. Rince a l'eau tiede puis FROIDE en finition (referme les ecailles, brillance garantie)");
+    addBullet("9. Tamponne avec un t-shirt en coton (la serviette eponge frotte trop)");
+    addBullet("10. Applique le leave-in puis l'huile/beurre sur cheveux humides");
+    addParagraph("Astuce : Demele TOUJOURS sur cheveux mouilles avec apres-shampoing. Demeler a sec = casse garantie.", { fontSize: 9, color: ORANGE });
     
     // SOINS HEBDO
     addSectionTitle("Soins hebdomadaires");
