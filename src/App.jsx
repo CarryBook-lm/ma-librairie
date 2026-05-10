@@ -4192,6 +4192,38 @@ function BodyDiagnosticResult({ result, onBack }) {
                       )}
                       {targetedAdvice.delai && <div style={{ marginTop: 8, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>⏱️ Résultats visibles : {targetedAdvice.delai}</div>}
                       {targetedAdvice.eviter && <div style={{ marginTop: 6, fontSize: 12, color: "#dc3545", fontStyle: "italic" }}>⚠️ Évite : {targetedAdvice.eviter}</div>}
+
+                      {/* ═══ CARTE PRODUIT EXCLUSIF — UNIQUEMENT POUR HYPERPIGMENTATION ═══ */}
+                      {pid === "hyperpigmentation" && (
+                        <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fff5f0 0%, #ffe8d6 100%)", border: "2px solid #c9952a", borderRadius: 14, padding: 16, position: "relative", overflow: "hidden" }}>
+                          <div style={{ position: "absolute", top: 8, right: 8, background: "#c9952a", color: "#fff", fontSize: 9, fontWeight: "bold", padding: "3px 8px", borderRadius: 4, letterSpacing: 0.5 }}>⭐ COUP DE CŒUR</div>
+                          <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
+                            <img src="https://i.ibb.co/LX5tyN4H/DSC-1355-copie-2-065616-1-Photoroom-1.webp" alt="Crème Bio Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 11, color: "#c9952a", fontWeight: "bold", letterSpacing: 0.5, marginBottom: 4 }}>RECOMMANDÉ PAR CARRYBOOKS</div>
+                              <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Crème Bio Exfolia</div>
+                              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5, marginBottom: 6 }}>100% naturelle, à base d'huiles végétales pressées à froid. Spécialement conçue pour <strong>les zones sombres</strong> (entre-cuisses, aisselles, coudes, genoux, cou).</div>
+                            </div>
+                          </div>
+                          <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <span style={{ fontSize: 11, color: CC.textFaint }}>PRIX</span>
+                              <span style={{ fontSize: 22, fontWeight: "bold", color: "#c9952a" }}>9 000 FCFA</span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: CC.noir, lineHeight: 1.5 }}>
+                              <div>✅ <strong>Satisfait ou remboursé</strong></div>
+                              <div>✅ Résultats visibles en <strong>2 semaines</strong></div>
+                              <div>✅ Sans risque de vergetures ni brûlures</div>
+                              <div>✅ Compatible exposition au soleil</div>
+                              <div>🚚 Livraison Cameroun (frais à la charge du client)</div>
+                            </div>
+                          </div>
+                          <a href="https://www.carrygoo.net/products/creme-bio-exfolia-contre-les-zones-sombres" target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: 14, background: "#c9952a", color: "#fff", textDecoration: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", boxShadow: "0 3px 10px rgba(201,149,42,0.3)" }}>
+                            👉 Commander sur CarryGoo →
+                          </a>
+                        </div>
+                      )}
+                      {/* ═══ FIN CARTE PRODUIT EXFOLIA ═══ */}
                     </>
                   )}
                 </div>
