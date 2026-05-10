@@ -1726,58 +1726,221 @@ const BF_CONTENT = {
 };
 
 // ═══ BEAUTÉ CORPORELLE — DONNÉES ═══
+// ═══ NOUVELLES QUESTIONS QUIZ CORPS (refonte v2 — Mai 2026) ═══
+
+// --- ÉTAPE 1 : PROFIL (3 ou 4 questions selon genre) ---
+const BB_PROFILE_QUESTIONS = [
+  {
+    id: "gender",
+    q: "Tu es :",
+    options: [
+      { value: "homme", label: "👨 Un homme" },
+      { value: "femme", label: "👩 Une femme" }
+    ]
+  },
+  {
+    id: "age",
+    q: "Quelle est ta tranche d'âge ?",
+    options: [
+      { value: "18-25", label: "🌱 18-25 ans" },
+      { value: "26-35", label: "🌿 26-35 ans" },
+      { value: "36-45", label: "🌳 36-45 ans" },
+      { value: "46+", label: "🍃 46 ans et plus" }
+    ]
+  },
+  {
+    id: "skin_tone",
+    q: "Quel est ton teint actuel ?",
+    options: [
+      { value: "ebene", label: "🌑 Très foncé / Ébène" },
+      { value: "fonce", label: "🌒 Foncé" },
+      { value: "metisse", label: "🌓 Métissé / Caramel" },
+      { value: "clair", label: "🌔 Clair" },
+      { value: "tres_clair", label: "🌕 Très clair" }
+    ]
+  },
+  {
+    id: "pregnancy",
+    q: "Es-tu enceinte ou allaitante ?",
+    note: "Cette information nous permet d'écarter les produits déconseillés pendant cette période.",
+    onlyIfFemme: true,
+    options: [
+      { value: "enceinte", label: "🤰 Oui, je suis enceinte" },
+      { value: "allaite", label: "🤱 Oui, j'allaite" },
+      { value: "non", label: "🚫 Non" },
+      { value: "prefer_not", label: "💭 Je préfère ne pas répondre" }
+    ]
+  }
+];
+
+// --- ÉTAPE 2 : OBJECTIFS (1 question multi-select max 3) ---
+const BB_OBJECTIVES = [
+  { id: "eclat", emoji: "✨", label: "Avoir une peau lumineuse et éclatante" },
+  { id: "unifier", emoji: "🎯", label: "Unifier mon teint (réduire taches noires)" },
+  { id: "depigmentation", emoji: "⚪", label: "Éliminer les taches de dépigmentation (vitiligo, dartres)" },
+  { id: "demangeaisons", emoji: "🚫", label: "Éliminer les démangeaisons" },
+  { id: "hydratation", emoji: "💧", label: "Hydrater profondément ma peau" },
+  { id: "adoucir", emoji: "🧖", label: "Adoucir et lisser ma peau rugueuse" },
+  { id: "acne", emoji: "🔴", label: "Réduire l'acné corporelle (dos, épaules, fesses)" },
+  { id: "vergetures", emoji: "🌊", label: "Atténuer les vergetures" },
+  { id: "cellulite", emoji: "🟡", label: "Réduire la cellulite" },
+  { id: "preparer", emoji: "🌟", label: "Préparer ma peau (mariage, événement, été)" },
+  { id: "pieds", emoji: "🦶", label: "Réparer mes pieds/talons crevassés" },
+  { id: "raffermir", emoji: "💪", label: "Raffermir / tonifier (post-grossesse, perte de poids)" }
+];
+
+// --- ÉTAPE 3 : TYPE DE PEAU (4 questions pour déduire le type) ---
 const BB_TYPE_QUESTIONS = [
   {
-    id: "after_shower",
-    q: "Comment ta peau réagit après la douche ?",
+    id: "morning",
+    q: "Le matin au réveil, ta peau du corps est :",
     options: [
-      { value: "A", label: "Tirée, sèche, parfois irritée" },
-      { value: "B", label: "Plutôt normale, confortable" },
-      { value: "C", label: "Brillante, surtout dos et poitrine" },
-      { value: "D", label: "Très sèche, parfois rouge ou qui démange" }
+      { value: "tire", label: "💧 Inconfortable, qui tire", points: { seche: 3 } },
+      { value: "brille", label: "✨ Brillante surtout sur le dos / la poitrine", points: { grasse: 3 } },
+      { value: "confort", label: "☁️ Confortable, ni trop sèche ni grasse", points: { normale: 3 } },
+      { value: "mixte", label: "🌗 Sèche aux jambes mais grasse au dos / poitrine", points: { mixte: 3 } },
+      { value: "sensible", label: "🌹 Sensible, parfois irritée", points: { sensible: 3 } }
+    ]
+  },
+  {
+    id: "after_shower",
+    q: "Après la douche sans crème, ta peau :",
+    options: [
+      { value: "tire_fort", label: "😣 Tire fort, peut démanger", points: { seche: 3 } },
+      { value: "tire_peu", label: "😐 Tire un peu", points: { seche: 2, normale: 1 } },
+      { value: "confort", label: "😊 Reste confortable", points: { normale: 3 } },
+      { value: "huileuse", label: "💦 Devient huileuse rapidement", points: { grasse: 3 } },
+      { value: "reagit", label: "🔴 Réagit (rougeurs, picotements)", points: { sensible: 3 } }
+    ]
+  },
+  {
+    id: "touch",
+    q: "Au toucher, ta peau corporelle est :",
+    options: [
+      { value: "rugueuse", label: "🪨 Rugueuse, écailleuse par endroits", points: { seche: 3 } },
+      { value: "douce", label: "🍃 Douce et lisse partout", points: { normale: 3 } },
+      { value: "glissante", label: "🌊 Glissante, parfois moite", points: { grasse: 3 } },
+      { value: "variable", label: "🎭 Variable selon les zones", points: { mixte: 3 } },
+      { value: "fine", label: "🌸 Fine et fragile", points: { sensible: 2, seche: 1 } }
     ]
   },
   {
     id: "hydration",
     q: "À quelle fréquence tu hydrates ton corps ?",
     options: [
-      { value: "A", label: "Tous les jours, parfois 2x" },
-      { value: "B", label: "Plusieurs fois par semaine" },
-      { value: "C", label: "Rarement, j'oublie souvent" },
-      { value: "D", label: "Jamais ou presque" }
-    ]
-  },
-  {
-    id: "reactivity",
-    q: "Tu remarques des plaques, rougeurs ou démangeaisons ?",
-    options: [
-      { value: "A", label: "Non, jamais" },
-      { value: "B", label: "Parfois, en hiver ou avec un produit nouveau" },
-      { value: "C", label: "Souvent, ma peau réagit à beaucoup de choses" },
-      { value: "D", label: "Très souvent, je dois faire très attention" }
+      { value: "tous_jours", label: "✅ Tous les jours, parfois 2 fois", points: {} },
+      { value: "souvent", label: "📅 Plusieurs fois par semaine", points: {} },
+      { value: "rarement", label: "⏰ Rarement, j'oublie", points: { seche: 1 } },
+      { value: "jamais", label: "❌ Jamais ou presque", points: { seche: 2 } }
     ]
   }
 ];
 
+// --- ÉTAPE 4 : PROBLÈMES SPÉCIFIQUES (multi-select) ---
 const BB_PROBLEMS = [
-  { id: "vergetures", emoji: "🌊", label: "Vergetures (ventre, hanches, cuisses)" },
+  { id: "acne_corps", emoji: "🔴", label: "Acné sur le corps (dos, épaules, fesses)" },
+  { id: "taches_noires", emoji: "🟤", label: "Taches noires (anciens boutons, blessures)" },
+  { id: "cicatrices_corps", emoji: "⚪", label: "Cicatrices d'anciens boutons" },
+  { id: "hyperpigmentation", emoji: "🟫", label: "Hyperpigmentation (aisselles, coudes, genoux foncés)" },
+  { id: "vergetures_rouges", emoji: "🌊", label: "Vergetures rouges/violettes (récentes)" },
+  { id: "vergetures_blanches", emoji: "⚡", label: "Vergetures blanches (anciennes)" },
   { id: "cellulite", emoji: "🟡", label: "Cellulite (peau d'orange)" },
   { id: "pieds_sombres", emoji: "🦶", label: "Pieds sombres / talons foncés" },
   { id: "peau_terne", emoji: "🌫️", label: "Peau terne, manque d'éclat" },
-  { id: "boutons_corps", emoji: "💢", label: "Boutons sur le corps (dos, fesses, épaules)" },
-  { id: "cicatrices_corps", emoji: "🔴", label: "Cicatrices d'anciens boutons" },
-  { id: "melasma", emoji: "🟤", label: "Mélasma / taches brunes" },
-  { id: "cernes_corps", emoji: "⚫", label: "Zones foncées (genoux, coudes, aisselles)" },
+  { id: "melasma", emoji: "🟤", label: "Mélasma / \"mamie\" (taches brunes)" },
+  { id: "taches_blanches", emoji: "⚪", label: "Taches blanches (vitiligo, pityriasis)" },
   { id: "quintox", emoji: "💧", label: "Quintox (peau qui pèle, démangeaisons)" },
   { id: "dartres", emoji: "🥚", label: "Dartres (plaques blanches qui pèlent)" },
-  { id: "veines", emoji: "🌿", label: "Veines apparentes (jambes)" },
+  { id: "veines", emoji: "🦵", label: "Veines apparentes (jambes)" },
   { id: "mains_seches", emoji: "🤲", label: "Mains très sèches" },
-  { id: "demangeaisons", emoji: "🦵", label: "Peau qui démange" },
+  { id: "demangeaisons", emoji: "🦋", label: "Peau qui démange" },
   { id: "coups_soleil", emoji: "🔥", label: "Coups de soleil fréquents" },
-  { id: "vergetures_muscle", emoji: "💪", label: "Vergetures musculaires (bras, épaules)" },
   { id: "mycoses", emoji: "🍄", label: "Mycoses (entre les orteils)" },
-  { id: "poils_incarnes", emoji: "🌸", label: "Poils incarnés (bikini, jambes)" }
+  { id: "poils_incarnes", emoji: "🌸", label: "Poils incarnés (bikini, jambes, barbe)" },
+  { id: "aucun", emoji: "✅", label: "Aucun problème particulier" }
 ];
+
+// --- ÉTAPE 5 : MODE DE VIE (8 questions) ---
+const BB_LIFESTYLE_QUESTIONS = [
+  {
+    id: "water",
+    q: "Combien d'eau bois-tu par jour ?",
+    options: [
+      { value: "low", label: "🥤 Moins d'1 litre" },
+      { value: "med", label: "💧 Entre 1 et 2 litres" },
+      { value: "high", label: "💦 Plus de 2 litres" },
+      { value: "unknown", label: "❓ Je ne sais pas" }
+    ]
+  },
+  {
+    id: "sun",
+    q: "Tu t'exposes au soleil :",
+    options: [
+      { value: "high", label: "☀️☀️☀️ Beaucoup (travail extérieur, sport en plein air)" },
+      { value: "med", label: "☀️☀️ Modérément (trajets quotidiens)" },
+      { value: "low", label: "☀️ Peu (travail bureau / intérieur)" }
+    ]
+  },
+  {
+    id: "sport",
+    q: "Tu fais du sport :",
+    options: [
+      { value: "regular", label: "💪 Régulièrement (3+ fois / semaine)" },
+      { value: "sometimes", label: "🚶 Occasionnellement (1-2 fois / semaine)" },
+      { value: "rare", label: "🛋️ Rarement ou jamais" }
+    ]
+  },
+  {
+    id: "sleep",
+    q: "Combien d'heures tu dors par nuit ?",
+    options: [
+      { value: "high", label: "😴 Plus de 8 heures" },
+      { value: "med", label: "😊 Entre 6 et 8 heures" },
+      { value: "low", label: "😪 Moins de 6 heures" },
+      { value: "irregular", label: "🥱 Mon sommeil est irrégulier" }
+    ]
+  },
+  {
+    id: "allergies",
+    q: "As-tu déjà eu une réaction allergique à un produit cosmétique ?",
+    options: [
+      { value: "no", label: "✅ Non, jamais" },
+      { value: "sometimes", label: "⚠️ Oui, occasionnellement" },
+      { value: "very_sensitive", label: "🔴 Oui, ma peau est très sensible/réactive" },
+      { value: "unknown", label: "🤔 Je ne sais pas" }
+    ]
+  },
+  {
+    id: "preference",
+    q: "Tu préfères quels types de produits ?",
+    options: [
+      { value: "naturel", label: "🌿 Naturels (huiles, beurre, savons artisanaux, marché)" },
+      { value: "cosmetique", label: "🧴 Cosmétiques industriels (Nivea, Dove, La Roche-Posay, etc.)" },
+      { value: "mix", label: "🌿🧴 Mix des deux" }
+    ]
+  },
+  {
+    id: "routine_time",
+    q: "Combien de temps tu peux consacrer à ta routine quotidienne ?",
+    options: [
+      { value: "express", label: "⚡ Express — 5 minutes max" },
+      { value: "standard", label: "⏱️ Standard — 10 à 15 minutes" },
+      { value: "complete", label: "🧖 Complète — 20 minutes ou plus" }
+    ]
+  },
+  {
+    id: "budget",
+    q: "Ton budget mensuel pour les soins du corps ?",
+    options: [
+      { value: "eco", label: "💰 Économique — moins de 10 000 FCFA" },
+      { value: "med", label: "💰💰 Moyen — entre 10 000 et 25 000 FCFA" },
+      { value: "premium", label: "💰💰💰 Premium — plus de 25 000 FCFA" }
+    ]
+  }
+];
+
+// (BB_PROBLEMS déplacé plus haut dans la nouvelle structure)
+
 
 // ─── BASE DE CONTENU BEAUTÉ CORPORELLE ───
 const BB_CONTENT = {
@@ -2871,7 +3034,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
 // ═══════════════════════════════════════════════
 // BEAUTÉ CORPORELLE — COMPOSANT QUIZ
 // ═══════════════════════════════════════════════
-function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod, bbShowGift, setBbShowGift }) {
+function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfile, setBbProfile, bbObjectives, setBbObjectives, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod, bbShowGift, setBbShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [bbStep, bbPaymentStep]);
 
@@ -2902,29 +3065,92 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
     );
   }
 
-  function getBodySkinType(answers) {
-    const counts = { A: 0, B: 0, C: 0, D: 0 };
-    answers.forEach(a => { if (counts[a] !== undefined) counts[a]++; });
-    const max = Math.max(...Object.values(counts));
-    const winner = Object.keys(counts).find(k => counts[k] === max);
+  // ═══════════ HELPERS ═══════════
+
+  // Filtre les questions de profil selon le genre (pas de Q grossesse pour homme)
+  function getActiveProfileQuestions() {
+    return BB_PROFILE_QUESTIONS.filter(q => !q.onlyIfFemme || bbProfile.gender === "femme");
+  }
+
+  // Calcule le nombre total de questions selon le genre
+  function getTotalQuestions() {
+    const profileCount = bbProfile.gender === "homme" ? 3 : 4;
+    return profileCount + 1 + 4 + 1 + 8; // profil + objectifs + typepeau + problemes + lifestyle
+  }
+
+  // Calcule le numéro de la question courante (pour la barre de progression)
+  function getCurrentQuestionNumber() {
+    const profileQuestions = getActiveProfileQuestions();
+    const profileAnswered = profileQuestions.filter(q => bbProfile[q.id]).length;
+    const isMale = bbProfile.gender === "homme";
+
+    if (bbStep === 1) return profileAnswered + 1;
+    if (bbStep === 2) return (isMale ? 3 : 4) + 1; // après profil = Q4 ou Q5
+    if (bbStep === 3) {
+      const typeAnswered = BB_TYPE_QUESTIONS.filter(q => bbTypeAnswers[q.id]).length;
+      return (isMale ? 4 : 5) + typeAnswered;
+    }
+    if (bbStep === 4) return (isMale ? 8 : 9) + 1; // après typepeau et objectifs
+    if (bbStep === 5) {
+      const lifestyleAnswered = Object.values(bbLifestyle).filter(v => v !== null).length;
+      return (isMale ? 9 : 10) + lifestyleAnswered;
+    }
+    return 0;
+  }
+
+  // Détermine le type de peau à partir des réponses Q6-9
+  function determineSkinType() {
+    const scores = { seche: 0, grasse: 0, normale: 0, mixte: 0, sensible: 0 };
+    BB_TYPE_QUESTIONS.forEach(q => {
+      const answer = bbTypeAnswers[q.id];
+      if (!answer) return;
+      const opt = q.options.find(o => o.value === answer);
+      if (opt && opt.points) {
+        Object.entries(opt.points).forEach(([type, pts]) => {
+          scores[type] = (scores[type] || 0) + pts;
+        });
+      }
+    });
+    // Trouver le type avec le score max
+    const maxScore = Math.max(...Object.values(scores));
+    if (maxScore === 0) return { code: "normale", emoji: "☁️", name: "Peau Normale", desc: "Ta peau est équilibrée" };
+    const winner = Object.keys(scores).find(k => scores[k] === maxScore);
     const types = {
-      A: { code: "seche", emoji: "🌵", name: "Peau Sèche", desc: "Ta peau corporelle manque d'hydratation" },
-      B: { code: "mixte", emoji: "🌸", name: "Peau Mixte", desc: "Certaines zones sèches, d'autres normales" },
-      C: { code: "grasse", emoji: "✨", name: "Peau Grasse", desc: "Ton corps produit beaucoup de sébum" },
-      D: { code: "sensible", emoji: "🌷", name: "Peau Sensible", desc: "Ta peau réagit facilement aux produits" }
+      seche: { code: "seche", emoji: "🌵", name: "Peau Sèche", desc: "Ta peau corporelle manque d'hydratation profonde" },
+      grasse: { code: "grasse", emoji: "✨", name: "Peau Grasse", desc: "Ton corps produit beaucoup de sébum, surtout dos et poitrine" },
+      normale: { code: "normale", emoji: "☁️", name: "Peau Normale", desc: "Ta peau est équilibrée, ni grasse ni sèche" },
+      mixte: { code: "mixte", emoji: "🌗", name: "Peau Mixte", desc: "Ta peau est sèche aux jambes mais grasse au dos" },
+      sensible: { code: "sensible", emoji: "🌹", name: "Peau Sensible", desc: "Ta peau réagit facilement aux produits et au soleil" }
     };
-    return types[winner] || types.B;
+    return types[winner] || types.normale;
   }
 
-  function selectAnswer(questionIdx, value) {
-    const newAnswers = [...bbTypeAnswers];
-    newAnswers[questionIdx] = value;
-    setBbTypeAnswers(newAnswers);
+  // Toggle d'un objectif (max 3)
+  function toggleObjective(id) {
+    if (bbObjectives.includes(id)) {
+      setBbObjectives(bbObjectives.filter(o => o !== id));
+    } else {
+      if (bbObjectives.length >= 3) {
+        alert("Tu peux choisir 3 objectifs maximum. Décoche-en un pour en ajouter un autre.");
+        return;
+      }
+      setBbObjectives([...bbObjectives, id]);
+    }
   }
 
+  // Toggle d'un problème
   function toggleProblem(id) {
-    if (bbProblems.includes(id)) setBbProblems(bbProblems.filter(p => p !== id));
-    else setBbProblems([...bbProblems, id]);
+    // Si "aucun" → effacer tout et garder seulement aucun
+    if (id === "aucun") {
+      setBbProblems(bbProblems.includes("aucun") ? [] : ["aucun"]);
+      return;
+    }
+    // Si on coche autre que "aucun" → enlever "aucun" si présent
+    if (bbProblems.includes(id)) {
+      setBbProblems(bbProblems.filter(p => p !== id));
+    } else {
+      setBbProblems([...bbProblems.filter(p => p !== "aucun"), id]);
+    }
   }
 
   // Header commun
@@ -2935,25 +3161,105 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
     </div>
   );
 
-  // ÉTAPE 1 — Type de peau corporelle (3 questions)
-  if (bbStep === 1) {
-    const allAnswered = BB_TYPE_QUESTIONS.every((_, i) => bbTypeAnswers[i]);
+  // Barre de progression
+  const ProgressBar = () => {
+    const total = getTotalQuestions();
+    const current = getCurrentQuestionNumber();
+    const pct = Math.min(100, Math.round((current / total) * 100));
+    return (
+      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, color: CC.textFaint, fontWeight: "bold", letterSpacing: 0.5 }}>QUESTION {current} / {total}</div>
+          <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold" }}>{pct}%</div>
+        </div>
+        <div style={{ height: 6, background: "#f0e0e2", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, " + CC.rose + ", #d4889b)", transition: "width 0.4s ease", borderRadius: 3 }} />
+        </div>
+      </div>
+    );
+  };
+
+  // ═══════════ ÉTAPE 0 : ÉCRAN D'INTRODUCTION ═══════════
+  if (bbStep === 0) {
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Beauté Corporelle" onBack={() => { setCarryCarePage("home"); setBbStep(1); }} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Étape 1 / 3</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>Quel est ton type de peau ?</div>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginTop: 6 }}>3 questions pour identifier ta peau corporelle</div>
+        <Header title="Beauté Corporelle" onBack={() => setCarryCarePage("home")} />
+        <div style={{ padding: "24px 16px", maxWidth: 600, margin: "0 auto" }}>
+          
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "28px 22px", marginBottom: 18, textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Diagnostic Beauté Corporelle</div>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Personnalisé selon ton profil</div>
           </div>
-          {BB_TYPE_QUESTIONS.map((q, qIdx) => (
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Avant de commencer</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>📋</div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>
+                  <strong>17-18 questions</strong> personnalisées
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>⏱️</div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>
+                  <strong>5 minutes</strong> de ton temps
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>🎯</div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>
+                  Un diagnostic <strong>complet et professionnel</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                "Ton type de peau corporelle exact",
+                "Une routine matin et soir adaptée à toi",
+                "Des produits précis avec lieux d'achat",
+                "Des soins ciblés pour chacun de tes problèmes",
+                "Tes résultats attendus dans le temps"
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ color: CC.rose, fontWeight: "bold", flexShrink: 0 }}>✓</div>
+                  <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.5 }}>{item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => setBbStep(1)}
+            style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            Commencer le diagnostic →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════ ÉTAPE 1 : PROFIL (3 ou 4 questions) ═══════════
+  if (bbStep === 1) {
+    const activeQuestions = getActiveProfileQuestions();
+    const allAnswered = activeQuestions.every(q => bbProfile[q.id]);
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 1 / 5 — Ton profil" onBack={() => setBbStep(0)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          {activeQuestions.map((q) => (
             <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{qIdx + 1}. {q.q}</div>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: q.note ? 6 : 12 }}>{q.q}</div>
+              {q.note && <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>{q.note}</div>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {q.options.map(opt => (
-                  <button key={opt.value} onClick={() => selectAnswer(qIdx, opt.value)}
-                    style={{ padding: 12, border: "1.5px solid " + (bbTypeAnswers[qIdx] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bbTypeAnswers[qIdx] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                  <button key={opt.value} onClick={() => setBbProfile({ ...bbProfile, [q.id]: opt.value })}
+                    style={{ padding: 12, border: "1.5px solid " + (bbProfile[q.id] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bbProfile[q.id] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 14, cursor: "pointer", textAlign: "left" }}>
                     {opt.label}
                   </button>
                 ))}
@@ -2962,25 +3268,95 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
           ))}
           <button onClick={() => allAnswered && setBbStep(2)} disabled={!allAnswered}
             style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10 }}>
-            {allAnswered ? "Suivant — Mes problèmes ✨" : "Réponds aux 3 questions"}
+            {allAnswered ? "Continuer — Tes objectifs ✨" : "Réponds à toutes les questions"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 2 — Sélection des problèmes
+  // ═══════════ ÉTAPE 2 : OBJECTIFS ═══════════
   if (bbStep === 2) {
+    const ok = bbObjectives.length >= 1;
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Tes problèmes" onBack={() => setBbStep(1)} />
+        <Header title="Étape 2 / 5 — Tes objectifs" onBack={() => setBbStep(1)} />
+        <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Étape 2 / 3</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>Coche tes préoccupations</div>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginTop: 6 }}>Tu peux en cocher plusieurs (ou aucune)</div>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels sont tes objectifs principaux ?</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Choisis 1 à 3 objectifs maximum</div>
+            {bbObjectives.length > 0 && (
+              <div style={{ marginTop: 8, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>
+                {bbObjectives.length} / 3 sélectionné{bbObjectives.length > 1 ? "s" : ""}
+              </div>
+            )}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {BB_OBJECTIVES.map(o => (
+              <button key={o.id} onClick={() => toggleObjective(o.id)}
+                style={{ padding: 14, border: "1.5px solid " + (bbObjectives.includes(o.id) ? CC.rose : CC.border), borderRadius: 10, background: bbObjectives.includes(o.id) ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 22 }}>{o.emoji}</span>
+                <span style={{ flex: 1 }}>{o.label}</span>
+                {bbObjectives.includes(o.id) && <span style={{ color: CC.rose, fontSize: 18, fontWeight: "bold" }}>✓</span>}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => ok && setBbStep(3)} disabled={!ok}
+            style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Continuer — Type de peau ✨" : "Choisis au moins 1 objectif"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════ ÉTAPE 3 : TYPE DE PEAU (4 questions) ═══════════
+  if (bbStep === 3) {
+    const allAnswered = BB_TYPE_QUESTIONS.every(q => bbTypeAnswers[q.id]);
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 3 / 5 — Type de peau" onBack={() => setBbStep(2)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Pour qu'on puisse déterminer ton type de peau exact</div>
+          </div>
+          {BB_TYPE_QUESTIONS.map((q) => (
+            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{q.q}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {q.options.map(opt => (
+                  <button key={opt.value} onClick={() => setBbTypeAnswers({ ...bbTypeAnswers, [q.id]: opt.value })}
+                    style={{ padding: 12, border: "1.5px solid " + (bbTypeAnswers[q.id] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bbTypeAnswers[q.id] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button onClick={() => allAnswered && setBbStep(4)} disabled={!allAnswered}
+            style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {allAnswered ? "Continuer — Tes problèmes ✨" : "Réponds à toutes les questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════ ÉTAPE 4 : PROBLÈMES SPÉCIFIQUES ═══════════
+  if (bbStep === 4) {
+    const ok = bbProblems.length >= 1;
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 4 / 5 — Tes problèmes" onBack={() => setBbStep(3)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels problèmes tu rencontres sur ton corps ?</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Coche tout ce qui te concerne (autant que tu veux)</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
             {BB_PROBLEMS.map(p => (
               <button key={p.id} onClick={() => toggleProblem(p.id)}
                 style={{ padding: 12, border: "1.5px solid " + (bbProblems.includes(p.id) ? CC.rose : CC.border), borderRadius: 10, background: bbProblems.includes(p.id) ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
@@ -2990,55 +3366,33 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
               </button>
             ))}
           </div>
-          <button onClick={() => setBbStep(3)}
-            style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>
-            Suivant — Mon mode de vie ✨
+          <button onClick={() => ok && setBbStep(5)} disabled={!ok}
+            style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Continuer — Mode de vie ✨" : "Coche au moins 1 réponse"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 3 — Mode de vie (âge, soleil, gommage)
-  if (bbStep === 3) {
-    const ageOpts = [
-      { v: "ado", label: "Moins de 20 ans" },
-      { v: "20s", label: "20-29 ans" },
-      { v: "30s", label: "30-39 ans" },
-      { v: "40s", label: "40-49 ans" },
-      { v: "50plus", label: "50 ans et plus" }
-    ];
-    const sunOpts = [
-      { v: "low", label: "Moins d'1h/jour" },
-      { v: "med", label: "1 à 3h/jour" },
-      { v: "high", label: "Plus de 3h/jour" }
-    ];
-    const scrubOpts = [
-      { v: "yes", label: "Oui, 1-2x/semaine" },
-      { v: "sometimes", label: "Parfois" },
-      { v: "no", label: "Jamais" }
-    ];
-    const allDone = bbLifestyle.age && bbLifestyle.sun && bbLifestyle.scrub;
-    const sections = [
-      { key: "age", title: "Quel est ton âge ?", opts: ageOpts },
-      { key: "sun", title: "Combien d'heures au soleil par jour ?", opts: sunOpts },
-      { key: "scrub", title: "Tu te gommes le corps régulièrement ?", opts: scrubOpts }
-    ];
+  // ═══════════ ÉTAPE 5 : MODE DE VIE (8 questions) ═══════════
+  if (bbStep === 5) {
+    const allAnswered = BB_LIFESTYLE_QUESTIONS.every(q => bbLifestyle[q.id] !== null && bbLifestyle[q.id] !== undefined);
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Ton mode de vie" onBack={() => setBbStep(2)} />
+        <Header title="Étape 5 / 5 — Mode de vie" onBack={() => setBbStep(4)} />
+        <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Étape 3 / 3</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>Pour personnaliser ton diagnostic</div>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Dernière étape ! On personnalise tes recommandations.</div>
           </div>
-          {sections.map(section => (
-            <div key={section.key} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{section.title}</div>
+          {BB_LIFESTYLE_QUESTIONS.map(q => (
+            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{q.q}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {section.opts.map(opt => (
-                  <button key={opt.v} onClick={() => setBbLifestyle({ ...bbLifestyle, [section.key]: opt.v })}
-                    style={{ padding: 12, border: "1.5px solid " + (bbLifestyle[section.key] === opt.v ? CC.rose : CC.border), borderRadius: 10, background: bbLifestyle[section.key] === opt.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                {q.options.map(opt => (
+                  <button key={opt.value} onClick={() => setBbLifestyle({ ...bbLifestyle, [q.id]: opt.value })}
+                    style={{ padding: 12, border: "1.5px solid " + (bbLifestyle[q.id] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bbLifestyle[q.id] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
                     {opt.label}
                   </button>
                 ))}
@@ -3046,370 +3400,890 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbTypeAn
             </div>
           ))}
           <button onClick={() => {
-            if (!allDone) return;
-            const skinType = getBodySkinType(bbTypeAnswers);
-            setBbResult({ skinType, problems: bbProblems, lifestyle: bbLifestyle });
-            setBbStep(4);
-            setTimeout(() => setBbStep(5), 2500);
-          }} disabled={!allDone}
-            style={{ width: "100%", padding: 16, background: allDone ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allDone ? "pointer" : "not-allowed" }}>
-            {allDone ? "Voir mon diagnostic ✨" : "Réponds aux 3 questions"}
+            if (!allAnswered) return;
+            const skinType = determineSkinType();
+            setBbResult({
+              skinType,
+              profile: bbProfile,
+              objectives: bbObjectives,
+              problems: bbProblems,
+              lifestyle: bbLifestyle
+            });
+            setBbStep(6);
+            setTimeout(() => setBbStep(7), 2500);
+          }} disabled={!allAnswered}
+            style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed" }}>
+            {allAnswered ? "Voir mon diagnostic ✨" : "Réponds à toutes les questions"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 4 — Suspense
-  if (bbStep === 4) {
+  // ═══════════ ÉTAPE 6 : SUSPENSE ═══════════
+  if (bbStep === 6) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-        {[
-          { left: "20%", top: "30%", delay: "0s", color: "#ffd700" },
-          { left: "70%", top: "25%", delay: "0.3s", color: "#ff4081" },
-          { left: "45%", top: "55%", delay: "0.5s", color: "#00e5ff" },
-          { left: "30%", top: "65%", delay: "0.7s", color: "#76ff03" },
-          { left: "75%", top: "60%", delay: "0.9s", color: "#ff9100" },
-          { left: "55%", top: "20%", delay: "1.1s", color: "#e040fb" }
-        ].map((fw, i) => (
-          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
-            {[0,1,2,3,4,5,6,7].map(angle => (
-              <div key={angle} style={{
-                position: "absolute",
-                width: 6, height: 6,
-                borderRadius: "50%",
-                background: fw.color,
-                boxShadow: "0 0 12px " + fw.color,
-                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
-                transform: "rotate(" + (angle * 45) + "deg)",
-                transformOrigin: "center"
-              }} />
-            ))}
-          </div>
-        ))}
-        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
-          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ff4081", animation: "fadeIn 0.5s ease-out" }}>Ton diagnostic est prêt !</div>
-        </div>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>🌸</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse de ton profil...</div>
+        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton diagnostic personnalisé</div>
         <style>{`
-          @keyframes fwExplode {
-            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
-            100% { transform: translate(60px, 0) scale(0.2); opacity: 0; }
-          }
-          @keyframes rocketBounce {
-            0% { transform: scale(0) rotate(-30deg); }
-            60% { transform: scale(1.3) rotate(10deg); }
-            100% { transform: scale(1) rotate(0deg); }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.7; }
           }
         `}</style>
       </div>
     );
   }
 
-  // ÉTAPE 5 — Paiement (5 sous-étapes : info → operator → phone → wait → fail/success)
-  if (bbStep === 5) {
-    if (bbPaymentStep === 1) {
-      return (
-        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-          <Header title="Diagnostic prêt !" onBack={() => setBbStep(3)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-            <div style={{ fontSize: 60, marginBottom: 16 }}>🌸</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>Ton diagnostic est prêt</div>
-            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 20, lineHeight: 1.6 }}>
-              Type de peau corporelle identifié, problèmes ciblés, mode de vie analysé.<br/>
-              Reçois ton plan complet : routine personnalisée, conseils naturels et produits adaptés à TES besoins.
-            </div>
-            <div style={{ background: "#fdf8f8", border: "1px solid " + CC.rose, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📋 Tu vas recevoir :</div>
-              <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
-                ✅ Ton type de peau corporelle expliqué<br/>
-                ✅ Routine matin et soir personnalisée<br/>
-                ✅ Conseils naturels (DIY) et produits<br/>
-                ✅ Plan d'action selon ton mode de vie<br/>
-                ✅ Conseils gommage et soleil adaptés
-              </div>
-            </div>
-            <button onClick={() => setBbPaymentStep(2)} style={{
-              width: "100%", padding: 16, background: CC.noir, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
-              💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
-            </button>
-          </div>
-        </div>
-      );
-    }
-    if (bbPaymentStep === 2) {
-      return (
-        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-          <Header title="Méthode de paiement" onBack={() => setBbPaymentStep(1)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 20, textAlign: "center" }}>Choisis ta méthode de paiement</div>
-            <button onClick={() => { setBbPaymentMethod("MTN"); setBbPaymentStep(3); }} style={{
-              width: "100%", padding: 16, background: "#FFCC00", color: "#000",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", marginBottom: 12, cursor: "pointer"
-            }}>📱 MTN Mobile Money</button>
-            <button onClick={() => { setBbPaymentMethod("ORANGE"); setBbPaymentStep(3); }} style={{
-              width: "100%", padding: 16, background: "#FF6600", color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>📱 Orange Money</button>
-          </div>
-        </div>
-      );
-    }
-    if (bbPaymentStep === 3) {
-      return (
-        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-          <Header title={"Ton numéro " + bbPaymentMethod} onBack={() => setBbPaymentStep(2)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 16, textAlign: "center" }}>
-              Entre ton numéro {bbPaymentMethod} (9 chiffres, sans +237)
-            </div>
-            <input type="tel" value={bbPaymentPhone} onChange={(e) => setBbPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
-              placeholder="6XXXXXXXX" style={{
-                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border,
-                borderRadius: 12, marginBottom: 16, outline: "none"
-              }} />
-            <button onClick={async () => {
-              if (bbPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
-              setBbPaymentStep(4);
-              const fullPhone = "237" + bbPaymentPhone;
-              const userResp = await supabase.auth.getUser();
-              const userId = userResp.data.user?.id;
-              try {
-                const collect = await fetch("/api/campay", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Corporelle", external_reference: "carrycare_body_" + Date.now() })
-                });
-                const data = await collect.json();
-                if (!data.reference) { setBbPaymentStep(5); return; }
-                const ref = data.reference;
-                let attempts = 0;
-                const maxAttempts = 25;
-                const interval = setInterval(async () => {
-                  attempts++;
-                  if (attempts >= maxAttempts) { clearInterval(interval); setBbPaymentStep(5); return; }
-                  try {
-                    const checkRes = await fetch("/api/campay", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "check", reference: ref })
-                    });
-                    const checkData = await checkRes.json();
-                    if (checkData.status === "SUCCESSFUL") {
-                      clearInterval(interval);
-                      setBbPaymentStep(1);
-                      setBbShowGift(true);
-                      if (userId) {
-                        const { error: saveErr } = await supabase.from("carrycare_results").insert([{
-                          user_id: userId,
-                          quiz_type: "body",
-                          amount: beautyQuizPrice || 0,
-                          result_data: { typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
-                        }]);
-                        if (saveErr) console.error("Erreur sauvegarde CarryCare:", saveErr);
-                        else console.log("Résultat CarryCare body sauvegardé !");
-                      } else {
-                        console.warn("Pas de user_id, sauvegarde impossible");
-                      }
-                      setTimeout(() => { setBbShowGift(false); setBbStep(6); }, 2500);
-                    }
-                    else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
-                  } catch (e) {}
-                }, 3000);
-              } catch (e) { setBbPaymentStep(5); }
-            }} style={{
-              width: "100%", padding: 16, background: CC.noir, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
-              💎 Payer {beautyQuizPrice} FCFA
-            </button>
-          </div>
-        </div>
-      );
-    }
-    if (bbPaymentStep === 4) {
-      return (
-        <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
-          <div style={{ fontSize: 80, marginBottom: 20 }}>⏳</div>
-          <div style={{ fontSize: 20, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
-          <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
-            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold", textAlign: "center" }}>
-              ⚠️ NE QUITTE PAS CET ÉCRAN<br/>Patiente jusqu'à la fin du paiement.
-            </div>
-          </div>
-          <div style={{ fontSize: 13, color: CC.textFaint, textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
-            📱 Vérifie ton téléphone et valide le paiement {bbPaymentMethod}.<br/>
-            Patiente un instant, on te montre ton diagnostic dès que c'est validé.
-          </div>
-        </div>
-      );
-    }
-    if (bbPaymentStep === 5) {
-      return (
-        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-          <Header title="Paiement non finalisé" onBack={() => setBbPaymentStep(2)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-            <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
-            <div style={{ fontSize: 20, fontWeight: "bold", color: CC.rose, marginBottom: 12 }}>Paiement non finalisé</div>
-            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 20 }}>Le réseau de l'opérateur est peut-être occupé.</div>
-            <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
-              <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.8, textAlign: "center" }}>
-                ✅ Vérifie ton solde Mobile Money<br/>
-                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
-                ✅ Patiente quelques minutes et réessaie<br/>
-                ✅ Vérifie ta connexion internet
-              </div>
-            </div>
-            <button onClick={() => { setBbPaymentStep(2); setBbPaymentMethod(null); setBbPaymentPhone(""); }} style={{
-              width: "100%", padding: 16, background: CC.noir, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 10
-            }}>🔄 Réessayer</button>
-            <button onClick={() => { setBbPaymentStep(1); setBbPaymentMethod(null); setBbPaymentPhone(""); }} style={{
-              width: "100%", padding: 14, background: "#fff", color: CC.noir,
-              border: "1.5px solid " + CC.border, borderRadius: 12, fontSize: 14, cursor: "pointer"
-            }}>Annuler</button>
-          </div>
-        </div>
-      );
-    }
-  }
-
-  // ÉTAPE 6 — RÉSULTAT FINAL
-  if (bbStep === 6 && bbResult) {
-    const problemLabels = bbResult.problems.map(pid => BB_PROBLEMS.find(p => p.id === pid)).filter(Boolean);
-    const skinCode = bbResult.skinType.code;
-    const typeData = BB_CONTENT.types[skinCode] || BB_CONTENT.types.mixte;
-    const sunData = BB_CONTENT.soleil[bbResult.lifestyle.sun] || BB_CONTENT.soleil.med;
-    const ageData = BB_CONTENT.age[bbResult.lifestyle.age] || BB_CONTENT.age["20s"];
-    const scrubData = BB_CONTENT.gommage[bbResult.lifestyle.scrub] || BB_CONTENT.gommage.sometimes;
-
-    function restart() {
-      setBbStep(1);
-      setBbTypeAnswers([]);
-      setBbProblems([]);
-      setBbLifestyle({ age: null, sun: null, scrub: null });
-      setBbResult(null);
-    }
-
+  // ═══════════ ÉTAPE 7 : PAIEMENT ═══════════
+  if (bbStep === 7) {
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Ton diagnostic complet" onBack={() => { setCarryCarePage("home"); setBbStep(1); }} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          {/* Type de peau */}
-          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 14, padding: 20, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 50, marginBottom: 8 }}>{bbResult.skinType.emoji}</div>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Ton type de peau corporelle</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>{bbResult.skinType.name}</div>
-            <div style={{ fontSize: 13, color: CC.textDim }}>{bbResult.skinType.desc}</div>
+        <Header title="Ton diagnostic est prêt !" onBack={() => setBbStep(5)} />
+        <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 16, padding: 24, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>🎁</div>
+            <div style={{ fontSize: 20, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Ton diagnostic est prêt</div>
+            <div style={{ fontSize: 14, color: CC.textDim, marginBottom: 16 }}>Type de peau : <strong>{bbResult?.skinType?.name}</strong></div>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 16, marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>PRIX</div>
+              <div style={{ fontSize: 28, fontWeight: "bold", color: CC.rose }}>{beautyQuizPrice} FCFA</div>
+              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 4, fontStyle: "italic" }}>Diagnostic complet et personnalisé</div>
+            </div>
           </div>
-
-          {/* Routine type de peau */}
           <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>{typeData.titre}</div>
-            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, marginBottom: 14, fontStyle: "italic" }}>{typeData.intro}</div>
-            <div style={{ background: "#f5f9f0", borderRadius: 10, padding: 14, marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5d2d", marginBottom: 8 }}>🌿 Routine naturelle</div>
-              {typeData.naturel.map((item, i) => (
-                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
-                  <span style={{ position: "absolute", left: 0 }}>•</span>{item}
-                </div>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 14 }}>📞 Choisis ton mode de paiement</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { id: "OM", label: "🟠 Orange Money", desc: "MTN OM" },
+                { id: "MOMO", label: "🟡 MTN Mobile Money", desc: "MoMo" }
+              ].map(m => (
+                <button key={m.id} onClick={() => setBbPaymentMethod(m.id)}
+                  style={{ padding: 14, border: "1.5px solid " + (bbPaymentMethod === m.id ? CC.rose : CC.border), borderRadius: 10, background: bbPaymentMethod === m.id ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 14, cursor: "pointer", textAlign: "left", fontWeight: "bold" }}>
+                  {m.label}
+                </button>
               ))}
-            </div>
-            <div style={{ background: "#fdf8f8", borderRadius: 10, padding: 14, marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>💎 Routine express (produits)</div>
-              <div style={{ fontSize: 10, color: CC.textFaint, fontStyle: "italic", marginBottom: 8 }}>Choisis 1 ou plusieurs selon ton budget. Le 1er produit de chaque liste est l'essentiel.</div>
-              {typeData.express.map((item, i) => (
-                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, paddingLeft: 16, position: "relative" }}>
-                  <span style={{ position: "absolute", left: 0 }}>•</span>{item}
-                </div>
-              ))}
-            </div>
-            <div style={{ background: "#fef9e7", borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#8a6d00", marginBottom: 8 }}>💡 Mes conseils</div>
-              <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{typeData.conseils}</div>
             </div>
           </div>
-
-          {/* Problèmes ciblés */}
-          {problemLabels.length > 0 && (
+          {bbPaymentMethod && (
             <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-              <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 14 }}>🎯 Tes préoccupations ciblées</div>
-              {problemLabels.map(p => {
-                const pcontent = BB_CONTENT.problems[p.id];
-                if (!pcontent) return null;
-                const isPlaceholder = pcontent.naturel[0] && pcontent.naturel[0].startsWith("🚧");
-                return (
-                  <div key={p.id} style={{ background: "#fafafa", border: "1px solid " + CC.border, borderRadius: 10, padding: 14, marginBottom: 10 }}>
-                    <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>{pcontent.titre}</div>
-                    {!isPlaceholder && (
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: "bold", color: "#2d5d2d", marginBottom: 4 }}>🌿 Naturel :</div>
-                        {pcontent.naturel.map((it, i) => (
-                          <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
-                        ))}
-                        <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginTop: 8, marginBottom: 2 }}>💎 Produits :</div>
-                        <div style={{ fontSize: 9, color: CC.textFaint, fontStyle: "italic", marginBottom: 4 }}>Choisis selon ton budget — le 1er est l'essentiel</div>
-                        {pcontent.express.map((it, i) => (
-                          <div key={i} style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 4, paddingLeft: 14 }}>• {it}</div>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: "#5a5a5a", lineHeight: 1.5, marginTop: 8, fontStyle: "italic" }}>{pcontent.conseils}</div>
-                  </div>
-                );
-              })}
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>📱 Numéro de paiement</div>
+              <input
+                type="tel"
+                value={bbPaymentPhone}
+                onChange={e => setBbPaymentPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="6XXXXXXXX"
+                maxLength={9}
+                style={{ width: "100%", padding: 14, border: "1.5px solid " + CC.border, borderRadius: 10, fontSize: 15, color: CC.noir, background: "#fff" }}
+              />
+              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 6, fontStyle: "italic" }}>9 chiffres, sans le +237</div>
             </div>
           )}
-
-          {/* Section soleil */}
-          <div style={{ background: "#fef9e7", border: "1px solid #e8c547", borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#8a6d00", marginBottom: 8 }}>{sunData.titre}</div>
-            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{sunData.text}</div>
-          </div>
-
-          {/* Section gommage */}
-          <div style={{ background: "#f0f8ff", border: "1px solid #87ceeb", borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#2c5d8a", marginBottom: 8 }}>{scrubData.titre}</div>
-            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{scrubData.text}</div>
-          </div>
-
-          {/* Section âge */}
-          <div style={{ background: "#fdf8f8", border: "1px solid " + CC.rose, borderRadius: 14, padding: 16, marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.rose, marginBottom: 8 }}>{ageData.titre}</div>
-            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>{ageData.text}</div>
-          </div>
-
-          <ShareButtons quizName="Beauté Corporelle" quizType="carrycare" />
-
-          {/* CTA bas */}
-          <div style={{ textAlign: "center", marginTop: 20 }}>
-            <button onClick={restart}
-              style={{ padding: "12px 24px", background: "#fff", color: CC.noir, border: "1.5px solid " + CC.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
-              🔄 Refaire le test
-            </button>
-            <button onClick={() => { setCarryCarePage("home"); setBbStep(1); }}
-              style={{ padding: "12px 24px", background: CC.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
-              🌸 Autre quiz CarryCare
-            </button>
-          </div>
-
-          <div style={{ textAlign: "center", marginTop: 30, paddingTop: 20, borderTop: "1px solid " + CC.border }}>
-            <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic" }}>💝 Merci de faire confiance à CarryCare</div>
-          </div>
+          <button onClick={async () => {
+            if (!bbPaymentMethod || bbPaymentPhone.length !== 9) {
+              alert("Choisis un mode de paiement et entre ton numéro complet (9 chiffres).");
+              return;
+            }
+            // Lancer le paiement Campay
+            try {
+              const externalReference = "carrycare_body_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+              const operator = bbPaymentMethod === "OM" ? "ORANGE" : "MTN";
+              const r = await fetch("/api/campay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "collect", phone: "237" + bbPaymentPhone, amount: beautyQuizPrice, reference: externalReference, operator })
+              });
+              const d = await r.json();
+              if (!d.reference) { alert("Erreur de paiement. Réessaie."); return; }
+              alert("📞 Une demande de paiement a été envoyée sur ton téléphone. Confirme-la, puis attends quelques secondes.");
+              // Polling
+              let attempts = 0;
+              const checkPayment = async () => {
+                attempts++;
+                if (attempts > 36) { alert("⏱️ Le paiement n'a pas été confirmé. Réessaie."); return; }
+                try {
+                  const c = await fetch("/api/campay", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "status", reference: d.reference })
+                  });
+                  const cd = await c.json();
+                  if (cd.status === "SUCCESSFUL") {
+                    // Enregistrer le paiement
+                    await fetch("/api/campay", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "record_carrycare",
+                        external_reference: externalReference,
+                        quiz_type: "body",
+                        amount: beautyQuizPrice,
+                        phone: bbPaymentPhone,
+                        result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
+                      })
+                    });
+                    setBbShowGift(true);
+                    setTimeout(() => { setBbShowGift(false); setBbStep(8); }, 3500);
+                  } else if (cd.status === "FAILED" || cd.status === "CANCELLED") {
+                    alert("❌ Paiement échoué ou annulé. Réessaie.");
+                  } else {
+                    setTimeout(checkPayment, 5000);
+                  }
+                } catch (e) { setTimeout(checkPayment, 5000); }
+              };
+              setTimeout(checkPayment, 5000);
+            } catch (e) {
+              alert("Erreur réseau. Réessaie.");
+            }
+          }}
+            disabled={!bbPaymentMethod || bbPaymentPhone.length !== 9}
+            style={{ width: "100%", padding: 18, background: (bbPaymentMethod && bbPaymentPhone.length === 9) ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: (bbPaymentMethod && bbPaymentPhone.length === 9) ? "pointer" : "not-allowed", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            🎁 Recevoir mon diagnostic
+          </button>
         </div>
       </div>
     );
   }
 
+  // ═══════════ ÉTAPE 8 : RÉSULTAT ═══════════
+  if (bbStep === 8 && bbResult) {
+    return <BodyDiagnosticResult result={bbResult} onBack={() => setCarryCarePage("home")} />;
+  }
+
   return null;
 }
+
+// ═══════════════════════════════════════════════════
+// BODY DIAGNOSTIC RESULT — Refonte complète Mai 2026
+// ═══════════════════════════════════════════════════
+
+// Base de produits structurée par catégorie + niveau budget
+const BB_PRODUCTS = {
+  // ═══ GEL DOUCHE ═══
+  gel_douche_normal: {
+    eco: [
+      { name: "Dove crème classique", lieu: "supermarché" },
+      { name: "Lux Soft Touch", lieu: "supermarché" },
+      { name: "Palmolive Naturals", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Le Petit Marseillais miel", lieu: "parfumerie" },
+      { name: "Nivea Soft (peau sèche)", lieu: "parfumerie" },
+      { name: "Sanex Zero", lieu: "parfumerie" },
+      { name: "Cottage gel hydratant", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "The Body Shop arbre à thé", lieu: "boutique" },
+      { name: "Yves Rocher gel douche bio", lieu: "boutique" },
+      { name: "Sol de Janeiro Brazilian Crush", lieu: "parfumerie" }
+    ]
+  },
+  gel_douche_acne: {
+    eco: [
+      { name: "Dettol Original gel douche", lieu: "supermarché" },
+      { name: "Lifebuoy Total", lieu: "supermarché" },
+      { name: "Savon noir africain", lieu: "marché" }
+    ],
+    med: [
+      { name: "Sanex Dermo Pure", lieu: "parfumerie" },
+      { name: "Le Petit Marseillais Tea Tree", lieu: "parfumerie" },
+      { name: "Cottage purifiant", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Effaclar gel", lieu: "pharmacie" },
+      { name: "Bioderma Sébium", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ LOTION HYDRATANTE ═══
+  lotion_normale: {
+    eco: [
+      { name: "Nivea Soft (boîte bleue)", lieu: "supermarché" },
+      { name: "Vaseline Cocoa Radiant", lieu: "supermarché" },
+      { name: "Johnson's body lotion", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Mixa Hydratation Intensive", lieu: "parfumerie" },
+      { name: "Garnier Body Sensitive", lieu: "parfumerie" },
+      { name: "Eveline Cosmetics lait", lieu: "parfumerie" },
+      { name: "Dove DermaSpa", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "CeraVe lotion hydratante", lieu: "pharmacie" },
+      { name: "La Roche-Posay Lipikar", lieu: "pharmacie" },
+      { name: "Cetaphil moisturizer", lieu: "pharmacie" }
+    ]
+  },
+  lotion_seche: {
+    eco: [
+      { name: "Vaseline Intensive Cocoa", lieu: "supermarché" },
+      { name: "Beurre de karité pur", lieu: "marché" },
+      { name: "Huile de coco vierge", lieu: "marché" }
+    ],
+    med: [
+      { name: "Palmer's Cocoa Butter Formula", lieu: "parfumerie" },
+      { name: "Nivea Q10 raffermissant", lieu: "parfumerie" },
+      { name: "Eveline Argan", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Lipikar Baume AP+", lieu: "pharmacie" },
+      { name: "Bioderma Atoderm baume", lieu: "pharmacie" },
+      { name: "Eucerin Aquaphor", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ ANTI-VERGETURES ═══
+  anti_vergetures: {
+    eco: [
+      { name: "Beurre de karité pur", lieu: "marché" },
+      { name: "Huile de coco vierge", lieu: "marché" },
+      { name: "Vaseline Cocoa Butter", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bio Oil ⭐", lieu: "pharmacie", note: "LE produit star vergetures" },
+      { name: "Palmer's Cocoa Butter", lieu: "parfumerie" },
+      { name: "Mustela Maternité", lieu: "pharmacie" }
+    ],
+    premium: [
+      { name: "Clarins Stretch Mark", lieu: "parfumerie" },
+      { name: "Lierac Phytolastil", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ ANTI-ACNÉ DOS ═══
+  anti_acne_dos: {
+    eco: [
+      { name: "Argile verte (masque)", lieu: "marché ou pharmacie" },
+      { name: "Mixture maison : miel + citron + curcuma", lieu: "maison" }
+    ],
+    med: [
+      { name: "Effaclar gel La Roche-Posay", lieu: "pharmacie" },
+      { name: "Garnier Pure Active gel", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "Effaclar Duo+ La Roche-Posay", lieu: "pharmacie" },
+      { name: "Cetaphil DermaControl", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ ANTI-TACHES (unification teint) ═══
+  anti_taches: {
+    eco: [
+      { name: "Aloe vera pur", lieu: "marché ou maison" },
+      { name: "Citron + miel maison", lieu: "maison" }
+    ],
+    med: [
+      { name: "The Ordinary Niacinamide 10%", lieu: "boutique" },
+      { name: "HT26 lait éclat nuit", lieu: "boutique cosmétique afro" },
+      { name: "Carotone lait éclat", lieu: "boutique cosmétique afro" }
+    ],
+    premium: [
+      { name: "Vichy Liftactiv vitamine C", lieu: "pharmacie" },
+      { name: "La Roche-Posay Pigmentclar", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ DÉODORANT (pour aisselles) ═══
+  deodorant: {
+    eco: [
+      { name: "Nivea Black & White Invisible", lieu: "supermarché" },
+      { name: "Dove Original sans alcool", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Mixa Sensitive sans alcool", lieu: "parfumerie" },
+      { name: "Sanex Zero alcool", lieu: "parfumerie" },
+      { name: "Vichy Stress Resist", lieu: "pharmacie" }
+    ],
+    premium: [
+      { name: "La Roche-Posay déo physiologique", lieu: "pharmacie" },
+      { name: "Avène déodorant", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ GOMMAGE CORPS ═══
+  gommage: {
+    eco: [
+      { name: "Sucre + huile coco + miel (maison)", lieu: "maison" },
+      { name: "Marc de café + huile (maison)", lieu: "maison" },
+      { name: "Sel marin + huile végétale (maison)", lieu: "maison" }
+    ],
+    med: [
+      { name: "Dove Gommage exfoliant", lieu: "parfumerie" },
+      { name: "Tree Hut Coco Colada", lieu: "boutique" },
+      { name: "St Ives Apricot Scrub", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "The Body Shop gommage", lieu: "boutique" },
+      { name: "Sol de Janeiro Brazilian 4 Play", lieu: "parfumerie" }
+    ]
+  },
+  // ═══ PROTECTION SOLAIRE ═══
+  spf: {
+    eco: [
+      { name: "Nivea Sun Protect SPF 30", lieu: "supermarché" },
+      { name: "Garnier Ambre Solaire SPF 30", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Mixa Solaire SPF 50", lieu: "parfumerie" },
+      { name: "Avène Solaire SPF 50+", lieu: "pharmacie" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Anthelios SPF 50+", lieu: "pharmacie" },
+      { name: "Bioderma Photoderm SPF 50+", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ SOIN PIEDS ═══
+  pieds: {
+    eco: [
+      { name: "Vaseline simple + chaussettes la nuit", lieu: "supermarché" },
+      { name: "Beurre de karité pur", lieu: "marché" }
+    ],
+    med: [
+      { name: "Akileïne crème pieds réparatrice", lieu: "pharmacie" },
+      { name: "Scholl crème active", lieu: "pharmacie" }
+    ],
+    premium: [
+      { name: "Avène Cicalfate pieds", lieu: "pharmacie" },
+      { name: "Eucerin Repair pieds", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ ANTI-CELLULITE ═══
+  anti_cellulite: {
+    eco: [
+      { name: "Marc de café + huile coco (massage)", lieu: "maison" },
+      { name: "Huile d'olive + citron (massage circulaire)", lieu: "maison" }
+    ],
+    med: [
+      { name: "Somatoline Cosmetic", lieu: "pharmacie" },
+      { name: "Garnier Body Tonic", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "Clarins Body Lift", lieu: "parfumerie" },
+      { name: "Biotherm Celluli Eraser", lieu: "parfumerie" }
+    ]
+  }
+};
+
+// Explications scientifiques pour chaque catégorie
+const BB_PRODUCT_EXPLAINS = {
+  gel_douche_normal: "Ces gels douches contiennent des AGENTS HYDRATANTS DOUX (glycérine, beurre de karité) qui nettoient sans agresser la barrière cutanée. Ils respectent le pH naturel de ta peau (5,5).",
+  gel_douche_acne: "Ces produits sont riches en ACIDE SALICYLIQUE, ZINC ou HUILE D'ARBRE À THÉ — des actifs antibactériens qui pénètrent les pores pour éliminer les bactéries responsables de l'acné.",
+  lotion_normale: "Ces lotions contiennent de la GLYCÉRINE et de l'ACIDE HYALURONIQUE qui retiennent l'eau dans la peau. Elles forment une barrière hydratante invisible toute la journée.",
+  lotion_seche: "Ces produits sont riches en CÉRAMIDES, BEURRE DE KARITÉ et HUILES VÉGÉTALES qui reconstruisent la barrière lipidique de ta peau et empêchent l'eau de s'évaporer.",
+  anti_vergetures: "Ces produits sont riches en VITAMINE E, BEURRE DE KARITÉ et HUILES VÉGÉTALES (rosier musqué, amande) qui nourrissent les fibres de collagène cassées et améliorent l'élasticité. Bio Oil contient en plus du PURCELLIN OIL qui aide les autres ingrédients à pénétrer profondément.",
+  anti_acne_dos: "Ces produits contiennent de l'ACIDE SALICYLIQUE (BHA) qui pénètre dans les pores pour les désincruster, et du ZINC qui régule la production de sébum. L'argile verte agit comme un aimant et absorbe les impuretés.",
+  anti_taches: "Ces produits contiennent de la NIACINAMIDE (vitamine B3), de la VITAMINE C et des ACIDES DOUX qui inhibent la production de mélanine en excès et accélèrent le renouvellement cellulaire pour estomper les taches.",
+  deodorant: "Ces déodorants sont SANS ALCOOL ni sels d'aluminium agressifs. Ils respectent la peau fragile des aisselles et n'aggravent pas l'hyperpigmentation.",
+  gommage: "Les exfoliants éliminent les cellules mortes en surface. Le sucre est doux et fond dans l'eau (pas d'irritation), tandis que le marc de café stimule la microcirculation.",
+  spf: "La protection solaire est ESSENTIELLE même sur peau noire. Au Cameroun, l'ensoleillement est intense toute l'année. Sans SPF, les taches noires reviennent et la peau vieillit prématurément.",
+  pieds: "Ces crèmes contiennent de l'URÉE (10-25%) qui exfolie la corne et hydrate en profondeur, ainsi que du PANTHÉNOL réparateur.",
+  anti_cellulite: "La caféine en application locale améliore la microcirculation et aide à déstocker les graisses. Le massage circulaire (le plus important !) stimule le drainage lymphatique."
+};
+
+// Composant : Affiche une liste de produits avec budgets
+function ProductList({ category, budgetPref, count = 5 }) {
+  const products = BB_PRODUCTS[category];
+  if (!products) return null;
+
+  // Affiche selon le budget préféré
+  const budgets = budgetPref === "premium" ? ["eco", "med", "premium"] : budgetPref === "med" ? ["eco", "med"] : ["eco"];
+  const explanation = BB_PRODUCT_EXPLAINS[category];
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic", marginBottom: 8 }}>
+        ⚠️ Choisis 1 ou 2 produits dans cette liste (pas tous !)
+      </div>
+      {budgets.map(b => {
+        const list = products[b] || [];
+        if (list.length === 0) return null;
+        const label = b === "eco" ? "💰 Économique" : b === "med" ? "💰💰 Moyen" : "💰💰💰 Premium";
+        return (
+          <div key={b} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{label}</div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+              {list.slice(0, count).map((p, i) => (
+                <li key={i}>
+                  <strong>{p.name}</strong> ({p.lieu})
+                  {p.note && <span style={{ color: CC.rose, fontStyle: "italic" }}> — {p.note}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      {explanation && (
+        <div style={{ marginTop: 10, padding: 10, background: "#fdf8f8", borderLeft: "3px solid " + CC.rose, borderRadius: 4 }}>
+          <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold", marginBottom: 4 }}>🔬 POURQUOI ces produits</div>
+          <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{explanation}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// COMPOSANT PRINCIPAL — Affichage du diagnostic complet
+function BodyDiagnosticResult({ result, onBack }) {
+  if (!result) return null;
+  const { skinType, profile, objectives, problems, lifestyle } = result;
+  const isMale = profile?.gender === "homme";
+  const budgetPref = lifestyle?.budget || "med";
+  const isPregnant = profile?.pregnancy === "enceinte" || profile?.pregnancy === "allaite";
+
+  // Mappings utiles
+  const ageLabels = { "18-25": "18-25 ans", "26-35": "26-35 ans", "36-45": "36-45 ans", "46+": "46 ans et +" };
+  const toneLabels = { ebene: "Ébène", fonce: "Foncé", metisse: "Métissé / Caramel", clair: "Clair", tres_clair: "Très clair" };
+
+  // Génère les priorités d'après les objectifs choisis
+  function getPriorityText(objId) {
+    const map = {
+      eclat: "Retrouver l'éclat naturel de ta peau",
+      unifier: "Unifier ton teint (réduire les taches noires)",
+      depigmentation: "Traiter les taches de dépigmentation",
+      demangeaisons: "Apaiser les démangeaisons",
+      hydratation: "Hydrater profondément ta peau",
+      adoucir: "Adoucir et lisser ta peau",
+      acne: "Stopper l'acné corporelle",
+      vergetures: "Atténuer les vergetures",
+      cellulite: "Réduire la cellulite",
+      preparer: "Préparer ta peau pour ton événement",
+      pieds: "Réparer tes pieds et talons",
+      raffermir: "Raffermir ta peau"
+    };
+    return map[objId] || objId;
+  }
+
+  // Style commun
+  const Section = ({ title, color, children }) => (
+    <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: "bold", color: color || CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+      <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+        <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+        <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🌟 Ton diagnostic</div>
+      </div>
+
+      <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+
+        {/* Hero */}
+        <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton diagnostic personnalisé</div>
+          <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
+          <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto" }}>{skinType.desc}</div>
+        </div>
+
+        {/* PROFIL */}
+        <Section title="👤 Ton profil" color={CC.noir}>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            <div><strong>Genre :</strong> {isMale ? "Homme" : "Femme"}</div>
+            <div><strong>Âge :</strong> {ageLabels[profile?.age] || "—"}</div>
+            <div><strong>Teint :</strong> {toneLabels[profile?.skin_tone] || "—"}</div>
+            <div><strong>Type de peau :</strong> {skinType.name}</div>
+            {isPregnant && <div style={{ marginTop: 8, padding: 8, background: "#fff8e1", borderLeft: "3px solid #f5a623", borderRadius: 4, fontSize: 12 }}>🤰 Tes recommandations sont adaptées à ta grossesse / allaitement (pas de rétinol, pas d'acide salicylique fort, pas de glutathion).</div>}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginBottom: 6 }}>🎯 Tes objectifs</div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+              {objectives.map(o => <li key={o}>{getPriorityText(o)}</li>)}
+            </ul>
+          </div>
+        </Section>
+
+        {/* CE QUI SE PASSE */}
+        <Section title="📊 Ce qui se passe sur ta peau">
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            {generateExplanation(skinType, profile, problems, lifestyle)}
+          </div>
+        </Section>
+
+        {/* PLAN D'ACTION */}
+        <Section title="🎯 Ton plan d'action en 3 priorités">
+          {objectives.slice(0, 3).map((o, i) => (
+            <div key={o} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: i < Math.min(objectives.length, 3) - 1 ? "1px solid " + CC.border : "none" }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>
+                {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} Priorité {i + 1} — {getPriorityText(o)}
+              </div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>{getPriorityDesc(o, skinType.code)}</div>
+            </div>
+          ))}
+        </Section>
+
+        {/* ROUTINE QUOTIDIENNE */}
+        <Section title="🛁 Ta routine quotidienne" color={CC.rose}>
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 14 }}>Adaptée à ta peau {skinType.name.toLowerCase()} et à tes objectifs</div>
+
+          {/* MATIN */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>☀️ MATIN</div>
+            
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Gel douche</div>
+              <ProductList category={problems.includes("acne_corps") ? "gel_douche_acne" : "gel_douche_normal"} budgetPref={budgetPref} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>2. Lotion hydratante</div>
+              <ProductList category={skinType.code === "seche" ? "lotion_seche" : "lotion_normale"} budgetPref={budgetPref} />
+            </div>
+
+            {(problems.includes("hyperpigmentation") || problems.includes("aisselles")) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>3. Déodorant doux (sans alcool)</div>
+                <ProductList category="deodorant" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{problems.includes("hyperpigmentation") ? "4" : "3"}. Protection solaire ⚠️ ESSENTIEL</div>
+              <ProductList category="spf" budgetPref={budgetPref} />
+            </div>
+          </div>
+
+          {/* SOIR */}
+          <div style={{ marginBottom: 6 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>🌙 SOIR</div>
+            
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Douche tiède + gel doux</div>
+              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>Utilise les mêmes gels douche que le matin. Évite l'eau brûlante, elle assèche la peau.</div>
+            </div>
+
+            {(objectives.includes("vergetures") || problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")) && !isPregnant && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>2. Soin anti-vergetures</div>
+                <ProductList category="anti_vergetures" budgetPref={budgetPref} />
+                <div style={{ marginTop: 8, padding: 8, background: "#fff", borderLeft: "3px solid " + CC.rose, borderRadius: 4, fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>💡 Application : Masse en cercles pendant 2 minutes — c'est le massage qui aide la peau à reformer ses fibres de collagène.</div>
+              </div>
+            )}
+
+            {(objectives.includes("unifier") || problems.includes("taches_noires") || problems.includes("hyperpigmentation")) && !isPregnant && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>3. Soin anti-taches / unification du teint</div>
+                <ProductList category="anti_taches" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{(objectives.includes("vergetures") || problems.includes("vergetures_rouges")) ? "4" : "2"}. Crème / beurre nourrissant</div>
+              <ProductList category={skinType.code === "seche" ? "lotion_seche" : "lotion_normale"} budgetPref={budgetPref} />
+            </div>
+          </div>
+        </Section>
+
+        {/* SOINS HEBDOMADAIRES */}
+        <Section title="📅 Soins hebdomadaires (1-2 fois / semaine)">
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>✨ Gommage corps</div>
+            <ProductList category="gommage" budgetPref={budgetPref} />
+          </div>
+        </Section>
+
+        {/* SOINS CIBLÉS PAR PROBLÈME */}
+        {problems.length > 0 && !problems.includes("aucun") && (
+          <Section title="🎯 Soins ciblés pour tes problèmes">
+            {problems.filter(p => p !== "aucun").map(pid => {
+              const p = BB_PROBLEMS.find(x => x.id === pid);
+              if (!p) return null;
+              const targetedAdvice = getTargetedAdvice(pid, skinType.code, isPregnant);
+              return (
+                <div key={pid} style={{ marginBottom: 18, paddingBottom: 14, borderBottom: "1px solid " + CC.border }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>{p.emoji} {p.label}</div>
+                  {targetedAdvice && (
+                    <>
+                      <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6, marginBottom: 8 }}><strong>💡 Pourquoi tu en as :</strong> {targetedAdvice.cause}</div>
+                      <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6, marginBottom: 6 }}><strong>✅ Tes solutions :</strong></div>
+                      {targetedAdvice.category && <ProductList category={targetedAdvice.category} budgetPref={budgetPref} />}
+                      {targetedAdvice.tips && (
+                        <ul style={{ margin: "8px 0 0", paddingLeft: 20, fontSize: 12, color: CC.textDim, lineHeight: 1.7 }}>
+                          {targetedAdvice.tips.map((tip, i) => <li key={i}>{tip}</li>)}
+                        </ul>
+                      )}
+                      {targetedAdvice.delai && <div style={{ marginTop: 8, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>⏱️ Résultats visibles : {targetedAdvice.delai}</div>}
+                      {targetedAdvice.eviter && <div style={{ marginTop: 6, fontSize: 12, color: "#dc3545", fontStyle: "italic" }}>⚠️ Évite : {targetedAdvice.eviter}</div>}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </Section>
+        )}
+
+        {/* À ÉVITER */}
+        <Section title="🚫 À éviter absolument" color="#dc3545">
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+            <li>❌ <strong>Hydroquinone</strong> (cancérigène potentiel)</li>
+            <li>❌ <strong>Mercure</strong> (dans certains produits non étiquetés)</li>
+            <li>❌ <strong>Glutathion injectable</strong> (effets secondaires graves)</li>
+            <li>❌ <strong>Corticoïdes sans ordonnance</strong> (Movate, etc.)</li>
+            <li>❌ Eau brûlante (assèche et irrite ta peau)</li>
+            <li>❌ Frotter avec gant kessa très fort</li>
+            <li>❌ Toucher / percer les boutons</li>
+            <li>❌ Produits "résultats en 7 jours" (mensonge)</li>
+          </ul>
+        </Section>
+
+        {/* OÙ ACHETER */}
+        <Section title="📍 Où acheter tes produits">
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>💊 Pharmacie</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Bio Oil, La Roche-Posay, Vichy, CeraVe, Cetaphil, Mustela, Avène, Eucerin, Bioderma</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>💄 Parfumerie</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Nivea, Mixa, Garnier, Dove, Le Petit Marseillais, Cottage, Sanex, Tree Hut, Eveline</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🛒 Supermarché / Superette</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Vaseline, Dove, Nivea basique, Lux, Dettol, Lifebuoy, Palmolive, Johnson's</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Marché traditionnel</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Beurre de karité pur, savon noir africain, huile de coco vierge, argile verte, miel, aloe vera</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🏪 Boutique cosmétique afro</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>HT26, Carotone, Bio Claire, Fair & White, QEI+, Eveline, Pr. Françoise Bedon</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* RÉSULTATS ATTENDUS */}
+        <Section title="⏱️ Tes résultats attendus" color={CC.rose}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 2 semaines</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Peau plus douce, mieux hydratée, moins inconfortable</div>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 1 mois</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Premiers résultats visibles : éclat, baisse de l'acné, taches qui s'estompent</div>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 2-3 mois</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Résultats nets : teint unifié, vergetures rouges atténuées, acné contrôlée</div>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 6 mois</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Peau transformée, teint éclatant, problèmes anciens largement réduits</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* CONSEILS PRO */}
+        <Section title="💎 Mes 5 conseils pro pour toi" color="#c9952a">
+          <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+            <li><strong>La constance avant l'intensité.</strong> 5 min par jour vaut mieux qu'1h le dimanche.</li>
+            <li><strong>Hydrate-toi de l'intérieur.</strong> Bois 2 litres d'eau par jour, ta peau te dira merci.</li>
+            <li><strong>Crème solaire OBLIGATOIRE</strong> même peau noire. Le soleil camerounais empire les taches.</li>
+            <li><strong>Patience.</strong> Ta peau se renouvelle tous les 28 jours. Donne-lui le temps.</li>
+            <li><strong>Évite les "miracles 7 jours"</strong> — c'est faux et souvent dangereux.</li>
+          </ol>
+        </Section>
+
+        <div style={{ marginTop: 24, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>💪 Tu peux le faire !</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", lineHeight: 1.6 }}>La constance est la clé. Tes résultats arrivent.</div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// HELPER : Génère le texte explicatif
+function generateExplanation(skinType, profile, problems, lifestyle) {
+  const parts = [];
+  
+  // Type de peau
+  if (skinType.code === "seche") {
+    parts.push("Ta peau corporelle manque de gras et d'eau. Elle se déshydrate facilement et a du mal à retenir l'humidité.");
+  } else if (skinType.code === "grasse") {
+    parts.push("Ton corps produit beaucoup de sébum, surtout sur le dos et la poitrine. C'est ce qui explique l'aspect brillant et parfois les boutons.");
+  } else if (skinType.code === "mixte") {
+    parts.push("Ta peau combine deux défis : certaines zones (souvent dos, poitrine) sont grasses, tandis que d'autres (jambes, bras) sont sèches.");
+  } else if (skinType.code === "sensible") {
+    parts.push("Ta peau est fine et réactive. Elle se défend en rougissant ou en démangeant face aux agressions.");
+  } else {
+    parts.push("Ta peau est globalement équilibrée — c'est une bonne base de travail !");
+  }
+
+  // Climat camerounais
+  parts.push("Au Cameroun, le climat chaud et humide amplifie la transpiration et la production de sébum. C'est pour ça qu'une routine adaptée est essentielle.");
+
+  // Problèmes spécifiques
+  if (problems.includes("acne_corps")) {
+    parts.push("Pour ton acné dorsale : la transpiration combinée aux frottements des vêtements bouche les pores et nourrit les bactéries.");
+  }
+  if (problems.includes("vergetures_rouges")) {
+    parts.push("Bonne nouvelle pour tes vergetures rouges : elles sont récentes et réagissent BIEN aux soins. Une fois blanches, ce sera beaucoup plus difficile. Donc maintenant !");
+  }
+  if (problems.includes("hyperpigmentation")) {
+    parts.push("Pour l'hyperpigmentation aux aisselles / coudes / genoux : c'est le frottement répété + le rasage + parfois les déodorants à l'alcool qui assombrissent ces zones.");
+  }
+  if (problems.includes("taches_noires")) {
+    if (profile?.skin_tone === "metisse" || profile?.skin_tone === "fonce" || profile?.skin_tone === "ebene") {
+      parts.push("Sur ton teint, la peau pigmente fortement après chaque blessure / bouton. C'est un mécanisme naturel de protection mais qui prend du temps à s'effacer.");
+    }
+  }
+
+  return parts.join(" ");
+}
+
+// HELPER : Description de la priorité
+function getPriorityDesc(objId, skinCode) {
+  const map = {
+    eclat: "Une peau lumineuse vient d'une bonne hydratation + exfoliation régulière + protection solaire. Tu en seras récompensée en quelques semaines.",
+    unifier: "Pour unifier le teint, il faut d'abord stopper toute nouvelle pigmentation (protection solaire), puis traiter les taches existantes avec des actifs comme la niacinamide ou la vitamine C.",
+    depigmentation: "Les taches blanches (vitiligo, pityriasis) demandent un avis médical en plus des soins cosmétiques. On va t'orienter vers des produits qui apaisent.",
+    demangeaisons: "Les démangeaisons viennent souvent d'une peau sèche ou d'une réaction. On va apaiser et reconstruire ta barrière cutanée.",
+    hydratation: "L'hydratation est la BASE de toute belle peau. Sans hydratation, aucun autre soin ne fonctionne bien.",
+    adoucir: "Une peau lisse vient de l'exfoliation régulière + d'une bonne hydratation. Constance = succès.",
+    acne: "Avant de traiter les taches d'acné, il faut empêcher de nouveaux boutons d'apparaître. Sinon tu soignes en boucle.",
+    vergetures: "Les vergetures rouges réagissent BIEN aux soins. Les blanches sont plus difficiles. Donc commence MAINTENANT.",
+    cellulite: "La cellulite se traite par MASSAGE (le plus important !) + soins drainants + activité physique. Pas de miracle sans effort.",
+    preparer: "Pour un événement, il faut commencer 2-3 mois à l'avance pour que ta peau soit au top le jour J.",
+    pieds: "Des pieds secs et crevassés s'améliorent VITE avec un bon soin (urée + occlusion la nuit avec chaussettes). Tu verras la différence en 1-2 semaines.",
+    raffermir: "Pour raffermir, il faut combiner soins toniques + activité physique + hydratation profonde. La peau a besoin de temps pour reformer ses fibres."
+  };
+  return map[objId] || "Suivez votre routine et soyez patiente.";
+}
+
+// HELPER : Conseils ciblés par problème
+function getTargetedAdvice(pid, skinCode, isPregnant) {
+  const map = {
+    acne_corps: {
+      cause: "Sébum + transpiration + vêtements serrés bouchent les pores. La chaleur du Cameroun amplifie ça.",
+      category: "anti_acne_dos",
+      tips: ["Vêtements amples en coton", "Lave tes draps 1x/semaine", "Évite les sacs à dos lourds longtemps", "Douche après le sport"],
+      delai: "4-8 semaines",
+      eviter: "produits gras sur le dos, soutien-gorge sport synthétique mouillé"
+    },
+    taches_noires: {
+      cause: "Ta peau pigmente fortement après chaque bouton ou blessure (mélanine en excès).",
+      category: isPregnant ? null : "anti_taches",
+      tips: isPregnant ? ["Aloe vera pur (sans danger)", "Citron + miel maison 2x/semaine", "Protection solaire essentielle"] : ["Application le soir uniquement", "Toujours protection solaire le matin"],
+      delai: "2-3 mois minimum",
+      eviter: "exposition au soleil sans protection"
+    },
+    cicatrices_corps: {
+      cause: "Les cicatrices anciennes sont des marques permanentes du collagène. On peut les estomper, pas les effacer totalement.",
+      category: "anti_taches",
+      tips: ["Bio Oil ou huile rose musquée 2x/jour", "Massage circulaire 2 minutes", "Patience"],
+      delai: "3-6 mois",
+      eviter: "exposer cicatrices au soleil"
+    },
+    hyperpigmentation: {
+      cause: "Frottement + rasage + déodorants à l'alcool assombrissent ces zones.",
+      category: "deodorant",
+      tips: ["Citron + miel maison 2-3x/sem", "Bicarbonate + eau de rose 1-2x/sem", "Crème dépilatoire au lieu du rasoir"],
+      delai: "6-12 semaines de patience",
+      eviter: "déodorants à l'alcool, rasage à sec"
+    },
+    vergetures_rouges: {
+      cause: "Étirement rapide de la peau (prise/perte de poids, croissance, sport).",
+      category: "anti_vergetures",
+      tips: ["Bio Oil + beurre de karité 2x/jour", "Massage circulaire 2 minutes", "Persévérance pendant 3 mois minimum"],
+      delai: "60-70% atténuées en 3 mois",
+      eviter: "exposition solaire des vergetures rouges"
+    },
+    vergetures_blanches: {
+      cause: "Vergetures anciennes — fibres de collagène cicatrisées.",
+      category: "anti_vergetures",
+      tips: ["Bio Oil régulier", "Beurre de karité au quotidien", "Acceptation : ne disparaîtront jamais totalement, seulement s'estomper"],
+      delai: "Atténuation discrète sur 6 mois",
+      eviter: "promesses de produits 'miracle' qui les feraient disparaître"
+    },
+    cellulite: {
+      cause: "Stockage de graisse dans les hypoderme + mauvaise circulation lymphatique.",
+      category: "anti_cellulite",
+      tips: ["Massage palper-rouler 5 min/jour", "Brosse de massage à sec", "Hydratation 2L/jour", "Activité physique régulière"],
+      delai: "8-12 semaines d'effort constant",
+      eviter: "produits miracles seuls (sans massage ni sport)"
+    },
+    pieds_sombres: {
+      cause: "Frottement + déshydratation + cellules mortes accumulées.",
+      category: "pieds",
+      tips: ["Bain de pieds 10 min eau tiède + sel", "Pierre ponce 2x/sem", "Crème + chaussettes la nuit"],
+      delai: "2-4 semaines",
+      eviter: "marcher pieds nus longtemps sur sol rugueux"
+    },
+    peau_terne: {
+      cause: "Cellules mortes accumulées + déshydratation + manque d'éclat.",
+      category: "gommage",
+      tips: ["Gommage 2x/semaine", "Hydratation tous les jours", "Boire 2L d'eau"],
+      delai: "2-3 semaines"
+    },
+    melasma: {
+      cause: "Hormones (grossesse, contraceptifs) + soleil intense activent la mélanine.",
+      category: isPregnant ? null : "anti_taches",
+      tips: ["SPF 50+ TOUS LES JOURS (essentiel)", "Niacinamide ou vitamine C en sérum", "Si grossesse : juste hydratation + soleil"],
+      delai: "3-6 mois",
+      eviter: "soleil sans protection (annule tout le travail)"
+    },
+    taches_blanches: {
+      cause: "Peut être pityriasis versicolor (champignon) ou vitiligo (auto-immune).",
+      tips: ["Consulte un dermatologue pour diagnostic précis", "Si pityriasis : Ketoderm crème (pharmacie)", "Si vitiligo : pas de cure, mais maquillage corps + protection solaire"],
+      delai: "Selon diagnostic médical",
+      eviter: "auto-traitement avant diagnostic"
+    },
+    quintox: {
+      cause: "Réaction allergique ou irritation chronique. La peau pèle et démange.",
+      category: "lotion_seche",
+      tips: ["Identifie le produit déclencheur (savon, lessive, etc.)", "Crème apaisante au cold cream", "Consulte si persiste"],
+      delai: "1-3 semaines après arrêt du déclencheur",
+      eviter: "produits parfumés, savons agressifs"
+    },
+    dartres: {
+      cause: "Plaques sèches dues à carence en gras et eau.",
+      category: "lotion_seche",
+      tips: ["Crème grasse 2x/jour", "Bain à l'eau tiède (pas chaud)", "Pas de savon agressif"],
+      delai: "2-4 semaines"
+    },
+    veines: {
+      cause: "Faiblesse de la circulation veineuse aux jambes.",
+      tips: ["Surélève les jambes 15 min/jour", "Marche, vélo, natation", "Évite stations debout prolongées", "Crèmes à base de marron d'Inde"],
+      delai: "Amélioration progressive sur 3-6 mois",
+      eviter: "talons hauts permanents, vêtements trop serrés aux cuisses"
+    },
+    mains_seches: {
+      cause: "Lavages fréquents + détergents + air sec.",
+      category: "lotion_seche",
+      tips: ["Crème mains après chaque lavage", "Gants pour vaisselle/ménage", "Crème mains la nuit"],
+      delai: "1-2 semaines"
+    },
+    demangeaisons: {
+      cause: "Peau sèche + agression (savon, parfum, climat).",
+      category: "lotion_seche",
+      tips: ["Hydratation 2x/jour avec produit sans parfum", "Évite eau brûlante", "Vêtements en coton"],
+      delai: "1-2 semaines"
+    },
+    coups_soleil: {
+      cause: "Exposition prolongée sans protection.",
+      category: "spf",
+      tips: ["SPF 50+ tous les jours", "Réapplication toutes les 2h en extérieur", "Aloe vera pur sur coup de soleil"],
+      delai: "Prévention = immédiate",
+      eviter: "exposition entre 11h et 15h"
+    },
+    mycoses: {
+      cause: "Champignons entre les orteils dûs à humidité + chaleur.",
+      tips: ["Sèche bien tes pieds après douche", "Ketoderm ou Daktarin (pharmacie)", "Chaussettes en coton", "Alterne tes chaussures"],
+      delai: "2-4 semaines de traitement",
+      eviter: "marcher pieds nus dans les piscines / douches publiques"
+    },
+    poils_incarnes: {
+      cause: "Poils qui repoussent sous la peau au lieu de sortir (rasage / épilation agressive).",
+      category: "gommage",
+      tips: ["Gommage doux 2x/semaine", "Crème dépilatoire au lieu du rasoir", "Évite les vêtements trop serrés"],
+      delai: "Prévention = immédiate",
+      eviter: "rasage à sec, épilation à la pince"
+    }
+  };
+  return map[pid] || null;
+}
+
 
 // ═══════════════════════════════════════════════
 // GARDE LA LIGNE — COMPOSANT QUIZ
@@ -5042,11 +5916,13 @@ export default function App() {
   const [bfPaymentMethod, setBfPaymentMethod] = useState(null);
   const [bfShowGift, setBfShowGift] = useState(false);
 
-  // ─── BEAUTÉ CORPORELLE STATES ───
-  const [bbStep, setBbStep] = useState(1); // 1=type, 2=problemes, 3=lifestyle, 4=suspense, 5=paiement, 6=resultat
-  const [bbTypeAnswers, setBbTypeAnswers] = useState([]); // 3 réponses A/B/C/D
-  const [bbProblems, setBbProblems] = useState([]); // cases cochées
-  const [bbLifestyle, setBbLifestyle] = useState({ age: null, sun: null, scrub: null });
+  // ─── BEAUTÉ CORPORELLE STATES (refonte v2 — Mai 2026) ───
+  const [bbStep, setBbStep] = useState(0); // 0=intro, 1=profil, 2=objectifs, 3=typepeau, 4=problemes, 5=lifestyle, 6=suspense, 7=paiement, 8=resultat
+  const [bbProfile, setBbProfile] = useState({ gender: null, age: null, skin_tone: null, pregnancy: null });
+  const [bbObjectives, setBbObjectives] = useState([]); // 1-3 objectifs
+  const [bbTypeAnswers, setBbTypeAnswers] = useState({}); // Map id => value (morning, after_shower, touch, hydration)
+  const [bbProblems, setBbProblems] = useState([]); // cases cochées (problèmes)
+  const [bbLifestyle, setBbLifestyle] = useState({ water: null, sun: null, sport: null, sleep: null, allergies: null, preference: null, routine_time: null, budget: null });
   const [bbResult, setBbResult] = useState(null);
   const [bbPaymentStep, setBbPaymentStep] = useState(1);
   const [bbPaymentPhone, setBbPaymentPhone] = useState("");
@@ -8545,6 +9421,8 @@ export default function App() {
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 bbStep={bbStep} setBbStep={setBbStep}
+                bbProfile={bbProfile} setBbProfile={setBbProfile}
+                bbObjectives={bbObjectives} setBbObjectives={setBbObjectives}
                 bbTypeAnswers={bbTypeAnswers} setBbTypeAnswers={setBbTypeAnswers}
                 bbProblems={bbProblems} setBbProblems={setBbProblems}
                 bbLifestyle={bbLifestyle} setBbLifestyle={setBbLifestyle}
