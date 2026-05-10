@@ -2164,7 +2164,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
   }
 
   function startLine() {
-    setLgStep(1);
+    setLgStep(0);
     setLgData({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
     setCarryCarePage("lineQuiz");
   }
@@ -7267,416 +7267,595 @@ function getTargetedAdvice(pid, skinCode, isPregnant) {
 // ═══════════════════════════════════════════════
 // GARDE LA LIGNE — COMPOSANT QUIZ
 // ═══════════════════════════════════════════════
-function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLgData, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift, beautyQuizPrice, books, setSelectedBook }) {
+
+// ═══════════════════════════════════════════════════
+// GARDE LA LIGNE — DONNÉES (refonte v2 — Mai 2026)
+// Quiz éducatif et sécurisé sur la nutrition
+// ═══════════════════════════════════════════════════
+
+const LG_OBJECTIVES = [
+  { id: "sante", emoji: "💚", label: "Améliorer ma santé globale", desc: "Manger mieux, me sentir mieux" },
+  { id: "maintenir", emoji: "⚖️", label: "Maintenir mon poids actuel", desc: "Stabiliser et bien manger" },
+  { id: "perdre", emoji: "🎯", label: "Perdre du poids progressivement", desc: "0,5-1 kg/semaine maximum" },
+  { id: "prendre", emoji: "💪", label: "Prendre du poids sainement", desc: "Reprendre des forces" },
+  { id: "sportif", emoji: "🏃", label: "Soutenir mon activité sportive", desc: "Performance + récupération" },
+  { id: "famille", emoji: "👨‍👩‍👧", label: "Conseils famille / enfants", desc: "Éducation nutritionnelle" }
+];
+
+const LG_ACTIVITY_LEVELS = [
+  { id: "sedentaire", emoji: "🪑", label: "Sédentaire", desc: "Bureau, peu de marche, pas de sport", factor: 1.2 },
+  { id: "leger", emoji: "🚶", label: "Activité légère", desc: "Marche quotidienne, sport 1-2x/sem", factor: 1.375 },
+  { id: "modere", emoji: "🏃", label: "Activité modérée", desc: "Sport 3-4x/sem, métier physique léger", factor: 1.55 },
+  { id: "intense", emoji: "🏋️", label: "Activité intense", desc: "Sport 5-6x/sem, métier physique", factor: 1.725 },
+  { id: "tres_intense", emoji: "💪", label: "Très intense", desc: "Sport quotidien, athlète", factor: 1.9 }
+];
+
+// ═══════════════════════════════════════════════════
+// QUIZ GARDE LA LIGNE — COMPOSANT (refonte)
+// ═══════════════════════════════════════════════════
+function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, setLgProfile, lgObjective, setLgObjective, lgConditions, setLgConditions, lgHabits, setLgHabits, lgActivity, setLgActivity, lgResult, setLgResult, beautyQuizPrice, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [lgStep, lgPaymentStep]);
 
-  // ANIMATION CADEAU (après paiement, avant résultat)
+  // ANIMATION CADEAU
   if (lgShowGift) {
     return (
-      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20, position: "relative", overflow: "hidden" }}>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
         <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
-        <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a", marginBottom: 8, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2s forwards", opacity: 0 }}>✨ Voici ton plan ✨</div>
-        <div style={{ fontSize: 14, color: "#666", textAlign: "center", animation: "fadeInUp 0.6s ease-out 2.2s forwards", opacity: 0 }}>Préparé spécialement pour toi</div>
-        <style>{`
-          @keyframes giftShake { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
-          @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }
-          @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        `}</style>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>✨ Voici ton plan nutrition ✨</div>
+        <div style={{ fontSize: 14, color: CC.textDim, textAlign: "center" }}>Préparé spécialement pour toi</div>
+        <style>{`@keyframes giftShake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }`}</style>
       </div>
     );
   }
 
-  // Couleurs Garde la Ligne (palette verte)
-  const LG = {
-    blanc: "#fdfdf9",
-    fond: "#f0fdf4",
-    vert: "#4caf50",
-    vertDeep: "#2e7d32",
-    border: "#d4e8d6",
-    noir: "#1a1a1a",
-    textDim: "#555",
-    textFaint: "#888"
-  };
+  // CALCULATEUR — Mifflin-St Jeor (formule scientifique)
+  function calculateBMR() {
+    const { gender, age, height, weight } = lgProfile;
+    if (!gender || !age || !height || !weight) return 0;
+    if (gender === "homme") {
+      return Math.round(10 * weight + 6.25 * height - 5 * age + 5);
+    } else {
+      return Math.round(10 * weight + 6.25 * height - 5 * age - 161);
+    }
+  }
+  function calculateTDEE() {
+    const bmr = calculateBMR();
+    const activity = LG_ACTIVITY_LEVELS.find(a => a.id === lgActivity.activity_level);
+    if (!bmr || !activity) return 0;
+    return Math.round(bmr * activity.factor);
+  }
+  function calculateBMI() {
+    const { height, weight } = lgProfile;
+    if (!height || !weight) return 0;
+    const h = height / 100;
+    return (weight / (h * h)).toFixed(1);
+  }
+  function getBMICategory(bmi) {
+    const b = parseFloat(bmi);
+    if (b < 18.5) return { label: "Insuffisance pondérale", color: "#ff9800", advice: "Tu pourrais bénéficier de prendre un peu de poids sainement." };
+    if (b < 25) return { label: "Poids normal", color: "#4caf50", advice: "Tu es dans la zone de poids santé. Continue comme ça !" };
+    if (b < 30) return { label: "Surpoids", color: "#ff9800", advice: "Une perte de poids modérée pourrait améliorer ta santé." };
+    return { label: "Obésité", color: "#f44336", advice: "Une consultation médicale est recommandée pour un suivi adapté." };
+  }
+
+  // Recommandation calorique selon objectif
+  function getRecommendedCalories() {
+    const tdee = calculateTDEE();
+    if (!tdee) return 0;
+    if (lgObjective === "perdre") return Math.max(1500, tdee - 400); // Déficit modéré, jamais < 1500
+    if (lgObjective === "prendre") return tdee + 400;
+    if (lgObjective === "sportif") return tdee + 200;
+    return tdee; // maintenir, sante
+  }
 
   // Header commun
   const Header = ({ title, onBack }) => (
-    <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", padding: "12px 16px", borderBottom: "1px solid " + LG.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
-      <button onClick={onBack} style={{ background: LG.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
-      <div style={{ fontSize: 15, fontWeight: "bold", color: LG.noir, flex: 1, textAlign: "center" }}>⚖️ {title}</div>
+    <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+      <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🥗 {title}</div>
     </div>
   );
 
-  // ÉTAPE 1 — Genre + Objectif (+ kg si perdre/prendre)
-  if (lgStep === 1) {
-    const selectedObj = LIGNE_OBJECTIFS.find(o => o.id === lgData.objectif);
-    const needsKg = selectedObj && selectedObj.needsKg;
-    const canContinue = lgData.genre && lgData.objectif && (!needsKg || (lgData.kg && lgData.kg > 0));
-
-    return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Garde la Ligne" onBack={() => { setCarryCarePage("home"); setLgStep(1); }} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 1 / 6</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Quel est ton objectif ?</div>
-          </div>
-
-          {/* GENRE */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>Tu es...</div>
-            <div style={{ display: "flex", gap: 10 }}>
-              {[{ v: "femme", label: "👩 Femme" }, { v: "homme", label: "👨 Homme" }].map(opt => (
-                <button key={opt.v} onClick={() => setLgData({ ...lgData, genre: opt.v })}
-                  style={{ flex: 1, padding: 14, border: "1.5px solid " + (lgData.genre === opt.v ? LG.vert : LG.border), borderRadius: 10, background: lgData.genre === opt.v ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 14, cursor: "pointer", fontWeight: lgData.genre === opt.v ? "bold" : "normal" }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* OBJECTIF */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>Mon objectif</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {LIGNE_OBJECTIFS.map(obj => (
-                <button key={obj.id} onClick={() => setLgData({ ...lgData, objectif: obj.id })}
-                  style={{ padding: 12, border: "1.5px solid " + (lgData.objectif === obj.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.objectif === obj.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 24 }}>{obj.emoji}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: "bold", marginBottom: 2 }}>{obj.title}</div>
-                    <div style={{ fontSize: 11, color: LG.textFaint }}>{obj.subtitle}</div>
-                  </div>
-                  {lgData.objectif === obj.id && <span style={{ color: LG.vert, fontSize: 18 }}>✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* COMBIEN DE KG (si perdre ou prendre) */}
-          {needsKg && (
-            <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>
-                Combien de kilos veux-tu {lgData.objectif === "perdre" ? "perdre" : "prendre"} ?
-              </div>
-              <input type="number" min="1" max="30" value={lgData.kg || ""} onChange={e => setLgData({ ...lgData, kg: parseInt(e.target.value) || 0 })}
-                placeholder="Ex : 5" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-              <div style={{ fontSize: 11, color: LG.textFaint, marginTop: 8, textAlign: "center" }}>Entre 1 et 30 kg (au-delà, consulte un médecin)</div>
-            </div>
-          )}
-
-          <button onClick={() => canContinue && setLgStep(2)} disabled={!canContinue}
-            style={{ width: "100%", padding: 16, background: canContinue ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: canContinue ? "pointer" : "not-allowed", marginTop: 10 }}>
-            {canContinue ? "Suivant — Mon profil ✨" : "Remplis tous les champs"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ÉTAPE 2 — Profil (poids, taille, âge)
-  if (lgStep === 2) {
-    const canContinue = lgData.poids && lgData.poids > 0 && lgData.taille && lgData.taille > 0 && lgData.age && lgData.age > 0;
-    return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Mon profil" onBack={() => setLgStep(1)} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 2 / 6</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Tes données de base</div>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Pour calculer tes besoins en calories</div>
-          </div>
-
-          {/* POIDS */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>⚖️ Mon poids actuel (kg)</div>
-            <input type="number" min="30" max="250" value={lgData.poids || ""} onChange={e => setLgData({ ...lgData, poids: parseInt(e.target.value) || 0 })}
-              placeholder="Ex : 65" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-          </div>
-
-          {/* TAILLE */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>📏 Ma taille (cm)</div>
-            <input type="number" min="120" max="220" value={lgData.taille || ""} onChange={e => setLgData({ ...lgData, taille: parseInt(e.target.value) || 0 })}
-              placeholder="Ex : 165" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-          </div>
-
-          {/* ÂGE */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>🎂 Mon âge</div>
-            <input type="number" min="15" max="100" value={lgData.age || ""} onChange={e => setLgData({ ...lgData, age: parseInt(e.target.value) || 0 })}
-              placeholder="Ex : 28" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border, borderRadius: 10, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-          </div>
-
-          <button onClick={() => canContinue && setLgStep(3)} disabled={!canContinue}
-            style={{ width: "100%", padding: 16, background: canContinue ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: canContinue ? "pointer" : "not-allowed", marginTop: 10 }}>
-            {canContinue ? "Suivant — Mon activité ✨" : "Remplis tous les champs"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ÉTAPE 3 — Niveau d'activité
-  if (lgStep === 3) {
-    return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Mon activité physique" onBack={() => setLgStep(2)} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 3 / 6</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Mon niveau d'activité</div>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Pour ajuster tes besoins en calories</div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-            {LIGNE_ACTIVITE.map(act => (
-              <button key={act.id} onClick={() => setLgData({ ...lgData, activite: act.id })}
-                style={{ padding: 14, border: "1.5px solid " + (lgData.activite === act.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.activite === act.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 28 }}>{act.emoji}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: "bold", marginBottom: 2 }}>{act.label}</div>
-                  <div style={{ fontSize: 11, color: LG.textFaint }}>{act.desc}</div>
-                </div>
-                {lgData.activite === act.id && <span style={{ color: LG.vert, fontSize: 18 }}>✓</span>}
-              </button>
-            ))}
-          </div>
-
-          <button onClick={() => lgData.activite && setLgStep(4)} disabled={!lgData.activite}
-            style={{ width: "100%", padding: 16, background: lgData.activite ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: lgData.activite ? "pointer" : "not-allowed" }}>
-            {lgData.activite ? "Suivant — Mes habitudes ✨" : "Choisis ton niveau"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ÉTAPE 4 — Habitudes alimentaires
-  if (lgStep === 4) {
-    const canContinue = lgData.repas && lgData.eau && lgData.sucre;
-    return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Mes habitudes" onBack={() => setLgStep(3)} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 4 / 6</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Mes habitudes alimentaires</div>
-          </div>
-
-          {/* REPAS PAR JOUR */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>🍽️ Combien de repas par jour ?</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {LIGNE_REPAS_FREQ.map(opt => (
-                <button key={opt.id} onClick={() => setLgData({ ...lgData, repas: opt.id })}
-                  style={{ padding: 12, border: "1.5px solid " + (lgData.repas === opt.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.repas === opt.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* EAU */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>💧 Combien d'eau par jour ?</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {LIGNE_EAU.map(opt => (
-                <button key={opt.id} onClick={() => setLgData({ ...lgData, eau: opt.id })}
-                  style={{ padding: 12, border: "1.5px solid " + (lgData.eau === opt.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.eau === opt.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* SUCRE / BOISSONS SUCRÉES */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>🍬 Tu consommes du sucre / sodas ?</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {LIGNE_SUCRE.map(opt => (
-                <button key={opt.id} onClick={() => setLgData({ ...lgData, sucre: opt.id })}
-                  style={{ padding: 12, border: "1.5px solid " + (lgData.sucre === opt.id ? LG.vert : LG.border), borderRadius: 10, background: lgData.sucre === opt.id ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={() => canContinue && setLgStep(5)} disabled={!canContinue}
-            style={{ width: "100%", padding: 16, background: canContinue ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: canContinue ? "pointer" : "not-allowed" }}>
-            {canContinue ? "Suivant — Mes blocages ✨" : "Réponds à toutes les questions"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ÉTAPE 5 — Blocages (multi-sélection)
-  if (lgStep === 5) {
-    function toggleBlocage(id) {
-      const blocages = lgData.blocages || [];
-      if (blocages.includes(id)) setLgData({ ...lgData, blocages: blocages.filter(b => b !== id) });
-      else setLgData({ ...lgData, blocages: [...blocages, id] });
+  // Compteur de questions
+  const totalQuestions = 18;
+  function getCurrentQ() {
+    let n = 0;
+    if (lgStep >= 1) {
+      // Profil (5 questions)
+      if (lgProfile.gender) n++;
+      if (lgProfile.age) n++;
+      if (lgProfile.height) n++;
+      if (lgProfile.weight) n++;
+      if (lgProfile.family_size) n++;
     }
+    if (lgStep >= 2 && lgObjective) n++;
+    if (lgStep >= 3) {
+      // Conditions (3-4 questions selon profil)
+      if (lgConditions.pregnancy !== null) n++;
+      if (lgConditions.diabetes !== null) n++;
+      if (lgConditions.allergies !== null) n++;
+    }
+    if (lgStep >= 4) {
+      // Habitudes (5 questions)
+      if (lgHabits.meals_per_day) n++;
+      if (lgHabits.water) n++;
+      if (lgHabits.snacking) n++;
+      if (lgHabits.breakfast) n++;
+      if (lgHabits.fast_food) n++;
+    }
+    if (lgStep >= 5) {
+      // Activité (3 questions)
+      if (lgActivity.activity_level) n++;
+      if (lgActivity.sleep) n++;
+      if (lgActivity.stress) n++;
+    }
+    return n;
+  }
+  const ProgressBar = () => {
+    const current = getCurrentQ();
+    const pct = Math.min(100, Math.round((current / totalQuestions) * 100));
     return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Mes blocages" onBack={() => setLgStep(4)} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 5 / 6</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Qu'est-ce qui te bloque ?</div>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Coche tout ce qui s'applique (ou aucun)</div>
+      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, color: CC.textFaint, fontWeight: "bold" }}>QUESTION {current} / {totalQuestions}</div>
+          <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold" }}>{pct}%</div>
+        </div>
+        <div style={{ height: 6, background: "#f0e0e2", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, " + CC.rose + ", #d4889b)", transition: "width 0.4s ease", borderRadius: 3 }} />
+        </div>
+      </div>
+    );
+  };
+
+  // ═══ ÉTAPE 0 : INTRO + AVERTISSEMENT BLOQUANT ═══
+  if (lgStep === 0) {
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Garde la Ligne" onBack={() => setCarryCarePage("home")} />
+        <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto" }}>
+
+          {/* Hero */}
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "24px 22px", marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 10 }}>🥗</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Garde la Ligne</div>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Plan nutrition adapté à ton profil avec aliments du Cameroun</div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-            {LIGNE_BLOCAGES.map(b => {
-              const checked = (lgData.blocages || []).includes(b.id);
+          {/* AVERTISSEMENT IMPORTANT — bloquant */}
+          <div style={{ background: "#fff8e1", border: "2px solid #ff9800", borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#e65100", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 24 }}>⚠️</span> À LIRE AVANT DE COMMENCER
+            </div>
+            <div style={{ fontSize: 13, color: "#5d4037", lineHeight: 1.7, marginBottom: 12 }}>
+              Ce quiz est un <strong>outil éducatif</strong> qui te donne des principes d'alimentation équilibrée et des exemples de menus. <strong>Il ne remplace pas l'avis d'un médecin ou d'un nutritionniste.</strong>
+            </div>
+            <div style={{ background: "#fff", padding: 12, borderRadius: 8, marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: "bold", color: "#5d4037", marginBottom: 6 }}>🚫 Ce quiz N'EST PAS adapté si :</div>
+              <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: "#5d4037", lineHeight: 1.6 }}>
+                <li>Tu as moins de <strong>18 ans</strong> et veux perdre du poids (consulte un médecin)</li>
+                <li>Tu souffres ou as souffert de <strong>troubles alimentaires</strong> (anorexie, boulimie...)</li>
+                <li>Tu as une <strong>maladie nécessitant un régime spécifique</strong> (diabète, insuffisance rénale, maladie cœliaque...)</li>
+                <li>Tu prends des médicaments qui interagissent avec l'alimentation</li>
+              </ul>
+            </div>
+            <div style={{ fontSize: 12, color: "#5d4037", lineHeight: 1.6, fontStyle: "italic" }}>
+              💡 Si tu es enceinte ou allaitante, le quiz adaptera les recommandations (besoins augmentés, pas de perte de poids).
+            </div>
+          </div>
+
+          {/* Ce que tu vas découvrir */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                "Tes besoins caloriques approximatifs (formule scientifique)",
+                "Une structure d'assiette équilibrée adaptée",
+                "Des exemples de repas avec aliments camerounais",
+                "Conseils selon ton objectif (santé, poids, sport)",
+                "Habitudes à adopter (eau, sommeil, mouvement)",
+                "PDF téléchargeable avec ton plan complet"
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ color: CC.rose, fontWeight: "bold", flexShrink: 0 }}>✓</div>
+                  <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.5 }}>{item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Acceptation */}
+          <button onClick={() => setLgStep(1)} style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", marginBottom: 8 }}>
+            J'ai compris, je commence le quiz →
+          </button>
+          <div style={{ fontSize: 11, color: CC.textFaint, textAlign: "center", fontStyle: "italic", lineHeight: 1.5 }}>
+            En continuant, tu confirmes avoir lu l'avertissement ci-dessus et comprendre que ce quiz ne remplace pas un avis médical.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 1 : PROFIL ═══
+  if (lgStep === 1) {
+    const ok = lgProfile.gender && lgProfile.age && lgProfile.height && lgProfile.weight && lgProfile.family_size;
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 1 / 5 — Ton profil" onBack={() => setLgStep(0)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          {/* Genre */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Tu es :</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "homme", l: "👨 Un homme" },
+                { v: "femme", l: "👩 Une femme" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgProfile({ ...lgProfile, gender: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (lgProfile.gender === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgProfile.gender === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Age */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quel est ton âge ?</div>
+            <div style={{ fontSize: 11, color: CC.textFaint, marginBottom: 10, fontStyle: "italic" }}>Important pour calculer tes besoins</div>
+            <input type="number" min="1" max="100" value={lgProfile.age || ""} onChange={(e) => setLgProfile({ ...lgProfile, age: parseInt(e.target.value) || 0 })} placeholder="Ex: 28" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
+            {lgProfile.age && lgProfile.age < 18 && (
+              <div style={{ marginTop: 10, padding: 10, background: "#fff8e1", borderLeft: "3px solid #ff9800", borderRadius: 4, fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
+                ⚠️ Tu as moins de 18 ans : tu recevras des conseils alimentation adolescents adaptés. <strong>Aucun calcul de calories ni régime restrictif ne te sera proposé</strong> (ton corps est encore en croissance).
+              </div>
+            )}
+          </div>
+
+          {/* Taille */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quelle est ta taille ? (en cm)</div>
+            <input type="number" min="100" max="220" value={lgProfile.height || ""} onChange={(e) => setLgProfile({ ...lgProfile, height: parseInt(e.target.value) || 0 })} placeholder="Ex: 165" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
+          </div>
+
+          {/* Poids */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quel est ton poids actuel ? (en kg)</div>
+            <input type="number" min="20" max="250" value={lgProfile.weight || ""} onChange={(e) => setLgProfile({ ...lgProfile, weight: parseInt(e.target.value) || 0 })} placeholder="Ex: 65" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
+          </div>
+
+          {/* Composition foyer */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Combien êtes-vous à la maison ?</div>
+            <div style={{ fontSize: 11, color: CC.textFaint, marginBottom: 10, fontStyle: "italic" }}>Pour adapter les conseils famille</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { v: 1, l: "👤 Je vis seul(e)" },
+                { v: 2, l: "👫 En couple (2 personnes)" },
+                { v: 3, l: "👨‍👩‍👦 Famille avec enfants (3-4)" },
+                { v: 5, l: "👨‍👩‍👧‍👦 Grande famille (5+)" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgProfile({ ...lgProfile, family_size: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgProfile.family_size === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgProfile.family_size === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => ok && setLgStep(2)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {ok ? "Continuer — Ton objectif ✨" : "Remplis toutes les questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 2 : OBJECTIF ═══
+  if (lgStep === 2) {
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 2 / 5 — Ton objectif" onBack={() => setLgStep(1)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quel est ton objectif principal ?</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Choisis ce qui te ressemble le plus</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {LG_OBJECTIVES.map(o => {
+              // Si <18 ans, désactiver perdre/prendre/sportif (rediriger vers santé)
+              const isMinor = lgProfile.age && lgProfile.age < 18;
+              const disabled = isMinor && (o.id === "perdre" || o.id === "prendre" || o.id === "sportif");
               return (
-                <button key={b.id} onClick={() => toggleBlocage(b.id)}
-                  style={{ padding: 12, border: "1.5px solid " + (checked ? LG.vert : LG.border), borderRadius: 10, background: checked ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 22 }}>{b.emoji}</span>
-                  <span style={{ flex: 1 }}>{b.label}</span>
-                  {checked && <span style={{ color: LG.vert, fontSize: 18 }}>✓</span>}
+                <button key={o.id} onClick={() => !disabled && setLgObjective(o.id)} disabled={disabled} style={{ padding: 14, border: "1.5px solid " + (lgObjective === o.id ? CC.rose : CC.border), borderRadius: 10, background: disabled ? "#f5f5f5" : (lgObjective === o.id ? "#fdf0f1" : "#fff"), color: disabled ? "#aaa" : CC.noir, fontSize: 13, cursor: disabled ? "not-allowed" : "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, opacity: disabled ? 0.5 : 1 }}>
+                  <span style={{ fontSize: 24 }}>{o.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "bold" }}>{o.label}</div>
+                    <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 2 }}>{o.desc}</div>
+                    {disabled && <div style={{ fontSize: 11, color: "#ff9800", marginTop: 4, fontStyle: "italic" }}>Non disponible avant 18 ans</div>}
+                  </div>
+                  {lgObjective === o.id && <span style={{ color: CC.rose, fontSize: 18 }}>✓</span>}
                 </button>
               );
             })}
           </div>
-
-          <button onClick={() => setLgStep(6)}
-            style={{ width: "100%", padding: 16, background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>
-            Suivant — Mon mode de vie ✨
+          <button onClick={() => lgObjective && setLgStep(3)} disabled={!lgObjective} style={{ width: "100%", padding: 16, background: lgObjective ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: lgObjective ? "pointer" : "not-allowed" }}>
+            {lgObjective ? "Continuer — Conditions de santé ✨" : "Choisis un objectif"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 6 — Mode de vie (sommeil + stress)
-  if (lgStep === 6) {
-    const sommeilOpts = [
-      { v: "moins_6h", label: "😴 Moins de 6h" },
-      { v: "6-7h", label: "🙂 6-7h" },
-      { v: "7-8h", label: "✨ 7-8h (idéal)" },
-      { v: "plus_8h", label: "💤 Plus de 8h" }
-    ];
-    const stressOpts = [
-      { v: "faible", label: "😌 Faible — Je suis assez serein(e)" },
-      { v: "modere", label: "😐 Modéré — Stress normal du quotidien" },
-      { v: "eleve", label: "😟 Élevé — Souvent stressé(e)" },
-      { v: "tres_eleve", label: "😰 Très élevé — Stress chronique" }
-    ];
-    const allDone = lgData.sommeil && lgData.stress;
+  // ═══ ÉTAPE 3 : CONDITIONS SANTÉ ═══
+  if (lgStep === 3) {
+    const isFemme = lgProfile.gender === "femme";
+    const isAdult = lgProfile.age >= 18;
+    const ok = lgConditions.diabetes !== null && lgConditions.allergies !== null && (!isFemme || !isAdult || lgConditions.pregnancy !== null);
     return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Mon mode de vie" onBack={() => setLgStep(5)} />
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 3 / 5 — Santé" onBack={() => setLgStep(2)} />
+        <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Étape 6 / 6</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: LG.noir }}>Sommeil & stress</div>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginTop: 6 }}>Le sommeil et le stress impactent ton poids</div>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, fontStyle: "italic" }}>🔒 Ces informations sont strictement confidentielles et servent uniquement à adapter tes recommandations.</div>
           </div>
 
-          {/* SOMMEIL */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>💤 Combien d'heures de sommeil par nuit ?</div>
+          {/* Grossesse / allaitement (femmes adultes) */}
+          {isFemme && isAdult && (
+            <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Es-tu enceinte ou allaitante ?</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[
+                  { v: "enceinte", l: "🤰 Oui, je suis enceinte" },
+                  { v: "allaite", l: "🤱 Oui, j'allaite" },
+                  { v: "non", l: "🚫 Non" },
+                  { v: "prefer_not", l: "💭 Je préfère ne pas répondre" }
+                ].map(o => (
+                  <button key={o.v} onClick={() => setLgConditions({ ...lgConditions, pregnancy: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgConditions.pregnancy === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgConditions.pregnancy === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+                ))}
+              </div>
+              {(lgConditions.pregnancy === "enceinte" || lgConditions.pregnancy === "allaite") && (
+                <div style={{ marginTop: 12, padding: 10, background: "#fff5e6", borderLeft: "3px solid #e67e22", borderRadius: 4, fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
+                  💡 Tes besoins en énergie sont augmentés. <strong>Aucun objectif de perte de poids ne te sera proposé.</strong> Le plan sera adapté pour soutenir ta grossesse / ton allaitement.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Diabète */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>As-tu du diabète (type 1 ou 2) ?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "non", l: "✅ Non" },
+                { v: "oui", l: "⚠️ Oui" },
+                { v: "pre", l: "🤔 Pré-diabète" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgConditions({ ...lgConditions, diabetes: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (lgConditions.diabetes === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgConditions.diabetes === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 12, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+            {lgConditions.diabetes === "oui" && (
+              <div style={{ marginTop: 12, padding: 10, background: "#ffebee", borderLeft: "3px solid #f44336", borderRadius: 4, fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
+                ⚠️ <strong>Important :</strong> Le diabète nécessite un suivi spécifique avec ton médecin / nutritionniste. Le quiz te donnera des conseils éducatifs généraux, mais <strong>ne remplace pas ton plan médical</strong>.
+              </div>
+            )}
+          </div>
+
+          {/* Allergies */}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Allergies ou intolérances alimentaires ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {sommeilOpts.map(opt => (
-                <button key={opt.v} onClick={() => setLgData({ ...lgData, sommeil: opt.v })}
-                  style={{ padding: 12, border: "1.5px solid " + (lgData.sommeil === opt.v ? LG.vert : LG.border), borderRadius: 10, background: lgData.sommeil === opt.v ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                  {opt.label}
-                </button>
+              {[
+                { v: "aucune", l: "✅ Aucune" },
+                { v: "lactose", l: "🥛 Intolérance au lactose" },
+                { v: "gluten", l: "🌾 Intolérance au gluten" },
+                { v: "arachides", l: "🥜 Allergie aux arachides" },
+                { v: "autre", l: "🔍 Autre allergie connue" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgConditions({ ...lgConditions, allergies: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgConditions.allergies === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgConditions.allergies === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
               ))}
             </div>
           </div>
 
-          {/* STRESS */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>😰 Niveau de stress quotidien ?</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {stressOpts.map(opt => (
-                <button key={opt.v} onClick={() => setLgData({ ...lgData, stress: opt.v })}
-                  style={{ padding: 12, border: "1.5px solid " + (lgData.stress === opt.v ? LG.vert : LG.border), borderRadius: 10, background: lgData.stress === opt.v ? "#f0fdf4" : "#fff", color: LG.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={() => allDone && setLgStep(7)} disabled={!allDone}
-            style={{ width: "100%", padding: 16, background: allDone ? LG.vertDeep : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allDone ? "pointer" : "not-allowed" }}>
-            {allDone ? "Voir mon plan personnalisé ✨" : "Réponds aux 2 questions"}
+          <button onClick={() => ok && setLgStep(4)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {ok ? "Continuer — Tes habitudes ✨" : "Réponds aux questions"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 7 — Suspense (feu d'artifice vert)
-  if (lgStep === 7) {
-    // Lance automatiquement le passage à l'étape 8 (paiement) après 2.5s
-    setTimeout(() => { if (lgStep === 7) setLgStep(8); }, 2500);
+  // ═══ ÉTAPE 4 : HABITUDES ALIMENTAIRES ═══
+  if (lgStep === 4) {
+    const ok = lgHabits.meals_per_day && lgHabits.water && lgHabits.snacking && lgHabits.breakfast && lgHabits.fast_food;
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-        {[
-          { left: "20%", top: "30%", delay: "0s", color: "#76ff03" },
-          { left: "70%", top: "25%", delay: "0.3s", color: "#4caf50" },
-          { left: "45%", top: "55%", delay: "0.5s", color: "#a5d6a7" },
-          { left: "30%", top: "65%", delay: "0.7s", color: "#00e676" },
-          { left: "75%", top: "60%", delay: "0.9s", color: "#69f0ae" },
-          { left: "55%", top: "20%", delay: "1.1s", color: "#b9f6ca" }
-        ].map((fw, i) => (
-          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
-            {[0,1,2,3,4,5,6,7].map(angle => (
-              <div key={angle} style={{
-                position: "absolute", width: 6, height: 6, borderRadius: "50%",
-                background: fw.color, boxShadow: "0 0 12px " + fw.color,
-                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
-                transform: "rotate(" + (angle * 45) + "deg)", transformOrigin: "center"
-              }} />
-            ))}
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 4 / 5 — Tes habitudes" onBack={() => setLgStep(3)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Combien de repas prends-tu par jour ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { v: "1-2", l: "🍽️ 1 à 2 repas (souvent saute des repas)" },
+                { v: "3", l: "🍽️🍽️🍽️ 3 repas réguliers" },
+                { v: "3+", l: "🍽️🍽️🍽️ 3 repas + collations" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgHabits({ ...lgHabits, meals_per_day: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgHabits.meals_per_day === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgHabits.meals_per_day === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+              ))}
+            </div>
           </div>
-        ))}
-        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
-          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#76ff03", animation: "fadeIn 0.5s ease-out" }}>Ton plan est prêt !</div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Combien d'eau bois-tu par jour ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { v: "low", l: "🥤 Moins d'1 litre" },
+                { v: "med", l: "💧 Entre 1 et 2 litres" },
+                { v: "high", l: "💦 Plus de 2 litres" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgHabits({ ...lgHabits, water: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgHabits.water === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgHabits.water === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Tu prends un petit-déjeuner ?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "always", l: "✅ Tous les jours" },
+                { v: "sometimes", l: "🤷 Parfois" },
+                { v: "never", l: "🚫 Jamais" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgHabits({ ...lgHabits, breakfast: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (lgHabits.breakfast === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgHabits.breakfast === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 12, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Grignotage entre les repas ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { v: "rare", l: "🚫 Rarement / jamais" },
+                { v: "sain", l: "🥜 Oui mais sain (fruits, noix)" },
+                { v: "sucre", l: "🍫 Oui souvent (sucré, gras)" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgHabits({ ...lgHabits, snacking: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgHabits.snacking === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgHabits.snacking === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>À quelle fréquence manges-tu fast-food / boutique ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { v: "rare", l: "🍳 Rarement (je cuisine)" },
+                { v: "weekly", l: "🍔 1-2 fois / semaine" },
+                { v: "frequent", l: "🌮 3+ fois / semaine" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgHabits({ ...lgHabits, fast_food: o.v })} style={{ padding: 12, border: "1.5px solid " + (lgHabits.fast_food === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgHabits.fast_food === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => ok && setLgStep(5)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {ok ? "Continuer — Activité & Sommeil ✨" : "Réponds aux questions"}
+          </button>
         </div>
-        <style>{`
-          @keyframes fwExplode { 0% { transform: translate(0, 0) scale(0.5); opacity: 1; } 100% { transform: translate(60px, 0) scale(0.2); opacity: 0; } }
-          @keyframes rocketBounce { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.3) rotate(10deg); } 100% { transform: scale(1) rotate(0deg); } }
-          @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        `}</style>
       </div>
     );
   }
 
-  // ÉTAPE 8 — Paiement (5 sous-étapes : info → operator → phone → wait → fail/success)
-  if (lgStep === 8) {
+  // ═══ ÉTAPE 5 : ACTIVITÉ + SOMMEIL ═══
+  if (lgStep === 5) {
+    const ok = lgActivity.activity_level && lgActivity.sleep && lgActivity.stress;
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 5 / 5 — Activité & Sommeil" onBack={() => setLgStep(4)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Quel est ton niveau d'activité physique ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {LG_ACTIVITY_LEVELS.map(o => (
+                <button key={o.id} onClick={() => setLgActivity({ ...lgActivity, activity_level: o.id })} style={{ padding: 12, border: "1.5px solid " + (lgActivity.activity_level === o.id ? CC.rose : CC.border), borderRadius: 10, background: lgActivity.activity_level === o.id ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 22 }}>{o.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "bold" }}>{o.label}</div>
+                    <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 2 }}>{o.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Combien d'heures dors-tu par nuit ?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "low", l: "😪 < 6h" },
+                { v: "med", l: "😊 6-8h" },
+                { v: "high", l: "😴 > 8h" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgActivity({ ...lgActivity, sleep: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (lgActivity.sleep === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgActivity.sleep === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Niveau de stress quotidien ?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "low", l: "😌 Faible" },
+                { v: "med", l: "😐 Modéré" },
+                { v: "high", l: "😰 Élevé" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setLgActivity({ ...lgActivity, stress: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (lgActivity.stress === o.v ? CC.rose : CC.border), borderRadius: 10, background: lgActivity.stress === o.v ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => {
+            if (!ok) return;
+            // Calcul résultat
+            const bmr = calculateBMR();
+            const tdee = calculateTDEE();
+            const bmi = calculateBMI();
+            const calories = getRecommendedCalories();
+            setLgResult({
+              bmr, tdee, bmi, calories,
+              profile: lgProfile,
+              objective: lgObjective,
+              conditions: lgConditions,
+              habits: lgHabits,
+              activity: lgActivity
+            });
+            setLgStep(6);
+            setLgPaymentStep(1);
+            setTimeout(() => setLgStep(7), 2500);
+          }} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Voir mon plan nutrition ✨" : "Réponds aux questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 6 : SUSPENSE ═══
+  if (lgStep === 6) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>🥗</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Calcul de tes besoins...</div>
+        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton plan nutrition personnalisé</div>
+        <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }`}</style>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 7 : PAIEMENT ═══
+  if (lgStep === 7) {
     if (lgPaymentStep === 1) {
       return (
-        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-          <Header title="Plan prêt !" onBack={() => setLgStep(6)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-            <div style={{ fontSize: 60, marginBottom: 16 }}>⚖️</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: LG.noir, marginBottom: 12 }}>Ton plan personnalisé est prêt</div>
-            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 20, lineHeight: 1.6 }}>
-              Calcul de calories quotidiennes, plan d'action selon ton objectif, conseils sur tes blocages.<br/>
-              Reçois ton diagnostic complet pour atteindre tes objectifs.
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+          <Header title="Ton plan est prêt ✨" onBack={() => setLgStep(5)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton plan nutrition est prêt</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6 }}>Calculé spécialement pour toi avec aliments du Cameroun</div>
             </div>
-            <div style={{ background: "#f0fdf4", border: "1px solid " + LG.vert, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>📋 Tu vas recevoir :</div>
-              <div style={{ fontSize: 13, color: LG.textDim, lineHeight: 1.8 }}>
-                ✅ Ton IMC et ce qu'il signifie<br/>
-                ✅ Tes calories quotidiennes calculées<br/>
-                ✅ Plan personnalisé selon ton objectif<br/>
-                ✅ Conseils ciblés sur tes blocages<br/>
-                ✅ Conseils sommeil et gestion du stress
+            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton plan inclut :</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
+                ✅ Tes besoins caloriques approximatifs<br/>
+                ✅ Méthode de l'assiette équilibrée<br/>
+                ✅ Exemples de repas avec aliments locaux<br/>
+                ✅ Conseils selon ton objectif<br/>
+                ✅ Habitudes à adopter<br/>
+                ✅ PDF téléchargeable
               </div>
             </div>
-            <button onClick={() => setLgPaymentStep(2)} style={{
-              width: "100%", padding: 16, background: LG.vertDeep, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
+            <button onClick={() => setLgPaymentStep(2)} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Débloquer mon plan — {beautyQuizPrice} FCFA
             </button>
           </div>
@@ -7685,35 +7864,23 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
     }
     if (lgPaymentStep === 2) {
       return (
-        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title="Méthode de paiement" onBack={() => setLgPaymentStep(1)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 20, textAlign: "center" }}>Choisis ta méthode de paiement</div>
-            <button onClick={() => { setLgPaymentMethod("MTN"); setLgPaymentStep(3); }} style={{
-              width: "100%", padding: 16, background: "#FFCC00", color: "#000",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", marginBottom: 12, cursor: "pointer"
-            }}>📱 MTN Mobile Money</button>
-            <button onClick={() => { setLgPaymentMethod("ORANGE"); setLgPaymentStep(3); }} style={{
-              width: "100%", padding: 16, background: "#FF6600", color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>📱 Orange Money</button>
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CC.noir, marginBottom: 16, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            <button onClick={() => { setLgPaymentMethod("MTN"); setLgPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FFCC00", color: "#000", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>📱 MTN Mobile Money</button>
+            <button onClick={() => { setLgPaymentMethod("ORANGE"); setLgPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FF6600", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📱 Orange Money</button>
           </div>
         </div>
       );
     }
     if (lgPaymentStep === 3) {
       return (
-        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title={"Ton numéro " + lgPaymentMethod} onBack={() => setLgPaymentStep(2)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 16, textAlign: "center" }}>
-              Entre ton numéro {lgPaymentMethod} (9 chiffres, sans +237)
-            </div>
-            <input type="tel" value={lgPaymentPhone} onChange={(e) => setLgPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
-              placeholder="6XXXXXXXX" style={{
-                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + LG.border,
-                borderRadius: 12, marginBottom: 16, outline: "none"
-              }} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 12 }}>Entre ton numéro {lgPaymentMethod} (9 chiffres, sans +237)</div>
+            <input type="tel" value={lgPaymentPhone} onChange={(e) => setLgPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="6XXXXXXXX" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border, borderRadius: 12, marginBottom: 16, outline: "none" }} />
             <button onClick={async () => {
               if (lgPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
               setLgPaymentStep(4);
@@ -7724,415 +7891,714 @@ function LigneQuiz({ setPage, setCarryCarePage, lgStep, setLgStep, lgData, setLg
                 const collect = await fetch("/api/campay", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Garde la Ligne", external_reference: "carrycare_line_" + Date.now() })
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Garde la Ligne", external_reference: "carrycare_ligne_" + Date.now() })
                 });
                 const data = await collect.json();
                 if (!data.reference) { setLgPaymentStep(5); return; }
                 const ref = data.reference;
                 let attempts = 0;
-                const maxAttempts = 25;
                 const interval = setInterval(async () => {
                   attempts++;
-                  if (attempts >= maxAttempts) { clearInterval(interval); setLgPaymentStep(5); return; }
+                  if (attempts >= 60) { clearInterval(interval); setLgPaymentStep(5); return; }
                   try {
-                    const checkRes = await fetch("/api/campay", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "check", reference: ref })
-                    });
+                    const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: ref }) });
                     const checkData = await checkRes.json();
                     if (checkData.status === "SUCCESSFUL") {
                       clearInterval(interval);
                       setLgPaymentStep(1);
                       setLgShowGift(true);
                       if (userId) {
-                        saveCarrycareResultRobust({
-                          user_id: userId,
-                          quiz_type: "line",
-                          amount: beautyQuizPrice || 0,
-                          result_data: lgData
-                        });
-                      } else {
-                        console.warn("Pas de user_id, sauvegarde impossible");
+                        saveCarrycareResultRobust({ user_id: userId, quiz_type: "ligne", amount: beautyQuizPrice || 0, result_data: { profile: lgProfile, objective: lgObjective, conditions: lgConditions, habits: lgHabits, activity: lgActivity, result: lgResult } });
                       }
-                      setTimeout(() => { setLgShowGift(false); setLgStep(9); }, 2500);
-                    }
-                    else if (checkData.status === "FAILED") { clearInterval(interval); setLgPaymentStep(5); }
+                      setTimeout(() => { setLgShowGift(false); setLgStep(8); }, 2500);
+                    } else if (checkData.status === "FAILED") { clearInterval(interval); setLgPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
               } catch (e) { setLgPaymentStep(5); }
-            }} style={{
-              width: "100%", padding: 16, background: LG.vertDeep, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
-              💎 Payer {beautyQuizPrice} FCFA
-            </button>
+            }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>💎 Payer {beautyQuizPrice} FCFA</button>
           </div>
         </div>
       );
     }
     if (lgPaymentStep === 4) {
       return (
-        <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
-          <div style={{ fontSize: 80, marginBottom: 20 }}>⏳</div>
-          <div style={{ fontSize: 20, fontWeight: "bold", color: LG.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
+        <div style={{ minHeight: "100vh", background: CC.blanc, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
           <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
-            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold", textAlign: "center" }}>
-              ⚠️ NE QUITTE PAS CET ÉCRAN<br/>Patiente jusqu'à la fin du paiement.
-            </div>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ Ne quittez pas cet écran, veuillez patienter.</div>
           </div>
-          <div style={{ fontSize: 13, color: LG.textFaint, textAlign: "center", maxWidth: 320, lineHeight: 1.6 }}>
-            📱 Vérifie ton téléphone et valide le paiement {lgPaymentMethod}.<br/>
-            Patiente un instant, on te montre ton plan dès que c'est validé.
-          </div>
+          <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>Confirme la transaction sur ton téléphone {lgPaymentMethod}.</div>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
         </div>
       );
     }
     if (lgPaymentStep === 5) {
       return (
-        <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
+        <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title="Paiement non finalisé" onBack={() => setLgPaymentStep(2)} />
-          <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-            <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
-            <div style={{ fontSize: 20, fontWeight: "bold", color: "#d32f2f", marginBottom: 12 }}>Paiement non finalisé</div>
-            <div style={{ fontSize: 14, color: LG.textDim, marginBottom: 20 }}>Le réseau de l'opérateur est peut-être occupé.</div>
-            <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: LG.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
-              <div style={{ fontSize: 13, color: LG.textDim, lineHeight: 1.8, textAlign: "center" }}>
-                ✅ Vérifie ton solde Mobile Money<br/>
-                ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
-                ✅ Patiente quelques minutes et réessaie<br/>
-                ✅ Vérifie ta connexion internet
-              </div>
+          <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
+              <h3 style={{ color: "#c62828", marginBottom: 8 }}>Paiement non finalisé</h3>
+              <p style={{ color: CC.textFaint, fontSize: 14 }}>Réessaie ou change de méthode</p>
             </div>
-            <button onClick={() => { setLgPaymentStep(2); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{
-              width: "100%", padding: 16, background: LG.vertDeep, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 10
-            }}>🔄 Réessayer</button>
-            <button onClick={() => { setLgPaymentStep(1); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{
-              width: "100%", padding: 14, background: "#fff", color: LG.noir,
-              border: "1.5px solid " + LG.border, borderRadius: 12, fontSize: 14, cursor: "pointer"
-            }}>Annuler</button>
+            <button onClick={() => { setLgPaymentStep(2); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10 }}>🔁 Réessayer</button>
+            <button onClick={() => { setLgPaymentStep(1); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{ width: "100%", padding: 14, background: "transparent", color: CC.textFaint, border: "1px solid " + CC.border, borderRadius: 12, fontSize: 13, cursor: "pointer" }}>Annuler</button>
           </div>
         </div>
       );
     }
   }
 
-  // ÉTAPE 9 — RÉSULTAT
-  if (lgStep === 9) {
-    // ═══ CALCULS ═══
-    const { genre, objectif, kg, poids, taille, age, activite, repas, eau, sucre, blocages, sommeil, stress } = lgData;
+  // ═══ ÉTAPE 8 : RÉSULTAT ═══
+  if (lgStep === 8 && lgResult) {
+    return <LigneDiagnosticResult result={lgResult} onBack={() => setCarryCarePage("home")} setCarryCarePage={setCarryCarePage} />;
+  }
 
-    // IMC
-    const tailleM = taille / 100;
-    const imc = poids / (tailleM * tailleM);
-    let imcStatus = "", imcColor = "", imcAdvice = "";
-    if (imc < 18.5) {
-      imcStatus = "Sous-poids";
-      imcColor = "#2196f3";
-      imcAdvice = "Ton IMC indique que tu es en sous-poids. Concentre-toi sur une alimentation plus riche en calories saines (protéines, bonnes graisses, féculents complets). Si tu veux perdre encore du poids, consulte un médecin avant.";
-    } else if (imc < 25) {
-      imcStatus = "Poids normal";
-      imcColor = "#4caf50";
-      imcAdvice = "Bravo ! Ton IMC est dans la fourchette idéale. Garde tes bonnes habitudes : alimentation équilibrée, activité régulière, sommeil de qualité.";
-    } else if (imc < 30) {
-      imcStatus = "Surpoids";
-      imcColor = "#ff9800";
-      imcAdvice = "Ton IMC indique un léger surpoids. Avec quelques ajustements (réduction des sucres, plus d'activité physique, hydratation), tu peux retrouver ton équilibre durablement.";
-    } else if (imc < 35) {
-      imcStatus = "Obésité modérée";
-      imcColor = "#f57c00";
-      imcAdvice = "Ton IMC indique une obésité modérée. Ne te décourage pas — un changement progressif et durable est la clé. Consulte un médecin/nutritionniste pour t'accompagner.";
-    } else {
-      imcStatus = "Obésité importante";
-      imcColor = "#d32f2f";
-      imcAdvice = "Ton IMC est élevé. ⚠️ IMPORTANT : consulte un médecin avant de commencer tout régime. Tu peux y arriver, mais avec un suivi médical adapté.";
-    }
+  return null;
+}
 
-    // BMR (Mifflin-St Jeor)
-    let bmr;
-    if (genre === "homme") {
-      bmr = (10 * poids) + (6.25 * taille) - (5 * age) + 5;
-    } else {
-      bmr = (10 * poids) + (6.25 * taille) - (5 * age) - 161;
-    }
+// ═══════════════════════════════════════════════════
+// COMPOSANT RÉSULTAT — GARDE LA LIGNE (refonte v2)
+// ═══════════════════════════════════════════════════
 
-    // TDEE
-    const activeData = LIGNE_ACTIVITE.find(a => a.id === activite);
-    const tdee = bmr * (activeData ? activeData.multi : 1.375);
+function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
+  if (!result) return null;
+  const { bmr, tdee, bmi, calories, profile, objective, conditions, habits, activity } = result;
+  const isMinor = profile.age < 18;
+  const isPregnant = conditions.pregnancy === "enceinte" || conditions.pregnancy === "allaite";
+  const hasDiabetes = conditions.diabetes === "oui";
 
-    // Calories selon objectif
-    let caloriesObjectif = tdee;
-    let objectifText = "";
-    if (objectif === "perdre") { caloriesObjectif = tdee - 500; objectifText = "Pour perdre du poids"; }
-    else if (objectif === "tonifier") { caloriesObjectif = tdee - 200; objectifText = "Pour tonifier"; }
-    else if (objectif === "prendre") { caloriesObjectif = tdee + 300; objectifText = "Pour prendre du poids"; }
-    else { caloriesObjectif = tdee; objectifText = "Pour maintenir"; }
+  // Catégorie BMI
+  function getBMICategoryLocal(bmi) {
+    const b = parseFloat(bmi);
+    if (b < 18.5) return { label: "Insuffisance pondérale", color: "#ff9800", advice: "Tu pourrais bénéficier de prendre un peu de poids sainement." };
+    if (b < 25) return { label: "Poids normal", color: "#4caf50", advice: "Tu es dans la zone de poids santé. Continue comme ça !" };
+    if (b < 30) return { label: "Surpoids", color: "#ff9800", advice: "Une perte de poids modérée pourrait améliorer ta santé." };
+    return { label: "Obésité", color: "#f44336", advice: "Une consultation médicale est recommandée pour un suivi adapté." };
+  }
+  const bmiCat = isMinor ? null : getBMICategoryLocal(bmi);
 
-    // Sécurité minimum
-    const minCal = genre === "homme" ? 1500 : 1200;
-    if (caloriesObjectif < minCal) caloriesObjectif = minCal;
+  // Calories adaptées selon grossesse
+  let displayedCalories = calories;
+  if (conditions.pregnancy === "enceinte") displayedCalories = tdee + 300;
+  if (conditions.pregnancy === "allaite") displayedCalories = tdee + 500;
 
-    const caloriesFinal = Math.round(caloriesObjectif);
-    const tdeeFinal = Math.round(tdee);
+  const Section = ({ title, color, children }) => (
+    <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: "bold", color: color || CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
+      {children}
+    </div>
+  );
 
-    // Estimation durée pour atteindre l'objectif
-    let dureeText = "";
-    if ((objectif === "perdre" || objectif === "prendre") && kg > 0) {
-      // 0.5 kg/semaine pour perdre, 0.3 kg/semaine pour prendre
-      const semaines = objectif === "perdre" ? Math.round(kg * 2) : Math.round(kg * 3);
-      const mois = Math.round(semaines / 4);
-      dureeText = `À ce rythme, tes ${kg} kg seront atteints en environ ${semaines} semaines (~${mois} mois)`;
-    }
+  // Distribution macronutriments selon objectif
+  function getMacros() {
+    let prot_pct = 25, lip_pct = 30, gluc_pct = 45;
+    if (objective === "perdre") { prot_pct = 30; lip_pct = 30; gluc_pct = 40; }
+    if (objective === "prendre" || objective === "sportif") { prot_pct = 25; lip_pct = 25; gluc_pct = 50; }
+    return { prot: Math.round(displayedCalories * prot_pct / 100 / 4), lip: Math.round(displayedCalories * lip_pct / 100 / 9), gluc: Math.round(displayedCalories * gluc_pct / 100 / 4) };
+  }
+  const macros = getMacros();
 
-    // Plan selon objectif
-    const plansObjectif = {
-      perdre: {
-        titre: "📉 Mon plan perte de poids",
-        intro: "Ton objectif : perdre " + (kg || "") + " kg sainement et durablement. La règle d'or : déficit calorique modéré + activité physique + sommeil de qualité.",
-        conseils: [
-          "🍽️ Mange 3 repas équilibrés + 1 collation si besoin (jamais sauter de repas)",
-          "🥗 Remplis la moitié de ton assiette de légumes à chaque repas",
-          "🍗 Privilégie protéines maigres (poulet, poisson, œufs, légumineuses)",
-          "🥖 Réduis pain blanc, riz blanc, pâtes blanches → choisis les versions complètes",
-          "💧 Bois minimum 2L d'eau/jour (ça aide à brûler les graisses)",
-          "🏃 Bouge 30 min/jour minimum (marche rapide, danse, sport)",
-          "💤 Dors 7-8h/nuit (le manque de sommeil fait grossir)",
-          "🚫 Évite les régimes drastiques : ils créent l'effet yoyo"
-        ]
-      },
-      tonifier: {
-        titre: "💪 Mon plan tonification",
-        intro: "Ton objectif : raffermir, perdre du gras et gagner du muscle. Combine renforcement musculaire + alimentation riche en protéines + récupération.",
-        conseils: [
-          "🍗 Augmente les protéines : 1.5g/kg de poids (ex: 65kg = 100g de protéines/jour)",
-          "🏋️ Renforcement musculaire 3-4x/semaine (poids du corps ou haltères)",
-          "🏃 Cardio modéré 2-3x/semaine pour brûler le gras",
-          "🥗 Légumes à volonté à chaque repas",
-          "🥑 Bonnes graisses : avocat, noix, huile d'olive, poissons gras",
-          "💧 Hydratation 2,5L/jour minimum (les muscles ont besoin d'eau)",
-          "💤 Sommeil = construction musculaire (vise 8h)",
-          "⏰ Patience : 2-3 mois pour des résultats visibles"
-        ]
-      },
-      prendre: {
-        titre: "📈 Mon plan prise de poids saine",
-        intro: "Ton objectif : prendre " + (kg || "") + " kg de manière équilibrée. La règle : surplus calorique modéré + protéines + bonnes graisses + entraînement.",
-        conseils: [
-          "🍽️ Mange plus souvent : 5 à 6 fois/jour (3 repas + 2-3 collations)",
-          "🍗 Protéines à chaque repas (œufs, viande, poisson, légumineuses)",
-          "🥑 Bonnes graisses : avocat, noix, beurre de cacahuète, huiles",
-          "🍚 Féculents complets : riz, pâtes complètes, patate douce, plantain",
-          "💪 Renforcement musculaire 3-4x/semaine (sinon tu prends que du gras)",
-          "💧 Hydratation suffisante (mais pas avant les repas pour ne pas couper l'appétit)",
-          "💤 Sommeil 8h/nuit minimum",
-          "📈 Pèse-toi 1x/semaine seulement (pas tous les jours)"
-        ]
-      },
-      maintenir: {
-        titre: "⚖️ Mon plan maintien",
-        intro: "Ton objectif : garder ton équilibre actuel. Tu es bien, et tu veux le rester. Continue tes bonnes habitudes !",
-        conseils: [
-          "🍽️ Continue tes 3 repas équilibrés par jour",
-          "🥗 Garde l'équilibre : protéines + légumes + féculents complets",
-          "💧 Hydratation 2L/jour",
-          "🏃 Maintiens ton activité physique régulière",
-          "💤 Sommeil de qualité 7-8h/nuit",
-          "📊 Pèse-toi 1x/semaine pour surveiller",
-          "🎯 Écoute ton corps : faim, satiété, énergie",
-          "⚖️ Si tu vois 2-3 kg en plus → ajuste rapidement (avant que ça s'accumule)"
-        ]
-      }
-    };
+  // Conseils selon objectif
+  function getObjectiveAdvice() {
+    if (isMinor) return "À ton âge, ton corps est encore en croissance. Mange équilibré (3 repas + 2 collations), évite les régimes restrictifs. Privilégie les vrais aliments aux produits transformés. Pas de comptage de calories à ton âge.";
+    if (conditions.pregnancy === "enceinte") return "Tes besoins énergétiques sont augmentés (+300 kcal/jour environ au 2e et 3e trimestre). Privilégie les aliments riches en fer (foie, viande rouge, lentilles), calcium (lait, fromage), folates (légumes verts), oméga-3 (poisson 2x/sem hors crustacés crus). Évite alcool, charcuterie crue, fromages au lait cru.";
+    if (conditions.pregnancy === "allaite") return "Tes besoins sont +500 kcal/jour environ. Bois 2,5-3L d'eau par jour. Privilégie les aliments riches en calcium, fer et oméga-3. Évite alcool et limite caféine.";
+    if (objective === "perdre") return "Tu vas perdre du poids progressivement (0,5 à 1 kg/semaine maximum). Plus rapide = reprise garantie. Le secret : déficit modéré (-300 à -500 kcal/jour), priorité aux protéines pour ne pas perdre de muscle, et beaucoup de légumes pour la satiété.";
+    if (objective === "prendre") return "Tu vas prendre du poids sainement. Surplus modéré (+300 à +400 kcal/jour). Priorité aux aliments denses en énergie : avocat, oléagineux, huile d'olive, féculents complets, lait entier. Évite la malbouffe : prendre du gras n'est pas l'objectif.";
+    if (objective === "sportif") return "Pour soutenir ta performance et récupération : 1,4-1,8g protéines/kg de poids/jour, glucides complexes avant entraînement, protéines + glucides dans les 30min après. Hydrate-toi très bien (3L+ les jours de sport).";
+    return "Ton objectif est ta santé globale. Mange équilibré sans te priver, varie les aliments, mange à ta faim, écoute ton corps. La santé n'est pas une question de poids mais d'habitudes.";
+  }
 
-    const planData = plansObjectif[objectif] || plansObjectif.maintenir;
-
-    // Conseils blocages
-    const conseilsBlocages = {
-      sucre: "🍬 **Sucre** : Le sucre est la 1ère cause de prise de poids. Réduis progressivement les sodas, biscuits, bonbons. Remplace par : fruits, dattes, chocolat noir 70%+. En 2 semaines tu n'auras plus envie de sucre.",
-      pain: "🍞 **Pain/féculents** : Pas besoin de les éliminer ! Choisis les versions complètes (pain complet, riz complet, pâtes complètes). Limite les portions : 1 poignée de féculent par repas.",
-      stress: "😰 **Stress** : Le stress fait sécréter du cortisol qui stocke la graisse au ventre. Pratique la respiration profonde, la méditation, le sport, ou parle à quelqu'un.",
-      alcool: "🍷 **Alcool** : Très calorique (1 verre de vin = ~120 kcal, 1 bière = ~150 kcal). Limite à 1-2 verres par semaine maximum. Préfère eau, tisanes, kombucha.",
-      temps: "⏱️ **Manque de temps** : Cuisine en batch le dimanche pour la semaine. Préfère les recettes simples (10-15 min). Évite les plats préparés (sel, sucre, additifs).",
-      motivation: "😴 **Motivation** : Fixe-toi de petits objectifs hebdomadaires (pas mensuels). Trouve un partenaire de motivation. Récompense-toi (mais pas avec de la nourriture !).",
-      regimes: "🔄 **Régimes ratés** : L'effet yoyo vient des régimes trop restrictifs. Cette fois → changement DURABLE, pas un régime. Mange équilibré, pas drastique.",
-      hormones: "🌸 **Hormones** : Post-grossesse, ménopause, syndrome ovarien... Sois patiente avec toi-même. Consulte un médecin pour bilan hormonal si besoin."
-    };
-
-    // Conseils sommeil
-    const conseilsSommeil = {
-      moins_6h: "💤 **Tu dors moins de 6h** : C'est ton ennemi n°1 pour la perte de poids. Le manque de sommeil augmente la faim et fait stocker la graisse. Vise 7-8h dès cette semaine.",
-      "6-7h": "😌 **Tu dors 6-7h** : C'est correct mais essaie de gagner 30 min à 1h. Le sommeil = ta meilleure arme pour atteindre ton objectif.",
-      "7-8h": "✨ **Tu dors 7-8h** : Parfait ! Continue comme ça. Ton sommeil te soutient dans ton objectif.",
-      plus_8h: "💤 **Tu dors plus de 8h** : C'est très bien si tu te sens en forme. Si tu te sens fatigué(e) malgré ça → consulte un médecin (apnée, anémie...)."
-    };
-
-    // Conseils stress
-    const conseilsStress = {
-      faible: "😌 **Stress faible** : Excellent ! Continue tes bonnes pratiques.",
-      modere: "😐 **Stress modéré** : Pratique la respiration profonde 5 min/jour. Marche dans la nature. Limite les écrans le soir.",
-      eleve: "😟 **Stress élevé** : Ton stress te fait stocker du gras au ventre. Pratique méditation, yoga, sport. Parle à quelqu'un de confiance.",
-      tres_eleve: "😰 **Stress très élevé** : Important : consulte un professionnel (médecin, psychologue). Le stress chronique impacte ta santé. Tu n'es pas seul(e)."
-    };
-
-    // Conseil eau
-    const conseilEau = {
-      moins_1L: "💧 **Tu bois moins de 1L** : C'est insuffisant. Augmente progressivement : 1 verre toutes les 2h. Vise 2L/jour. L'eau aide à brûler les graisses.",
-      "1-2L": "💧 **Tu bois 1-2L** : C'est correct. Vise 2L minimum. Astuce : 1 verre avant chaque repas réduit l'appétit.",
-      "2L_plus": "💧 **Tu bois plus de 2L** : Parfait ! Continue."
-    };
-
-    function restart() {
-      setLgStep(1);
-      setLgData({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
-      setLgPaymentStep(1);
-      setLgPaymentMethod(null);
-      setLgPaymentPhone("");
-    }
-
+  // Si profil enfant (mineur), afficher conseils famille
+  if (isMinor || objective === "famille") {
     return (
-      <div style={{ minHeight: "100vh", background: LG.blanc, paddingBottom: 80 }}>
-        <Header title="Ton plan personnalisé" onBack={() => { setCarryCarePage("home"); setLgStep(1); }} />
-        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+          <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+          <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>👨‍👩‍👧 Conseils alimentation famille</div>
+        </div>
+        <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
 
-          {/* IMC */}
-          <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #d4e8d6 100%)", border: "1px solid " + LG.vert, borderRadius: 14, padding: 20, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: LG.textFaint, marginBottom: 4 }}>Ton IMC (Indice de Masse Corporelle)</div>
-            <div style={{ fontSize: 36, fontWeight: "bold", color: imcColor, marginBottom: 6 }}>{imc.toFixed(1)}</div>
-            <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 10 }}>{imcStatus}</div>
-            <div style={{ fontSize: 12, color: LG.textDim, lineHeight: 1.6, fontStyle: "italic" }}>{imcAdvice}</div>
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: 22, marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>👨‍👩‍👧</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>Alimentation Famille / Enfants</div>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Principes pour bien nourrir tes enfants</div>
+            <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ marginTop: 14, padding: "10px 20px", background: CC.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>📥 Télécharger en PDF</button>
           </div>
 
-          {/* CALORIES */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 12, textAlign: "center" }}>🔥 Tes calories quotidiennes</div>
-
-            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: 14, marginBottom: 10, textAlign: "center" }}>
-              <div style={{ fontSize: 11, color: LG.textFaint, marginBottom: 4 }}>{objectifText}</div>
-              <div style={{ fontSize: 32, fontWeight: "bold", color: LG.vertDeep }}>{caloriesFinal} kcal</div>
-              <div style={{ fontSize: 11, color: LG.textDim, marginTop: 4 }}>par jour</div>
+          <Section title="🌱 Principes pour les enfants" color={CC.noir}>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+              <div style={{ marginBottom: 10 }}>Les enfants ont des besoins spécifiques car leur corps est en pleine croissance. <strong>Ne JAMAIS mettre un enfant au régime</strong> sans avis médical.</div>
+              <ul style={{ margin: "8px 0", paddingLeft: 20 }}>
+                <li><strong>3 repas + 2 collations</strong> par jour minimum</li>
+                <li><strong>Toujours un petit-déjeuner</strong> (céréales + lait + fruit)</li>
+                <li><strong>Au moins 5 fruits et légumes</strong> par jour</li>
+                <li><strong>Eau comme boisson principale</strong> — limite sucreries et sodas</li>
+                <li><strong>Protéines à chaque repas</strong> (viande/poisson/œuf/légumineuse)</li>
+                <li><strong>Pas d'écran à table</strong> (favorise la satiété consciente)</li>
+                <li><strong>Cuisiner ensemble</strong> — implique les enfants pour qu'ils apprécient</li>
+              </ul>
             </div>
+          </Section>
 
-            <div style={{ fontSize: 11, color: LG.textFaint, lineHeight: 1.5, marginBottom: 10 }}>
-              💡 Pour info, ton métabolisme de base (BMR) est de <strong>{Math.round(bmr)} kcal</strong> et tes besoins de maintien sont d'environ <strong>{tdeeFinal} kcal</strong>.
-            </div>
-
-            {/* Répartition repas */}
-            <div style={{ background: "#fafafa", borderRadius: 10, padding: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>📊 Répartition suggérée :</div>
-              <div style={{ fontSize: 12, color: LG.textDim, lineHeight: 1.8 }}>
-                🌅 Petit-déjeuner : <strong>{Math.round(caloriesFinal * 0.25)} kcal</strong> (25%)<br/>
-                ☀️ Déjeuner : <strong>{Math.round(caloriesFinal * 0.35)} kcal</strong> (35%)<br/>
-                🌙 Dîner : <strong>{Math.round(caloriesFinal * 0.30)} kcal</strong> (30%)<br/>
-                🍎 Collations : <strong>{Math.round(caloriesFinal * 0.10)} kcal</strong> (10%)
+          <Section title="🍽️ Méthode de l'assiette équilibrée">
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+              Pour chaque repas, divise mentalement l'assiette ainsi :
+              <div style={{ marginTop: 12, padding: 14, background: "#f0f9f0", borderRadius: 10 }}>
+                🥬 <strong>1/2 = légumes</strong> (cuits ou crus, variés en couleurs)<br/>
+                🍗 <strong>1/4 = protéines</strong> (viande, poisson, œuf, légumineuses)<br/>
+                🍚 <strong>1/4 = féculents</strong> (riz, manioc, igname, pain)<br/>
+                💧 <strong>+ Eau</strong> comme boisson<br/>
+                🥑 <strong>+ Un peu de matière grasse</strong> (huile d'olive, avocat)
               </div>
             </div>
+          </Section>
 
-            {dureeText && (
-              <div style={{ background: "#fef9e7", border: "1px solid #e8c547", borderRadius: 8, padding: 10, marginTop: 10, textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "#8a6d00", fontWeight: "bold" }}>⏰ {dureeText}</div>
-              </div>
-            )}
-          </div>
-
-          {/* PLAN SELON OBJECTIF */}
-          <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 8 }}>{planData.titre}</div>
-            <div style={{ fontSize: 13, color: LG.textDim, lineHeight: 1.6, marginBottom: 14, fontStyle: "italic" }}>{planData.intro}</div>
-            <div style={{ background: "#f0fdf4", borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: LG.vertDeep, marginBottom: 8 }}>✅ Mes 8 conseils clés</div>
-              {planData.conseils.map((c, i) => (
-                <div key={i} style={{ fontSize: 12, color: "#3a3a3a", marginBottom: 6, lineHeight: 1.5 }}>{c}</div>
-              ))}
+          <Section title="🇨🇲 Aliments du Cameroun à privilégier" color="#4caf50">
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+              <div style={{ marginBottom: 10 }}><strong>🌾 Féculents</strong> : Manioc bouilli, igname, plantain mûr, taro, maïs, riz complet, mil, sorgho</div>
+              <div style={{ marginBottom: 10 }}><strong>🍗 Protéines</strong> : Poulet, poisson frais (capitaine, machoiron), œufs, niébé, lentilles, soja</div>
+              <div style={{ marginBottom: 10 }}><strong>🥬 Légumes</strong> : Folong, ndolè, koki, gombo, morelle, aubergine, tomate, oignon, ail</div>
+              <div style={{ marginBottom: 10 }}><strong>🍌 Fruits</strong> : Banane, mangue, papaye, ananas, orange, goyave, avocat, pastèque</div>
+              <div><strong>🥥 Bonnes graisses</strong> : Huile de palme rouge (modération), huile d'arachide, avocat, noix de coco</div>
             </div>
+          </Section>
+
+          <Section title="❌ À limiter ou éviter" color="#dc3545">
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+              <li><strong>Sodas et jus industriels</strong> (beaucoup de sucre)</li>
+              <li><strong>Bonbons et biscuits</strong> en grande quantité</li>
+              <li><strong>Fritures excessives</strong> (beignets, akara tous les jours)</li>
+              <li><strong>Cubes Maggi</strong> et bouillons en excès (sel + glutamate)</li>
+              <li><strong>Produits ultra-transformés</strong> (chips, snacks emballés)</li>
+              <li><strong>Charcuterie</strong> en grande quantité</li>
+            </ul>
+          </Section>
+
+          <Section title="💪 Bonnes habitudes famille">
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+              <li>Manger en famille à table, sans télé ni téléphone</li>
+              <li>Servir des portions raisonnables, ne pas forcer à finir</li>
+              <li>Cuisiner maison plutôt qu'acheter prêt-à-manger</li>
+              <li>Faire bouger les enfants au moins 1h/jour</li>
+              <li>Instaurer un rythme : repas à heures régulières</li>
+              <li>L'enfant a soif d'eau, pas de soda — montre l'exemple</li>
+              <li>Les fruits comme dessert, le sucre comme exception</li>
+            </ul>
+          </Section>
+
+          <Section title="⚠️ Quand consulter un pédiatre ou nutritionniste" color="#ff9800">
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+              <li>Enfant qui maigrit / perd l'appétit longtemps</li>
+              <li>Enfant qui prend du poids très vite</li>
+              <li>Enfant qui refuse une catégorie d'aliments entière</li>
+              <li>Enfant avec allergies suspectées</li>
+              <li>Enfant ado qui parle de "régime" ou de poids</li>
+            </ul>
+          </Section>
+
+          <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>📂 Garde ces conseils sous la main</div>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6 }}>Tu peux retrouver ce guide à tout moment dans <strong>Menu → Mes résultats</strong>. Tu peux aussi le télécharger en PDF.</div>
           </div>
 
-          {/* RECOMMANDATION LIVRE THONON (uniquement si "perdre") */}
-          {objectif === "perdre" && (
-            <div style={{ background: "linear-gradient(135deg, #fff8e1 0%, #ffe082 100%)", border: "2px solid #f57c00", borderRadius: 14, padding: 20, marginBottom: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: "#bf360c", marginBottom: 8, textAlign: "center" }}>📚 Pour t'accompagner dans ta perte de poids</div>
-              <div style={{ fontSize: 13, color: "#3a3a3a", lineHeight: 1.6, marginBottom: 14, textAlign: "center" }}>
-                Découvre <strong>"Le Programme Complet du Régime Thonon"</strong> — un guide détaillé qui complète parfaitement ton plan personnalisé avec menus, recettes et conseils pour réussir ta perte de poids.
-              </div>
-              <button onClick={() => {
-                const thononBook = books.find(b => b.title && b.title.toLowerCase().includes("thonon"));
-                if (thononBook) {
-                  setSelectedBook(thononBook);
-                  setPage("detail");
-                } else {
-                  setPage("catalog");
-                }
-              }}
-                style={{ display: "block", width: "100%", padding: 14, background: "#bf360c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", textAlign: "center", boxSizing: "border-box" }}>
-                📖 Voir le livre
-              </button>
-            </div>
-          )}
-
-          {/* CONSEILS BLOCAGES */}
-          {blocages && blocages.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid " + LG.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-              <div style={{ fontSize: 16, fontWeight: "bold", color: LG.noir, marginBottom: 14 }}>🎯 Tes blocages — comment les surmonter</div>
-              {blocages.map(bid => {
-                const conseil = conseilsBlocages[bid];
-                if (!conseil) return null;
-                return (
-                  <div key={bid} style={{ background: "#fafafa", borderRadius: 10, padding: 12, marginBottom: 8, fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
-                    {conseil.split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* CONSEILS HYDRATATION */}
-          <div style={{ background: "#e3f2fd", border: "1px solid #64b5f6", borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#0d47a1", marginBottom: 8 }}>💧 Hydratation</div>
-            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
-              {(conseilEau[eau] || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
-            </div>
+          <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
+            <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mes conseils en PDF</button>
           </div>
 
-          {/* CONSEIL SOMMEIL */}
-          <div style={{ background: "#f3e5f5", border: "1px solid #ba68c8", borderRadius: 14, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#4a148c", marginBottom: 8 }}>💤 Sommeil</div>
-            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
-              {(conseilsSommeil[sommeil] || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
-            </div>
-          </div>
-
-          {/* CONSEIL STRESS */}
-          <div style={{ background: "#fff3e0", border: "1px solid #ffb74d", borderRadius: 14, padding: 16, marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#e65100", marginBottom: 8 }}>😌 Gestion du stress</div>
-            <div style={{ fontSize: 12, color: "#3a3a3a", lineHeight: 1.6 }}>
-              {(conseilsStress[stress] || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
-            </div>
-          </div>
-
-          <ShareButtons quizName="Garde la Ligne" quizType="carrycare" />
-
-          {/* CTA bas */}
-          <div style={{ textAlign: "center", marginTop: 20 }}>
-            <button onClick={restart}
-              style={{ padding: "12px 24px", background: "#fff", color: LG.noir, border: "1.5px solid " + LG.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
-              🔄 Refaire le test
-            </button>
-            <button onClick={() => { setCarryCarePage("home"); setLgStep(1); }}
-              style={{ padding: "12px 24px", background: LG.vertDeep, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer" }}>
-              🌸 Autre quiz CarryCare
-            </button>
-          </div>
-
-          <div style={{ textAlign: "center", marginTop: 30, paddingTop: 20, borderTop: "1px solid " + LG.border }}>
-            <div style={{ fontSize: 11, color: LG.textFaint, fontStyle: "italic" }}>💝 Merci de faire confiance à CarryCare</div>
-          </div>
         </div>
       </div>
     );
   }
 
-  return null;
+  // ═══ RÉSULTAT ADULTE (avec calculs) ═══
+  return (
+    <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+      <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+        <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+        <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🥗 Ton plan nutrition</div>
+      </div>
+
+      <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+
+        {/* Hero */}
+        <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Plan nutrition personnalisé</div>
+          <div style={{ fontSize: 56, marginBottom: 12 }}>🥗</div>
+          <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{displayedCalories} kcal/jour</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>Tes besoins énergétiques approximatifs</div>
+          <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CC.noir, color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer", boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>📥 Télécharger en PDF</button>
+        </div>
+
+        {/* Avertissement haut */}
+        <div style={{ background: "#fff8e1", border: "1px solid #ff9800", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
+            ⚠️ <strong>Rappel important :</strong> Ce plan est un <strong>outil éducatif</strong>. Pour un suivi personnalisé adapté à ton état de santé exact, consulte un médecin ou un nutritionniste.
+          </div>
+        </div>
+
+        {/* PROFIL */}
+        <Section title="👤 Ton profil" color={CC.noir}>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            <div><strong>Genre :</strong> {profile.gender === "homme" ? "Homme" : "Femme"}</div>
+            <div><strong>Âge :</strong> {profile.age} ans</div>
+            <div><strong>Taille :</strong> {profile.height} cm</div>
+            <div><strong>Poids :</strong> {profile.weight} kg</div>
+            <div><strong>Activité :</strong> {LG_ACTIVITY_LEVELS.find(a => a.id === activity.activity_level)?.label || "—"}</div>
+          </div>
+          {!isPregnant && bmiCat && (
+            <div style={{ marginTop: 12, padding: 12, background: "#f5f5f5", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>📊 Indice de Masse Corporelle (IMC)</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 22, fontWeight: "bold", color: bmiCat.color }}>{bmi}</span>
+                <span style={{ fontSize: 12, fontWeight: "bold", color: bmiCat.color, padding: "4px 10px", background: bmiCat.color + "22", borderRadius: 6 }}>{bmiCat.label}</span>
+              </div>
+              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic", lineHeight: 1.5 }}>{bmiCat.advice}</div>
+              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 6, fontStyle: "italic" }}>L'IMC est un indicateur, pas une vérité absolue. Il ne tient pas compte de la masse musculaire.</div>
+            </div>
+          )}
+        </Section>
+
+        {/* CALCULS */}
+        <Section title="📊 Tes besoins énergétiques" color="#4caf50">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ padding: 12, background: "#f0f9f0", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: CC.textDim, marginBottom: 4 }}>Métabolisme de base (au repos)</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>{bmr} kcal/jour</div>
+              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 2 }}>Ce que ton corps brûle même au repos complet</div>
+            </div>
+            <div style={{ padding: 12, background: "#fff5e6", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, color: CC.textDim, marginBottom: 4 }}>Dépense énergétique totale (avec activité)</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>{tdee} kcal/jour</div>
+              <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 2 }}>Ce que ton corps brûle au total avec ton niveau d'activité</div>
+            </div>
+            <div style={{ padding: 12, background: "linear-gradient(135deg, #fdf0f1 0%, #f5d7d9 100%)", borderRadius: 8, border: "2px solid " + CC.rose }}>
+              <div style={{ fontSize: 12, color: CC.rose, fontWeight: "bold", marginBottom: 4 }}>🎯 Recommandation pour ton objectif</div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir }}>{displayedCalories} kcal/jour</div>
+              <div style={{ fontSize: 11, color: CC.textDim, marginTop: 4, fontStyle: "italic" }}>{objective === "perdre" ? "Déficit modéré pour perte progressive" : objective === "prendre" ? "Surplus modéré pour prise saine" : objective === "sportif" ? "Soutien à la performance" : isPregnant ? "Adapté à grossesse / allaitement" : "Maintien et santé"}</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 12, fontSize: 11, color: CC.textFaint, fontStyle: "italic", lineHeight: 1.5 }}>
+            🔬 Calculs basés sur la formule Mifflin-St Jeor, reconnue scientifiquement. Ce sont des estimations, ton corps peut varier de ±10%.
+          </div>
+        </Section>
+
+        {/* MACRONUTRIMENTS */}
+        <Section title="⚖️ Répartition recommandée">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ padding: 12, background: "#fff5e6", borderRadius: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, fontWeight: "bold", color: CC.noir }}>🍗 Protéines</span>
+                <span style={{ fontSize: 16, fontWeight: "bold", color: "#e67e22" }}>~{macros.prot}g/jour</span>
+              </div>
+              <div style={{ fontSize: 11, color: CC.textDim, marginTop: 4 }}>Viande, poisson, œuf, légumineuses, soja</div>
+            </div>
+            <div style={{ padding: 12, background: "#f0f9f0", borderRadius: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, fontWeight: "bold", color: CC.noir }}>🍚 Glucides</span>
+                <span style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>~{macros.gluc}g/jour</span>
+              </div>
+              <div style={{ fontSize: 11, color: CC.textDim, marginTop: 4 }}>Riz, manioc, igname, pain, plantain</div>
+            </div>
+            <div style={{ padding: 12, background: "#fff5f8", borderRadius: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, fontWeight: "bold", color: CC.noir }}>🥑 Lipides</span>
+                <span style={{ fontSize: 16, fontWeight: "bold", color: CC.rose }}>~{macros.lip}g/jour</span>
+              </div>
+              <div style={{ fontSize: 11, color: CC.textDim, marginTop: 4 }}>Huile d'olive, avocat, noix, poisson gras</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* MÉTHODE DE L'ASSIETTE */}
+        <Section title="🍽️ Méthode de l'assiette équilibrée" color={CC.rose}>
+          <div style={{ fontSize: 13, color: CC.textDim, marginBottom: 12, lineHeight: 1.6 }}>
+            Pour chaque repas, divise mentalement l'assiette comme ceci :
+          </div>
+          <div style={{ background: "linear-gradient(135deg, #f0f9f0 0%, #fff5f8 50%, #fff5e6 100%)", borderRadius: 14, padding: 18 }}>
+            <div style={{ fontSize: 14, color: CC.noir, lineHeight: 1.9 }}>
+              <div style={{ marginBottom: 8 }}>🥬 <strong>1/2 de l'assiette = LÉGUMES</strong> (variés, cuits ou crus)</div>
+              <div style={{ marginBottom: 8 }}>🍗 <strong>1/4 de l'assiette = PROTÉINES</strong> (viande, poisson, œuf, légumineuses)</div>
+              <div style={{ marginBottom: 8 }}>🍚 <strong>1/4 de l'assiette = FÉCULENTS</strong> (riz, manioc, igname, pain complet)</div>
+              <div style={{ marginBottom: 8 }}>🥑 <strong>+ Une cuillère de bonne graisse</strong> (huile d'olive, avocat)</div>
+              <div>💧 <strong>+ Eau comme boisson</strong> (toujours)</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 12, padding: 10, background: "#fdf8f8", borderRadius: 8, fontSize: 12, color: CC.textDim, fontStyle: "italic", lineHeight: 1.5 }}>
+            💡 Cette méthode visuelle est plus efficace que de compter les calories. Elle s'adapte à toutes les cuisines, y compris camerounaise (ndolè + viande + manioc + huile = parfait !).
+          </div>
+        </Section>
+
+        {/* CONSEILS OBJECTIF */}
+        <Section title="🎯 Conseils pour ton objectif" color="#e67e22">
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            {getObjectiveAdvice()}
+          </div>
+        </Section>
+
+        {/* ALIMENTS À PRIVILÉGIER */}
+        <Section title="✅ Aliments du Cameroun à privilégier" color="#4caf50">
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌾 Féculents (à chaque repas)</div>
+              <div>Manioc bouilli, igname, plantain mûr, taro, maïs, riz complet, mil, sorgho. Privilégie les versions cuites/bouillies plutôt que frites.</div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🍗 Protéines (à chaque repas)</div>
+              <div>Poulet, poisson frais (capitaine, machoiron, sole), œufs, niébé, lentilles, soja, arachides (modérément). Limite la viande rouge à 2x/sem.</div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🥬 Légumes (le plus possible)</div>
+              <div>Folong, ndolè, koki, gombo, morelle, aubergine africaine, tomate, carotte, oignon, ail. Au moins la moitié de chaque assiette.</div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🍌 Fruits (2-3 par jour)</div>
+              <div>Banane, mangue, papaye, ananas, orange, goyave, avocat, pastèque, coco. Privilégie les fruits entiers aux jus.</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🥥 Bonnes graisses</div>
+              <div>Huile d'olive, avocat, noix, amandes, huile de palme rouge non raffinée (modérément), poisson gras.</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* À LIMITER */}
+        <Section title="❌ À limiter ou éviter" color="#dc3545">
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+            <li><strong>Sodas et jus industriels</strong> (énormément de sucre)</li>
+            <li><strong>Beignets et fritures quotidiennes</strong> (riches en graisses saturées)</li>
+            <li><strong>Cubes Maggi en excès</strong> (sel + glutamate, max 1 cube/jour)</li>
+            <li><strong>Charcuterie</strong> en grande quantité (sel + nitrites)</li>
+            <li><strong>Produits ultra-transformés</strong> (chips, snacks emballés, plats préparés)</li>
+            <li><strong>Bonbons et pâtisseries industrielles</strong> tous les jours</li>
+            <li><strong>Alcool</strong> (calories vides, mauvais pour le foie)</li>
+            <li><strong>Glutathion injectable et compléments "minceur"</strong> non testés (dangereux)</li>
+          </ul>
+        </Section>
+
+        {/* HABITUDES */}
+        <Section title="💪 Habitudes santé à adopter" color={CC.rose}>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+            <li><strong>Boire 2 à 2,5 L d'eau / jour</strong> (3L+ si tu fais du sport)</li>
+            <li><strong>Manger lentement</strong> (la satiété arrive après 20 min)</li>
+            <li><strong>Bouger 30 min / jour minimum</strong> (marche, vélo, danse, sport)</li>
+            <li><strong>Dormir 7-8 heures / nuit</strong> (sommeil court = plus faim)</li>
+            <li><strong>Cuisiner maison</strong> autant que possible</li>
+            <li><strong>Manger en pleine conscience</strong> (sans télé ni téléphone)</li>
+            <li><strong>Pas de privation totale</strong> — un plaisir 1-2x/sem est OK</li>
+            <li><strong>Écouter ta faim</strong> — manger quand on a faim, s'arrêter quand on n'a plus faim</li>
+          </ul>
+        </Section>
+
+        {/* OÙ RETROUVER */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 28 }}>📂</div>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir }}>Garde ton plan à portée de main</div>
+          </div>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, marginBottom: 10 }}>Tu peux retrouver ce plan dans : <strong>Menu → Mes résultats</strong></div>
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>💡 Tu peux y revenir aussi souvent que tu veux pour suivre tes objectifs, sans repayer.</div>
+        </div>
+
+        {/* CROSS-SELL */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 14 }}>
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>✨ POUR ALLER PLUS LOIN</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Et ta peau, comment va-t-elle ?</div>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, fontStyle: "italic" }}>Une bonne nutrition aide la peau, mais des soins ciblés font la différence.</div>
+          </div>
+          <button onClick={() => { if (setCarryCarePage) setCarryCarePage("facialQuiz"); }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>🌸 Faire le diagnostic visage →</button>
+        </div>
+
+        {/* MESSAGE FINAL */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>💪 Tu peux le faire !</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", lineHeight: 1.6 }}>Petit à petit, jour après jour. C'est la régularité qui paye.</div>
+        </div>
+
+        {/* Bouton télécharger PDF en bas */}
+        <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon plan en PDF</button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// PDF GARDE LA LIGNE — version Phase 1 (basique mais complet)
+// ═══════════════════════════════════════════════════
+async function downloadLigneDiagnosticPDF(result) {
+  if (!result) { alert("Plan non disponible."); return; }
+
+  try {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const { bmr, tdee, bmi, calories, profile, objective, conditions, habits, activity } = result;
+    const isMinor = profile.age < 18;
+    const isPregnant = conditions.pregnancy === "enceinte" || conditions.pregnancy === "allaite";
+    let displayedCalories = calories;
+    if (conditions.pregnancy === "enceinte") displayedCalories = tdee + 300;
+    if (conditions.pregnancy === "allaite") displayedCalories = tdee + 500;
+
+    const ROSE = [212, 136, 155];
+    const NOIR = [44, 28, 17];
+    const GRIS = [120, 120, 120];
+    const GRIS_CLAIR = [200, 200, 200];
+    const BG_ROSE = [253, 240, 241];
+    const VERT = [76, 175, 80];
+    const ROUGE = [220, 53, 69];
+
+    let y = 20;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 18;
+    const usableW = pageW - margin * 2;
+
+    function clean(text) { if (!text) return ""; return String(text).replace(/[^\x20-\x7E\u00C0-\u017F]/g, "").trim().replace(/\s+/g, " "); }
+    function checkPage(h = 10) { if (y + h > pageH - 22) { addFooter(); doc.addPage(); y = 22; addHeader(); } }
+    function addHeader() {
+      doc.setFontSize(10); doc.setTextColor(...ROSE); doc.setFont("helvetica", "bold");
+      doc.text("CARRYBOOKS - CARRYCARE", margin, 12);
+      doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+      doc.text("Plan Garde la Ligne", pageW - margin, 12, { align: "right" });
+      doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, 14, pageW - margin, 14);
+    }
+    function addFooter() {
+      const pageNum = doc.internal.getNumberOfPages();
+      doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+      doc.setFontSize(8); doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal");
+      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.setFontSize(7); doc.text("Plan genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
+      doc.setFontSize(8); doc.text("Page " + pageNum, pageW - margin, pageH - 9, { align: "right" });
+    }
+    function addSectionTitle(title) {
+      checkPage(15); y += 4;
+      doc.setFillColor(...BG_ROSE); doc.rect(margin, y - 4, usableW, 9, "F");
+      doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+      doc.text(clean(title), margin + 3, y + 2); y += 11;
+    }
+    function addSubTitle(title, color = NOIR) {
+      checkPage(8); doc.setTextColor(...color); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+      doc.text(clean(title), margin, y); y += 5;
+    }
+    function addParagraph(text, options = {}) {
+      const { fontSize = 9, color = NOIR, bold = false, lineHeight = 4.5, marginBottom = 2 } = options;
+      doc.setTextColor(...color); doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(clean(text), usableW);
+      checkPage(lines.length * lineHeight + marginBottom);
+      lines.forEach(line => { doc.text(line, margin, y); y += lineHeight; });
+      y += marginBottom;
+    }
+    function addBullet(text, options = {}) {
+      const { fontSize = 9, color = NOIR } = options;
+      doc.setTextColor(...color); doc.setFont("helvetica", "normal"); doc.setFontSize(fontSize);
+      const cleanText = "- " + clean(text);
+      const lines = doc.splitTextToSize(cleanText, usableW - 4);
+      checkPage(lines.length * 4.3 + 1);
+      lines.forEach((line, i) => { doc.text(line, margin + (i === 0 ? 0 : 4), y); y += 4.3; });
+      y += 0.5;
+    }
+    function addInfoBox(title, text, color = ROSE) {
+      checkPage(20);
+      const startY = y;
+      const lines = doc.splitTextToSize(clean(text), usableW - 8);
+      const boxHeight = 8 + lines.length * 4.3 + 4;
+      doc.setFillColor(...BG_ROSE); doc.roundedRect(margin, startY, usableW, boxHeight, 2, 2, "F");
+      doc.setDrawColor(...color); doc.setLineWidth(0.3); doc.line(margin, startY, margin, startY + boxHeight); doc.setLineWidth(0.2);
+      y = startY + 5;
+      doc.setTextColor(...color); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+      doc.text(clean(title), margin + 3, y); y += 5;
+      doc.setTextColor(...NOIR); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+      lines.forEach(line => { doc.text(line, margin + 3, y); y += 4.3; });
+      y = startY + boxHeight + 3;
+    }
+
+    // PAGE 1 - COUVERTURE
+    addHeader();
+    y = 50;
+    doc.setFillColor(...BG_ROSE); doc.roundedRect(margin, y, usableW, 75, 4, 4, "F");
+    doc.setDrawColor(...ROSE); doc.setLineWidth(0.5); doc.roundedRect(margin, y, usableW, 75, 4, 4, "D");
+    doc.setFontSize(11); doc.setTextColor(...GRIS); doc.setFont("helvetica", "bold");
+    doc.text("PLAN PERSONNALISE", pageW / 2, y + 13, { align: "center" });
+    if (isMinor) {
+      doc.setFontSize(22); doc.setTextColor(...NOIR);
+      doc.text("Conseils Famille", pageW / 2, y + 35, { align: "center" });
+      doc.text("Et Enfants", pageW / 2, y + 45, { align: "center" });
+    } else {
+      doc.setFontSize(28); doc.setTextColor(...NOIR);
+      doc.text(displayedCalories + " kcal/jour", pageW / 2, y + 38, { align: "center" });
+      doc.setFontSize(10); doc.setTextColor(...GRIS); doc.setFont("helvetica", "italic");
+      doc.text("Tes besoins energetiques approximatifs", pageW / 2, y + 50, { align: "center" });
+    }
+    doc.setFontSize(9); doc.setTextColor(...ROSE); doc.setFont("helvetica", "bold");
+    doc.text("Garde la Ligne", pageW / 2, y + 67, { align: "center" });
+    y += 85;
+
+    // AVERTISSEMENT
+    addInfoBox("AVERTISSEMENT IMPORTANT", "Ce plan est un outil educatif. Il ne remplace pas l'avis d'un medecin ou d'un nutritionniste. Pour un suivi personnalise adapte a ton etat de sante, consulte un professionnel.", [255, 152, 0]);
+
+    // SI MINEUR : conseils famille seulement
+    if (isMinor) {
+      addSectionTitle("Principes pour les enfants et adolescents");
+      addParagraph("Les enfants et adolescents ont des besoins specifiques car leur corps est en pleine croissance. Ne JAMAIS mettre un enfant au regime sans avis medical.");
+      addBullet("3 repas + 2 collations par jour minimum");
+      addBullet("Toujours un petit-dejeuner (cereales + lait + fruit)");
+      addBullet("Au moins 5 fruits et legumes par jour");
+      addBullet("Eau comme boisson principale - limite sucreries et sodas");
+      addBullet("Proteines a chaque repas");
+      addBullet("Pas d'ecran a table");
+      addBullet("Cuisiner ensemble - implique les enfants");
+
+      addSectionTitle("Methode de l'assiette equilibree");
+      addBullet("1/2 = legumes (cuits ou crus, varies)");
+      addBullet("1/4 = proteines (viande, poisson, oeuf, legumineuses)");
+      addBullet("1/4 = feculents (riz, manioc, igname, pain)");
+      addBullet("+ Eau comme boisson");
+      addBullet("+ Un peu de matiere grasse (huile d'olive, avocat)");
+
+      addSectionTitle("Aliments du Cameroun a privilegier");
+      addBullet("Feculents : Manioc bouilli, igname, plantain mur, taro, mais, riz complet, mil, sorgho");
+      addBullet("Proteines : Poulet, poisson frais, oeufs, niebe, lentilles, soja");
+      addBullet("Legumes : Folong, ndole, koki, gombo, morelle, aubergine, tomate");
+      addBullet("Fruits : Banane, mangue, papaye, ananas, orange, goyave, avocat");
+      addBullet("Bonnes graisses : Huile de palme rouge (moderation), arachide, avocat, coco");
+
+      addSectionTitle("A limiter ou eviter");
+      addBullet("Sodas et jus industriels (beaucoup de sucre)", { color: ROUGE });
+      addBullet("Bonbons et biscuits en grande quantite", { color: ROUGE });
+      addBullet("Fritures excessives (beignets tous les jours)", { color: ROUGE });
+      addBullet("Cubes Maggi en exces (sel + glutamate)", { color: ROUGE });
+      addBullet("Produits ultra-transformes", { color: ROUGE });
+
+      addSectionTitle("Quand consulter un pediatre");
+      addBullet("Enfant qui maigrit / perd l'appetit longtemps");
+      addBullet("Enfant qui prend du poids tres vite");
+      addBullet("Enfant qui refuse une categorie d'aliments");
+      addBullet("Enfant ado qui parle de regime");
+    } else {
+      // PROFIL ADULTE
+      addSectionTitle("Ton profil");
+      addBullet("Genre : " + (profile.gender === "homme" ? "Homme" : "Femme"));
+      addBullet("Age : " + profile.age + " ans");
+      addBullet("Taille : " + profile.height + " cm");
+      addBullet("Poids : " + profile.weight + " kg");
+
+      if (!isPregnant) {
+        const b = parseFloat(bmi);
+        let cat = "Normal";
+        if (b < 18.5) cat = "Insuffisance ponderale";
+        else if (b >= 25 && b < 30) cat = "Surpoids";
+        else if (b >= 30) cat = "Obesite";
+        addBullet("IMC : " + bmi + " (" + cat + ")");
+      }
+
+      // CALCULS
+      addSectionTitle("Tes besoins energetiques");
+      addBullet("Metabolisme de base (au repos) : " + bmr + " kcal/jour");
+      addBullet("Depense totale (avec activite) : " + tdee + " kcal/jour");
+      doc.setTextColor(...ROSE); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+      checkPage(8); doc.text("RECOMMANDATION : " + displayedCalories + " kcal/jour", margin, y); y += 6;
+      addParagraph("Calculs bases sur la formule Mifflin-St Jeor (reconnue scientifiquement). Estimations a +/- 10%.", { fontSize: 8, color: GRIS });
+
+      // METHODE ASSIETTE
+      addSectionTitle("Methode de l'assiette equilibree");
+      addParagraph("Pour chaque repas, divise mentalement l'assiette ainsi :");
+      addBullet("1/2 = legumes (varies, cuits ou crus)");
+      addBullet("1/4 = proteines (viande, poisson, oeuf, legumineuses)");
+      addBullet("1/4 = feculents (riz, manioc, igname, pain complet)");
+      addBullet("+ Une cuillere de bonne graisse (huile d'olive, avocat)");
+      addBullet("+ Eau comme boisson");
+
+      // CONSEILS OBJECTIF
+      addSectionTitle("Conseils pour ton objectif");
+      let advice = "";
+      if (conditions.pregnancy === "enceinte") advice = "Tes besoins sont augmentes (+300 kcal/jour). Privilegie aliments riches en fer, calcium, folates, omega-3. Evite alcool, charcuterie crue, fromages au lait cru.";
+      else if (conditions.pregnancy === "allaite") advice = "Tes besoins sont +500 kcal/jour. Bois 2,5-3L d'eau. Privilegie calcium, fer, omega-3.";
+      else if (objective === "perdre") advice = "Perte progressive (0,5-1 kg/semaine max). Plus rapide = reprise garantie. Deficit modere, priorite aux proteines, beaucoup de legumes.";
+      else if (objective === "prendre") advice = "Prise de poids saine. Surplus modere. Aliments denses : avocat, oleagineux, huile d'olive, feculents complets.";
+      else if (objective === "sportif") advice = "Pour la performance : 1,4-1,8g proteines/kg/jour, glucides complexes avant entrainement, proteines + glucides apres. Hydratation 3L+.";
+      else advice = "Mange equilibre sans te priver, varie les aliments, ecoute ton corps. La sante n'est pas une question de poids mais d'habitudes.";
+      addParagraph(advice);
+
+      // ALIMENTS A PRIVILEGIER
+      addSectionTitle("Aliments du Cameroun a privilegier");
+      addBullet("FECULENTS : Manioc bouilli, igname, plantain mur, taro, mais, riz complet, mil, sorgho", { color: VERT });
+      addBullet("PROTEINES : Poulet, poisson frais, oeufs, niebe, lentilles, soja, arachides (modere)", { color: VERT });
+      addBullet("LEGUMES : Folong, ndole, koki, gombo, morelle, aubergine, tomate, oignon, ail", { color: VERT });
+      addBullet("FRUITS : Banane, mangue, papaye, ananas, orange, goyave, avocat (2-3/jour)", { color: VERT });
+      addBullet("BONNES GRAISSES : Huile d'olive, avocat, noix, palme rouge non raffinee", { color: VERT });
+
+      // A LIMITER
+      addSectionTitle("A limiter ou eviter");
+      addBullet("Sodas et jus industriels (sucre cache)", { color: ROUGE });
+      addBullet("Beignets et fritures quotidiennes", { color: ROUGE });
+      addBullet("Cubes Maggi en exces (max 1/jour)", { color: ROUGE });
+      addBullet("Charcuterie en grande quantite", { color: ROUGE });
+      addBullet("Produits ultra-transformes (chips, snacks emballes)", { color: ROUGE });
+      addBullet("Glutathion injectable et complements minceur (dangereux)", { color: ROUGE });
+
+      // HABITUDES
+      addSectionTitle("Habitudes sante a adopter");
+      addBullet("Boire 2 a 2,5 L d'eau / jour");
+      addBullet("Manger lentement (satiete arrive apres 20 min)");
+      addBullet("Bouger 30 min / jour minimum");
+      addBullet("Dormir 7-8 heures / nuit");
+      addBullet("Cuisiner maison autant que possible");
+      addBullet("Manger en pleine conscience (sans ecrans)");
+      addBullet("Pas de privation totale - un plaisir 1-2x/sem est OK");
+    }
+
+    // MESSAGE FINAL
+    y += 5;
+    checkPage(25);
+    doc.setFillColor(...BG_ROSE); doc.roundedRect(margin, y, usableW, 22, 3, 3, "F");
+    doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+    doc.text("Tu peux le faire !", pageW / 2, y + 9, { align: "center" });
+    doc.setFont("helvetica", "italic"); doc.setFontSize(10); doc.setTextColor(...GRIS);
+    doc.text("Petit a petit, jour apres jour. C'est la regularite qui paye.", pageW / 2, y + 16, { align: "center" });
+    y += 28;
+
+    // LIENS CLIQUABLES
+    checkPage(55);
+    const linkBoxStart = y;
+    doc.setFillColor(255, 255, 255); doc.roundedRect(margin, linkBoxStart, usableW, 50, 3, 3, "F");
+    doc.setDrawColor(...ROSE); doc.setLineWidth(0.6); doc.roundedRect(margin, linkBoxStart, usableW, 50, 3, 3, "D"); doc.setLineWidth(0.2);
+    y = linkBoxStart + 7;
+    doc.setTextColor(...ROSE); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text("Envie d'aller plus loin ?", pageW / 2, y, { align: "center" }); y += 8;
+    doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.text("Retrouve tes resultats en ligne", margin + 5, y); y += 4.5;
+    doc.setTextColor(0, 102, 204); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, { url: "https://carrybooks.com/mes-resultats" }); y += 8;
+    doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.text("Decouvre nos autres diagnostics (visage, corps, cheveux)", margin + 5, y); y += 4.5;
+    doc.setTextColor(0, 102, 204); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, { url: "https://carrybooks.com/carrycare" });
+    y = linkBoxStart + 53;
+
+    addFooter();
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i < totalPages; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+      doc.setFontSize(8); doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal");
+      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.setFontSize(7); doc.text("Plan genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
+      doc.setFontSize(8); doc.text("Page " + i, pageW - margin, pageH - 9, { align: "right" });
+    }
+
+    const dateStr = new Date().toISOString().split("T")[0];
+    doc.save("Plan-CarryBooks-Garde-la-Ligne-" + dateStr + ".pdf");
+  } catch (err) {
+    console.error("[CarryCare] Erreur PDF Ligne:", err);
+    alert("Erreur lors du telechargement du PDF. Verifie ta connexion internet et reessaie.");
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -8907,13 +9373,20 @@ export default function App() {
   const [bbPaymentMethod, setBbPaymentMethod] = useState(null);
   const [bbShowGift, setBbShowGift] = useState(false);
 
-  // ─── GARDE LA LIGNE STATES ───
-  const [lgStep, setLgStep] = useState(1);
-  const [lgData, setLgData] = useState({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
+  // ─── GARDE LA LIGNE STATES (refonte v2 — Mai 2026) ───
+  const [lgStep, setLgStep] = useState(0); // 0=intro+avertissement, 1=profil, 2=objectif, 3=conditions, 4=habitudes, 5=activite_sommeil, 6=suspense, 7=paiement, 8=resultat
+  const [lgProfile, setLgProfile] = useState({ gender: null, age: null, height: 0, weight: 0, target_weight: 0, family_size: 1 });
+  const [lgObjective, setLgObjective] = useState(null); // maintenir, perdre, prendre, sportif, sante, enfant_conseils
+  const [lgConditions, setLgConditions] = useState({ pregnancy: null, breastfeeding: null, diabetes: null, allergies: null, medical: null });
+  const [lgHabits, setLgHabits] = useState({ meals_per_day: null, water: null, snacking: null, breakfast: null, eating_out: null, fast_food: null, sugar: null });
+  const [lgActivity, setLgActivity] = useState({ activity_level: null, sleep: null, stress: null, smoking: null });
+  const [lgResult, setLgResult] = useState(null);
   const [lgPaymentStep, setLgPaymentStep] = useState(1);
   const [lgPaymentPhone, setLgPaymentPhone] = useState("");
   const [lgPaymentMethod, setLgPaymentMethod] = useState(null);
   const [lgShowGift, setLgShowGift] = useState(false);
+  // Anciens states maintenus pour compatibilité
+  const [lgData, setLgData] = useState({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
 
   // ─── BEAUTÉ CAPILLAIRE STATES ───
   const [capStep, setCapStep] = useState(1);
@@ -11958,9 +12431,17 @@ export default function App() {
                     <div key={r.id} onClick={() => {
                       // Ré-injecter les données et ouvrir le résultat complet
                       const data = r.result_data || {};
-                      if (r.quiz_type === "line") {
-                        setLgData(data);
-                        setLgStep(9);
+                      if (r.quiz_type === "line" || r.quiz_type === "ligne") {
+                        // Nouveau format (refonte v2)
+                        if (data.profile) setLgProfile(data.profile);
+                        if (data.objective) setLgObjective(data.objective);
+                        if (data.conditions) setLgConditions(data.conditions);
+                        if (data.habits) setLgHabits(data.habits);
+                        if (data.activity) setLgActivity(data.activity);
+                        if (data.result) setLgResult(data.result);
+                        // Compatibilité ancien format
+                        if (!data.profile && data.genre) setLgData(data);
+                        setLgStep(8);
                         setLgPaymentStep(1);
                         setLgShowGift(false);
                         setCarryCarePage("lineQuiz");
@@ -12425,17 +12906,21 @@ export default function App() {
               />
             )}
             {carryCarePage === "lineQuiz" && (
-              <LigneQuiz
+              <LigneQuizV2
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 lgStep={lgStep} setLgStep={setLgStep}
-                lgData={lgData} setLgData={setLgData}
+                lgProfile={lgProfile} setLgProfile={setLgProfile}
+                lgObjective={lgObjective} setLgObjective={setLgObjective}
+                lgConditions={lgConditions} setLgConditions={setLgConditions}
+                lgHabits={lgHabits} setLgHabits={setLgHabits}
+                lgActivity={lgActivity} setLgActivity={setLgActivity}
+                lgResult={lgResult} setLgResult={setLgResult}
                 lgPaymentStep={lgPaymentStep} setLgPaymentStep={setLgPaymentStep}
                 lgPaymentPhone={lgPaymentPhone} setLgPaymentPhone={setLgPaymentPhone}
                 lgPaymentMethod={lgPaymentMethod} setLgPaymentMethod={setLgPaymentMethod}
                 lgShowGift={lgShowGift} setLgShowGift={setLgShowGift}
                 beautyQuizPrice={beautyQuizPrice}
-                books={books} setSelectedBook={setSelectedBook}
               />
             )}
             {carryCarePage === "hairQuiz" && (
