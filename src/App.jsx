@@ -474,8 +474,13 @@ async function downloadBodyDiagnosticPDF(result) {
     // ═══ ROUTINE QUOTIDIENNE ═══
     addSectionTitle("Ta routine quotidienne");
     
-    // MATIN
+    // ═══ MATIN ═══
     addSubTitle("MATIN", ROSE);
+    
+    // Vue d'ensemble MATIN
+    const bbMatinCount = 3 + ((problems && problems.includes("hyperpigmentation")) ? 1 : 0);
+    addInfoBox("VUE D'ENSEMBLE", "Pour ta routine du matin, tu auras besoin de " + bbMatinCount + " produits. Bonne nouvelle : le gel douche servira aussi pour la douche du soir (achete-en 1 seul).", { color: ROSE, fontSize: 9 });
+    
     addSubTitle("1. Gel douche");
     addProductList(problems && problems.includes("acne_corps") ? "gel_douche_acne" : "gel_douche_normal", budgetPref);
     
@@ -487,29 +492,59 @@ async function downloadBodyDiagnosticPDF(result) {
       addProductList("deodorant", budgetPref);
     }
     
-    addSubTitle((problems && problems.includes("hyperpigmentation") ? "4" : "3") + ". Protection solaire (ESSENTIEL)");
+    addSubTitle((problems && problems.includes("hyperpigmentation") ? "4" : "3") + ". PROTECTION SOLAIRE SPF 30+ (ESSENTIEL)", ORANGE_GOLD);
     addProductList("spf", budgetPref);
 
-    // SOIR
-    y += 3;
+    // Comment appliquer MATIN
+    y += 4;
+    addSubTitle("COMMENT APPLIQUER TA ROUTINE MATIN (etape par etape)", ROSE);
+    addParagraph("Etape 1 - Douche (5-7 minutes) : Prends une douche a l'eau tiede (jamais brulante). Applique le gel douche avec tes mains ou un gant doux. Insiste sur les zones sensibles (acne, hyperpigmentation). Rince bien et tamponne avec une serviette propre (sans frotter).", { fontSize: 9 });
+    addParagraph("Etape 2 - Lotion hydratante (2 minutes) : Sur peau encore legerement humide, applique genereusement la lotion hydratante sur tout le corps en mouvements ascendants (de bas en haut). N'oublie pas le cou, les coudes, les genoux et les pieds. Attends 2 minutes que ca penetre.", { fontSize: 9 });
+    if (problems && problems.includes("hyperpigmentation")) {
+      addParagraph("Etape 3 - Deodorant (30 secondes) : Applique ton deodorant doux sur des aisselles propres et seches. Evite ceux a base d'alcool ou avec des sels d'aluminium agressifs qui empirent l'hyperpigmentation.", { fontSize: 9 });
+    }
+    addParagraph("Etape " + ((problems && problems.includes("hyperpigmentation")) ? "4" : "3") + " - Protection solaire (2 minutes) - L'ETAPE LA PLUS IMPORTANTE : Applique genereusement la protection solaire sur toutes les zones exposees : visage, cou, bras, jambes, mains. Renouvelle toutes les 2 heures si tu restes longtemps au soleil.", { fontSize: 9, color: ORANGE_GOLD, bold: true });
+    addParagraph("Temps total : 10-12 minutes (douche incluse).", { fontSize: 9, color: GRIS });
+
+    y += 6;
+    
+    // ═══ SOIR ═══
     addSubTitle("SOIR", ROSE);
-    addParagraph("Douche tiede + gel doux (utilise les memes que le matin). Evite l'eau brulante, elle asseche la peau.", { fontSize: 9 });
+    
+    // Vue d'ensemble SOIR
+    const bbSoirCount = 2 + ((((objectives && objectives.includes("vergetures")) || (problems && (problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")))) && !isPregnant) ? 1 : 0) + ((((objectives && objectives.includes("unifier")) || (problems && (problems.includes("taches_noires") || problems.includes("hyperpigmentation")))) && !isPregnant) ? 1 : 0);
+    addInfoBox("VUE D'ENSEMBLE", "Pour ta routine du soir, tu auras besoin de " + bbSoirCount + " produits. Le gel douche est le meme que le matin. Pas besoin de protection solaire le soir !", { color: ROSE, fontSize: 9 });
+    
+    addSubTitle("1. Douche tiede + gel doux (meme que le matin)");
+    addParagraph("Tu peux utiliser le meme gel douche que le matin. Evite l'eau brulante, elle asseche la peau.", { fontSize: 9, color: GRIS });
     
     if ((objectives && objectives.includes("vergetures")) || (problems && (problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")))) {
       if (!isPregnant) {
-        addSubTitle("Soin anti-vergetures");
+        addSubTitle("2. Soin anti-vergetures");
         addProductList("anti_vergetures", budgetPref);
-        addInfoBox("CONSEIL", "Masse en cercles pendant 2 minutes - c'est le massage qui aide la peau a reformer ses fibres de collagene.");
       }
     }
     
     if ((objectives && objectives.includes("unifier")) || (problems && (problems.includes("taches_noires") || problems.includes("hyperpigmentation"))) && !isPregnant) {
-      addSubTitle("Soin anti-taches / unification du teint");
+      addSubTitle("3. Soin anti-taches / unification du teint");
       addProductList("anti_taches", budgetPref);
     }
     
-    addSubTitle("Creme / beurre nourrissant");
+    addSubTitle("4. Creme / beurre nourrissant");
     addProductList(skinType.code === "seche" ? "lotion_seche" : "lotion_normale", budgetPref);
+
+    // Comment appliquer SOIR
+    y += 4;
+    addSubTitle("COMMENT APPLIQUER TA ROUTINE SOIR (etape par etape)", ROSE);
+    addParagraph("Etape 1 - Douche douce (5-7 minutes) : Prends ta douche du soir avec ton gel douche du matin. Eau tiede, jamais brulante. C'est le moment ideal pour bien nettoyer apres une journee de chaleur.", { fontSize: 9 });
+    if (((objectives && objectives.includes("vergetures")) || (problems && (problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")))) && !isPregnant) {
+      addParagraph("Etape 2 - Soin anti-vergetures (3 minutes) : Sur peau legerement humide, applique le soin sur les zones concernees (ventre, cuisses, hanches, poitrine, bras). Masse en cercles pendant 2 minutes - c'est le massage qui aide la peau a reformer ses fibres de collagene.", { fontSize: 9 });
+    }
+    if (((objectives && objectives.includes("unifier")) || (problems && (problems.includes("taches_noires") || problems.includes("hyperpigmentation")))) && !isPregnant) {
+      addParagraph("Etape 3 - Soin anti-taches (2 minutes) : Applique le soin sur les zones concernees (entre-cuisses, aisselles, coudes, genoux). Laisse penetrer 1-2 minutes avant la creme nourrissante.", { fontSize: 9 });
+    }
+    addParagraph("Etape 4 - Creme ou beurre nourrissant (3 minutes) : Applique genereusement sur tout le corps. Le soir, ta peau a besoin de plus d'hydratation car elle se regenere pendant la nuit. N'oublie pas les pieds et les talons.", { fontSize: 9 });
+    addParagraph("Temps total : 10-15 minutes (douche incluse). Astuce : Fais ta routine 1h avant de dormir pour que les produits penetrent bien.", { fontSize: 9, color: GRIS });
 
     // ═══ SOINS HEBDOMADAIRES ═══
     addSectionTitle("Soins hebdomadaires (1-2 fois / semaine)");
@@ -5398,16 +5433,23 @@ async function downloadFacialDiagnosticPDF(result) {
 
     // ROUTINE
     addSectionTitle("Ta routine quotidienne");
+    
+    // ═══ MATIN ═══
     addSubTitle("MATIN", ROSE);
+    
+    // Vue d'ensemble MATIN
+    const matinCount = 4 + ((objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) ? 1 : 0) + ((problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) ? 1 : 0);
+    addInfoBox("VUE D'ENSEMBLE", "Pour ta routine du matin, tu auras besoin de " + matinCount + " produits. Le nettoyant et la lotion seront aussi utilises le soir (achete-en 1 seul de chaque pour economiser).", { color: ROSE, fontSize: 9 });
+    
     addSubTitle("1. Nettoyant doux");
     addProductList(problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale"), budgetPref);
     addSubTitle("2. Tonique / Lotion");
     addProductList("tonique_normale", budgetPref);
-    if (objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne")) {
+    if (objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) {
       addSubTitle("3. Serum vitamine C");
       addProductList("serum_vitc", budgetPref);
     }
-    if (problems.includes("cernes") || problems.includes("poches")) {
+    if (problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) {
       addSubTitle("4. Contour des yeux");
       addProductList("contour_yeux", budgetPref);
     }
@@ -5416,30 +5458,88 @@ async function downloadFacialDiagnosticPDF(result) {
     addSubTitle("6. PROTECTION SOLAIRE SPF 30+ (ESSENTIEL)", ORANGE_SPF);
     addProductList(skinType.code === "grasse" || problems.includes("acne_active") ? "spf_grasse" : (skinTone === "metisse" || skinTone === "fonce" || skinTone === "ebene" ? "spf_metisse" : "spf"), budgetPref);
 
-    y += 3;
+    // Comment appliquer MATIN
+    y += 4;
+    addSubTitle("COMMENT APPLIQUER TA ROUTINE MATIN (etape par etape)", ROSE);
+    addParagraph("Etape 1 - Nettoyer (1 minute) : Mouille ton visage a l'eau tiede (jamais brulante). Prends une noisette de nettoyant, fais mousser un peu, masse en mouvements circulaires pendant 30 secondes. Insiste sur la zone T (front, nez, menton). Rince a l'eau tiede.", { fontSize: 9 });
+    addParagraph("Etape 2 - Tonifier (30 secondes) : Imbibe un coton de lotion tonique. Passe-le sur le visage en tapotant doucement, sans frotter. Evite le contour des yeux. Laisse secher 30 secondes.", { fontSize: 9 });
+    if (objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) {
+      addParagraph("Etape 3 - Serum vitamine C (2 minutes) : Depose 3 a 4 gouttes dans la paume. Tapote tes doigts dans le serum, applique sur le visage en partant du centre vers l'exterieur. Attends 1 a 2 minutes que ca penetre.", { fontSize: 9 });
+    }
+    if (problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) {
+      addParagraph("Etape 4 - Contour des yeux (30 secondes) : Prelève une petite quantite (taille d'un grain de riz). Tapote doucement avec ton annulaire (le doigt le plus delicat) autour des yeux. Ne frotte JAMAIS.", { fontSize: 9 });
+    }
+    addParagraph("Etape 5 - Creme hydratante (1 minute) : Prends une noisette, chauffe entre les paumes, applique sur le visage et le cou en mouvements ascendants. Attends 2 minutes.", { fontSize: 9 });
+    addParagraph("Etape 6 - Protection solaire (1 minute) - L'ETAPE LA PLUS IMPORTANTE : Mets l'equivalent de 2 doigts pleins. Etale sur tout le visage, le cou, les oreilles. N'oublie pas le dessous du menton.", { fontSize: 9, color: ORANGE_SPF, bold: true });
+    addParagraph("Temps total : 6-8 minutes. Astuce : Fais ta routine apres ton reveil et avant le petit-dejeuner. Le temps que tu manges, tous tes produits sont absorbes.", { fontSize: 9, color: GRIS });
+
+    y += 6;
+    
+    // ═══ SOIR ═══
     addSubTitle("SOIR", ROSE);
+    
+    // Vue d'ensemble SOIR
+    const soirCount = 3 + ((lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") ? 1 : 0) + ((!isPregnant && problems.includes("acne_active")) ? 1 : 0) + ((!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides"))) ? 1 : 0) + ((problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant ? 1 : 0) + ((problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) ? 1 : 0) + (problems.includes("acne_active") ? 1 : 0);
+    addInfoBox("VUE D'ENSEMBLE", "Pour ta routine du soir, tu auras besoin de " + soirCount + " produits. Plusieurs sont les memes que le matin (nettoyant, tonique, contour des yeux). Tu n'as pas besoin de tout racheter !", { color: ROSE, fontSize: 9 });
+    
     if (lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") {
       addSubTitle("1. Demaquillant");
       addProductList("demaquillant", budgetPref);
     }
-    addSubTitle((lifestyle.makeup === "never" ? "1" : "2") + ". Nettoyant doux");
-    addProductList(problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale"), budgetPref);
-    addSubTitle("3. Tonique (idem matin)");
+    addSubTitle((lifestyle.makeup === "never" ? "1" : "2") + ". Nettoyant doux (meme que le matin)");
+    addParagraph("Tu peux utiliser le meme nettoyant que le matin pour economiser.", { fontSize: 9, color: GRIS });
+    addSubTitle("3. Tonique / Lotion (meme que le matin)");
+    addParagraph("Tu peux utiliser le meme tonique que le matin pour economiser.", { fontSize: 9, color: GRIS });
     if (!isPregnant && problems.includes("acne_active")) {
       addSubTitle("4. Serum acide salicylique");
       addProductList("serum_acne", budgetPref);
     }
-    if (!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+")) {
+    if (!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides"))) {
       addSubTitle("4. Serum retinol (anti-age)");
       addProductList("serum_anti_age", budgetPref);
-      addParagraph("ATTENTION : retinol = SPF OBLIGATOIRE le matin. Commence 2x/sem puis augmente.", { fontSize: 8, color: ROUGE });
+      addParagraph("ATTENTION : retinol = PROTECTION SOLAIRE OBLIGATOIRE le matin. Commence 2x/sem puis augmente.", { fontSize: 8, color: ROUGE });
     }
-    if ((problems.includes("taches_acne") || problems.includes("melasma")) && !isPregnant) {
+    if ((problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant) {
       addSubTitle("5. Serum anti-taches (niacinamide)");
       addProductList("serum_niacinamide", budgetPref);
     }
-    addSubTitle("6. Creme nuit");
+    if (problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) {
+      addSubTitle("6. Contour des yeux nuit (meme que le matin)");
+      addParagraph("Tu peux utiliser le meme contour des yeux que le matin.", { fontSize: 9, color: GRIS });
+    }
+    addSubTitle("7. Creme nuit");
     addProductList("creme_nuit", budgetPref);
+    if (problems.includes("acne_active")) {
+      addSubTitle("8. Soin localise sur les boutons");
+      addProductList("spot_acne", budgetPref);
+    }
+
+    // Comment appliquer SOIR
+    y += 4;
+    addSubTitle("COMMENT APPLIQUER TA ROUTINE SOIR (etape par etape)", ROSE);
+    if (lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") {
+      addParagraph("Etape 1 - Demaquiller (1 minute) : Imbibe un coton de demaquillant et passe-le sur tes yeux, ta bouche et tout ton visage. Repete jusqu'a ce que le coton soit propre. Le demaquillage est essentiel avant le nettoyage.", { fontSize: 9 });
+    }
+    const etapeNum = lifestyle.makeup === "never" ? 1 : 2;
+    addParagraph("Etape " + etapeNum + " - Nettoyer en profondeur (1-2 minutes) : Le soir, ton visage a accumule pollution et residus. Utilise le meme nettoyant que le matin mais double la duree du massage : 1 minute au lieu de 30 secondes.", { fontSize: 9 });
+    addParagraph("Etape " + (etapeNum + 1) + " - Tonifier (30 secondes) : Identique au matin avec ta lotion tonique. Imbibe un coton et tapote sur le visage.", { fontSize: 9 });
+    if (!isPregnant && problems.includes("acne_active")) {
+      addParagraph("Etape 4 - Serum acide salicylique (2 minutes) : Le SOIR uniquement (jamais avec la vitamine C du matin). Depose 3-4 gouttes, applique en evitant contour des yeux. Concentre sur les zones avec acne. Laisse penetrer 1-2 minutes.", { fontSize: 9 });
+    }
+    if (!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides"))) {
+      addParagraph("Etape 4 - Serum retinol (2 minutes) : Depose 2-3 gouttes seulement (tres puissant). Applique en evitant contour des yeux et bouche. Commence 2x/semaine puis augmente.", { fontSize: 9 });
+    }
+    if ((problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant) {
+      addParagraph("Etape 5 - Serum anti-taches (1 minute) : Depose 3-4 gouttes, applique en insistant sur les zones avec taches.", { fontSize: 9 });
+    }
+    if (problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) {
+      addParagraph("Etape 6 - Contour des yeux (30 secondes) : Identique au matin. Tapote doucement avec ton annulaire.", { fontSize: 9 });
+    }
+    addParagraph("Etape 7 - Creme nuit (1 minute) : Plus riche que la creme de jour. Etale genereusement sur le visage et le cou. Tu peux laisser un leger exces, ta peau l'absorbera pendant la nuit.", { fontSize: 9 });
+    if (problems.includes("acne_active")) {
+      addParagraph("Etape 8 - Soin localise sur les boutons (30 secondes) : En dernier, applique une petite goutte uniquement sur les boutons (pas tout le visage). Patches anti-acne en option pour la nuit.", { fontSize: 9 });
+    }
+    addParagraph("Temps total : 6-10 minutes. Astuces : Fais ta routine au moins 1 heure avant de dormir. Change ta taie d'oreiller 2 fois par semaine (les bacteries empirent l'acne).", { fontSize: 9, color: GRIS });
 
     // SOINS HEBDOMADAIRES
     addSectionTitle("Soins hebdomadaires");
