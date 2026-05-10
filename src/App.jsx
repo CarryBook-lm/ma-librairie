@@ -2216,76 +2216,265 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
 
 
 // ─── QUIZ BEAUTÉ FACIALE ───
-const BF_TYPE_QUESTIONS = [
-  { q: "Le matin au réveil, ta peau est :", options: [
-    { label: "Brillante surtout sur le front et le nez", v: "A" },
-    { label: "Tendue, inconfortable, ça tire", v: "B" },
-    { label: "Confortable, ni grasse ni sèche", v: "C" },
-    { label: "Brillante au centre, sèche sur les joues", v: "D" },
-    { label: "Rouge, irritée ou sensible au toucher", v: "E" },
-  ]},
-  { q: "2-3 heures après ta crème hydratante :", options: [
-    { label: "Ma peau brille beaucoup", v: "A" },
-    { label: "Ma peau tire encore", v: "B" },
-    { label: "Ma peau reste confortable", v: "C" },
-    { label: "Ça brille au centre, sec ailleurs", v: "D" },
-    { label: "Ma peau réagit (rougeurs, picotements)", v: "E" },
-  ]},
-  { q: "Tes pores sont :", options: [
-    { label: "Visibles partout", v: "A" },
-    { label: "Très fins, presque invisibles", v: "B" },
-    { label: "Normaux, peu visibles", v: "C" },
-    { label: "Visibles au centre du visage", v: "D" },
-    { label: "Variables selon les zones", v: "E" },
-  ]},
-  { q: "As-tu des points noirs ?", options: [
-    { label: "Beaucoup, surtout nez et front", v: "A" },
-    { label: "Très peu ou aucun", v: "B" },
-    { label: "Quelques-uns occasionnellement", v: "C" },
-    { label: "Sur la zone T uniquement", v: "D" },
-    { label: "Rarement", v: "E" },
-  ]},
-  { q: "Le maquillage tient sur ta peau :", options: [
-    { label: "Mal, il fond rapidement", v: "A" },
-    { label: "Il craque sur les zones sèches", v: "B" },
-    { label: "Très bien toute la journée", v: "C" },
-    { label: "Bien sur joues, mal au centre", v: "D" },
-    { label: "Ma peau réagit au maquillage", v: "E" },
-    { label: "🚫 Je ne me maquille pas", v: "skip" },
-  ]},
-  { q: "Quand tu transpires :", options: [
-    { label: "Ma peau devient huileuse rapidement", v: "A" },
-    { label: "Je transpire peu, ma peau reste sèche", v: "B" },
-    { label: "Normal", v: "C" },
-    { label: "Le centre devient gras", v: "D" },
-    { label: "Ma peau rougit ou s'irrite", v: "E" },
-  ]},
-  { q: "Tu as souvent des boutons ou imperfections ?", options: [
-    { label: "Oui, régulièrement, surtout zone T", v: "A" },
-    { label: "Très rarement", v: "B" },
-    { label: "Parfois (avant les règles ou en cas de stress)", v: "C" },
-    { label: "Sur menton et front uniquement", v: "D" },
-    { label: "Rarement, mais peau sensible", v: "E" },
-  ]},
-  { q: "Comment réagit ta peau à un nouveau produit ?", options: [
-    { label: "Plutôt bien", v: "A" },
-    { label: "Elle a besoin de produits riches", v: "B" },
-    { label: "Aucune réaction particulière", v: "C" },
-    { label: "Réactions différentes selon zones", v: "D" },
-    { label: "Souvent rougeurs, picotements", v: "E" },
-  ]},
+// ═══ BEAUTÉ FACIALE — DONNÉES (refonte v2 — Mai 2026) ═══
+
+// --- ÉTAPE 1 : PROFIL (3 ou 4 ou 5 questions selon genre) ---
+const BF_PROFILE_QUESTIONS = [
+  {
+    id: "gender",
+    q: "Tu es :",
+    options: [
+      { value: "homme", label: "👨 Un homme" },
+      { value: "femme", label: "👩 Une femme" }
+    ]
+  },
+  {
+    id: "age",
+    q: "Quelle est ta tranche d'âge ?",
+    options: [
+      { value: "18-25", label: "🌱 18-25 ans" },
+      { value: "26-35", label: "🌿 26-35 ans" },
+      { value: "36-45", label: "🌳 36-45 ans" },
+      { value: "46+", label: "🍃 46 ans et plus" }
+    ]
+  },
+  {
+    id: "skin_tone",
+    q: "Quel est ton teint actuel ?",
+    options: [
+      { value: "ebene", label: "🌑 Très foncé / Ébène" },
+      { value: "fonce", label: "🌒 Foncé" },
+      { value: "metisse", label: "🌓 Métissé / Caramel" },
+      { value: "clair", label: "🌔 Clair" },
+      { value: "tres_clair", label: "🌕 Très clair" }
+    ]
+  },
+  {
+    id: "pregnancy",
+    q: "Es-tu enceinte ou allaitante ?",
+    note: "Cette information nous permet d'écarter les produits déconseillés pendant cette période.",
+    onlyIfFemme: true,
+    options: [
+      { value: "enceinte", label: "🤰 Oui, je suis enceinte" },
+      { value: "allaite", label: "🤱 Oui, j'allaite" },
+      { value: "non", label: "🚫 Non" },
+      { value: "prefer_not", label: "💭 Je préfère ne pas répondre" }
+    ]
+  },
+  {
+    id: "cycle",
+    q: "Tes règles sont :",
+    note: "Pour comprendre l'acné hormonale.",
+    onlyIfFemme: true,
+    options: [
+      { value: "regulier", label: "✅ Régulières" },
+      { value: "irregulier", label: "🔄 Irrégulières" },
+      { value: "menopause", label: "🌙 Ménopause / pré-ménopause" },
+      { value: "prefer_not", label: "💭 Préfère ne pas répondre" }
+    ]
+  },
+  {
+    id: "shaving",
+    q: "Tu te rases le visage ?",
+    note: "Pour adapter les conseils contre le feu du rasoir et les poils incarnés.",
+    onlyIfHomme: true,
+    options: [
+      { value: "daily", label: "🪒 Tous les jours (ou presque)" },
+      { value: "weekly", label: "📅 2-3 fois par semaine" },
+      { value: "rarely", label: "🌿 Rarement" },
+      { value: "none", label: "🚫 Pas de barbe / peu de pilosité" }
+    ]
+  }
 ];
 
+// --- ÉTAPE 2 : OBJECTIFS (1 question multi-select max 3) ---
+const BF_OBJECTIVES = [
+  { id: "glow", emoji: "✨", label: "Avoir un visage lumineux / glow" },
+  { id: "unifier", emoji: "🎯", label: "Unifier le teint (taches, mélasma)" },
+  { id: "acne", emoji: "🔴", label: "Stopper l'acné / boutons" },
+  { id: "points_noirs", emoji: "⚫", label: "Effacer les points noirs" },
+  { id: "pores", emoji: "🕳️", label: "Resserrer les pores dilatés" },
+  { id: "hydratation", emoji: "💧", label: "Hydrater profondément" },
+  { id: "anti_age", emoji: "🧬", label: "Ralentir le vieillissement (rides, fermeté)" },
+  { id: "cernes", emoji: "👁️", label: "Réduire les cernes / poches" },
+  { id: "apaiser", emoji: "🌹", label: "Apaiser ma peau sensible / rougeurs" },
+  { id: "preparer", emoji: "🪷", label: "Préparer ma peau (mariage, événement)" },
+  { id: "naturel", emoji: "🌿", label: "Passer au naturel / bio" },
+  { id: "cicatrices", emoji: "🌫️", label: "Effacer les cicatrices d'acné" },
+  { id: "doux_bebe", emoji: "👶", label: "Avoir un visage doux comme un bébé" }
+];
+
+// --- ÉTAPE 3 : TYPE DE PEAU FACIALE (4 questions pour déduire) ---
+const BF_TYPE_QUESTIONS = [
+  {
+    id: "after_2h",
+    q: "2 heures après lavage, ton visage est :",
+    options: [
+      { value: "tire", label: "💧 Tire, sec", points: { seche: 3 } },
+      { value: "zone_t", label: "✨ Brille front + nez + menton (zone T)", points: { mixte: 3 } },
+      { value: "brille_partout", label: "🪞 Brille partout", points: { grasse: 3 } },
+      { value: "confort", label: "☁️ Confortable", points: { normale: 3 } },
+      { value: "rougit", label: "🌹 Rougit / picote", points: { sensible: 3 } }
+    ]
+  },
+  {
+    id: "pores",
+    q: "Tes pores sont :",
+    options: [
+      { value: "invisibles", label: "🤏 Invisibles", points: { seche: 2, normale: 1 } },
+      { value: "zone_t", label: "👃 Visibles surtout zone T", points: { mixte: 3 } },
+      { value: "partout", label: "🕳️ Visibles partout", points: { grasse: 3 } },
+      { value: "variables", label: "🎭 Variables selon zones", points: { normale: 2, mixte: 1 } }
+    ]
+  },
+  {
+    id: "boutons",
+    q: "Combien de boutons / imperfections tu as actuellement ?",
+    options: [
+      { value: "aucun", label: "✅ Aucun", points: { normale: 2 } },
+      { value: "1-3", label: "1️⃣ 1-3", points: { normale: 1, mixte: 1 } },
+      { value: "4-10", label: "4️⃣ 4-10", points: { mixte: 1, grasse: 2 } },
+      { value: "10+", label: "🔟 Plus de 10", points: { grasse: 3 } },
+      { value: "cycle", label: "🩸 Variables selon cycle (femme)", points: { mixte: 1 } }
+    ]
+  },
+  {
+    id: "touch",
+    q: "Au toucher, ton visage est :",
+    options: [
+      { value: "rugueuse", label: "🪨 Rugueux, écailleux", points: { seche: 3 } },
+      { value: "lisse", label: "🍃 Lisse", points: { normale: 3 } },
+      { value: "gras", label: "🌊 Gras, parfois moite", points: { grasse: 3 } },
+      { value: "mixte", label: "🎭 Mixte selon zones", points: { mixte: 3 } },
+      { value: "fine", label: "🌸 Fin et fragile", points: { sensible: 2, seche: 1 } }
+    ]
+  }
+];
+
+// --- ÉTAPE 4 : PROBLÈMES FACIAUX (multi-select) ---
 const BF_PROBLEMS = [
-  { id: "acne", emoji: "🔴", label: "Acné active" },
-  { id: "taches", emoji: "🟤", label: "Taches noires / hyperpigmentation" },
-  { id: "cicatrices", emoji: "⚪", label: "Cicatrices d'acné anciennes" },
-  { id: "pores", emoji: "⚫", label: "Points noirs / pores dilatés" },
-  { id: "cernes", emoji: "👁️", label: "Cernes ou poches" },
-  { id: "terne", emoji: "😐", label: "Peau terne, manque d'éclat" },
-  { id: "rides", emoji: "⏳", label: "Premières rides ou relâchement" },
-  { id: "rougeurs", emoji: "🌹", label: "Rougeurs ou peau qui réagit" },
-  { id: "secheresse", emoji: "💧", label: "Sécheresse, tiraillements" },
+  { id: "acne_active", emoji: "🔴", label: "Acné active (boutons rouges, kystes)" },
+  { id: "points_noirs", emoji: "⚫", label: "Points noirs (nez, menton)" },
+  { id: "points_blancs", emoji: "⚪", label: "Points blancs / micro-kystes" },
+  { id: "pores", emoji: "🕳️", label: "Pores dilatés" },
+  { id: "taches_acne", emoji: "🟤", label: "Taches noires d'anciens boutons" },
+  { id: "melasma", emoji: "🟫", label: "Mélasma / \"mamie\" (taches brunes)" },
+  { id: "cernes", emoji: "⚫", label: "Cernes foncés" },
+  { id: "poches", emoji: "💧", label: "Poches sous les yeux" },
+  { id: "rides", emoji: "〰️", label: "Rides / ridules" },
+  { id: "fermete", emoji: "↘️", label: "Manque de fermeté / relâchement" },
+  { id: "rougeurs", emoji: "🌹", label: "Rougeurs / couperose" },
+  { id: "terne", emoji: "🌫️", label: "Teint terne / pâle" },
+  { id: "deshydratee", emoji: "🎭", label: "Peau déshydratée (tire mais grasse)" },
+  { id: "tres_seche", emoji: "💧", label: "Peau très sèche qui pèle" },
+  { id: "sensibilite", emoji: "🔥", label: "Sensibilité / picotements" },
+  { id: "cicatrices_creux", emoji: "🩹", label: "Cicatrices d'acné en creux" },
+  { id: "jaunatre", emoji: "🟡", label: "Teint jaunâtre / fatigué" },
+  { id: "nez_gras", emoji: "👃", label: "Nez gras avec brillance" },
+  { id: "feu_rasoir", emoji: "🌸", label: "Poils incarnés / feu du rasoir (homme)" },
+  { id: "aucun", emoji: "✅", label: "Aucun problème particulier" }
+];
+
+// --- ÉTAPE 5 : MODE DE VIE FACIAL (10 questions) ---
+const BF_LIFESTYLE_QUESTIONS = [
+  {
+    id: "water",
+    q: "Combien d'eau bois-tu par jour ?",
+    options: [
+      { value: "low", label: "🥤 Moins d'1 litre" },
+      { value: "med", label: "💧 Entre 1 et 2 litres" },
+      { value: "high", label: "💦 Plus de 2 litres" },
+      { value: "unknown", label: "❓ Je ne sais pas" }
+    ]
+  },
+  {
+    id: "sun",
+    q: "Tu t'exposes au soleil :",
+    options: [
+      { value: "high", label: "☀️☀️☀️ Beaucoup (extérieur)" },
+      { value: "med", label: "☀️☀️ Modérément (trajets)" },
+      { value: "low", label: "☀️ Peu (bureau / intérieur)" }
+    ]
+  },
+  {
+    id: "sleep",
+    q: "Combien d'heures tu dors par nuit ?",
+    options: [
+      { value: "high", label: "😴 Plus de 8 heures" },
+      { value: "med", label: "😊 Entre 6 et 8 heures" },
+      { value: "low", label: "😪 Moins de 6 heures" },
+      { value: "irregular", label: "🥱 Sommeil irrégulier" }
+    ]
+  },
+  {
+    id: "stress",
+    q: "Ton niveau de stress quotidien :",
+    options: [
+      { value: "low", label: "😌 Faible" },
+      { value: "med", label: "😐 Modéré" },
+      { value: "high", label: "😣 Élevé" },
+      { value: "very_high", label: "😰 Très élevé" }
+    ]
+  },
+  {
+    id: "makeup",
+    q: "À quelle fréquence tu te maquilles ?",
+    options: [
+      { value: "never", label: "🚫 Je ne me maquille pas" },
+      { value: "occasional", label: "💄 Occasionnellement (événements)" },
+      { value: "daily_light", label: "🪞 Quotidiennement (léger)" },
+      { value: "daily_full", label: "🎨 Quotidiennement (complet)" }
+    ]
+  },
+  {
+    id: "screen_time",
+    q: "Temps écran (téléphone, ordi) par jour :",
+    note: "Pour comprendre l'impact sur cernes et fatigue cutanée.",
+    options: [
+      { value: "low", label: "📱 Moins de 4 heures" },
+      { value: "med", label: "💻 4 à 8 heures" },
+      { value: "high", label: "🖥️ Plus de 8 heures" }
+    ]
+  },
+  {
+    id: "allergies",
+    q: "As-tu déjà eu une réaction allergique à un cosmétique ?",
+    options: [
+      { value: "no", label: "✅ Non, jamais" },
+      { value: "sometimes", label: "⚠️ Oui, occasionnellement" },
+      { value: "very_sensitive", label: "🔴 Oui, peau très sensible/réactive" },
+      { value: "unknown", label: "🤔 Je ne sais pas" }
+    ]
+  },
+  {
+    id: "preference",
+    q: "Tu préfères quels types de produits ?",
+    options: [
+      { value: "naturel", label: "🌿 Naturels (huiles, végétal, bio)" },
+      { value: "cosmetique", label: "🧴 Cosmétiques (Nivea, La Roche-Posay...)" },
+      { value: "kbeauty", label: "🇰🇷 K-Beauty (coréen)" },
+      { value: "chinois", label: "🇨🇳 Marques chinoises (Bioaqua, Dr Rashel...)" },
+      { value: "mix", label: "✨ Mix de tout" }
+    ]
+  },
+  {
+    id: "routine_time",
+    q: "Combien de temps pour ta routine quotidienne ?",
+    options: [
+      { value: "express", label: "⚡ Express — 5 minutes max" },
+      { value: "standard", label: "⏱️ Standard — 10 à 15 minutes" },
+      { value: "complete", label: "🧖 Complète — 20 minutes ou plus" }
+    ]
+  },
+  {
+    id: "budget",
+    q: "Ton budget mensuel pour les soins du visage ?",
+    options: [
+      { value: "eco", label: "💰 Économique — moins de 10 000 FCFA" },
+      { value: "med", label: "💰💰 Moyen — entre 10 000 et 25 000 FCFA" },
+      { value: "premium", label: "💰💰💰 Premium — plus de 25 000 FCFA" }
+    ]
+  }
 ];
 
 // ─── BASE DE CONTENU BEAUTÉ FACIALE ───
@@ -3053,11 +3242,11 @@ const CAP_CONTENT = {
   }
 };
 
-function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
+function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProfile, setBfProfile, bfObjectives, setBfObjectives, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [bfStep, bfPaymentStep]);
 
-  // ANIMATION CADEAU (après paiement, avant résultat)
+  // ANIMATION CADEAU
   if (bfShowGift) {
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20, position: "relative", overflow: "hidden" }}>
@@ -3065,209 +3254,327 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
         <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2s forwards", opacity: 0 }}>✨ Voici ton diagnostic ✨</div>
         <div style={{ fontSize: 14, color: CC.textDim, textAlign: "center", animation: "fadeInUp 0.6s ease-out 2.2s forwards", opacity: 0 }}>Préparé spécialement pour toi</div>
         <style>{`
-          @keyframes giftShake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-15deg); }
-            75% { transform: rotate(15deg); }
-          }
-          @keyframes giftOpen {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5) rotate(20deg); opacity: 1; }
-            100% { transform: scale(2.5) rotate(-10deg); opacity: 0; }
-          }
-          @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
+          @keyframes giftShake { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
+          @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }
+          @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
       </div>
     );
   }
 
-  function getSkinType(answers) {
-    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-    answers.forEach(a => { if (counts[a] !== undefined) counts[a]++; });
-    const max = Math.max(...Object.values(counts));
-    const winner = Object.keys(counts).find(k => counts[k] === max);
-    const types = {
-      A: { code: "grasse", emoji: "🔵", name: "Peau Grasse", desc: "Ta peau produit beaucoup de sébum, surtout au niveau de la zone T" },
-      B: { code: "seche", emoji: "🟡", name: "Peau Sèche", desc: "Ta peau manque de lipides et tire facilement" },
-      C: { code: "normale", emoji: "🟢", name: "Peau Normale", desc: "Ta peau est équilibrée, ni grasse ni sèche" },
-      D: { code: "mixte", emoji: "🟣", name: "Peau Mixte", desc: "Ta peau est grasse au centre et normale ou sèche sur les côtés" },
-      E: { code: "sensible", emoji: "🔴", name: "Peau Sensible", desc: "Ta peau réagit facilement aux produits et agressions" },
-    };
-    return types[winner] || types.C;
+  // HELPERS
+  function getActiveProfileQuestions() {
+    return BF_PROFILE_QUESTIONS.filter(q => {
+      if (q.onlyIfFemme && bfProfile.gender !== "femme") return false;
+      if (q.onlyIfHomme && bfProfile.gender !== "homme") return false;
+      return true;
+    });
   }
 
-  function selectAnswer(questionIdx, value) {
-    const newAnswers = [...bfTypeAnswers];
-    newAnswers[questionIdx] = value;
-    setBfTypeAnswers(newAnswers);
+  function getTotalQuestions() {
+    const profileCount = bfProfile.gender === "homme" ? 4 : (bfProfile.gender === "femme" ? 5 : 4);
+    return profileCount + 1 + 4 + 1 + 10;
+  }
+
+  function getCurrentQuestionNumber() {
+    const profileQuestions = getActiveProfileQuestions();
+    const profileAnswered = profileQuestions.filter(q => bfProfile[q.id]).length;
+    const profileCount = bfProfile.gender === "homme" ? 4 : (bfProfile.gender === "femme" ? 5 : 4);
+
+    if (bfStep === 1) return profileAnswered + 1;
+    if (bfStep === 2) return profileCount + 1;
+    if (bfStep === 3) {
+      const typeAnswered = BF_TYPE_QUESTIONS.filter(q => bfTypeAnswers[q.id]).length;
+      return profileCount + 1 + typeAnswered;
+    }
+    if (bfStep === 4) return profileCount + 1 + 4 + 1;
+    if (bfStep === 5) {
+      const lifestyleAnswered = Object.values(bfLifestyle).filter(v => v !== null).length;
+      return profileCount + 1 + 4 + 1 + lifestyleAnswered;
+    }
+    return 0;
+  }
+
+  function determineSkinType() {
+    const scores = { seche: 0, grasse: 0, normale: 0, mixte: 0, sensible: 0 };
+    BF_TYPE_QUESTIONS.forEach(q => {
+      const answer = bfTypeAnswers[q.id];
+      if (!answer) return;
+      const opt = q.options.find(o => o.value === answer);
+      if (opt && opt.points) {
+        Object.entries(opt.points).forEach(([type, pts]) => {
+          scores[type] = (scores[type] || 0) + pts;
+        });
+      }
+    });
+    const maxScore = Math.max(...Object.values(scores));
+    if (maxScore === 0) return { code: "normale", emoji: "☁️", name: "Peau Normale", desc: "Ton visage est équilibré" };
+    const winner = Object.keys(scores).find(k => scores[k] === maxScore);
+    const types = {
+      seche: { code: "seche", emoji: "🌵", name: "Peau Sèche", desc: "Ton visage manque d'hydratation et de gras" },
+      grasse: { code: "grasse", emoji: "✨", name: "Peau Grasse", desc: "Ton visage produit beaucoup de sébum" },
+      normale: { code: "normale", emoji: "☁️", name: "Peau Normale", desc: "Ton visage est équilibré" },
+      mixte: { code: "mixte", emoji: "🌗", name: "Peau Mixte", desc: "Zone T grasse, joues normales à sèches" },
+      sensible: { code: "sensible", emoji: "🌹", name: "Peau Sensible", desc: "Ton visage réagit facilement aux produits" }
+    };
+    return types[winner] || types.normale;
+  }
+
+  function toggleObjective(id) {
+    if (bfObjectives.includes(id)) {
+      setBfObjectives(bfObjectives.filter(o => o !== id));
+    } else {
+      if (bfObjectives.length >= 3) {
+        alert("Tu peux choisir 3 objectifs maximum. Décoche-en un pour en ajouter un autre.");
+        return;
+      }
+      setBfObjectives([...bfObjectives, id]);
+    }
   }
 
   function toggleProblem(id) {
+    if (id === "aucun") {
+      setBfProblems(bfProblems.includes("aucun") ? [] : ["aucun"]);
+      return;
+    }
     if (bfProblems.includes(id)) {
       setBfProblems(bfProblems.filter(p => p !== id));
     } else {
-      setBfProblems([...bfProblems, id]);
+      setBfProblems([...bfProblems.filter(p => p !== "aucun"), id]);
     }
   }
 
   // Header commun
   const Header = ({ title, onBack }) => (
-    <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "20px 16px 18px", position: "relative", borderBottom: "1px solid " + CC.border }}>
-      <button onClick={onBack} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
-      <div style={{ textAlign: "center", paddingTop: 8 }}>
-        <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 2 }}>💄 Beauté Faciale</div>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir }}>{title}</div>
-      </div>
+    <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+      <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🌸 {title}</div>
     </div>
   );
 
-  // ÉTAPE 1 — Type de peau
-  if (bfStep === 1) {
-    const answeredCount = BF_TYPE_QUESTIONS.filter((_, i) => bfTypeAnswers[i]).length;
-    const allAnswered = answeredCount === BF_TYPE_QUESTIONS.length;
+  // Barre de progression
+  const ProgressBar = () => {
+    const total = getTotalQuestions();
+    const current = getCurrentQuestionNumber();
+    const pct = Math.min(100, Math.round((current / total) * 100));
+    return (
+      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, color: CC.textFaint, fontWeight: "bold", letterSpacing: 0.5 }}>QUESTION {current} / {total}</div>
+          <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold" }}>{pct}%</div>
+        </div>
+        <div style={{ height: 6, background: "#f0e0e2", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, " + CC.rose + ", #d4889b)", transition: "width 0.4s ease", borderRadius: 3 }} />
+        </div>
+      </div>
+    );
+  };
+
+  // ═══ ÉTAPE 0 : INTRO ═══
+  if (bfStep === 0) {
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Étape 1 / 3 — Type de peau" onBack={() => setCarryCarePage("home")} />
-        <div style={{ padding: "16px" }}>
-          <div style={{ background: CC.roseLight, padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13, color: CC.noir }}>
-            ✨ Réponds à ces 8 questions pour identifier précisément ton type de peau
+        <Header title="Beauté Faciale" onBack={() => setCarryCarePage("home")} />
+        <div style={{ padding: "24px 16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "28px 22px", marginBottom: 18, textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Diagnostic Beauté Faciale</div>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Personnalisé selon ton profil</div>
           </div>
-          {BF_TYPE_QUESTIONS.map((q, idx) => (
-            <div key={idx} style={{ background: "#fff", borderRadius: 14, padding: "14px 14px", marginBottom: 12, border: "1px solid " + CC.border }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>
-                {idx + 1}. {q.q}
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Avant de commencer</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>📋</div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}><strong>20-21 questions</strong> personnalisées</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>⏱️</div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}><strong>5-7 minutes</strong> de ton temps</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>🎯</div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>Un diagnostic <strong>complet et professionnel</strong></div>
+              </div>
+            </div>
+          </div>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                "Ton type de peau exact (déduit de tes réponses)",
+                "Une routine matin et soir complète et adaptée",
+                "L'importance de la crème solaire (essentiel)",
+                "Des produits précis avec lieux d'achat",
+                "Des soins ciblés pour chacun de tes problèmes",
+                "Tes résultats attendus dans le temps"
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ color: CC.rose, fontWeight: "bold", flexShrink: 0 }}>✓</div>
+                  <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.5 }}>{item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button onClick={() => setBfStep(1)} style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            Commencer le diagnostic →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 1 : PROFIL ═══
+  if (bfStep === 1) {
+    const activeQuestions = getActiveProfileQuestions();
+    const allAnswered = activeQuestions.every(q => bfProfile[q.id]);
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 1 / 5 — Ton profil" onBack={() => setBfStep(0)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          {activeQuestions.map((q) => (
+            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: q.note ? 6 : 12 }}>{q.q}</div>
+              {q.note && <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>{q.note}</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {q.options.map(opt => (
-                  <button key={opt.v} onClick={() => selectAnswer(idx, opt.v)} style={{
-                    padding: "10px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer", textAlign: "left",
-                    border: "1.5px solid " + (bfTypeAnswers[idx] === opt.v ? CC.roseDeep : CC.border),
-                    background: bfTypeAnswers[idx] === opt.v ? CC.roseLight : "#fff",
-                    color: CC.noir,
-                    fontWeight: bfTypeAnswers[idx] === opt.v ? "bold" : "normal"
-                  }}>
+                  <button key={opt.value} onClick={() => setBfProfile({ ...bfProfile, [q.id]: opt.value })}
+                    style={{ padding: 12, border: "1.5px solid " + (bfProfile[q.id] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bfProfile[q.id] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 14, cursor: "pointer", textAlign: "left" }}>
                     {opt.label}
                   </button>
                 ))}
               </div>
             </div>
           ))}
-          <button onClick={() => allAnswered && setBfStep(2)} disabled={!allAnswered} style={{
-            width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff",
-            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold",
-            cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10
-          }}>
-            {allAnswered ? "Suivant — Tes problèmes →" : `Réponds aux ${BF_TYPE_QUESTIONS.length - answeredCount} questions restantes`}
+          <button onClick={() => allAnswered && setBfStep(2)} disabled={!allAnswered}
+            style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {allAnswered ? "Continuer — Tes objectifs ✨" : "Réponds à toutes les questions"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 2 — Problèmes
+  // ═══ ÉTAPE 2 : OBJECTIFS ═══
   if (bfStep === 2) {
+    const ok = bfObjectives.length >= 1;
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Étape 2 / 3 — Tes problèmes" onBack={() => setBfStep(1)} />
-        <div style={{ padding: "16px" }}>
-          <div style={{ background: CC.roseLight, padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13, color: CC.noir }}>
-            ✨ Coche tous les problèmes que tu as actuellement (plusieurs choix possibles)
+        <Header title="Étape 2 / 5 — Tes objectifs" onBack={() => setBfStep(1)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels sont tes objectifs principaux ?</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Choisis 1 à 3 objectifs maximum</div>
+            {bfObjectives.length > 0 && (
+              <div style={{ marginTop: 8, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>
+                {bfObjectives.length} / 3 sélectionné{bfObjectives.length > 1 ? "s" : ""}
+              </div>
+            )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {BF_PROBLEMS.map(p => (
-              <button key={p.id} onClick={() => toggleProblem(p.id)} style={{
-                padding: "14px 16px", borderRadius: 12, fontSize: 14, cursor: "pointer", textAlign: "left",
-                border: "1.5px solid " + (bfProblems.includes(p.id) ? CC.roseDeep : CC.border),
-                background: bfProblems.includes(p.id) ? CC.roseLight : "#fff",
-                color: CC.noir, display: "flex", alignItems: "center", gap: 12,
-                fontWeight: bfProblems.includes(p.id) ? "bold" : "normal"
-              }}>
-                <span style={{ fontSize: 20 }}>{p.emoji}</span>
-                <span style={{ flex: 1 }}>{p.label}</span>
-                <span style={{ fontSize: 18 }}>{bfProblems.includes(p.id) ? "✅" : "⬜"}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {BF_OBJECTIVES.map(o => (
+              <button key={o.id} onClick={() => toggleObjective(o.id)}
+                style={{ padding: 14, border: "1.5px solid " + (bfObjectives.includes(o.id) ? CC.rose : CC.border), borderRadius: 10, background: bfObjectives.includes(o.id) ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 22 }}>{o.emoji}</span>
+                <span style={{ flex: 1 }}>{o.label}</span>
+                {bfObjectives.includes(o.id) && <span style={{ color: CC.rose, fontSize: 18, fontWeight: "bold" }}>✓</span>}
               </button>
             ))}
           </div>
-          <button onClick={() => setBfStep(3)} style={{
-            width: "100%", padding: 16, background: CC.noir, color: "#fff",
-            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold",
-            cursor: "pointer", marginTop: 16
-          }}>
-            Suivant — Ton mode de vie →
-          </button>
-          <button onClick={() => { setBfProblems([]); setBfStep(3); }} style={{
-            width: "100%", padding: 12, background: "transparent", color: CC.textFaint,
-            border: "none", fontSize: 12, cursor: "pointer", marginTop: 6
-          }}>
-            Aucun problème majeur, juste de l'entretien →
+          <button onClick={() => ok && setBfStep(3)} disabled={!ok}
+            style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Continuer — Type de peau ✨" : "Choisis au moins 1 objectif"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 3 — Mode de vie
+  // ═══ ÉTAPE 3 : TYPE DE PEAU ═══
   if (bfStep === 3) {
-    const lifestyleQuestions = [
-      { key: "age", q: "Ta tranche d'âge ?", options: [
-        { label: "🌱 Moins de 20 ans", v: "ado" },
-        { label: "🌸 20 - 29 ans", v: "20s" },
-        { label: "🌺 30 - 39 ans", v: "30s" },
-        { label: "🌹 40 - 49 ans", v: "40s" },
-        { label: "🌷 50 ans et plus", v: "50plus" },
-      ]},
-      { key: "sun", q: "Combien de temps au soleil par jour ?", options: [
-        { label: "🌤️ Moins d'1 heure", v: "low" },
-        { label: "☀️ Entre 1 et 3 heures", v: "med" },
-        { label: "🔥 Plus de 3 heures", v: "high" },
-      ]},
-      { key: "spf", q: "Tu utilises une protection solaire (SPF) ?", options: [
-        { label: "✅ Oui, tous les jours", v: "always" },
-        { label: "🟡 Parfois", v: "sometimes" },
-        { label: "❌ Non, jamais", v: "never" },
-      ]},
-      { key: "makeup", q: "Tu te maquilles à quelle fréquence ?", options: [
-        { label: "💄 Tous les jours", v: "daily" },
-        { label: "🎉 Occasionnellement", v: "occ" },
-        { label: "🚫 Rarement ou jamais", v: "rarely" },
-      ]},
-      { key: "water", q: "Combien d'eau bois-tu par jour ?", options: [
-        { label: "💧 Moins d'1 litre", v: "low" },
-        { label: "💧💧 1 à 2 litres", v: "med" },
-        { label: "💧💧💧 Plus de 2 litres", v: "high" },
-      ]},
-      { key: "sleep", q: "Sommeil et stress ?", options: [
-        { label: "😴 Bon sommeil et détendue", v: "good" },
-        { label: "😐 Moyen", v: "med" },
-        { label: "😩 Peu de sommeil et stressée", v: "bad" },
-      ]},
-    ];
-    const allDone = lifestyleQuestions.every(q => bfLifestyle[q.key] !== null);
-
+    const allAnswered = BF_TYPE_QUESTIONS.every(q => bfTypeAnswers[q.id]);
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Étape 3 / 3 — Ton mode de vie" onBack={() => setBfStep(2)} />
-        <div style={{ padding: "16px" }}>
-          <div style={{ background: CC.roseLight, padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13, color: CC.noir }}>
-            ✨ Ces dernières questions affinent ton diagnostic
+        <Header title="Étape 3 / 5 — Type de peau" onBack={() => setBfStep(2)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Pour qu'on puisse déterminer ton type de peau exact</div>
           </div>
-          {lifestyleQuestions.map((lq, idx) => (
-            <div key={lq.key} style={{ background: "#fff", borderRadius: 14, padding: "14px 14px", marginBottom: 12, border: "1px solid " + CC.border }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>
-                {idx + 1}. {lq.q}
+          {BF_TYPE_QUESTIONS.map((q) => (
+            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{q.q}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {q.options.map(opt => (
+                  <button key={opt.value} onClick={() => setBfTypeAnswers({ ...bfTypeAnswers, [q.id]: opt.value })}
+                    style={{ padding: 12, border: "1.5px solid " + (bfTypeAnswers[q.id] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bfTypeAnswers[q.id] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {lq.options.map(opt => (
-                  <button key={opt.v} onClick={() => setBfLifestyle({ ...bfLifestyle, [lq.key]: opt.v })} style={{
-                    padding: "10px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer", textAlign: "left",
-                    border: "1.5px solid " + (bfLifestyle[lq.key] === opt.v ? CC.roseDeep : CC.border),
-                    background: bfLifestyle[lq.key] === opt.v ? CC.roseLight : "#fff",
-                    color: CC.noir,
-                    fontWeight: bfLifestyle[lq.key] === opt.v ? "bold" : "normal"
-                  }}>
+            </div>
+          ))}
+          <button onClick={() => allAnswered && setBfStep(4)} disabled={!allAnswered}
+            style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {allAnswered ? "Continuer — Tes problèmes ✨" : "Réponds à toutes les questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 4 : PROBLÈMES ═══
+  if (bfStep === 4) {
+    const ok = bfProblems.length >= 1;
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 4 / 5 — Tes problèmes" onBack={() => setBfStep(3)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels problèmes tu rencontres sur ton visage ?</div>
+            <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Coche tout ce qui te concerne (autant que tu veux)</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {BF_PROBLEMS.map(p => (
+              <button key={p.id} onClick={() => toggleProblem(p.id)}
+                style={{ padding: 12, border: "1.5px solid " + (bfProblems.includes(p.id) ? CC.rose : CC.border), borderRadius: 10, background: bfProblems.includes(p.id) ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{p.emoji}</span>
+                <span style={{ flex: 1 }}>{p.label}</span>
+                {bfProblems.includes(p.id) && <span style={{ color: CC.rose, fontSize: 16 }}>✓</span>}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => ok && setBfStep(5)} disabled={!ok}
+            style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Continuer — Mode de vie ✨" : "Coche au moins 1 réponse"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 5 : MODE DE VIE ═══
+  if (bfStep === 5) {
+    const allAnswered = BF_LIFESTYLE_QUESTIONS.every(q => bfLifestyle[q.id] !== null && bfLifestyle[q.id] !== undefined);
+    return (
+      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 5 / 5 — Mode de vie" onBack={() => setBfStep(4)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Dernière étape ! On personnalise tes recommandations.</div>
+          </div>
+          {BF_LIFESTYLE_QUESTIONS.map(q => (
+            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: q.note ? 4 : 12 }}>{q.q}</div>
+              {q.note && <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic", marginBottom: 10 }}>{q.note}</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {q.options.map(opt => (
+                  <button key={opt.value} onClick={() => setBfLifestyle({ ...bfLifestyle, [q.id]: opt.value })}
+                    style={{ padding: 12, border: "1.5px solid " + (bfLifestyle[q.id] === opt.value ? CC.rose : CC.border), borderRadius: 10, background: bfLifestyle[q.id] === opt.value ? "#fdf0f1" : "#fff", color: CC.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
                     {opt.label}
                   </button>
                 ))}
@@ -3275,156 +3582,96 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
             </div>
           ))}
           <button onClick={() => {
-            if (!allDone) return;
-            // Calcul résultat
-            const skinType = getSkinType(bfTypeAnswers);
-            setBfResult({ skinType, problems: bfProblems, lifestyle: bfLifestyle });
-            setBfStep(4); // suspense
-            setTimeout(() => setBfStep(5), 2500); // payment
-          }} disabled={!allDone} style={{
-            width: "100%", padding: 16, background: allDone ? CC.noir : "#ccc", color: "#fff",
-            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold",
-            cursor: allDone ? "pointer" : "not-allowed", marginTop: 10
-          }}>
-            {allDone ? "Voir mon diagnostic ✨" : "Réponds aux questions restantes"}
+            if (!allAnswered) return;
+            const skinType = determineSkinType();
+            setBfResult({
+              skinType,
+              profile: bfProfile,
+              objectives: bfObjectives,
+              problems: bfProblems,
+              lifestyle: bfLifestyle
+            });
+            setBfStep(6);
+            setBfPaymentStep(1);
+            setTimeout(() => setBfStep(7), 2500);
+          }} disabled={!allAnswered}
+            style={{ width: "100%", padding: 16, background: allAnswered ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: allAnswered ? "pointer" : "not-allowed" }}>
+            {allAnswered ? "Voir mon diagnostic ✨" : "Réponds à toutes les questions"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ÉTAPE 4 — Suspense
-  if (bfStep === 4) {
+  // ═══ ÉTAPE 6 : SUSPENSE ═══
+  if (bfStep === 6) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-        {[
-          { left: "20%", top: "30%", delay: "0s", color: "#ffd700" },
-          { left: "70%", top: "25%", delay: "0.3s", color: "#ff4081" },
-          { left: "45%", top: "55%", delay: "0.5s", color: "#00e5ff" },
-          { left: "30%", top: "65%", delay: "0.7s", color: "#76ff03" },
-          { left: "75%", top: "60%", delay: "0.9s", color: "#ff9100" },
-          { left: "55%", top: "20%", delay: "1.1s", color: "#e040fb" }
-        ].map((fw, i) => (
-          <div key={i} style={{ position: "absolute", left: fw.left, top: fw.top, width: 10, height: 10 }}>
-            {[0,1,2,3,4,5,6,7].map(angle => (
-              <div key={angle} style={{
-                position: "absolute",
-                width: 6, height: 6,
-                borderRadius: "50%",
-                background: fw.color,
-                boxShadow: "0 0 12px " + fw.color,
-                animation: "fwExplode 1.4s " + fw.delay + " ease-out forwards",
-                transform: "rotate(" + (angle * 45) + "deg)",
-                transformOrigin: "center"
-              }} />
-            ))}
-          </div>
-        ))}
-        <div style={{ textAlign: "center", color: "#fff", zIndex: 10 }}>
-          <div style={{ fontSize: 80, marginBottom: 14, animation: "rocketBounce 0.8s ease-out" }}>🎆</div>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ff4081", animation: "fadeIn 0.5s ease-out" }}>Ton diagnostic est prêt !</div>
-        </div>
-        <style>{`
-          @keyframes fwExplode {
-            0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
-            100% { transform: translate(60px, 0) scale(0.2); opacity: 0; }
-          }
-          @keyframes rocketBounce {
-            0% { transform: scale(0) rotate(-30deg); }
-            60% { transform: scale(1.3) rotate(10deg); }
-            100% { transform: scale(1) rotate(0deg); }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}</style>
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>🌸</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse de ton profil...</div>
+        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton diagnostic personnalisé</div>
+        <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }`}</style>
       </div>
     );
   }
 
-  // ÉTAPE 5 — Paiement
-  if (bfStep === 5) {
+  // ═══ ÉTAPE 7 : PAIEMENT (multi-étapes) ═══
+  if (bfStep === 7) {
     if (bfPaymentStep === 1) {
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-          <Header title="Ton diagnostic est prêt ✨" onBack={() => setBfStep(3)} />
-          <div style={{ padding: 16 }}>
+          <Header title="Ton diagnostic est prêt ✨" onBack={() => setBfStep(5)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
               <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton diagnostic personnalisé</div>
-              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Notre analyse a révélé des résultats surprenants sur ta peau...</div>
+              <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Type de peau identifié : <strong>{bfResult?.skinType?.name}</strong></div>
             </div>
-
             <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton diagnostic complet inclut :</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
-                ✅ Ton vrai type de peau identifié<br/>
-                ✅ Ta routine matin/soir personnalisée<br/>
-                ✅ Tes ingrédients miracles<br/>
-                ✅ Conseils ciblés pour tes problèmes<br/>
-                ✅ Option 100% naturel (recettes maison)<br/>
-                ✅ Option rapide & efficace (produits pro)<br/>
-                ✅ Erreurs à éviter
+                ✅ Ton type de peau facial exact<br/>
+                ✅ Routine matin et soir détaillée (8-10 étapes)<br/>
+                ✅ Importance et choix de ta crème solaire<br/>
+                ✅ Soins ciblés pour chacun de tes problèmes<br/>
+                ✅ Produits précis avec lieux d'achat<br/>
+                ✅ PDF téléchargeable
               </div>
             </div>
-
-            <button onClick={() => setBfPaymentStep(2)} style={{
-              width: "100%", padding: 16, background: CC.noir, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
+            <button onClick={() => setBfPaymentStep(2)} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
             </button>
           </div>
         </div>
       );
     }
-
-    // Choix méthode paiement
     if (bfPaymentStep === 2) {
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title="Méthode de paiement" onBack={() => setBfPaymentStep(1)} />
-          <div style={{ padding: 16 }}>
-            <div style={{ fontSize: 14, color: CC.noir, marginBottom: 16, textAlign: "center" }}>
-              Choisis ta méthode de paiement
-            </div>
-            <button onClick={() => { setBfPaymentMethod("MTN"); setBfPaymentStep(3); }} style={{
-              width: "100%", padding: 18, background: "#FFCC00", color: "#000",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12
-            }}>
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CC.noir, marginBottom: 16, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            <button onClick={() => { setBfPaymentMethod("MTN"); setBfPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FFCC00", color: "#000", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
               📱 MTN Mobile Money
             </button>
-            <button onClick={() => { setBfPaymentMethod("ORANGE"); setBfPaymentStep(3); }} style={{
-              width: "100%", padding: 18, background: "#FF6600", color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
+            <button onClick={() => { setBfPaymentMethod("ORANGE"); setBfPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FF6600", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               📱 Orange Money
             </button>
           </div>
         </div>
       );
     }
-
-    // Saisie numéro
     if (bfPaymentStep === 3) {
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title={"Ton numéro " + bfPaymentMethod} onBack={() => setBfPaymentStep(2)} />
-          <div style={{ padding: 16 }}>
-            <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 12 }}>
-              Entre ton numéro {bfPaymentMethod} (9 chiffres, sans +237)
-            </div>
-            <input type="tel" value={bfPaymentPhone} onChange={(e) => setBfPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
-              placeholder="6XXXXXXXX" style={{
-                width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border,
-                borderRadius: 12, marginBottom: 16, outline: "none"
-              }} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 13, color: CC.textFaint, marginBottom: 12 }}>Entre ton numéro {bfPaymentMethod} (9 chiffres, sans +237)</div>
+            <input type="tel" value={bfPaymentPhone} onChange={(e) => setBfPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="6XXXXXXXX" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CC.border, borderRadius: 12, marginBottom: 16, outline: "none" }} />
             <button onClick={async () => {
               if (bfPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
               setBfPaymentStep(4);
               const fullPhone = "237" + bfPaymentPhone;
-              // Récupérer user_id maintenant pour la sauvegarde
               const userResp = await supabase.auth.getUser();
               const userId = userResp.data.user?.id;
               try {
@@ -3435,7 +3682,6 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                 });
                 const data = await collect.json();
                 if (!data.reference) { setBfPaymentStep(5); return; }
-                // Polling check
                 const ref = data.reference;
                 let attempts = 0;
                 const maxAttempts = 60;
@@ -3453,62 +3699,47 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                       clearInterval(interval);
                       setBfPaymentStep(1);
                       setBfShowGift(true);
-                      // Sauvegarde robuste avec retry + backup localStorage
                       if (userId) {
                         saveCarrycareResultRobust({
                           user_id: userId,
                           quiz_type: "facial",
                           amount: beautyQuizPrice || 0,
-                          result_data: { typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
+                          result_data: { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
                         });
-                      } else {
-                        console.warn("Pas de user_id, sauvegarde impossible");
-                      }
-                      setTimeout(() => { setBfShowGift(false); setBfStep(6); }, 2500);
+                      } else { console.warn("Pas de user_id, sauvegarde impossible"); }
+                      setTimeout(() => { setBfShowGift(false); setBfStep(8); }, 2500);
                     }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBfPaymentStep(5); }
                   } catch (e) {}
                 }, 3000);
-              } catch (e) {
-                setBfPaymentStep(5);
-              }
-            }} style={{
-              width: "100%", padding: 16, background: CC.noir, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
-            }}>
+              } catch (e) { setBfPaymentStep(5); }
+            }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Payer {beautyQuizPrice} FCFA
             </button>
           </div>
         </div>
       );
     }
-
-    // En cours
     if (bfPaymentStep === 4) {
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
           <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
           <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
           <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
-            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>
-              ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
-            </div>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.</div>
           </div>
           <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>
-            Confirme la transaction sur ton téléphone {bfPaymentMethod}.<br/>
-            Cela peut prendre jusqu'à 30 secondes.
+            Confirme la transaction sur ton téléphone {bfPaymentMethod}.<br/>Cela peut prendre jusqu'à 30 secondes.
           </div>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
         </div>
       );
     }
-
-    // ÉCHEC
     if (bfPaymentStep === 5) {
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title="Paiement non finalisé" onBack={() => setBfPaymentStep(2)} />
-          <div style={{ padding: 20 }}>
+          <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
               <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>Paiement non finalisé</h3>
@@ -3523,16 +3754,10 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
                 ✅ Vérifie ta connexion internet
               </p>
             </div>
-            <button onClick={() => { setBfPaymentStep(2); setBfPaymentMethod(null); setBfPaymentPhone(""); }} style={{
-              width: "100%", padding: 16, background: CC.noir, color: "#fff",
-              border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10
-            }}>
+            <button onClick={() => { setBfPaymentStep(2); setBfPaymentMethod(null); setBfPaymentPhone(""); }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10 }}>
               🔁 Réessayer
             </button>
-            <button onClick={() => { setBfPaymentStep(1); setBfPaymentMethod(null); setBfPaymentPhone(""); }} style={{
-              width: "100%", padding: 14, background: "transparent", color: CC.textFaint,
-              border: "1px solid " + CC.border, borderRadius: 12, fontSize: 13, cursor: "pointer"
-            }}>
+            <button onClick={() => { setBfPaymentStep(1); setBfPaymentMethod(null); setBfPaymentPhone(""); }} style={{ width: "100%", padding: 14, background: "transparent", color: CC.textFaint, border: "1px solid " + CC.border, borderRadius: 12, fontSize: 13, cursor: "pointer" }}>
               Annuler
             </button>
           </div>
@@ -3541,213 +3766,1632 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfType
     }
   }
 
-  // ÉTAPE 6 — Résultat débloqué COMPLET
-  if (bfStep === 6 && bfResult) {
-    const problemLabels = bfResult.problems.map(pid => BF_PROBLEMS.find(p => p.id === pid)).filter(Boolean);
-    const skinCode = bfResult.skinType.code;
-    const routine = BF_CONTENT.routines[skinCode] || BF_CONTENT.routines.normale;
-    const sunData = BF_CONTENT.soleil[bfResult.lifestyle.sun] || BF_CONTENT.soleil.med;
-    const ageData = BF_CONTENT.age[bfResult.lifestyle.age] || BF_CONTENT.age["20s"];
-
-    function reset() {
-      setCarryCarePage("home");
-      setBfStep(1);
-      setBfTypeAnswers([]);
-      setBfProblems([]);
-      setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
-      setBfResult(null);
-      setBfPaymentStep(1);
-      setBfPaymentPhone("");
-      setBfPaymentMethod(null);
-    }
-
-    return (
-      <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Ton diagnostic complet ✨" onBack={reset} />
-        <div style={{ padding: 16 }}>
-
-          {/* DIAGNOSTIC PRINCIPAL */}
-          <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "24px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
-            <div style={{ fontSize: 56, marginBottom: 8 }}>{bfResult.skinType.emoji}</div>
-            <div style={{ fontSize: 12, color: CC.textFaint, marginBottom: 4 }}>Ton diagnostic</div>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>{bfResult.skinType.name}</div>
-            <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.5, fontStyle: "italic" }}>{bfResult.skinType.desc}</div>
-          </div>
-
-          {/* PROBLÈMES IDENTIFIÉS */}
-          {problemLabels.length > 0 && (
-            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>🎯 Tes problèmes identifiés</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {problemLabels.map(p => (
-                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: CC.roseLight, borderRadius: 8 }}>
-                    <span style={{ fontSize: 18 }}>{p.emoji}</span>
-                    <span style={{ fontSize: 13, color: CC.noir }}>{p.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* INTRO ROUTINE */}
-          <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
-            <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>{routine.intro}</div>
-          </div>
-
-          {/* OPTION 1 — NATUREL */}
-          <div style={{ background: "linear-gradient(135deg, #f0f7e8 0%, #d4e8c5 100%)", borderRadius: 16, padding: 18, marginBottom: 16, border: "1px solid #b8d4a0" }}>
-            <div style={{ fontSize: 17, fontWeight: "bold", color: "#2d5016", marginBottom: 4 }}>🌿 Option 1 — 100% Naturel</div>
-            <div style={{ fontSize: 11, color: "#4a7028", marginBottom: 14, fontStyle: "italic" }}>Recettes maison, ingrédients du marché — économique et accessible</div>
-
-            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5016", marginBottom: 6 }}>🌅 MATIN</div>
-              {routine.naturel.matin.map((step, i) => (
-                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
-                  {i + 1}. {step}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: "#2d5016", marginBottom: 6 }}>🌙 SOIR</div>
-              {routine.naturel.soir.map((step, i) => (
-                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
-                  {i + 1}. {step}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 10, padding: 12, marginBottom: 8 }}>
-              <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.5 }}>✨ <strong>Bonus :</strong> {routine.naturel.bonus}</div>
-            </div>
-
-            <div style={{ fontSize: 11, color: "#4a7028", fontStyle: "italic", textAlign: "center", marginTop: 8 }}>
-              ⏰ {routine.naturel.delai}
-            </div>
-          </div>
-
-          {/* OPTION 2 — EXPRESS */}
-          <div style={{ background: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)", borderRadius: 16, padding: 18, marginBottom: 16, border: "1px solid " + CC.roseDeep }}>
-            <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>⚡ Option 2 — Rapide & Efficace</div>
-            <div style={{ fontSize: 11, color: CC.noirSoft, marginBottom: 14, fontStyle: "italic" }}>Sérums modernes — résultats rapides — disponibles bientôt sur CarryGoo.net</div>
-
-            <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>🌅 MATIN</div>
-              {routine.express.matin.map((step, i) => (
-                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
-                  {i + 1}. {step}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>🌙 SOIR</div>
-              {routine.express.soir.map((step, i) => (
-                <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 4, lineHeight: 1.5, paddingLeft: 8 }}>
-                  {i + 1}. {step}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.8)", borderRadius: 10, padding: 12, marginBottom: 8 }}>
-              <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.5 }}>✨ <strong>Bonus :</strong> {routine.express.bonus}</div>
-            </div>
-
-            <div style={{ fontSize: 11, color: CC.noirSoft, fontStyle: "italic", textAlign: "center", marginTop: 8 }}>
-              ⏰ {routine.express.delai}
-            </div>
-          </div>
-
-          {/* À ÉVITER */}
-          <div style={{ background: "#fff5f5", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid #ffcdd2" }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#c62828", marginBottom: 10 }}>❌ À éviter absolument</div>
-            {routine.eviter.map((item, i) => (
-              <div key={i} style={{ fontSize: 12, color: CC.noir, marginBottom: 6, lineHeight: 1.5 }}>
-                • {item}
-              </div>
-            ))}
-          </div>
-
-          {/* MODULES PROBLÈMES */}
-          {problemLabels.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>
-                🎯 Conseils ciblés pour tes problèmes
-              </div>
-              {problemLabels.map(p => {
-                const probContent = BF_CONTENT.problems[p.id];
-                if (!probContent) return null;
-                return (
-                  <div key={p.id} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 12, border: "1px solid " + CC.border }}>
-                    <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{probContent.titre}</div>
-
-                    <div style={{ background: "#f0f7e8", borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, fontWeight: "bold", color: "#2d5016", marginBottom: 6 }}>🌿 Solutions naturelles</div>
-                      {probContent.naturel.map((sol, i) => (
-                        <div key={i} style={{ fontSize: 11, color: CC.noir, marginBottom: 4, lineHeight: 1.5 }}>• {sol}</div>
-                      ))}
-                    </div>
-
-                    <div style={{ background: CC.roseLight, borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>⚡ Solutions express</div>
-                      {probContent.express.map((sol, i) => (
-                        <div key={i} style={{ fontSize: 11, color: CC.noir, marginBottom: 4, lineHeight: 1.5 }}>• {sol}</div>
-                      ))}
-                    </div>
-
-                    <div style={{ background: "#fffbe6", borderRadius: 8, padding: 10 }}>
-                      <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.5 }}>📌 {probContent.conseils}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* AJUSTEMENT SOLEIL */}
-          <div style={{ background: "linear-gradient(135deg, #fff8e1 0%, #ffe082 100%)", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid #ffcc80" }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#7a5c00", marginBottom: 8 }}>{sunData.titre}</div>
-            <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.6 }}>{sunData.text}</div>
-          </div>
-
-          {/* AJUSTEMENT ÂGE */}
-          <div style={{ background: "linear-gradient(135deg, #f5ecec 0%, #e8d4b8 100%)", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>{ageData.titre}</div>
-            <div style={{ fontSize: 12, color: CC.noir, lineHeight: 1.6 }}>{ageData.text}</div>
-          </div>
-
-          {/* DISCLAIMER */}
-          <div style={{ background: "#fff8e1", borderLeft: "3px solid " + CC.gold, padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: "#7a5c00", lineHeight: 1.5 }}>
-              ⚠️ Ces conseils sont indicatifs. Avant d'utiliser un nouveau produit, fais un test sur une petite zone de peau (intérieur du poignet, 24h). En cas de problème de peau important, consulte un dermatologue.
-            </div>
-          </div>
-
-          {/* PROCHAINEMENT */}
-          <div style={{ background: CC.noir, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 24, marginBottom: 6 }}>🛒</div>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#fff", marginBottom: 6 }}>Bientôt sur CarryGoo.net</div>
-            <div style={{ fontSize: 11, color: "#ddd", lineHeight: 1.5 }}>
-              Tous les sérums et produits recommandés seront disponibles à la vente dès le lancement de notre boutique. Reste connectée !
-            </div>
-          </div>
-
-          <ShareButtons quizName="Beauté Faciale" quizType="carrycare" />
-
-          {/* BOUTON RETOUR */}
-          <button onClick={reset} style={{
-            width: "100%", padding: 14, background: CC.noir, color: "#fff",
-            border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer"
-          }}>
-            🌸 Retour à CarryCare
-          </button>
-        </div>
-      </div>
-    );
+  // ═══ ÉTAPE 8 : RÉSULTAT ═══
+  if (bfStep === 8 && bfResult) {
+    return <FacialDiagnosticResult result={bfResult} onBack={() => setCarryCarePage("home")} setCarryCarePage={setCarryCarePage} />;
   }
 
   return null;
 }
+
+// ═══════════════════════════════════════════════════
+// FACIAL DIAGNOSTIC — DONNÉES PRODUITS COMPLÈTES (Mai 2026)
+// ═══════════════════════════════════════════════════
+
+const BF_PRODUCTS = {
+  // ═══ NETTOYANTS ═══
+  nettoyant_normale: {
+    eco: [
+      { name: "Garnier Pure Active gel", lieu: "supermarché" },
+      { name: "Clean & Clear Face Wash", lieu: "supermarché" },
+      { name: "Nivea Face Wash", lieu: "parfumerie" },
+      { name: "Simple Refreshing Wash", lieu: "parfumerie" }
+    ],
+    med: [
+      { name: "CeraVe Foaming Cleanser", lieu: "pharmacie" },
+      { name: "Cetaphil Gentle Cleanser", lieu: "pharmacie" },
+      { name: "Bioaqua Cleanser", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Face Cleanser", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Effaclar Gel", lieu: "pharmacie" },
+      { name: "Bioderma Sébium Gel", lieu: "pharmacie" },
+      { name: "COSRX Low pH Cleanser", lieu: "boutique K-Beauty" }
+    ]
+  },
+  nettoyant_acne: {
+    eco: [
+      { name: "Garnier Pure Active anti-imperfections", lieu: "supermarché" },
+      { name: "Clean & Clear Acne Wash", lieu: "supermarché" },
+      { name: "Neutrogena Face Wash", lieu: "parfumerie" }
+    ],
+    med: [
+      { name: "La Roche-Posay Effaclar Gel", lieu: "pharmacie" },
+      { name: "Bioderma Sébium Gel moussant", lieu: "pharmacie" },
+      { name: "Dr Rashel Acne Cleanser", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "SVR Sebiaclear Gel moussant", lieu: "pharmacie" },
+      { name: "Some By Mi AHA BHA PHA Cleanser", lieu: "boutique K-Beauty" },
+      { name: "Cetaphil DermaControl", lieu: "pharmacie" }
+    ]
+  },
+  nettoyant_seche: {
+    eco: [
+      { name: "Nivea Face Wash hydratant", lieu: "supermarché" },
+      { name: "Dove Facial Cleanser", lieu: "supermarché" },
+      { name: "Simple Refreshing Wash", lieu: "parfumerie" }
+    ],
+    med: [
+      { name: "CeraVe Hydrating Cleanser", lieu: "pharmacie" },
+      { name: "Cetaphil Gentle Cleanser", lieu: "pharmacie" },
+      { name: "Bioaqua Hydrating Cleanser", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Toleriane Caring Wash", lieu: "pharmacie" },
+      { name: "Bioderma Hydrabio H2O", lieu: "pharmacie" },
+      { name: "Beauty of Joseon Green Plum Cleanser", lieu: "boutique K-Beauty" }
+    ]
+  },
+  // ═══ TONIQUE / LOTION ═══
+  tonique_normale: {
+    eco: [
+      { name: "Garnier Eau Micellaire", lieu: "supermarché" },
+      { name: "Clean & Clear Lotion", lieu: "supermarché" },
+      { name: "Nivea Lotion Visage", lieu: "parfumerie" }
+    ],
+    med: [
+      { name: "Dr Rashel Niacinamide Toner", lieu: "boutique cosmétique" },
+      { name: "Bioaqua Toner", lieu: "boutique cosmétique" },
+      { name: "Neutrogena Toner", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Effaclar Lotion", lieu: "pharmacie" },
+      { name: "Bioderma Sébium Lotion", lieu: "pharmacie" },
+      { name: "COSRX AHA/BHA Clarifying Toner", lieu: "boutique K-Beauty" }
+    ]
+  },
+  // ═══ SÉRUMS ═══
+  serum_vitc: {
+    eco: [
+      { name: "Garnier Vitamin C Serum", lieu: "supermarché" },
+      { name: "Disaar Vitamin C Serum", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "Dr Rashel Vitamin C Serum", lieu: "boutique cosmétique" },
+      { name: "Breylee Vitamin C Serum", lieu: "boutique cosmétique" },
+      { name: "The Ordinary Vitamin C", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "Vichy Liftactiv Vitamin C", lieu: "pharmacie" },
+      { name: "La Roche-Posay Pure Vitamin C10", lieu: "pharmacie" },
+      { name: "SVR Ampoule Hydra", lieu: "pharmacie" }
+    ]
+  },
+  serum_niacinamide: {
+    eco: [
+      { name: "Bioaqua Niacinamide Serum", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "Dr Rashel Niacinamide Serum", lieu: "boutique cosmétique" },
+      { name: "The Ordinary Niacinamide 10%", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Mela B3", lieu: "pharmacie" },
+      { name: "Vichy Mineral 89", lieu: "pharmacie" }
+    ]
+  },
+  serum_acne: {
+    eco: [
+      { name: "Lanbena Acne Serum", lieu: "boutique cosmétique" },
+      { name: "Bioaqua Acne Serum", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "The Ordinary Salicylic Acid 2%", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Acne Serum", lieu: "boutique cosmétique" },
+      { name: "Some By Mi AHA BHA PHA Serum", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Effaclar Serum", lieu: "pharmacie" },
+      { name: "SVR Sebiaclear Serum", lieu: "pharmacie" },
+      { name: "COSRX Acne Pimple Master", lieu: "boutique K-Beauty" }
+    ]
+  },
+  serum_anti_age: {
+    eco: [
+      { name: "Bioaqua Hyaluronic Acid Serum", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "The Ordinary Retinol 0.5%", lieu: "boutique cosmétique" },
+      { name: "CeraVe Retinol Serum", lieu: "pharmacie" },
+      { name: "Beauty of Joseon Ginseng Serum", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Retinol B3", lieu: "pharmacie" },
+      { name: "Vichy Liftactiv Serum", lieu: "pharmacie" },
+      { name: "SVR Ampoule Anti-Age", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ CRÈMES HYDRATANTES ═══
+  creme_normale: {
+    eco: [
+      { name: "Nivea Soft", lieu: "supermarché" },
+      { name: "Garnier Hydra Bomb", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bioaqua Aqua Cream", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Collagen Cream", lieu: "boutique cosmétique" },
+      { name: "Olay Day Cream", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "CeraVe Moisturizing Cream", lieu: "pharmacie" },
+      { name: "La Roche-Posay Toleriane", lieu: "pharmacie" },
+      { name: "Cetaphil Moisturizer", lieu: "pharmacie" }
+    ]
+  },
+  creme_grasse: {
+    eco: [
+      { name: "Garnier Pure Active Matte", lieu: "supermarché" },
+      { name: "Neutrogena Hydro Boost gel", lieu: "parfumerie" }
+    ],
+    med: [
+      { name: "Bioaqua Oil Control Cream", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Oil Control", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Effaclar Mat", lieu: "pharmacie" },
+      { name: "Bioderma Sébium Mat Control", lieu: "pharmacie" },
+      { name: "Some By Mi Snail Truecica Cream", lieu: "boutique K-Beauty" }
+    ]
+  },
+  creme_seche: {
+    eco: [
+      { name: "Nivea Soft", lieu: "supermarché" },
+      { name: "Vaseline Cocoa Radiant", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bioaqua Hyaluronic Cream", lieu: "boutique cosmétique" },
+      { name: "Eveline Moisturizing Cream", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "CeraVe Moisturizing Cream", lieu: "pharmacie" },
+      { name: "La Roche-Posay Lipikar", lieu: "pharmacie" },
+      { name: "Avène Hydrance", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ CRÈMES NUIT ═══
+  creme_nuit: {
+    eco: [
+      { name: "Olay Night Cream", lieu: "parfumerie" },
+      { name: "Garnier Hydra Bomb Night", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bioaqua Night Cream", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Night Cream", lieu: "boutique cosmétique" },
+      { name: "Beauty of Joseon Dynasty Cream", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Redermic", lieu: "pharmacie" },
+      { name: "Vichy Liftactiv Nuit", lieu: "pharmacie" },
+      { name: "Clarins Multi-Active Night", lieu: "parfumerie" }
+    ]
+  },
+  // ═══ CONTOUR YEUX ═══
+  contour_yeux: {
+    eco: [
+      { name: "Garnier Eye Roll", lieu: "supermarché" },
+      { name: "Olay Eye Cream", lieu: "parfumerie" }
+    ],
+    med: [
+      { name: "Bioaqua Eye Cream", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Eye Cream", lieu: "boutique cosmétique" },
+      { name: "The Ordinary Caffeine Solution", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Redermic Yeux", lieu: "pharmacie" },
+      { name: "Avène Soins Anti-Cernes", lieu: "pharmacie" },
+      { name: "COSRX Snail Eye Cream", lieu: "boutique K-Beauty" }
+    ]
+  },
+  // ═══ PROTECTION SOLAIRE ═══
+  spf: {
+    eco: [
+      { name: "Nivea Sun UV Face Shine Control", lieu: "supermarché" },
+      { name: "Garnier Ambre Solaire SPF 50", lieu: "supermarché" },
+      { name: "Disaar Whitening Sunscreen", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "Bioaqua SPF 50 Sun Cream", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Sun Cream SPF 60", lieu: "boutique cosmétique" },
+      { name: "Eveline Sun Protection SPF 50", lieu: "parfumerie" },
+      { name: "Beauty of Joseon Relief Sun SPF 50+", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Anthelios SPF 50+", lieu: "pharmacie" },
+      { name: "Bioderma Photoderm SPF 50+", lieu: "pharmacie" },
+      { name: "Avène Very High Protection SPF 50+", lieu: "pharmacie" },
+      { name: "ISDIN Fusion Water SPF 50", lieu: "pharmacie" }
+    ]
+  },
+  spf_grasse: {
+    eco: [
+      { name: "Garnier UV Anti-Brillance", lieu: "supermarché" },
+      { name: "Nivea Sun Mat", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bioaqua Oil Control Sunscreen", lieu: "boutique cosmétique" },
+      { name: "Beauty of Joseon Relief Sun", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Anthelios Oil Control", lieu: "pharmacie" },
+      { name: "Eucerin Oil Control SPF 50", lieu: "pharmacie" },
+      { name: "Bioderma Photoderm AKN Mat", lieu: "pharmacie" },
+      { name: "SVR Sun Secure Fluide", lieu: "pharmacie" },
+      { name: "ISDIN Fusion Water", lieu: "pharmacie" }
+    ]
+  },
+  spf_metisse: {
+    eco: [
+      { name: "Garnier Vitamin C SPF", lieu: "supermarché" },
+      { name: "Nivea UV Face Glow", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Beauty of Joseon Relief Sun SPF 50+", lieu: "boutique K-Beauty" },
+      { name: "COSRX Aloe Soothing Sun Cream", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "Black Girl Sunscreen", lieu: "boutique cosmétique" },
+      { name: "ISDIN Fusion Water", lieu: "pharmacie" },
+      { name: "La Roche-Posay Invisible Fluid", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ GOMMAGES ═══
+  gommage_facial: {
+    eco: [
+      { name: "St Ives Apricot Scrub", lieu: "parfumerie" },
+      { name: "Garnier Pure Active Scrub", lieu: "supermarché" },
+      { name: "Clean & Clear Exfoliant", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bioaqua Rice Scrub", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Facial Scrub", lieu: "boutique cosmétique" },
+      { name: "Veze Face Scrub", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "Neutrogena Visibly Clear Exfoliating", lieu: "parfumerie" },
+      { name: "Some By Mi AHA BHA PHA Cleansing Bar", lieu: "boutique K-Beauty" },
+      { name: "Dove Exfoliant Visage", lieu: "parfumerie" }
+    ]
+  },
+  // ═══ MASQUES ═══
+  masque_purifiant: {
+    eco: [
+      { name: "Argile verte (maison)", lieu: "marché ou pharmacie" },
+      { name: "Lanbena Black Mask", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "Bioaqua Bubble Mask", lieu: "boutique cosmétique" },
+      { name: "Dr Rashel Charcoal Mask", lieu: "boutique cosmétique" },
+      { name: "Some By Mi Yuja Niacin Mask", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "L'Oréal Pure Clay Mask", lieu: "parfumerie" },
+      { name: "Innisfree Super Volcanic Clay", lieu: "boutique K-Beauty" },
+      { name: "Freeman Charcoal Mask", lieu: "boutique cosmétique" }
+    ]
+  },
+  masque_hydratant: {
+    eco: [
+      { name: "Bioaqua Rice Mask (en sachet)", lieu: "boutique cosmétique" },
+      { name: "Garnier Tissue Mask", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Dr Rashel Gold Mask", lieu: "boutique cosmétique" },
+      { name: "Laikou Sakura Mask", lieu: "boutique cosmétique" },
+      { name: "Images Facial Mask", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "Beauty of Joseon Centella Mask", lieu: "boutique K-Beauty" },
+      { name: "Some By Mi Snail Mask", lieu: "boutique K-Beauty" },
+      { name: "L'Oréal Sheet Masks", lieu: "parfumerie" }
+    ]
+  },
+  // ═══ SOINS LOCALISÉS ═══
+  spot_acne: {
+    eco: [
+      { name: "Garnier Pure Active 3-en-1", lieu: "supermarché" },
+      { name: "Lanbena Acne Treatment", lieu: "boutique cosmétique" }
+    ],
+    med: [
+      { name: "COSRX Acne Pimple Master Patch", lieu: "boutique K-Beauty" },
+      { name: "Dr Rashel Acne Spot Treatment", lieu: "boutique cosmétique" },
+      { name: "Some By Mi 30 Days Miracle Toner", lieu: "boutique K-Beauty" }
+    ],
+    premium: [
+      { name: "La Roche-Posay Effaclar Duo", lieu: "pharmacie" },
+      { name: "SVR Sebiaclear Cica", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ ANTI-TACHES VISAGE ═══
+  anti_taches_visage: {
+    eco: [
+      { name: "Aloe vera pur (maison)", lieu: "marché" },
+      { name: "Carotone Visage", lieu: "boutique cosmétique afro" }
+    ],
+    med: [
+      { name: "The Ordinary Niacinamide 10%", lieu: "boutique cosmétique" },
+      { name: "The Ordinary Alpha Arbutin 2%", lieu: "boutique cosmétique" },
+      { name: "Bioaqua Whitening Serum", lieu: "boutique cosmétique" }
+    ],
+    premium: [
+      { name: "Vichy Liftactiv Vitamin C", lieu: "pharmacie" },
+      { name: "La Roche-Posay Pigmentclar", lieu: "pharmacie" },
+      { name: "SVR Clairial Sérum", lieu: "pharmacie" }
+    ]
+  },
+  // ═══ DÉMAQUILLANT ═══
+  demaquillant: {
+    eco: [
+      { name: "Garnier Eau Micellaire", lieu: "supermarché" },
+      { name: "Nivea Eau Micellaire", lieu: "supermarché" }
+    ],
+    med: [
+      { name: "Bioaqua Cleansing Oil", lieu: "boutique cosmétique" },
+      { name: "Simple Eau Micellaire", lieu: "parfumerie" }
+    ],
+    premium: [
+      { name: "Bioderma Sensibio H2O", lieu: "pharmacie" },
+      { name: "La Roche-Posay Eau Micellaire Ultra", lieu: "pharmacie" },
+      { name: "Beauty of Joseon Cleansing Oil", lieu: "boutique K-Beauty" }
+    ]
+  }
+};
+
+const BF_PRODUCT_EXPLAINS = {
+  nettoyant_normale: "Ces nettoyants doux respectent le pH naturel de la peau (5,5) sans agresser. Ils éliminent saletés, sébum et pollution sans dessécher.",
+  nettoyant_acne: "Ces nettoyants contiennent de l'ACIDE SALICYLIQUE (BHA) qui pénètre dans les pores pour éliminer le sébum et les bactéries responsables de l'acné.",
+  nettoyant_seche: "Ces nettoyants sont riches en GLYCÉRINE et CÉRAMIDES qui maintiennent l'hydratation pendant le nettoyage. Ils ne laissent pas la peau qui tire.",
+  tonique_normale: "Les toniques rééquilibrent le pH après le nettoyage et préparent la peau à mieux absorber les soins suivants. La NIACINAMIDE resserre les pores.",
+  serum_vitc: "La VITAMINE C est un antioxydant puissant qui éclaircit le teint, atténue les taches et stimule la production de collagène. À utiliser le matin pour protéger contre les agressions.",
+  serum_niacinamide: "La NIACINAMIDE (vitamine B3) régule le sébum, resserre les pores, atténue les taches et apaise les rougeurs. Compatible avec tous les autres actifs.",
+  serum_acne: "L'ACIDE SALICYLIQUE (BHA) pénètre dans les pores pour les désincruster. Le ZINC régule le sébum. Ces actifs ciblent l'acné à sa source.",
+  serum_anti_age: "Le RÉTINOL (vitamine A) accélère le renouvellement cellulaire et stimule le collagène. Résultats : moins de rides, peau plus ferme. À utiliser le soir uniquement, avec SPF obligatoire le matin.",
+  creme_normale: "Ces crèmes hydratent en profondeur grâce à l'ACIDE HYALURONIQUE (retient 1000x son poids en eau) et aux CÉRAMIDES qui reconstruisent la barrière cutanée.",
+  creme_grasse: "Ces crèmes texture gel-crème hydratent SANS étouffer les pores. Elles contiennent du ZINC ou de l'ACIDE SALICYLIQUE pour réguler le sébum sans dessécher.",
+  creme_seche: "Ces crèmes riches contiennent du BEURRE DE KARITÉ, des CÉRAMIDES et de la GLYCÉRINE qui forment un film protecteur et nourrissent en profondeur.",
+  creme_nuit: "Ces crèmes nuit sont plus riches en actifs régénérants (RÉTINOL, PEPTIDES, ACIDE HYALURONIQUE). La peau se régénère 3x plus vite la nuit, profite-en !",
+  contour_yeux: "Le contour des yeux est 5x plus fin que le reste du visage. Ces crèmes contiennent de la CAFÉINE (anti-cernes), de l'ACIDE HYALURONIQUE (anti-poches) et des PEPTIDES (anti-rides).",
+  spf: "La crème solaire est le produit le PLUS IMPORTANT de ta routine. 90% du vieillissement cutané vient du soleil. Sans SPF, aucun autre soin ne fonctionne. Tous les SPF 30+ avec UVA/UVB protègent efficacement.",
+  spf_grasse: "Ces SPF spécial peaux grasses ont une texture FLUIDE non-comédogène. Ils ne brillent pas et ne bouchent pas les pores. Idéal pour les peaux acnéiques.",
+  spf_metisse: "Ces SPF sont formulés sans laisser de fini blanc disgracieux sur les peaux foncées/métissées. Ils donnent un effet glow naturel.",
+  gommage_facial: "L'exfoliation 1-2x/sem élimine les cellules mortes en surface, illumine le teint et permet aux soins de mieux pénétrer. Ne pas frotter trop fort.",
+  masque_purifiant: "Les masques à l'argile ou au charbon absorbent l'excès de sébum et désincrustent les pores. Idéal pour les peaux grasses et acnéiques 1-2x/sem.",
+  masque_hydratant: "Les masques en tissu ou crème nourrissent intensivement en 15-20 min. Idéaux avant un événement pour une peau lumineuse et repulpée.",
+  spot_acne: "Ces traitements localisés contiennent de l'ACIDE SALICYLIQUE concentré ou du PEROXYDE DE BENZOYLE pour assécher rapidement les boutons sans agresser tout le visage.",
+  anti_taches_visage: "Ces actifs (NIACINAMIDE, ALPHA ARBUTIN, VITAMINE C) inhibent la production excessive de mélanine et accélèrent le renouvellement cellulaire pour estomper les taches.",
+  demaquillant: "Le démaquillage est ESSENTIEL le soir. Les eaux micellaires capturent saleté et maquillage, les huiles démaquillantes éliminent même les maquillages waterproof. Fais toujours un double nettoyage après."
+};
+
+// Composant : Liste produits avec budgets
+function FacialProductList({ category, budgetPref }) {
+  const products = BF_PRODUCTS[category];
+  if (!products) return null;
+  const budgets = budgetPref === "premium" ? ["eco", "med", "premium"] : budgetPref === "med" ? ["eco", "med"] : ["eco"];
+  const explanation = BF_PRODUCT_EXPLAINS[category];
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic", marginBottom: 8 }}>
+        ⚠️ Choisis 1 ou 2 produits dans cette liste (pas tous !)
+      </div>
+      {budgets.map(b => {
+        const list = products[b] || [];
+        if (list.length === 0) return null;
+        const label = b === "eco" ? "💰 Économique" : b === "med" ? "💰💰 Moyen" : "💰💰💰 Premium";
+        return (
+          <div key={b} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{label}</div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+              {list.slice(0, 5).map((p, i) => (
+                <li key={i}>
+                  <strong>{p.name}</strong> ({p.lieu})
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      {explanation && (
+        <div style={{ marginTop: 10, padding: 10, background: "#fdf8f8", borderLeft: "3px solid " + CC.rose, borderRadius: 4 }}>
+          <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold", marginBottom: 4 }}>🔬 POURQUOI ces produits</div>
+          <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>{explanation}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Carte Kit Exfolia (réutilisable)
+function KitExfoliaCard({ skinTone }) {
+  const isPeauNoire = skinTone === "ebene" || skinTone === "fonce";
+  const prix = isPeauNoire ? "14 000 FCFA" : "15 000 FCFA";
+  const teintLabel = isPeauNoire ? "(teint noir)" : "(teint clair)";
+  return (
+    <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fff5f0 0%, #ffe8d6 100%)", border: "2px solid #c9952a", borderRadius: 14, padding: 16, position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 8, right: 8, background: "#c9952a", color: "#fff", fontSize: 9, fontWeight: "bold", padding: "3px 8px", borderRadius: 4, letterSpacing: 0.5 }}>⭐ COUP DE CŒUR</div>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
+        <img src="https://i.ibb.co/LLMS3vG/kit-1.webp" alt="Kit Visage Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: "#c9952a", fontWeight: "bold", letterSpacing: 0.5, marginBottom: 4 }}>RECOMMANDÉ PAR CARRYBOOKS</div>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Kit Visage Exfolia</div>
+          <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>Kit complet à base d'<strong>hydrolats de plantes et produits bio</strong>. Traite acné sévère, taches tenaces, mélasma, mamies, cernes, rougeurs, rides.</div>
+        </div>
+      </div>
+      <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>📦 Contenu du kit (5 produits) :</div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+          <li><strong>Lotion Jour 60ml</strong> — protège le visage des intempéries</li>
+          <li><strong>Lotion Nuit 60ml</strong> — régénère et régule le sébum</li>
+          <li><strong>Crème visage 30g</strong> — peau lisse et éclatante</li>
+          <li><strong>Lotion anti-cernes 30ml</strong> — tous types de cernes</li>
+          <li><strong>Savon/Masque 100g</strong> — absorbe les impuretés</li>
+        </ul>
+      </div>
+      <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span style={{ fontSize: 11, color: CC.textFaint }}>PRIX {teintLabel}</span>
+          <span style={{ fontSize: 22, fontWeight: "bold", color: "#c9952a" }}>{prix}</span>
+        </div>
+        <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic", marginBottom: 8 }}>
+          Choix du teint (noir / clair) au moment de la commande
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: CC.noir, lineHeight: 1.5 }}>
+          <div>✅ <strong>Satisfait ou remboursé</strong></div>
+          <div>✅ <strong>100% naturel</strong> (hydrolats de plantes, produits bio)</div>
+          <div>✅ Efficace contre acné sévère, mélasma, cernes, rides</div>
+          <div>🚚 Livraison Cameroun (frais à la charge du client)</div>
+        </div>
+      </div>
+      <a href="https://www.carrygoo.net/products/kit-visage-exfolia-1" target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: 14, background: "#c9952a", color: "#fff", textDecoration: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", boxShadow: "0 3px 10px rgba(201,149,42,0.3)" }}>
+        👉 Commander le Kit Visage Exfolia →
+      </a>
+    </div>
+  );
+}
+
+// COMPOSANT PRINCIPAL — RÉSULTAT FACIAL
+function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
+  if (!result) return null;
+  const { skinType, profile, objectives, problems, lifestyle } = result;
+  const isMale = profile?.gender === "homme";
+  const budgetPref = lifestyle?.budget || "med";
+  const isPregnant = profile?.pregnancy === "enceinte" || profile?.pregnancy === "allaite";
+  const skinTone = profile?.skin_tone || "metisse";
+
+  const ageLabels = { "18-25": "18-25 ans", "26-35": "26-35 ans", "36-45": "36-45 ans", "46+": "46 ans et +" };
+  const toneLabels = { ebene: "Ébène", fonce: "Foncé", metisse: "Métissé / Caramel", clair: "Clair", tres_clair: "Très clair" };
+
+  // Détermine si on doit afficher Kit Exfolia dans soins ciblés (acné, cernes, terne, mélasma, cicatrices)
+  function shouldShowKitInProblem(pid) {
+    return ["acne_active", "cernes", "terne", "melasma", "cicatrices_creux", "taches_acne"].includes(pid);
+  }
+
+  function getPriorityText(objId) {
+    const map = {
+      glow: "Avoir un visage lumineux / glow",
+      unifier: "Unifier ton teint",
+      acne: "Stopper l'acné",
+      points_noirs: "Effacer les points noirs",
+      pores: "Resserrer tes pores dilatés",
+      hydratation: "Hydrater profondément",
+      anti_age: "Ralentir le vieillissement",
+      cernes: "Réduire les cernes / poches",
+      apaiser: "Apaiser ta peau sensible",
+      preparer: "Préparer ta peau pour ton événement",
+      naturel: "Passer au naturel / bio",
+      cicatrices: "Effacer les cicatrices d'acné",
+      doux_bebe: "Avoir un visage doux comme un bébé"
+    };
+    return map[objId] || objId;
+  }
+
+  const Section = ({ title, color, children }) => (
+    <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: "bold", color: color || CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
+      <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+        <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+        <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🌟 Ton diagnostic visage</div>
+      </div>
+
+      <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+
+        {/* Hero */}
+        <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
+          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton diagnostic personnalisé</div>
+          <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
+          <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>{skinType.desc}</div>
+          <button onClick={() => downloadFacialDiagnosticPDF(result)} style={{
+            display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+            boxShadow: "0 3px 10px rgba(0,0,0,0.15)"
+          }}>
+            📥 Télécharger en PDF
+          </button>
+          <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>Garde-le sur ton téléphone, partage-le, imprime-le</div>
+        </div>
+
+        {/* PROFIL */}
+        <Section title="👤 Ton profil" color={CC.noir}>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            <div><strong>Genre :</strong> {isMale ? "Homme" : "Femme"}</div>
+            <div><strong>Âge :</strong> {ageLabels[profile?.age] || "—"}</div>
+            <div><strong>Teint :</strong> {toneLabels[profile?.skin_tone] || "—"}</div>
+            <div><strong>Type de peau :</strong> {skinType.name}</div>
+            {isPregnant && <div style={{ marginTop: 8, padding: 8, background: "#fff8e1", borderLeft: "3px solid #f5a623", borderRadius: 4, fontSize: 12 }}>🤰 Tes recommandations sont adaptées à ta grossesse / allaitement (pas de rétinol, pas d'acide salicylique fort).</div>}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: CC.rose, marginBottom: 6 }}>🎯 Tes objectifs</div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+              {objectives.map(o => <li key={o}>{getPriorityText(o)}</li>)}
+            </ul>
+          </div>
+        </Section>
+
+        {/* CE QUI SE PASSE */}
+        <Section title="📊 Ce qui se passe sur ton visage">
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            {generateFacialExplanation(skinType, profile, problems, lifestyle)}
+          </div>
+        </Section>
+
+        {/* IMPORTANCE CRÈME SOLAIRE */}
+        <Section title="🌞 L'importance VITALE de la crème solaire" color="#e67e22">
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.7 }}>
+            <div style={{ marginBottom: 10 }}>
+              La crème solaire est le <strong>produit le PLUS important</strong> de ta routine. <strong>90% du vieillissement cutané vient du soleil</strong> (UV).
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              Au Cameroun, l'ensoleillement est intense <strong>toute l'année</strong>. Sans SPF :
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 20, marginBottom: 10 }}>
+              <li>Les <strong>taches noires</strong> reviennent (mélanine activée)</li>
+              <li>Le <strong>mélasma</strong> empire</li>
+              <li>Apparition de <strong>rides précoces</strong></li>
+              <li>Aucun autre soin (vitamine C, niacinamide, anti-âge) ne fonctionne vraiment</li>
+            </ul>
+            <div style={{ marginTop: 12, padding: 12, background: "#fff5e6", borderLeft: "3px solid #e67e22", borderRadius: 4, fontSize: 12 }}>
+              <strong>💡 Règles d'or :</strong>
+              <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                <li>SPF 30 minimum, idéal 50+</li>
+                <li>2 doigts pleins pour le visage (15ml)</li>
+                <li>Réapplication toutes les 2h en extérieur</li>
+                <li>Même par temps couvert (les UV traversent les nuages)</li>
+                <li>Même en intérieur près d'une fenêtre</li>
+              </ul>
+            </div>
+          </div>
+        </Section>
+
+        {/* PLAN D'ACTION */}
+        <Section title="🎯 Ton plan d'action en 3 priorités">
+          {objectives.slice(0, 3).map((o, i) => (
+            <div key={o} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: i < Math.min(objectives.length, 3) - 1 ? "1px solid " + CC.border : "none" }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>
+                {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} Priorité {i + 1} — {getPriorityText(o)}
+              </div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>{getFacialPriorityDesc(o, skinType.code)}</div>
+            </div>
+          ))}
+        </Section>
+
+        {/* ROUTINE QUOTIDIENNE */}
+        <Section title="🛁 Ta routine quotidienne" color={CC.rose}>
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 14 }}>Adaptée à ta peau {skinType.name.toLowerCase()} et à tes objectifs</div>
+
+          {/* MATIN */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>☀️ MATIN</div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Nettoyant doux</div>
+              <FacialProductList category={problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale")} budgetPref={budgetPref} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>2. Tonique / Lotion</div>
+              <FacialProductList category="tonique_normale" budgetPref={budgetPref} />
+            </div>
+
+            {(objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>3. Sérum vitamine C (éclat + protection antioxydante)</div>
+                <FacialProductList category="serum_vitc" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>4. Contour des yeux</div>
+                <FacialProductList category="contour_yeux" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>5. Crème hydratante</div>
+              <FacialProductList category={skinType.code === "grasse" ? "creme_grasse" : (skinType.code === "seche" ? "creme_seche" : "creme_normale")} budgetPref={budgetPref} />
+            </div>
+
+            <div style={{ marginBottom: 14, padding: 12, background: "#fff5e6", border: "2px solid #e67e22", borderRadius: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>6. 🌞 Protection solaire SPF 30+ (ÉTAPE LA PLUS IMPORTANTE)</div>
+              <FacialProductList category={skinType.code === "grasse" || problems.includes("acne_active") ? "spf_grasse" : (skinTone === "metisse" || skinTone === "fonce" || skinTone === "ebene" ? "spf_metisse" : "spf")} budgetPref={budgetPref} />
+            </div>
+          </div>
+
+          {/* SOIR */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10, padding: "6px 12px", background: "#fdf0f1", borderRadius: 6, display: "inline-block" }}>🌙 SOIR</div>
+
+            {(lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>1. Démaquillant</div>
+                <FacialProductList category="demaquillant" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{(lifestyle.makeup === "never" ? "1" : "2")}. Nettoyant doux (double nettoyage)</div>
+              <FacialProductList category={problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale")} budgetPref={budgetPref} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{(lifestyle.makeup === "never" ? "2" : "3")}. Tonique / Lotion</div>
+              <div style={{ fontSize: 12, color: CC.textDim, fontStyle: "italic" }}>Idem matin (utilise le même produit)</div>
+            </div>
+
+            {!isPregnant && problems.includes("acne_active") && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>4. Sérum acide salicylique (anti-acné)</div>
+                <FacialProductList category="serum_acne" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            {!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides")) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>4. Sérum rétinol (anti-âge)</div>
+                <FacialProductList category="serum_anti_age" budgetPref={budgetPref} />
+                <div style={{ marginTop: 6, fontSize: 11, color: "#dc3545", fontStyle: "italic" }}>⚠️ Le rétinol = SPF OBLIGATOIRE le matin. Commence 2x/sem puis augmente.</div>
+              </div>
+            )}
+
+            {(problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>5. Sérum anti-taches (niacinamide ou alpha arbutin)</div>
+                <FacialProductList category="serum_niacinamide" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>6. Contour des yeux nuit</div>
+                <FacialProductList category="contour_yeux" budgetPref={budgetPref} />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>7. Crème nuit (régénérante)</div>
+              <FacialProductList category="creme_nuit" budgetPref={budgetPref} />
+            </div>
+
+            {problems.includes("acne_active") && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>8. Soin localisé sur les boutons</div>
+                <FacialProductList category="spot_acne" budgetPref={budgetPref} />
+              </div>
+            )}
+          </div>
+        </Section>
+
+        {/* SOINS HEBDOMADAIRES */}
+        <Section title="📅 Soins hebdomadaires (1-2 fois / semaine)">
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>✨ Gommage facial</div>
+            <FacialProductList category="gommage_facial" budgetPref={budgetPref} />
+          </div>
+          {(skinType.code === "grasse" || problems.includes("acne_active") || problems.includes("points_noirs") || problems.includes("pores")) && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🪨 Masque purifiant (argile / charbon)</div>
+              <FacialProductList category="masque_purifiant" budgetPref={budgetPref} />
+            </div>
+          )}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>💧 Masque hydratant / nourrissant</div>
+            <FacialProductList category="masque_hydratant" budgetPref={budgetPref} />
+          </div>
+        </Section>
+
+        {/* SOINS CIBLÉS */}
+        {problems.length > 0 && !problems.includes("aucun") && (
+          <Section title="🎯 Soins ciblés pour tes problèmes">
+            {problems.filter(p => p !== "aucun").map(pid => {
+              const p = BF_PROBLEMS.find(x => x.id === pid);
+              if (!p) return null;
+              const targetedAdvice = getFacialTargetedAdvice(pid, skinType.code, isPregnant);
+              return (
+                <div key={pid} style={{ marginBottom: 18, paddingBottom: 14, borderBottom: "1px solid " + CC.border }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>{p.emoji} {p.label}</div>
+                  {targetedAdvice && (
+                    <>
+                      <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6, marginBottom: 8 }}><strong>💡 Pourquoi tu en as :</strong> {targetedAdvice.cause}</div>
+                      <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6, marginBottom: 6 }}><strong>✅ Tes solutions :</strong></div>
+                      {targetedAdvice.category && <FacialProductList category={targetedAdvice.category} budgetPref={budgetPref} />}
+                      {targetedAdvice.tips && (
+                        <ul style={{ margin: "8px 0 0", paddingLeft: 20, fontSize: 12, color: CC.textDim, lineHeight: 1.7 }}>
+                          {targetedAdvice.tips.map((tip, i) => <li key={i}>{tip}</li>)}
+                        </ul>
+                      )}
+                      {targetedAdvice.delai && <div style={{ marginTop: 8, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>⏱️ Résultats visibles : {targetedAdvice.delai}</div>}
+                      {targetedAdvice.eviter && <div style={{ marginTop: 6, fontSize: 12, color: "#dc3545", fontStyle: "italic" }}>⚠️ Évite : {targetedAdvice.eviter}</div>}
+
+                      {/* CARTE KIT EXFOLIA pour problèmes spécifiques */}
+                      {shouldShowKitInProblem(pid) && <KitExfoliaCard skinTone={skinTone} />}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </Section>
+        )}
+
+        {/* À ÉVITER */}
+        <Section title="🚫 À éviter absolument" color="#dc3545">
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+            <li>❌ <strong>Hydroquinone</strong> (cancérigène potentiel)</li>
+            <li>❌ <strong>Mercure</strong> (dans certains produits non étiquetés)</li>
+            <li>❌ <strong>Glutathion injectable</strong> (effets secondaires graves)</li>
+            <li>❌ <strong>Corticoïdes sans ordonnance</strong> (Movate, etc.)</li>
+            <li>❌ Eau brûlante (aggrave couperose et acné)</li>
+            <li>❌ Toucher / percer les boutons (marques permanentes)</li>
+            <li>❌ Citron pur sur la peau (acide trop fort)</li>
+            <li>❌ Produits "résultats en 7 jours" (mensonge)</li>
+            <li>❌ Mélanger trop d'actifs (rétinol + vitamine C + acide = catastrophe)</li>
+          </ul>
+        </Section>
+
+        {/* OÙ ACHETER */}
+        <Section title="📍 Où acheter tes produits">
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>💊 Pharmacie</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>CeraVe, Cetaphil, La Roche-Posay, Bioderma, Avène, Vichy, SVR, Eucerin, Uriage, ISDIN</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>💄 Parfumerie / Supermarché</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Nivea, Garnier, L'Oréal, Olay, Neutrogena, Clean & Clear, Dove, Simple, Mixa</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🇨🇳 Boutique cosmétique (marques chinoises)</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Bioaqua, Dr Rashel, Disaar, Images, Veze, Laikou, Lanbena, Breylee, Sadoer</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🇰🇷 Boutique K-Beauty</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>COSRX, Beauty of Joseon, Some By Mi, Innisfree, Laneige, Etude, Missha</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Marché traditionnel</div>
+              <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Aloe vera pur, miel, argile verte, eau de rose, huile d'amande douce</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* RÉSULTATS ATTENDUS */}
+        <Section title="⏱️ Tes résultats attendus" color={CC.rose}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 2 semaines</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Peau plus lumineuse, mieux hydratée, premiers signes de mieux</div>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 1 mois</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Acné en baisse, taches qui s'estompent, teint plus uniforme</div>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 2-3 mois</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Résultats nets visibles, peau transformée, confiance retrouvée</div>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ minWidth: 90, fontSize: 12, color: CC.rose, fontWeight: "bold" }}>📅 6 mois</div>
+              <div style={{ flex: 1, fontSize: 13, color: CC.textDim, lineHeight: 1.5 }}>Peau profondément régénérée, problèmes anciens largement réduits</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* CONSEILS PRO */}
+        <Section title="💎 Mes 7 conseils pro pour toi" color="#c9952a">
+          <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CC.textDim, lineHeight: 1.8 }}>
+            <li><strong>SPF tous les jours, sans exception.</strong> Ta peau te dira merci dans 10 ans.</li>
+            <li><strong>La constance avant l'intensité.</strong> Une routine simple suivie 3 mois vaut mieux qu'une routine complexe abandonnée en 1 semaine.</li>
+            <li><strong>Hydrate-toi de l'intérieur.</strong> 2 litres d'eau par jour. La peau est ton plus grand organe, elle a besoin d'eau.</li>
+            <li><strong>Ne mélange pas trop d'actifs.</strong> Vitamine C le matin, rétinol le soir. Pas les deux ensemble.</li>
+            <li><strong>Patience.</strong> Ta peau se renouvelle tous les 28 jours. Donne au moins 1 mois à un produit avant de juger.</li>
+            <li><strong>Ne touche pas tes boutons.</strong> Tu crées des cicatrices permanentes en les perçant.</li>
+            <li><strong>Évite les "miracles 7 jours"</strong> — c'est faux et souvent dangereux pour ta peau.</li>
+          </ol>
+        </Section>
+
+        {/* OÙ RETROUVER SES RÉSULTATS */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 28 }}>📂</div>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir }}>Garde ton diagnostic à portée de main</div>
+          </div>
+          <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, marginBottom: 10 }}>
+            Tu peux <strong>retrouver ce diagnostic à tout moment</strong> dans :
+          </div>
+          <div style={{ background: "#fdf8f8", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
+              📱 <strong>Menu</strong> (en haut à droite) → <strong>Mes résultats</strong>
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", lineHeight: 1.5 }}>
+            💡 Tu peux y revenir aussi souvent que tu veux pour suivre ta routine, sans repayer.
+          </div>
+        </div>
+
+        {/* CROSS-SELL : Quiz Body */}
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 14 }}>
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>✨ POUR ALLER PLUS LOIN</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Et ton corps, comment va-t-il ?</div>
+            <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, fontStyle: "italic" }}>
+              Vergetures, hyperpigmentation, cellulite, pieds secs, taches...<br/>Découvre une routine sur mesure pour ton corps.
+            </div>
+          </div>
+          <div style={{ background: "#fff", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+            <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
+              ✓ Diagnostic <strong>complet et personnalisé</strong><br/>
+              ✓ Routine matin et soir adaptée<br/>
+              ✓ Produits précis avec lieux d'achat<br/>
+              ✓ Soins ciblés pour tes problèmes
+            </div>
+          </div>
+          <button onClick={() => { if (setCarryCarePage) setCarryCarePage("bodyQuiz"); }} style={{
+            width: "100%", padding: 16, background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+          }}>
+            🌸 Faire le diagnostic corps →
+          </button>
+        </div>
+
+        {/* KIT EXFOLIA — COUP DE CŒUR FINAL (peu importe les problèmes) */}
+        <Section title="⭐ Notre coup de cœur pour toi" color="#c9952a">
+          <div style={{ fontSize: 13, color: CC.textDim, marginBottom: 12, lineHeight: 1.6 }}>
+            Si tu cherches <strong>un kit complet et naturel</strong> qui traite plusieurs problèmes à la fois (acné sévère, taches tenaces, mélasma, cernes, rides, rougeurs), nous te recommandons :
+          </div>
+          <KitExfoliaCard skinTone={skinTone} />
+        </Section>
+
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>💪 Tu peux le faire !</div>
+          <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", lineHeight: 1.6 }}>La constance est la clé. Tes résultats arrivent.</div>
+        </div>
+
+        {/* Bouton télécharger PDF (en bas) */}
+        <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadFacialDiagnosticPDF(result)} style={{
+            display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CC.noir, color: "#fff",
+            border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+          }}>
+            📥 Télécharger mon diagnostic en PDF
+          </button>
+          <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>
+            Garde-le sur ton téléphone, partage-le, imprime-le
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// HELPER : Génère le texte explicatif facial
+function generateFacialExplanation(skinType, profile, problems, lifestyle) {
+  const parts = [];
+  if (skinType.code === "seche") {
+    parts.push("Ton visage manque d'hydratation et de gras. Il tire facilement et les rides peuvent apparaître plus tôt si tu ne nourris pas profondément.");
+  } else if (skinType.code === "grasse") {
+    parts.push("Ton visage produit beaucoup de sébum, surtout au niveau de la zone T (front, nez, menton). C'est ce qui cause la brillance et les imperfections.");
+  } else if (skinType.code === "mixte") {
+    parts.push("Ton visage combine deux défis : la zone T (front, nez, menton) est grasse, tandis que les joues sont normales à sèches.");
+  } else if (skinType.code === "sensible") {
+    parts.push("Ton visage est fin et réactif. Il rougit ou picote facilement face aux produits agressifs ou aux changements climatiques.");
+  } else {
+    parts.push("Ton visage est globalement équilibré — c'est une excellente base de travail !");
+  }
+  parts.push("Au Cameroun, le climat chaud et humide combiné à un ensoleillement intense toute l'année met ta peau à rude épreuve. Une routine adaptée est essentielle.");
+  if (problems.includes("acne_active")) parts.push("Pour ton acné : sébum + bactéries + inflammation. Le rythme de vie, le stress et les hormones aggravent souvent.");
+  if (problems.includes("melasma")) parts.push("Pour ton mélasma : c'est principalement causé par les hormones (grossesse, contraception) combinées au soleil. La protection solaire est NON négociable.");
+  if (problems.includes("cernes")) parts.push("Pour tes cernes : sommeil, fatigue, écrans, génétique et déshydratation s'additionnent. La crème solaire et le contour des yeux sont tes meilleurs alliés.");
+  if (problems.includes("taches_acne") && (profile?.skin_tone === "metisse" || profile?.skin_tone === "fonce" || profile?.skin_tone === "ebene")) {
+    parts.push("Sur ton teint, ta peau pigmente fortement après chaque bouton. C'est un mécanisme naturel mais qui prend du temps à s'effacer.");
+  }
+  return parts.join(" ");
+}
+
+// HELPER : Description priorité
+function getFacialPriorityDesc(objId, skinCode) {
+  const map = {
+    glow: "Un visage lumineux vient d'une bonne hydratation, d'une exfoliation régulière, de la vitamine C et surtout d'une protection solaire quotidienne.",
+    unifier: "Pour unifier le teint, il faut d'abord arrêter de créer de nouvelles taches (SPF tous les jours), puis traiter les taches existantes (niacinamide, vitamine C).",
+    acne: "Avant de traiter les cicatrices d'acné, il faut empêcher de nouveaux boutons d'apparaître. Sinon tu tournes en rond. Patience + rigueur = résultats.",
+    points_noirs: "Les points noirs = sébum oxydé. Solution : nettoyage doux 2x/jour + acide salicylique 2-3 fois/semaine + masque argile 1x/sem.",
+    pores: "On ne peut pas vraiment 'fermer' les pores (ils sont génétiques) mais on peut les rendre moins visibles avec niacinamide + acide salicylique + retinol.",
+    hydratation: "L'hydratation est la BASE. Sans hydratation, aucun autre soin ne fonctionne bien. Acide hyaluronique + glycérine = ta peau te remerciera.",
+    anti_age: "Le rétinol est l'actif n°1 prouvé scientifiquement contre les rides. Combiné avec SPF + vitamine C, tu maintiens jeunesse et fermeté.",
+    cernes: "Cernes = circulation lymphatique + déshydratation + génétique. Caféine (matin) + acide hyaluronique (soir) + sommeil = la trinité gagnante.",
+    apaiser: "Pour une peau sensible, simplifie ! Moins de produits, plus de douceur. Niacinamide, centella, eau thermale = tes alliés.",
+    preparer: "Pour un événement, commence ta préparation 2-3 mois avant. Routine régulière + masques 2x/sem dans le dernier mois = peau parfaite le jour J.",
+    naturel: "Le naturel a ses limites mais peut faire des merveilles. Hydrolats, huiles végétales, miel, aloe vera. Vérifie toujours la qualité.",
+    cicatrices: "Les cicatrices d'acné en creux nécessitent du temps. Acides AHA/BHA + niacinamide + rétinol pendant plusieurs mois. Sois patiente.",
+    doux_bebe: "Une peau douce comme un bébé vient d'une exfoliation régulière (douce !) + hydratation profonde + masques nourrissants + zéro produit agressif."
+  };
+  return map[objId] || "Suis ta routine et sois patiente.";
+}
+
+// HELPER : Conseils ciblés par problème facial
+function getFacialTargetedAdvice(pid, skinCode, isPregnant) {
+  const map = {
+    acne_active: {
+      cause: "Sébum + bactéries + cellules mortes bouchent les pores. Hormones, stress et alimentation aggravent.",
+      category: "serum_acne",
+      tips: ["Ne touche JAMAIS tes boutons (cicatrices)", "Nettoie ton téléphone régulièrement (bactéries !)", "Change ta taie d'oreiller 2x/sem", "Évite les produits gras / occlusifs"],
+      delai: "4-8 semaines",
+      eviter: "huiles essentielles non diluées, dentifrice (mythe dangereux), savons agressifs"
+    },
+    points_noirs: {
+      cause: "Le sébum s'accumule dans les pores et s'oxyde au contact de l'air, devenant noir.",
+      category: "serum_niacinamide",
+      tips: ["Nettoyage 2x/jour + acide salicylique 3x/sem", "Masque argile 1-2x/sem", "Ne presse JAMAIS (ça les empire)", "Patches anti-points noirs en SOS"],
+      delai: "2-4 semaines"
+    },
+    points_blancs: {
+      cause: "Cellules mortes accumulées + sébum sous la peau (sans contact avec l'air donc blancs).",
+      category: "serum_acne",
+      tips: ["Exfoliation chimique (BHA) 2x/sem", "Pas de gommage agressif", "Évite les produits comédogènes"],
+      delai: "3-6 semaines"
+    },
+    pores: {
+      cause: "Génétique + sébum excessif + perte d'élasticité avec l'âge dilatent visiblement les pores.",
+      category: "serum_niacinamide",
+      tips: ["Niacinamide quotidienne", "BHA 2-3x/sem", "Tonique resserrant", "Évite vapeur du visage trop chaude"],
+      delai: "8-12 semaines"
+    },
+    taches_acne: {
+      cause: "Hyperpigmentation post-inflammatoire après chaque bouton. Plus marqué sur peaux foncées.",
+      category: isPregnant ? null : "anti_taches_visage",
+      tips: ["Aloe vera pur quotidien", "SPF non négociable", "Pas de soleil direct"],
+      delai: "2-4 mois minimum",
+      eviter: "exposition solaire sans SPF (annule tout)"
+    },
+    melasma: {
+      cause: "Hormones (grossesse, contraception) + UV activent la mélanine de manière excessive.",
+      category: isPregnant ? null : "anti_taches_visage",
+      tips: ["SPF 50+ TOUS LES JOURS (essentiel)", "Chapeau / casquette en extérieur", "Si grossesse : juste hydratation + soleil"],
+      delai: "3-6 mois",
+      eviter: "soleil sans protection (annule tout)"
+    },
+    cernes: {
+      cause: "Sommeil insuffisant + déshydratation + écrans + génétique + fragilité de la peau sous les yeux.",
+      category: "contour_yeux",
+      tips: ["Dors 7-8h/nuit", "Hydrate-toi (2L/jour)", "Limite les écrans le soir", "Cuillères au congélateur 5 min le matin", "Patches anti-cernes en SOS"],
+      delai: "4-8 semaines"
+    },
+    poches: {
+      cause: "Rétention d'eau + circulation lymphatique faible + fatigue.",
+      category: "contour_yeux",
+      tips: ["Caféine en application locale", "Massage doux 1 min/jour", "Réduis sel + alcool", "Surélève la tête la nuit"],
+      delai: "2-4 semaines"
+    },
+    rides: {
+      cause: "Vieillissement + soleil (90% des rides !) + mimiques + tabac + manque d'hydratation.",
+      category: isPregnant ? null : "serum_anti_age",
+      tips: ["Rétinol le soir 2-3x/sem", "SPF 50+ tous les jours", "Vitamine C le matin", "Hydratation maximale"],
+      delai: "3-6 mois",
+      eviter: "soleil sans SPF"
+    },
+    fermete: {
+      cause: "Perte de collagène avec l'âge + UV + stress oxydatif.",
+      category: isPregnant ? null : "serum_anti_age",
+      tips: ["Rétinol + peptides", "Massage du visage 2 min/jour", "Vitamine C antioxydante"],
+      delai: "3-6 mois"
+    },
+    rougeurs: {
+      cause: "Sensibilité cutanée, dilatation des vaisseaux, peau fine.",
+      category: "creme_seche",
+      tips: ["Évite eau chaude, alcool, épices fortes", "Centella asiatica = miracle", "Eau thermale en spray", "Évite les exfoliants forts"],
+      delai: "4-8 semaines"
+    },
+    terne: {
+      cause: "Cellules mortes accumulées + déshydratation + manque de soin + fatigue.",
+      category: "serum_vitc",
+      tips: ["Exfoliation 1-2x/sem", "Vitamine C le matin", "Hydratation max", "Sommeil 8h"],
+      delai: "2-4 semaines"
+    },
+    deshydratee: {
+      cause: "Manque d'EAU dans la peau (différent de manque de gras). Souvent peau qui tire mais brille.",
+      category: "creme_normale",
+      tips: ["Acide hyaluronique en sérum + crème", "Bois 2L/jour", "Évite eau brûlante", "Brumisateur d'eau thermale"],
+      delai: "2-4 semaines"
+    },
+    tres_seche: {
+      cause: "Manque de gras (lipides) + barrière cutanée altérée.",
+      category: "creme_seche",
+      tips: ["Beurre de karité", "Huiles végétales (argan, jojoba)", "Évite savons agressifs", "Crème riche le soir"],
+      delai: "2-4 semaines"
+    },
+    sensibilite: {
+      cause: "Barrière cutanée fragile, vaisseaux superficiels, peau réactive.",
+      category: "creme_seche",
+      tips: ["Routine ULTRA simple", "Pas de parfum, alcool, huile essentielle", "Centella, niacinamide doux", "Eau thermale"],
+      delai: "4-8 semaines"
+    },
+    cicatrices_creux: {
+      cause: "Acné kystique sévère qui détruit le collagène en profondeur.",
+      category: isPregnant ? null : "serum_anti_age",
+      tips: ["Rétinol pendant des mois", "Niacinamide", "Pour vraies cicatrices profondes : peeling chimique chez dermato", "Patience++"],
+      delai: "6-12 mois pour atténuation",
+      eviter: "promesses miracles 30 jours"
+    },
+    jaunatre: {
+      cause: "Fatigue + manque d'oxygénation cutanée + tabac + alimentation pauvre.",
+      category: "serum_vitc",
+      tips: ["Vitamine C antioxydante", "Sport (oxygène la peau)", "Légumes verts", "Sommeil"],
+      delai: "4-6 semaines"
+    },
+    nez_gras: {
+      cause: "Glandes sébacées plus actives au niveau du nez (zone T).",
+      category: "serum_acne",
+      tips: ["BHA 2-3x/sem", "Tonique sébo-régulateur", "Papier matifiant en SOS", "Pas trop décaper sinon rebond"],
+      delai: "4-6 semaines"
+    },
+    feu_rasoir: {
+      cause: "Rasage à sec ou avec lame émoussée + poils incarnés.",
+      category: "creme_normale",
+      tips: ["Rase dans le sens du poil", "Lame neuve toutes les semaines", "Crème de rasage hydratante", "Après-rasage apaisant", "Exfoliation 2x/sem"],
+      delai: "Prévention immédiate",
+      eviter: "rasage à sec, lame émoussée"
+    }
+  };
+  return map[pid] || null;
+}
+
+// ═══════════════════════════════════════════════════
+// PDF FACIAL — DOWNLOAD
+// ═══════════════════════════════════════════════════
+async function downloadFacialDiagnosticPDF(result) {
+  if (!result) { alert("Diagnostic non disponible."); return; }
+
+  try {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const { skinType, profile, objectives, problems, lifestyle } = result;
+    const isMale = profile?.gender === "homme";
+    const isPregnant = profile?.pregnancy === "enceinte" || profile?.pregnancy === "allaite";
+    const budgetPref = lifestyle?.budget || "med";
+    const skinTone = profile?.skin_tone || "metisse";
+    const ageLabels = { "18-25": "18-25 ans", "26-35": "26-35 ans", "36-45": "36-45 ans", "46+": "46 ans et +" };
+    const toneLabels = { ebene: "Ebene", fonce: "Fonce", metisse: "Metisse / Caramel", clair: "Clair", tres_clair: "Tres clair" };
+
+    const ROSE = [212, 136, 155];
+    const NOIR = [44, 28, 17];
+    const GRIS = [120, 120, 120];
+    const GRIS_CLAIR = [200, 200, 200];
+    const BG_ROSE_LIGHT = [253, 240, 241];
+    const ORANGE_GOLD = [201, 149, 42];
+    const ROUGE = [220, 53, 69];
+    const ORANGE_SPF = [230, 126, 34];
+
+    let y = 20;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 18;
+    const usableW = pageW - margin * 2;
+
+    function clean(text) {
+      if (!text) return "";
+      return String(text).replace(/[^\x20-\x7E\u00C0-\u017F]/g, "").trim().replace(/\s+/g, " ");
+    }
+
+    function checkPage(neededHeight = 10) {
+      if (y + neededHeight > pageH - 22) { addFooter(); doc.addPage(); y = 22; addHeader(); }
+    }
+
+    function addHeader() {
+      doc.setFontSize(10);
+      doc.setTextColor(...ROSE);
+      doc.setFont("helvetica", "bold");
+      doc.text("CARRYBOOKS - CARRYCARE", margin, 12);
+      doc.setTextColor(...GRIS);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Diagnostic Beaute Faciale", pageW - margin, 12, { align: "right" });
+      doc.setDrawColor(...GRIS_CLAIR);
+      doc.line(margin, 14, pageW - margin, 14);
+    }
+
+    function addFooter() {
+      const pageNum = doc.internal.getNumberOfPages();
+      doc.setDrawColor(...GRIS_CLAIR);
+      doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+      doc.setFontSize(8);
+      doc.setTextColor(...GRIS);
+      doc.setFont("helvetica", "normal");
+      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.setFontSize(7);
+      doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
+      doc.setFontSize(8);
+      doc.text("Page " + pageNum, pageW - margin, pageH - 9, { align: "right" });
+    }
+
+    function addSectionTitle(title) {
+      checkPage(15);
+      y += 4;
+      doc.setFillColor(...BG_ROSE_LIGHT);
+      doc.rect(margin, y - 4, usableW, 9, "F");
+      doc.setTextColor(...NOIR);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(clean(title), margin + 3, y + 2);
+      y += 11;
+    }
+
+    function addSubTitle(title, color = NOIR) {
+      checkPage(8);
+      doc.setTextColor(...color);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(clean(title), margin, y);
+      y += 5;
+    }
+
+    function addParagraph(text, options = {}) {
+      const { fontSize = 9, color = NOIR, bold = false, lineHeight = 4.5, marginBottom = 2, indent = 0 } = options;
+      doc.setTextColor(...color);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(clean(text), usableW - indent);
+      checkPage(lines.length * lineHeight + marginBottom);
+      lines.forEach(line => { doc.text(line, margin + indent, y); y += lineHeight; });
+      y += marginBottom;
+    }
+
+    function addBullet(text, options = {}) {
+      const { fontSize = 9, color = NOIR, indent = 4, bold = false } = options;
+      doc.setTextColor(...color);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(fontSize);
+      const cleanText = "- " + clean(text);
+      const lines = doc.splitTextToSize(cleanText, usableW - indent);
+      checkPage(lines.length * 4.3 + 1);
+      lines.forEach((line, i) => { doc.text(line, margin + (i === 0 ? 0 : indent), y); y += 4.3; });
+      y += 0.5;
+    }
+
+    function addInfoBox(title, text, options = {}) {
+      const { color = ROSE, bg = BG_ROSE_LIGHT, fontSize = 9 } = options;
+      checkPage(20);
+      const startY = y;
+      const lines = doc.splitTextToSize(clean(text), usableW - 8);
+      const boxHeight = 8 + lines.length * 4.3 + 4;
+      doc.setFillColor(...bg);
+      doc.roundedRect(margin, startY, usableW, boxHeight, 2, 2, "F");
+      doc.setDrawColor(...color);
+      doc.setLineWidth(0.3);
+      doc.line(margin, startY, margin, startY + boxHeight);
+      doc.setLineWidth(0.2);
+      y = startY + 5;
+      doc.setTextColor(...color);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(fontSize);
+      doc.text(clean(title), margin + 3, y);
+      y += 5;
+      doc.setTextColor(...NOIR);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(fontSize);
+      lines.forEach(line => { doc.text(line, margin + 3, y); y += 4.3; });
+      y = startY + boxHeight + 3;
+    }
+
+    function addProductList(category, budgetPref) {
+      const products = BF_PRODUCTS[category];
+      if (!products) return;
+      const budgets = budgetPref === "premium" ? ["eco", "med", "premium"] : budgetPref === "med" ? ["eco", "med"] : ["eco"];
+      const explanation = BF_PRODUCT_EXPLAINS[category];
+
+      doc.setTextColor(...GRIS);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      doc.text("Choisis 1 ou 2 produits dans cette liste (pas tous)", margin + 4, y);
+      y += 5;
+
+      budgets.forEach(b => {
+        const list = products[b] || [];
+        if (list.length === 0) return;
+        const label = b === "eco" ? "Economique" : b === "med" ? "Moyen" : "Premium";
+        doc.setTextColor(...NOIR);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        checkPage(6);
+        doc.text("> " + label, margin + 4, y);
+        y += 4.3;
+        list.slice(0, 5).forEach(p => {
+          const text = "- " + clean(p.name) + " (" + clean(p.lieu) + ")";
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.setTextColor(...GRIS);
+          const lines = doc.splitTextToSize(text, usableW - 12);
+          checkPage(lines.length * 4 + 1);
+          lines.forEach((line, i) => { doc.text(line, margin + 8 + (i === 0 ? 0 : 4), y); y += 4; });
+        });
+        y += 1;
+      });
+
+      if (explanation) {
+        addInfoBox("POURQUOI ces produits", explanation, { fontSize: 8 });
+      }
+    }
+
+    function addKitExfoliaBox() {
+      checkPage(60);
+      y += 3;
+      const startY = y;
+      const isPeauNoire = skinTone === "ebene" || skinTone === "fonce";
+      const prix = isPeauNoire ? "14 000 FCFA" : "15 000 FCFA";
+      const teintLabel = isPeauNoire ? "(teint noir)" : "(teint clair)";
+      
+      doc.setFillColor(255, 248, 235);
+      doc.roundedRect(margin, startY, usableW, 57, 3, 3, "F");
+      doc.setDrawColor(...ORANGE_GOLD);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, startY, usableW, 57, 3, 3, "D");
+      doc.setLineWidth(0.2);
+
+      y = startY + 7;
+      doc.setTextColor(...ORANGE_GOLD);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text("** COUP DE COEUR - RECOMMANDE PAR CARRYBOOKS **", pageW / 2, y, { align: "center" });
+      y += 6;
+      doc.setTextColor(...NOIR);
+      doc.setFontSize(13);
+      doc.text("Kit Visage Exfolia", pageW / 2, y, { align: "center" });
+      y += 5;
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...GRIS);
+      const exDesc = "Kit complet 100% naturel a base d'hydrolats de plantes et produits bio. Traite acne severe, taches tenaces, melasma, cernes, rides.";
+      const exLines = doc.splitTextToSize(exDesc, usableW - 8);
+      exLines.forEach(line => { doc.text(line, pageW / 2, y, { align: "center" }); y += 4 });
+      y += 1;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...NOIR);
+      doc.setFontSize(8);
+      doc.text("5 produits : Lotion Jour, Lotion Nuit, Creme, Anti-Cernes, Savon/Masque", pageW / 2, y, { align: "center" });
+      y += 5;
+      doc.setTextColor(...ORANGE_GOLD);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(prix + " " + teintLabel, pageW / 2, y, { align: "center" });
+      y += 4;
+      doc.setFontSize(8);
+      doc.setTextColor(...NOIR);
+      doc.setFont("helvetica", "normal");
+      doc.text("Satisfait ou rembourse - 100% naturel - Resultats efficaces", pageW / 2, y, { align: "center" });
+      y += 4;
+      doc.setTextColor(0, 102, 204);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.textWithLink("Commander : carrygoo.net/products/kit-visage-exfolia-1", pageW / 2, y, {
+        align: "center",
+        url: "https://www.carrygoo.net/products/kit-visage-exfolia-1"
+      });
+      y = startY + 60;
+    }
+
+    // ═══ PAGE 1 — COUVERTURE ═══
+    addHeader();
+    y = 50;
+    doc.setFillColor(...BG_ROSE_LIGHT);
+    doc.roundedRect(margin, y, usableW, 75, 4, 4, "F");
+    doc.setDrawColor(...ROSE);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, usableW, 75, 4, 4, "D");
+    doc.setFontSize(11);
+    doc.setTextColor(...GRIS);
+    doc.setFont("helvetica", "bold");
+    doc.text("DIAGNOSTIC PERSONNALISE", pageW / 2, y + 13, { align: "center" });
+    doc.setFontSize(28);
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.text(clean(skinType.name || "Peau Normale"), pageW / 2, y + 35, { align: "center" });
+    doc.setFontSize(10);
+    doc.setTextColor(...GRIS);
+    doc.setFont("helvetica", "italic");
+    const descLines = doc.splitTextToSize(clean(skinType.desc || ""), usableW - 20);
+    descLines.forEach((line, i) => { doc.text(line, pageW / 2, y + 48 + i * 5, { align: "center" }); });
+    doc.setFontSize(9);
+    doc.setTextColor(...ROSE);
+    doc.setFont("helvetica", "bold");
+    doc.text("Beaute Faciale", pageW / 2, y + 67, { align: "center" });
+    y += 85;
+
+    // PROFIL
+    addSectionTitle("Ton profil");
+    addBullet("Genre : " + (isMale ? "Homme" : "Femme"));
+    addBullet("Age : " + (ageLabels[profile?.age] || "—"));
+    addBullet("Teint : " + (toneLabels[profile?.skin_tone] || "—"));
+    addBullet("Type de peau : " + (skinType.name || "Normale"));
+    if (isPregnant) {
+      addInfoBox("ATTENTION GROSSESSE / ALLAITEMENT", "Tes recommandations sont adaptees (pas de retinol, pas d'acide salicylique fort).", { color: ORANGE_GOLD, bg: [255, 248, 225] });
+    }
+
+    // OBJECTIFS
+    if (objectives && objectives.length > 0) {
+      addSectionTitle("Tes objectifs");
+      const objMap = { glow: "Avoir un visage lumineux / glow", unifier: "Unifier le teint (taches, melasma)", acne: "Stopper l'acne / boutons", points_noirs: "Effacer les points noirs", pores: "Resserrer les pores dilates", hydratation: "Hydrater profondement", anti_age: "Ralentir le vieillissement", cernes: "Reduire les cernes / poches", apaiser: "Apaiser peau sensible / rougeurs", preparer: "Preparer la peau (mariage, evenement)", naturel: "Passer au naturel / bio", cicatrices: "Effacer les cicatrices d'acne", doux_bebe: "Avoir un visage doux comme un bebe" };
+      objectives.forEach(o => addBullet(objMap[o] || o));
+    }
+
+    // PROBLÈMES
+    if (problems && problems.length > 0 && !problems.includes("aucun")) {
+      addSectionTitle("Tes problemes");
+      const probMap = { acne_active: "Acne active (boutons, kystes)", points_noirs: "Points noirs", points_blancs: "Points blancs / micro-kystes", pores: "Pores dilates", taches_acne: "Taches d'anciens boutons", melasma: "Melasma / mamie", cernes: "Cernes fonces", poches: "Poches sous yeux", rides: "Rides / ridules", fermete: "Manque de fermete", rougeurs: "Rougeurs / couperose", terne: "Teint terne / pale", deshydratee: "Peau deshydratee", tres_seche: "Peau tres seche qui pele", sensibilite: "Sensibilite / picotements", cicatrices_creux: "Cicatrices d'acne en creux", jaunatre: "Teint jaunatre / fatigue", nez_gras: "Nez gras avec brillance", feu_rasoir: "Poils incarnes / feu du rasoir" };
+      problems.filter(p => p !== "aucun").forEach(p => addBullet(probMap[p] || p));
+    }
+
+    // CE QUI SE PASSE
+    addSectionTitle("Ce qui se passe sur ton visage");
+    const explanation = generateFacialExplanation(skinType, profile, problems, lifestyle);
+    addParagraph(explanation, { fontSize: 9 });
+
+    // IMPORTANCE SPF
+    addSectionTitle("L'importance VITALE de la creme solaire");
+    addParagraph("La creme solaire est le produit le PLUS important de ta routine. 90% du vieillissement cutane vient du soleil (UV). Au Cameroun, l'ensoleillement est intense toute l'annee.");
+    addBullet("Sans SPF : taches reviennent, melasma empire, rides precoces");
+    addBullet("Aucun autre soin (vit C, niacinamide, anti-age) ne fonctionne sans SPF");
+    addBullet("SPF 30 minimum, ideal SPF 50+");
+    addBullet("2 doigts pleins pour le visage (15ml)");
+    addBullet("Reapplication toutes les 2h en exterieur");
+    addBullet("Meme par temps couvert (les UV traversent les nuages)");
+
+    // PLAN D'ACTION
+    addSectionTitle("Plan d'action en 3 priorites");
+    const objNames = { glow: "Visage lumineux", unifier: "Unifier le teint", acne: "Stopper l'acne", points_noirs: "Effacer points noirs", pores: "Resserrer les pores", hydratation: "Hydrater profondement", anti_age: "Ralentir le vieillissement", cernes: "Reduire les cernes", apaiser: "Apaiser peau sensible", preparer: "Preparer la peau", naturel: "Passer au naturel", cicatrices: "Effacer les cicatrices", doux_bebe: "Visage doux comme un bebe" };
+    if (objectives && objectives.length > 0) {
+      objectives.slice(0, 3).forEach((o, i) => {
+        const medal = "Priorite " + (i + 1);
+        checkPage(15);
+        doc.setTextColor(...ROSE);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(medal + " - " + clean(objNames[o] || o), margin, y);
+        y += 5;
+        addParagraph(getFacialPriorityDesc(o, skinType.code), { fontSize: 9, color: GRIS, indent: 3 });
+      });
+    }
+
+    // ROUTINE
+    addSectionTitle("Ta routine quotidienne");
+    addSubTitle("MATIN", ROSE);
+    addSubTitle("1. Nettoyant doux");
+    addProductList(problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale"), budgetPref);
+    addSubTitle("2. Tonique / Lotion");
+    addProductList("tonique_normale", budgetPref);
+    if (objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne")) {
+      addSubTitle("3. Serum vitamine C");
+      addProductList("serum_vitc", budgetPref);
+    }
+    if (problems.includes("cernes") || problems.includes("poches")) {
+      addSubTitle("4. Contour des yeux");
+      addProductList("contour_yeux", budgetPref);
+    }
+    addSubTitle("5. Creme hydratante");
+    addProductList(skinType.code === "grasse" ? "creme_grasse" : (skinType.code === "seche" ? "creme_seche" : "creme_normale"), budgetPref);
+    addSubTitle("6. PROTECTION SOLAIRE SPF 30+ (ESSENTIEL)", ORANGE_SPF);
+    addProductList(skinType.code === "grasse" || problems.includes("acne_active") ? "spf_grasse" : (skinTone === "metisse" || skinTone === "fonce" || skinTone === "ebene" ? "spf_metisse" : "spf"), budgetPref);
+
+    y += 3;
+    addSubTitle("SOIR", ROSE);
+    if (lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") {
+      addSubTitle("1. Demaquillant");
+      addProductList("demaquillant", budgetPref);
+    }
+    addSubTitle((lifestyle.makeup === "never" ? "1" : "2") + ". Nettoyant doux");
+    addProductList(problems.includes("acne_active") ? "nettoyant_acne" : (skinType.code === "seche" ? "nettoyant_seche" : "nettoyant_normale"), budgetPref);
+    addSubTitle("3. Tonique (idem matin)");
+    if (!isPregnant && problems.includes("acne_active")) {
+      addSubTitle("4. Serum acide salicylique");
+      addProductList("serum_acne", budgetPref);
+    }
+    if (!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+")) {
+      addSubTitle("4. Serum retinol (anti-age)");
+      addProductList("serum_anti_age", budgetPref);
+      addParagraph("ATTENTION : retinol = SPF OBLIGATOIRE le matin. Commence 2x/sem puis augmente.", { fontSize: 8, color: ROUGE });
+    }
+    if ((problems.includes("taches_acne") || problems.includes("melasma")) && !isPregnant) {
+      addSubTitle("5. Serum anti-taches (niacinamide)");
+      addProductList("serum_niacinamide", budgetPref);
+    }
+    addSubTitle("6. Creme nuit");
+    addProductList("creme_nuit", budgetPref);
+
+    // SOINS HEBDOMADAIRES
+    addSectionTitle("Soins hebdomadaires");
+    addSubTitle("Gommage facial (1-2x/sem)");
+    addProductList("gommage_facial", budgetPref);
+    if (skinType.code === "grasse" || problems.includes("acne_active") || problems.includes("points_noirs")) {
+      addSubTitle("Masque purifiant (argile / charbon, 1-2x/sem)");
+      addProductList("masque_purifiant", budgetPref);
+    }
+    addSubTitle("Masque hydratant (1-2x/sem)");
+    addProductList("masque_hydratant", budgetPref);
+
+    // SOINS CIBLÉS
+    if (problems && problems.length > 0 && !problems.includes("aucun")) {
+      addSectionTitle("Soins cibles pour tes problemes");
+      const probMap = { acne_active: "Acne active", points_noirs: "Points noirs", points_blancs: "Points blancs", pores: "Pores dilates", taches_acne: "Taches d'anciens boutons", melasma: "Melasma / mamie", cernes: "Cernes fonces", poches: "Poches sous yeux", rides: "Rides", fermete: "Manque de fermete", rougeurs: "Rougeurs", terne: "Teint terne", deshydratee: "Peau deshydratee", tres_seche: "Peau tres seche", sensibilite: "Sensibilite", cicatrices_creux: "Cicatrices en creux", jaunatre: "Teint jaunatre", nez_gras: "Nez gras", feu_rasoir: "Feu du rasoir" };
+      const kitProblems = ["acne_active", "cernes", "terne", "melasma", "cicatrices_creux", "taches_acne"];
+      problems.filter(p => p !== "aucun").forEach(pid => {
+        const advice = getFacialTargetedAdvice(pid, skinType.code, isPregnant);
+        if (!advice) return;
+        checkPage(20);
+        addSubTitle(probMap[pid] || pid, ROSE);
+        addParagraph("Pourquoi tu en as : " + clean(advice.cause), { fontSize: 9 });
+        if (advice.category) addProductList(advice.category, budgetPref);
+        if (advice.tips && advice.tips.length > 0) {
+          addSubTitle("Conseils pratiques");
+          advice.tips.forEach(tip => addBullet(tip));
+        }
+        if (advice.delai) {
+          doc.setTextColor(...ROSE); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+          checkPage(6);
+          doc.text("Resultats visibles : " + clean(advice.delai), margin, y);
+          y += 5;
+        }
+        if (advice.eviter) {
+          doc.setTextColor(...ROUGE); doc.setFont("helvetica", "italic"); doc.setFontSize(9);
+          const evitText = "A eviter : " + clean(advice.eviter);
+          const evitLines = doc.splitTextToSize(evitText, usableW);
+          checkPage(evitLines.length * 4.5);
+          evitLines.forEach(line => { doc.text(line, margin, y); y += 4.5; });
+          y += 1;
+        }
+        if (kitProblems.includes(pid)) {
+          addKitExfoliaBox();
+        }
+        y += 3;
+      });
+    }
+
+    // À ÉVITER
+    addSectionTitle("A eviter absolument");
+    ["Hydroquinone (cancerigene potentiel)", "Mercure", "Glutathion injectable", "Corticoides sans ordonnance (Movate)", "Eau brulante", "Toucher / percer les boutons", "Citron pur sur la peau", "Produits 'resultats en 7 jours' (mensonge)", "Melanger trop d'actifs (retinol + vit C + acide)"].forEach(item => addBullet(item, { color: ROUGE }));
+
+    // OÙ ACHETER
+    addSectionTitle("Ou acheter tes produits");
+    addBullet("PHARMACIE : CeraVe, Cetaphil, La Roche-Posay, Bioderma, Avene, Vichy, SVR, Eucerin, Uriage, ISDIN", { bold: true });
+    addBullet("PARFUMERIE / SUPERMARCHE : Nivea, Garnier, L'Oreal, Olay, Neutrogena, Clean & Clear, Dove, Mixa", { bold: true });
+    addBullet("BOUTIQUE COSMETIQUE (chinoises) : Bioaqua, Dr Rashel, Disaar, Images, Veze, Laikou, Lanbena, Breylee", { bold: true });
+    addBullet("BOUTIQUE K-BEAUTY : COSRX, Beauty of Joseon, Some By Mi, Innisfree, Laneige, Etude, Missha", { bold: true });
+    addBullet("MARCHE TRADITIONNEL : Aloe vera pur, miel, argile verte, eau de rose", { bold: true });
+
+    // RÉSULTATS ATTENDUS
+    addSectionTitle("Tes resultats attendus");
+    addBullet("2 semaines : peau plus lumineuse, mieux hydratee");
+    addBullet("1 mois : acne en baisse, taches s'estompent");
+    addBullet("2-3 mois : resultats nets, peau transformee");
+    addBullet("6 mois : peau profondement regeneree");
+
+    // CONSEILS PRO
+    addSectionTitle("7 conseils pro pour toi");
+    addBullet("SPF tous les jours, sans exception.", { bold: true });
+    addBullet("La constance avant l'intensite. Routine simple suivie 3 mois > routine complexe abandonnee.", { bold: true });
+    addBullet("Hydrate-toi de l'interieur. 2L d'eau par jour.", { bold: true });
+    addBullet("Ne melange pas trop d'actifs. Vit C matin, retinol soir.", { bold: true });
+    addBullet("Patience. Ta peau se renouvelle tous les 28 jours.", { bold: true });
+    addBullet("Ne touche pas tes boutons. Cicatrices permanentes garanties.", { bold: true });
+    addBullet("Evite les 'miracles 7 jours' c'est faux et dangereux.", { bold: true });
+
+    // KIT EXFOLIA — COUP DE CŒUR FINAL
+    addSectionTitle("Coup de coeur CarryBooks");
+    addParagraph("Pour un kit complet et naturel qui traite plusieurs problemes a la fois (acne severe, taches tenaces, melasma, cernes, rides), voici notre recommandation :");
+    addKitExfoliaBox();
+
+    // MESSAGE FINAL
+    y += 5;
+    checkPage(25);
+    doc.setFillColor(...BG_ROSE_LIGHT);
+    doc.roundedRect(margin, y, usableW, 22, 3, 3, "F");
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Tu peux le faire !", pageW / 2, y + 9, { align: "center" });
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(10);
+    doc.setTextColor(...GRIS);
+    doc.text("La constance est la cle. Tes resultats arrivent.", pageW / 2, y + 16, { align: "center" });
+    y += 28;
+
+    // LIENS CLIQUABLES FIN
+    checkPage(55);
+    const linkBoxStart = y;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(margin, linkBoxStart, usableW, 50, 3, 3, "F");
+    doc.setDrawColor(...ROSE);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(margin, linkBoxStart, usableW, 50, 3, 3, "D");
+    doc.setLineWidth(0.2);
+    y = linkBoxStart + 7;
+    doc.setTextColor(...ROSE);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Envie d'aller plus loin ?", pageW / 2, y, { align: "center" });
+    y += 8;
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("Retrouve tes resultats en ligne", margin + 5, y);
+    y += 4.5;
+    doc.setTextColor(0, 102, 204);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, { url: "https://carrybooks.com/mes-resultats" });
+    y += 8;
+    doc.setTextColor(...NOIR);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("Decouvre nos autres diagnostics (corps, cheveux, ligne)", margin + 5, y);
+    y += 4.5;
+    doc.setTextColor(0, 102, 204);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, { url: "https://carrybooks.com/carrycare" });
+    y = linkBoxStart + 53;
+
+    addFooter();
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i < totalPages; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(...GRIS_CLAIR);
+      doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
+      doc.setFontSize(8);
+      doc.setTextColor(...GRIS);
+      doc.setFont("helvetica", "normal");
+      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.setFontSize(7);
+      doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
+      doc.setFontSize(8);
+      doc.text("Page " + i, pageW - margin, pageH - 9, { align: "right" });
+    }
+
+    const dateStr = new Date().toISOString().split("T")[0];
+    const fileName = "Diagnostic-CarryBooks-Visage-" + dateStr + ".pdf";
+    doc.save(fileName);
+    console.log("[CarryCare] PDF Facial telecharge:", fileName);
+  } catch (err) {
+    console.error("[CarryCare] Erreur PDF Facial:", err);
+    alert("Erreur lors du telechargement du PDF. Verifie ta connexion internet et reessaie.");
+  }
+}
+
 
 // ═══════════════════════════════════════════════
 // BEAUTÉ CORPORELLE — COMPOSANT QUIZ
@@ -6812,10 +8456,13 @@ export default function App() {
   // ─── CARRYCARE / BEAUTÉ & SANTÉ ───
   const [carryCarePage, setCarryCarePage] = useState("home"); // home | facialQuiz
   const [beautyQuizPrice, setBeautyQuizPrice] = useState(1000);
-  const [bfStep, setBfStep] = useState(1); // 1=type peau, 2=problèmes, 3=mode vie, 4=résultat suspense, 5=paiement, 6=résultat
-  const [bfTypeAnswers, setBfTypeAnswers] = useState([]); // 8 réponses A/B/C/D/E
+  // ─── BEAUTÉ FACIALE STATES (refonte v2 — Mai 2026) ───
+  const [bfStep, setBfStep] = useState(0); // 0=intro, 1=profil, 2=objectifs, 3=typepeau, 4=problemes, 5=lifestyle, 6=suspense, 7=paiement, 8=resultat
+  const [bfProfile, setBfProfile] = useState({ gender: null, age: null, skin_tone: null, pregnancy: null, cycle: null, shaving: null });
+  const [bfObjectives, setBfObjectives] = useState([]); // 1-3 objectifs
+  const [bfTypeAnswers, setBfTypeAnswers] = useState({}); // Map id => value
   const [bfProblems, setBfProblems] = useState([]); // cases cochées
-  const [bfLifestyle, setBfLifestyle] = useState({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
+  const [bfLifestyle, setBfLifestyle] = useState({ water: null, sun: null, sleep: null, stress: null, makeup: null, screen_time: null, allergies: null, preference: null, routine_time: null, budget: null });
   const [bfResult, setBfResult] = useState(null);
   const [bfPaymentStep, setBfPaymentStep] = useState(1);
   const [bfPaymentPhone, setBfPaymentPhone] = useState("");
@@ -9894,11 +11541,13 @@ export default function App() {
                         setCarryCarePage("lineQuiz");
                         setPage("carrycare");
                       } else if (r.quiz_type === "facial") {
+                        if (data.profile) setBfProfile(data.profile);
+                        if (data.objectives) setBfObjectives(data.objectives);
                         if (data.typeAnswers) setBfTypeAnswers(data.typeAnswers);
                         if (data.problems) setBfProblems(data.problems);
                         if (data.lifestyle) setBfLifestyle(data.lifestyle);
                         if (data.result) setBfResult(data.result);
-                        setBfStep(6);
+                        setBfStep(8); // Aller direct au résultat (pas suspense ni paiement)
                         setBfPaymentStep(1);
                         setBfShowGift(false);
                         setCarryCarePage("facialQuiz");
@@ -10319,6 +11968,8 @@ export default function App() {
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 bfStep={bfStep} setBfStep={setBfStep}
+                bfProfile={bfProfile} setBfProfile={setBfProfile}
+                bfObjectives={bfObjectives} setBfObjectives={setBfObjectives}
                 bfTypeAnswers={bfTypeAnswers} setBfTypeAnswers={setBfTypeAnswers}
                 bfProblems={bfProblems} setBfProblems={setBfProblems}
                 bfLifestyle={bfLifestyle} setBfLifestyle={setBfLifestyle}
