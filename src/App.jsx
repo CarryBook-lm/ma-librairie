@@ -2143,7 +2143,7 @@ const CC = {
 };
 
 // ─── PAGE D'ACCUEIL CARRYCARE ───
-function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData, setCapStep, setCapTexture, setCapProblems, setCapLifestyle, setCapResult }) {
+function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData, setCapStep, setCapProfile, setCapTexture, setCapEtat, setCapLongueur, setCapProblems, setCapObjectives, setCapRoutine, setCapLifestyle, setCapBudget, setCapResult }) {
 
   function startFacial() {
     setBfStep(1);
@@ -2170,10 +2170,16 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
   }
 
   function startHair() {
-    setCapStep(1);
+    setCapStep(0);
+    setCapProfile({ gender: null, age: null });
     setCapTexture(null);
+    setCapEtat(null);
+    setCapLongueur(null);
     setCapProblems([]);
-    setCapLifestyle({ lavage: null, age: null });
+    setCapObjectives([]);
+    setCapRoutine({ lavage: null, apres_shampoing: null, masque: null, huiles: null, proteines: null, chaleur: null });
+    setCapLifestyle({ eau: null, sommeil: null, stress: null, tresses: null });
+    setCapBudget(null);
     setCapResult(null);
     setCarryCarePage("hairQuiz");
   }
@@ -8897,6 +8903,768 @@ async function downloadLigneDiagnosticPDF(result) {
 // ═══════════════════════════════════════════════
 // BEAUTÉ CAPILLAIRE — COMPOSANT QUIZ
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// QUIZ CAPILLAIRE v2 — DONNÉES (refonte Mai 2026)
+// ═══════════════════════════════════════════════════
+
+// Couleurs Beauté Capillaire (palette ambrée/marron doré) - CONSTANTE GLOBALE
+const CAP = {
+  blanc: "#fdfbf6",
+  fond: "#fdf6e3",
+  or: "#c9a66b",
+  orDeep: "#8b6f3a",
+  border: "#e8d4b8",
+  noir: "#1a1a1a",
+  noirSoft: "#444",
+  textDim: "#555",
+  textFaint: "#888"
+};
+
+// Genres et tranches d'âge
+const CAP_GENDERS = [
+  { id: "femme", emoji: "👩", label: "Femme" },
+  { id: "homme", emoji: "👨", label: "Homme" },
+  { id: "ado_fille", emoji: "👧", label: "Adolescente (12-17 ans)" },
+  { id: "ado_garcon", emoji: "👦", label: "Adolescent (12-17 ans)" }
+];
+
+const CAP_AGE_RANGES = [
+  { id: "12-17", label: "12-17 ans" },
+  { id: "18-25", label: "18-25 ans" },
+  { id: "26-35", label: "26-35 ans" },
+  { id: "36-45", label: "36-45 ans" },
+  { id: "46-55", label: "46-55 ans" },
+  { id: "56+", label: "56 ans et +" }
+];
+
+// Types de cheveux (avec texte adapté hommes / femmes)
+const CAP_TEXTURES_V2 = [
+  { id: "3A", emoji: "🌀", title: "Type 3A", subtitle: "Boucles larges en spirales", desc: "Boucles souples, brillantes naturellement, faciles à définir" },
+  { id: "3B", emoji: "🌪️", title: "Type 3B", subtitle: "Boucles serrées en tire-bouchons", desc: "Boucles bien marquées, de la grosseur d'un crayon" },
+  { id: "3C", emoji: "🌸", title: "Type 3C", subtitle: "Boucles très serrées (mini ressorts)", desc: "Boucles denses, taille d'une paille" },
+  { id: "4A", emoji: "✨", title: "Type 4A", subtitle: "Crépus définis (zigzag fin)", desc: "Boucles serrées en S, douces au toucher" },
+  { id: "4B", emoji: "🌟", title: "Type 4B", subtitle: "Crépus en Z (zigzag prononcé)", desc: "Cheveux en angles, peu de définition naturelle" },
+  { id: "4C", emoji: "👑", title: "Type 4C", subtitle: "Crépus très serrés", desc: "Les plus crépus, fragiles, demandent beaucoup d'amour" },
+  { id: "ne_sait_pas", emoji: "🤔", title: "Je ne sais pas", subtitle: "Aide-moi à découvrir", desc: "Pas de souci, on te donnera les conseils universels" }
+];
+
+// État capillaire actuel
+const CAP_ETATS = [
+  { id: "naturel", emoji: "🌿", label: "Cheveux 100% naturels" },
+  { id: "defrise", emoji: "💉", label: "Cheveux défrisés / permanentés" },
+  { id: "colore", emoji: "🎨", label: "Cheveux colorés (henné, teinture)" },
+  { id: "transition", emoji: "🔄", label: "En transition (du défrisé vers le naturel)" },
+  { id: "tresses", emoji: "💁", label: "Je porte des tresses / nattes la plupart du temps" },
+  { id: "perruques", emoji: "👱‍♀️", label: "Je porte des perruques / mèches" },
+  { id: "rase_court", emoji: "💇", label: "Cheveux courts / rasés" }
+];
+
+// Longueur (femmes principalement)
+const CAP_LONGUEURS = [
+  { id: "tres_court", emoji: "✂️", label: "Très court (rasé / TWA)", desc: "Moins de 5 cm" },
+  { id: "court", emoji: "📏", label: "Court", desc: "Jusqu'aux oreilles ou nuque" },
+  { id: "epaules", emoji: "📐", label: "Épaules", desc: "Au-dessus ou aux épaules" },
+  { id: "moyen", emoji: "📏", label: "Mi-long", desc: "Entre les épaules et la poitrine" },
+  { id: "long", emoji: "📏", label: "Long", desc: "Sous la poitrine" },
+  { id: "tres_long", emoji: "💁", label: "Très long", desc: "Jusqu'aux hanches ou plus" }
+];
+
+// Problèmes capillaires (élargi)
+const CAP_PROBLEMS_V2 = [
+  // Sécheresse / casse
+  { id: "secs", emoji: "💧", label: "Cheveux secs", category: "hydratation" },
+  { id: "cassants", emoji: "💔", label: "Cheveux qui cassent / fragiles", category: "casse" },
+  { id: "fourchues", emoji: "✂️", label: "Pointes fourchues", category: "casse" },
+  { id: "abimes_chaleur", emoji: "🔥", label: "Cheveux abîmés (fer, sèche-cheveux)", category: "casse" },
+  { id: "abimes_chimie", emoji: "🧪", label: "Cheveux abîmés (défrisage, coloration)", category: "casse" },
+  // Cuir chevelu
+  { id: "pellicules", emoji: "❄️", label: "Pellicules", category: "cuir_chevelu" },
+  { id: "demangeaisons", emoji: "😖", label: "Démangeaisons / cuir chevelu sensible", category: "cuir_chevelu" },
+  { id: "cuir_gras", emoji: "🧴", label: "Cuir chevelu gras", category: "cuir_chevelu" },
+  { id: "croutes", emoji: "🩹", label: "Croûtes / boutons sur le cuir chevelu", category: "cuir_chevelu" },
+  // Pousse / chute
+  { id: "lents", emoji: "🌱", label: "Cheveux qui poussent lentement", category: "pousse" },
+  { id: "chute", emoji: "🌬️", label: "Chute de cheveux importante", category: "pousse" },
+  { id: "alopecie_traction", emoji: "🪢", label: "Alopécie de traction (tresses serrées)", category: "pousse" },
+  { id: "alopecie_areata", emoji: "⭕", label: "Pelade / zones sans cheveux", category: "pousse" },
+  { id: "clairsemes", emoji: "🌾", label: "Zones clairsemées / dégarnies", category: "pousse" },
+  { id: "tempes", emoji: "👀", label: "Tempes dégarnies", category: "pousse" },
+  { id: "calvitie", emoji: "👨‍🦲", label: "Calvitie / dégarnissement (homme)", category: "pousse" },
+  // Texture / esthétique
+  { id: "frisottis", emoji: "🌀", label: "Frisottis incontrôlables", category: "esthetique" },
+  { id: "no_definition", emoji: "🪞", label: "Boucles peu définies", category: "esthetique" },
+  { id: "emmeles", emoji: "🪢", label: "Cheveux qui s'emmêlent / nœuds", category: "esthetique" },
+  { id: "ternes", emoji: "✨", label: "Cheveux ternes / sans brillance", category: "esthetique" },
+  { id: "volume", emoji: "🎈", label: "Manque de volume", category: "esthetique" },
+  // Spécial
+  { id: "blancs_premature", emoji: "⚪", label: "Cheveux blancs prématurés", category: "special" },
+  { id: "aucun", emoji: "✨", label: "Aucun problème particulier", category: "aucun" }
+];
+
+// Objectifs capillaires
+const CAP_OBJECTIVES = [
+  { id: "pousse", emoji: "📏", label: "Faire pousser mes cheveux" },
+  { id: "epaisseur", emoji: "🌳", label: "Avoir des cheveux plus épais / volumineux" },
+  { id: "douceur", emoji: "🌸", label: "Cheveux plus doux et soyeux" },
+  { id: "definition", emoji: "🌀", label: "Définir mes boucles" },
+  { id: "anti_chute", emoji: "🛡️", label: "Stopper / réduire la chute" },
+  { id: "cuir_sain", emoji: "💆", label: "Avoir un cuir chevelu sain" },
+  { id: "transition_naturel", emoji: "🌿", label: "Réussir ma transition vers le naturel" },
+  { id: "longueur_max", emoji: "💁", label: "Atteindre une longueur maximale" },
+  { id: "reparer", emoji: "🩹", label: "Réparer mes cheveux abîmés" },
+  { id: "hydrater", emoji: "💧", label: "Hydrater profondément" }
+];
+
+// Routine actuelle
+const CAP_LAVAGE_FREQ = [
+  { id: "quotidien", label: "Tous les jours" },
+  { id: "2x_sem", label: "2 fois par semaine" },
+  { id: "1x_sem", label: "1 fois par semaine" },
+  { id: "2_sem", label: "Toutes les 2 semaines" },
+  { id: "rare", label: "Plus rarement" }
+];
+
+const CAP_BUDGET = [
+  { id: "eco", label: "Économique", emoji: "💰", desc: "Marché, supermarché abordable" },
+  { id: "moyen", label: "Moyen", emoji: "💎", desc: "Pharmacie, parfumerie classique" },
+  { id: "premium", label: "Premium", emoji: "👑", desc: "Marques pro, qualité maximale" }
+];
+
+// ═══════════════════════════════════════════════════
+// QUIZ CAPILLAIRE v2 — COMPOSANT (refonte Mai 2026)
+// ═══════════════════════════════════════════════════
+function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capProfile, setCapProfile, capTexture, setCapTexture, capEtat, setCapEtat, capLongueur, setCapLongueur, capProblems, setCapProblems, capObjectives, setCapObjectives, capRoutine, setCapRoutine, capLifestyle, setCapLifestyle, capBudget, setCapBudget, capResult, setCapResult, beautyQuizPrice, capPaymentStep, setCapPaymentStep, capPaymentPhone, setCapPaymentPhone, capPaymentMethod, setCapPaymentMethod, capShowGift, setCapShowGift }) {
+
+  useEffect(() => { window.scrollTo(0, 0); }, [capStep, capPaymentStep]);
+
+  function toggleProblem(id) {
+    if (id === "aucun") { setCapProblems(["aucun"]); return; }
+    let next = capProblems.filter(p => p !== "aucun");
+    if (next.includes(id)) next = next.filter(p => p !== id);
+    else next = [...next, id];
+    setCapProblems(next);
+  }
+  function toggleObjective(id) {
+    if (capObjectives.includes(id)) setCapObjectives(capObjectives.filter(o => o !== id));
+    else if (capObjectives.length < 3) setCapObjectives([...capObjectives, id]);
+  }
+
+  // ANIMATION CADEAU
+  if (capShowGift) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CAP.noir, marginBottom: 8, textAlign: "center" }}>✨ Voici ton diagnostic capillaire ✨</div>
+        <div style={{ fontSize: 14, color: CAP.noirSoft, textAlign: "center" }}>Préparé spécialement pour toi</div>
+        <style>{`@keyframes giftShake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }`}</style>
+      </div>
+    );
+  }
+
+  // Header commun
+  const Header = ({ title, onBack }) => (
+    <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", padding: "12px 16px", borderBottom: "1px solid " + CAP.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
+      <button onClick={onBack} style={{ background: CAP.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
+      <div style={{ fontSize: 15, fontWeight: "bold", color: CAP.noir, flex: 1, textAlign: "center" }}>💆 {title}</div>
+    </div>
+  );
+
+  // Compteur questions
+  const totalQuestions = 20;
+  function getCurrentQ() {
+    let n = 0;
+    if (capStep >= 1) {
+      if (capProfile.gender) n++;
+      if (capProfile.age) n++;
+    }
+    if (capStep >= 2) {
+      if (capTexture) n++;
+      if (capEtat) n++;
+      if (capLongueur) n++;
+    }
+    if (capStep >= 3) {
+      if (capProblems.length > 0) n += capProblems.length;
+    }
+    if (capStep >= 4) {
+      if (capObjectives.length > 0) n += capObjectives.length;
+    }
+    if (capStep >= 5) {
+      if (capRoutine.lavage) n++;
+      if (capRoutine.apres_shampoing !== null) n++;
+      if (capRoutine.masque !== null) n++;
+      if (capRoutine.huiles !== null) n++;
+      if (capRoutine.proteines !== null) n++;
+      if (capRoutine.chaleur !== null) n++;
+    }
+    if (capStep >= 6) {
+      if (capLifestyle.eau) n++;
+      if (capLifestyle.sommeil) n++;
+      if (capLifestyle.stress) n++;
+      if (capLifestyle.tresses) n++;
+      if (capBudget) n++;
+    }
+    return Math.min(n, totalQuestions);
+  }
+  const ProgressBar = () => {
+    const current = getCurrentQ();
+    const pct = Math.min(100, Math.round((current / totalQuestions) * 100));
+    return (
+      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CAP.border }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, color: CAP.textFaint, fontWeight: "bold" }}>QUESTION {current} / {totalQuestions}</div>
+          <div style={{ fontSize: 11, color: CAP.or, fontWeight: "bold" }}>{pct}%</div>
+        </div>
+        <div style={{ height: 6, background: "#f5e6c4", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, " + CAP.or + ", " + CAP.orDeep + ")", transition: "width 0.4s ease", borderRadius: 3 }} />
+        </div>
+      </div>
+    );
+  };
+
+  // ═══ ÉTAPE 0 : INTRO ═══
+  if (capStep === 0) {
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Beauté Capillaire" onBack={() => setCarryCarePage("home")} />
+        <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto" }}>
+
+          <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", border: "1px solid " + CAP.border, borderRadius: 18, padding: "28px 22px", marginBottom: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 52, marginBottom: 10 }}>💆</div>
+            <div style={{ fontSize: 24, fontWeight: "bold", color: CAP.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Diagnostic Capillaire</div>
+            <div style={{ fontSize: 13, color: CAP.noirSoft, fontStyle: "italic" }}>Routine personnalisée + produits adaptés à TES cheveux</div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.or, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                "Ton type de cheveux exact (3A à 4C)",
+                "Ce qui se passe vraiment sur tes cheveux",
+                "Ta routine matin / soir personnalisée",
+                "Soins hebdomadaires adaptés",
+                "Marques et produits recommandés (200+)",
+                "Les erreurs à éviter absolument",
+                "PDF téléchargeable avec ton plan complet"
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ color: CAP.or, fontWeight: "bold", flexShrink: 0 }}>✓</div>
+                  <div style={{ fontSize: 13, color: CAP.noir, lineHeight: 1.5 }}>{item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => setCapStep(1)} style={{ width: "100%", padding: 18, background: CAP.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            Commencer mon diagnostic ✨
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 1 : PROFIL (genre + âge) ═══
+  if (capStep === 1) {
+    const ok = capProfile.gender && capProfile.age;
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 1 / 6 — Ton profil" onBack={() => setCapStep(0)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          {/* Genre */}
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu es :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_GENDERS.map(g => (
+                <button key={g.id} onClick={() => setCapProfile({ ...capProfile, gender: g.id })} style={{ padding: 12, border: "1.5px solid " + (capProfile.gender === g.id ? CAP.or : CAP.border), borderRadius: 10, background: capProfile.gender === g.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 22 }}>{g.emoji}</span>
+                  <span style={{ flex: 1 }}>{g.label}</span>
+                  {capProfile.gender === g.id && <span style={{ color: CAP.or, fontSize: 18 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Âge */}
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Ton âge :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_AGE_RANGES.map(a => (
+                <button key={a.id} onClick={() => setCapProfile({ ...capProfile, age: a.id })} style={{ padding: 12, border: "1.5px solid " + (capProfile.age === a.id ? CAP.or : CAP.border), borderRadius: 10, background: capProfile.age === a.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{a.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => ok && setCapStep(2)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CAP.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {ok ? "Continuer — Tes cheveux ✨" : "Réponds aux questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 2 : TEXTURE + ÉTAT + LONGUEUR ═══
+  if (capStep === 2) {
+    const ok = capTexture && capEtat && capLongueur;
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 2 / 6 — Tes cheveux" onBack={() => setCapStep(1)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          {/* Texture */}
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>Ton type de cheveux ?</div>
+            <div style={{ fontSize: 11, color: CAP.textFaint, marginBottom: 10, fontStyle: "italic" }}>Si tu hésites, choisis "Je ne sais pas" — on te guidera</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_TEXTURES_V2.map(t => (
+                <button key={t.id} onClick={() => setCapTexture(t.id)} style={{ padding: 12, border: "1.5px solid " + (capTexture === t.id ? CAP.or : CAP.border), borderRadius: 10, background: capTexture === t.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 22 }}>{t.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "bold", marginBottom: 2 }}>{t.title}</div>
+                    <div style={{ fontSize: 11, color: CAP.textFaint }}>{t.subtitle}</div>
+                  </div>
+                  {capTexture === t.id && <span style={{ color: CAP.or, fontSize: 18 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* État actuel */}
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>État actuel de tes cheveux :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_ETATS.map(e => (
+                <button key={e.id} onClick={() => setCapEtat(e.id)} style={{ padding: 12, border: "1.5px solid " + (capEtat === e.id ? CAP.or : CAP.border), borderRadius: 10, background: capEtat === e.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>{e.emoji}</span>
+                  <span style={{ flex: 1 }}>{e.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Longueur */}
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Longueur actuelle :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_LONGUEURS.map(l => (
+                <button key={l.id} onClick={() => setCapLongueur(l.id)} style={{ padding: 12, border: "1.5px solid " + (capLongueur === l.id ? CAP.or : CAP.border), borderRadius: 10, background: capLongueur === l.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>{l.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "bold" }}>{l.label}</div>
+                    <div style={{ fontSize: 11, color: CAP.textFaint }}>{l.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => ok && setCapStep(3)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CAP.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Continuer — Tes problèmes ✨" : "Réponds aux questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 3 : PROBLÈMES (multi-select) ═══
+  if (capStep === 3) {
+    const ok = capProblems.length > 0;
+    const categories = [
+      { id: "hydratation", label: "💧 Hydratation" },
+      { id: "casse", label: "💔 Casse / fragilité" },
+      { id: "cuir_chevelu", label: "🩹 Cuir chevelu" },
+      { id: "pousse", label: "🌱 Pousse / chute" },
+      { id: "esthetique", label: "✨ Aspect / texture" },
+      { id: "special", label: "⚪ Spécial" },
+      { id: "aucun", label: "🌟 Aucun" }
+    ];
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 3 / 6 — Tes problèmes" onBack={() => setCapStep(2)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>Quels problèmes rencontres-tu ?</div>
+            <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic" }}>Tu peux en sélectionner plusieurs</div>
+          </div>
+
+          {categories.map(cat => {
+            const probs = CAP_PROBLEMS_V2.filter(p => p.category === cat.id);
+            if (probs.length === 0) return null;
+            return (
+              <div key={cat.id} style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.or, marginBottom: 6, padding: "0 4px", textTransform: "uppercase", letterSpacing: 0.5 }}>{cat.label}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {probs.map(p => (
+                    <button key={p.id} onClick={() => toggleProblem(p.id)} style={{ padding: 10, border: "1.5px solid " + (capProblems.includes(p.id) ? CAP.or : CAP.border), borderRadius: 10, background: capProblems.includes(p.id) ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 18 }}>{p.emoji}</span>
+                      <span style={{ flex: 1 }}>{p.label}</span>
+                      {capProblems.includes(p.id) && <span style={{ color: CAP.or, fontSize: 16 }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          <button onClick={() => ok && setCapStep(4)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CAP.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {ok ? "Continuer — Tes objectifs ✨" : "Choisis au moins 1 option"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 4 : OBJECTIFS (max 3) ═══
+  if (capStep === 4) {
+    const ok = capObjectives.length > 0;
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 4 / 6 — Tes objectifs" onBack={() => setCapStep(3)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>Quels sont tes objectifs ?</div>
+            <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic" }}>Choisis 1 à 3 objectifs prioritaires ({capObjectives.length}/3)</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {CAP_OBJECTIVES.map(o => {
+              const sel = capObjectives.includes(o.id);
+              const blocked = !sel && capObjectives.length >= 3;
+              return (
+                <button key={o.id} onClick={() => !blocked && toggleObjective(o.id)} disabled={blocked} style={{ padding: 12, border: "1.5px solid " + (sel ? CAP.or : CAP.border), borderRadius: 10, background: blocked ? "#f5f5f5" : (sel ? "#fdf6e3" : "#fff"), color: blocked ? "#aaa" : CAP.noir, fontSize: 13, cursor: blocked ? "not-allowed" : "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, opacity: blocked ? 0.5 : 1 }}>
+                  <span style={{ fontSize: 22 }}>{o.emoji}</span>
+                  <span style={{ flex: 1 }}>{o.label}</span>
+                  {sel && <span style={{ color: CAP.or, fontSize: 18 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={() => ok && setCapStep(5)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CAP.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Continuer — Ta routine ✨" : "Choisis au moins 1 objectif"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 5 : ROUTINE ACTUELLE ═══
+  if (capStep === 5) {
+    const ok = capRoutine.lavage && capRoutine.apres_shampoing !== null && capRoutine.masque !== null && capRoutine.huiles !== null && capRoutine.proteines !== null && capRoutine.chaleur !== null;
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 5 / 6 — Ta routine" onBack={() => setCapStep(4)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu laves tes cheveux à quelle fréquence ?</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_LAVAGE_FREQ.map(f => (
+                <button key={f.id} onClick={() => setCapRoutine({ ...capRoutine, lavage: f.id })} style={{ padding: 12, border: "1.5px solid " + (capRoutine.lavage === f.id ? CAP.or : CAP.border), borderRadius: 10, background: capRoutine.lavage === f.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{f.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {[
+            { key: "apres_shampoing", q: "Tu utilises un après-shampoing après chaque lavage ?" },
+            { key: "masque", q: "Tu fais un masque capillaire (1x/sem) ?" },
+            { key: "huiles", q: "Tu utilises des huiles (coco, ricin, jojoba, etc.) ?" },
+            { key: "proteines", q: "Tu fais des soins protéinés (1x/mois) ?" },
+            { key: "chaleur", q: "Tu utilises sèche-cheveux / fer à lisser souvent ?" }
+          ].map(item => (
+            <div key={item.key} style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>{item.q}</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[
+                  { v: "oui", l: "✅ Oui" },
+                  { v: "parfois", l: "🤷 Parfois" },
+                  { v: "non", l: "🚫 Non" }
+                ].map(o => (
+                  <button key={o.v} onClick={() => setCapRoutine({ ...capRoutine, [item.key]: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (capRoutine[item.key] === o.v ? CAP.or : CAP.border), borderRadius: 10, background: capRoutine[item.key] === o.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <button onClick={() => ok && setCapStep(6)} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CAP.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed", marginTop: 10 }}>
+            {ok ? "Continuer — Mode de vie ✨" : "Réponds aux questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 6 : MODE DE VIE + BUDGET ═══
+  if (capStep === 6) {
+    const ok = capLifestyle.eau && capLifestyle.sommeil && capLifestyle.stress && capLifestyle.tresses && capBudget;
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Étape 6 / 6 — Mode de vie" onBack={() => setCapStep(5)} />
+        <ProgressBar />
+        <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu bois combien d'eau par jour ?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "low", l: "🥤 < 1L" },
+                { v: "med", l: "💧 1-2L" },
+                { v: "high", l: "💦 2L+" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setCapLifestyle({ ...capLifestyle, eau: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (capLifestyle.eau === o.v ? CAP.or : CAP.border), borderRadius: 10, background: capLifestyle.eau === o.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu dors combien d'heures ?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "low", l: "😪 < 6h" },
+                { v: "med", l: "😊 6-8h" },
+                { v: "high", l: "😴 > 8h" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setCapLifestyle({ ...capLifestyle, sommeil: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (capLifestyle.sommeil === o.v ? CAP.or : CAP.border), borderRadius: 10, background: capLifestyle.sommeil === o.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Niveau de stress quotidien :</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { v: "low", l: "😌 Faible" },
+                { v: "med", l: "😐 Modéré" },
+                { v: "high", l: "😰 Élevé" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setCapLifestyle({ ...capLifestyle, stress: o.v })} style={{ flex: 1, padding: 12, border: "1.5px solid " + (capLifestyle.stress === o.v ? CAP.or : CAP.border), borderRadius: 10, background: capLifestyle.stress === o.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Port de tresses / perruques (en %) :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { v: "jamais", l: "❌ Jamais (cheveux libres)" },
+                { v: "occasionnel", l: "🤷 Occasionnel (1x/mois)" },
+                { v: "regulier", l: "👍 Régulier (la moitié du temps)" },
+                { v: "souvent", l: "💁 Très souvent (la plupart du temps)" }
+              ].map(o => (
+                <button key={o.v} onClick={() => setCapLifestyle({ ...capLifestyle, tresses: o.v })} style={{ padding: 12, border: "1.5px solid " + (capLifestyle.tresses === o.v ? CAP.or : CAP.border), borderRadius: 10, background: capLifestyle.tresses === o.v ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left" }}>{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Ton budget produits :</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CAP_BUDGET.map(b => (
+                <button key={b.id} onClick={() => setCapBudget(b.id)} style={{ padding: 12, border: "1.5px solid " + (capBudget === b.id ? CAP.or : CAP.border), borderRadius: 10, background: capBudget === b.id ? "#fdf6e3" : "#fff", color: CAP.noir, fontSize: 13, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 20 }}>{b.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "bold" }}>{b.label}</div>
+                    <div style={{ fontSize: 11, color: CAP.textFaint }}>{b.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => {
+            if (!ok) return;
+            // Préparer le résultat (basique pour Phase 1, sera enrichi en Phase 2 demain)
+            setCapResult({
+              profile: capProfile,
+              texture: capTexture,
+              etat: capEtat,
+              longueur: capLongueur,
+              problems: capProblems,
+              objectives: capObjectives,
+              routine: capRoutine,
+              lifestyle: capLifestyle,
+              budget: capBudget
+            });
+            setCapStep(7);
+            setCapPaymentStep(1);
+            setTimeout(() => setCapStep(8), 2500);
+          }} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CAP.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
+            {ok ? "Voir mon diagnostic ✨" : "Réponds aux questions"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 7 : SUSPENSE ═══
+  if (capStep === 7) {
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+        <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>💆</div>
+        <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 8, textAlign: "center" }}>Analyse de tes cheveux...</div>
+        <div style={{ fontSize: 13, color: CAP.noirSoft, textAlign: "center", maxWidth: 280 }}>On prépare ta routine personnalisée</div>
+        <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }`}</style>
+      </div>
+    );
+  }
+
+  // ═══ ÉTAPE 8 : PAIEMENT ═══
+  if (capStep === 8) {
+    if (capPaymentStep === 1) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title="Ton diag est prêt ✨" onBack={() => setCapStep(6)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CAP.border }}>
+              <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Ton diagnostic capillaire est prêt</div>
+              <div style={{ fontSize: 13, color: CAP.noirSoft, lineHeight: 1.6 }}>Routine + produits + marques recommandées</div>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CAP.border }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>✨ Ton diag inclut :</div>
+              <div style={{ fontSize: 13, color: CAP.noirSoft, lineHeight: 1.8 }}>
+                ✅ Analyse de ton type de cheveux<br/>
+                ✅ Routine matin / soir personnalisée<br/>
+                ✅ Soins hebdomadaires adaptés<br/>
+                ✅ 200+ marques recommandées<br/>
+                ✅ Conseils selon tes objectifs<br/>
+                ✅ Erreurs à éviter<br/>
+                ✅ PDF téléchargeable
+              </div>
+            </div>
+            <button onClick={() => setCapPaymentStep(2)} style={{ width: "100%", padding: 16, background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+              💎 Débloquer mon diag — {beautyQuizPrice} FCFA
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 2) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title="Méthode de paiement" onBack={() => setCapPaymentStep(1)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 14, color: CAP.noir, marginBottom: 16, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            <button onClick={() => { setCapPaymentMethod("MTN"); setCapPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FFCC00", color: "#000", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>📱 MTN Mobile Money</button>
+            <button onClick={() => { setCapPaymentMethod("ORANGE"); setCapPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FF6600", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📱 Orange Money</button>
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 3) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title={"Ton numéro " + capPaymentMethod} onBack={() => setCapPaymentStep(2)} />
+          <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ fontSize: 13, color: CAP.textFaint, marginBottom: 12 }}>Entre ton numéro {capPaymentMethod} (9 chiffres, sans +237)</div>
+            <input type="tel" value={capPaymentPhone} onChange={(e) => setCapPaymentPhone(e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="6XXXXXXXX" style={{ width: "100%", padding: 14, fontSize: 18, border: "1.5px solid " + CAP.border, borderRadius: 12, marginBottom: 16, outline: "none" }} />
+            <button onClick={async () => {
+              if (capPaymentPhone.length !== 9) { alert("Numéro invalide (9 chiffres requis)"); return; }
+              setCapPaymentStep(4);
+              const fullPhone = "237" + capPaymentPhone;
+              const userResp = await supabase.auth.getUser();
+              const userId = userResp.data.user?.id;
+              try {
+                const collect = await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Capillaire", external_reference: "carrycare_capillaire_" + Date.now() })
+                });
+                const data = await collect.json();
+                if (!data.reference) { setCapPaymentStep(5); return; }
+                const ref = data.reference;
+                let attempts = 0;
+                const interval = setInterval(async () => {
+                  attempts++;
+                  if (attempts >= 60) { clearInterval(interval); setCapPaymentStep(5); return; }
+                  try {
+                    const checkRes = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "check", reference: ref }) });
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "SUCCESSFUL") {
+                      clearInterval(interval);
+                      setCapPaymentStep(1);
+                      setCapShowGift(true);
+                      if (userId) {
+                        saveCarrycareResultRobust({ user_id: userId, quiz_type: "capillaire", amount: beautyQuizPrice || 0, result_data: { profile: capProfile, texture: capTexture, etat: capEtat, longueur: capLongueur, problems: capProblems, objectives: capObjectives, routine: capRoutine, lifestyle: capLifestyle, budget: capBudget, result: capResult } });
+                      }
+                      setTimeout(() => { setCapShowGift(false); setCapStep(9); }, 2500);
+                    } else if (checkData.status === "FAILED") { clearInterval(interval); setCapPaymentStep(5); }
+                  } catch (e) {}
+                }, 3000);
+              } catch (e) { setCapPaymentStep(5); }
+            }} style={{ width: "100%", padding: 16, background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>💎 Payer {beautyQuizPrice} FCFA</button>
+          </div>
+        </div>
+      );
+    }
+    if (capPaymentStep === 4) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
+          <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
+          <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ Ne quittez pas cet écran, veuillez patienter.</div>
+          </div>
+          <div style={{ fontSize: 12, color: CAP.textFaint, textAlign: "center", lineHeight: 1.5 }}>Confirme la transaction sur ton téléphone {capPaymentMethod}.</div>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
+        </div>
+      );
+    }
+    if (capPaymentStep === 5) {
+      return (
+        <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+          <Header title="Paiement non finalisé" onBack={() => setCapPaymentStep(2)} />
+          <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
+              <h3 style={{ color: "#c62828", marginBottom: 8 }}>Paiement non finalisé</h3>
+              <p style={{ color: CAP.textFaint, fontSize: 14 }}>Réessaie ou change de méthode</p>
+            </div>
+            <button onClick={() => { setCapPaymentStep(2); setCapPaymentMethod(null); setCapPaymentPhone(""); }} style={{ width: "100%", padding: 16, background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10 }}>🔁 Réessayer</button>
+            <button onClick={() => { setCapPaymentStep(1); setCapPaymentMethod(null); setCapPaymentPhone(""); }} style={{ width: "100%", padding: 14, background: "transparent", color: CAP.textFaint, border: "1px solid " + CAP.border, borderRadius: 12, fontSize: 13, cursor: "pointer" }}>Annuler</button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // ═══ ÉTAPE 9 : RÉSULTAT (placeholder Phase 1, sera enrichi Phase 2) ═══
+  if (capStep === 9) {
+    return (
+      <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
+        <Header title="Ton diagnostic capillaire" onBack={() => setCarryCarePage("home")} />
+        <div style={{ padding: "20px 16px", maxWidth: 720, margin: "0 auto" }}>
+          <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", border: "1px solid " + CAP.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>💆</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CAP.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>Ton diagnostic capillaire</div>
+            <div style={{ fontSize: 13, color: CAP.noirSoft, fontStyle: "italic" }}>Type {capTexture || "—"} · {capLongueur || "—"}</div>
+          </div>
+          <div style={{ background: "#fff8e1", border: "2px solid #ff9800", borderRadius: 12, padding: 18, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#e65100", marginBottom: 8 }}>🛠️ Diagnostic en cours de finalisation</div>
+            <div style={{ fontSize: 13, color: "#5d4037", lineHeight: 1.6 }}>Le diagnostic complet (routine personnalisée, marques recommandées, soins ciblés et PDF téléchargeable) sera disponible très prochainement. Reste connectée !</div>
+          </div>
+          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.or, marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>📋 Ton profil capturé</div>
+            <div style={{ fontSize: 13, color: CAP.noirSoft, lineHeight: 1.8 }}>
+              <div><strong>Type :</strong> {capTexture}</div>
+              <div><strong>État :</strong> {capEtat}</div>
+              <div><strong>Longueur :</strong> {capLongueur}</div>
+              <div><strong>Problèmes :</strong> {capProblems.length} identifiés</div>
+              <div><strong>Objectifs :</strong> {capObjectives.join(", ")}</div>
+              <div><strong>Budget :</strong> {capBudget}</div>
+            </div>
+          </div>
+          <button onClick={() => setCarryCarePage("home")} style={{ width: "100%", padding: 14, background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>← Retour au menu CarryCare</button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTexture, setCapTexture, capProblems, setCapProblems, capLifestyle, setCapLifestyle, capResult, setCapResult, beautyQuizPrice, capPaymentStep, setCapPaymentStep, capPaymentPhone, setCapPaymentPhone, capPaymentMethod, setCapPaymentMethod, capShowGift, setCapShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [capStep, capPaymentStep]);
@@ -8917,17 +9685,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
     );
   }
 
-  // Couleurs Beauté Capillaire (palette ambrée/marron doré)
-  const CAP = {
-    blanc: "#fdfbf6",
-    fond: "#fdf6e3",
-    or: "#c9a66b",
-    orDeep: "#8b6f3a",
-    border: "#e8d4b8",
-    noir: "#1a1a1a",
-    textDim: "#555",
-    textFaint: "#888"
-  };
+  // Couleurs Beauté Capillaire — utilise la constante globale CAP
 
   // Header commun
   const Header = ({ title, onBack }) => (
@@ -9681,11 +10439,17 @@ export default function App() {
   // Anciens states maintenus pour compatibilité
   const [lgData, setLgData] = useState({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
 
-  // ─── BEAUTÉ CAPILLAIRE STATES ───
-  const [capStep, setCapStep] = useState(1);
+  // ─── BEAUTÉ CAPILLAIRE STATES (refonte v2 — Mai 2026) ───
+  const [capStep, setCapStep] = useState(0); // 0=intro, 1=profil, 2=texture+etat+longueur, 3=problèmes, 4=objectifs, 5=routine, 6=mode_vie, 7=suspense, 8=paiement, 9=résultat
+  const [capProfile, setCapProfile] = useState({ gender: null, age: null });
   const [capTexture, setCapTexture] = useState(null);
+  const [capEtat, setCapEtat] = useState(null);
+  const [capLongueur, setCapLongueur] = useState(null);
   const [capProblems, setCapProblems] = useState([]);
-  const [capLifestyle, setCapLifestyle] = useState({ lavage: null, age: null });
+  const [capObjectives, setCapObjectives] = useState([]);
+  const [capRoutine, setCapRoutine] = useState({ lavage: null, apres_shampoing: null, masque: null, huiles: null, proteines: null, chaleur: null });
+  const [capLifestyle, setCapLifestyle] = useState({ eau: null, sommeil: null, stress: null, tresses: null });
+  const [capBudget, setCapBudget] = useState(null);
   const [capResult, setCapResult] = useState(null);
   const [capPaymentStep, setCapPaymentStep] = useState(1);
   const [capPaymentPhone, setCapPaymentPhone] = useState("");
@@ -13156,9 +13920,15 @@ export default function App() {
                 setLgStep={setLgStep}
                 setLgData={setLgData}
                 setCapStep={setCapStep}
+                setCapProfile={setCapProfile}
                 setCapTexture={setCapTexture}
+                setCapEtat={setCapEtat}
+                setCapLongueur={setCapLongueur}
                 setCapProblems={setCapProblems}
+                setCapObjectives={setCapObjectives}
+                setCapRoutine={setCapRoutine}
                 setCapLifestyle={setCapLifestyle}
+                setCapBudget={setCapBudget}
                 setCapResult={setCapResult}
               />
             )}
@@ -13217,13 +13987,19 @@ export default function App() {
               />
             )}
             {carryCarePage === "hairQuiz" && (
-              <CapillaireQuiz
+              <CapillaireQuizV2
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 capStep={capStep} setCapStep={setCapStep}
+                capProfile={capProfile} setCapProfile={setCapProfile}
                 capTexture={capTexture} setCapTexture={setCapTexture}
+                capEtat={capEtat} setCapEtat={setCapEtat}
+                capLongueur={capLongueur} setCapLongueur={setCapLongueur}
                 capProblems={capProblems} setCapProblems={setCapProblems}
+                capObjectives={capObjectives} setCapObjectives={setCapObjectives}
+                capRoutine={capRoutine} setCapRoutine={setCapRoutine}
                 capLifestyle={capLifestyle} setCapLifestyle={setCapLifestyle}
+                capBudget={capBudget} setCapBudget={setCapBudget}
                 capResult={capResult} setCapResult={setCapResult}
                 beautyQuizPrice={beautyQuizPrice}
                 capPaymentStep={capPaymentStep} setCapPaymentStep={setCapPaymentStep}
