@@ -9262,7 +9262,127 @@ function getCapProducts(category, budget = "moyen") {
   return CAP_MARQUES[category].moyen || [];
 }
 
-// COMPOSANT : Liste de produits affichée
+// HELPER : Explications pédagogiques par catégorie de produit
+function getCapProductExplanation(category) {
+  const explanations = {
+    shampoing_hydratant: {
+      cest_quoi: "Le shampoing, c'est ce qui nettoie ton cuir chevelu et tes cheveux. Choisis un shampoing HYDRATANT (sans sulfates si possible) qui nettoie sans dessécher.",
+      pourquoi: "Beaucoup de shampoings classiques contiennent des sulfates (SLS) qui décapent trop. Pour les cheveux crépus/bouclés/secs, c'est catastrophique : ça les rend cassants et ternes.",
+      comment: "Mouille bien tes cheveux à l'eau tiède. Mets une noisette de shampoing dans tes paumes, fais mousser. Masse uniquement le CUIR CHEVELU (pas les longueurs, elles vont se nettoyer toutes seules au rinçage). Rince abondamment."
+    },
+    shampoing_pellicules: {
+      cest_quoi: "Un shampoing anti-pelliculaire est un shampoing qui contient un antifongique (comme le kétoconazole) pour combattre le champignon Malassezia, responsable des pellicules.",
+      pourquoi: "Les pellicules ne sont PAS de la sécheresse. C'est un champignon qui se nourrit de l'huile de ton cuir chevelu. Un shampoing anti-pelliculaire le tue, sinon les pellicules reviennent toujours.",
+      comment: "Utilise-le 2 fois par semaine. Laisse mousser 3-5 minutes sur le cuir chevelu (le temps que l'actif fasse effet) avant de rincer. Alterne avec un shampoing hydratant les autres jours."
+    },
+    apres_shampoing: {
+      cest_quoi: "L'après-shampoing (ou démêlant) est une crème qu'on applique APRÈS le shampoing, qu'on laisse 2-5 minutes, puis qu'on rince. Ça referme les écailles du cheveu et facilite le démêlage.",
+      pourquoi: "Le shampoing ouvre les écailles pour nettoyer. Si tu ne refermes pas avec un après-shampoing, tes cheveux restent rugueux et s'emmêlent. C'est ESSENTIEL.",
+      comment: "Après ton shampoing, essore tes cheveux à la main. Applique l'après-shampoing sur les LONGUEURS et POINTES (jamais sur les racines). Laisse 2-5 minutes. C'est LE moment idéal pour démêler avec un peigne large. Rince à l'eau tiède puis fraîche pour bien refermer."
+    },
+    masque: {
+      cest_quoi: "Un masque capillaire est un soin TRÈS riche qu'on applique 1 fois par semaine pour nourrir en profondeur.",
+      pourquoi: "L'après-shampoing hydrate en surface. Le masque, lui, pénètre plus profondément et nourrit la fibre de l'intérieur. Sans masque hebdo, tes cheveux secs/abîmés ne se réparent pas.",
+      comment: "Après le shampoing, applique généreusement le masque sur cheveux essorés, des longueurs aux pointes. Laisse poser 15 à 30 minutes (idéalement avec un bonnet chauffant ou serviette chaude). Rince à l'eau tiède."
+    },
+    proteines: {
+      cest_quoi: "Un soin protéiné contient des protéines (kératine, collagène, blé, soja) qui RECONSTRUISENT la fibre du cheveu cassée.",
+      pourquoi: "Les cheveux sont faits de kératine (protéine). Quand ils sont défrisés, colorés ou très abîmés, leur structure protéinique est endommagée. Un soin protéiné fait office de 'colle' pour reformer la fibre.",
+      comment: "À utiliser 1 SEULE fois par mois (pas plus, sinon tes cheveux deviennent rigides et cassants). Applique sur cheveux propres et essorés. Laisse poser le temps indiqué (généralement 5 à 30 min). Rince et fais TOUJOURS un masque hydratant après (les protéines doivent être suivies d'hydratation)."
+    },
+    huiles: {
+      cest_quoi: "Une huile capillaire est une huile végétale (coco, ricin, jojoba, olive) qui nourrit, protège et fait briller le cheveu.",
+      pourquoi: "Les huiles SCELLENT l'hydratation dans le cheveu (c'est-à-dire qu'elles empêchent l'eau de s'évaporer). Elles protègent aussi du frottement et nourrissent le cuir chevelu. Indispensables pour cheveux crépus/secs.",
+      comment: "2 usages : 1) Bain d'huile AVANT shampoing : applique généreusement, masse, laisse poser 30 min à 1h, puis shampoing. 2) Sceller APRÈS hydratation : 2-3 gouttes dans les paumes, applique sur cheveux légèrement humides après le leave-in."
+    },
+    leave_in: {
+      cest_quoi: "Un leave-in (= 'à laisser') est une crème ou un lait qu'on applique sur cheveux humides et qu'on NE RINCE PAS. Ça reste dans tes cheveux toute la journée.",
+      pourquoi: "Les cheveux crépus/bouclés ont besoin d'hydratation EXTERNE constante car l'eau s'évapore vite. Le leave-in maintient l'hydratation pendant des heures. C'est LE produit le plus important pour des cheveux doux.",
+      comment: "Sur cheveux essorés (pas trempés), prends une noix de leave-in, frotte entre les paumes. Applique mèche par mèche en partant des pointes vers les racines. Tu peux suivre avec une huile pour sceller."
+    },
+    gel: {
+      cest_quoi: "Un gel coiffant est un produit qui DÉFINIT et FIXE les boucles. Il forme une fine pellicule autour de la mèche pour la maintenir en place.",
+      pourquoi: "Si tu veux des boucles bien dessinées (sans frizz), tu as besoin d'un gel pour les sculpter et les faire tenir. Sans gel, les boucles vont gonfler et perdre leur définition.",
+      comment: "Sur cheveux humides après le leave-in, prends une noix de gel. Applique mèche par mèche en faisant le geste de la 'prière' (paume contre paume avec la mèche entre, et glisse). Laisse sécher à l'air libre ou diffuseur. Une fois sec, casse le gel cast (la croûte qui se forme) en frottant avec une huile dans les paumes."
+    },
+    beurre: {
+      cest_quoi: "Un beurre capillaire est un produit ÉPAIS et riche (à base de beurre de karité, mangue, cacao) qui hydrate ET scelle en même temps.",
+      pourquoi: "Pour cheveux TRÈS secs ou type 4C, un leave-in seul ne suffit pas. Le beurre apporte une nutrition supplémentaire et protège la fibre.",
+      comment: "Toujours après le leave-in (eau D'ABORD, beurre EN DERNIER). Prends une petite quantité (taille d'un pois pour commencer), réchauffe entre tes paumes, applique mèche par mèche en commençant par les pointes (les plus sèches)."
+    },
+    pousse: {
+      cest_quoi: "Les huiles et sérums pour la pousse sont des produits qui STIMULENT la circulation sanguine du cuir chevelu pour activer les bulbes capillaires.",
+      pourquoi: "Les cheveux poussent depuis le cuir chevelu. Si la circulation y est bonne, les bulbes reçoivent plus de nutriments et poussent mieux. Le minoxidil (produit médical) prolonge aussi la phase de croissance.",
+      comment: "Applique 5-10 gouttes directement sur le CUIR CHEVELU (pas les longueurs). Masse en cercles pendant 5 minutes (le massage compte autant que le produit). À faire 3-5 fois par semaine pendant minimum 3 mois pour voir des résultats."
+    }
+  };
+  return explanations[category] || null;
+}
+
+// COMPOSANT : Section produit pédagogique (avec explication + 1 produit à choisir)
+function CapProductSection({ category, budget, customTitle, customNumber }) {
+  const products = getCapProducts(category, budget);
+  const explanation = getCapProductExplanation(category);
+  if (products.length === 0) return null;
+  
+  const titles = {
+    shampoing_hydratant: "Shampoing hydratant",
+    shampoing_pellicules: "Shampoing anti-pelliculaire",
+    apres_shampoing: "Après-shampoing (démêlant)",
+    masque: "Masque capillaire",
+    proteines: "Soin protéiné",
+    huiles: "Huile capillaire",
+    leave_in: "Leave-in (sans rinçage)",
+    gel: "Gel coiffant",
+    beurre: "Beurre capillaire",
+    pousse: "Sérum / huile pour la pousse"
+  };
+  const title = customTitle || titles[category] || category;
+  
+  return (
+    <div style={{ marginBottom: 18, padding: 14, background: "#fffaf0", border: "1px solid " + CAP.border, borderRadius: 12 }}>
+      <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>
+        {customNumber ? customNumber + ". " : ""}{title}
+      </div>
+      
+      {explanation && (
+        <>
+          <div style={{ marginBottom: 8, padding: 10, background: "#fff", borderRadius: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: "bold", color: CAP.or, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>💡 C'est quoi ?</div>
+            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{explanation.cest_quoi}</div>
+          </div>
+          <div style={{ marginBottom: 8, padding: 10, background: "#fff", borderRadius: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: "bold", color: CAP.or, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>🎯 Pourquoi en utiliser ?</div>
+            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{explanation.pourquoi}</div>
+          </div>
+          <div style={{ marginBottom: 12, padding: 10, background: "#fff", borderRadius: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: "bold", color: CAP.or, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>📝 Comment l'utiliser ?</div>
+            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{explanation.comment}</div>
+          </div>
+        </>
+      )}
+      
+      <div style={{ marginTop: 10, padding: 10, background: "#fdf6e3", borderRadius: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>
+          🛒 Choisis <strong style={{ color: CAP.or }}>UN SEUL</strong> produit ci-dessous (selon ton budget) :
+        </div>
+        <div style={{ fontSize: 11, color: CAP.textDim, fontStyle: "italic", marginBottom: 8 }}>
+          Ces marques sont reconnues pour les cheveux africains/métissés et disponibles au Cameroun.
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {products.map((p, i) => (
+            <div key={i} style={{ padding: "8px 12px", background: "#fff", border: "1px solid " + CAP.border, borderRadius: 8, fontSize: 12 }}>
+              <div style={{ fontWeight: "bold", color: CAP.noir, marginBottom: 2 }}>✓ {p.name}</div>
+              <div style={{ fontSize: 11, color: CAP.textFaint }}>📍 Disponible : {p.lieu}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// COMPOSANT : Liste simple (sans explication, pour références rapides)
 function CapProductList({ category, budget }) {
   const products = getCapProducts(category, budget);
   if (products.length === 0) {
@@ -9270,6 +9390,7 @@ function CapProductList({ category, budget }) {
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ fontSize: 11, color: CAP.or, fontWeight: "bold", marginBottom: 2 }}>🛒 Choisis UN SEUL produit ci-dessous :</div>
       {products.map((p, i) => (
         <div key={i} style={{ padding: "8px 12px", background: "#fff", border: "1px solid " + CAP.border, borderRadius: 8, fontSize: 12 }}>
           <div style={{ fontWeight: "bold", color: CAP.noir, marginBottom: 2 }}>✓ {p.name}</div>
@@ -9355,6 +9476,60 @@ function getCapEveningRoutine(texture, etat, problems) {
 // COMPOSANT RÉSULTAT — QUIZ CAPILLAIRE v2
 // ═══════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════
+// COMPOSANT RÉSULTAT — QUIZ CAPILLAIRE v2 (PÉDAGOGIQUE)
+// Adapté pour clientes qui ne connaissent pas les produits
+// ═══════════════════════════════════════════════════
+
+// COMPOSANT PRODUITS avec EXPLICATION pédagogique
+function CapProductCategory({ category, budget, titre, emoji, description, pourquoi, comment }) {
+  const products = getCapProducts(category, budget);
+  if (products.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 18, background: "#fff", border: "1px solid " + CAP.border, borderRadius: 10, overflow: "hidden" }}>
+      {/* En-tête : nom + explication */}
+      <div style={{ padding: 14, background: "#fdf6e3", borderBottom: "1px solid " + CAP.border }}>
+        <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>{emoji} {titre}</div>
+        <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6, marginBottom: pourquoi ? 8 : 0 }}>
+          <strong>📖 C'est quoi ?</strong> {description}
+        </div>
+        {pourquoi && (
+          <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6, marginBottom: comment ? 8 : 0 }}>
+            <strong>🎯 Pourquoi tu en as besoin :</strong> {pourquoi}
+          </div>
+        )}
+        {comment && (
+          <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+            <strong>💡 Comment l'utiliser :</strong> {comment}
+          </div>
+        )}
+      </div>
+      
+      {/* Note importante "Choisis 1 seul" */}
+      <div style={{ padding: "10px 14px", background: "#fff5e6", borderBottom: "1px solid " + CAP.border }}>
+        <div style={{ fontSize: 12, color: "#5d4037", lineHeight: 1.5 }}>
+          🛒 <strong>Choisis UN SEUL produit</strong> dans la liste ci-dessous (pas tous !). Voici les marques recommandées pour ton type de cheveux et ton budget :
+        </div>
+      </div>
+
+      {/* Liste produits */}
+      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+        {products.map((p, i) => (
+          <div key={i} style={{ padding: "8px 12px", background: "#fdf8e8", borderRadius: 6, fontSize: 12 }}>
+            <div style={{ fontWeight: "bold", color: CAP.noir, marginBottom: 2 }}>✓ {p.name}</div>
+            <div style={{ fontSize: 11, color: CAP.textFaint }}>📍 {p.lieu}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Note "Pourquoi ces marques" */}
+      <div style={{ padding: "10px 14px", background: "#f0f9f0", borderTop: "1px solid " + CAP.border, fontSize: 11, color: CAP.textDim, fontStyle: "italic", lineHeight: 1.5 }}>
+        💎 <strong>Pourquoi ces marques ?</strong> Ces produits sont reconnus pour les cheveux africains, faciles à trouver au Cameroun et dans les boutiques d'Afrique. Si tu trouves une marque équivalente, vérifie qu'elle contient des ingrédients similaires (huiles naturelles, beurre de karité, sans sulfates).
+      </div>
+    </div>
+  );
+}
+
 function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
   if (!result) return null;
   const { profile, texture, etat, longueur, problems, objectives, routine, lifestyle, budget } = result;
@@ -9375,6 +9550,14 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
   const textureLabel = CAP_TEXTURES_V2.find(t => t.id === texture)?.title || texture;
   const etatLabel = CAP_ETATS.find(e => e.id === etat)?.label || etat;
   const longueurLabel = CAP_LONGUEURS.find(l => l.id === longueur)?.label || longueur;
+
+  // Calcul nombre de produits totaux
+  const showSerumAcne = false;
+  let totalProducts = 5; // shampoing + apres-shampoing + leave-in + masque + huile (base)
+  if (isFra) totalProducts++; // beurre/huile en plus
+  if (problems.includes("frisottis") || problems.includes("no_definition")) totalProducts++;
+  if (etat === "defrise" || objectives.includes("reparer")) totalProducts++; // soin protéiné
+  if (objectives.includes("pousse") || objectives.includes("anti_chute") || problems.includes("lents")) totalProducts++;
 
   return (
     <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
@@ -9416,109 +9599,267 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
           })}
         </Section>
 
+        {/* GLOSSAIRE — Nouvelle section pédagogique */}
+        <Section title="📖 Petit lexique avant de commencer" color={CAP.or}>
+          <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 8 }}>
+            Tu vas voir des termes que tu ne connais peut-être pas. On t'explique tout :
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>🧴 Shampoing</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>Tu connais ! C'est le produit qui lave tes cheveux. Choisis-le sans sulfates pour les cheveux secs/crépus.</div>
+            </div>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>💧 Après-shampoing (ou démêlant)</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>C'est ce que tu mets APRÈS le shampoing pour démêler et adoucir. Tu rinces. Indispensable pour cheveux crépus / longs.</div>
+            </div>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>✨ Leave-in (sans rinçage)</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>"Leave-in" veut dire "laisser dedans". C'est une crème ou un spray hydratant qu'on applique sur cheveux mouillés ou secs et <strong>qu'on NE RINCE PAS</strong>. C'est l'hydratation du quotidien.</div>
+            </div>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>🥥 Huile / Beurre</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>Huile de coco, ricin, karité... Sert à <strong>"sceller" l'hydratation</strong> : tu la mets APRÈS le leave-in pour que l'eau ne s'évapore pas. Une noisette suffit.</div>
+            </div>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>🎭 Masque capillaire</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>Soin nourrissant intense, à faire 1x par semaine. Tu l'appliques après le shampoing, tu laisses 15-30 min, puis tu rinces. Hydratation profonde garantie.</div>
+            </div>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>💪 Soin protéiné</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>Soin qui <strong>répare la structure du cheveu</strong> (la "fibre"). À faire 1x PAR MOIS maximum (sinon trop de protéine = cheveux rigides). Indispensable pour cheveux défrisés ou cassants.</div>
+            </div>
+            <div style={{ padding: 10, background: "#fdf8e8", borderRadius: 8 }}>
+              <strong style={{ color: CAP.noir }}>🌀 Gel coiffant</strong>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginTop: 2 }}>Pour <strong>définir tes boucles</strong> (les rendre nettes et non frisottées). À appliquer sur cheveux mouillés en "écrasant doucement" (méthode prière).</div>
+            </div>
+          </div>
+        </Section>
+
+        {/* VUE D'ENSEMBLE — combien de produits */}
+        <Section title="📋 Ta routine en résumé">
+          <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 12 }}>
+            Pour bien t'occuper de tes cheveux, tu auras besoin d'environ <strong>{totalProducts} produits</strong>. Pas plus !
+          </div>
+          <div style={{ background: "#fdf6e3", padding: 14, borderRadius: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>📦 Ce qu'il te faut :</div>
+            <ol style={{ margin: 0, paddingLeft: 22, fontSize: 13, color: CAP.noir, lineHeight: 1.9 }}>
+              <li>Un <strong>shampoing</strong>{problems.includes("pellicules") ? " anti-pelliculaire" : " hydratant"} (lavage)</li>
+              <li>Un <strong>après-shampoing</strong> (à utiliser après chaque shampoing)</li>
+              <li>Un <strong>leave-in</strong> (hydratation quotidienne, sans rinçage)</li>
+              {isFra && <li>Une <strong>huile ou un beurre</strong> (pour sceller l'hydratation)</li>}
+              <li>Un <strong>masque capillaire</strong> (1x par semaine)</li>
+              <li>Une <strong>huile de massage</strong> (cuir chevelu, 1x par semaine avant lavage)</li>
+              {(etat === "defrise" || objectives.includes("reparer")) && <li>Un <strong>soin protéiné</strong> (1x par mois)</li>}
+              {(problems.includes("frisottis") || problems.includes("no_definition")) && <li>Un <strong>gel coiffant</strong> (pour définir les boucles)</li>}
+              {(objectives.includes("pousse") || objectives.includes("anti_chute") || problems.includes("lents")) && <li>Une <strong>huile spéciale pousse</strong> (massage cuir chevelu)</li>}
+            </ol>
+            <div style={{ marginTop: 12, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              💡 <strong>Important :</strong> Pour chaque type de produit, tu choisis <strong>1 SEUL</strong> dans la liste qu'on te propose. Pas besoin d'acheter toutes les marques !
+            </div>
+            <div style={{ marginTop: 8, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              🛒 <strong>Astuce économies :</strong> Achète d'abord le shampoing + après-shampoing + leave-in. C'est la base. Ajoute progressivement les autres produits.
+            </div>
+          </div>
+        </Section>
+
+        {/* PRODUITS DÉTAILLÉS — Avec explications pédagogiques */}
+        <Section title="🛒 Tes produits — Explications complètes">
+          <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.6, marginBottom: 14, padding: 12, background: "#fdf6e3", borderRadius: 8 }}>
+            ⚠️ <strong>Ne sois pas effrayée par les noms anglais !</strong> On t'explique chaque produit en détail, à quoi il sert, et pourquoi on a choisi ces marques. Pour chaque produit, tu n'achètes <strong>qu'UN SEUL</strong> dans la liste.
+          </div>
+
+          <CapProductCategory
+            category={problems.includes("pellicules") ? "shampoing_pellicules" : "shampoing_hydratant"}
+            budget={budgetUsed}
+            titre={problems.includes("pellicules") ? "Shampoing anti-pelliculaire" : "Shampoing hydratant (sans sulfates)"}
+            emoji="🧴"
+            description={problems.includes("pellicules") ? "Un shampoing spécial qui contient des actifs antifongiques (Pyrithione zinc, Ketoconazole) pour combattre les pellicules à la racine du problème." : "Un shampoing doux qui lave SANS assécher tes cheveux. Le mot 'sulfates' désigne des détergents agressifs qu'il faut éviter pour les cheveux crépus / défrisés."}
+            pourquoi={problems.includes("pellicules") ? "Les pellicules sont causées par un champignon. Sans shampoing antifongique, elles reviendront toujours." : "Les shampoings classiques (Pantene, Sunsilk basiques) sont trop agressifs pour les cheveux africains : ils lavent trop fort et assèchent. Tu finis avec des cheveux cassants."}
+            comment={`Mouille bien tes cheveux. Mets une noisette de shampoing dans les paumes, fais mousser, applique sur le cuir chevelu (pas les longueurs), masse 1 minute. Rince. ${problems.includes("pellicules") ? "Utilise 2-3 fois par semaine au début, puis 1x/sem." : isFra ? "Pas plus d'1-2 fois par semaine." : "2-3 fois par semaine."}`}
+          />
+
+          <CapProductCategory
+            category="apres_shampoing"
+            budget={budgetUsed}
+            titre="Après-shampoing (démêlant)"
+            emoji="💧"
+            description="Une crème qui s'utilise APRÈS le shampoing pour démêler et adoucir. Tu rinces à l'eau tiède."
+            pourquoi="Sans après-shampoing, tes cheveux mouillés sont rugueux et s'emmêlent en séchant. Avec, ils deviennent doux, glissants et faciles à coiffer. C'est OBLIGATOIRE pour les cheveux crépus, longs ou cassants."
+            comment="Après le shampoing, essore tes cheveux. Applique l'après-shampoing UNIQUEMENT sur les longueurs (pas sur le cuir chevelu). Démêle avec tes doigts ou un peigne large pendant que c'est dans tes cheveux. Laisse 2-5 min, rince à l'eau tiède."
+          />
+
+          <CapProductCategory
+            category="leave_in"
+            budget={budgetUsed}
+            titre="Leave-in (crème hydratante sans rinçage)"
+            emoji="✨"
+            description="Une crème ou un spray qu'on applique sur cheveux humides ou secs et qu'on NE RINCE PAS. C'est l'hydratation du quotidien."
+            pourquoi="Tes cheveux ont besoin d'eau tous les jours, comme ta peau. Le leave-in est un mélange d'eau + ingrédients hydratants qui pénètrent et hydratent en profondeur. Sans leave-in, les cheveux crépus deviennent secs et cassants en quelques heures."
+            comment="Mets une noisette de leave-in dans les paumes, frotte tes mains, applique sur tes cheveux humides (après le bain) ou secs (le matin), des longueurs vers les pointes. Tu peux aussi vaporiser un mélange eau + leave-in (50/50) le matin pour réveiller tes cheveux."
+          />
+
+          {isFra && (
+            <CapProductCategory
+              category={problems.includes("secs") ? "beurre" : "huiles"}
+              budget={budgetUsed}
+              titre={problems.includes("secs") ? "Beurre capillaire (pour cheveux très secs)" : "Huile capillaire"}
+              emoji="🥥"
+              description={problems.includes("secs") ? "Une crème épaisse à base de beurre de karité, mangue ou cacao. Très nourrissante." : "Huile de coco, ricin, jojoba ou olive. Une couche fine sur tes cheveux après l'hydratation."}
+              pourquoi="Tes cheveux crépus / défrisés sont naturellement secs. Après avoir mis du leave-in (eau), tu dois 'sceller' avec une huile ou un beurre. C'est comme mettre un couvercle sur ta marmite : ça empêche l'eau de s'évaporer."
+              comment="APRÈS avoir appliqué le leave-in, prends une petite quantité d'huile ou de beurre (taille d'un grain de riz) dans tes paumes. Frotte tes mains, applique sur les longueurs et pointes. Pas trop, sinon les cheveux deviennent gras."
+            />
+          )}
+
+          <CapProductCategory
+            category="masque"
+            budget={budgetUsed}
+            titre="Masque capillaire (1x par semaine)"
+            emoji="🎭"
+            description="Un soin intensif super hydratant ou nourrissant. Tu l'appliques après le shampoing, tu laisses agir 15-30 min, puis tu rinces."
+            pourquoi="Le shampoing + après-shampoing nettoient et démêlent, mais ne nourrissent pas en profondeur. Le masque, c'est ton 'soin spa' hebdomadaire qui répare et hydrate vraiment. Tes cheveux deviennent doux, brillants, élastiques."
+            comment="Après le shampoing, applique le masque sur tes cheveux essorés. Couvre avec une charlotte ou serviette tiède. Laisse 15-30 min (lis le pot). Rince à l'eau tiède jusqu'à ce que l'eau soit claire."
+          />
+
+          {(etat === "defrise" || objectives.includes("reparer") || problems.includes("cassants")) && (
+            <CapProductCategory
+              category="proteines"
+              budget={budgetUsed}
+              titre="Soin protéiné (1x par MOIS, pas plus)"
+              emoji="💪"
+              description="Un soin qui contient des protéines (kératine, soie, blé...) qui REMPLISSENT et REPARENT la fibre du cheveu là où elle est cassée."
+              pourquoi="Tes cheveux défrisés ou très cassants ont des 'trous' dans leur structure. Le soin protéiné rebouche ces trous, ce qui rend les cheveux plus solides et moins cassants. ATTENTION : à faire SEULEMENT 1x PAR MOIS, sinon tes cheveux deviennent rigides et cassent encore plus."
+              comment="Sur cheveux propres et essorés, applique le soin protéiné mèche par mèche. Laisse agir le temps indiqué sur le pot (souvent 15-20 min). Rince. ALWAYS finis par un masque hydratant pour rééquilibrer (sinon trop de protéines)."
+            />
+          )}
+
+          <CapProductCategory
+            category="huiles"
+            budget={budgetUsed}
+            titre="Huile de massage cuir chevelu"
+            emoji="💆"
+            description="Une huile que tu masses sur ton cuir chevelu (pas tes cheveux !) pour stimuler la circulation et nourrir tes racines."
+            pourquoi="Un cuir chevelu mal irrigué = pousse lente. Le massage avec une huile stimule les follicules pileux et favorise la pousse. C'est aussi très relaxant !"
+            comment="Réchauffe quelques gouttes d'huile entre tes paumes. Sépare tes cheveux en raies (raie au milieu, sur les côtés...). Avec le bout de tes doigts (pas les ongles !), masse ton cuir chevelu en petits cercles pendant 5-10 min. Laisse agir 30 min à 1h, puis fais ton shampoing."
+          />
+
+          {(problems.includes("frisottis") || problems.includes("no_definition")) && (
+            <CapProductCategory
+              category="gel"
+              budget={budgetUsed}
+              titre="Gel coiffant (pour définir les boucles)"
+              emoji="🌀"
+              description="Un gel transparent qu'on applique sur cheveux mouillés pour définir nettement les boucles et lutter contre les frisottis."
+              pourquoi="Sans gel, tes boucles peuvent être 'cotonneuses' (frisottées, peu définies). Avec un gel adapté, elles deviennent nettes, brillantes, et tiennent toute la journée."
+              comment="Sur cheveux MOUILLÉS et déjà imprégnés de leave-in, prends une noisette de gel. Avec tes mains, écrase doucement chaque mèche (méthode 'prière' : tu mets ta mèche entre tes 2 paumes et tu pries vers le bas). Laisse sécher à l'air libre. Une fois sec, casse délicatement la couche dure avec tes doigts pour assouplir."
+            />
+          )}
+
+          {(objectives.includes("pousse") || objectives.includes("anti_chute") || objectives.includes("longueur_max") || problems.includes("lents") || problems.includes("chute")) && (
+            <CapProductCategory
+              category="pousse"
+              budget={budgetUsed}
+              titre="Huile spéciale pousse"
+              emoji="🌱"
+              description="Une huile contenant des actifs stimulants : romarin, gingembre, menthe poivrée, ricin noir de Jamaïque... Pour stimuler les follicules pileux."
+              pourquoi="Si tu veux que tes cheveux poussent plus vite et plus fort, l'huile spéciale pousse appliquée en massage 3-5 fois par semaine sur le cuir chevelu fait des miracles (avec patience : 3-6 mois pour voir les résultats)."
+              comment="3-5 fois par semaine, applique quelques gouttes sur ton cuir chevelu. Masse en petits cercles pendant 5-10 min. Tu peux laisser toute la nuit (avec un bonnet pour ne pas tâcher l'oreiller), puis laver le lendemain matin."
+            />
+          )}
+        </Section>
+
         {/* ROUTINE MATIN */}
-        <Section title="☀️ Ta routine matin" color="#e67e22">
-          <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic", marginBottom: 12 }}>5-10 minutes pour réveiller tes cheveux</div>
+        <Section title="☀️ Ta routine matin (5-10 minutes)" color="#e67e22">
+          <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic", marginBottom: 12 }}>Au réveil, voici ce que tu fais :</div>
           {morningSteps.map((s, i) => (
             <div key={i} style={{ marginBottom: 10, padding: 12, background: "#fff5e6", borderRadius: 8 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>Étape {i + 1} — {s.titre}</div>
               <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{s.desc}</div>
             </div>
           ))}
-          
-          <div style={{ fontSize: 13, fontWeight: "bold", color: "#e67e22", marginTop: 14, marginBottom: 8 }}>🛒 Produits recommandés (matin)</div>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>1. Leave-in (sans rinçage)</div>
-            <CapProductList category="leave_in" budget={budgetUsed} />
-          </div>
-          {isFra && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>2. Huile / Beurre (sceller)</div>
-              <CapProductList category={problems.includes("secs") ? "beurre" : "huiles"} budget={budgetUsed} />
-            </div>
-          )}
-          {(problems.includes("frisottis") || problems.includes("no_definition")) && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>3. Gel définissant</div>
-              <CapProductList category="gel" budget={budgetUsed} />
-            </div>
-          )}
         </Section>
 
         {/* ROUTINE SOIR */}
-        <Section title="🌙 Ta routine soir" color="#9c7ba8">
-          <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic", marginBottom: 12 }}>5 minutes pour préparer la nuit</div>
+        <Section title="🌙 Ta routine soir (5 minutes avant de dormir)" color="#9c7ba8">
+          <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic", marginBottom: 12 }}>Avant de te coucher :</div>
           {eveningSteps.map((s, i) => (
             <div key={i} style={{ marginBottom: 10, padding: 12, background: "#f0e8f3", borderRadius: 8 }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>Étape {i + 1} — {s.titre}</div>
               <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{s.desc}</div>
             </div>
           ))}
-          <div style={{ marginTop: 12, padding: 12, background: "#fff", border: "2px solid #9c7ba8", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>💜 INVESTISSEMENT NUMÉRO 1</div>
-            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>
-              Achète une <strong>taie d'oreiller en satin ou soie</strong> (5000-10000 FCFA). Ça change tout : moins de casse, moins de frizz au réveil, cheveux mieux préservés. C'est le meilleur investissement capillaire que tu peux faire.
+          <div style={{ marginTop: 12, padding: 14, background: "#fff", border: "2px solid #9c7ba8", borderRadius: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 6 }}>💜 INVESTISSEMENT NUMÉRO 1</div>
+            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              Achète une <strong>taie d'oreiller en satin ou soie</strong> (5000-10000 FCFA dans les marchés ou en ligne). Ça change tout : moins de casse pendant la nuit, moins de frizz au réveil, cheveux mieux préservés.
+              <br/><br/>
+              <strong>Pourquoi ?</strong> Le coton de tes oreillers absorbe l'hydratation de tes cheveux et les frotte toute la nuit (= casse, frisottis). Le satin/soie glisse, sans assécher.
+              <br/><br/>
+              <strong>Alternative :</strong> Si tu n'as pas de taie satin, mets un <strong>bonnet en satin</strong> sur tes cheveux pour dormir.
             </div>
           </div>
         </Section>
 
         {/* LAVAGE */}
-        <Section title="🚿 Lavage et après-shampoing" color={CAP.or}>
+        <Section title="🚿 Ton rituel de lavage" color={CAP.or}>
+          <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 12 }}>
+            <strong>Fréquence recommandée :</strong> {isFra ? "1 à 2 fois par semaine maximum (pas plus, sinon tu assèches tes cheveux)" : "2 à 3 fois par semaine"}.
+          </div>
+          <div style={{ marginBottom: 12, padding: 12, background: "#fdf6e3", borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>📋 Étapes du lavage parfait :</div>
+            <ol style={{ margin: 0, paddingLeft: 22, fontSize: 12, color: CAP.textDim, lineHeight: 1.7 }}>
+              <li><strong>Mouille bien</strong> tes cheveux à l'eau tiède (pas brûlante !)</li>
+              <li>Si tu as fait un bain d'huile avant, applique le shampoing maintenant</li>
+              <li><strong>Shampoing</strong> : noisette dans les paumes, fais mousser, applique sur le CUIR CHEVELU (pas les longueurs), masse 1 min</li>
+              <li><strong>Rince</strong> bien à l'eau tiède</li>
+              <li><strong>Essore</strong> tes cheveux (pas trop fort)</li>
+              <li><strong>Après-shampoing</strong> : applique sur les LONGUEURS, démêle avec les doigts, laisse 2-5 min</li>
+              <li>Si c'est ton jour de masque : applique-le maintenant et laisse 15-30 min</li>
+              <li><strong>Rince</strong> à l'eau tiède puis FROIDE en finition (referme les écailles, brillance garantie)</li>
+              <li>Tamponne avec un t-shirt en coton (la serviette éponge frotte trop)</li>
+              <li>Applique le leave-in puis l'huile/beurre sur cheveux humides</li>
+            </ol>
+          </div>
+          <div style={{ padding: 10, background: "#fff5e6", borderRadius: 6, fontSize: 12, color: CAP.textDim, fontStyle: "italic", lineHeight: 1.5 }}>
+            💡 <strong>Astuce</strong> : Démêle TOUJOURS sur cheveux mouillés avec après-shampoing. Démêler à sec = casse garantie.
+          </div>
+        </Section>
+
+        {/* SOINS HEBDO — Vue simplifiée */}
+        <Section title="📅 Soins hebdomadaires (1x par semaine)">
           <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.6, marginBottom: 12 }}>
-            <strong>Fréquence recommandée :</strong> {isFra ? "1 à 2 fois par semaine maximum" : "2 à 3 fois par semaine"}.
+            En plus de ta routine quotidienne, fais ces soins <strong>1 fois par semaine</strong> pour des cheveux en pleine forme :
           </div>
-          
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>🧴 Shampoing {problems.includes("pellicules") ? "anti-pelliculaire" : "hydratant"}</div>
-            <CapProductList category={problems.includes("pellicules") ? "shampoing_pellicules" : "shampoing_hydratant"} budget={budgetUsed} />
-          </div>
-          
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>💧 Après-shampoing / démêlant</div>
-            <CapProductList category="apres_shampoing" budget={budgetUsed} />
-          </div>
-
-          <div style={{ marginTop: 12, padding: 10, background: "#fdf6e3", borderRadius: 6, fontSize: 12, color: CAP.textDim, fontStyle: "italic", lineHeight: 1.5 }}>
-            💡 <strong>Astuce</strong> : Démêle TOUJOURS sur cheveux mouillés et avec après-shampoing. Démêler à sec = casse garantie.
-          </div>
-        </Section>
-
-        {/* SOINS HEBDO */}
-        <Section title="📅 Soins hebdomadaires (1x/sem ou 1x/2sem)">
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>💆 Bain d'huile (avant lavage)</div>
-            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginBottom: 6 }}>Applique de l'huile sur tout le cheveu et le cuir chevelu, masse 5 min, laisse agir 30 min à 1h, puis fais ton shampoing.</div>
-            <CapProductList category="huiles" budget={budgetUsed} />
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>🎭 Masque nourrissant (après shampoing)</div>
-            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginBottom: 6 }}>Applique sur cheveux essorés, laisse agir 15-30 min, rince à l'eau tiède.</div>
-            <CapProductList category="masque" budget={budgetUsed} />
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>💪 Soin protéiné (1x/mois)</div>
-            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5, marginBottom: 6 }}>Indispensable pour cheveux défrisés, colorés, ou cassants. Pas plus d'1x/mois (risque rigidité).</div>
-            <CapProductList category="proteines" budget={budgetUsed} />
-          </div>
-        </Section>
-
-        {/* OBJECTIF SPÉCIAL : POUSSE */}
-        {(objectives.includes("pousse") || objectives.includes("anti_chute") || objectives.includes("longueur_max") || problems.includes("lents") || problems.includes("chute")) && (
-          <Section title="🌱 Spécial : Stimuler la pousse" color="#4caf50">
-            <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 12 }}>
-              <strong>3 piliers pour faire pousser tes cheveux :</strong>
-              <ol style={{ margin: "8px 0", paddingLeft: 20, lineHeight: 1.8 }}>
-                <li><strong>Massages réguliers</strong> du cuir chevelu (5 min/jour) : stimulent la circulation sanguine</li>
-                <li><strong>Protéger les pointes</strong> : la pousse est constante, mais si les pointes cassent, tu ne vois rien</li>
-                <li><strong>Alimentation</strong> : protéines (œufs, poisson), fer (légumes verts, foie), vitamines B (avocat, banane)</li>
-              </ol>
+          <div style={{ marginBottom: 14, padding: 14, background: "#fdf6e3", borderRadius: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>💆 1. Bain d'huile (avant le lavage)</div>
+            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              <strong>C'est quoi ?</strong> Tu mets de l'huile dans tes cheveux et sur ton cuir chevelu, tu masses, tu laisses agir 30 min à 1h, puis tu fais ton shampoing.<br/>
+              <strong>Pourquoi ?</strong> L'huile pénètre dans tes cheveux et nourrit en profondeur. C'est comme un "petit-déjeuner" pour tes cheveux avant de les laver.<br/>
+              <strong>Quelle huile ?</strong> Coco, ricin, olive, jojoba ou avocat. Une seule suffit ou tu peux mélanger.
             </div>
-            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>🌿 Produits recommandés pour la pousse</div>
-            <CapProductList category="pousse" budget={budgetUsed} />
-            <div style={{ marginTop: 10, padding: 10, background: "#fff3e0", borderLeft: "3px solid #ff9800", borderRadius: 4, fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>
-              ⚠️ <strong>Attention</strong> : Si tu prends des médicaments, parle à ton médecin avant le Minoxidil. Pour les enceintes/allaitantes, évite le Minoxidil.
+          </div>
+          <div style={{ marginBottom: 14, padding: 14, background: "#fdf6e3", borderRadius: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>🎭 2. Masque capillaire (après le shampoing)</div>
+            <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              <strong>C'est quoi ?</strong> Un soin nourrissant intense que tu mets après le shampoing.<br/>
+              <strong>Pourquoi ?</strong> Apporte hydratation et nutrition profonde. Tes cheveux deviennent doux, brillants, élastiques.<br/>
+              <strong>Combien de temps ?</strong> 15 à 30 minutes (lis le pot).
+            </div>
+          </div>
+        </Section>
+
+        {/* SOIN PROTÉINÉ MENSUEL */}
+        {(etat === "defrise" || objectives.includes("reparer") || problems.includes("cassants")) && (
+          <Section title="💪 Soin protéiné (1x par MOIS seulement)" color="#dc3545">
+            <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 10 }}>
+              <strong>Attention :</strong> Le soin protéiné se fait <strong>1 fois par MOIS, pas plus !</strong>
+            </div>
+            <div style={{ padding: 12, background: "#ffebee", borderRadius: 8, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              ⚠️ Trop de protéines = cheveux rigides et qui cassent encore plus. Respecte la fréquence !
+            </div>
+            <div style={{ marginTop: 10, padding: 12, background: "#fdf6e3", borderRadius: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>🔄 Quand le faire :</div>
+              <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>Avant un lavage normal. Tu fais : Bain d'huile → Shampoing → Soin protéiné (15-20 min) → Masque hydratant (TRÈS important pour rééquilibrer !) → Leave-in + huile.</div>
             </div>
           </Section>
         )}
@@ -9527,14 +9868,14 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {etat === "defrise" && (
           <Section title="💉 Spécial cheveux défrisés" color="#dc3545">
             <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 10 }}>
-              Tes cheveux défrisés sont fragiles. Quelques règles :
+              Tes cheveux défrisés ont subi un traitement chimique qui les rend fragiles. Quelques règles essentielles :
             </div>
             <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CAP.textDim, lineHeight: 1.8 }}>
-              <li>Soin protéiné <strong>1x/mois OBLIGATOIRE</strong></li>
-              <li>Retouche défrisage <strong>tous les 3-4 mois minimum</strong> (jamais avant)</li>
-              <li>Évite la <strong>chaleur</strong> (sèche-cheveux, fer) ou utilise toujours un protecteur thermique</li>
-              <li>Hydrate <strong>tous les jours</strong> avec un leave-in</li>
-              <li>Coupe les pointes fourchues régulièrement</li>
+              <li>Soin protéiné <strong>1x/mois OBLIGATOIRE</strong> (sinon ils cassent)</li>
+              <li>Retouche défrisage <strong>tous les 3-4 mois minimum</strong> (jamais avant !)</li>
+              <li>Évite la <strong>chaleur</strong> (sèche-cheveux, fer à lisser) ou utilise toujours un protecteur thermique</li>
+              <li>Hydrate <strong>tous les jours</strong> avec ton leave-in</li>
+              <li>Coupe les pointes fourchues régulièrement (tous les 3 mois)</li>
             </ul>
           </Section>
         )}
@@ -9543,14 +9884,31 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {etat === "colore" && (
           <Section title="🎨 Spécial cheveux colorés" color="#9c27b0">
             <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 10 }}>
-              La coloration ouvre tes écailles. Pour préserver couleur + santé :
+              La coloration ouvre tes écailles capillaires. Pour préserver couleur + santé :
             </div>
             <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CAP.textDim, lineHeight: 1.8 }}>
-              <li>Shampoing <strong>sans sulfates</strong> (les sulfates délavent la couleur)</li>
+              <li>Shampoing <strong>sans sulfates</strong> (les sulfates délavent la couleur plus vite)</li>
               <li>Masque nourrissant <strong>après chaque lavage</strong></li>
-              <li>Évite l'eau brûlante (rouvre les écailles)</li>
-              <li>Protège du soleil (chapeau, foulard)</li>
+              <li>Évite l'eau brûlante (rouvre les écailles, fait fuir la couleur)</li>
+              <li>Protège du soleil (chapeau, foulard, ou produit anti-UV)</li>
             </ul>
+          </Section>
+        )}
+
+        {/* OBJECTIF SPÉCIAL : POUSSE */}
+        {(objectives.includes("pousse") || objectives.includes("anti_chute") || objectives.includes("longueur_max") || problems.includes("lents") || problems.includes("chute")) && (
+          <Section title="🌱 Spécial : Stimuler la pousse" color="#4caf50">
+            <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.7, marginBottom: 12 }}>
+              <strong>Les 3 piliers pour des cheveux qui poussent vraiment :</strong>
+            </div>
+            <ol style={{ margin: "0 0 12px", paddingLeft: 22, fontSize: 13, color: CAP.textDim, lineHeight: 1.8 }}>
+              <li><strong>Massages réguliers du cuir chevelu</strong> (5 min par jour) avec une huile spéciale pousse. Stimule la circulation sanguine = plus de nutriments aux racines = pousse</li>
+              <li><strong>Protéger les pointes</strong> de la casse. La pousse est constante (1-1,5 cm/mois), mais si les pointes cassent au même rythme, tu ne vois RIEN</li>
+              <li><strong>Alimentation</strong> : protéines (œufs, poisson, soja), fer (épinards, lentilles), vitamines B (avocat, banane), eau (2L/jour minimum)</li>
+            </ol>
+            <div style={{ padding: 12, background: "#fff3e0", borderLeft: "3px solid #ff9800", borderRadius: 4, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+              ⚠️ <strong>Attention au Minoxidil :</strong> Si tu prends des médicaments, parle à ton médecin avant. Pour les enceintes/allaitantes, évite-le complètement.
+            </div>
           </Section>
         )}
 
@@ -9558,12 +9916,12 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         <Section title="❌ Erreurs à éviter absolument" color="#dc3545">
           <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CAP.textDim, lineHeight: 1.8 }}>
             <li><strong>Démêler à sec</strong> = casse garantie. Toujours sur cheveux mouillés + après-shampoing</li>
-            <li><strong>Tresses trop serrées</strong> = alopécie de traction. Si ça fait mal, c'est trop serré</li>
-            <li><strong>Eau brûlante</strong> sur les cheveux = assèche et rend cassant. Tiède c'est mieux</li>
-            <li><strong>Sécheuse / fer à lisser souvent</strong> = abîme la fibre. Limite à 1-2x/mois max</li>
+            <li><strong>Tresses ou coiffures trop serrées</strong> = alopécie de traction (les cheveux tombent par traction). Si ça fait mal, c'est trop serré</li>
+            <li><strong>Eau brûlante</strong> sur les cheveux = assèche et rend cassant. Tiède c'est mieux, finir froid encore mieux</li>
+            <li><strong>Sèche-cheveux ou fer à lisser souvent</strong> = abîme la fibre. Limite à 1-2x par mois maximum</li>
             <li><strong>Dormir cheveux libres sur coton</strong> = friction = casse. Bonnet/taie satin obligatoire</li>
             <li><strong>Trop de produits différents</strong> en même temps = surcharge. Simplicité vaut mieux que complexité</li>
-            <li><strong>Mélanger 2 défrisants différents</strong> = cassure assurée. Fini un puis essaie l'autre</li>
+            <li><strong>Mélanger 2 défrisants différents</strong> = cassure assurée. Fini un avant d'essayer l'autre</li>
             <li><strong>Couper soi-même quand on ne sait pas</strong> = catastrophe. Va chez un pro pour les coupes</li>
             <li><strong>Glutathion injectable, produits "pousse miracle 1 mois"</strong> = arnaques dangereuses</li>
           </ul>
@@ -9572,8 +9930,8 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* HABITUDES BIEN-ÊTRE */}
         <Section title="💪 Habitudes capillaires saines" color={CAP.or}>
           <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: CAP.textDim, lineHeight: 1.8 }}>
-            <li><strong>Boire 2 L d'eau / jour</strong> (l'hydratation vient AUSSI de l'intérieur)</li>
-            <li><strong>Dormir 7-8h</strong> (le cycle de pousse se fait la nuit)</li>
+            <li><strong>Boire 2 L d'eau par jour</strong> (l'hydratation vient AUSSI de l'intérieur)</li>
+            <li><strong>Dormir 7-8 heures par nuit</strong> (le cycle de pousse se fait la nuit)</li>
             <li><strong>Massages cuir chevelu</strong> 5 min/jour (stimule circulation)</li>
             <li><strong>Couper les pointes</strong> tous les 3-4 mois (élimine fourchues)</li>
             <li><strong>Alterner coiffures</strong> (pas toujours les mêmes tresses au même endroit)</li>
@@ -9594,7 +9952,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* CROSS-SELL */}
         <div style={{ marginTop: 16, marginBottom: 16, padding: 20, background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", border: "1px solid " + CAP.or, borderRadius: 14 }}>
           <div style={{ textAlign: "center", marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: CAP.or, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>✨ POUR ALLER PLUS LOIN</div>
+            <div style={{ fontSize: 11, color: CAP.or, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>POUR ALLER PLUS LOIN</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Et ta peau, comment va-t-elle ?</div>
             <div style={{ fontSize: 13, color: CAP.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>De beaux cheveux ET une belle peau = combo gagnant.</div>
           </div>
@@ -9616,6 +9974,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
     </div>
   );
 }
+
 
 // ═══════════════════════════════════════════════════
 // PDF QUIZ CAPILLAIRE
