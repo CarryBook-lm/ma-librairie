@@ -1896,12 +1896,49 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 }
 
 // ─── LIBRARY PAGE COMPONENT ───
-function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G }) {
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
   const myBooks = books.filter(b => purchasedBooks.includes(b.id));
 
+  // 🛡️ Détails des achats récupérés (titres des livres)
+  const recoveredBooksDetails = (recoveredPurchases || []).map(r => {
+    const book = books.find(b => b.id === r.book_id || String(b.id) === String(r.book_id));
+    return book ? { ...r, title: book.title } : r;
+  }).filter(r => r.book_id);
+
   return (
     <div style={{ padding: "0 0 80px" }}>
+      {/* 🛡️ Banner de récupération automatique */}
+      {recoveredBooksDetails.length > 0 && (
+        <div style={{
+          background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+          color: "#fff",
+          padding: "14px 16px",
+          margin: "12px 16px",
+          borderRadius: 12,
+          boxShadow: "0 4px 12px rgba(34, 197, 94, 0.25)",
+          position: "relative"
+        }}>
+          <button onClick={onDismissRecovered} style={{
+            position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.2)",
+            border: "none", color: "#fff", width: 24, height: 24, borderRadius: "50%",
+            cursor: "pointer", fontSize: 14, lineHeight: 1
+          }}>×</button>
+          <div style={{ fontSize: 22, marginBottom: 6 }}>🎉</div>
+          <div style={{ fontWeight: "bold", fontSize: 15, marginBottom: 4 }}>
+            Nous avons retrouvé {recoveredBooksDetails.length > 1 ? "vos achats" : "votre achat"} !
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.95, lineHeight: 1.4 }}>
+            {recoveredBooksDetails.map((r, i) => (
+              <div key={i}>📖 {r.title || "Livre acheté"} ({r.amount} FCFA)</div>
+            ))}
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
+              {recoveredBooksDetails.length > 1 ? "Ils sont" : "Il est"} maintenant dans votre bibliothèque 💛
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ padding: "12px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
@@ -11584,6 +11621,50 @@ async function trackMetaConversion(data) {
   }
 }
 
+// 🛡️ Helper : Enregistre l'INTENTION d'achat AVANT confirmation CamPay
+// Si la connexion coupe pendant le paiement, on pourra retrouver l'achat plus tard
+async function recordPendingPurchase(data) {
+  try {
+    await fetch("/api/campay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "record_pending",
+        reference: data.reference,
+        user_id: data.user_id,
+        type: data.type, // 'book', 'subscription', 'quiz'
+        book_id: data.book_id || null,
+        amount: data.amount,
+        phone: data.phone || null,
+        metadata: data.metadata || null
+      })
+    });
+  } catch (e) {
+    // Silent fail - ne JAMAIS bloquer le paiement même si l'enregistrement échoue
+    console.error("recordPendingPurchase error:", e);
+  }
+}
+
+// 🛡️ Helper : Récupère les achats perdus d'un user (paiements réussis mais non livrés)
+// Appelé au chargement de la bibliothèque
+async function recoverLostPurchases(user_id) {
+  try {
+    const res = await fetch("/api/campay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "recover_lost_purchases",
+        user_id: user_id
+      })
+    });
+    const data = await res.json();
+    return data.recovered || [];
+  } catch (e) {
+    console.error("recoverLostPurchases error:", e);
+    return [];
+  }
+}
+
 export default function App() {
   const [page, setPage] = useState(() => {
     // Priorité 1 : Lire la page depuis l'URL (pour partage et deep links)
@@ -11603,6 +11684,7 @@ export default function App() {
   });
   const [selectedBook, setSelectedBook] = useState(null);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [recoveredPurchases, setRecoveredPurchases] = useState([]); // 🛡️ Achats récupérés automatiquement
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
@@ -12279,6 +12361,23 @@ export default function App() {
   }
 
   async function loadUserPurchases(userId) {
+    // 🛡️ ÉTAPE 1 : Récupérer les achats perdus AVANT de charger la liste
+    // (paiements CamPay réussis mais non enregistrés à cause de déconnexion)
+    try {
+      const recovered = await recoverLostPurchases(userId);
+      if (recovered && recovered.length > 0) {
+        const bookRecoveries = recovered.filter(r => r.type === "book");
+        if (bookRecoveries.length > 0) {
+          setRecoveredPurchases(bookRecoveries);
+          console.log("🎉 Achats récupérés:", bookRecoveries);
+        }
+      }
+    } catch (e) {
+      console.error("Erreur récupération achats perdus:", e);
+      // Ne pas bloquer si la récupération échoue
+    }
+
+    // ÉTAPE 2 : Charger la liste (qui inclut maintenant les achats récupérés)
     const { data } = await supabase.from("purchases").select("book_id, created_at, amount").eq("user_id", userId).order("created_at", { ascending: false });
     if (data) {
       const remoteIds = data.map(p => p.book_id);
@@ -12453,6 +12552,18 @@ export default function App() {
       if (!payData.reference) {
         setSubPaymentStep(6);
         return;
+      }
+
+      // 🛡️ Sauvegarder l'INTENTION d'abonnement (au cas où la connexion coupe)
+      if (user) {
+        recordPendingPurchase({
+          reference: payData.reference,
+          user_id: user.id,
+          type: "subscription",
+          amount: price,
+          phone: phone,
+          metadata: { plan: subPlan, books_per_month: subSettings.books_per_month, external_reference: externalRef }
+        });
       }
 
       // ✅ POLLING : on vérifie toutes les 5 secondes pendant max 3 minutes
@@ -12769,6 +12880,19 @@ export default function App() {
       if (!payData.reference) {
         setPaymentStep(6);
         return;
+      }
+
+      // 🛡️ Sauvegarder l'INTENTION d'achat (au cas où la connexion coupe)
+      if (user) {
+        recordPendingPurchase({
+          reference: payData.reference,
+          user_id: user.id,
+          type: "book",
+          book_id: paymentBook.id,
+          amount: finalPrice,
+          phone: phone,
+          metadata: { title: paymentBook.title, external_reference: externalRef }
+        });
       }
 
       // ✅ POLLING : on vérifie toutes les 5 secondes pendant max 3 minutes (36 tentatives)
@@ -14674,7 +14798,7 @@ export default function App() {
 
         {/* BIBLIOTHEQUE */}
         {page === "library" && (
-          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} />
+          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} recoveredPurchases={recoveredPurchases} onDismissRecovered={() => setRecoveredPurchases([])} />
         )}
 
         {/* FAVORIS */}
