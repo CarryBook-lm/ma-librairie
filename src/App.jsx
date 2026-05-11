@@ -1595,6 +1595,14 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
                   });
                 }
               } catch (e) {}
+              // 🔥 API Conversions Meta (serveur - capte ce que le Pixel JS rate)
+              trackMetaConversion({
+                reference: collectData.reference,
+                amount: quizPrice || 0,
+                description: "Carry'Quiz " + (quiz?.title || ""),
+                external_reference: "quiz_" + quiz.id,
+                phone: fullPhone
+              });
             }
             else if (checkData.status === "FAILED" || attempts > 60) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
           } catch(e) { clearInterval(check); setQuizPaymentStep(5); setLoading(false); }
@@ -3748,6 +3756,14 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
                           result_data: { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
                         });
                       } else { console.warn("Pas de user_id, sauvegarde impossible"); }
+                      // 🔥 API Conversions Meta (serveur)
+                      trackMetaConversion({
+                        reference: ref,
+                        amount: beautyQuizPrice || 0,
+                        description: "CarryCare Beauté Faciale",
+                        external_reference: "carrycare_facial",
+                        phone: fullPhone
+                      });
                       setTimeout(() => { setBfShowGift(false); setBfStep(8); }, 2500);
                     }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBfPaymentStep(5); }
@@ -6228,6 +6244,14 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
                       } else {
                         console.warn("Pas de user_id, sauvegarde impossible");
                       }
+                      // 🔥 API Conversions Meta (serveur)
+                      trackMetaConversion({
+                        reference: ref,
+                        amount: beautyQuizPrice || 0,
+                        description: "CarryCare Beauté Corporelle",
+                        external_reference: "carrycare_body",
+                        phone: fullPhone
+                      });
                       setTimeout(() => { setBbShowGift(false); setBbStep(8); }, 2500);
                     }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setBbPaymentStep(5); }
@@ -8026,6 +8050,14 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
                       if (userId) {
                         saveCarrycareResultRobust({ user_id: userId, quiz_type: "ligne", amount: beautyQuizPrice || 0, result_data: { profile: lgProfile, objective: lgObjective, conditions: lgConditions, habits: lgHabits, activity: lgActivity, result: lgResult } });
                       }
+                      // 🔥 API Conversions Meta (serveur)
+                      trackMetaConversion({
+                        reference: ref,
+                        amount: beautyQuizPrice || 0,
+                        description: "CarryCare Garde la Ligne",
+                        external_reference: "carrycare_ligne",
+                        phone: fullPhone
+                      });
                       setTimeout(() => { setLgShowGift(false); setLgStep(8); }, 2500);
                     } else if (checkData.status === "FAILED") { clearInterval(interval); setLgPaymentStep(5); }
                   } catch (e) {}
@@ -10903,6 +10935,14 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
                       if (userId) {
                         saveCarrycareResultRobust({ user_id: userId, quiz_type: "capillaire", amount: beautyQuizPrice || 0, result_data: { profile: capProfile, texture: capTexture, etat: capEtat, longueur: capLongueur, problems: capProblems, objectives: capObjectives, routine: capRoutine, lifestyle: capLifestyle, budget: capBudget, result: capResult } });
                       }
+                      // 🔥 API Conversions Meta (serveur)
+                      trackMetaConversion({
+                        reference: ref,
+                        amount: beautyQuizPrice || 0,
+                        description: "CarryCare Beauté Capillaire",
+                        external_reference: "carrycare_capillaire",
+                        phone: fullPhone
+                      });
                       setTimeout(() => { setCapShowGift(false); setCapStep(9); }, 2500);
                     } else if (checkData.status === "FAILED") { clearInterval(interval); setCapPaymentStep(5); }
                   } catch (e) {}
@@ -11271,6 +11311,14 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
                           result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult }
                         });
                       }
+                      // 🔥 API Conversions Meta (serveur)
+                      trackMetaConversion({
+                        reference: ref,
+                        amount: beautyQuizPrice || 0,
+                        description: "CarryCare Beauté Capillaire",
+                        external_reference: "carrycare_hair",
+                        phone: fullPhone
+                      });
                       setTimeout(() => { setCapShowGift(false); setCapStep(7); }, 2500);
                     }
                     else if (checkData.status === "FAILED") { clearInterval(interval); setCapPaymentStep(5); }
@@ -11508,6 +11556,31 @@ function trackPixelEvent(eventName, params = {}) {
     }
   } catch (e) {
     // Silent fail si Pixel pas disponible
+  }
+}
+
+// 🔥 Helper pour envoyer les conversions à l'API Meta côté serveur (Supabase)
+// Capte 100% des conversions, même celles bloquées par AdBlock/iOS/data savers
+// Fonctionne en parallèle du Pixel JS - Meta dédoublonne automatiquement
+async function trackMetaConversion(data) {
+  try {
+    await fetch("https://huikxujxsklboejkbnda.supabase.co/functions/v1/meta-conversion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "SUCCESSFUL",
+        reference: data.reference || ("conv_" + Date.now()),
+        amount: String(data.amount || 0),
+        currency: "XAF",
+        description: data.description || "",
+        external_reference: data.external_reference || "",
+        external_user: data.email || "",
+        phone_number: data.phone || ""
+      })
+    });
+  } catch (e) {
+    // Silent fail - on ne bloque jamais l'utilisateur si Meta API échoue
+    console.error("Meta API conversion error:", e);
   }
 }
 
@@ -12429,6 +12502,15 @@ export default function App() {
               }
             }
 
+            // 🔥 API Conversions Meta (serveur)
+            trackMetaConversion({
+              reference: payData.reference,
+              amount: price,
+              description: "Abonnement CarryBooks " + subPlan,
+              external_reference: externalRef,
+              phone: phone
+            });
+
             setSubPaymentStep(5);
             return; // Stop le polling
           }
@@ -12786,6 +12868,14 @@ export default function App() {
               value: paymentBook.price || 0,
               currency: "XAF",
               num_items: 1,
+            });
+            // 🔥 API Conversions Meta (serveur)
+            trackMetaConversion({
+              reference: payData.reference,
+              amount: finalPrice,
+              description: "Livre " + (paymentBook.title || ""),
+              external_reference: externalRef,
+              phone: phone
             });
             return; // Stop le polling
           }
