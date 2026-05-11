@@ -1,5 +1,6 @@
 // api/campay.js
 // Fonction serverless Vercel : gère collect, check, withdraw + record_purchase + record_subscription + record_carrycare (bypass RLS)
+// + record_pending + recover_lost_purchases (système de récupération automatique des achats perdus)
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -129,6 +130,14 @@ export default async function handler(req, res) {
         });
       }
 
+      // 🔥 Marquer le pending comme completed si existait
+      try {
+        await supabaseAdmin
+          .from("pending_purchases")
+          .update({ status: "completed", recovered_at: new Date().toISOString() })
+          .eq("reference", reference);
+      } catch (e) { /* silent fail */ }
+
       return res.status(200).json({
         success: true,
         purchase: inserted[0],
@@ -218,6 +227,14 @@ export default async function handler(req, res) {
         });
       }
 
+      // 🔥 Marquer le pending comme completed si existait
+      try {
+        await supabaseAdmin
+          .from("pending_purchases")
+          .update({ status: "completed", recovered_at: new Date().toISOString() })
+          .eq("reference", reference);
+      } catch (e) { /* silent fail */ }
+
       return res.status(200).json({
         success: true,
         subscription: inserted,
@@ -299,9 +316,231 @@ export default async function handler(req, res) {
         });
       }
 
+      // 🔥 Marquer le pending comme completed si existait
+      try {
+        await supabaseAdmin
+          .from("pending_purchases")
+          .update({ status: "completed", recovered_at: new Date().toISOString() })
+          .eq("reference", reference);
+      } catch (e) { /* silent fail */ }
+
       return res.status(200).json({
         success: true,
         result: inserted,
+      });
+    }
+
+    // ========== 🔥 ACTION : RECORD_PENDING ==========
+    // Enregistre l'INTENTION d'achat AVANT confirmation CamPay
+    // Permet de récupérer les achats perdus si la connexion coupe
+    if (action === "record_pending") {
+      const {
+        reference,
+        user_id,
+        type, // 'book', 'subscription', 'quiz'
+        book_id,
+        amount,
+        phone,
+        metadata,
+      } = params;
+
+      // Validation : user_id obligatoire (sinon impossible de récupérer)
+      if (!user_id || !reference || !type || !amount) {
+        return res.status(400).json({
+          error: "Paramètres manquants pour record_pending",
+        });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // Insert pending (UPSERT pour éviter les doublons si rappel)
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from("pending_purchases")
+        .upsert(
+          [
+            {
+              user_id,
+              reference,
+              type,
+              book_id: book_id || null,
+              amount,
+              phone: phone || null,
+              status: "pending",
+              metadata: metadata || null,
+            },
+          ],
+          { onConflict: "reference" }
+        )
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("[RECORD_PENDING] Insert error:", insertError);
+        // ⚠️ ON NE BLOQUE PAS LE PAIEMENT si le pending échoue
+        // Le paiement doit pouvoir continuer même si on n'a pas pu sauvegarder l'intention
+        return res.status(200).json({
+          success: false,
+          warning: "Pending non enregistré mais paiement peut continuer",
+          details: insertError.message,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        pending: inserted,
+      });
+    }
+
+    // ========== 🔥 ACTION : RECOVER_LOST_PURCHASES ==========
+    // Vérifie tous les pending d'un user et récupère les achats perdus
+    // Appelée au chargement de la bibliothèque du client
+    if (action === "recover_lost_purchases") {
+      const { user_id } = params;
+
+      if (!user_id) {
+        return res.status(400).json({ error: "user_id manquant" });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // 1. Récupérer tous les pending de moins de 7 jours (limite raisonnable)
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: pendings, error: pendingError } = await supabaseAdmin
+        .from("pending_purchases")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("status", "pending")
+        .gte("created_at", sevenDaysAgo);
+
+      if (pendingError) {
+        console.error("[RECOVER] Error fetching pendings:", pendingError);
+        return res.status(200).json({ recovered: [], errors: [] });
+      }
+
+      if (!pendings || pendings.length === 0) {
+        return res.status(200).json({ recovered: [], message: "Aucun achat en attente" });
+      }
+
+      const recovered = [];
+      const errors = [];
+
+      // 2. Pour chaque pending, vérifier CamPay
+      for (const pending of pendings) {
+        try {
+          const verifyUrl = `https://www.campay.net/api/transaction/${pending.reference}/`;
+          const verifyRes = await fetch(verifyUrl, {
+            headers: { Authorization: "Token " + CAMPAY_TOKEN },
+          });
+          const verifyData = await verifyRes.json();
+
+          if (verifyData.status === "SUCCESSFUL") {
+            // 🎯 PAIEMENT RÉUSSI MAIS PAS LIVRÉ → on récupère
+
+            if (pending.type === "book") {
+              // Vérifier si pas déjà dans purchases
+              const { data: existingPurchase } = await supabaseAdmin
+                .from("purchases")
+                .select("id")
+                .eq("user_id", user_id)
+                .eq("book_id", pending.book_id)
+                .limit(1);
+
+              if (existingPurchase && existingPurchase.length > 0) {
+                // Déjà acheté, on marque juste le pending
+                await supabaseAdmin
+                  .from("pending_purchases")
+                  .update({ status: "completed", recovered_at: new Date().toISOString() })
+                  .eq("id", pending.id);
+                continue;
+              }
+
+              // Insérer dans purchases
+              const { data: newPurchase, error: insertErr } = await supabaseAdmin
+                .from("purchases")
+                .insert([
+                  {
+                    user_id: pending.user_id,
+                    book_id: pending.book_id,
+                    amount: pending.amount,
+                    phone: pending.phone,
+                    external_reference: "RECOVERED_" + pending.reference,
+                    type: "sale",
+                  },
+                ])
+                .select()
+                .single();
+
+              if (insertErr) {
+                errors.push({ reference: pending.reference, error: insertErr.message });
+                continue;
+              }
+
+              // Marquer comme recovered
+              await supabaseAdmin
+                .from("pending_purchases")
+                .update({ status: "recovered", recovered_at: new Date().toISOString() })
+                .eq("id", pending.id);
+
+              recovered.push({
+                type: "book",
+                book_id: pending.book_id,
+                amount: pending.amount,
+                reference: pending.reference,
+              });
+            } else if (pending.type === "subscription") {
+              // Pour les abonnements, on note mais on demande au client de re-confirmer
+              // (car les abonnements ont des règles plus complexes)
+              await supabaseAdmin
+                .from("pending_purchases")
+                .update({ status: "recovered", recovered_at: new Date().toISOString() })
+                .eq("id", pending.id);
+
+              recovered.push({
+                type: "subscription",
+                reference: pending.reference,
+                metadata: pending.metadata,
+                requires_action: true,
+              });
+            } else if (pending.type === "quiz") {
+              // Pour les quiz, on note mais le client doit refaire le quiz pour recevoir les résultats
+              await supabaseAdmin
+                .from("pending_purchases")
+                .update({ status: "recovered", recovered_at: new Date().toISOString() })
+                .eq("id", pending.id);
+
+              recovered.push({
+                type: "quiz",
+                reference: pending.reference,
+                metadata: pending.metadata,
+              });
+            }
+          } else if (verifyData.status === "FAILED") {
+            // Paiement échoué, on marque comme failed
+            await supabaseAdmin
+              .from("pending_purchases")
+              .update({ status: "failed" })
+              .eq("id", pending.id);
+          }
+          // Si PENDING dans CamPay, on laisse tel quel (on revérifiera plus tard)
+        } catch (err) {
+          console.error("[RECOVER] Error checking", pending.reference, err);
+          errors.push({ reference: pending.reference, error: err.message });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        recovered,
+        errors,
+        checked: pendings.length,
       });
     }
 
