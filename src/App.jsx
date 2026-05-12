@@ -2093,9 +2093,57 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 }
 
 // ─── LIBRARY PAGE COMPONENT ───
-function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered }) {
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, onPurchasesRecovered }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
   const myBooks = books.filter(b => purchasedBooks.includes(b.id));
+
+  // 🆕 État pour le modal de récupération des achats invités
+  const [showRecoverModal, setShowRecoverModal] = useState(false);
+  const [recoverPhone, setRecoverPhone] = useState("");
+  const [recoverLoading, setRecoverLoading] = useState(false);
+  const [recoverResult, setRecoverResult] = useState(null); // null | {recovered: [...], errors: [...]}
+
+  // 🆕 Fonction de récupération des achats invités
+  async function handleRecoverPurchases() {
+    if (!user || !user.id) {
+      setRecoverResult({ error: "Tu dois être connecté pour récupérer tes achats." });
+      return;
+    }
+    if (!recoverPhone || recoverPhone.trim().length < 6) {
+      setRecoverResult({ error: "Entre un numéro de téléphone valide." });
+      return;
+    }
+    setRecoverLoading(true);
+    setRecoverResult(null);
+    try {
+      const res = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "recover_guest_purchases",
+          user_id: user.id,
+          phone: recoverPhone.trim(),
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRecoverResult({
+          recovered: data.recovered || [],
+          total: data.total || 0,
+        });
+        // Si on a récupéré des achats, notifier le parent pour rafraîchir
+        if (data.recovered && data.recovered.length > 0 && onPurchasesRecovered) {
+          onPurchasesRecovered(data.recovered);
+        }
+      } else {
+        setRecoverResult({ error: data.error || "Erreur lors de la récupération" });
+      }
+    } catch (err) {
+      setRecoverResult({ error: "Erreur réseau. Vérifie ta connexion." });
+    } finally {
+      setRecoverLoading(false);
+    }
+  }
 
   // 🛡️ Détails des achats récupérés (titres des livres)
   const recoveredBooksDetails = (recoveredPurchases || []).map(r => {
@@ -2153,6 +2201,131 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
           ))}
         </div>
       </div>
+
+      {/* 🆕 BOUTON : Récupérer mes achats invités */}
+      {user && (
+        <div style={{ padding: "12px 16px 0" }}>
+          <button onClick={() => { setShowRecoverModal(true); setRecoverResult(null); setRecoverPhone(""); }}
+            style={{
+              width: "100%", padding: "10px 14px", background: "transparent",
+              border: "1px dashed " + G.gold, borderRadius: 8, color: G.gold,
+              fontSize: 12, cursor: "pointer", textAlign: "left"
+            }}>
+            💡 As-tu acheté en invité avant ? <span style={{ fontWeight: "bold", textDecoration: "underline" }}>Récupérer mes livres</span>
+          </button>
+        </div>
+      )}
+
+      {/* 🆕 MODAL : Récupération des achats invités */}
+      {showRecoverModal && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 300, padding: 16
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 12, padding: 24,
+            maxWidth: 400, width: "100%", maxHeight: "90vh", overflow: "auto"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 17, color: "#1a1a1a" }}>📱 Récupérer mes achats</h3>
+              <button onClick={() => setShowRecoverModal(false)} style={{
+                background: "none", border: "none", fontSize: 22, cursor: "pointer",
+                color: "#888", padding: 0, lineHeight: 1
+              }}>×</button>
+            </div>
+
+            {!recoverResult || !recoverResult.recovered ? (
+              <>
+                <p style={{ color: "#666", fontSize: 13, lineHeight: 1.5, marginBottom: 16 }}>
+                  Entre le numéro de téléphone que tu as utilisé pour acheter tes livres en mode invité.
+                  Nous les retrouverons et les ajouterons à ta bibliothèque.
+                </p>
+
+                <label style={{ display: "block", fontSize: 12, color: "#888", marginBottom: 6 }}>
+                  Numéro de téléphone
+                </label>
+                <input
+                  type="tel"
+                  value={recoverPhone}
+                  onChange={e => setRecoverPhone(e.target.value)}
+                  placeholder="+237 6XX XXX XXX"
+                  disabled={recoverLoading}
+                  style={{
+                    width: "100%", padding: "10px 14px", fontSize: 14,
+                    border: "1px solid #ddd", borderRadius: 8, marginBottom: 12,
+                    boxSizing: "border-box"
+                  }}
+                />
+
+                {recoverResult && recoverResult.error && (
+                  <div style={{
+                    padding: "10px 12px", background: "#fee", color: "#c62828",
+                    borderRadius: 6, fontSize: 12, marginBottom: 12
+                  }}>
+                    ❌ {recoverResult.error}
+                  </div>
+                )}
+
+                <button onClick={handleRecoverPurchases} disabled={recoverLoading || !recoverPhone.trim()}
+                  style={{
+                    width: "100%", padding: 14,
+                    background: recoverLoading || !recoverPhone.trim() ? "#ddd" : G.gold,
+                    color: recoverLoading || !recoverPhone.trim() ? "#888" : "#000",
+                    border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold",
+                    cursor: recoverLoading || !recoverPhone.trim() ? "not-allowed" : "pointer"
+                  }}>
+                  {recoverLoading ? "Recherche en cours..." : "🔍 Rechercher mes livres"}
+                </button>
+              </>
+            ) : (
+              <>
+                {recoverResult.recovered.length > 0 ? (
+                  <>
+                    <div style={{ textAlign: "center", marginBottom: 16 }}>
+                      <div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div>
+                      <h4 style={{ color: "#22c55e", margin: 0, fontSize: 16 }}>
+                        {recoverResult.recovered.length} {recoverResult.recovered.length > 1 ? "livres récupérés" : "livre récupéré"} !
+                      </h4>
+                    </div>
+                    <p style={{ color: "#666", fontSize: 13, textAlign: "center", marginBottom: 16 }}>
+                      Tes livres sont maintenant dans ta bibliothèque 💛
+                    </p>
+                    <button onClick={() => { setShowRecoverModal(false); window.location.reload(); }}
+                      style={{
+                        width: "100%", padding: 14, background: G.gold, color: "#000",
+                        border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer"
+                      }}>
+                      ✅ Voir mes livres
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ textAlign: "center", marginBottom: 16 }}>
+                      <div style={{ fontSize: 48, marginBottom: 8 }}>🤔</div>
+                      <h4 style={{ color: "#888", margin: 0, fontSize: 16 }}>
+                        Aucun achat trouvé
+                      </h4>
+                    </div>
+                    <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 16, lineHeight: 1.5 }}>
+                      Aucun achat invité trouvé pour ce numéro.
+                      Vérifie que tu as bien entré le numéro utilisé lors de l'achat.
+                    </p>
+                    <button onClick={() => setRecoverResult(null)}
+                      style={{
+                        width: "100%", padding: 14, background: "transparent",
+                        border: "1px solid " + G.gold, color: G.gold,
+                        borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer"
+                      }}>
+                      Réessayer avec un autre numéro
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Books tab */}
       {libTab === "books" && (
@@ -15033,7 +15206,7 @@ export default function App() {
 
         {/* BIBLIOTHEQUE */}
         {page === "library" && (
-          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} recoveredPurchases={recoveredPurchases} onDismissRecovered={() => setRecoveredPurchases([])} />
+          <LibraryPage books={books} purchasedBooks={purchasedBooks} purchaseHistory={purchaseHistory} startReading={startReading} setPage={setPage} G={G} recoveredPurchases={recoveredPurchases} onDismissRecovered={() => setRecoveredPurchases([])} user={user} onPurchasesRecovered={(recovered) => { if (user) loadUserPurchases(user.id); }} />
         )}
 
         {/* FAVORIS */}
