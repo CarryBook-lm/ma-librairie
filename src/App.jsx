@@ -13133,6 +13133,26 @@ export default function App() {
                 setPaymentStep(6);
                 return;
               }
+            } else {
+              // 🆕 ACHAT INVITÉ : enregistrer dans guest_purchases pour récupération future
+              // 🛡️ NON BLOQUANT : si ça plante, le client a quand même son livre (localStorage)
+              try {
+                await fetch("/api/campay", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "record_guest_purchase",
+                    reference: payData.reference,
+                    book_id: paymentBook.id,
+                    amount: finalPrice,
+                    phone: phone,
+                    external_reference: externalRef,
+                    type: "book"
+                  })
+                });
+              } catch (guestErr) {
+                console.warn("[GUEST_PURCHASE] Backup invité échoué (non bloquant):", guestErr);
+              }
             }
 
             // ✅ Tout est OK : afficher succès et mettre à jour la lib locale
