@@ -12097,7 +12097,8 @@ export default function App() {
           // Re-tente les sauvegardes CarryCare en attente
           flushPendingCarrycareSaves().catch(() => {});
         }
-        else setShowAuthModal(true); // Afficher modal si non connecté
+        // 🚫 SUPPRIMÉ: setShowAuthModal(true) qui forçait la modal au démarrage
+        // Le visiteur peut maintenant naviguer librement sans être bloqué
         setAuthChecked(true);
       });
     }
