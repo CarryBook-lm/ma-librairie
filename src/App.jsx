@@ -12211,18 +12211,8 @@ export default function App() {
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
-  // État pour la popup "Ouvrir dans navigateur" (utilisateurs venus depuis Facebook/Instagram)
-  const [showOpenBrowserModal, setShowOpenBrowserModal] = useState(() => {
-    // Affiche la popup uniquement si on est dans un in-app browser
-    // ET seulement la première fois (sauvegarde dans sessionStorage pour éviter de réafficher)
-    try {
-      if (typeof window === "undefined") return false;
-      if (sessionStorage.getItem("inAppBrowserDismissed") === "1") return false;
-      return isInAppBrowser();
-    } catch (e) {
-      return false;
-    }
-  });
+  // État pour la popup "Ouvrir dans navigateur" (DÉSACTIVÉE pour ne pas créer de friction depuis Facebook)
+  const [showOpenBrowserModal, setShowOpenBrowserModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
