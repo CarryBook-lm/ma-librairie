@@ -158,6 +158,175 @@ function loadJsPDF() {
   return _jsPDFLoadPromise;
 }
 
+// 🛡️ CHARGEMENT DE PDF-LIB (pour le watermark anti-piratage)
+let _pdfLibLoadPromise = null;
+function loadPdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  if (_pdfLibLoadPromise) return _pdfLibLoadPromise;
+  _pdfLibLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";
+    script.onload = () => resolve(window.PDFLib);
+    script.onerror = () => { _pdfLibLoadPromise = null; reject(new Error("Impossible de charger pdf-lib")); };
+    document.head.appendChild(script);
+  });
+  return _pdfLibLoadPromise;
+}
+
+// 🛡️ HELPER : Télécharger un PDF avec watermark personnalisé (anti-piratage)
+// Ajoute sur CHAQUE page :
+//   - En haut : Nom + Email + Téléphone du client
+//   - En diagonale : Nom du client (semi-transparent)
+//   - En bas : Date d'achat + lien CARRYBOOKS.COM CLIQUABLE
+async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
+  try {
+    // 1. Charger pdf-lib
+    const PDFLib = await loadPdfLib();
+    const { PDFDocument, rgb, StandardFonts, degrees } = PDFLib;
+
+    // 2. Récupérer le PDF original
+    const response = await fetch(pdfUrl);
+    if (!response.ok) throw new Error("Erreur téléchargement");
+    const pdfBytes = await response.arrayBuffer();
+
+    // 3. Charger le PDF dans pdf-lib
+    const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    // 4. Préparer les infos du client (avec fallbacks safe)
+    const clientName = String(clientInfo.name || "Client CarryBooks").substring(0, 50);
+    const clientEmail = String(clientInfo.email || "").substring(0, 60);
+    const clientPhone = String(clientInfo.phone || "").substring(0, 20);
+    const purchaseDate = new Date().toLocaleDateString("fr-FR");
+    const siteUrl = "https://carrybooks.com";
+
+    // 5. Ajouter le watermark sur CHAQUE page
+    const pages = pdfDoc.getPages();
+    pages.forEach((page) => {
+      const { width, height } = page.getSize();
+
+      // 🔝 EN HAUT GAUCHE : Nom + Email (discret, gris)
+      const topLeftText = clientEmail
+        ? clientName + " - " + clientEmail
+        : clientName;
+      page.drawText(topLeftText, {
+        x: 20,
+        y: height - 18,
+        size: 7,
+        font: helveticaFont,
+        color: rgb(0.55, 0.55, 0.55),
+      });
+
+      // 🔝 EN HAUT DROITE : Téléphone (discret, gris)
+      if (clientPhone) {
+        const phoneText = "Tel: " + clientPhone;
+        const phoneWidth = helveticaFont.widthOfTextAtSize(phoneText, 7);
+        page.drawText(phoneText, {
+          x: width - phoneWidth - 20,
+          y: height - 18,
+          size: 7,
+          font: helveticaFont,
+          color: rgb(0.55, 0.55, 0.55),
+        });
+      }
+
+      // 🎯 AU CENTRE : Nom du client en DIAGONALE (semi-transparent)
+      const diagText = clientName.toUpperCase();
+      const diagSize = 36;
+      const diagWidth = helveticaBold.widthOfTextAtSize(diagText, diagSize);
+      page.drawText(diagText, {
+        x: width / 2 - (diagWidth / 2) * 0.866,
+        y: height / 2 - (diagWidth / 2) * 0.5,
+        size: diagSize,
+        font: helveticaBold,
+        color: rgb(0.7, 0.7, 0.7),
+        opacity: 0.15,
+        rotate: degrees(-30),
+      });
+
+      // 🔻 EN BAS GAUCHE : Copyright + Date
+      const bottomLeftText = "(c) CarryBooks - Achete le " + purchaseDate;
+      page.drawText(bottomLeftText, {
+        x: 20,
+        y: 12,
+        size: 7,
+        font: helveticaFont,
+        color: rgb(0.55, 0.55, 0.55),
+      });
+
+      // 🔻 EN BAS DROITE : Lien CLIQUABLE invitation marketing (doré)
+      const linkText = "Telechargez plus de livres sur www.carrybooks.com";
+      const linkSize = 8;
+      const linkWidth = helveticaBold.widthOfTextAtSize(linkText, linkSize);
+      const linkX = width - linkWidth - 20;
+      const linkY = 12;
+      // Dessiner le texte
+      page.drawText(linkText, {
+        x: linkX,
+        y: linkY,
+        size: linkSize,
+        font: helveticaBold,
+        color: rgb(0.788, 0.584, 0.165), // #c9952a (doré CarryBooks)
+      });
+      // Ajouter une annotation cliquable
+      try {
+        const linkAnnotation = pdfDoc.context.register(
+          pdfDoc.context.obj({
+            Type: "Annot",
+            Subtype: "Link",
+            Rect: [linkX - 2, linkY - 2, linkX + linkWidth + 2, linkY + linkSize + 2],
+            Border: [0, 0, 0],
+            A: {
+              Type: "Action",
+              S: "URI",
+              URI: PDFLib.PDFString.of(siteUrl),
+            },
+          })
+        );
+        const annots = page.node.Annots() || pdfDoc.context.obj([]);
+        annots.push(linkAnnotation);
+        page.node.set(PDFLib.PDFName.of("Annots"), annots);
+      } catch (linkErr) {
+        // Si l'ajout du lien cliquable échoue, on continue quand même
+        console.warn("Lien cliquable non ajouté:", linkErr);
+      }
+    });
+
+    // 6. Sauvegarder et télécharger
+    const watermarkedPdfBytes = await pdfDoc.save();
+    const blob = new Blob([watermarkedPdfBytes], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (e) {
+    console.error("Erreur watermark PDF:", e);
+    // 🛡️ FALLBACK : si le watermark échoue, on télécharge le PDF original
+    // pour ne PAS bloquer le client qui a payé
+    try {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      return true;
+    } catch (fallbackErr) {
+      throw new Error("Erreur de téléchargement. Vérifie ta connexion et réessaie.");
+    }
+  }
+}
+
 async function downloadBodyDiagnosticPDF(result) {
   if (!result) { alert("Diagnostic non disponible."); return; }
 
@@ -13806,17 +13975,16 @@ export default function App() {
             <button
               onClick={async () => {
                 try {
-                  const response = await fetch(book.pdf_url);
-                  if (!response.ok) throw new Error("Erreur téléchargement");
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = (book.title || "livre") + ".pdf";
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  window.URL.revokeObjectURL(url);
+                  // 🛡️ Télécharger avec watermark anti-piratage
+                  await downloadProtectedPDF(
+                    book.pdf_url,
+                    (book.title || "livre") + ".pdf",
+                    {
+                      name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                      email: user?.email || "",
+                      phone: user?.user_metadata?.phone || "",
+                    }
+                  );
                 } catch (e) {
                   alert("Erreur de téléchargement. Vérifie ta connexion et réessaie.");
                 }
@@ -14188,17 +14356,16 @@ export default function App() {
                       </button>
                       <button onClick={async () => {
                         try {
-                          const response = await fetch(paymentBook.pdf_url);
-                          if (!response.ok) throw new Error("Erreur téléchargement");
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = (paymentBook.title || "livre") + ".pdf";
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                          window.URL.revokeObjectURL(url);
+                          // 🛡️ Télécharger avec watermark anti-piratage
+                          await downloadProtectedPDF(
+                            paymentBook.pdf_url,
+                            (paymentBook.title || "livre") + ".pdf",
+                            {
+                              name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                              email: user?.email || "",
+                              phone: phoneNumber || user?.user_metadata?.phone || "",
+                            }
+                          );
                         } catch (err) { alert("Erreur lors du téléchargement"); }
                       }}
                         style={{ flex: 1, padding: 14, background: "transparent", border: "2px solid " + G.gold, borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
