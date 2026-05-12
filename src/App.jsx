@@ -2582,6 +2582,69 @@ const CC = {
 };
 
 // ─── PAGE D'ACCUEIL CARRYCARE ───
+// 🎯 COMPOSANT SHARE BUTTONS — WhatsApp, Facebook, Copier
+function DiagnosticShareButtons({ url, title, message }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleWhatsApp = () => {
+    const text = encodeURIComponent((message || title || "Découvre ça !") + "\n\n" + url);
+    window.open("https://wa.me/?text=" + text, "_blank");
+  };
+
+  const handleFacebook = () => {
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank", "width=600,height=400");
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      // Fallback pour anciens navigateurs
+      const input = document.createElement("input");
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      try { document.execCommand("copy"); } catch (e2) {}
+      document.body.removeChild(input);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div style={{ background: "#fff", border: "1px solid #e8d4b8", borderRadius: 14, padding: 16, marginBottom: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: "bold", color: "#7a6a50", marginBottom: 12, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
+        💛 Partage avec tes amies
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+        <button onClick={handleWhatsApp} style={{
+          flex: "1 1 100px", minWidth: 90, padding: "10px 12px", background: "#25D366", color: "#fff",
+          border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+        }}>
+          <span style={{ fontSize: 16 }}>📱</span> WhatsApp
+        </button>
+        <button onClick={handleFacebook} style={{
+          flex: "1 1 100px", minWidth: 90, padding: "10px 12px", background: "#1877F2", color: "#fff",
+          border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+        }}>
+          <span style={{ fontSize: 16 }}>📘</span> Facebook
+        </button>
+        <button onClick={handleCopy} style={{
+          flex: "1 1 100px", minWidth: 90, padding: "10px 12px", background: copied ? "#4caf50" : "#1a1a1a", color: "#fff",
+          border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+        }}>
+          <span style={{ fontSize: 16 }}>{copied ? "✓" : "🔗"}</span> {copied ? "Copié !" : "Copier"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData, setCapStep, setCapProfile, setCapTexture, setCapEtat, setCapLongueur, setCapProblems, setCapObjectives, setCapRoutine, setCapLifestyle, setCapBudget, setCapResult }) {
 
   function startFacial() {
@@ -3907,6 +3970,13 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
           <button onClick={() => setBfStep(1)} style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
             Commencer le diagnostic →
           </button>
+          <div style={{ marginTop: 20 }}>
+            <DiagnosticShareButtons
+              url="https://carrybooks.com/diagnostic-facial"
+              title="Diagnostic Beauté Faciale CarryCare"
+              message="🪞 Découvre ton type de peau exact + ta routine personnalisée en 5 min sur CarryCare !"
+            />
+          </div>
         </div>
       </div>
     );
@@ -5372,6 +5442,13 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
         </div>
 
+        {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
+        <DiagnosticShareButtons
+          url="https://carrybooks.com/diagnostic-facial"
+          title="Diagnostic Beauté Faciale CarryCare"
+          message="🪞 J'ai fait mon Diagnostic Facial sur CarryCare et c'est incroyable ! Découvre ta routine personnalisée :"
+        />
+
       </div>
     </div>
   );
@@ -6361,6 +6438,13 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
             style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
             Commencer le diagnostic →
           </button>
+          <div style={{ marginTop: 20 }}>
+            <DiagnosticShareButtons
+              url="https://carrybooks.com/diagnostic-corporel"
+              title="Diagnostic Beauté Corporelle CarryCare"
+              message="🧴 Vergetures, taches, hydratation... Découvre la routine corps parfaite pour toi sur CarryCare !"
+            />
+          </div>
         </div>
       </div>
     );
@@ -7516,6 +7600,13 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
         </div>
 
+        {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
+        <DiagnosticShareButtons
+          url="https://carrybooks.com/diagnostic-corporel"
+          title="Diagnostic Beauté Corporelle CarryCare"
+          message="🧴 J'ai fait mon Diagnostic Corporel sur CarryCare ! Vergetures, taches, hydratation... découvre ta routine corps :"
+        />
+
       </div>
     </div>
   );
@@ -8065,6 +8156,13 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           </button>
           <div style={{ fontSize: 11, color: CC.textFaint, textAlign: "center", fontStyle: "italic", lineHeight: 1.5 }}>
             En continuant, tu confirmes avoir lu l'avertissement ci-dessus et comprendre que ce quiz ne remplace pas un avis médical.
+          </div>
+          <div style={{ marginTop: 20 }}>
+            <DiagnosticShareButtons
+              url="https://carrybooks.com/garde-la-ligne"
+              title="Garde la Ligne CarryCare"
+              message="⚖️ Plan nutrition personnalisé selon ton profil. Garde la ligne intelligemment avec CarryCare !"
+            />
           </div>
         </div>
       </div>
@@ -9003,6 +9101,13 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
         <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
           <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon plan en PDF</button>
         </div>
+
+        {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
+        <DiagnosticShareButtons
+          url="https://carrybooks.com/garde-la-ligne"
+          title="Garde la Ligne CarryCare"
+          message="⚖️ J'ai mon plan nutrition personnalisé sur CarryCare ! Garde la ligne intelligemment, fais-le aussi :"
+        />
 
       </div>
     </div>
@@ -10418,6 +10523,13 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <button onClick={() => downloadCapDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon diagnostic en PDF</button>
         </div>
 
+        {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
+        <DiagnosticShareButtons
+          url="https://carrybooks.com/diagnostic-capillaire"
+          title="Diagnostic Beauté Capillaire CarryCare"
+          message="💇‍♀️ J'ai ma routine capillaire sur mesure grâce à CarryCare ! Découvre la tienne :"
+        />
+
       </div>
     </div>
   );
@@ -10942,6 +11054,13 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
           <button onClick={() => setCapStep(1)} style={{ width: "100%", padding: 18, background: CAP.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
             Commencer mon diagnostic ✨
           </button>
+          <div style={{ marginTop: 20 }}>
+            <DiagnosticShareButtons
+              url="https://carrybooks.com/diagnostic-capillaire"
+              title="Diagnostic Beauté Capillaire CarryCare"
+              message="💇‍♀️ Cheveux crépus, croissance, routines... Découvre LA routine capillaire faite pour toi !"
+            />
+          </div>
         </div>
       </div>
     );
