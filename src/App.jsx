@@ -12297,6 +12297,33 @@ export default function App() {
     }
   }, [page, user]);
 
+  // 🎯 DÉTECTION URLS DIRECTES POUR LES DIAGNOSTICS CARRYCARE
+  // Permet aux pubs Facebook de pointer directement sur un diagnostic spécifique
+  // URLs supportées :
+  //   /diagnostic-facial    → ouvre directement le quiz Facial
+  //   /diagnostic-corporel  → ouvre directement le quiz Corporel
+  //   /diagnostic-capillaire → ouvre directement le quiz Capillaire
+  //   /garde-la-ligne       → ouvre directement le quiz Garde la Ligne
+  useEffect(() => {
+    const path = window.location.pathname.toLowerCase();
+    let carryCareTarget = null;
+
+    if (path === "/diagnostic-facial" || path === "/diagnostic-visage") {
+      carryCareTarget = "facialQuiz";
+    } else if (path === "/diagnostic-corporel" || path === "/diagnostic-corps") {
+      carryCareTarget = "bodyQuiz";
+    } else if (path === "/diagnostic-capillaire" || path === "/diagnostic-cheveux") {
+      carryCareTarget = "hairQuiz";
+    } else if (path === "/garde-la-ligne" || path === "/diagnostic-ligne") {
+      carryCareTarget = "lineQuiz";
+    }
+
+    if (carryCareTarget) {
+      setPage("carrycare");
+      setCarryCarePage(carryCareTarget);
+    }
+  }, []);
+
   // Détecter livre dans l'URL (slug /livre/xxx OU ?book=XX) et ouvrir
   useEffect(() => {
     if (books.length === 0) return;
