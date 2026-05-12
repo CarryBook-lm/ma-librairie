@@ -640,12 +640,22 @@ export default async function handler(req, res) {
       // Convertir en array pour la requête
       const phoneArray = Array.from(phoneCandidates);
 
+      // 🔍 LOG DEBUG pour identifier le problème
+      console.log("[RECOVER_GUEST] Input phone:", phone);
+      console.log("[RECOVER_GUEST] Normalized:", normalizedPhone);
+      console.log("[RECOVER_GUEST] Candidates:", phoneArray);
+      console.log("[RECOVER_GUEST] User ID:", user_id);
+
       // 1. Chercher tous les achats invités NON encore récupérés avec n'importe quel format
       const { data: guestPurchases, error: fetchError } = await supabaseAdmin
         .from("guest_purchases")
         .select("*")
         .in("phone", phoneArray)
         .is("recovered_by_user_id", null);
+
+      // 🔍 LOG DEBUG
+      console.log("[RECOVER_GUEST] Found:", guestPurchases?.length || 0, "purchases");
+      console.log("[RECOVER_GUEST] Error:", fetchError);
 
       if (fetchError) {
         console.error("[RECOVER_GUEST] Error:", fetchError);
@@ -672,15 +682,13 @@ export default async function handler(req, res) {
               .limit(1);
 
             if (!existing || existing.length === 0) {
-              // Ajouter à purchases
+              // Ajouter à purchases (sans reference/external_reference qui n'existent pas dans la table actuelle)
               const { error: insertError } = await supabaseAdmin
                 .from("purchases")
                 .insert([{
                   user_id: user_id,
                   book_id: gp.book_id,
                   amount: gp.amount || 0,
-                  reference: gp.reference,
-                  external_reference: gp.external_reference,
                 }]);
 
               if (insertError) {
@@ -720,4 +728,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
- 
