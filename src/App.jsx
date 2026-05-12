@@ -14376,6 +14376,25 @@ export default function App() {
                   <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
                   <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
                   <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
+
+                  {/* 📱 BOUTON WHATSAPP : Recevoir le livre sur WhatsApp (marketing viral) */}
+                  <button onClick={() => {
+                    const slug = slugify(paymentBook.title || paymentBook.id);
+                    const bookUrl = "https://carrybooks.com/livre/" + slug;
+                    const message =
+                      "📖 J'ai acheté un livre sur CarryBooks !\n\n" +
+                      "✨ \"" + (paymentBook.title || "ce livre") + "\"\n" +
+                      "Une histoire à dévorer 💫\n\n" +
+                      "🔗 Découvre-le :\n" +
+                      bookUrl + "\n\n" +
+                      "📚 Plus de livres : https://carrybooks.com";
+                    const whatsappUrl = "https://wa.me/?text=" + encodeURIComponent(message);
+                    window.open(whatsappUrl, "_blank");
+                  }}
+                    style={{ width: "100%", padding: 14, background: "#25D366", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", fontSize: 14, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    📱 Recevoir le livre sur WhatsApp
+                  </button>
+
                   {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
@@ -16091,6 +16110,25 @@ export default function App() {
                 <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
                 <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
                 <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
+
+                {/* 📱 BOUTON WHATSAPP : Recevoir le livre sur WhatsApp (marketing viral) */}
+                <button onClick={() => {
+                  const slug = slugify(paymentBook.title || paymentBook.id);
+                  const bookUrl = "https://carrybooks.com/livre/" + slug;
+                  const message =
+                    "📖 J'ai acheté un livre sur CarryBooks !\n\n" +
+                    "✨ \"" + (paymentBook.title || "ce livre") + "\"\n" +
+                    "Une histoire à dévorer 💫\n\n" +
+                    "🔗 Découvre-le :\n" +
+                    bookUrl + "\n\n" +
+                    "📚 Plus de livres : https://carrybooks.com";
+                  const whatsappUrl = "https://wa.me/?text=" + encodeURIComponent(message);
+                  window.open(whatsappUrl, "_blank");
+                }}
+                  style={{ width: "100%", padding: 14, background: "#25D366", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", fontSize: 14, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  📱 Recevoir le livre sur WhatsApp
+                </button>
+
                 {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
@@ -16099,17 +16137,16 @@ export default function App() {
                     </button>
                     <button onClick={async () => {
                       try {
-                        const response = await fetch(paymentBook.pdf_url);
-                        if (!response.ok) throw new Error("Erreur téléchargement");
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = (paymentBook.title || "livre") + ".pdf";
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(url);
+                        // 🛡️ Télécharger avec watermark anti-piratage
+                        await downloadProtectedPDF(
+                          paymentBook.pdf_url,
+                          (paymentBook.title || "livre") + ".pdf",
+                          {
+                            name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                            email: user?.email || "",
+                            phone: phoneNumber || user?.user_metadata?.phone || "",
+                          }
+                        );
                       } catch (err) { alert("Erreur lors du téléchargement"); }
                     }}
                       style={{ flex: 1, padding: 14, background: "transparent", border: "2px solid " + G.gold, borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
