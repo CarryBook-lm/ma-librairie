@@ -12361,6 +12361,19 @@ export default function App() {
 
   // Synchroniser l'URL à chaque changement de page (pour partage et tracking)
   useEffect(() => {
+    // 🎯 PRÉSERVER les URLs de diagnostic CarryCare (pour pubs Facebook)
+    // Ne pas écraser /diagnostic-facial, /diagnostic-corporel, etc.
+    const currentPath = window.location.pathname.toLowerCase();
+    const diagnosticUrls = [
+      "/diagnostic-facial", "/diagnostic-visage",
+      "/diagnostic-corporel", "/diagnostic-corps",
+      "/diagnostic-capillaire", "/diagnostic-cheveux",
+      "/garde-la-ligne", "/diagnostic-ligne"
+    ];
+    if (page === "carrycare" && diagnosticUrls.includes(currentPath)) {
+      return; // On garde l'URL actuelle, ne pas écraser
+    }
+
     const newPath = buildPath(page, selectedBook);
     if (window.location.pathname !== newPath) {
       window.history.pushState({ page, bookId: selectedBook?.id }, "", newPath);
