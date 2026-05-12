@@ -194,10 +194,26 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // 4. Préparer les infos du client (avec fallbacks safe)
-    const clientName = String(clientInfo.name || "Client CarryBooks").substring(0, 50);
-    const clientEmail = String(clientInfo.email || "").substring(0, 60);
-    const clientPhone = String(clientInfo.phone || "").substring(0, 20);
+    // 4. Préparer les infos du client (avec fallbacks intelligents)
+    // Priorité : nom > email > téléphone > fallback générique
+    const rawPhone = String(clientInfo.phone || "").trim();
+    const rawEmail = String(clientInfo.email || "").trim();
+    const rawName = String(clientInfo.name || "").trim();
+
+    // Si pas de nom, on utilise email ou téléphone comme identité
+    let clientName;
+    if (rawName && rawName !== "Client CarryBooks") {
+      clientName = rawName.substring(0, 50);
+    } else if (rawEmail) {
+      clientName = rawEmail.split("@")[0].substring(0, 50);
+    } else if (rawPhone) {
+      clientName = rawPhone.substring(0, 20);
+    } else {
+      clientName = "Client CarryBooks";
+    }
+
+    const clientEmail = rawEmail.substring(0, 60);
+    const clientPhone = rawPhone.substring(0, 20);
     const purchaseDate = new Date().toLocaleDateString("fr-FR");
     const siteUrl = "https://carrybooks.com";
 
