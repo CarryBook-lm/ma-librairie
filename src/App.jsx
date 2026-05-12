@@ -1050,6 +1050,20 @@ const getSlugFromURL = () => {
 };
 
 const buildPath = (page, book) => {
+  // 🎯 PRÉSERVER les URLs de diagnostic CarryCare (pour pubs Facebook)
+  if (page === "carrycare" && typeof window !== "undefined") {
+    const currentPath = window.location.pathname.toLowerCase();
+    const diagnosticUrls = [
+      "/diagnostic-facial", "/diagnostic-visage",
+      "/diagnostic-corporel", "/diagnostic-corps",
+      "/diagnostic-capillaire", "/diagnostic-cheveux",
+      "/garde-la-ligne", "/diagnostic-ligne"
+    ];
+    if (diagnosticUrls.includes(currentPath)) {
+      return currentPath;
+    }
+  }
+
   const base = PAGE_TO_PATH[page] || "/";
   if ((page === "detail" || page === "reader") && book) {
     return `${base}/${slugify(book.title || book.id)}`;
