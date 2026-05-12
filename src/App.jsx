@@ -1039,6 +1039,16 @@ const getPageFromURL = () => {
   if (path.startsWith("/livre/")) return "detail";
   if (path.startsWith("/lecture/")) return "reader";
   if (path.startsWith("/mes-resultats/") && path.length > 16) return "myResultDetail";
+
+  // 🎯 URLs de diagnostic CarryCare (pour pubs Facebook)
+  const diagnosticUrls = [
+    "/diagnostic-facial", "/diagnostic-visage",
+    "/diagnostic-corporel", "/diagnostic-corps",
+    "/diagnostic-capillaire", "/diagnostic-cheveux",
+    "/garde-la-ligne", "/diagnostic-ligne"
+  ];
+  if (diagnosticUrls.includes(path.toLowerCase())) return "carrycare";
+
   return PATH_TO_PAGE[path] || "home";
 };
 
