@@ -544,6 +544,153 @@ export default async function handler(req, res) {
       });
     }
 
+    // ========== 🆕 ACTION : RECORD_GUEST_PURCHASE ==========
+    // Enregistre un achat fait SANS connexion (mode invité)
+    // Stocké avec le numéro de téléphone comme identifiant
+    // Permettra plus tard de récupérer les livres si le client crée un compte
+    if (action === "record_guest_purchase") {
+      const { phone, book_id, amount, reference, external_reference, type } = params;
+
+      if (!phone || !reference) {
+        return res.status(400).json({ error: "phone et reference requis" });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // Normaliser le téléphone (enlever espaces, garder + et chiffres)
+      const normalizedPhone = String(phone).replace(/\s+/g, "").trim();
+
+      // Vérifier si déjà enregistré (idempotence)
+      const { data: existing } = await supabaseAdmin
+        .from("guest_purchases")
+        .select("id")
+        .eq("reference", reference)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        return res.status(200).json({ success: true, message: "Déjà enregistré", id: existing[0].id });
+      }
+
+      // Insérer le nouvel achat invité
+      const { data, error } = await supabaseAdmin
+        .from("guest_purchases")
+        .insert([{
+          phone: normalizedPhone,
+          book_id: book_id || null,
+          amount: amount || 0,
+          reference: reference,
+          external_reference: external_reference || null,
+          type: type || "book",
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[GUEST_PURCHASE] Erreur insert:", error);
+        // 🛡️ On retourne SUCCESS quand même pour ne pas casser le flow de paiement
+        // L'achat est déjà dans CamPay + localStorage du client
+        return res.status(200).json({ success: false, error: error.message, non_blocking: true });
+      }
+
+      return res.status(200).json({ success: true, id: data.id });
+    }
+
+    // ========== 🆕 ACTION : RECOVER_GUEST_PURCHASES ==========
+    // Quand un client crée un compte ou se connecte, il peut entrer son
+    // numéro de téléphone pour récupérer ses achats invités précédents
+    if (action === "recover_guest_purchases") {
+      const { user_id, phone } = params;
+
+      if (!user_id || !phone) {
+        return res.status(400).json({ error: "user_id et phone requis" });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      const normalizedPhone = String(phone).replace(/\s+/g, "").trim();
+
+      // 1. Chercher tous les achats invités NON encore récupérés
+      const { data: guestPurchases, error: fetchError } = await supabaseAdmin
+        .from("guest_purchases")
+        .select("*")
+        .eq("phone", normalizedPhone)
+        .is("recovered_by_user_id", null);
+
+      if (fetchError) {
+        console.error("[RECOVER_GUEST] Error:", fetchError);
+        return res.status(200).json({ recovered: [], error: fetchError.message });
+      }
+
+      if (!guestPurchases || guestPurchases.length === 0) {
+        return res.status(200).json({ recovered: [], message: "Aucun achat trouvé pour ce numéro" });
+      }
+
+      const recovered = [];
+      const errors = [];
+
+      // 2. Pour chaque achat invité, créer une entrée dans 'purchases'
+      for (const gp of guestPurchases) {
+        try {
+          if (gp.type === "book" && gp.book_id) {
+            // Vérifier si l'utilisateur a déjà ce livre
+            const { data: existing } = await supabaseAdmin
+              .from("purchases")
+              .select("id")
+              .eq("user_id", user_id)
+              .eq("book_id", gp.book_id)
+              .limit(1);
+
+            if (!existing || existing.length === 0) {
+              // Ajouter à purchases
+              const { error: insertError } = await supabaseAdmin
+                .from("purchases")
+                .insert([{
+                  user_id: user_id,
+                  book_id: gp.book_id,
+                  amount: gp.amount || 0,
+                  reference: gp.reference,
+                  external_reference: gp.external_reference,
+                }]);
+
+              if (insertError) {
+                errors.push({ ref: gp.reference, error: insertError.message });
+                continue;
+              }
+            }
+
+            recovered.push({ book_id: gp.book_id, reference: gp.reference });
+          }
+
+          // Marquer comme récupéré
+          await supabaseAdmin
+            .from("guest_purchases")
+            .update({
+              recovered_by_user_id: user_id,
+              recovered_at: new Date().toISOString(),
+            })
+            .eq("id", gp.id);
+
+        } catch (err) {
+          errors.push({ ref: gp.reference, error: err.message });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        recovered,
+        errors,
+        total: guestPurchases.length,
+      });
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);
