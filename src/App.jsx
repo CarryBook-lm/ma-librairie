@@ -271,21 +271,33 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
         color: rgb(0.55, 0.55, 0.55),
       });
 
-      // 🔻 EN BAS DROITE : Lien CLIQUABLE invitation marketing (doré)
-      const linkText = "Telechargez plus de livres sur www.carrybooks.com";
+      // 🔻 EN BAS DROITE : "Plus de livre sur" (noir) + "carrybooks.com" (bleu CLIQUABLE)
+      const prefixText = "Plus de livres sur ";
+      const linkText = "carrybooks.com";
       const linkSize = 8;
+      const prefixWidth = helveticaFont.widthOfTextAtSize(prefixText, linkSize);
       const linkWidth = helveticaBold.widthOfTextAtSize(linkText, linkSize);
-      const linkX = width - linkWidth - 20;
+      const totalWidth = prefixWidth + linkWidth;
+      const startX = width - totalWidth - 20;
+      const linkX = startX + prefixWidth;
       const linkY = 12;
-      // Dessiner le texte
+      // Dessiner "Plus de livre sur " en noir
+      page.drawText(prefixText, {
+        x: startX,
+        y: linkY,
+        size: linkSize,
+        font: helveticaFont,
+        color: rgb(0.15, 0.15, 0.15), // Noir
+      });
+      // Dessiner "carrybooks.com" en bleu (style lien)
       page.drawText(linkText, {
         x: linkX,
         y: linkY,
         size: linkSize,
         font: helveticaBold,
-        color: rgb(0.788, 0.584, 0.165), // #c9952a (doré CarryBooks)
+        color: rgb(0.10, 0.36, 0.74), // Bleu lien classique
       });
-      // Ajouter une annotation cliquable
+      // Ajouter une annotation cliquable UNIQUEMENT sur "carrybooks.com"
       try {
         const linkAnnotation = pdfDoc.context.register(
           pdfDoc.context.obj({
