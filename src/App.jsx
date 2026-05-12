@@ -2211,7 +2211,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
               border: "1px dashed " + G.gold, borderRadius: 8, color: G.gold,
               fontSize: 12, cursor: "pointer", textAlign: "left"
             }}>
-            💡 As-tu perdu tes livres ? <span style={{ fontWeight: "bold", textDecoration: "underline" }}>Les récupérer</span>
+            💡 As-tu perdu tes livres ? <span style={{ fontWeight: "bold", textDecoration: "underline" }}>Récupère les ici</span>
           </button>
         </div>
       )}
