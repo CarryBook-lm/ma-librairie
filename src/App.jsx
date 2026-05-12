@@ -14379,7 +14379,7 @@ export default function App() {
           <button
             onClick={() => startReading(book)}
             style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : "💳 Acheter — " + book.price?.toLocaleString() + " FCFA"}
+            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.pdf_url ? "📥 Télécharger — " : "💳 Acheter — ") + book.price?.toLocaleString() + " FCFA"}
           </button>
 
           {/* BOUTON TÉLÉCHARGER LE PDF (si owned/free + can_download + pdf_url) */}
