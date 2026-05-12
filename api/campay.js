@@ -617,11 +617,34 @@ export default async function handler(req, res) {
 
       const normalizedPhone = String(phone).replace(/\s+/g, "").trim();
 
-      // 1. Chercher tous les achats invités NON encore récupérés
+      // 🎯 Générer toutes les variantes possibles du numéro pour matcher
+      // Cameroun : numéro local 6XX XXX XXX OU avec préfixe 237 ou +237
+      const phoneCandidates = new Set();
+      phoneCandidates.add(normalizedPhone);
+
+      // Enlever + en début si présent
+      const noPlus = normalizedPhone.replace(/^\+/, "");
+      phoneCandidates.add(noPlus);
+
+      // Enlever 237 en début si présent
+      if (noPlus.startsWith("237")) {
+        phoneCandidates.add(noPlus.substring(3));
+      }
+
+      // Ajouter 237 en début si pas présent (et longueur correspond à un numéro local)
+      if (!noPlus.startsWith("237") && noPlus.length >= 8 && noPlus.length <= 10) {
+        phoneCandidates.add("237" + noPlus);
+        phoneCandidates.add("+237" + noPlus);
+      }
+
+      // Convertir en array pour la requête
+      const phoneArray = Array.from(phoneCandidates);
+
+      // 1. Chercher tous les achats invités NON encore récupérés avec n'importe quel format
       const { data: guestPurchases, error: fetchError } = await supabaseAdmin
         .from("guest_purchases")
         .select("*")
-        .eq("phone", normalizedPhone)
+        .in("phone", phoneArray)
         .is("recovered_by_user_id", null);
 
       if (fetchError) {
