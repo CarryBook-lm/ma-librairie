@@ -2591,6 +2591,8 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
     setBfResult(null);
     setCarryCarePage("facialQuiz");
+    // 🎯 Changer l'URL dans la barre pour pouvoir la copier
+    window.history.pushState({}, "", "/diagnostic-facial");
   }
 
   function startBody() {
@@ -2600,12 +2602,16 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     setBbLifestyle({ age: null, sun: null, scrub: null });
     setBbResult(null);
     setCarryCarePage("bodyQuiz");
+    // 🎯 Changer l'URL dans la barre pour pouvoir la copier
+    window.history.pushState({}, "", "/diagnostic-corporel");
   }
 
   function startLine() {
     setLgStep(0);
     setLgData({ genre: null, objectif: null, kg: 0, poids: 0, taille: 0, age: 0, activite: null, repas: null, eau: null, sucre: null, blocages: [], sommeil: null, stress: null });
     setCarryCarePage("lineQuiz");
+    // 🎯 Changer l'URL dans la barre pour pouvoir la copier
+    window.history.pushState({}, "", "/garde-la-ligne");
   }
 
   function startHair() {
@@ -2621,6 +2627,8 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     setCapBudget(null);
     setCapResult(null);
     setCarryCarePage("hairQuiz");
+    // 🎯 Changer l'URL dans la barre pour pouvoir la copier
+    window.history.pushState({}, "", "/diagnostic-capillaire");
   }
 
   const quizCards = [
