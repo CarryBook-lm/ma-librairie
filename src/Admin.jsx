@@ -512,7 +512,7 @@ export default function Admin() {
         book_id: g.book_id,
         created_at: g.created_at,
         amount: g.amount,
-        type: g.type || "guest"
+        type: "sale"
       })))
     ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
