@@ -378,15 +378,39 @@ export default function Admin() {
   }
 
   async function fetchStats() {
+    // Ventes des utilisateurs connectés
     const { data: purchases } = await supabase.from("purchases").select("amount, book_id, created_at");
     const { data: users } = await supabase.from("purchases").select("user_id");
+
+    // 🎯 Ventes invités (sans compte)
+    const { data: guestPurchases } = await supabase.from("guest_purchases").select("amount, book_id, phone, created_at");
+
     if (purchases) {
-      const total = purchases.reduce((s, p) => s + (p.amount || 0), 0);
+      // Combiner les revenus des 2 sources
+      const totalPurchases = purchases.reduce((s, p) => s + (p.amount || 0), 0);
+      const totalGuests = guestPurchases ? guestPurchases.reduce((s, p) => s + (p.amount || 0), 0) : 0;
+      const total = totalPurchases + totalGuests;
+
       const uniqueUsers = users ? new Set(users.map(u => u.user_id)).size : 0;
+      const uniqueGuests = guestPurchases ? new Set(guestPurchases.map(g => g.phone)).size : 0;
+
       const bookCount = {};
       purchases.forEach(p => { bookCount[p.book_id] = (bookCount[p.book_id] || 0) + 1; });
+      if (guestPurchases) {
+        guestPurchases.forEach(g => { bookCount[g.book_id] = (bookCount[g.book_id] || 0) + 1; });
+      }
       const topBooks = Object.entries(bookCount).sort((a,b) => b[1]-a[1]).slice(0,5).map(([id, count]) => ({ id: parseInt(id), count }));
-      setStats({ totalRevenue: total, totalPurchases: purchases.length, totalUsers: uniqueUsers, topBooks });
+
+      const totalCount = purchases.length + (guestPurchases ? guestPurchases.length : 0);
+
+      setStats({
+        totalRevenue: total,
+        totalPurchases: totalCount,
+        totalUsers: uniqueUsers + uniqueGuests,
+        topBooks,
+        guestRevenue: totalGuests,
+        guestCount: guestPurchases ? guestPurchases.length : 0
+      });
     }
   }
 
@@ -472,8 +496,27 @@ export default function Admin() {
       .select("user_id, book_id, created_at, amount, type")
       .order("created_at", { ascending: false });
     if (error) { console.error("Purchases error:", error); }
-    if (data) setUsers(data);
-    else setUsers([]);
+
+    // 🎯 Ajouter les achats invités
+    const { data: guestData, error: guestError } = await supabase
+      .from("guest_purchases")
+      .select("phone, book_id, created_at, amount, type, recovered_by_user_id")
+      .order("created_at", { ascending: false });
+    if (guestError) { console.error("Guest purchases error:", guestError); }
+
+    // Combiner les 2 (marquer les invités avec phone au lieu de user_id)
+    const combined = [
+      ...(data || []),
+      ...((guestData || []).map(g => ({
+        user_id: "📱 " + g.phone + (g.recovered_by_user_id ? " (récupéré)" : " (invité)"),
+        book_id: g.book_id,
+        created_at: g.created_at,
+        amount: g.amount,
+        type: g.type || "guest"
+      })))
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    setUsers(combined);
   }
 
   async function handleImageUpload(e) {
