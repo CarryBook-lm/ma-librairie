@@ -1903,7 +1903,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
             <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
             <input value={quizPhone} onChange={e => setQuizPhone(e.target.value.replace(/[^0-9]/g,""))}
               placeholder="6XXXXXXXX"
-              style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "left", boxSizing: "border-box" }} />
             {error && <div style={{ color: "#f44336", fontSize: 12, marginBottom: 8, textAlign: "center" }}>{error}</div>}
             <button onClick={handlePay} disabled={loading || !quizPhone || quizPhone.length < 8}
               style={{ width: "100%", padding: 14, background: (quizPhone && quizPhone.length >= 8 && !loading) ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: (quizPhone && quizPhone.length >= 8 && !loading) ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
@@ -15457,7 +15457,7 @@ export default function App() {
                   <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
                   <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                     placeholder="6XXXXXXXX"
-                    style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
+                    style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "left", boxSizing: "border-box" }} />
                   <button onClick={handlePurchase} disabled={!phoneNumber || phoneNumber.length < 8}
                     style={{ width: "100%", padding: 14, background: phoneNumber && phoneNumber.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: phoneNumber && phoneNumber.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
                     💎 Payer {paymentBook.price?.toLocaleString()} FCFA
@@ -17087,7 +17087,7 @@ export default function App() {
                 <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
                 <input value={subPhone} onChange={e => setSubPhone(e.target.value)}
                   placeholder="6XXXXXXXX"
-                  style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "left", boxSizing: "border-box" }} />
                 <button onClick={handleSubscribe} disabled={!subPhone || subPhone.length < 8}
                   style={{ width: "100%", padding: 14, background: subPhone && subPhone.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: subPhone && subPhone.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
                   💎 Payer {(subPlan === "annuel" ? subSettings.annual_price : subSettings.monthly_price)?.toLocaleString()} FCFA
@@ -17200,7 +17200,7 @@ export default function App() {
                 <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
                 <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
                   placeholder="6XXXXXXXX"
-                  style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "center", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "left", boxSizing: "border-box" }} />
                 <button onClick={handlePurchase} disabled={!phoneNumber || phoneNumber.length < 8}
                   style={{ width: "100%", padding: 14, background: phoneNumber && phoneNumber.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: phoneNumber && phoneNumber.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
                   💎 Payer {paymentBook.price?.toLocaleString()} FCFA
