@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">CarryBooks</string>
     <string name="title_activity_main">CarryBooks</string>
-    <string name="package_name">com.carrybook.librairie</string>
-    <string name="custom_url_scheme">com.carrybook.librairie</string>
+    <string name="package_name">com.carrybooks.bibliotheque</string>
+    <string name="custom_url_scheme">com.carrybooks.bibliotheque</string>
 </resources>

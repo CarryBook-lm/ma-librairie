@@ -6,7 +6,10 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-const CATEGORIES = {
+// CATEGORIES est maintenant chargé dynamiquement depuis Supabase
+// Voir state CATEGORIES dans le composant Admin
+// Fallback minimal si Supabase n'a pas encore répondu
+const CATEGORIES_FALLBACK = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
   "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces", "Guide pratique"],
   "Développement personnel": ["Confiance en soi", "Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
@@ -93,6 +96,20 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ===== GESTION DES CATÉGORIES (chargées depuis Supabase) =====
+  const [CATEGORIES, setCATEGORIES] = useState(CATEGORIES_FALLBACK);
+  const [categoriesRaw, setCategoriesRaw] = useState([]); // [{id, name, display_order}]
+  const [subcategoriesRaw, setSubcategoriesRaw] = useState([]); // [{id, category_id, name, display_order}]
+  const [catLoading, setCatLoading] = useState(false);
+  const [catSaving, setCatSaving] = useState(false);
+  const [catMessage, setCatMessage] = useState({ type: "", text: "" });
+  const [newCatName, setNewCatName] = useState("");
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [editingCatName, setEditingCatName] = useState("");
+  const [newSubName, setNewSubName] = useState({}); // { categoryId: "nom de la nouvelle sous-cat" }
+  const [editingSubId, setEditingSubId] = useState(null);
+  const [editingSubName, setEditingSubName] = useState("");
+
   // ===== AUTH ADMIN : useEffect (DOIT être AVANT tout early return) =====
   useEffect(() => {
     checkAdminAccess();
@@ -101,7 +118,7 @@ export default function Admin() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); }, []);
 
   // Auto-refresh des données de présence toutes les 10 secondes
   useEffect(() => {
@@ -110,6 +127,213 @@ export default function Admin() {
     }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // ===== GESTION DES CATÉGORIES : Fonctions =====
+  async function fetchCategories() {
+    setCatLoading(true);
+    try {
+      const { data: cats, error: e1 } = await supabase
+        .from('categories')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (e1) throw e1;
+      const { data: subs, error: e2 } = await supabase
+        .from('subcategories')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (e2) throw e2;
+      setCategoriesRaw(cats || []);
+      setSubcategoriesRaw(subs || []);
+      // Reconstruction de l'objet CATEGORIES { "Nom cat": ["sous1", "sous2", ...] }
+      const obj = {};
+      (cats || []).forEach(c => {
+        obj[c.name] = (subs || [])
+          .filter(s => s.category_id === c.id)
+          .map(s => s.name);
+      });
+      if (Object.keys(obj).length > 0) {
+        setCATEGORIES(obj);
+      }
+    } catch (err) {
+      console.error('Erreur fetchCategories:', err);
+      setCatMessage({ type: 'error', text: 'Erreur de chargement des catégories' });
+    }
+    setCatLoading(false);
+  }
+
+  async function addCategory() {
+    if (!newCatName.trim()) {
+      setCatMessage({ type: 'error', text: 'Le nom est requis' });
+      return;
+    }
+    setCatSaving(true);
+    setCatMessage({ type: '', text: '' });
+    const maxOrder = categoriesRaw.length > 0
+      ? Math.max(...categoriesRaw.map(c => c.display_order))
+      : 0;
+    const { error } = await supabase
+      .from('categories')
+      .insert({ name: newCatName.trim(), display_order: maxOrder + 1 });
+    setCatSaving(false);
+    if (error) {
+      setCatMessage({ type: 'error', text: error.message.includes('duplicate') ? 'Cette catégorie existe déjà' : error.message });
+      return;
+    }
+    setNewCatName('');
+    setCatMessage({ type: 'success', text: 'Catégorie ajoutée ✅' });
+    await fetchCategories();
+  }
+
+  async function updateCategoryName(id, newName) {
+    if (!newName.trim()) {
+      setCatMessage({ type: 'error', text: 'Le nom ne peut pas être vide' });
+      return;
+    }
+    setCatSaving(true);
+    setCatMessage({ type: '', text: '' });
+    // Ancien nom pour mettre à jour les livres
+    const oldCat = categoriesRaw.find(c => c.id === id);
+    const oldName = oldCat ? oldCat.name : null;
+    const { error } = await supabase
+      .from('categories')
+      .update({ name: newName.trim(), updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) {
+      setCatSaving(false);
+      setCatMessage({ type: 'error', text: error.message.includes('duplicate') ? 'Ce nom existe déjà' : error.message });
+      return;
+    }
+    // Met à jour les livres qui utilisent cette catégorie
+    if (oldName && oldName !== newName.trim()) {
+      await supabase.from('books').update({ category: newName.trim() }).eq('category', oldName);
+    }
+    setCatSaving(false);
+    setEditingCatId(null);
+    setEditingCatName('');
+    setCatMessage({ type: 'success', text: 'Catégorie renommée ✅' });
+    await fetchCategories();
+  }
+
+  async function deleteCategory(id, name) {
+    // Vérifier si des livres utilisent cette catégorie
+    const { count, error: countErr } = await supabase
+      .from('books')
+      .select('*', { count: 'exact', head: true })
+      .eq('category', name);
+    if (countErr) {
+      setCatMessage({ type: 'error', text: countErr.message });
+      return;
+    }
+    let confirmMsg = `Supprimer la catégorie "${name}" ?`;
+    if (count > 0) {
+      confirmMsg = `⚠️ ATTENTION : ${count} livre(s) utilisent cette catégorie.\n\nSi tu supprimes "${name}", ces livres n'auront plus de catégorie.\n\nContinuer quand même ?`;
+    }
+    if (!window.confirm(confirmMsg)) return;
+    setCatSaving(true);
+    setCatMessage({ type: '', text: '' });
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    setCatSaving(false);
+    if (error) {
+      setCatMessage({ type: 'error', text: error.message });
+      return;
+    }
+    setCatMessage({ type: 'success', text: `Catégorie "${name}" supprimée ✅` });
+    await fetchCategories();
+  }
+
+  async function moveCategory(id, direction) {
+    const idx = categoriesRaw.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= categoriesRaw.length) return;
+    const current = categoriesRaw[idx];
+    const target = categoriesRaw[targetIdx];
+    setCatSaving(true);
+    await supabase.from('categories').update({ display_order: target.display_order }).eq('id', current.id);
+    await supabase.from('categories').update({ display_order: current.display_order }).eq('id', target.id);
+    setCatSaving(false);
+    await fetchCategories();
+  }
+
+  async function addSubcategory(categoryId) {
+    const name = (newSubName[categoryId] || '').trim();
+    if (!name) {
+      setCatMessage({ type: 'error', text: 'Le nom de la sous-catégorie est requis' });
+      return;
+    }
+    setCatSaving(true);
+    setCatMessage({ type: '', text: '' });
+    const subsOfCat = subcategoriesRaw.filter(s => s.category_id === categoryId);
+    const maxOrder = subsOfCat.length > 0
+      ? Math.max(...subsOfCat.map(s => s.display_order))
+      : 0;
+    const { error } = await supabase
+      .from('subcategories')
+      .insert({ category_id: categoryId, name, display_order: maxOrder + 1 });
+    setCatSaving(false);
+    if (error) {
+      setCatMessage({ type: 'error', text: error.message.includes('duplicate') ? 'Cette sous-catégorie existe déjà' : error.message });
+      return;
+    }
+    setNewSubName(s => ({ ...s, [categoryId]: '' }));
+    setCatMessage({ type: 'success', text: 'Sous-catégorie ajoutée ✅' });
+    await fetchCategories();
+  }
+
+  async function updateSubcategoryName(id, newName) {
+    if (!newName.trim()) {
+      setCatMessage({ type: 'error', text: 'Le nom ne peut pas être vide' });
+      return;
+    }
+    setCatSaving(true);
+    setCatMessage({ type: '', text: '' });
+    const oldSub = subcategoriesRaw.find(s => s.id === id);
+    const oldName = oldSub ? oldSub.name : null;
+    const { error } = await supabase
+      .from('subcategories')
+      .update({ name: newName.trim(), updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) {
+      setCatSaving(false);
+      setCatMessage({ type: 'error', text: error.message.includes('duplicate') ? 'Ce nom existe déjà dans cette catégorie' : error.message });
+      return;
+    }
+    // Met à jour les livres
+    if (oldName && oldName !== newName.trim()) {
+      await supabase.from('books').update({ subcategory: newName.trim() }).eq('subcategory', oldName);
+    }
+    setCatSaving(false);
+    setEditingSubId(null);
+    setEditingSubName('');
+    setCatMessage({ type: 'success', text: 'Sous-catégorie renommée ✅' });
+    await fetchCategories();
+  }
+
+  async function deleteSubcategory(id, name) {
+    const { count, error: countErr } = await supabase
+      .from('books')
+      .select('*', { count: 'exact', head: true })
+      .eq('subcategory', name);
+    if (countErr) {
+      setCatMessage({ type: 'error', text: countErr.message });
+      return;
+    }
+    let confirmMsg = `Supprimer la sous-catégorie "${name}" ?`;
+    if (count > 0) {
+      confirmMsg = `⚠️ ATTENTION : ${count} livre(s) utilisent cette sous-catégorie.\n\nContinuer quand même ?`;
+    }
+    if (!window.confirm(confirmMsg)) return;
+    setCatSaving(true);
+    setCatMessage({ type: '', text: '' });
+    const { error } = await supabase.from('subcategories').delete().eq('id', id);
+    setCatSaving(false);
+    if (error) {
+      setCatMessage({ type: 'error', text: error.message });
+      return;
+    }
+    setCatMessage({ type: 'success', text: `Sous-catégorie "${name}" supprimée ✅` });
+    await fetchCategories();
+  }
 
   // ===== AUTH ADMIN : Fonctions + early returns (APRÈS tous les hooks) =====
   async function checkAdminAccess() {
@@ -723,6 +947,7 @@ export default function Admin() {
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Livres", icon: "📚" },
+            { id: "categories", label: "Catégories", icon: "🗂️" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
@@ -985,6 +1210,248 @@ export default function Admin() {
             </div>
           </div>
         )}
+        {view === "categories" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>🗂️ Gestion des catégories</h1>
+              <button onClick={fetchCategories} disabled={catLoading} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
+                {catLoading ? "⏳ Chargement..." : "🔄 Actualiser"}
+              </button>
+            </div>
+
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+              Ajoute, renomme, supprime ou réorganise tes catégories. Les modifications s'appliquent immédiatement à toute l'app.
+              <br/>⚠️ Si tu renommes une catégorie, tous les livres associés seront automatiquement mis à jour.
+            </p>
+
+            {/* MESSAGE */}
+            {catMessage.text && (
+              <div style={{
+                padding: "10px 14px", borderRadius: 6, marginBottom: 16,
+                background: catMessage.type === "success" ? "#1a3a1a" : "#3a1a1a",
+                color: catMessage.type === "success" ? "#4ade80" : "#f87171",
+                border: "1px solid " + (catMessage.type === "success" ? "#22c55e" : "#ef4444"),
+                fontSize: 13
+              }}>
+                {catMessage.text}
+              </div>
+            )}
+
+            {/* FORMULAIRE D'AJOUT DE CATÉGORIE */}
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <h3 style={{ color: "#c9a84c", fontSize: 14, marginBottom: 10 }}>➕ Nouvelle catégorie</h3>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addCategory(); }}
+                  placeholder="Ex: Spiritualité, Cuisine, Sport..."
+                  style={{
+                    flex: 1, minWidth: 200, padding: "10px 12px",
+                    background: "#0a0a0a", border: "1px solid #2a2a2a",
+                    borderRadius: 6, color: "#fff", fontSize: 14
+                  }}
+                />
+                <button
+                  onClick={addCategory}
+                  disabled={catSaving || !newCatName.trim()}
+                  style={{
+                    padding: "10px 20px",
+                    background: catSaving || !newCatName.trim() ? "#333" : "#c9a84c",
+                    color: catSaving || !newCatName.trim() ? "#666" : "#000",
+                    border: "none", borderRadius: 6, fontSize: 14, fontWeight: 600,
+                    cursor: catSaving || !newCatName.trim() ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {catSaving ? "⏳" : "Ajouter"}
+                </button>
+              </div>
+            </div>
+
+            {/* LISTE DES CATÉGORIES */}
+            {catLoading && categoriesRaw.length === 0 ? (
+              <div style={{ color: "#888", textAlign: "center", padding: 40 }}>⏳ Chargement...</div>
+            ) : categoriesRaw.length === 0 ? (
+              <div style={{ color: "#888", textAlign: "center", padding: 40 }}>Aucune catégorie. Ajoute-en une ci-dessus.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {categoriesRaw.map((cat, idx) => {
+                  const subs = subcategoriesRaw.filter(s => s.category_id === cat.id);
+                  return (
+                    <div key={cat.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
+                      {/* En-tête catégorie */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                        {/* Boutons d'ordre */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <button
+                            onClick={() => moveCategory(cat.id, 'up')}
+                            disabled={idx === 0 || catSaving}
+                            title="Monter"
+                            style={{
+                              width: 24, height: 18, padding: 0,
+                              background: idx === 0 ? "#1a1a1a" : "#2a2a2a",
+                              border: "1px solid #333", borderRadius: 4,
+                              color: idx === 0 ? "#444" : "#c9a84c",
+                              cursor: idx === 0 ? "not-allowed" : "pointer",
+                              fontSize: 10
+                            }}
+                          >▲</button>
+                          <button
+                            onClick={() => moveCategory(cat.id, 'down')}
+                            disabled={idx === categoriesRaw.length - 1 || catSaving}
+                            title="Descendre"
+                            style={{
+                              width: 24, height: 18, padding: 0,
+                              background: idx === categoriesRaw.length - 1 ? "#1a1a1a" : "#2a2a2a",
+                              border: "1px solid #333", borderRadius: 4,
+                              color: idx === categoriesRaw.length - 1 ? "#444" : "#c9a84c",
+                              cursor: idx === categoriesRaw.length - 1 ? "not-allowed" : "pointer",
+                              fontSize: 10
+                            }}
+                          >▼</button>
+                        </div>
+
+                        {/* Nom ou édition */}
+                        {editingCatId === cat.id ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editingCatName}
+                              onChange={e => setEditingCatName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') updateCategoryName(cat.id, editingCatName);
+                                if (e.key === 'Escape') { setEditingCatId(null); setEditingCatName(''); }
+                              }}
+                              autoFocus
+                              style={{
+                                flex: 1, minWidth: 150, padding: "6px 10px",
+                                background: "#0a0a0a", border: "1px solid #c9a84c",
+                                borderRadius: 6, color: "#fff", fontSize: 15, fontWeight: 600
+                              }}
+                            />
+                            <button
+                              onClick={() => updateCategoryName(cat.id, editingCatName)}
+                              disabled={catSaving}
+                              style={{ padding: "6px 12px", background: "#22c55e", color: "#000", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                            >✓ OK</button>
+                            <button
+                              onClick={() => { setEditingCatId(null); setEditingCatName(''); }}
+                              style={{ padding: "6px 12px", background: "#444", color: "#fff", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                            >✗</button>
+                          </>
+                        ) : (
+                          <>
+                            <h2 style={{ flex: 1, color: "#c9a84c", fontSize: 16, fontWeight: 600, margin: 0 }}>
+                              {cat.name}
+                              <span style={{ color: "#666", fontSize: 12, fontWeight: 400, marginLeft: 8 }}>
+                                ({subs.length} sous-cat.)
+                              </span>
+                            </h2>
+                            <button
+                              onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); }}
+                              style={{ padding: "6px 10px", background: "#2a2a2a", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                            >✏️ Renommer</button>
+                            <button
+                              onClick={() => deleteCategory(cat.id, cat.name)}
+                              disabled={catSaving}
+                              style={{ padding: "6px 10px", background: "#3a1a1a", color: "#f87171", border: "1px solid #ef4444", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                            >🗑️ Supprimer</button>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Sous-catégories */}
+                      <div style={{ marginLeft: 32, marginTop: 8 }}>
+                        {subs.length === 0 && (
+                          <div style={{ color: "#666", fontSize: 12, fontStyle: "italic", marginBottom: 10 }}>
+                            Aucune sous-catégorie
+                          </div>
+                        )}
+                        {subs.map(sub => (
+                          <div key={sub.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 0", flexWrap: "wrap" }}>
+                            <span style={{ color: "#666", fontSize: 12 }}>└─</span>
+                            {editingSubId === sub.id ? (
+                              <>
+                                <input
+                                  type="text"
+                                  value={editingSubName}
+                                  onChange={e => setEditingSubName(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') updateSubcategoryName(sub.id, editingSubName);
+                                    if (e.key === 'Escape') { setEditingSubId(null); setEditingSubName(''); }
+                                  }}
+                                  autoFocus
+                                  style={{
+                                    flex: 1, minWidth: 120, padding: "4px 8px",
+                                    background: "#0a0a0a", border: "1px solid #c9a84c",
+                                    borderRadius: 4, color: "#fff", fontSize: 13
+                                  }}
+                                />
+                                <button
+                                  onClick={() => updateSubcategoryName(sub.id, editingSubName)}
+                                  disabled={catSaving}
+                                  style={{ padding: "4px 8px", background: "#22c55e", color: "#000", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                                >✓</button>
+                                <button
+                                  onClick={() => { setEditingSubId(null); setEditingSubName(''); }}
+                                  style={{ padding: "4px 8px", background: "#444", color: "#fff", border: "none", borderRadius: 4, fontSize: 11, cursor: "pointer" }}
+                                >✗</button>
+                              </>
+                            ) : (
+                              <>
+                                <span style={{ flex: 1, color: "#ddd", fontSize: 13 }}>{sub.name}</span>
+                                <button
+                                  onClick={() => { setEditingSubId(sub.id); setEditingSubName(sub.name); }}
+                                  style={{ padding: "3px 8px", background: "transparent", color: "#888", border: "1px solid #333", borderRadius: 4, fontSize: 11, cursor: "pointer" }}
+                                >✏️</button>
+                                <button
+                                  onClick={() => deleteSubcategory(sub.id, sub.name)}
+                                  disabled={catSaving}
+                                  style={{ padding: "3px 8px", background: "transparent", color: "#f87171", border: "1px solid #553333", borderRadius: 4, fontSize: 11, cursor: "pointer" }}
+                                >🗑️</button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Ajout sous-catégorie */}
+                        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                          <input
+                            type="text"
+                            value={newSubName[cat.id] || ''}
+                            onChange={e => setNewSubName(s => ({ ...s, [cat.id]: e.target.value }))}
+                            onKeyDown={e => { if (e.key === 'Enter') addSubcategory(cat.id); }}
+                            placeholder="+ Nouvelle sous-catégorie..."
+                            style={{
+                              flex: 1, minWidth: 150, padding: "6px 10px",
+                              background: "#0a0a0a", border: "1px solid #2a2a2a",
+                              borderRadius: 4, color: "#fff", fontSize: 12
+                            }}
+                          />
+                          <button
+                            onClick={() => addSubcategory(cat.id)}
+                            disabled={catSaving || !(newSubName[cat.id] || '').trim()}
+                            style={{
+                              padding: "6px 14px",
+                              background: catSaving || !(newSubName[cat.id] || '').trim() ? "#333" : "#c9a84c",
+                              color: catSaving || !(newSubName[cat.id] || '').trim() ? "#666" : "#000",
+                              border: "none", borderRadius: 4, fontSize: 12, fontWeight: 600,
+                              cursor: catSaving || !(newSubName[cat.id] || '').trim() ? "not-allowed" : "pointer"
+                            }}
+                          >
+                            ➕ Ajouter
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {view === "users" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>

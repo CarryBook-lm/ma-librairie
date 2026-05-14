@@ -1,1 +1,32 @@
-{"appId":"com.carrybook.librairie","appName":"CarryBooks","webDir":"dist"} 
+{
+  "appId": "com.carrybooks.bibliotheque",
+  "appName": "CarryBooks",
+  "webDir": "dist",
+  "server": {
+    "url": "https://carrybooks.com",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": [
+      "*.carrybooks.com",
+      "carrybooks.com",
+      "*.supabase.co",
+      "*.supabase.com",
+      "accounts.google.com",
+      "*.googleusercontent.com",
+      "*.google.com",
+      "*.gstatic.com",
+      "*.googleapis.com",
+      "*.campay.net",
+      "campay.net",
+      "*.monetbil.com",
+      "monetbil.com",
+      "*.imgbb.com",
+      "imgbb.com",
+      "i.ibb.co"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}
