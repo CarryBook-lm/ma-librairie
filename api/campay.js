@@ -722,6 +722,94 @@ export default async function handler(req, res) {
       });
     }
 
+    // ========== ACTION : RECORD_PAPER_ORDER (Module POD) ==========
+    if (action === "record_paper_order") {
+      const {
+        reference,
+        order_data,
+        external_reference
+      } = params;
+
+      // 1) Vérifier que le paiement est bien confirmé par CamPay
+      const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
+      const verifyRes = await fetch(verifyUrl, {
+        headers: { Authorization: "Token " + CAMPAY_TOKEN },
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.status !== "SUCCESSFUL") {
+        return res.status(400).json({
+          error: "Paiement non confirmé par CamPay",
+          status: verifyData.status,
+        });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // 2) Vérifier qu'on n'a pas déjà enregistré cette commande (anti-doublon)
+      if (order_data && order_data.order_ref) {
+        const { data: existing } = await supabaseAdmin
+          .from("paper_orders")
+          .select("id, order_ref")
+          .eq("order_ref", order_data.order_ref)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          return res.status(200).json({
+            success: true,
+            message: "Commande déjà enregistrée",
+            order_id: existing[0].id,
+            order_ref: existing[0].order_ref,
+            duplicate: true,
+          });
+        }
+      }
+
+      // 3) Insérer la commande avec statut "paye"
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from("paper_orders")
+        .insert([{
+          order_ref: order_data.order_ref,
+          user_id: order_data.user_id || null,
+          guest_email: order_data.guest_email || null,
+          items: order_data.items || [],
+          subtotal: order_data.subtotal || 0,
+          shipping_fee: order_data.shipping_fee || 0,
+          discount: order_data.discount || 0,
+          total_amount: order_data.total_amount || 0,
+          customer_name: order_data.customer_name,
+          customer_phone: order_data.customer_phone,
+          customer_email: order_data.customer_email || null,
+          shipping_city: order_data.shipping_city,
+          shipping_zone_id: order_data.shipping_zone_id || null,
+          shipping_address: order_data.shipping_address || null,
+          shipping_agency: order_data.shipping_agency || null,
+          shipping_notes: order_data.shipping_notes || null,
+          status: "paye",
+          payment_method: order_data.payment_method,
+          payment_reference: reference,
+          paid_at: new Date().toISOString(),
+        }])
+        .select();
+
+      if (insertError) {
+        console.error("[RECORD_PAPER_ORDER] Insert error:", insertError);
+        return res.status(500).json({
+          error: "Erreur enregistrement commande papier",
+          details: insertError.message,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        order: inserted[0],
+      });
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);

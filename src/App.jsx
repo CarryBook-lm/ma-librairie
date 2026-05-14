@@ -12191,6 +12191,28 @@ async function recoverLostPurchases(user_id) {
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
   const [CATEGORIES, setCATEGORIES] = useState(CATEGORIES_FALLBACK);
+
+  // ===== MODULE POD (Print On Demand) — Commande papier =====
+  const [shippingZones, setShippingZones] = useState([]); // zones actives chargées depuis Supabase
+  const [showPaperOrderModal, setShowPaperOrderModal] = useState(false);
+  const [paperOrderBook, setPaperOrderBook] = useState(null); // livre en cours de commande
+  const [paperOrderStep, setPaperOrderStep] = useState(1); // 1=form 2=récap 3=paiement 4=succès
+  const [paperOrderForm, setPaperOrderForm] = useState({
+    customer_name: "",
+    customer_phone: "",
+    customer_email: "",
+    shipping_city: "",
+    shipping_zone_id: null,
+    shipping_address: "",
+    shipping_agency: "",
+    shipping_notes: ""
+  });
+  const [paperOrderSaving, setPaperOrderSaving] = useState(false);
+  const [paperOrderError, setPaperOrderError] = useState("");
+  const [paperOrderRef, setPaperOrderRef] = useState(""); // référence de commande après succès
+  const [paperPaymentMethod, setPaperPaymentMethod] = useState(""); // mtn, orange, campay
+  const [paperPaymentPhone, setPaperPaymentPhone] = useState("");
+
   const [page, setPage] = useState(() => {
     // Priorité 1 : Lire la page depuis l'URL (pour partage et deep links)
     const urlPage = getPageFromURL();
@@ -12322,6 +12344,27 @@ export default function App() {
       }
     }
     fetchCategoriesFromSupabase();
+  }, []);
+
+  // Charger les zones de livraison actives depuis Supabase
+  useEffect(() => {
+    async function fetchActiveShippingZones() {
+      try {
+        const { data, error } = await supabase
+          .from('shipping_zones')
+          .select('*')
+          .eq('active', true)
+          .order('display_order', { ascending: true });
+        if (error) {
+          console.error('Erreur load shipping zones:', error);
+          return;
+        }
+        setShippingZones(data || []);
+      } catch (e) {
+        console.error('Erreur fetchActiveShippingZones:', e);
+      }
+    }
+    fetchActiveShippingZones();
   }, []);
 
   // PARRAINAGE
@@ -13331,6 +13374,231 @@ export default function App() {
       value: book.price || 0,
       currency: "XAF",
     });
+  }
+
+  // ===== MODULE POD : Fonctions de commande papier =====
+  function openPaperOrderModal(book) {
+    setPaperOrderBook(book);
+    setPaperOrderStep(1);
+    setPaperOrderError("");
+    setPaperOrderRef("");
+    setPaperOrderForm({
+      customer_name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
+      customer_phone: user?.user_metadata?.phone || "",
+      customer_email: user?.email || "",
+      shipping_city: "",
+      shipping_zone_id: null,
+      shipping_address: "",
+      shipping_agency: "",
+      shipping_notes: ""
+    });
+    setPaperPaymentMethod("");
+    setPaperPaymentPhone("");
+    setShowPaperOrderModal(true);
+  }
+
+  function closePaperOrderModal() {
+    setShowPaperOrderModal(false);
+    setPaperOrderBook(null);
+    setPaperOrderStep(1);
+    setPaperOrderError("");
+  }
+
+  function getSelectedZone() {
+    if (!paperOrderForm.shipping_zone_id) return null;
+    return shippingZones.find(z => z.id === paperOrderForm.shipping_zone_id) || null;
+  }
+
+  function getPaperOrderTotal() {
+    if (!paperOrderBook) return 0;
+    const bookPrice = paperOrderBook.paper_price || 0;
+    const zone = getSelectedZone();
+    const shippingFee = zone ? zone.delivery_fee : 0;
+    return bookPrice + shippingFee;
+  }
+
+  function validatePaperOrderForm() {
+    if (!paperOrderForm.customer_name.trim()) return "Ton nom est requis";
+    if (!paperOrderForm.customer_phone.trim()) return "Ton numéro de téléphone est requis";
+    if (!paperOrderForm.shipping_zone_id) return "Choisis ta ville de livraison";
+    const zone = getSelectedZone();
+    if (zone && zone.delivery_method === 'domicile' && !paperOrderForm.shipping_address.trim()) {
+      return "Indique ton adresse complète (quartier, rue, point de repère)";
+    }
+    if (zone && zone.delivery_method === 'agence' && !paperOrderForm.shipping_agency.trim()) {
+      return "Indique l'agence de voyage où tu veux retirer ton livre";
+    }
+    return "";
+  }
+
+  async function submitPaperOrder() {
+    setPaperOrderError("");
+    const validation = validatePaperOrderForm();
+    if (validation) {
+      setPaperOrderError(validation);
+      return;
+    }
+    if (!paperPaymentMethod) {
+      setPaperOrderError("Choisis un mode de paiement");
+      return;
+    }
+    if (!paperPaymentPhone.trim()) {
+      setPaperOrderError("Indique le numéro pour le paiement");
+      return;
+    }
+
+    setPaperOrderSaving(true);
+    setPaperOrderStep(3); // passe à l'écran "Paiement en cours..."
+
+    try {
+      // 1) Formater le numéro de paiement
+      let phone = paperPaymentPhone.replace(/\s/g, "");
+      if (phone.startsWith("0")) phone = "237" + phone.slice(1);
+      if (!phone.startsWith("237")) phone = "237" + phone;
+
+      // 2) Générer la référence de commande
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');
+      const randomPart = Math.floor(Math.random() * 9000 + 1000);
+      const orderRef = `POD-${dateStr}-${randomPart}`;
+      const externalRef = `POD_${paperOrderBook.id}_${(user ? user.id : "guest")}_${Date.now()}`;
+
+      const zone = getSelectedZone();
+      const items = [{
+        book_id: paperOrderBook.id,
+        title: paperOrderBook.title,
+        quantity: 1,
+        unit_price: paperOrderBook.paper_price || 0,
+        total: paperOrderBook.paper_price || 0
+      }];
+
+      const subtotal = paperOrderBook.paper_price || 0;
+      const shippingFee = zone ? zone.delivery_fee : 0;
+      const total = subtotal + shippingFee;
+
+      // 3) Déclencher le paiement CamPay (action: collect)
+      const payRes = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "collect",
+          amount: total,
+          phone: phone,
+          description: "Commande papier " + paperOrderBook.title + " - CarryBooks POD",
+          external_reference: externalRef
+        })
+      });
+      const payData = await payRes.json();
+
+      if (!payData.reference) {
+        setPaperOrderError("Impossible de déclencher le paiement. Vérifie ton numéro et réessaie.");
+        setPaperOrderStep(2);
+        setPaperOrderSaving(false);
+        return;
+      }
+
+      // 4) Préparer les données de la commande pour l'enregistrement après paiement
+      const orderData = {
+        order_ref: orderRef,
+        user_id: user?.id || null,
+        guest_email: !user ? (paperOrderForm.customer_email || null) : null,
+        items: items,
+        subtotal: subtotal,
+        shipping_fee: shippingFee,
+        discount: 0,
+        total_amount: total,
+        customer_name: paperOrderForm.customer_name.trim(),
+        customer_phone: paperOrderForm.customer_phone.trim(),
+        customer_email: paperOrderForm.customer_email.trim() || null,
+        shipping_city: zone ? zone.city : '',
+        shipping_zone_id: paperOrderForm.shipping_zone_id,
+        shipping_address: paperOrderForm.shipping_address.trim() || null,
+        shipping_agency: paperOrderForm.shipping_agency.trim() || null,
+        shipping_notes: paperOrderForm.shipping_notes.trim() || null,
+        payment_method: paperPaymentMethod,
+      };
+
+      // 5) Polling : vérifier le paiement toutes les 5s pendant max 3 minutes
+      let attempts = 0;
+      const maxAttempts = 36;
+      const pollInterval = 5000;
+
+      const pollPayment = async () => {
+        attempts++;
+        try {
+          const checkRes = await fetch("/api/campay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check", reference: payData.reference })
+          });
+          const checkData = await checkRes.json();
+
+          if (checkData.status === "SUCCESSFUL") {
+            // ✅ Paiement confirmé : enregistrer la commande côté serveur (bypass RLS)
+            const recordRes = await fetch("/api/campay", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "record_paper_order",
+                reference: payData.reference,
+                external_reference: externalRef,
+                order_data: orderData
+              })
+            });
+            const recordData = await recordRes.json();
+
+            if (!recordData.success) {
+              console.error("[POD CRITICAL] Paiement reçu mais enregistrement échoué:", recordData);
+              setPaperOrderError("⚠️ Paiement reçu mais erreur d'enregistrement. Contacte-nous avec la référence : " + payData.reference);
+              setPaperOrderStep(2);
+              setPaperOrderSaving(false);
+              return;
+            }
+
+            // ✅ Succès complet
+            setPaperOrderRef(orderRef);
+            setPaperOrderStep(4);
+            setPaperOrderSaving(false);
+            return;
+          }
+
+          if (checkData.status === "FAILED") {
+            setPaperOrderError("Le paiement a échoué. Vérifie ton solde et réessaie.");
+            setPaperOrderStep(2);
+            setPaperOrderSaving(false);
+            return;
+          }
+
+          // Statut encore PENDING : on continue le polling
+          if (attempts >= maxAttempts) {
+            setPaperOrderError("⏱️ Délai dépassé. Si tu as déjà validé le paiement, contacte-nous avec la référence : " + payData.reference);
+            setPaperOrderStep(2);
+            setPaperOrderSaving(false);
+            return;
+          }
+
+          setTimeout(pollPayment, pollInterval);
+        } catch (pollErr) {
+          console.error("[POD] Erreur polling:", pollErr);
+          if (attempts < maxAttempts) {
+            setTimeout(pollPayment, pollInterval);
+          } else {
+            setPaperOrderError("Erreur de vérification. Contacte-nous avec la référence : " + payData.reference);
+            setPaperOrderStep(2);
+            setPaperOrderSaving(false);
+          }
+        }
+      };
+
+      // Lancer le premier check après 5 secondes (laisser le temps à CamPay)
+      setTimeout(pollPayment, pollInterval);
+
+    } catch (e) {
+      console.error('Erreur submitPaperOrder:', e);
+      setPaperOrderError("Erreur technique : " + e.message);
+      setPaperOrderStep(2);
+      setPaperOrderSaving(false);
+    }
   }
 
   function startReading(book, excerpt = false) {
@@ -14411,6 +14679,50 @@ export default function App() {
             style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
             {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.pdf_url ? "📥 Télécharger — " : "📖 Lire — ") + book.price?.toLocaleString() + " FCFA"}
           </button>
+
+          {/* BOUTON COMMANDER EN PAPIER (si le livre a une version papier disponible) */}
+          {book.has_paper_version && book.paper_price > 0 && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0) && (
+            <button
+              onClick={() => openPaperOrderModal(book)}
+              style={{
+                width: "100%",
+                padding: 15,
+                marginTop: 10,
+                background: "transparent",
+                border: "2px solid " + G.gold,
+                borderRadius: 6,
+                color: G.gold,
+                cursor: "pointer",
+                fontSize: 14,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                fontWeight: "bold",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8
+              }}>
+              <span>📦</span>
+              <span>Commander en papier — {book.paper_price?.toLocaleString()} FCFA</span>
+            </button>
+          )}
+
+          {/* Indication si rupture de stock papier */}
+          {book.has_paper_version && book.paper_stock === 0 && (
+            <div style={{
+              width: "100%",
+              padding: 12,
+              marginTop: 10,
+              background: G.surface,
+              border: "1px solid " + G.border,
+              borderRadius: 6,
+              color: G.textDim,
+              fontSize: 12,
+              textAlign: "center"
+            }}>
+              📦 Version papier — Rupture de stock temporaire
+            </div>
+          )}
 
           {/* BOUTON TÉLÉCHARGER LE PDF (si owned/free + can_download + pdf_url) */}
           {(owned || free) && book.can_download && book.pdf_url && book.pdf_url !== "pending" && (
@@ -16599,6 +16911,386 @@ export default function App() {
                 </button>
                 <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>
                   Annuler
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============ MODAL COMMANDE PAPIER (POD) ============ */}
+      {showPaperOrderModal && paperOrderBook && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "flex-end",
+          zIndex: 300,
+          overflowY: "auto"
+        }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: "16px 16px 0 0",
+            width: "100%",
+            maxWidth: 600,
+            margin: "0 auto",
+            padding: "24px 20px 40px",
+            maxHeight: "95vh",
+            overflowY: "auto"
+          }}>
+            {/* En-tête */}
+            <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 16px" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: 0 }}>📦 Commander en papier</h2>
+              <button
+                onClick={closePaperOrderModal}
+                style={{ background: "none", border: "none", color: "#888", fontSize: 24, cursor: "pointer", padding: 0, lineHeight: 1 }}
+              >×</button>
+            </div>
+
+            {/* Livre commandé */}
+            <div style={{ display: "flex", gap: 12, padding: 12, background: "#f8f4ea", border: "1px solid #e8d5a3", borderRadius: 10, marginBottom: 18 }}>
+              {paperOrderBook.cover && (
+                <img src={paperOrderBook.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", borderRadius: 4 }} />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: "#1a1a1a", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{paperOrderBook.title}</div>
+                <div style={{ color: "#888", fontSize: 12, marginBottom: 4 }}>par {paperOrderBook.author}</div>
+                <div style={{ color: G.gold, fontSize: 15, fontWeight: 700 }}>{paperOrderBook.paper_price?.toLocaleString()} FCFA</div>
+                {paperOrderBook.paper_description && (
+                  <div style={{ color: "#666", fontSize: 11, marginTop: 4, fontStyle: "italic" }}>{paperOrderBook.paper_description}</div>
+                )}
+              </div>
+            </div>
+
+            {/* ============ ÉTAPE 1 : FORMULAIRE ============ */}
+            {paperOrderStep === 1 && (
+              <div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton nom complet *</label>
+                  <input
+                    type="text"
+                    value={paperOrderForm.customer_name}
+                    onChange={e => setPaperOrderForm(f => ({ ...f, customer_name: e.target.value }))}
+                    placeholder="Ex: Nadia Mballa"
+                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton téléphone *</label>
+                  <input
+                    type="tel"
+                    value={paperOrderForm.customer_phone}
+                    onChange={e => setPaperOrderForm(f => ({ ...f, customer_phone: e.target.value }))}
+                    placeholder="Ex: 6XX XX XX XX"
+                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton email (optionnel)</label>
+                  <input
+                    type="email"
+                    value={paperOrderForm.customer_email}
+                    onChange={e => setPaperOrderForm(f => ({ ...f, customer_email: e.target.value }))}
+                    placeholder="Ex: nadia@gmail.com"
+                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ville de livraison *</label>
+                  <select
+                    value={paperOrderForm.shipping_zone_id || ""}
+                    onChange={e => {
+                      const zoneId = e.target.value ? parseInt(e.target.value) : null;
+                      const zone = shippingZones.find(z => z.id === zoneId);
+                      setPaperOrderForm(f => ({
+                        ...f,
+                        shipping_zone_id: zoneId,
+                        shipping_city: zone ? zone.city : "",
+                        shipping_address: "",
+                        shipping_agency: ""
+                      }));
+                    }}
+                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
+                  >
+                    <option value="">— Choisis ta ville —</option>
+                    {shippingZones.map(z => (
+                      <option key={z.id} value={z.id}>
+                        {z.city} — {z.delivery_fee.toLocaleString()} F ({z.delivery_method === 'domicile' ? 'à domicile' : 'en agence'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Champ adresse OU agence selon la ville choisie */}
+                {getSelectedZone() && getSelectedZone().delivery_method === 'domicile' && (
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton adresse complète *</label>
+                    <textarea
+                      value={paperOrderForm.shipping_address}
+                      onChange={e => setPaperOrderForm(f => ({ ...f, shipping_address: e.target.value }))}
+                      placeholder="Quartier, rue, point de repère..."
+                      rows={3}
+                      style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
+                    />
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>💡 {getSelectedZone().instructions}</div>
+                  </div>
+                )}
+
+                {getSelectedZone() && getSelectedZone().delivery_method === 'agence' && (
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Agence de voyage *</label>
+                    <input
+                      type="text"
+                      value={paperOrderForm.shipping_agency}
+                      onChange={e => setPaperOrderForm(f => ({ ...f, shipping_agency: e.target.value }))}
+                      placeholder="Ex: General Express, Buca Voyages..."
+                      style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
+                    />
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>💡 {getSelectedZone().instructions}</div>
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Notes / instructions (optionnel)</label>
+                  <textarea
+                    value={paperOrderForm.shipping_notes}
+                    onChange={e => setPaperOrderForm(f => ({ ...f, shipping_notes: e.target.value }))}
+                    placeholder="Une remarque pour nous ?"
+                    rows={2}
+                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
+                  />
+                </div>
+
+                {/* Récap des frais */}
+                {getSelectedZone() && (
+                  <div style={{ background: "#f8f4ea", border: "1px solid #e8d5a3", borderRadius: 10, padding: 14, marginBottom: 18 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "#444" }}>
+                      <span>Prix du livre</span>
+                      <span>{paperOrderBook.paper_price?.toLocaleString()} F</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "#444" }}>
+                      <span>{getSelectedZone().delivery_method === 'domicile' ? '🏠 Frais de livraison' : '🏢 Frais d\'expédition'}</span>
+                      <span>{getSelectedZone().delivery_fee.toLocaleString()} F</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid #e8d5a3", fontSize: 16, fontWeight: 700, color: "#1a1a1a" }}>
+                      <span>TOTAL</span>
+                      <span>{getPaperOrderTotal().toLocaleString()} F</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 8, textAlign: "center" }}>
+                      Délai estimé : {getSelectedZone().delivery_days_min}-{getSelectedZone().delivery_days_max} jours
+                    </div>
+                  </div>
+                )}
+
+                {paperOrderError && (
+                  <div style={{ padding: "10px 14px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 14 }}>
+                    ⚠️ {paperOrderError}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => {
+                    const validation = validatePaperOrderForm();
+                    if (validation) { setPaperOrderError(validation); return; }
+                    setPaperOrderError("");
+                    setPaperOrderStep(2);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: 14,
+                    background: G.gold,
+                    border: "none",
+                    borderRadius: 8,
+                    color: "#000",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    cursor: "pointer"
+                  }}
+                >
+                  Continuer vers le paiement →
+                </button>
+                <button
+                  onClick={closePaperOrderModal}
+                  style={{ width: "100%", padding: 12, marginTop: 8, background: "none", border: "1px solid #ddd", borderRadius: 8, color: "#666", fontSize: 13, cursor: "pointer" }}
+                >
+                  Annuler
+                </button>
+              </div>
+            )}
+
+            {/* ============ ÉTAPE 2 : CHOIX DU PAIEMENT ============ */}
+            {paperOrderStep === 2 && (
+              <div>
+                <h3 style={{ color: "#1a1a1a", fontSize: 15, marginBottom: 12, marginTop: 0 }}>Mode de paiement</h3>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                  {[
+                    { id: 'mtn', label: 'MTN Mobile Money', icon: '📱', color: '#ffcc00' },
+                    { id: 'orange', label: 'Orange Money', icon: '🟠', color: '#ff7900' },
+                    { id: 'campay', label: 'CamPay', icon: '💳', color: '#0066cc' }
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setPaperPaymentMethod(m.id)}
+                      style={{
+                        padding: "12px 14px",
+                        background: paperPaymentMethod === m.id ? "#f8f4ea" : "#fff",
+                        border: "2px solid " + (paperPaymentMethod === m.id ? G.gold : "#e0e0e0"),
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        fontSize: 14,
+                        color: "#1a1a1a",
+                        fontWeight: paperPaymentMethod === m.id ? 700 : 500,
+                        textAlign: "left"
+                      }}
+                    >
+                      <span style={{ fontSize: 20 }}>{m.icon}</span>
+                      <span>{m.label}</span>
+                      {paperPaymentMethod === m.id && <span style={{ marginLeft: "auto", color: G.gold }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+
+                {paperPaymentMethod && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Numéro pour le paiement *</label>
+                    <input
+                      type="tel"
+                      value={paperPaymentPhone}
+                      onChange={e => setPaperPaymentPhone(e.target.value)}
+                      placeholder="Ex: 6XX XX XX XX"
+                      style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
+                    />
+                  </div>
+                )}
+
+                {/* Récap final */}
+                <div style={{ background: "#f8f4ea", border: "1px solid #e8d5a3", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, color: "#444", marginBottom: 6 }}>📦 {paperOrderBook.title}</div>
+                  <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
+                    Livraison à <b>{paperOrderForm.shipping_city}</b>
+                    {getSelectedZone() && getSelectedZone().delivery_method === 'domicile' ? ' (domicile)' : ' (agence)'}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid #e8d5a3", fontSize: 17, fontWeight: 700, color: "#1a1a1a" }}>
+                    <span>TOTAL À PAYER</span>
+                    <span>{getPaperOrderTotal().toLocaleString()} F</span>
+                  </div>
+                </div>
+
+                {paperOrderError && (
+                  <div style={{ padding: "10px 14px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 14 }}>
+                    ⚠️ {paperOrderError}
+                  </div>
+                )}
+
+                <button
+                  onClick={submitPaperOrder}
+                  disabled={paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim()}
+                  style={{
+                    width: "100%",
+                    padding: 14,
+                    background: paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim() ? "#ccc" : G.gold,
+                    border: "none",
+                    borderRadius: 8,
+                    color: "#000",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    cursor: paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim() ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {paperOrderSaving ? "⏳ Création de la commande..." : `Confirmer ma commande (${getPaperOrderTotal().toLocaleString()} F)`}
+                </button>
+                <button
+                  onClick={() => { setPaperOrderStep(1); setPaperOrderError(""); }}
+                  disabled={paperOrderSaving}
+                  style={{ width: "100%", padding: 12, marginTop: 8, background: "none", border: "1px solid #ddd", borderRadius: 8, color: "#666", fontSize: 13, cursor: "pointer" }}
+                >
+                  ← Retour
+                </button>
+              </div>
+            )}
+
+            {/* ============ ÉTAPE 3 : PAIEMENT EN COURS ============ */}
+            {paperOrderStep === 3 && (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontSize: 50, marginBottom: 16 }}>📱</div>
+                <h3 style={{ color: "#1a1a1a", fontSize: 17, marginBottom: 12 }}>Vérifie ton téléphone</h3>
+                <p style={{ color: "#444", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+                  Une demande de paiement de <b>{getPaperOrderTotal().toLocaleString()} F</b> a été envoyée au <b>{paperPaymentPhone}</b>.
+                  <br/><br/>
+                  Compose le code de validation pour finaliser ta commande.
+                </p>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "12px 20px", background: "#fff8e1", border: "1px solid #ffe69c", borderRadius: 8, marginBottom: 16 }}>
+                  <div style={{
+                    width: 18, height: 18,
+                    border: "3px solid #c9a84c",
+                    borderTop: "3px solid transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite"
+                  }} />
+                  <span style={{ fontSize: 12, color: "#664d03", fontWeight: 600 }}>En attente de confirmation...</span>
+                </div>
+                <p style={{ color: "#888", fontSize: 11, marginTop: 8 }}>
+                  ⏱️ Patiente jusqu'à 3 minutes. Ne ferme pas cette fenêtre.
+                </p>
+                <style>{`@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }`}</style>
+              </div>
+            )}
+
+            {/* ============ ÉTAPE 4 : SUCCÈS ============ */}
+            {paperOrderStep === 4 && (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 60, marginBottom: 12 }}>✅</div>
+                <h3 style={{ color: "#1a1a1a", fontSize: 18, marginBottom: 8 }}>Commande payée !</h3>
+                <p style={{ color: "#666", fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
+                  Ton paiement a été reçu. Voici ton numéro de référence :
+                </p>
+                <div style={{ background: "#f8f4ea", border: "2px solid " + G.gold, borderRadius: 10, padding: 14, marginBottom: 18 }}>
+                  <div style={{ fontSize: 11, color: "#888", marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Numéro de commande</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: G.gold, letterSpacing: 1 }}>{paperOrderRef}</div>
+                </div>
+
+                <div style={{ background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 10, padding: 14, marginBottom: 18, textAlign: "left" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#065f46", marginBottom: 8 }}>📦 Prochaines étapes :</div>
+                  <ol style={{ fontSize: 12, color: "#065f46", margin: 0, paddingLeft: 20, lineHeight: 1.7 }}>
+                    <li>Nous t'appellerons au <b>{paperOrderForm.customer_phone}</b> pour confirmer ton adresse</li>
+                    <li>Ta commande passe en préparation</li>
+                    <li>Tu seras informée quand ton livre sera {getSelectedZone()?.delivery_method === 'domicile' ? 'livré chez toi' : 'expédié à l\'agence'}</li>
+                    <li>Délai estimé : {getSelectedZone()?.delivery_days_min}-{getSelectedZone()?.delivery_days_max} jours</li>
+                  </ol>
+                </div>
+
+                <p style={{ color: "#888", fontSize: 11, marginBottom: 14 }}>
+                  💡 Conserve ce numéro de commande pour tout suivi.
+                </p>
+
+                <button
+                  onClick={closePaperOrderModal}
+                  style={{
+                    width: "100%",
+                    padding: 14,
+                    background: G.gold,
+                    border: "none",
+                    borderRadius: 8,
+                    color: "#000",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    cursor: "pointer"
+                  }}
+                >
+                  Fermer
                 </button>
               </div>
             )}
