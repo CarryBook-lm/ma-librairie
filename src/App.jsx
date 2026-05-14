@@ -14724,36 +14724,59 @@ export default function App() {
           {/* ============ ÉTAPE 2 : CHOIX DU PAIEMENT ============ */}
           {paperOrderStep === 2 && (
             <div>
-              <h3 style={{ color: G.text, fontSize: 16, marginBottom: 14 }}>Mode de paiement</h3>
+              {/* Icône carte de paiement comme dans le modal numérique */}
+              <div style={{ textAlign: "center", marginBottom: 18 }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>💳</div>
+                <h3 style={{ color: G.text, fontSize: 17, marginBottom: 4, fontWeight: "bold" }}>Choisis ta méthode</h3>
+                <div style={{ fontSize: 12, color: G.textDim }}>Avec quel opérateur veux-tu payer ?</div>
+              </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
-                {[
-                  { id: 'mtn', label: 'MTN Mobile Money', icon: '📱' },
-                  { id: 'orange', label: 'Orange Money', icon: '🟠' }
-                ].map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => setPaperPaymentMethod(m.id)}
-                    style={{
-                      padding: "14px 16px",
-                      background: paperPaymentMethod === m.id ? G.surface : "#fff",
-                      border: "2px solid " + (paperPaymentMethod === m.id ? G.gold : G.border),
-                      borderRadius: 10,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      fontSize: 14,
-                      color: G.text,
-                      fontWeight: paperPaymentMethod === m.id ? 700 : 500,
-                      textAlign: "left"
-                    }}
-                  >
-                    <span style={{ fontSize: 22 }}>{m.icon}</span>
-                    <span>{m.label}</span>
-                    {paperPaymentMethod === m.id && <span style={{ marginLeft: "auto", color: G.gold }}>✓</span>}
-                  </button>
-                ))}
+                {/* MTN — fond jaune comme dans modal numérique */}
+                <button
+                  onClick={() => setPaperPaymentMethod('mtn')}
+                  style={{
+                    padding: "16px 18px",
+                    background: paperPaymentMethod === 'mtn' ? "#ffb800" : "#ffcc00",
+                    border: paperPaymentMethod === 'mtn' ? "3px solid #000" : "none",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    fontSize: 14,
+                    color: "#000",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  <span>📱</span>
+                  <span>MTN Mobile Money</span>
+                </button>
+
+                {/* Orange — fond orange comme dans modal numérique */}
+                <button
+                  onClick={() => setPaperPaymentMethod('orange')}
+                  style={{
+                    padding: "16px 18px",
+                    background: paperPaymentMethod === 'orange' ? "#e56900" : "#ff7900",
+                    border: paperPaymentMethod === 'orange' ? "3px solid #fff" : "none",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    fontSize: 14,
+                    color: "#fff",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  <span>📱</span>
+                  <span>Orange Money</span>
+                </button>
               </div>
 
               {paperPaymentMethod && (
