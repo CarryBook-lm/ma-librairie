@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Preferences } from "@capacitor/preferences";
 import { createClient } from "@supabase/supabase-js";
 
@@ -16931,8 +16932,8 @@ export default function App() {
         </div>
       )}
 
-      {/* ============ MODAL COMMANDE PAPIER (POD) ============ */}
-      {showPaperOrderModal && paperOrderBook && (
+      {/* ============ MODAL COMMANDE PAPIER (POD) — via Portal ============ */}
+      {showPaperOrderModal && paperOrderBook && createPortal(
         <div style={{
           position: "fixed",
           top: 0,
@@ -17317,7 +17318,8 @@ export default function App() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
