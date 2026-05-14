@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { Preferences } from "@capacitor/preferences";
 import { createClient } from "@supabase/supabase-js";
 
@@ -13378,32 +13377,6 @@ export default function App() {
   }
 
   // ===== MODULE POD : Fonctions de commande papier =====
-  function openPaperOrderModal(book) {
-    setPaperOrderBook(book);
-    setPaperOrderStep(1);
-    setPaperOrderError("");
-    setPaperOrderRef("");
-    setPaperOrderForm({
-      customer_name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-      customer_phone: user?.user_metadata?.phone || "",
-      customer_email: user?.email || "",
-      shipping_city: "",
-      shipping_zone_id: null,
-      shipping_address: "",
-      shipping_agency: "",
-      shipping_notes: ""
-    });
-    setPaperPaymentMethod("");
-    setPaperPaymentPhone("");
-    setShowPaperOrderModal(true);
-  }
-
-  function closePaperOrderModal() {
-    setShowPaperOrderModal(false);
-    setPaperOrderBook(null);
-    setPaperOrderStep(1);
-    setPaperOrderError("");
-  }
 
   function getSelectedZone() {
     if (!paperOrderForm.shipping_zone_id) return null;
@@ -14556,6 +14529,371 @@ export default function App() {
     );
   }
 
+  // PAPER_ORDER : Page de commande papier (POD)
+  if (page === "paper_order" && paperOrderBook) {
+    const zone = getSelectedZone();
+    const total = getPaperOrderTotal();
+    return (
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
+        {/* Header */}
+        <div style={{ background: G.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
+          <button onClick={() => { setPage("detail"); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>← Retour</button>
+          <div style={{ fontSize: 13, color: G.text, fontWeight: "bold" }}>📦 Livre papier</div>
+          <div style={{ width: 60 }}></div>
+        </div>
+
+        <div style={{ padding: "20px 16px 40px", maxWidth: 600, margin: "0 auto" }}>
+          {/* Livre commandé */}
+          <div style={{ display: "flex", gap: 12, padding: 14, background: G.surface, border: "1px solid " + G.border, borderRadius: 10, marginBottom: 20 }}>
+            {paperOrderBook.cover && (
+              <img src={paperOrderBook.cover} alt="" style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: G.text, fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{paperOrderBook.title}</div>
+              <div style={{ color: G.textDim, fontSize: 12, marginBottom: 6 }}>par {paperOrderBook.author}</div>
+              <div style={{ color: G.gold, fontSize: 16, fontWeight: 700 }}>{paperOrderBook.paper_price?.toLocaleString()} FCFA</div>
+              {paperOrderBook.paper_description && (
+                <div style={{ color: G.textDim, fontSize: 11, marginTop: 4, fontStyle: "italic" }}>{paperOrderBook.paper_description}</div>
+              )}
+            </div>
+          </div>
+
+          {/* ============ ÉTAPE 1 : FORMULAIRE ============ */}
+          {paperOrderStep === 1 && (
+            <div>
+              <h3 style={{ color: G.text, fontSize: 16, marginBottom: 14 }}>Tes informations</h3>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton nom complet *</label>
+                <input
+                  type="text"
+                  value={paperOrderForm.customer_name}
+                  onChange={e => setPaperOrderForm(f => ({ ...f, customer_name: e.target.value }))}
+                  placeholder="Ex: Nadia Mballa"
+                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton téléphone *</label>
+                <input
+                  type="tel"
+                  value={paperOrderForm.customer_phone}
+                  onChange={e => setPaperOrderForm(f => ({ ...f, customer_phone: e.target.value }))}
+                  placeholder="Ex: 6XX XX XX XX"
+                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton email (optionnel)</label>
+                <input
+                  type="email"
+                  value={paperOrderForm.customer_email}
+                  onChange={e => setPaperOrderForm(f => ({ ...f, customer_email: e.target.value }))}
+                  placeholder="Ex: nadia@gmail.com"
+                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                />
+              </div>
+
+              <h3 style={{ color: G.text, fontSize: 16, marginBottom: 14, marginTop: 24 }}>Livraison</h3>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ville *</label>
+                <select
+                  value={paperOrderForm.shipping_zone_id || ""}
+                  onChange={e => {
+                    const zoneId = e.target.value ? parseInt(e.target.value) : null;
+                    const z = shippingZones.find(sz => sz.id === zoneId);
+                    setPaperOrderForm(f => ({
+                      ...f,
+                      shipping_zone_id: zoneId,
+                      shipping_city: z ? z.city : "",
+                      shipping_address: "",
+                      shipping_agency: ""
+                    }));
+                  }}
+                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                >
+                  <option value="">— Choisis ta ville —</option>
+                  {shippingZones.map(z => (
+                    <option key={z.id} value={z.id}>
+                      {z.city} — {z.delivery_fee.toLocaleString()} F ({z.delivery_method === 'domicile' ? 'à domicile' : 'en agence'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {zone && zone.delivery_method === 'domicile' && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton adresse complète *</label>
+                  <textarea
+                    value={paperOrderForm.shipping_address}
+                    onChange={e => setPaperOrderForm(f => ({ ...f, shipping_address: e.target.value }))}
+                    placeholder="Quartier, rue, point de repère..."
+                    rows={3}
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", color: G.text, fontFamily: "inherit" }}
+                  />
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 {zone.instructions}</div>
+                </div>
+              )}
+
+              {zone && zone.delivery_method === 'agence' && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Agence de voyage *</label>
+                  <input
+                    type="text"
+                    value={paperOrderForm.shipping_agency}
+                    onChange={e => setPaperOrderForm(f => ({ ...f, shipping_agency: e.target.value }))}
+                    placeholder="Ex: General Express, Buca Voyages..."
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  />
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 {zone.instructions}</div>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Notes (optionnel)</label>
+                <textarea
+                  value={paperOrderForm.shipping_notes}
+                  onChange={e => setPaperOrderForm(f => ({ ...f, shipping_notes: e.target.value }))}
+                  placeholder="Une remarque pour nous ?"
+                  rows={2}
+                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", color: G.text, fontFamily: "inherit" }}
+                />
+              </div>
+
+              {/* Récap des frais */}
+              {zone && (
+                <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: G.text }}>
+                    <span>Prix du livre</span>
+                    <span>{paperOrderBook.paper_price?.toLocaleString()} F</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14, color: G.text }}>
+                    <span>{zone.delivery_method === 'domicile' ? '🏠 Frais de livraison' : '🏢 Frais d\'expédition'}</span>
+                    <span>{zone.delivery_fee.toLocaleString()} F</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid " + G.gold, fontSize: 18, fontWeight: 700, color: G.gold }}>
+                    <span>TOTAL</span>
+                    <span>{total.toLocaleString()} F</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 8, textAlign: "center" }}>
+                    Délai estimé : {zone.delivery_days_min}-{zone.delivery_days_max} jours
+                  </div>
+                </div>
+              )}
+
+              {paperOrderError && (
+                <div style={{ padding: "12px 16px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 16 }}>
+                  ⚠️ {paperOrderError}
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  const validation = validatePaperOrderForm();
+                  if (validation) { setPaperOrderError(validation); return; }
+                  setPaperOrderError("");
+                  setPaperOrderStep(2);
+                  window.scrollTo(0, 0);
+                }}
+                style={{
+                  width: "100%",
+                  padding: 15,
+                  background: G.gold,
+                  border: "none",
+                  borderRadius: 8,
+                  color: "#000",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  cursor: "pointer"
+                }}
+              >
+                Continuer vers le paiement →
+              </button>
+              <button
+                onClick={() => setPage("detail")}
+                style={{ width: "100%", padding: 13, marginTop: 10, background: "none", border: "1px solid " + G.border, borderRadius: 8, color: G.textDim, fontSize: 13, cursor: "pointer" }}
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+
+          {/* ============ ÉTAPE 2 : CHOIX DU PAIEMENT ============ */}
+          {paperOrderStep === 2 && (
+            <div>
+              <h3 style={{ color: G.text, fontSize: 16, marginBottom: 14 }}>Mode de paiement</h3>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+                {[
+                  { id: 'mtn', label: 'MTN Mobile Money', icon: '📱' },
+                  { id: 'orange', label: 'Orange Money', icon: '🟠' }
+                ].map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => setPaperPaymentMethod(m.id)}
+                    style={{
+                      padding: "14px 16px",
+                      background: paperPaymentMethod === m.id ? G.surface : "#fff",
+                      border: "2px solid " + (paperPaymentMethod === m.id ? G.gold : G.border),
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      fontSize: 14,
+                      color: G.text,
+                      fontWeight: paperPaymentMethod === m.id ? 700 : 500,
+                      textAlign: "left"
+                    }}
+                  >
+                    <span style={{ fontSize: 22 }}>{m.icon}</span>
+                    <span>{m.label}</span>
+                    {paperPaymentMethod === m.id && <span style={{ marginLeft: "auto", color: G.gold }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+
+              {paperPaymentMethod && (
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Numéro pour le paiement *</label>
+                  <input
+                    type="tel"
+                    value={paperPaymentPhone}
+                    onChange={e => setPaperPaymentPhone(e.target.value)}
+                    placeholder="Ex: 6XX XX XX XX"
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  />
+                </div>
+              )}
+
+              <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 10, padding: 16, marginBottom: 18 }}>
+                <div style={{ fontSize: 13, color: G.text, marginBottom: 6 }}>📦 {paperOrderBook.title}</div>
+                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 6 }}>
+                  Livraison à <b>{paperOrderForm.shipping_city}</b> ({zone?.delivery_method === 'domicile' ? 'domicile' : 'agence'})
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid " + G.gold, fontSize: 18, fontWeight: 700, color: G.gold }}>
+                  <span>TOTAL À PAYER</span>
+                  <span>{total.toLocaleString()} F</span>
+                </div>
+              </div>
+
+              {paperOrderError && (
+                <div style={{ padding: "12px 16px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 16 }}>
+                  ⚠️ {paperOrderError}
+                </div>
+              )}
+
+              <button
+                onClick={submitPaperOrder}
+                disabled={paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim()}
+                style={{
+                  width: "100%",
+                  padding: 15,
+                  background: paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim() ? "#ccc" : G.gold,
+                  border: "none",
+                  borderRadius: 8,
+                  color: "#000",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  cursor: paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim() ? "not-allowed" : "pointer"
+                }}
+              >
+                {paperOrderSaving ? "⏳ Création..." : `Confirmer ma commande (${total.toLocaleString()} F)`}
+              </button>
+              <button
+                onClick={() => { setPaperOrderStep(1); setPaperOrderError(""); window.scrollTo(0, 0); }}
+                disabled={paperOrderSaving}
+                style={{ width: "100%", padding: 13, marginTop: 10, background: "none", border: "1px solid " + G.border, borderRadius: 8, color: G.textDim, fontSize: 13, cursor: "pointer" }}
+              >
+                ← Retour
+              </button>
+            </div>
+          )}
+
+          {/* ============ ÉTAPE 3 : ATTENTE PAIEMENT ============ */}
+          {paperOrderStep === 3 && (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ fontSize: 60, marginBottom: 16 }}>📱</div>
+              <h3 style={{ color: G.text, fontSize: 18, marginBottom: 12 }}>Vérifie ton téléphone</h3>
+              <p style={{ color: G.textDim, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+                Une demande de paiement de <b style={{ color: G.gold }}>{total.toLocaleString()} F</b> a été envoyée au <b>{paperPaymentPhone}</b>.
+                <br/><br/>
+                Compose le code de validation pour finaliser ta commande.
+              </p>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 22px", background: "#fff8e1", border: "1px solid #ffe69c", borderRadius: 10, marginBottom: 18 }}>
+                <div style={{
+                  width: 20, height: 20,
+                  border: "3px solid " + G.gold,
+                  borderTop: "3px solid transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite"
+                }} />
+                <span style={{ fontSize: 13, color: "#664d03", fontWeight: 600 }}>En attente de confirmation...</span>
+              </div>
+              <p style={{ color: G.textFaint, fontSize: 12, marginTop: 8 }}>
+                ⏱️ Patiente jusqu'à 3 minutes. Ne ferme pas cette page.
+              </p>
+              <style>{`@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }`}</style>
+            </div>
+          )}
+
+          {/* ============ ÉTAPE 4 : SUCCÈS ============ */}
+          {paperOrderStep === 4 && (
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 70, marginBottom: 14 }}>✅</div>
+              <h3 style={{ color: G.gold, fontSize: 20, marginBottom: 10 }}>Commande payée !</h3>
+              <p style={{ color: G.textDim, fontSize: 14, marginBottom: 18, lineHeight: 1.6 }}>
+                Ton paiement a été reçu. Voici ton numéro de référence :
+              </p>
+              <div style={{ background: G.surface, border: "2px solid " + G.gold, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Numéro de commande</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: G.gold, letterSpacing: 1 }}>{paperOrderRef}</div>
+              </div>
+
+              <div style={{ background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 10, padding: 16, marginBottom: 20, textAlign: "left" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#065f46", marginBottom: 10 }}>📦 Prochaines étapes :</div>
+                <ol style={{ fontSize: 13, color: "#065f46", margin: 0, paddingLeft: 22, lineHeight: 1.8 }}>
+                  <li>Nous t'appellerons au <b>{paperOrderForm.customer_phone}</b> pour confirmer ton adresse</li>
+                  <li>Ta commande passe en préparation</li>
+                  <li>Tu seras informée quand ton livre sera {zone?.delivery_method === 'domicile' ? 'livré chez toi' : 'expédié à l\'agence'}</li>
+                  <li>Délai estimé : {zone?.delivery_days_min}-{zone?.delivery_days_max} jours</li>
+                </ol>
+              </div>
+
+              <p style={{ color: G.textFaint, fontSize: 12, marginBottom: 16 }}>
+                💡 Conserve ce numéro de commande pour tout suivi.
+              </p>
+
+              <button
+                onClick={() => { setPage("home"); }}
+                style={{
+                  width: "100%",
+                  padding: 15,
+                  background: G.gold,
+                  border: "none",
+                  borderRadius: 8,
+                  color: "#000",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  cursor: "pointer"
+                }}
+              >
+                Retour à l'accueil
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
     // DETAIL
   if (page === "detail" && selectedBook) {
     const book = selectedBook;
@@ -14681,17 +15019,29 @@ export default function App() {
             {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.pdf_url ? "📥 Télécharger — " : "📖 Lire — ") + book.price?.toLocaleString() + " FCFA"}
           </button>
 
-          {/* BOUTON COMMANDER EN PAPIER (si le livre a une version papier disponible) */}
+          {/* BOUTON LIVRE PAPIER (si le livre a une version papier disponible) */}
           {book.has_paper_version && book.paper_price > 0 && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0) && (
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // Différer l'ouverture pour éviter conflit avec d'autres handlers
-                setTimeout(() => {
-                  openPaperOrderModal(book);
-                }, 0);
-                return false;
+              onClick={() => {
+                // Pré-remplir le formulaire avec les infos de l'utilisateur
+                setPaperOrderBook(book);
+                setPaperOrderStep(1);
+                setPaperOrderError("");
+                setPaperOrderRef("");
+                setPaperOrderForm({
+                  customer_name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
+                  customer_phone: user?.user_metadata?.phone || "",
+                  customer_email: user?.email || "",
+                  shipping_city: "",
+                  shipping_zone_id: null,
+                  shipping_address: "",
+                  shipping_agency: "",
+                  shipping_notes: ""
+                });
+                setPaperPaymentMethod("");
+                setPaperPaymentPhone("");
+                setPage("paper_order");
+                window.scrollTo(0, 0);
               }}
               type="button"
               style={{
@@ -15632,7 +15982,10 @@ export default function App() {
                             {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-                          <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                          <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
+                            {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                            {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                          </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                             <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
@@ -15666,7 +16019,10 @@ export default function App() {
                               {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             </div>
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-                            <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                            <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
+                              {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                              {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                            </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                             <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
@@ -15723,7 +16079,10 @@ export default function App() {
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
                         </div>
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
-                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}</div>
+                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>
+                          {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                          {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                        </div>
                         {isOnPromo(book) ? (
                           <div>
                             <div style={{ fontSize: 10, color: G.textFaint, textDecoration: "line-through", lineHeight: 1.2 }}>
@@ -16928,395 +17287,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ============ MODAL COMMANDE PAPIER (POD) — via Portal ============ */}
-      {showPaperOrderModal && paperOrderBook && createPortal(
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: "100vw",
-          height: "100vh",
-          background: "rgba(0,0,0,0.75)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2147483647,
-          overflowY: "auto",
-          WebkitOverflowScrolling: "touch",
-          padding: 0,
-          margin: 0
-        }}>
-          <div style={{
-            background: "#fff",
-            borderRadius: 16,
-            width: "calc(100% - 24px)",
-            maxWidth: 600,
-            margin: "12px auto",
-            padding: "24px 20px 30px",
-            maxHeight: "calc(100vh - 24px)",
-            overflowY: "auto",
-            position: "relative",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.5)"
-          }}>
-            {/* En-tête */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: 0 }}>📦 Livre papier</h2>
-              <button
-                onClick={closePaperOrderModal}
-                style={{ background: "none", border: "none", color: "#888", fontSize: 24, cursor: "pointer", padding: 0, lineHeight: 1 }}
-              >×</button>
-            </div>
-
-            {/* Livre commandé */}
-            <div style={{ display: "flex", gap: 12, padding: 12, background: "#f8f4ea", border: "1px solid #e8d5a3", borderRadius: 10, marginBottom: 18 }}>
-              {paperOrderBook.cover && (
-                <img src={paperOrderBook.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", borderRadius: 4 }} />
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "#1a1a1a", fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{paperOrderBook.title}</div>
-                <div style={{ color: "#888", fontSize: 12, marginBottom: 4 }}>par {paperOrderBook.author}</div>
-                <div style={{ color: G.gold, fontSize: 15, fontWeight: 700 }}>{paperOrderBook.paper_price?.toLocaleString()} FCFA</div>
-                {paperOrderBook.paper_description && (
-                  <div style={{ color: "#666", fontSize: 11, marginTop: 4, fontStyle: "italic" }}>{paperOrderBook.paper_description}</div>
-                )}
-              </div>
-            </div>
-
-            {/* ============ ÉTAPE 1 : FORMULAIRE ============ */}
-            {paperOrderStep === 1 && (
-              <div>
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton nom complet *</label>
-                  <input
-                    type="text"
-                    value={paperOrderForm.customer_name}
-                    onChange={e => setPaperOrderForm(f => ({ ...f, customer_name: e.target.value }))}
-                    placeholder="Ex: Nadia Mballa"
-                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                  />
-                </div>
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton téléphone *</label>
-                  <input
-                    type="tel"
-                    value={paperOrderForm.customer_phone}
-                    onChange={e => setPaperOrderForm(f => ({ ...f, customer_phone: e.target.value }))}
-                    placeholder="Ex: 6XX XX XX XX"
-                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                  />
-                </div>
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton email (optionnel)</label>
-                  <input
-                    type="email"
-                    value={paperOrderForm.customer_email}
-                    onChange={e => setPaperOrderForm(f => ({ ...f, customer_email: e.target.value }))}
-                    placeholder="Ex: nadia@gmail.com"
-                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ville de livraison *</label>
-                  <select
-                    value={paperOrderForm.shipping_zone_id || ""}
-                    onChange={e => {
-                      const zoneId = e.target.value ? parseInt(e.target.value) : null;
-                      const zone = shippingZones.find(z => z.id === zoneId);
-                      setPaperOrderForm(f => ({
-                        ...f,
-                        shipping_zone_id: zoneId,
-                        shipping_city: zone ? zone.city : "",
-                        shipping_address: "",
-                        shipping_agency: ""
-                      }));
-                    }}
-                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                  >
-                    <option value="">— Choisis ta ville —</option>
-                    {shippingZones.map(z => (
-                      <option key={z.id} value={z.id}>
-                        {z.city} — {z.delivery_fee.toLocaleString()} F ({z.delivery_method === 'domicile' ? 'à domicile' : 'en agence'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Champ adresse OU agence selon la ville choisie */}
-                {getSelectedZone() && getSelectedZone().delivery_method === 'domicile' && (
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton adresse complète *</label>
-                    <textarea
-                      value={paperOrderForm.shipping_address}
-                      onChange={e => setPaperOrderForm(f => ({ ...f, shipping_address: e.target.value }))}
-                      placeholder="Quartier, rue, point de repère..."
-                      rows={3}
-                      style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
-                    />
-                    <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>💡 {getSelectedZone().instructions}</div>
-                  </div>
-                )}
-
-                {getSelectedZone() && getSelectedZone().delivery_method === 'agence' && (
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Agence de voyage *</label>
-                    <input
-                      type="text"
-                      value={paperOrderForm.shipping_agency}
-                      onChange={e => setPaperOrderForm(f => ({ ...f, shipping_agency: e.target.value }))}
-                      placeholder="Ex: General Express, Buca Voyages..."
-                      style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                    />
-                    <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>💡 {getSelectedZone().instructions}</div>
-                  </div>
-                )}
-
-                <div style={{ marginBottom: 18 }}>
-                  <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Notes / instructions (optionnel)</label>
-                  <textarea
-                    value={paperOrderForm.shipping_notes}
-                    onChange={e => setPaperOrderForm(f => ({ ...f, shipping_notes: e.target.value }))}
-                    placeholder="Une remarque pour nous ?"
-                    rows={2}
-                    style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
-                  />
-                </div>
-
-                {/* Récap des frais */}
-                {getSelectedZone() && (
-                  <div style={{ background: "#f8f4ea", border: "1px solid #e8d5a3", borderRadius: 10, padding: 14, marginBottom: 18 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "#444" }}>
-                      <span>Prix du livre</span>
-                      <span>{paperOrderBook.paper_price?.toLocaleString()} F</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13, color: "#444" }}>
-                      <span>{getSelectedZone().delivery_method === 'domicile' ? '🏠 Frais de livraison' : '🏢 Frais d\'expédition'}</span>
-                      <span>{getSelectedZone().delivery_fee.toLocaleString()} F</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid #e8d5a3", fontSize: 16, fontWeight: 700, color: "#1a1a1a" }}>
-                      <span>TOTAL</span>
-                      <span>{getPaperOrderTotal().toLocaleString()} F</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: "#888", marginTop: 8, textAlign: "center" }}>
-                      Délai estimé : {getSelectedZone().delivery_days_min}-{getSelectedZone().delivery_days_max} jours
-                    </div>
-                  </div>
-                )}
-
-                {paperOrderError && (
-                  <div style={{ padding: "10px 14px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 14 }}>
-                    ⚠️ {paperOrderError}
-                  </div>
-                )}
-
-                <button
-                  onClick={() => {
-                    const validation = validatePaperOrderForm();
-                    if (validation) { setPaperOrderError(validation); return; }
-                    setPaperOrderError("");
-                    setPaperOrderStep(2);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: 14,
-                    background: G.gold,
-                    border: "none",
-                    borderRadius: 8,
-                    color: "#000",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                    cursor: "pointer"
-                  }}
-                >
-                  Continuer vers le paiement →
-                </button>
-                <button
-                  onClick={closePaperOrderModal}
-                  style={{ width: "100%", padding: 12, marginTop: 8, background: "none", border: "1px solid #ddd", borderRadius: 8, color: "#666", fontSize: 13, cursor: "pointer" }}
-                >
-                  Annuler
-                </button>
-              </div>
-            )}
-
-            {/* ============ ÉTAPE 2 : CHOIX DU PAIEMENT ============ */}
-            {paperOrderStep === 2 && (
-              <div>
-                <h3 style={{ color: "#1a1a1a", fontSize: 15, marginBottom: 12, marginTop: 0 }}>Mode de paiement</h3>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                  {[
-                    { id: 'mtn', label: 'MTN Mobile Money', icon: '📱', color: '#ffcc00' },
-                    { id: 'orange', label: 'Orange Money', icon: '🟠', color: '#ff7900' }
-                  ].map(m => (
-                    <button
-                      key={m.id}
-                      onClick={() => setPaperPaymentMethod(m.id)}
-                      style={{
-                        padding: "12px 14px",
-                        background: paperPaymentMethod === m.id ? "#f8f4ea" : "#fff",
-                        border: "2px solid " + (paperPaymentMethod === m.id ? G.gold : "#e0e0e0"),
-                        borderRadius: 10,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        fontSize: 14,
-                        color: "#1a1a1a",
-                        fontWeight: paperPaymentMethod === m.id ? 700 : 500,
-                        textAlign: "left"
-                      }}
-                    >
-                      <span style={{ fontSize: 20 }}>{m.icon}</span>
-                      <span>{m.label}</span>
-                      {paperPaymentMethod === m.id && <span style={{ marginLeft: "auto", color: G.gold }}>✓</span>}
-                    </button>
-                  ))}
-                </div>
-
-                {paperPaymentMethod && (
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", color: "#444", fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Numéro pour le paiement *</label>
-                    <input
-                      type="tel"
-                      value={paperPaymentPhone}
-                      onChange={e => setPaperPaymentPhone(e.target.value)}
-                      placeholder="Ex: 6XX XX XX XX"
-                      style={{ width: "100%", padding: "11px 12px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                    />
-                  </div>
-                )}
-
-                {/* Récap final */}
-                <div style={{ background: "#f8f4ea", border: "1px solid #e8d5a3", borderRadius: 10, padding: 14, marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, color: "#444", marginBottom: 6 }}>📦 {paperOrderBook.title}</div>
-                  <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
-                    Livraison à <b>{paperOrderForm.shipping_city}</b>
-                    {getSelectedZone() && getSelectedZone().delivery_method === 'domicile' ? ' (domicile)' : ' (agence)'}
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid #e8d5a3", fontSize: 17, fontWeight: 700, color: "#1a1a1a" }}>
-                    <span>TOTAL À PAYER</span>
-                    <span>{getPaperOrderTotal().toLocaleString()} F</span>
-                  </div>
-                </div>
-
-                {paperOrderError && (
-                  <div style={{ padding: "10px 14px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 14 }}>
-                    ⚠️ {paperOrderError}
-                  </div>
-                )}
-
-                <button
-                  onClick={submitPaperOrder}
-                  disabled={paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim()}
-                  style={{
-                    width: "100%",
-                    padding: 14,
-                    background: paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim() ? "#ccc" : G.gold,
-                    border: "none",
-                    borderRadius: 8,
-                    color: "#000",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                    cursor: paperOrderSaving || !paperPaymentMethod || !paperPaymentPhone.trim() ? "not-allowed" : "pointer"
-                  }}
-                >
-                  {paperOrderSaving ? "⏳ Création de la commande..." : `Confirmer ma commande (${getPaperOrderTotal().toLocaleString()} F)`}
-                </button>
-                <button
-                  onClick={() => { setPaperOrderStep(1); setPaperOrderError(""); }}
-                  disabled={paperOrderSaving}
-                  style={{ width: "100%", padding: 12, marginTop: 8, background: "none", border: "1px solid #ddd", borderRadius: 8, color: "#666", fontSize: 13, cursor: "pointer" }}
-                >
-                  ← Retour
-                </button>
-              </div>
-            )}
-
-            {/* ============ ÉTAPE 3 : PAIEMENT EN COURS ============ */}
-            {paperOrderStep === 3 && (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ fontSize: 50, marginBottom: 16 }}>📱</div>
-                <h3 style={{ color: "#1a1a1a", fontSize: 17, marginBottom: 12 }}>Vérifie ton téléphone</h3>
-                <p style={{ color: "#444", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
-                  Une demande de paiement de <b>{getPaperOrderTotal().toLocaleString()} F</b> a été envoyée au <b>{paperPaymentPhone}</b>.
-                  <br/><br/>
-                  Compose le code de validation pour finaliser ta commande.
-                </p>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "12px 20px", background: "#fff8e1", border: "1px solid #ffe69c", borderRadius: 8, marginBottom: 16 }}>
-                  <div style={{
-                    width: 18, height: 18,
-                    border: "3px solid #c9a84c",
-                    borderTop: "3px solid transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite"
-                  }} />
-                  <span style={{ fontSize: 12, color: "#664d03", fontWeight: 600 }}>En attente de confirmation...</span>
-                </div>
-                <p style={{ color: "#888", fontSize: 11, marginTop: 8 }}>
-                  ⏱️ Patiente jusqu'à 3 minutes. Ne ferme pas cette fenêtre.
-                </p>
-                <style>{`@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }`}</style>
-              </div>
-            )}
-
-            {/* ============ ÉTAPE 4 : SUCCÈS ============ */}
-            {paperOrderStep === 4 && (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 60, marginBottom: 12 }}>✅</div>
-                <h3 style={{ color: "#1a1a1a", fontSize: 18, marginBottom: 8 }}>Commande payée !</h3>
-                <p style={{ color: "#666", fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
-                  Ton paiement a été reçu. Voici ton numéro de référence :
-                </p>
-                <div style={{ background: "#f8f4ea", border: "2px solid " + G.gold, borderRadius: 10, padding: 14, marginBottom: 18 }}>
-                  <div style={{ fontSize: 11, color: "#888", marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Numéro de commande</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: G.gold, letterSpacing: 1 }}>{paperOrderRef}</div>
-                </div>
-
-                <div style={{ background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 10, padding: 14, marginBottom: 18, textAlign: "left" }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#065f46", marginBottom: 8 }}>📦 Prochaines étapes :</div>
-                  <ol style={{ fontSize: 12, color: "#065f46", margin: 0, paddingLeft: 20, lineHeight: 1.7 }}>
-                    <li>Nous t'appellerons au <b>{paperOrderForm.customer_phone}</b> pour confirmer ton adresse</li>
-                    <li>Ta commande passe en préparation</li>
-                    <li>Tu seras informée quand ton livre sera {getSelectedZone()?.delivery_method === 'domicile' ? 'livré chez toi' : 'expédié à l\'agence'}</li>
-                    <li>Délai estimé : {getSelectedZone()?.delivery_days_min}-{getSelectedZone()?.delivery_days_max} jours</li>
-                  </ol>
-                </div>
-
-                <p style={{ color: "#888", fontSize: 11, marginBottom: 14 }}>
-                  💡 Conserve ce numéro de commande pour tout suivi.
-                </p>
-
-                <button
-                  onClick={closePaperOrderModal}
-                  style={{
-                    width: "100%",
-                    padding: 14,
-                    background: G.gold,
-                    border: "none",
-                    borderRadius: 8,
-                    color: "#000",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                    cursor: "pointer"
-                  }}
-                >
-                  Fermer
-                </button>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
     </div>
   );
 }
