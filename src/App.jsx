@@ -13396,8 +13396,6 @@ export default function App() {
     setPaperPaymentMethod("");
     setPaperPaymentPhone("");
     setShowPaperOrderModal(true);
-    // Bloquer le scroll de la page derrière
-    document.body.style.overflow = 'hidden';
   }
 
   function closePaperOrderModal() {
@@ -13405,8 +13403,6 @@ export default function App() {
     setPaperOrderBook(null);
     setPaperOrderStep(1);
     setPaperOrderError("");
-    // Réactive le scroll
-    document.body.style.overflow = '';
   }
 
   function getSelectedZone() {
