@@ -110,6 +110,24 @@ export default function Admin() {
   const [editingSubId, setEditingSubId] = useState(null);
   const [editingSubName, setEditingSubName] = useState("");
 
+  // ===== GESTION DU MODULE POD (Print On Demand) =====
+  const [shippingZones, setShippingZones] = useState([]);
+  const [zoneLoading, setZoneLoading] = useState(false);
+  const [zoneSaving, setZoneSaving] = useState(false);
+  const [zoneMessage, setZoneMessage] = useState({ type: "", text: "" });
+  const [editingZoneId, setEditingZoneId] = useState(null);
+  const [editingZone, setEditingZone] = useState({});
+  const [newZone, setNewZone] = useState({
+    city: "", delivery_fee: 0, delivery_method: "agence",
+    delivery_days_min: 1, delivery_days_max: 3, instructions: "", active: true
+  });
+  // Livres papier
+  const [paperBooks, setPaperBooks] = useState([]); // sous-ensemble de books filtré
+  const [paperSaving, setPaperSaving] = useState(false);
+  const [paperMessage, setPaperMessage] = useState({ type: "", text: "" });
+  const [editingPaperId, setEditingPaperId] = useState(null);
+  const [editingPaper, setEditingPaper] = useState({});
+
   // ===== AUTH ADMIN : useEffect (DOIT être AVANT tout early return) =====
   useEffect(() => {
     checkAdminAccess();
@@ -118,7 +136,7 @@ export default function Admin() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
 
   // Auto-refresh des données de présence toutes les 10 secondes
   useEffect(() => {
@@ -333,6 +351,142 @@ export default function Admin() {
     }
     setCatMessage({ type: 'success', text: `Sous-catégorie "${name}" supprimée ✅` });
     await fetchCategories();
+  }
+
+  // ===== GESTION POD : Zones de livraison =====
+  async function fetchShippingZones() {
+    setZoneLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('shipping_zones')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      setShippingZones(data || []);
+    } catch (err) {
+      console.error('Erreur fetchShippingZones:', err);
+      setZoneMessage({ type: 'error', text: 'Erreur de chargement' });
+    }
+    setZoneLoading(false);
+  }
+
+  async function addShippingZone() {
+    if (!newZone.city.trim()) {
+      setZoneMessage({ type: 'error', text: 'Le nom de la ville est requis' });
+      return;
+    }
+    setZoneSaving(true);
+    setZoneMessage({ type: '', text: '' });
+    const maxOrder = shippingZones.length > 0
+      ? Math.max(...shippingZones.map(z => z.display_order))
+      : 0;
+    const { error } = await supabase
+      .from('shipping_zones')
+      .insert({
+        ...newZone,
+        city: newZone.city.trim(),
+        delivery_fee: parseInt(newZone.delivery_fee) || 0,
+        delivery_days_min: parseInt(newZone.delivery_days_min) || 1,
+        delivery_days_max: parseInt(newZone.delivery_days_max) || 3,
+        display_order: maxOrder + 1
+      });
+    setZoneSaving(false);
+    if (error) {
+      setZoneMessage({ type: 'error', text: error.message.includes('duplicate') ? 'Cette ville existe déjà' : error.message });
+      return;
+    }
+    setNewZone({ city: "", delivery_fee: 0, delivery_method: "agence", delivery_days_min: 1, delivery_days_max: 3, instructions: "", active: true });
+    setZoneMessage({ type: 'success', text: 'Zone ajoutée ✅' });
+    await fetchShippingZones();
+  }
+
+  async function updateShippingZone(id) {
+    setZoneSaving(true);
+    setZoneMessage({ type: '', text: '' });
+    const { error } = await supabase
+      .from('shipping_zones')
+      .update({
+        city: editingZone.city.trim(),
+        delivery_fee: parseInt(editingZone.delivery_fee) || 0,
+        delivery_method: editingZone.delivery_method,
+        delivery_days_min: parseInt(editingZone.delivery_days_min) || 1,
+        delivery_days_max: parseInt(editingZone.delivery_days_max) || 3,
+        instructions: editingZone.instructions || '',
+        active: editingZone.active,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    setZoneSaving(false);
+    if (error) {
+      setZoneMessage({ type: 'error', text: error.message });
+      return;
+    }
+    setEditingZoneId(null);
+    setEditingZone({});
+    setZoneMessage({ type: 'success', text: 'Zone mise à jour ✅' });
+    await fetchShippingZones();
+  }
+
+  async function deleteShippingZone(id, city) {
+    if (!window.confirm(`Supprimer la zone "${city}" ? Les commandes existantes garderont leurs informations.`)) return;
+    setZoneSaving(true);
+    const { error } = await supabase.from('shipping_zones').delete().eq('id', id);
+    setZoneSaving(false);
+    if (error) {
+      setZoneMessage({ type: 'error', text: error.message });
+      return;
+    }
+    setZoneMessage({ type: 'success', text: `Zone "${city}" supprimée ✅` });
+    await fetchShippingZones();
+  }
+
+  async function toggleZoneActive(id, currentActive) {
+    setZoneSaving(true);
+    const { error } = await supabase
+      .from('shipping_zones')
+      .update({ active: !currentActive, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    setZoneSaving(false);
+    if (!error) await fetchShippingZones();
+  }
+
+  // ===== GESTION POD : Livres papier =====
+  async function togglePaperVersion(bookId, currentValue) {
+    setPaperSaving(true);
+    const { error } = await supabase
+      .from('books')
+      .update({ has_paper_version: !currentValue })
+      .eq('id', bookId);
+    setPaperSaving(false);
+    if (error) {
+      setPaperMessage({ type: 'error', text: error.message });
+      return;
+    }
+    await fetchBooks();
+  }
+
+  async function savePaperConfig(bookId) {
+    setPaperSaving(true);
+    setPaperMessage({ type: '', text: '' });
+    const { error } = await supabase
+      .from('books')
+      .update({
+        has_paper_version: true,
+        paper_price: parseInt(editingPaper.paper_price) || 0,
+        paper_stock: editingPaper.paper_stock === '' ? -1 : parseInt(editingPaper.paper_stock),
+        paper_pages: parseInt(editingPaper.paper_pages) || null,
+        paper_description: editingPaper.paper_description || null,
+      })
+      .eq('id', bookId);
+    setPaperSaving(false);
+    if (error) {
+      setPaperMessage({ type: 'error', text: error.message });
+      return;
+    }
+    setEditingPaperId(null);
+    setEditingPaper({});
+    setPaperMessage({ type: 'success', text: 'Configuration papier enregistrée ✅' });
+    await fetchBooks();
   }
 
   // ===== AUTH ADMIN : Fonctions + early returns (APRÈS tous les hooks) =====
@@ -948,6 +1102,8 @@ export default function Admin() {
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Livres", icon: "📚" },
             { id: "categories", label: "Catégories", icon: "🗂️" },
+            { id: "paper_books", label: "Livres papier", icon: "📦" },
+            { id: "shipping_zones", label: "Zones de livraison", icon: "🚚" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
@@ -1447,6 +1603,335 @@ export default function Admin() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === "paper_books" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>📦 Livres papier (POD)</h1>
+              <button onClick={fetchBooks} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
+            </div>
+
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+              Active le format papier pour les livres que tu veux vendre imprimés.<br/>
+              💡 Le prix papier peut être différent du prix PDF. Stock illimité = impression à la demande.
+            </p>
+
+            {paperMessage.text && (
+              <div style={{
+                padding: "10px 14px", borderRadius: 6, marginBottom: 16,
+                background: paperMessage.type === "success" ? "#1a3a1a" : "#3a1a1a",
+                color: paperMessage.type === "success" ? "#4ade80" : "#f87171",
+                border: "1px solid " + (paperMessage.type === "success" ? "#22c55e" : "#ef4444"),
+                fontSize: 13
+              }}>
+                {paperMessage.text}
+              </div>
+            )}
+
+            {books.length === 0 ? (
+              <div style={{ color: "#888", textAlign: "center", padding: 40 }}>Aucun livre.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {books.map(book => (
+                  <div key={book.id} style={{
+                    background: "#1a1a1a",
+                    border: "1px solid " + (book.has_paper_version ? "#c9a84c" : "#2a2a2a"),
+                    borderRadius: 8,
+                    padding: 14
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                      {book.cover && (
+                        <img src={book.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", borderRadius: 4, flexShrink: 0 }} />
+                      )}
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>{book.title}</div>
+                        <div style={{ color: "#888", fontSize: 12 }}>{book.author} • PDF: {book.price} F</div>
+                        {book.has_paper_version && (
+                          <div style={{ color: "#c9a84c", fontSize: 12, marginTop: 4 }}>
+                            📦 Papier: {book.paper_price || '?'} F
+                            {book.paper_stock === -1 ? ' • Stock illimité' :
+                             book.paper_stock === 0 ? ' • RUPTURE' :
+                             ` • ${book.paper_stock} en stock`}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: book.has_paper_version ? "#c9a84c" : "#888", fontSize: 13 }}>
+                          <input
+                            type="checkbox"
+                            checked={book.has_paper_version || false}
+                            onChange={() => togglePaperVersion(book.id, book.has_paper_version)}
+                            disabled={paperSaving}
+                            style={{ width: 18, height: 18, cursor: "pointer" }}
+                          />
+                          Papier
+                        </label>
+                        {book.has_paper_version && (
+                          <button
+                            onClick={() => {
+                              setEditingPaperId(book.id);
+                              setEditingPaper({
+                                paper_price: book.paper_price || book.price || 0,
+                                paper_stock: book.paper_stock === null ? -1 : book.paper_stock,
+                                paper_pages: book.paper_pages || '',
+                                paper_description: book.paper_description || ''
+                              });
+                            }}
+                            style={{ padding: "6px 10px", background: "#2a2a2a", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                          >⚙️ Configurer</button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bloc de configuration */}
+                    {editingPaperId === book.id && (
+                      <div style={{ marginTop: 14, padding: 14, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 6 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 10 }}>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Prix papier (FCFA)</label>
+                            <input
+                              type="number"
+                              value={editingPaper.paper_price}
+                              onChange={e => setEditingPaper(p => ({ ...p, paper_price: e.target.value }))}
+                              style={{ width: "100%", padding: "8px 10px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Stock (-1 = illimité)</label>
+                            <input
+                              type="number"
+                              value={editingPaper.paper_stock}
+                              onChange={e => setEditingPaper(p => ({ ...p, paper_stock: e.target.value }))}
+                              style={{ width: "100%", padding: "8px 10px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Pages</label>
+                            <input
+                              type="number"
+                              value={editingPaper.paper_pages}
+                              onChange={e => setEditingPaper(p => ({ ...p, paper_pages: e.target.value }))}
+                              style={{ width: "100%", padding: "8px 10px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: 10 }}>
+                          <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Description spécifique au format papier (optionnel)</label>
+                          <textarea
+                            value={editingPaper.paper_description}
+                            onChange={e => setEditingPaper(p => ({ ...p, paper_description: e.target.value }))}
+                            placeholder="Ex: Couverture souple, format A5, papier 80g..."
+                            rows={2}
+                            style={{ width: "100%", padding: "8px 10px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13, resize: "vertical" }}
+                          />
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={() => savePaperConfig(book.id)}
+                            disabled={paperSaving}
+                            style={{ padding: "8px 16px", background: "#22c55e", color: "#000", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                          >{paperSaving ? "⏳" : "✓ Enregistrer"}</button>
+                          <button
+                            onClick={() => { setEditingPaperId(null); setEditingPaper({}); }}
+                            style={{ padding: "8px 16px", background: "#444", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer" }}
+                          >Annuler</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === "shipping_zones" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>🚚 Zones de livraison</h1>
+              <button onClick={fetchShippingZones} disabled={zoneLoading} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
+                {zoneLoading ? "⏳ Chargement..." : "🔄 Actualiser"}
+              </button>
+            </div>
+
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+              Configure les villes où tu livres et les frais associés. <br/>
+              💡 <b>Domicile</b> : livraison à l'adresse de la cliente. <b>Agence</b> : la cliente retire à une agence de voyage.
+            </p>
+
+            {zoneMessage.text && (
+              <div style={{
+                padding: "10px 14px", borderRadius: 6, marginBottom: 16,
+                background: zoneMessage.type === "success" ? "#1a3a1a" : "#3a1a1a",
+                color: zoneMessage.type === "success" ? "#4ade80" : "#f87171",
+                border: "1px solid " + (zoneMessage.type === "success" ? "#22c55e" : "#ef4444"),
+                fontSize: 13
+              }}>
+                {zoneMessage.text}
+              </div>
+            )}
+
+            {/* Formulaire d'ajout */}
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
+              <h3 style={{ color: "#c9a84c", fontSize: 14, marginBottom: 12 }}>➕ Nouvelle zone</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 10 }}>
+                <div>
+                  <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Ville *</label>
+                  <input
+                    type="text"
+                    value={newZone.city}
+                    onChange={e => setNewZone(z => ({ ...z, city: e.target.value }))}
+                    placeholder="Ex: Dschang"
+                    style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Frais (FCFA) *</label>
+                  <input
+                    type="number"
+                    value={newZone.delivery_fee}
+                    onChange={e => setNewZone(z => ({ ...z, delivery_fee: e.target.value }))}
+                    placeholder="2500"
+                    style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Mode *</label>
+                  <select
+                    value={newZone.delivery_method}
+                    onChange={e => setNewZone(z => ({ ...z, delivery_method: e.target.value }))}
+                    style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                  >
+                    <option value="domicile">Domicile</option>
+                    <option value="agence">Agence</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Délai min (jours)</label>
+                  <input
+                    type="number"
+                    value={newZone.delivery_days_min}
+                    onChange={e => setNewZone(z => ({ ...z, delivery_days_min: e.target.value }))}
+                    style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Délai max (jours)</label>
+                  <input
+                    type="number"
+                    value={newZone.delivery_days_max}
+                    onChange={e => setNewZone(z => ({ ...z, delivery_days_max: e.target.value }))}
+                    style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                  />
+                </div>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Instructions pour la cliente</label>
+                <input
+                  type="text"
+                  value={newZone.instructions}
+                  onChange={e => setNewZone(z => ({ ...z, instructions: e.target.value }))}
+                  placeholder="Ex: Retrait à l'agence de voyage de votre choix"
+                  style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                />
+              </div>
+              <button
+                onClick={addShippingZone}
+                disabled={zoneSaving || !newZone.city.trim()}
+                style={{
+                  padding: "8px 18px",
+                  background: zoneSaving || !newZone.city.trim() ? "#333" : "#c9a84c",
+                  color: zoneSaving || !newZone.city.trim() ? "#666" : "#000",
+                  border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600,
+                  cursor: zoneSaving || !newZone.city.trim() ? "not-allowed" : "pointer"
+                }}
+              >
+                {zoneSaving ? "⏳" : "➕ Ajouter cette zone"}
+              </button>
+            </div>
+
+            {/* Liste des zones */}
+            {shippingZones.length === 0 ? (
+              <div style={{ color: "#888", textAlign: "center", padding: 40 }}>Aucune zone. Ajoute-en une ci-dessus.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {shippingZones.map(zone => (
+                  <div key={zone.id} style={{
+                    background: "#1a1a1a",
+                    border: "1px solid " + (zone.active ? "#2a2a2a" : "#553333"),
+                    borderRadius: 8,
+                    padding: 14,
+                    opacity: zone.active ? 1 : 0.5
+                  }}>
+                    {editingZoneId === zone.id ? (
+                      <div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 10 }}>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Ville</label>
+                            <input type="text" value={editingZone.city} onChange={e => setEditingZone(z => ({ ...z, city: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                          </div>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Frais</label>
+                            <input type="number" value={editingZone.delivery_fee} onChange={e => setEditingZone(z => ({ ...z, delivery_fee: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                          </div>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Mode</label>
+                            <select value={editingZone.delivery_method} onChange={e => setEditingZone(z => ({ ...z, delivery_method: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}>
+                              <option value="domicile">Domicile</option>
+                              <option value="agence">Agence</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Délai min</label>
+                            <input type="number" value={editingZone.delivery_days_min} onChange={e => setEditingZone(z => ({ ...z, delivery_days_min: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                          </div>
+                          <div>
+                            <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Délai max</label>
+                            <input type="number" value={editingZone.delivery_days_max} onChange={e => setEditingZone(z => ({ ...z, delivery_days_max: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: 10 }}>
+                          <input type="text" value={editingZone.instructions || ''} onChange={e => setEditingZone(z => ({ ...z, instructions: e.target.value }))} placeholder="Instructions" style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => updateShippingZone(zone.id)} disabled={zoneSaving} style={{ padding: "8px 16px", background: "#22c55e", color: "#000", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{zoneSaving ? "⏳" : "✓ Enregistrer"}</button>
+                          <button onClick={() => { setEditingZoneId(null); setEditingZone({}); }} style={{ padding: "8px 16px", background: "#444", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer" }}>Annuler</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: 180 }}>
+                          <div style={{ color: "#fff", fontSize: 15, fontWeight: 600 }}>
+                            {zone.city}
+                            {!zone.active && <span style={{ color: "#f87171", fontSize: 11, marginLeft: 8 }}>(désactivée)</span>}
+                          </div>
+                          <div style={{ color: "#c9a84c", fontSize: 13, marginTop: 4 }}>
+                            {zone.delivery_fee.toLocaleString()} FCFA •
+                            {zone.delivery_method === 'domicile' ? ' 🏠 Domicile' : ' 🏢 Agence'} •
+                            {' ' + zone.delivery_days_min}-{zone.delivery_days_max} jours
+                          </div>
+                          {zone.instructions && (
+                            <div style={{ color: "#888", fontSize: 12, marginTop: 4, fontStyle: "italic" }}>{zone.instructions}</div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => toggleZoneActive(zone.id, zone.active)} disabled={zoneSaving} style={{ padding: "6px 10px", background: zone.active ? "#1a3a1a" : "#3a3a1a", color: zone.active ? "#4ade80" : "#fbbf24", border: "1px solid " + (zone.active ? "#22c55e" : "#fbbf24"), borderRadius: 6, fontSize: 12, cursor: "pointer" }}>
+                            {zone.active ? "✓ Active" : "○ Inactive"}
+                          </button>
+                          <button onClick={() => {
+                            setEditingZoneId(zone.id);
+                            setEditingZone({ ...zone });
+                          }} style={{ padding: "6px 10px", background: "#2a2a2a", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>✏️ Modifier</button>
+                          <button onClick={() => deleteShippingZone(zone.id, zone.city)} disabled={zoneSaving} style={{ padding: "6px 10px", background: "#3a1a1a", color: "#f87171", border: "1px solid #ef4444", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>🗑️</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
