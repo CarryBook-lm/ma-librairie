@@ -13395,6 +13395,9 @@ export default function App() {
     setPaperPaymentMethod("");
     setPaperPaymentPhone("");
     setShowPaperOrderModal(true);
+    // Force le scroll en haut + désactive le scroll du body pendant que le modal est ouvert
+    setTimeout(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, 50);
+    document.body.style.overflow = 'hidden';
   }
 
   function closePaperOrderModal() {
@@ -13402,6 +13405,8 @@ export default function App() {
     setPaperOrderBook(null);
     setPaperOrderStep(1);
     setPaperOrderError("");
+    // Réactive le scroll du body
+    document.body.style.overflow = '';
   }
 
   function getSelectedZone() {
@@ -16922,12 +16927,16 @@ export default function App() {
       {showPaperOrderModal && paperOrderBook && (
         <div style={{
           position: "fixed",
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           background: "rgba(0,0,0,0.7)",
           display: "flex",
           alignItems: "flex-end",
-          zIndex: 300,
-          overflowY: "auto"
+          zIndex: 99999,
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch"
         }}>
           <div style={{
             background: "#fff",
@@ -16937,7 +16946,9 @@ export default function App() {
             margin: "0 auto",
             padding: "24px 20px 40px",
             maxHeight: "95vh",
-            overflowY: "auto"
+            overflowY: "auto",
+            position: "relative",
+            zIndex: 100000
           }}>
             {/* En-tête */}
             <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 16px" }} />
@@ -17131,8 +17142,7 @@ export default function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
                   {[
                     { id: 'mtn', label: 'MTN Mobile Money', icon: '📱', color: '#ffcc00' },
-                    { id: 'orange', label: 'Orange Money', icon: '🟠', color: '#ff7900' },
-                    { id: 'campay', label: 'CamPay', icon: '💳', color: '#0066cc' }
+                    { id: 'orange', label: 'Orange Money', icon: '🟠', color: '#ff7900' }
                   ].map(m => (
                     <button
                       key={m.id}
