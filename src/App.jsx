@@ -14708,7 +14708,7 @@ export default function App() {
                 gap: 8
               }}>
               <span>📦</span>
-              <span>Commander en papier — {book.paper_price?.toLocaleString()} FCFA</span>
+              <span>Livre papier — {book.paper_price?.toLocaleString()} FCFA</span>
             </button>
           )}
 
@@ -16931,29 +16931,33 @@ export default function App() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: "rgba(0,0,0,0.7)",
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.75)",
           display: "flex",
-          alignItems: "flex-end",
-          zIndex: 99999,
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2147483647,
           overflowY: "auto",
-          WebkitOverflowScrolling: "touch"
+          WebkitOverflowScrolling: "touch",
+          padding: 0,
+          margin: 0
         }}>
           <div style={{
             background: "#fff",
-            borderRadius: "16px 16px 0 0",
-            width: "100%",
+            borderRadius: 16,
+            width: "calc(100% - 24px)",
             maxWidth: 600,
-            margin: "0 auto",
-            padding: "24px 20px 40px",
-            maxHeight: "95vh",
+            margin: "12px auto",
+            padding: "24px 20px 30px",
+            maxHeight: "calc(100vh - 24px)",
             overflowY: "auto",
             position: "relative",
-            zIndex: 100000
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5)"
           }}>
             {/* En-tête */}
-            <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 16px" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: 0 }}>📦 Commander en papier</h2>
+              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: 0 }}>📦 Livre papier</h2>
               <button
                 onClick={closePaperOrderModal}
                 style={{ background: "none", border: "none", color: "#888", fontSize: 24, cursor: "pointer", padding: 0, lineHeight: 1 }}
