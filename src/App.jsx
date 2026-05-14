@@ -14920,7 +14920,10 @@ export default function App() {
     // DETAIL
   if (page === "detail" && selectedBook) {
     const book = selectedBook;
-    const free = book.price === 0;
+    // Un livre est "papier uniquement" s'il n'a ni texte ni PDF mais a une version papier
+    const isPaperOnly = !book.pdf_url && !book.content && book.has_paper_version;
+    // Gratuit = prix 0 ET pas un livre papier uniquement
+    const free = book.price === 0 && !isPaperOnly;
     const owned = hasAccess(book);
     const isFav = favoriteBooks.includes(book.id);
     return (
@@ -14940,13 +14943,19 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12, flexWrap: "wrap" }}>
             {free && <span style={{ background: G.greenDim, color: G.green, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>GRATUIT</span>}
+            {isPaperOnly && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1, border: "1px solid " + G.gold }}>📦 PAPIER UNIQUEMENT</span>}
             {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
           <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 16 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
-            {/* Si en promo : affiche prix barré + nouveau prix + badge */}
-            {isOnPromo(book) ? (
+            {/* Pour un livre papier uniquement, on affiche le prix papier */}
+            {isPaperOnly ? (
+              <div style={{ fontSize: 22, color: G.gold, fontWeight: "bold" }}>
+                {book.paper_price?.toLocaleString()} FCFA
+                <div style={{ fontSize: 11, color: G.textDim, fontWeight: "normal", marginTop: 4 }}>(livre papier)</div>
+              </div>
+            ) : isOnPromo(book) ? (
               <div>
                 <div style={{ display: "inline-block", padding: "4px 12px", background: "#dc3545", color: "#fff", borderRadius: 20, fontSize: 11, fontWeight: "bold", letterSpacing: 1, marginBottom: 8 }}>
                   🔥 PROMO -{getDiscountPct(book)}%
@@ -15036,11 +15045,26 @@ export default function App() {
               </span>
             </div>
           )}
-          <button
-            onClick={() => startReading(book)}
-            style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-            {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.pdf_url ? "📥 Télécharger — " : "📖 Lire — ") + book.price?.toLocaleString() + " FCFA"}
-          </button>
+          {/* BOUTON PRINCIPAL (Lire / Télécharger / Acheter) — masqué si livre papier uniquement */}
+          {(book.pdf_url || book.content) && (
+            <button
+              onClick={() => startReading(book)}
+              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.pdf_url ? "📥 Télécharger — " : "📖 Lire — ") + book.price?.toLocaleString() + " FCFA"}
+            </button>
+          )}
+
+          {/* Message si le livre est uniquement disponible en papier */}
+          {!book.pdf_url && !book.content && book.has_paper_version && (
+            <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 6, padding: "14px 16px", marginBottom: 4, textAlign: "center" }}>
+              <div style={{ color: G.gold, fontSize: 13, fontWeight: 600 }}>
+                📦 Ce livre est uniquement disponible en version papier
+              </div>
+              <div style={{ color: G.textDim, fontSize: 11, marginTop: 4 }}>
+                Consulte l'extrait avant de commander
+              </div>
+            </div>
+          )}
 
           {/* BOUTON LIVRE PAPIER (si le livre a une version papier disponible) */}
           {book.has_paper_version && book.paper_price > 0 && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0) && (
@@ -16002,15 +16026,22 @@ export default function App() {
                             {book.cover
                               ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
-                            {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                            {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                            {!book.pdf_url && !book.content && book.has_paper_version && <div style={{ position: "absolute", top: 4, left: 4, background: G.goldDim, color: G.gold, fontSize: 8, padding: "2px 6px", borderRadius: 6, border: "1px solid " + G.gold }}>PAPIER</div>}
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
-                            {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                            {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                            {(!book.pdf_url && !book.content && book.has_paper_version) ? (
+                              <span style={{ color: G.gold }}>📦 Livre papier</span>
+                            ) : (
+                              <>
+                                {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                                {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                              </>
+                            )}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            <span style={{ fontSize: 10, color: (!book.pdf_url && !book.content && book.has_paper_version) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(!book.pdf_url && !book.content && book.has_paper_version) ? book.paper_price?.toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -16039,15 +16070,22 @@ export default function App() {
                               {book.cover
                                 ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
-                              {book.price === 0 && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                              {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                              {!book.pdf_url && !book.content && book.has_paper_version && <div style={{ position: "absolute", top: 4, left: 4, background: G.goldDim, color: G.gold, fontSize: 8, padding: "2px 6px", borderRadius: 6, border: "1px solid " + G.gold }}>PAPIER</div>}
                             </div>
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                             <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
-                              {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                              {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                              {(!book.pdf_url && !book.content && book.has_paper_version) ? (
+                                <span style={{ color: G.gold }}>📦 Livre papier</span>
+                              ) : (
+                                <>
+                                  {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                                  {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                                </>
+                              )}
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            <span style={{ fontSize: 10, color: (!book.pdf_url && !book.content && book.has_paper_version) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(!book.pdf_url && !book.content && book.has_paper_version) ? book.paper_price?.toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -16098,15 +16136,26 @@ export default function App() {
                           {book.cover
                             ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
-                          {book.price === 0 && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
+                          {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
+                          {!book.pdf_url && !book.content && book.has_paper_version && <div style={{ position: "absolute", top: 8, left: 8, background: G.goldDim, color: G.gold, fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1, border: "1px solid " + G.gold }}>📦 PAPIER</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
                         </div>
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
                         <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>
-                          {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                          {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                          {(!book.pdf_url && !book.content && book.has_paper_version) ? (
+                            <span style={{ color: G.gold }}>📦 Livre papier</span>
+                          ) : (
+                            <>
+                              {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                              {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                            </>
+                          )}
                         </div>
-                        {isOnPromo(book) ? (
+                        {(!book.pdf_url && !book.content && book.has_paper_version) ? (
+                          <div style={{ fontSize: 13, color: G.gold, fontWeight: "bold" }}>
+                            {book.paper_price?.toLocaleString()} FCFA
+                          </div>
+                        ) : isOnPromo(book) ? (
                           <div>
                             <div style={{ fontSize: 10, color: G.textFaint, textDecoration: "line-through", lineHeight: 1.2 }}>
                               {book.original_price?.toLocaleString()} F
