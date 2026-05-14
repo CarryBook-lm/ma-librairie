@@ -13378,8 +13378,6 @@ export default function App() {
 
   // ===== MODULE POD : Fonctions de commande papier =====
   function openPaperOrderModal(book) {
-    // 1) Afficher le modal IMMÉDIATEMENT (avant tout le reste)
-    setShowPaperOrderModal(true);
     setPaperOrderBook(book);
     setPaperOrderStep(1);
     setPaperOrderError("");
@@ -13396,20 +13394,9 @@ export default function App() {
     });
     setPaperPaymentMethod("");
     setPaperPaymentPhone("");
-
-    // 2) Force le scroll en haut IMMÉDIATEMENT puis encore après le render
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    });
-
-    // 3) Bloquer le scroll de la page derrière
+    setShowPaperOrderModal(true);
+    // Bloquer le scroll de la page derrière
     document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
   }
 
   function closePaperOrderModal() {
@@ -13419,7 +13406,6 @@ export default function App() {
     setPaperOrderError("");
     // Réactive le scroll
     document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
   }
 
   function getSelectedZone() {
@@ -14704,7 +14690,11 @@ export default function App() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                openPaperOrderModal(book);
+                // Différer l'ouverture pour éviter conflit avec d'autres handlers
+                setTimeout(() => {
+                  openPaperOrderModal(book);
+                }, 0);
+                return false;
               }}
               type="button"
               style={{
