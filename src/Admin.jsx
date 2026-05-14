@@ -923,11 +923,11 @@ export default function Admin() {
   }
 
   async function handleSave() {
-    if (!form.title || !form.author || form.price === "") return;
+    if (!form.title || !form.author) return;
     setSaving(true);
     const payload = {
       ...form,
-      price: parseInt(form.price) || 0,
+      price: form.price === "" ? 0 : (parseInt(form.price) || 0),
       original_price: form.original_price && form.original_price !== "" ? parseInt(form.original_price) : null
     };
     if (editingBook) {
@@ -2652,11 +2652,12 @@ export default function Admin() {
                     placeholder="Nom et prénom" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>PRIX ACTUEL (FCFA) *</label>
+                  <label style={labelStyle}>PRIX ACTUEL (FCFA)</label>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder="Ex: 2500 (0 pour gratuit)" type="number" style={inputStyle} />
+                    placeholder="Ex: 2500 (0 pour gratuit, vide si papier uniquement)" type="number" style={inputStyle} />
                   <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
-                    💰 C'est le prix que paie le client
+                    💰 Prix de la version numérique<br/>
+                    📦 <b style={{ color: "#c9a84c" }}>Livre papier uniquement</b> : laisse vide et n'ajoute pas de contenu/PDF
                   </div>
                 </div>
                 <div>
