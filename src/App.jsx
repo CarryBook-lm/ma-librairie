@@ -1081,7 +1081,9 @@ const buildPath = (page, book) => {
   return base;
 };
 
-const CATEGORIES = {
+// CATEGORIES_FALLBACK : valeurs par défaut si Supabase n'a pas encore répondu
+// Les vraies catégories sont chargées dynamiquement depuis Supabase (voir useEffect dans App)
+const CATEGORIES_FALLBACK = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
   "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education", "Guide Pratique"],
   "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces", "Guide Pratique"],
@@ -12187,6 +12189,8 @@ async function recoverLostPurchases(user_id) {
 }
 
 export default function App() {
+  // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
+  const [CATEGORIES, setCATEGORIES] = useState(CATEGORIES_FALLBACK);
   const [page, setPage] = useState(() => {
     // Priorité 1 : Lire la page depuis l'URL (pour partage et deep links)
     const urlPage = getPageFromURL();
@@ -12282,6 +12286,42 @@ export default function App() {
       }
     }
     checkPromoCodesAvailability();
+  }, []);
+
+  // Charger les catégories dynamiquement depuis Supabase
+  useEffect(() => {
+    async function fetchCategoriesFromSupabase() {
+      try {
+        const { data: cats, error: e1 } = await supabase
+          .from('categories')
+          .select('*')
+          .order('display_order', { ascending: true });
+        if (e1) {
+          console.error('Erreur load categories:', e1);
+          return;
+        }
+        const { data: subs, error: e2 } = await supabase
+          .from('subcategories')
+          .select('*')
+          .order('display_order', { ascending: true });
+        if (e2) {
+          console.error('Erreur load subcategories:', e2);
+          return;
+        }
+        if (cats && cats.length > 0) {
+          const obj = {};
+          cats.forEach(c => {
+            obj[c.name] = (subs || [])
+              .filter(s => s.category_id === c.id)
+              .map(s => s.name);
+          });
+          setCATEGORIES(obj);
+        }
+      } catch (e) {
+        console.error('Erreur fetchCategoriesFromSupabase:', e);
+      }
+    }
+    fetchCategoriesFromSupabase();
   }, []);
 
   // PARRAINAGE
