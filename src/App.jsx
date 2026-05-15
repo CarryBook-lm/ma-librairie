@@ -12355,13 +12355,13 @@ export default function App() {
     // Vérifie que c'est bien un produit physique (papier, mixte, ou article)
     const isPhysical = book.product_type === 'papier' || book.product_type === 'mixte' || book.product_type === 'article';
     if (!isPhysical) {
-      alert("Ce produit ne peut pas être ajouté au panier (uniquement les produits physiques)");
+      showToast("Ce produit n'est pas disponible au panier", "error");
       return;
     }
     // Prix unitaire selon le type
     const unitPrice = book.product_type === 'article' ? (book.price || 0) : (book.paper_price || 0);
     if (unitPrice <= 0) {
-      alert("Ce produit n'a pas de prix défini");
+      showToast("Ce produit n'a pas de prix défini", "error");
       return;
     }
     setCart(prev => {
@@ -12384,6 +12384,7 @@ export default function App() {
         product_type: book.product_type
       }];
     });
+    showToast(`✅ ${book.title} ajouté au panier`, "success");
   }
 
   function removeFromCart(bookId) {
@@ -12407,6 +12408,13 @@ export default function App() {
   // Totaux du panier
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+
+  // 🍞 Toast de notification (confirmation ajout panier, etc.)
+  const [toast, setToast] = useState(null);  // { message, type: "success"|"error" }
+  function showToast(message, type = "success") {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 2500);
+  }
 
   const [myResults, setMyResults] = useState([]);
   const [loadingMyResults, setLoadingMyResults] = useState(false);
@@ -15237,52 +15245,80 @@ export default function App() {
               );
             }
 
-            // Sinon : afficher le bouton acheter (avec mention pré-commande si rupture + oversell)
+            // Sinon : afficher 2 boutons (Acheter maintenant + Ajouter au panier)
             return (
-            <button
-              onClick={() => {
-                // Champs vides : la cliente remplit ses infos elle-même à chaque commande
-                setPaperOrderBook(book);
-                setPaperOrderStep(1);
-                setPaperOrderError("");
-                setPaperOrderRef("");
-                setPaperOrderForm({
-                  customer_name: "",
-                  customer_phone: "",
-                  customer_email: "",
-                  shipping_city: "",
-                  shipping_zone_id: null,
-                  shipping_address: "",
-                  shipping_agency: "",
-                  shipping_notes: ""
-                });
-                setPaperPaymentMethod("");
-                setPaperPaymentPhone("");
-                setPage("paper_order");
-                window.scrollTo(0, 0);
-              }}
-              type="button"
-              style={{
-                width: "100%",
-                padding: 15,
-                marginTop: 10,
-                background: "transparent",
-                border: "2px solid " + G.gold,
-                borderRadius: 6,
-                color: G.gold,
-                cursor: "pointer",
-                fontSize: 14,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8
-              }}>
-              <span>📦</span>
-              <span>Acheter — {getDisplayPrice(book).toLocaleString()} FCFA</span>
-            </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                {/* Bouton ACHETER MAINTENANT (achat direct, comme avant) */}
+                <button
+                  onClick={() => {
+                    setPaperOrderBook(book);
+                    setPaperOrderStep(1);
+                    setPaperOrderError("");
+                    setPaperOrderRef("");
+                    setPaperOrderForm({
+                      customer_name: "",
+                      customer_phone: "",
+                      customer_email: "",
+                      shipping_city: "",
+                      shipping_zone_id: null,
+                      shipping_address: "",
+                      shipping_agency: "",
+                      shipping_notes: ""
+                    });
+                    setPaperPaymentMethod("");
+                    setPaperPaymentPhone("");
+                    setPage("paper_order");
+                    window.scrollTo(0, 0);
+                  }}
+                  type="button"
+                  style={{
+                    width: "100%",
+                    padding: 15,
+                    background: G.gold,
+                    border: "none",
+                    borderRadius: 6,
+                    color: "#000",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8
+                  }}>
+                  <span>⚡</span>
+                  <span>Acheter maintenant — {getDisplayPrice(book).toLocaleString()} FCFA</span>
+                </button>
+
+                {/* Bouton AJOUTER AU PANIER */}
+                <button
+                  onClick={() => {
+                    addToCart(book, 1);
+                  }}
+                  type="button"
+                  style={{
+                    width: "100%",
+                    padding: 15,
+                    background: "transparent",
+                    border: "2px solid " + G.gold,
+                    borderRadius: 6,
+                    color: G.gold,
+                    cursor: "pointer",
+                    fontSize: 14,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8
+                  }}>
+                  <span>🛒</span>
+                  <span>Ajouter au panier</span>
+                </button>
+              </div>
             );
           })()}
 
@@ -15932,11 +15968,6 @@ export default function App() {
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
-          {page === "home" && (
-            <button onClick={() => setPage("catalog")} style={{ background: "none", border: "none", color: G.text, fontSize: 20, cursor: "pointer", padding: 4 }}>
-              🔍
-            </button>
-          )}
           {/* 🛒 IC�NE PANIER avec compteur */}
           <button 
             onClick={() => { setPage("cart"); setShowMenu(false); }} 
@@ -15979,6 +16010,29 @@ export default function App() {
           </button>
         </div>
       </nav>
+
+      {/* 🍞 TOAST DE NOTIFICATION */}
+      {toast && (
+        <div style={{
+          position: "fixed",
+          top: 70,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 200,
+          background: toast.type === "success" ? "#1a3a1a" : "#3a1a1a",
+          color: toast.type === "success" ? "#4ade80" : "#f87171",
+          border: "1px solid " + (toast.type === "success" ? "#22c55e" : "#ef4444"),
+          padding: "12px 20px",
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: "bold",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          maxWidth: "90vw",
+          animation: "slideDown 0.3s ease-out"
+        }}>
+          {toast.message}
+        </div>
+      )}
 
       {/* BOUTON RETOUR GLOBAL (sur toutes les pages sauf accueil) */}
       {page !== "home" && !showMenu && (
@@ -16043,12 +16097,24 @@ export default function App() {
 
       <div style={{ paddingTop: 56 }}>
         {/* HERO */}
-        {/* SEARCH + CATEGORIES - caché sur home Netflix */}
-        {(page === "catalog" || searchQuery || selectedCategory !== "Tous" || page !== "home") && (
+        {/* SEARCH + CATEGORIES - visible aussi sur la page d'accueil */}
+        {(page === "home" || page === "catalog" || searchQuery || selectedCategory !== "Tous") && (
         <div style={{ padding: "14px 16px 8px", background: G.bg, position: "sticky", top: 56, zIndex: 9, borderBottom: "1px solid " + G.border }}>
-          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un livre ou auteur..."
-            style={{ width: "100%", padding: "11px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 10 }} />
+          <div style={{ position: "relative", marginBottom: 10 }}>
+            <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
+            <input value={searchQuery} onChange={e => { 
+              setSearchQuery(e.target.value); 
+              // Si on est sur la home et qu'on commence à taper → basculer sur catalogue
+              if (e.target.value && page === "home") setPage("catalog");
+            }}
+              placeholder="Rechercher un livre, un auteur, un produit..."
+              style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
+                ✕
+              </button>
+            )}
+          </div>
           <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
             <button onClick={() => { setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); }}
               style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === "Tous" ? G.gold : G.border), background: selectedCategory === "Tous" ? G.goldDim : "transparent", color: selectedCategory === "Tous" ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
