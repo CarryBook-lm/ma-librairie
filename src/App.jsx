@@ -12122,6 +12122,15 @@ function isMixte(book) {
   return book && book.product_type === 'mixte';
 }
 
+// Helper : retourne le bon prix à afficher selon le type de produit
+// Pour un article : utilise book.price (rempli dans l'admin)
+// Pour un livre papier : utilise book.paper_price (champ dédié)
+function getDisplayPrice(book) {
+  if (!book) return 0;
+  if (book.product_type === 'article') return book.price || 0;
+  return book.paper_price || 0;
+}
+
 // Helper pour générer un code parrainage suggéré (style PRENOM + 4 caractères)
 function generateSuggestedReferralCode(name) {
   const cleanName = (name || "USER").replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 8);
@@ -14977,7 +14986,7 @@ export default function App() {
             {/* Pour un livre papier uniquement, on affiche le prix papier */}
             {isPaperOnlyBook ? (
               <div style={{ fontSize: 22, color: G.gold, fontWeight: "bold" }}>
-                {book.paper_price?.toLocaleString()} FCFA
+                {getDisplayPrice(book).toLocaleString()} FCFA
                 <div style={{ fontSize: 11, color: G.textDim, fontWeight: "normal", marginTop: 4 }}>({isArticle(book) ? "article divers" : "livre papier"})</div>
               </div>
             ) : isOnPromo(book) ? (
@@ -15079,8 +15088,8 @@ export default function App() {
             </button>
           )}
 
-          {/* BOUTON LIVRE PAPIER (si le livre a une version papier disponible) */}
-          {book.has_paper_version && book.paper_price > 0 && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0) && (
+          {/* BOUTON ACHETER (livre papier OU article divers) */}
+          {((book.has_paper_version && book.paper_price > 0) || (isArticle(book) && book.price > 0)) && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0 || book.stock === -1 || book.stock > 0) && (
             <button
               onClick={() => {
                 // Pré-remplir le formulaire avec les infos de l'utilisateur
@@ -15123,7 +15132,7 @@ export default function App() {
                 gap: 8
               }}>
               <span>📦</span>
-              <span>Acheter — {book.paper_price?.toLocaleString()} FCFA</span>
+              <span>Acheter — {getDisplayPrice(book).toLocaleString()} FCFA</span>
             </button>
           )}
 
@@ -16034,7 +16043,7 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {books.slice(0, 10).map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
                               ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -16052,8 +16061,8 @@ export default function App() {
                               </>
                             )}
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: (isPaperOnly(book)) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(isPaperOnly(book)) ? book.paper_price?.toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, color: (isPaperOnly(book)) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(isPaperOnly(book)) ? getDisplayPrice(book).toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -16077,7 +16086,7 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                         {catBooks.map(book => (
-                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer" }}>
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
                             <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
                                 ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -16095,8 +16104,8 @@ export default function App() {
                                 </>
                               )}
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: (isPaperOnly(book)) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(isPaperOnly(book)) ? book.paper_price?.toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, color: (isPaperOnly(book)) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(isPaperOnly(book)) ? getDisplayPrice(book).toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -16114,7 +16123,7 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Mes favoris</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover && <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                             <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
@@ -16142,7 +16151,7 @@ export default function App() {
                 ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
                     {filteredBooks.map(book => (
-                      <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
+                      <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                         <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
                           {book.cover
                             ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
@@ -16163,7 +16172,7 @@ export default function App() {
                         </div>
                         {(isPaperOnly(book)) ? (
                           <div style={{ fontSize: 13, color: G.gold, fontWeight: "bold" }}>
-                            {book.paper_price?.toLocaleString()} FCFA
+                            {getDisplayPrice(book).toLocaleString()} FCFA
                           </div>
                         ) : isOnPromo(book) ? (
                           <div>
