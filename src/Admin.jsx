@@ -28,7 +28,8 @@ const emptyForm = {
   summary: "", content: "", pdf_url: "", status: "actif", audio_url: "", excerpt_pdf_url: "",
   can_read: true, can_download: false, featured: false, exclude_from_subscription: false,
   product_type: "numerique", stock: -1, images: [], audio_access_mode: "sale",
-  paper_pages: "", paper_description: "", paper_stock: -1, paper_price: ""
+  paper_pages: "", paper_description: "", paper_stock: -1, paper_price: "",
+  allow_oversell: false
 };
 
 export default function Admin() {
@@ -1010,7 +1011,8 @@ export default function Admin() {
       paper_pages: book.paper_pages || "",
       paper_description: book.paper_description || "",
       paper_stock: book.paper_stock !== undefined && book.paper_stock !== null ? book.paper_stock : -1,
-      paper_price: book.paper_price ? String(book.paper_price) : ""
+      paper_price: book.paper_price ? String(book.paper_price) : "",
+      allow_oversell: !!book.allow_oversell
     });
     setShowForm(true);
     setActiveTab("info");
@@ -3054,6 +3056,25 @@ export default function Admin() {
                       💡 Laisse vide si tu ne veux pas gérer le stock (stock illimité)<br/>
                       ⚠️ Mets 0 pour marquer comme "Rupture de stock"
                     </div>
+
+                    {/* Autoriser la commande en rupture */}
+                    <div style={{ marginTop: 12, padding: 10, background: "#0a0a0a", borderRadius: 6, border: "1px solid #2a2a2a" }}>
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={!!form.allow_oversell}
+                          onChange={e => setForm(f => ({ ...f, allow_oversell: e.target.checked }))}
+                          style={{ width: 18, height: 18, accentColor: "#c9a84c", marginTop: 2 }}
+                        />
+                        <div>
+                          <div style={{ color: "#e8e0d0", fontSize: 13, fontWeight: "bold" }}>♻️ Autoriser la commande en rupture de stock</div>
+                          <div style={{ color: "#888", fontSize: 11, marginTop: 3 }}>
+                            Si coché : la cliente peut commander même si stock = 0 (réapprovisionnement à venir)<br/>
+                            Si décoché : bouton "Acheter" désactivé quand stock = 0
+                          </div>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 )}
 
@@ -3130,6 +3151,25 @@ export default function Admin() {
                         💡 Laisse vide si stock illimité (impression à la demande)<br/>
                         ⚠️ Mets 0 pour marquer comme "Rupture de stock"
                       </div>
+                    </div>
+
+                    {/* Autoriser la commande en rupture */}
+                    <div style={{ marginTop: 12, padding: 10, background: "#0a0a0a", borderRadius: 6, border: "1px solid #2a2a2a" }}>
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={!!form.allow_oversell}
+                          onChange={e => setForm(f => ({ ...f, allow_oversell: e.target.checked }))}
+                          style={{ width: 18, height: 18, accentColor: "#c9a84c", marginTop: 2 }}
+                        />
+                        <div>
+                          <div style={{ color: "#e8e0d0", fontSize: 13, fontWeight: "bold" }}>♻️ Autoriser la commande en rupture de stock</div>
+                          <div style={{ color: "#888", fontSize: 11, marginTop: 3 }}>
+                            Si coché : la cliente peut commander même si stock = 0 (livraison à réapprovisionnement / impression à la demande)<br/>
+                            Si décoché : bouton "Acheter" désactivé quand stock = 0
+                          </div>
+                        </div>
+                      </label>
                     </div>
                   </div>
                 )}

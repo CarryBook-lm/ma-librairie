@@ -13461,9 +13461,7 @@ export default function App() {
     if (zone && zone.delivery_method === 'domicile' && !paperOrderForm.shipping_address.trim()) {
       return "Indique ton adresse complète (quartier, rue, point de repère)";
     }
-    if (zone && zone.delivery_method === 'agence' && !paperOrderForm.shipping_agency.trim()) {
-      return "Indique l'agence de voyage où tu veux retirer ton livre";
-    }
+    // L'agence n'est plus obligatoire : si vide, on la convient par téléphone
     return "";
   }
 
@@ -14702,15 +14700,17 @@ export default function App() {
 
               {zone && zone.delivery_method === 'agence' && (
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Agence de voyage *</label>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Agence de voyage (optionnel)</label>
                   <input
                     type="text"
                     value={paperOrderForm.shipping_agency}
                     onChange={e => setPaperOrderForm(f => ({ ...f, shipping_agency: e.target.value }))}
-                    placeholder="Ex: General Express, Buca Voyages..."
+                    placeholder="Ex: General Express, Buca Voyages... (ou laisser vide)"
                     style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   />
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 {zone.instructions}</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>
+                    💡 Si tu ne sais pas, laisse vide — on te proposera une agence au téléphone
+                  </div>
                 </div>
               )}
 
@@ -15120,18 +15120,41 @@ export default function App() {
           )}
 
           {/* BOUTON ACHETER (livre papier OU article divers) */}
-          {((book.has_paper_version && book.paper_price > 0) || (isArticle(book) && book.price > 0)) && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0 || book.stock === -1 || book.stock > 0) && (
+          {(() => {
+            // Le produit a un prix défini (papier ou article) ?
+            const hasPrice = (book.has_paper_version && book.paper_price > 0) || (isArticle(book) && book.price > 0);
+            if (!hasPrice) return null;
+
+            // Vérifier le stock disponible (selon le type)
+            const stock = isArticle(book) ? book.stock : book.paper_stock;
+            const isUnlimited = stock === null || stock === -1 || stock === undefined;
+            const inStock = isUnlimited || stock > 0;
+            const isOutOfStock = !isUnlimited && stock === 0;
+            const allowOversell = !!book.allow_oversell;
+
+            // Si rupture ET pas d'autorisation oversell : afficher message rupture
+            if (isOutOfStock && !allowOversell) {
+              return (
+                <div style={{ marginTop: 10, padding: 15, background: "#3a1a1a", border: "1.5px solid #f44336", borderRadius: 6, textAlign: "center" }}>
+                  <div style={{ color: "#f87171", fontSize: 13, fontWeight: "bold", marginBottom: 4 }}>⚠️ RUPTURE DE STOCK</div>
+                  <div style={{ color: "#aaa", fontSize: 11 }}>Ce produit n'est plus disponible pour le moment.</div>
+                </div>
+              );
+            }
+
+            // Sinon : afficher le bouton acheter (avec mention pré-commande si rupture + oversell)
+            return (
             <button
               onClick={() => {
-                // Pré-remplir le formulaire avec les infos de l'utilisateur
+                // Champs vides : la cliente remplit ses infos elle-même à chaque commande
                 setPaperOrderBook(book);
                 setPaperOrderStep(1);
                 setPaperOrderError("");
                 setPaperOrderRef("");
                 setPaperOrderForm({
-                  customer_name: user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-                  customer_phone: user?.user_metadata?.phone || "",
-                  customer_email: user?.email || "",
+                  customer_name: "",
+                  customer_phone: "",
+                  customer_email: "",
                   shipping_city: "",
                   shipping_zone_id: null,
                   shipping_address: "",
@@ -15165,7 +15188,8 @@ export default function App() {
               <span>📦</span>
               <span>Acheter — {getDisplayPrice(book).toLocaleString()} FCFA</span>
             </button>
-          )}
+            );
+          })()}
 
           {/* Indication si rupture de stock papier */}
           {book.has_paper_version && book.paper_stock === 0 && (
