@@ -12329,6 +12329,85 @@ export default function App() {
   const [excerptMode, setExcerptMode] = useState(false);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
+  
+  // 🛒 PANIER : �tat persist� dans localStorage (cl� "carrybooks_cart")
+  // Format : [{ book_id, title, cover, unit_price, quantity, product_type }, ...]
+  const [cart, setCart] = useState(() => {
+    try {
+      const stored = localStorage.getItem("carrybooks_cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) { console.error("Erreur lecture panier localStorage:", e); }
+    return [];
+  });
+
+  // Sauvegarde automatique du panier dans localStorage � chaque changement
+  useEffect(() => {
+    try {
+      localStorage.setItem("carrybooks_cart", JSON.stringify(cart));
+    } catch (e) { console.error("Erreur sauvegarde panier localStorage:", e); }
+  }, [cart]);
+
+  // Helpers panier
+  function addToCart(book, quantity = 1) {
+    // Vérifie que c'est bien un produit physique (papier, mixte, ou article)
+    const isPhysical = book.product_type === 'papier' || book.product_type === 'mixte' || book.product_type === 'article';
+    if (!isPhysical) {
+      alert("Ce produit ne peut pas être ajouté au panier (uniquement les produits physiques)");
+      return;
+    }
+    // Prix unitaire selon le type
+    const unitPrice = book.product_type === 'article' ? (book.price || 0) : (book.paper_price || 0);
+    if (unitPrice <= 0) {
+      alert("Ce produit n'a pas de prix défini");
+      return;
+    }
+    setCart(prev => {
+      const existing = prev.find(item => item.book_id === book.id);
+      if (existing) {
+        // Article déjà dans le panier → augmenter la quantité
+        return prev.map(item => 
+          item.book_id === book.id 
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
+      // Nouvel article
+      return [...prev, {
+        book_id: book.id,
+        title: book.title,
+        cover: book.cover,
+        unit_price: unitPrice,
+        quantity: quantity,
+        product_type: book.product_type
+      }];
+    });
+  }
+
+  function removeFromCart(bookId) {
+    setCart(prev => prev.filter(item => item.book_id !== bookId));
+  }
+
+  function updateCartQuantity(bookId, newQuantity) {
+    if (newQuantity <= 0) {
+      removeFromCart(bookId);
+      return;
+    }
+    setCart(prev => prev.map(item => 
+      item.book_id === bookId ? { ...item, quantity: newQuantity } : item
+    ));
+  }
+
+  function clearCart() {
+    setCart([]);
+  }
+
+  // Totaux du panier
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+
   const [myResults, setMyResults] = useState([]);
   const [loadingMyResults, setLoadingMyResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
@@ -15858,6 +15937,43 @@ export default function App() {
               🔍
             </button>
           )}
+          {/* 🛒 IC�NE PANIER avec compteur */}
+          <button 
+            onClick={() => { setPage("cart"); setShowMenu(false); }} 
+            style={{ 
+              background: "none", 
+              border: "none", 
+              color: "#1a1208", 
+              fontSize: 24, 
+              cursor: "pointer", 
+              padding: 4, 
+              position: "relative" 
+            }}
+          >
+            🛒
+            {cartItemCount > 0 && (
+              <span style={{ 
+                position: "absolute", 
+                top: -2, 
+                right: -2, 
+                background: "#dc3545", 
+                color: "#fff", 
+                fontSize: 10, 
+                fontWeight: "bold", 
+                minWidth: 18, 
+                height: 18, 
+                borderRadius: 9, 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                padding: "0 4px",
+                lineHeight: 1,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+              }}>
+                {cartItemCount > 99 ? "99+" : cartItemCount}
+              </span>
+            )}
+          </button>
           <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
@@ -16313,6 +16429,94 @@ export default function App() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 🛒 PAGE PANIER (placeholder - sera enrichie � l'�tape 4) */}
+        {page === "cart" && (
+          <div style={{ padding: "20px 16px 80px" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Mon panier</div>
+            <h1 style={{ fontSize: 22, color: G.text, margin: "0 0 4px 0" }}>🛒 Panier</h1>
+            <p style={{ color: G.textFaint, fontSize: 13, marginBottom: 20 }}>
+              {cart.length === 0 ? "Ton panier est vide" : `${cartItemCount} article${cartItemCount > 1 ? "s" : ""} • ${cartSubtotal.toLocaleString()} FCFA`}
+            </p>
+            
+            {cart.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 16px", border: "1px dashed " + G.border, borderRadius: 8 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
+                <div style={{ color: G.textDim, marginBottom: 16 }}>Ton panier est vide</div>
+                <button 
+                  onClick={() => setPage("catalog")} 
+                  style={{ background: G.gold, color: "#000", border: "none", padding: "12px 24px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}
+                >
+                  Découvrir nos produits
+                </button>
+              </div>
+            ) : (
+              <div>
+                {/* Liste des articles */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+                  {cart.map(item => (
+                    <div key={item.book_id} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 12, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      {item.cover ? (
+                        <img src={item.cover} alt={item.title} style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
+                      ) : (
+                        <div style={{ width: 60, height: 84, background: "#eee", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📖</div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: G.text, fontSize: 13, fontWeight: "bold", marginBottom: 4 }}>{item.title}</div>
+                        <div style={{ color: G.gold, fontSize: 14, fontWeight: "bold", marginBottom: 8 }}>{item.unit_price.toLocaleString()} F</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <button onClick={() => updateCartQuantity(item.book_id, item.quantity - 1)} style={{ background: "none", border: "1px solid " + G.border, borderRadius: 4, width: 28, height: 28, cursor: "pointer", color: G.text }}>−</button>
+                          <span style={{ minWidth: 24, textAlign: "center", color: G.text, fontWeight: "bold" }}>{item.quantity}</span>
+                          <button onClick={() => updateCartQuantity(item.book_id, item.quantity + 1)} style={{ background: "none", border: "1px solid " + G.border, borderRadius: 4, width: 28, height: 28, cursor: "pointer", color: G.text }}>+</button>
+                          <button onClick={() => removeFromCart(item.book_id)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#dc3545", cursor: "pointer", fontSize: 14 }}>🗑️</button>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ color: G.text, fontSize: 12, fontWeight: "bold" }}>{(item.unit_price * item.quantity).toLocaleString()} F</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Total */}
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ color: G.textDim, fontSize: 13 }}>Sous-total ({cartItemCount} article{cartItemCount > 1 ? "s" : ""})</span>
+                    <span style={{ color: G.text, fontSize: 14, fontWeight: "bold" }}>{cartSubtotal.toLocaleString()} F</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: G.textFaint, fontSize: 11, marginBottom: 12 }}>
+                    <span>💡 Frais de livraison calculés à l'étape suivante</span>
+                  </div>
+                  <div style={{ height: 1, background: G.border, marginBottom: 12 }} />
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: G.text, fontSize: 15, fontWeight: "bold" }}>Total estimé</span>
+                    <span style={{ color: G.gold, fontSize: 18, fontWeight: "bold" }}>{cartSubtotal.toLocaleString()} F</span>
+                  </div>
+                </div>
+
+                {/* Boutons */}
+                <button 
+                  onClick={() => alert("✨ Le checkout sera disponible bientôt (Étape 5)")} 
+                  style={{ width: "100%", background: G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15, marginBottom: 8 }}
+                >
+                  📦 Passer la commande
+                </button>
+                <button 
+                  onClick={() => setPage("catalog")} 
+                  style={{ width: "100%", background: "none", color: G.textDim, border: "1px solid " + G.border, padding: "10px 0", borderRadius: 6, cursor: "pointer", fontSize: 13, marginBottom: 8 }}
+                >
+                  ← Continuer mes achats
+                </button>
+                <button 
+                  onClick={() => { if(confirm("Vider le panier ?")) clearCart(); }} 
+                  style={{ width: "100%", background: "none", color: "#dc3545", border: "none", padding: "6px 0", cursor: "pointer", fontSize: 12 }}
+                >
+                  🗑️ Vider le panier
+                </button>
               </div>
             )}
           </div>
