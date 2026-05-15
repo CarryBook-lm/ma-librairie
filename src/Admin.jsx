@@ -2740,6 +2740,44 @@ export default function Admin() {
                   Choisis entre uploader un PDF ou coller le texte.
                 </p>
 
+                {/* ============ EXTRAIT PDF (toujours visible) ============ */}
+                <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
+                  <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                    📄 Extrait PDF (aperçu gratuit)
+                  </label>
+                  <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>
+                    💡 Quelques pages que les clients peuvent consulter gratuitement avant d'acheter.<br/>
+                    📦 <b style={{ color: "#c9a84c" }}>Obligatoire pour les livres papier uniquement</b>
+                  </div>
+                  {form.excerpt_pdf_url ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: "#4caf50", fontSize: 12 }}>✅ Extrait PDF uploadé</span>
+                      <button onClick={() => setForm(f => ({ ...f, excerpt_pdf_url: "" }))}
+                        style={{ background: "none", border: "1px solid #555", color: "#aaa", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: 11 }}>
+                        Supprimer
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{ display: "block", padding: "10px 12px", border: "2px dashed #c9a84c66", borderRadius: 6, cursor: "pointer", color: "#c9a84c", fontSize: 12, textAlign: "center", background: "#0a0a0a" }}>
+                      📁 Choisir un fichier PDF extrait
+                      <input type="file" accept=".pdf" style={{ display: "none" }} onChange={async e => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const fileName = Date.now() + "_excerpt_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+                        const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "application/pdf" });
+                        if (!error) {
+                          const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+                          setForm(f => ({ ...f, excerpt_pdf_url: urlData.publicUrl }));
+                        }
+                      }} />
+                    </label>
+                  )}
+                </div>
+
+                <p style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>
+                  ⬇️ <b>Contenu complet</b> (optionnel — laisse vide si le livre est uniquement disponible en papier)
+                </p>
+
                 {/* Toggle PDF / Texte */}
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                   <button onClick={() => setForm(f => ({ ...f, pdf_url: "" }))}
@@ -2785,42 +2823,18 @@ export default function Admin() {
                     {/* Options extrait PDF */}
                     {form.pdf_url && form.pdf_url !== "pending" && (
                       <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 12, marginTop: 8 }}>
-                        <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Options d'extrait PDF</label>
-                        
-                        <div style={{ marginBottom: 12 }}>
-                          <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 4 }}>📄 Extrait automatique (nombre de pages) :</label>
+                        <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Extrait automatique du PDF</label>
+
+                        <div style={{ marginBottom: 4 }}>
+                          <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 4 }}>📄 Nombre de pages à offrir gratuitement :</label>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <input type="number" min="1" max="50" value={form.extract_pages} onChange={e => setForm(f => ({ ...f, extract_pages: parseInt(e.target.value) || 5 }))}
                               style={{ ...inputStyle, width: 70 }} />
                             <span style={{ color: "#888", fontSize: 12 }}>pages</span>
                           </div>
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 6 }}>📤 OU uploader un PDF d'extrait séparé :</label>
-                          {form.excerpt_pdf_url ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ color: "#4caf50", fontSize: 12 }}>✅ Extrait PDF uploadé</span>
-                              <button onClick={() => setForm(f => ({ ...f, excerpt_pdf_url: "" }))}
-                                style={{ background: "none", border: "1px solid #555", color: "#aaa", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: 11 }}>
-                                Supprimer
-                              </button>
-                            </div>
-                          ) : (
-                            <label style={{ display: "block", padding: "8px 12px", border: "1px dashed #555", borderRadius: 6, cursor: "pointer", color: "#888", fontSize: 12, textAlign: "center" }}>
-                              📁 Choisir un fichier PDF extrait
-                              <input type="file" accept=".pdf" style={{ display: "none" }} onChange={async e => {
-                                const file = e.target.files[0];
-                                if (!file) return;
-                                const fileName = Date.now() + "_excerpt_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-                                const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "application/pdf" });
-                                if (!error) {
-                                  const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
-                                  setForm(f => ({ ...f, excerpt_pdf_url: urlData.publicUrl }));
-                                }
-                              }} />
-                            </label>
-                          )}
+                          <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                            💡 Ces pages seront extraites automatiquement du PDF principal (si pas d'extrait PDF séparé)
+                          </div>
                         </div>
                       </div>
                     )}
