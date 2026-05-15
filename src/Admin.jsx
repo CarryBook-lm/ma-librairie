@@ -946,13 +946,25 @@ export default function Admin() {
       const n = parseInt(val);
       return isNaN(n) ? 0 : n;
     };
+    // Helper : convertit en INT ou retourne null si vide
+    const toIntOrNull = (val) => {
+      if (val === undefined || val === null || val === "") return null;
+      const n = parseInt(val);
+      return isNaN(n) ? null : n;
+    };
 
-    // Construction du payload avec mapping selon le type de produit
+    // Construction du payload : on nettoie TOUS les champs INTEGER pour éviter les ""
     const priceInt = toPriceInt(form.price);
     const payload = {
       ...form,
+      // Champs INTEGER : on les nettoie tous, JAMAIS de string vide vers Supabase
       price: priceInt,
-      original_price: form.original_price && form.original_price !== "" ? parseInt(form.original_price) : null
+      original_price: toIntOrNull(form.original_price),
+      paper_price: toIntOrNull(form.paper_price),
+      paper_stock: toStockInt(form.paper_stock),
+      paper_pages: toIntOrNull(form.paper_pages),
+      stock: toStockInt(form.stock),
+      extract_pages: toIntOrNull(form.extract_pages) || 5,
     };
 
     // Mapping spécial selon le type de produit
@@ -960,31 +972,26 @@ export default function Admin() {
       payload.paper_price = priceInt;
       payload.price = 0;
       payload.has_paper_version = true;
-      payload.paper_stock = toStockInt(form.paper_stock);
-      payload.paper_pages = form.paper_pages ? parseInt(form.paper_pages) : null;
       payload.paper_description = form.paper_description || null;
       payload.allow_oversell = !!form.allow_oversell;
     } else if (form.product_type === "mixte") {
       payload.has_paper_version = true;
-      payload.paper_price = form.paper_price ? parseInt(form.paper_price) : priceInt;
-      payload.paper_stock = toStockInt(form.paper_stock);
-      payload.paper_pages = form.paper_pages ? parseInt(form.paper_pages) : null;
+      payload.paper_price = toIntOrNull(form.paper_price) || priceInt;
       payload.paper_description = form.paper_description || null;
       payload.allow_oversell = !!form.allow_oversell;
     } else if (form.product_type === "article") {
       payload.has_paper_version = false;
       payload.paper_price = 0;
-      payload.stock = toStockInt(form.stock);
       payload.allow_oversell = !!form.allow_oversell;
     } else if (form.product_type === "audio") {
       payload.has_paper_version = false;
       payload.paper_price = 0;
-      payload.allow_oversell = false;  // pas pertinent pour audio
+      payload.allow_oversell = false;
     } else {
-      // numerique : pas de stock physique
+      // numerique
       payload.has_paper_version = false;
       payload.paper_price = 0;
-      payload.allow_oversell = false;  // pas pertinent pour numérique
+      payload.allow_oversell = false;
     }
 
     // 🐛 Debug : afficher le payload envoyé
