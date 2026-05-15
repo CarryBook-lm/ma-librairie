@@ -14969,7 +14969,6 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12, flexWrap: "wrap" }}>
             {free && <span style={{ background: G.greenDim, color: G.green, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>GRATUIT</span>}
-            {isPaperOnlyBook && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1, border: "1px solid " + G.gold }}>📦 PAPIER UNIQUEMENT</span>}
             {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
@@ -14979,7 +14978,7 @@ export default function App() {
             {isPaperOnlyBook ? (
               <div style={{ fontSize: 22, color: G.gold, fontWeight: "bold" }}>
                 {book.paper_price?.toLocaleString()} FCFA
-                <div style={{ fontSize: 11, color: G.textDim, fontWeight: "normal", marginTop: 4 }}>(livre papier)</div>
+                <div style={{ fontSize: 11, color: G.textDim, fontWeight: "normal", marginTop: 4 }}>({isArticle(book) ? "article divers" : "livre papier"})</div>
               </div>
             ) : isOnPromo(book) ? (
               <div>
@@ -15080,18 +15079,6 @@ export default function App() {
             </button>
           )}
 
-          {/* Message si le livre est uniquement disponible en papier */}
-          {isPaperOnlyBook && (
-            <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 6, padding: "14px 16px", marginBottom: 4, textAlign: "center" }}>
-              <div style={{ color: G.gold, fontSize: 13, fontWeight: 600 }}>
-                📦 Ce livre est uniquement disponible en version papier
-              </div>
-              <div style={{ color: G.textDim, fontSize: 11, marginTop: 4 }}>
-                Consulte l'extrait avant de commander
-              </div>
-            </div>
-          )}
-
           {/* BOUTON LIVRE PAPIER (si le livre a une version papier disponible) */}
           {book.has_paper_version && book.paper_price > 0 && (book.paper_stock === null || book.paper_stock === -1 || book.paper_stock > 0) && (
             <button
@@ -15136,7 +15123,7 @@ export default function App() {
                 gap: 8
               }}>
               <span>📦</span>
-              <span>Livre papier — {book.paper_price?.toLocaleString()} FCFA</span>
+              <span>Acheter — {book.paper_price?.toLocaleString()} FCFA</span>
             </button>
           )}
 
@@ -16057,7 +16044,7 @@ export default function App() {
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
                             {(isPaperOnly(book)) ? (
-                              <span style={{ color: G.gold }}>📦 Livre papier</span>
+                              <span style={{ color: G.gold }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
                             ) : (
                               <>
                                 {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
@@ -16100,7 +16087,7 @@ export default function App() {
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                             <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
                               {(isPaperOnly(book)) ? (
-                                <span style={{ color: G.gold }}>📦 Livre papier</span>
+                                <span style={{ color: G.gold }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
                               ) : (
                                 <>
                                   {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
@@ -16166,7 +16153,7 @@ export default function App() {
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
                         <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>
                           {(isPaperOnly(book)) ? (
-                            <span style={{ color: G.gold, fontSize: 9 }}>📦 Livre papier</span>
+                            <span style={{ color: G.gold, fontSize: 9 }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
                           ) : (
                             <>
                               {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}

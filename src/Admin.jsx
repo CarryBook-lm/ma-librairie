@@ -2627,7 +2627,7 @@ export default function Admin() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 1000 }}>
           <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "16px 16px 0 0", width: "100%", maxWidth: 600, maxHeight: "92vh", overflowY: "auto", padding: "24px 20px 40px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ color: "#c9a84c", fontSize: 17 }}>{editingBook ? "Modifier le livre" : "Ajouter un livre"}</h2>
+              <h2 style={{ color: "#c9a84c", fontSize: 17 }}>{editingBook ? "Modifier" : "Ajouter"}</h2>
               <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#888", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
 
@@ -3073,7 +3073,7 @@ export default function Admin() {
               </button>
               <button onClick={handleSave} disabled={saving}
                 style={{ flex: 2, padding: "12px 0", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
-                {saving ? "Enregistrement..." : editingBook ? "Mettre à jour" : "Ajouter le livre"}
+                {saving ? "Enregistrement..." : editingBook ? "Mettre à jour" : "Ajouter"}
               </button>
             </div>
           </div>
