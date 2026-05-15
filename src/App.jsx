@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { Preferences } from "@capacitor/preferences";
 import { createClient } from "@supabase/supabase-js";
 
@@ -16037,12 +16037,15 @@ export default function App() {
                   );
                 })()}
 
-                {/* NOUVEAUTÉS */}
-                {books.slice(0, 10).length > 0 && (
-                  <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
+                {/* NOUVEAUTÉS (ARTICLES NUMÉRIQUES) - numérique + mixte */}
+                {(() => {
+                  const digitalBooks = books.filter(b => b.product_type !== 'papier' && b.product_type !== 'article').slice(0, 10);
+                  if (digitalBooks.length === 0) return null;
+                  return (
+                <div style={{ marginBottom: 28 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Articles Numériques)</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
-                      {books.slice(0, 10).map(book => (
+                      {digitalBooks.map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
@@ -16052,17 +16055,11 @@ export default function App() {
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
-                            {(isPaperOnly(book)) ? (
-                              <span style={{ color: G.gold }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
-                            ) : (
-                              <>
-                                {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                                {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
-                              </>
-                            )}
+                            {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                            {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: (isPaperOnly(book)) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(isPaperOnly(book)) ? getDisplayPrice(book).toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -16071,14 +16068,51 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-                )}
+                  );
+                })()}
+
+                {/* NOUVEAUTÉS (ARTICLES PHYSIQUES) - d�plac�e juste avant la cat�gorie 'Livres Papiers' */}
 
                 {/* CARROUSELS PAR CATÉGORIE */}
                 {Object.keys(CATEGORIES).map(cat => {
                   const catBooks = books.filter(b => b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")));
                   if (catBooks.length === 0) return null;
+                  // Détecter si on est sur la catégorie "Livres Papiers" pour insérer les nouveautés physiques juste avant
+                  const isLivresPapiers = cat.toLowerCase().includes("livre") && cat.toLowerCase().includes("papier");
+                  const physicalNewBooks = isLivresPapiers
+                    ? books.filter(b => b.product_type === 'papier' || b.product_type === 'article').slice(0, 10)
+                    : [];
                   return (
-                    <div key={cat} style={{ marginBottom: 28 }}>
+                    <Fragment key={cat}>
+                      {/* Nouveautés Articles Physiques (juste avant Livres Papiers) */}
+                      {isLivresPapiers && physicalNewBooks.length > 0 && (
+                        <div style={{ marginBottom: 28 }}>
+                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Articles Physiques)</div>
+                          <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                            {physicalNewBooks.map(book => (
+                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
+                                <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                                  {book.cover
+                                    ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+                                </div>
+                                <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                                <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
+                                  <span style={{ color: G.gold }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 2 }}>
+                                  <span style={{ fontSize: 10, color: G.gold, fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString() + " F"}</span>
+                                  {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
+                                    <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* La catégorie elle-même */}
+                      <div style={{ marginBottom: 28 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px", marginBottom: 12 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{cat}</div>
                         <button onClick={() => { setSelectedCategory(cat); setPage("catalog"); }}
@@ -16114,6 +16148,7 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                    </Fragment>
                   );
                 })}
 
