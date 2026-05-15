@@ -935,8 +935,20 @@ export default function Admin() {
     if (!form.title || !form.author) return;
     setSaving(true);
 
+    // Helper pour convertir une valeur en INTEGER ou -1 par défaut (pour stocks)
+    const toStockInt = (val) => {
+      if (val === undefined || val === null || val === "") return -1;
+      const n = parseInt(val);
+      return isNaN(n) ? -1 : n;
+    };
+    const toPriceInt = (val) => {
+      if (val === undefined || val === null || val === "") return 0;
+      const n = parseInt(val);
+      return isNaN(n) ? 0 : n;
+    };
+
     // Construction du payload avec mapping selon le type de produit
-    const priceInt = form.price === "" ? 0 : (parseInt(form.price) || 0);
+    const priceInt = toPriceInt(form.price);
     const payload = {
       ...form,
       price: priceInt,
@@ -945,39 +957,54 @@ export default function Admin() {
 
     // Mapping spécial selon le type de produit
     if (form.product_type === "papier") {
-      // Livre papier uniquement : le prix saisi va dans paper_price, pas de prix numérique
       payload.paper_price = priceInt;
-      payload.price = 0;  // pas de version numérique
+      payload.price = 0;
       payload.has_paper_version = true;
-      payload.paper_stock = form.paper_stock !== undefined && form.paper_stock !== "" ? parseInt(form.paper_stock) : -1;
+      payload.paper_stock = toStockInt(form.paper_stock);
       payload.paper_pages = form.paper_pages ? parseInt(form.paper_pages) : null;
       payload.paper_description = form.paper_description || null;
+      payload.allow_oversell = !!form.allow_oversell;
     } else if (form.product_type === "mixte") {
-      // Mixte : le prix saisi est le prix numérique. Le paper_price doit être saisi séparément (form.paper_price)
       payload.has_paper_version = true;
       payload.paper_price = form.paper_price ? parseInt(form.paper_price) : priceInt;
-      payload.paper_stock = form.paper_stock !== undefined && form.paper_stock !== "" ? parseInt(form.paper_stock) : -1;
+      payload.paper_stock = toStockInt(form.paper_stock);
       payload.paper_pages = form.paper_pages ? parseInt(form.paper_pages) : null;
       payload.paper_description = form.paper_description || null;
+      payload.allow_oversell = !!form.allow_oversell;
     } else if (form.product_type === "article") {
-      // Article : le prix saisi va dans price normal, pas de version papier (mais utilise la même logique de commande)
       payload.has_paper_version = false;
       payload.paper_price = 0;
+      payload.stock = toStockInt(form.stock);
+      payload.allow_oversell = !!form.allow_oversell;
     } else if (form.product_type === "audio") {
-      // Audio : pas de version papier
       payload.has_paper_version = false;
       payload.paper_price = 0;
+      payload.allow_oversell = false;  // pas pertinent pour audio
     } else {
-      // numerique : pas de version papier
+      // numerique : pas de stock physique
       payload.has_paper_version = false;
       payload.paper_price = 0;
+      payload.allow_oversell = false;  // pas pertinent pour numérique
     }
 
+    // 🐛 Debug : afficher le payload envoyé
+    console.log("📤 Payload envoyé à Supabase :", payload);
+
+    let result;
     if (editingBook) {
-      await supabase.from("books").update(payload).eq("id", editingBook.id);
+      result = await supabase.from("books").update(payload).eq("id", editingBook.id).select();
     } else {
-      await supabase.from("books").insert([payload]);
+      result = await supabase.from("books").insert([payload]).select();
     }
+
+    // 🐛 Debug : afficher le résultat
+    if (result.error) {
+      console.error("❌ Erreur Supabase :", result.error);
+      alert("Erreur lors de la sauvegarde : " + result.error.message);
+    } else {
+      console.log("✅ Réponse Supabase :", result.data);
+    }
+
     setSaving(false);
     setShowForm(false);
     setEditingBook(null);
