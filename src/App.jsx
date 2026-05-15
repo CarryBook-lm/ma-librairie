@@ -15234,6 +15234,17 @@ export default function App() {
             <div style={{ textAlign: "center", padding: "20px 0" }}>
               <div style={{ fontSize: 60, marginBottom: 16 }}>📱</div>
               <h3 style={{ color: G.text, fontSize: 18, marginBottom: 12 }}>Vérifie ton téléphone</h3>
+
+              {/* MESSAGE PRINCIPAL — bien visible, persistant */}
+              <div style={{ background: "#fff3cd", border: "2px solid #ffb800", borderRadius: 10, padding: 16, marginBottom: 18 }}>
+                <div style={{ fontSize: 14, color: "#664d03", fontWeight: 700, lineHeight: 1.6 }}>
+                  ⚠️ Ne quittez pas cet écran jusqu'au paiement complet
+                </div>
+                <div style={{ fontSize: 13, color: "#664d03", marginTop: 8, lineHeight: 1.6 }}>
+                  Vous recevrez un message de retrait directement sur cet écran.
+                </div>
+              </div>
+
               <p style={{ color: G.textDim, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
                 Une demande de paiement de <b style={{ color: G.gold }}>{total.toLocaleString()} F</b> a été envoyée au <b>{paperPaymentPhone}</b>.
                 <br/><br/>
@@ -15250,7 +15261,7 @@ export default function App() {
                 <span style={{ fontSize: 13, color: "#664d03", fontWeight: 600 }}>En attente de confirmation...</span>
               </div>
               <p style={{ color: G.textFaint, fontSize: 12, marginTop: 8 }}>
-                ⏱️ Patiente jusqu'à 3 minutes. Ne ferme pas cette page.
+                ⏱️ Patiente jusqu'à 3 minutes.
               </p>
               <style>{`@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }`}</style>
             </div>
@@ -16514,13 +16525,18 @@ export default function App() {
                   );
                 })()}
 
-                {/* NOUVEAUTÉS (ARTICLES NUMÉRIQUES) - numérique + mixte */}
+                {/* NOUVEAUTÉS (PRODUITS NUMÉRIQUES) - numérique + mixte */}
                 {(() => {
-                  const digitalBooks = books.filter(b => b.product_type !== 'papier' && b.product_type !== 'article').slice(0, 10);
+                  // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
+                  const digitalBooks = books.filter(b => 
+                    b.product_type === 'numerique' || 
+                    b.product_type === 'mixte' || 
+                    !b.product_type
+                  ).slice(0, 10);
                   if (digitalBooks.length === 0) return null;
                   return (
                 <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Articles Numériques)</div>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Produits Numériques)</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {digitalBooks.map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
@@ -16566,10 +16582,10 @@ export default function App() {
                     : [];
                   return (
                     <Fragment key={cat}>
-                      {/* Nouveautés Articles Physiques (juste avant Livres Papiers) */}
+                      {/* Nouveautés Produits Physiques (juste avant Livres Papiers) */}
                       {isLivresPapiers && physicalNewBooks.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
-                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Articles Physiques)</div>
+                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Produits Physiques)</div>
                           <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                             {physicalNewBooks.map(book => (
                               <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
@@ -17135,22 +17151,38 @@ export default function App() {
 
             {/* �TAPE 3 : PAIEMENT EN COURS (polling CamPay) */}
             {cartCheckoutStep === 3 && (
-              <div style={{ textAlign: "center", padding: "40px 16px" }}>
-                <div style={{ fontSize: 50, marginBottom: 16 }}>📱</div>
+              <div style={{ textAlign: "center", padding: "30px 16px" }}>
+                <div style={{ fontSize: 60, marginBottom: 16 }}>📱</div>
                 <h2 style={{ color: G.text, fontSize: 19, marginBottom: 12 }}>Validation du paiement</h2>
-                <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
+
+                {/* MESSAGE PRINCIPAL — bien visible, persistant */}
+                <div style={{ background: "#fff3cd", border: "2px solid #ffb800", borderRadius: 10, padding: 16, marginBottom: 18 }}>
+                  <div style={{ fontSize: 14, color: "#664d03", fontWeight: 700, lineHeight: 1.6 }}>
+                    ⚠️ Ne quittez pas cet écran jusqu'au paiement complet
+                  </div>
+                  <div style={{ fontSize: 13, color: "#664d03", marginTop: 8, lineHeight: 1.6 }}>
+                    Vous recevrez un message de retrait directement sur cet écran.
+                  </div>
+                </div>
+
+                <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.7, marginBottom: 18 }}>
                   Une notification de paiement a été envoyée sur ton téléphone.<br/>
                   <b style={{ color: G.gold }}>Saisis ton code PIN Mobile Money</b> pour valider.
                 </p>
-                <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 8, padding: 14, marginBottom: 16, textAlign: "left" }}>
-                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6 }}>⏳ En attente de ta confirmation...</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 20, height: 20, border: "3px solid " + G.gold, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                    <div style={{ color: G.text, fontSize: 13 }}>Le système vérifie automatiquement le paiement</div>
-                  </div>
+
+                {/* Loader anim� */}
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 22px", background: "#fff8e1", border: "1px solid #ffe69c", borderRadius: 10, marginBottom: 16 }}>
+                  <div style={{
+                    width: 20, height: 20,
+                    border: "3px solid " + G.gold,
+                    borderTop: "3px solid transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite"
+                  }} />
+                  <span style={{ fontSize: 13, color: "#664d03", fontWeight: 600 }}>En attente de confirmation...</span>
                 </div>
+
                 <p style={{ color: G.textFaint, fontSize: 11, lineHeight: 1.6 }}>
-                  💡 Ne ferme pas cette page<br/>
                   ⏰ Délai maximum : 3 minutes
                 </p>
                 <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>

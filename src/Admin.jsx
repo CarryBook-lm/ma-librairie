@@ -3031,7 +3031,16 @@ export default function Admin() {
                 </div>
                 <div>
                   <label style={labelStyle}>{form.product_type === "papier" || form.product_type === "article" || form.product_type === "audio" ? "PRIX (FCFA) *" : "PRIX ACTUEL (FCFA)"}</label>
-                  <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                  <input 
+                    value={form.product_type === "papier" ? (form.paper_price || "") : form.price} 
+                    onChange={e => {
+                      if (form.product_type === "papier") {
+                        // Pour livre papier : le prix saisi va directement dans paper_price
+                        setForm(f => ({ ...f, paper_price: e.target.value, price: e.target.value }));
+                      } else {
+                        setForm(f => ({ ...f, price: e.target.value }));
+                      }
+                    }}
                     placeholder="Ex: 2500" type="number" style={inputStyle} />
                   <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
                     {form.product_type === "numerique" && "💰 Prix de la version numérique"}
