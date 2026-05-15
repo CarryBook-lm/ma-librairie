@@ -13621,6 +13621,7 @@ export default function App() {
     }
 
     setCartCheckoutLoading(true);
+    setCartCheckoutStep(3); // passe à l'écran "Paiement en cours..."
 
     try {
       // 1) Formater le numéro de paiement
@@ -13632,17 +13633,50 @@ export default function App() {
       const now = new Date();
       const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');
       const randomPart = Math.floor(Math.random() * 9000 + 1000);
-      const orderRef = `CB-${dateStr}-${randomPart}`;
+      const orderRef = `CART-${dateStr}-${randomPart}`;
+      const externalRef = `CART_${(user ? user.id : "guest")}_${Date.now()}`;
 
       const zone = getCartSelectedZone();
       const shippingFee = zone ? (zone.delivery_fee || 0) : 0;
       const subtotal = cartSubtotal;
       const total = subtotal + shippingFee;
 
-      // 3) Créer la commande dans cart_orders
-      const orderPayload = {
+      // Préparer les items pour l'enregistrement après paiement
+      const items = cart.map(item => ({
+        book_id: item.book_id,
+        title: item.title,
+        cover: item.cover,
+        product_type: item.product_type,
+        unit_price: item.unit_price,
+        quantity: item.quantity,
+        subtotal: item.unit_price * item.quantity
+      }));
+
+      // 3) Déclencher le paiement CamPay (action: collect)
+      const payRes = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "collect",
+          amount: total,
+          phone: phone,
+          description: "Commande panier CarryBooks - " + items.length + " article(s)",
+          external_reference: externalRef
+        })
+      });
+      const payData = await payRes.json();
+
+      if (!payData.reference) {
+        setCartCheckoutError("Impossible de déclencher le paiement. Vérifie ton numéro et réessaie.");
+        setCartCheckoutStep(2);
+        setCartCheckoutLoading(false);
+        return;
+      }
+
+      // 4) Préparer les données de la commande pour l'enregistrement
+      const orderData = {
         order_reference: orderRef,
-        user_id: user ? user.id : null,
+        user_id: user?.id || null,
         customer_name: cartCheckoutForm.customer_name.trim(),
         customer_phone: cartCheckoutForm.customer_phone.trim(),
         customer_email: cartCheckoutForm.customer_email.trim() || null,
@@ -13657,70 +13691,90 @@ export default function App() {
         total: total,
         payment_method: cartPaymentMethod,
         payment_phone: phone,
-        payment_status: "pending",
-        status: "pending"
+        items: items
       };
 
-      const { data: newOrder, error: orderError } = await supabase
-        .from("cart_orders")
-        .insert([orderPayload])
-        .select()
-        .single();
+      // 5) Polling : vérifier le paiement toutes les 5s pendant max 3 minutes
+      let attempts = 0;
+      const maxAttempts = 36;
+      const pollInterval = 5000;
 
-      if (orderError) {
-        console.error("Erreur création commande:", orderError);
-        setCartCheckoutError("Erreur lors de la création de la commande : " + orderError.message);
-        setCartCheckoutLoading(false);
-        return;
-      }
+      const pollPayment = async () => {
+        attempts++;
+        try {
+          const checkRes = await fetch("/api/campay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check", reference: payData.reference })
+          });
+          const checkData = await checkRes.json();
 
-      // 4) Créer les items de la commande
-      const itemsPayload = cart.map(item => ({
-        order_id: newOrder.id,
-        book_id: item.book_id,
-        product_type: item.product_type,
-        title: item.title,
-        cover: item.cover,
-        unit_price: item.unit_price,
-        quantity: item.quantity,
-        subtotal: item.unit_price * item.quantity
-      }));
+          if (checkData.status === "SUCCESSFUL") {
+            // ✅ Paiement confirmé : enregistrer la commande côté serveur (bypass RLS)
+            const recordRes = await fetch("/api/campay", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "record_cart_order",
+                reference: payData.reference,
+                external_reference: externalRef,
+                order_data: orderData
+              })
+            });
+            const recordData = await recordRes.json();
 
-      const { error: itemsError } = await supabase
-        .from("cart_order_items")
-        .insert(itemsPayload);
+            if (!recordData.success) {
+              console.error("[CART CRITICAL] Paiement reçu mais enregistrement échoué:", recordData);
+              setCartCheckoutError("⚠️ Paiement reçu mais erreur d'enregistrement. Contacte-nous avec la référence : " + payData.reference);
+              setCartCheckoutStep(2);
+              setCartCheckoutLoading(false);
+              return;
+            }
 
-      if (itemsError) {
-        console.error("Erreur création items:", itemsError);
-        // On garde quand même la commande, on alerte
-        setCartCheckoutError("Commande créée mais erreur sur les articles : " + itemsError.message);
-        setCartCheckoutLoading(false);
-        return;
-      }
+            // ✅ Succès complet
+            setCartOrderRef(orderRef);
+            clearCart();
+            setCartCheckoutStep(4);  // étape confirmation
+            setCartCheckoutLoading(false);
+            window.scrollTo(0, 0);
+            return;
+          }
 
-      // 5) Marquer comme payée et décrémenter le stock
-      // (Pour l'instant on confirme directement la commande sans vrai paiement intégré.
-      //  Le paiement réel via CamPay/Monetbil sera branché plus tard.)
-      await supabase
-        .from("cart_orders")
-        .update({ payment_status: "paid", status: "confirmed", payment_paid_at: new Date().toISOString() })
-        .eq("id", newOrder.id);
+          if (checkData.status === "FAILED") {
+            setCartCheckoutError("Le paiement a échoué. Vérifie ton solde et réessaie.");
+            setCartCheckoutStep(2);
+            setCartCheckoutLoading(false);
+            return;
+          }
 
-      // Décrémenter le stock via la fonction SQL
-      try {
-        await supabase.rpc("decrement_stock_for_order", { p_order_id: newOrder.id });
-      } catch (e) { console.error("Erreur decr stock:", e); }
+          // Statut encore PENDING : on continue le polling
+          if (attempts >= maxAttempts) {
+            setCartCheckoutError("⏱️ Délai dépassé. Si tu as déjà validé le paiement, contacte-nous avec la référence : " + payData.reference);
+            setCartCheckoutStep(2);
+            setCartCheckoutLoading(false);
+            return;
+          }
 
-      // 6) Vider le panier et passer à la confirmation
-      setCartOrderRef(orderRef);
-      clearCart();
-      setCartCheckoutStep(3);
-      setCartCheckoutLoading(false);
-      window.scrollTo(0, 0);
+          setTimeout(pollPayment, pollInterval);
+        } catch (pollErr) {
+          console.error("[CART] Erreur polling:", pollErr);
+          if (attempts < maxAttempts) {
+            setTimeout(pollPayment, pollInterval);
+          } else {
+            setCartCheckoutError("Erreur de vérification. Contacte-nous avec la référence : " + payData.reference);
+            setCartCheckoutStep(2);
+            setCartCheckoutLoading(false);
+          }
+        }
+      };
+
+      // Lancer le premier check après 5 secondes (laisser le temps à CamPay)
+      setTimeout(pollPayment, pollInterval);
 
     } catch (e) {
-      console.error("Erreur globale checkout panier:", e);
-      setCartCheckoutError("Une erreur est survenue : " + e.message);
+      console.error('Erreur submitCartOrder:', e);
+      setCartCheckoutError("Erreur technique : " + e.message);
+      setCartCheckoutStep(2);
       setCartCheckoutLoading(false);
     }
   }
@@ -16790,10 +16844,11 @@ export default function App() {
               <h1 style={{ fontSize: 22, color: G.text, margin: 0 }}>
                 {cartCheckoutStep === 1 && "📋 Tes informations"}
                 {cartCheckoutStep === 2 && "💳 Paiement"}
-                {cartCheckoutStep === 3 && "✅ Commande confirmée"}
+                {cartCheckoutStep === 3 && "⏳ Paiement en cours..."}
+                {cartCheckoutStep === 4 && "✅ Commande confirmée"}
               </h1>
               <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
-                {[1, 2, 3].map(s => (
+                {[1, 2, 4].map(s => (
                   <div key={s} style={{ flex: 1, height: 4, background: cartCheckoutStep >= s ? G.gold : G.border, borderRadius: 2 }} />
                 ))}
               </div>
@@ -17019,13 +17074,37 @@ export default function App() {
               </div>
             )}
 
-            {/* �TAPE 3 : CONFIRMATION */}
+            {/* �TAPE 3 : PAIEMENT EN COURS (polling CamPay) */}
             {cartCheckoutStep === 3 && (
+              <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                <div style={{ fontSize: 50, marginBottom: 16 }}>📱</div>
+                <h2 style={{ color: G.text, fontSize: 19, marginBottom: 12 }}>Validation du paiement</h2>
+                <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
+                  Une notification de paiement a été envoyée sur ton téléphone.<br/>
+                  <b style={{ color: G.gold }}>Saisis ton code PIN Mobile Money</b> pour valider.
+                </p>
+                <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 8, padding: 14, marginBottom: 16, textAlign: "left" }}>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6 }}>⏳ En attente de ta confirmation...</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 20, height: 20, border: "3px solid " + G.gold, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                    <div style={{ color: G.text, fontSize: 13 }}>Le système vérifie automatiquement le paiement</div>
+                  </div>
+                </div>
+                <p style={{ color: G.textFaint, fontSize: 11, lineHeight: 1.6 }}>
+                  💡 Ne ferme pas cette page<br/>
+                  ⏰ Délai maximum : 3 minutes
+                </p>
+                <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+              </div>
+            )}
+
+            {/* �TAPE 4 : CONFIRMATION */}
+            {cartCheckoutStep === 4 && (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
                 <h2 style={{ color: G.text, fontSize: 22, marginBottom: 8 }}>Merci pour ta commande !</h2>
                 <p style={{ color: G.textDim, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
-                  Ta commande <b style={{ color: G.gold }}>{cartOrderRef}</b> a été enregistrée.<br/>
+                  Ta commande <b style={{ color: G.gold }}>{cartOrderRef}</b> a été enregistrée et payée.<br/>
                   On te contactera par téléphone pour confirmer la livraison.
                 </p>
                 <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20, textAlign: "left" }}>

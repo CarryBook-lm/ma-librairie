@@ -810,6 +810,131 @@ export default async function handler(req, res) {
       });
     }
 
+    // ========== ACTION : RECORD_CART_ORDER (Module Panier) ==========
+    if (action === "record_cart_order") {
+      const {
+        reference,
+        order_data,
+        external_reference
+      } = params;
+
+      // 1) V�rifier que le paiement est bien confirm� par CamPay
+      const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
+      const verifyRes = await fetch(verifyUrl, {
+        headers: { Authorization: "Token " + CAMPAY_TOKEN },
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.status !== "SUCCESSFUL") {
+        return res.status(400).json({
+          error: "Paiement non confirmé par CamPay",
+          status: verifyData.status,
+        });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // 2) V�rifier qu'on n'a pas d�j� enregistr� cette commande (anti-doublon)
+      if (order_data && order_data.order_reference) {
+        const { data: existing } = await supabaseAdmin
+          .from("cart_orders")
+          .select("id, order_reference")
+          .eq("order_reference", order_data.order_reference)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          return res.status(200).json({
+            success: true,
+            message: "Commande déjà enregistrée",
+            order_id: existing[0].id,
+            order_reference: existing[0].order_reference,
+            duplicate: true,
+          });
+        }
+      }
+
+      // 3) Ins�rer la commande dans cart_orders
+      const { data: insertedOrder, error: insertOrderError } = await supabaseAdmin
+        .from("cart_orders")
+        .insert([{
+          order_reference: order_data.order_reference,
+          user_id: order_data.user_id || null,
+          customer_name: order_data.customer_name,
+          customer_phone: order_data.customer_phone,
+          customer_email: order_data.customer_email || null,
+          shipping_zone_id: order_data.shipping_zone_id || null,
+          shipping_city: order_data.shipping_city,
+          shipping_address: order_data.shipping_address || null,
+          shipping_agency: order_data.shipping_agency || null,
+          shipping_notes: order_data.shipping_notes || null,
+          shipping_fee: order_data.shipping_fee || 0,
+          delivery_method: order_data.delivery_method || "agence",
+          subtotal: order_data.subtotal || 0,
+          total: order_data.total || 0,
+          payment_method: order_data.payment_method,
+          payment_phone: order_data.payment_phone || null,
+          payment_status: "paid",
+          payment_reference: reference,
+          payment_paid_at: new Date().toISOString(),
+          status: "confirmed"
+        }])
+        .select()
+        .single();
+
+      if (insertOrderError) {
+        console.error("[RECORD_CART_ORDER] Insert order error:", insertOrderError);
+        return res.status(500).json({
+          error: "Erreur enregistrement commande panier",
+          details: insertOrderError.message,
+        });
+      }
+
+      // 4) Ins�rer les items de la commande
+      if (order_data.items && Array.isArray(order_data.items) && order_data.items.length > 0) {
+        const itemsPayload = order_data.items.map(item => ({
+          order_id: insertedOrder.id,
+          book_id: item.book_id,
+          product_type: item.product_type,
+          title: item.title,
+          cover: item.cover || null,
+          unit_price: item.unit_price,
+          quantity: item.quantity,
+          subtotal: item.subtotal || (item.unit_price * item.quantity)
+        }));
+
+        const { error: insertItemsError } = await supabaseAdmin
+          .from("cart_order_items")
+          .insert(itemsPayload);
+
+        if (insertItemsError) {
+          console.error("[RECORD_CART_ORDER] Insert items error:", insertItemsError);
+          // Items pas inser�s mais commande oui : on alerte mais on continue
+          return res.status(500).json({
+            error: "Commande enregistrée mais erreur sur les articles",
+            details: insertItemsError.message,
+            order_id: insertedOrder.id
+          });
+        }
+      }
+
+      // 5) D�cr�menter le stock via la fonction SQL
+      try {
+        await supabaseAdmin.rpc("decrement_stock_for_order", { p_order_id: insertedOrder.id });
+      } catch (e) {
+        console.error("[RECORD_CART_ORDER] Stock decrement error:", e);
+        // Non bloquant
+      }
+
+      return res.status(200).json({
+        success: true,
+        order: insertedOrder,
+      });
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);
