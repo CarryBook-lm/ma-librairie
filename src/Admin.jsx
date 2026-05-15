@@ -3355,7 +3355,8 @@ export default function Admin() {
               </div>
             )}
 
-              {/* Section Audio */}
+              {/* Section Audio (ancien - synthèse vocale fallback) : seulement pour livres numeriques et mixtes */}
+              {(form.product_type === "numerique" || form.product_type === "mixte") && (
               <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
                 <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🎧 Livre Audio (MP3)</label>
                 {form.audio_url ? (
@@ -3386,8 +3387,10 @@ export default function Admin() {
                   </div>
                 )}
               </div>
+              )}
 
-              {/* Options lecture / téléchargement */}
+              {/* Options lecture / téléchargement : seulement pour livres numériques et mixtes (PAS papier, PAS article, PAS audio) */}
+              {(form.product_type === "numerique" || form.product_type === "mixte") && (
               <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
                 <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>📖 Options d'accès</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -3425,6 +3428,7 @@ export default function Admin() {
                   </label>
                 </div>
               </div>
+              )}
 
             <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
               <button onClick={() => setShowForm(false)}
