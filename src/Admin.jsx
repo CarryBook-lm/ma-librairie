@@ -930,11 +930,41 @@ export default function Admin() {
   async function handleSave() {
     if (!form.title || !form.author) return;
     setSaving(true);
+
+    // Construction du payload avec mapping selon le type de produit
+    const priceInt = form.price === "" ? 0 : (parseInt(form.price) || 0);
     const payload = {
       ...form,
-      price: form.price === "" ? 0 : (parseInt(form.price) || 0),
+      price: priceInt,
       original_price: form.original_price && form.original_price !== "" ? parseInt(form.original_price) : null
     };
+
+    // Mapping spécial selon le type de produit
+    if (form.product_type === "papier") {
+      // Livre papier uniquement : le prix saisi va dans paper_price, pas de prix numérique
+      payload.paper_price = priceInt;
+      payload.price = 0;  // pas de version numérique
+      payload.has_paper_version = true;
+      payload.paper_stock = form.paper_stock !== undefined && form.paper_stock !== "" ? parseInt(form.paper_stock) : -1;
+    } else if (form.product_type === "mixte") {
+      // Mixte : le prix saisi est le prix numérique. Le paper_price doit être saisi séparément (form.paper_price)
+      payload.has_paper_version = true;
+      payload.paper_price = form.paper_price ? parseInt(form.paper_price) : priceInt;
+      payload.paper_stock = form.paper_stock !== undefined && form.paper_stock !== "" ? parseInt(form.paper_stock) : -1;
+    } else if (form.product_type === "article") {
+      // Article : le prix saisi va dans price normal, pas de version papier (mais utilise la même logique de commande)
+      payload.has_paper_version = false;
+      payload.paper_price = 0;
+    } else if (form.product_type === "audio") {
+      // Audio : pas de version papier
+      payload.has_paper_version = false;
+      payload.paper_price = 0;
+    } else {
+      // numerique : pas de version papier
+      payload.has_paper_version = false;
+      payload.paper_price = 0;
+    }
+
     if (editingBook) {
       await supabase.from("books").update(payload).eq("id", editingBook.id);
     } else {
@@ -3288,8 +3318,8 @@ export default function Admin() {
                   </div>
                 )}
 
-                {/* Zone texte - seulement si mode texte */}
-                {!form.pdf_url && (<>
+                {/* Zone texte - seulement pour livres numériques et mixtes (sans pdf_url) */}
+                {!form.pdf_url && (form.product_type === "numerique" || form.product_type === "mixte") && (<>
                 <p style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>
                   Colle le texte de ton livre ici. Sépare les chapitres avec une ligne vide.
                 </p>
