@@ -16250,22 +16250,25 @@ export default function App() {
       {toast && (
         <div style={{
           position: "fixed",
-          top: 70,
+          top: 80,
           left: "50%",
           transform: "translateX(-50%)",
-          zIndex: 200,
-          background: toast.type === "success" ? "#1a3a1a" : "#3a1a1a",
-          color: toast.type === "success" ? "#4ade80" : "#f87171",
-          border: "1px solid " + (toast.type === "success" ? "#22c55e" : "#ef4444"),
-          padding: "12px 20px",
-          borderRadius: 8,
-          fontSize: 13,
+          zIndex: 9999,
+          background: toast.type === "success" ? "#16a34a" : "#dc2626",
+          color: "#fff",
+          border: "2px solid " + (toast.type === "success" ? "#15803d" : "#b91c1c"),
+          padding: "14px 24px",
+          borderRadius: 10,
+          fontSize: 14,
           fontWeight: "bold",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-          maxWidth: "90vw",
-          animation: "slideDown 0.3s ease-out"
+          boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
+          maxWidth: "92vw",
+          minWidth: 240,
+          textAlign: "center",
+          animation: "slideDownIn 0.3s ease-out"
         }}>
           {toast.message}
+          <style>{`@keyframes slideDownIn { from{opacity:0; transform:translate(-50%, -20px)} to{opacity:1; transform:translate(-50%, 0)} }`}</style>
         </div>
       )}
 
@@ -17166,8 +17169,8 @@ export default function App() {
                 </div>
 
                 <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.7, marginBottom: 18 }}>
-                  Une notification de paiement a été envoyée sur ton téléphone.<br/>
-                  <b style={{ color: G.gold }}>Saisis ton code PIN Mobile Money</b> pour valider.
+                  Une notification de paiement a été envoyée sur votre téléphone.<br/>
+                  <b style={{ color: G.gold }}>Saisissez votre code PIN Mobile Money</b> pour valider.
                 </p>
 
                 {/* Loader anim� */}
@@ -17193,10 +17196,10 @@ export default function App() {
             {cartCheckoutStep === 4 && (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
-                <h2 style={{ color: G.text, fontSize: 22, marginBottom: 8 }}>Merci pour ta commande !</h2>
+                <h2 style={{ color: G.text, fontSize: 22, marginBottom: 8 }}>Merci pour votre commande !</h2>
                 <p style={{ color: G.textDim, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
-                  Ta commande <b style={{ color: G.gold }}>{cartOrderRef}</b> a été enregistrée et payée.<br/>
-                  On te contactera par téléphone pour confirmer la livraison.
+                  Votre commande <b style={{ color: G.gold }}>{cartOrderRef}</b> a été enregistrée et payée.<br/>
+                  Nous vous contacterons par téléphone pour confirmer la livraison.
                 </p>
                 <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20, textAlign: "left" }}>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>📋 Récapitulatif</div>

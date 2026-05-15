@@ -772,31 +772,52 @@ export default function Admin() {
     // 🎯 Ventes invités (sans compte)
     const { data: guestPurchases } = await supabase.from("guest_purchases").select("amount, book_id, phone, created_at");
 
+    // 🛒 Ventes panier (commandes pay�es)
+    const { data: cartOrders } = await supabase
+      .from("cart_orders")
+      .select("id, total, customer_phone, created_at")
+      .eq("payment_status", "paid");
+
+    // 🛒 Items des commandes panier (pour Top livres)
+    const { data: cartItems } = await supabase
+      .from("cart_order_items")
+      .select("book_id, quantity, order_id");
+
     if (purchases) {
-      // Combiner les revenus des 2 sources
+      // Combiner les revenus des 3 sources
       const totalPurchases = purchases.reduce((s, p) => s + (p.amount || 0), 0);
       const totalGuests = guestPurchases ? guestPurchases.reduce((s, p) => s + (p.amount || 0), 0) : 0;
-      const total = totalPurchases + totalGuests;
+      const totalCart = cartOrders ? cartOrders.reduce((s, o) => s + (o.total || 0), 0) : 0;
+      const total = totalPurchases + totalGuests + totalCart;
 
       const uniqueUsers = users ? new Set(users.map(u => u.user_id)).size : 0;
       const uniqueGuests = guestPurchases ? new Set(guestPurchases.map(g => g.phone)).size : 0;
+      const uniqueCartCustomers = cartOrders ? new Set(cartOrders.map(o => o.customer_phone)).size : 0;
 
       const bookCount = {};
       purchases.forEach(p => { bookCount[p.book_id] = (bookCount[p.book_id] || 0) + 1; });
       if (guestPurchases) {
         guestPurchases.forEach(g => { bookCount[g.book_id] = (bookCount[g.book_id] || 0) + 1; });
       }
+      // Ajouter les items des commandes panier au top
+      if (cartItems) {
+        cartItems.forEach(i => { bookCount[i.book_id] = (bookCount[i.book_id] || 0) + (i.quantity || 1); });
+      }
       const topBooks = Object.entries(bookCount).sort((a,b) => b[1]-a[1]).slice(0,5).map(([id, count]) => ({ id: parseInt(id), count }));
 
-      const totalCount = purchases.length + (guestPurchases ? guestPurchases.length : 0);
+      // Nombre total de transactions (commandes pay�es)
+      const cartItemsCount = cartItems ? cartItems.reduce((s, i) => s + (i.quantity || 1), 0) : 0;
+      const totalCount = purchases.length + (guestPurchases ? guestPurchases.length : 0) + cartItemsCount;
 
       setStats({
         totalRevenue: total,
         totalPurchases: totalCount,
-        totalUsers: uniqueUsers + uniqueGuests,
+        totalUsers: uniqueUsers + uniqueGuests + uniqueCartCustomers,
         topBooks,
         guestRevenue: totalGuests,
-        guestCount: guestPurchases ? guestPurchases.length : 0
+        guestCount: guestPurchases ? guestPurchases.length : 0,
+        cartRevenue: totalCart,
+        cartOrdersCount: cartOrders ? cartOrders.length : 0
       });
     }
   }
@@ -969,11 +990,17 @@ export default function Admin() {
 
     // Mapping spécial selon le type de produit
     if (form.product_type === "papier") {
-      payload.paper_price = priceInt;
+      // Le prix saisi dans le champ "PRIX" est stock� dans form.paper_price (via onChange custom)
+      // ET aussi dans form.price (en backup). On prend le max des deux pour �tre s�rs.
+      const paperPriceFromForm = toIntOrNull(form.paper_price);
+      const priceFromForm = toIntOrNull(form.price);
+      const finalPaperPrice = paperPriceFromForm || priceFromForm || 0;
+      payload.paper_price = finalPaperPrice;
       payload.price = 0;
       payload.has_paper_version = true;
       payload.paper_description = form.paper_description || null;
       payload.allow_oversell = !!form.allow_oversell;
+      console.log("📦 [PAPIER] Prix final envoy� en BDD :", { paper_price: finalPaperPrice, price: 0, from_form: { price: form.price, paper_price: form.paper_price } });
     } else if (form.product_type === "mixte") {
       payload.has_paper_version = true;
       payload.paper_price = toIntOrNull(form.paper_price) || priceInt;
@@ -2483,6 +2510,12 @@ export default function Admin() {
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
                 <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>📊 Panier moyen</div>
                 <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases ? Math.round((stats.totalRevenue || 0) / stats.totalPurchases).toLocaleString() : 0} F</div>
+              </div>
+              {/* Carte sp�cifique aux ventes panier (produits physiques) */}
+              <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase" }}>🛒 Commandes panier</div>
+                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.cartOrdersCount || 0}</div>
+                <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>{(stats.cartRevenue || 0).toLocaleString()} F</div>
               </div>
             </div>
 
