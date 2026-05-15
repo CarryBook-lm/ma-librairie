@@ -12131,6 +12131,33 @@ function getDisplayPrice(book) {
   return book.paper_price || 0;
 }
 
+// Helper : retourne le badge à afficher sous le titre pour un produit physique
+// - Livres papier → toujours "📦 Livre papier"
+// - Articles → adaptatif selon la catégorie
+function getProductBadge(book) {
+  if (!book) return "";
+  // Si c'est un livre papier (et pas un article)
+  if (book.product_type === 'papier') return "📦 Livre papier";
+  // Si c'est un article : adaptatif selon la catégorie
+  if (book.product_type === 'article') {
+    const cat = (book.category || "").toLowerCase();
+    // Détection par mots-clés dans le nom de la catégorie
+    if (cat.includes("complément") || cat.includes("complement") || cat.includes("supplément") || cat.includes("vitamin")) return "💊 Complément";
+    if (cat.includes("consommable") || cat.includes("coloriage") || cat.includes("fourniture") || cat.includes("papeterie")) return "📦 Consommable";
+    if (cat.includes("cosmétique") || cat.includes("cosmetique") || cat.includes("beauté") || cat.includes("beaute") || cat.includes("maquillage")) return "💄 Cosmétique";
+    if (cat.includes("parfum") || cat.includes("fragrance")) return "🌸 Parfum";
+    if (cat.includes("vêtement") || cat.includes("vetement") || cat.includes("habit") || cat.includes("mode")) return "👕 Vêtement";
+    if (cat.includes("bijou") || cat.includes("accessoire")) return "💎 Accessoire";
+    if (cat.includes("alimentaire") || cat.includes("nourriture") || cat.includes("food")) return "🍫 Alimentaire";
+    if (cat.includes("électronique") || cat.includes("electronique") || cat.includes("tech")) return "🔌 Électronique";
+    if (cat.includes("jouet") || cat.includes("jeu")) return "🧸 Jouet";
+    if (cat.includes("santé") || cat.includes("sante") || cat.includes("médical")) return "🏥 Santé";
+    // Badge par défaut pour articles sans correspondance
+    return "🎨 Article";
+  }
+  return "";
+}
+
 // Helper pour générer un code parrainage suggéré (style PRENOM + 4 caractères)
 function generateSuggestedReferralCode(name) {
   const cleanName = (name || "USER").replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 8);
@@ -14987,7 +15014,7 @@ export default function App() {
             {isPaperOnlyBook ? (
               <div style={{ fontSize: 22, color: G.gold, fontWeight: "bold" }}>
                 {getDisplayPrice(book).toLocaleString()} FCFA
-                <div style={{ fontSize: 11, color: G.textDim, fontWeight: "normal", marginTop: 4 }}>({isArticle(book) ? "article divers" : "livre papier"})</div>
+                <div style={{ fontSize: 11, color: G.textDim, fontWeight: "normal", marginTop: 4 }}>({isArticle(book) ? (book.category || "article") : "livre papier"})</div>
               </div>
             ) : isOnPromo(book) ? (
               <div>
@@ -16098,7 +16125,7 @@ export default function App() {
                                 </div>
                                 <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                                 <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
-                                  <span style={{ color: G.gold }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
+                                  <span style={{ color: G.gold }}>{getProductBadge(book)}</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 2 }}>
                                   <span style={{ fontSize: 10, color: G.gold, fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString() + " F"}</span>
@@ -16130,7 +16157,7 @@ export default function App() {
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                             <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
                               {(isPaperOnly(book)) ? (
-                                <span style={{ color: G.gold }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
+                                <span style={{ color: G.gold }}>{getProductBadge(book)}</span>
                               ) : (
                                 <>
                                   {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
@@ -16197,7 +16224,7 @@ export default function App() {
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
                         <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>
                           {(isPaperOnly(book)) ? (
-                            <span style={{ color: G.gold, fontSize: 9 }}>{isArticle(book) ? "🎨 Article" : "📦 Livre papier"}</span>
+                            <span style={{ color: G.gold, fontSize: 9 }}>{getProductBadge(book)}</span>
                           ) : (
                             <>
                               {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
