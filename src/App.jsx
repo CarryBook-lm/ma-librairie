@@ -16864,7 +16864,7 @@ export default function App() {
                     style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   >
                     <option value="">-- Choisir ta ville --</option>
-                    {shippingZones.filter(z => z.is_active).map(z => (
+                    {shippingZones.map(z => (
                       <option key={z.id} value={z.id}>{z.city} ({(z.delivery_fee || 0).toLocaleString()} F)</option>
                     ))}
                   </select>
