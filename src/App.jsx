@@ -12416,6 +12416,37 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   }
 
+  // 🛒 CHECKOUT PANIER (multi-articles)
+  const [cartCheckoutForm, setCartCheckoutForm] = useState({
+    customer_name: "",
+    customer_phone: "",
+    customer_email: "",
+    shipping_zone_id: null,
+    shipping_city: "",
+    shipping_address: "",
+    shipping_agency: "",
+    shipping_notes: ""
+  });
+  const [cartCheckoutStep, setCartCheckoutStep] = useState(1);  // 1=infos, 2=paiement, 3=confirmation
+  const [cartCheckoutError, setCartCheckoutError] = useState("");
+  const [cartCheckoutLoading, setCartCheckoutLoading] = useState(false);
+  const [cartPaymentMethod, setCartPaymentMethod] = useState("");
+  const [cartPaymentPhone, setCartPaymentPhone] = useState("");
+  const [cartOrderRef, setCartOrderRef] = useState("");
+
+  // Trouver la zone de livraison s�lectionn�e
+  function getCartSelectedZone() {
+    if (!cartCheckoutForm.shipping_zone_id) return null;
+    return shippingZones.find(z => z.id === cartCheckoutForm.shipping_zone_id);
+  }
+
+  // Calcul des frais de livraison pour le panier
+  const cartShippingFee = (() => {
+    const zone = getCartSelectedZone();
+    return zone ? (zone.delivery_fee || 0) : 0;
+  })();
+  const cartTotal = cartSubtotal + cartShippingFee;
+
   const [myResults, setMyResults] = useState([]);
   const [loadingMyResults, setLoadingMyResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
@@ -13555,6 +13586,145 @@ export default function App() {
     const shippingFee = zone ? zone.delivery_fee : 0;
     return bookPrice + shippingFee;
   }
+
+  // ============ CHECKOUT PANIER (multi-articles) ============
+  function validateCartCheckoutForm() {
+    if (!cartCheckoutForm.customer_name.trim()) return "Ton nom est requis";
+    if (!cartCheckoutForm.customer_phone.trim()) return "Ton numéro de téléphone est requis";
+    if (!cartCheckoutForm.shipping_zone_id) return "Choisis ta ville de livraison";
+    const zone = getCartSelectedZone();
+    if (zone && zone.delivery_method === 'domicile' && !cartCheckoutForm.shipping_address.trim()) {
+      return "Indique ton adresse complète (quartier, rue, point de repère)";
+    }
+    // L'agence n'est plus obligatoire : si vide, on la convient par téléphone
+    return "";
+  }
+
+  async function submitCartOrder() {
+    setCartCheckoutError("");
+    const validation = validateCartCheckoutForm();
+    if (validation) {
+      setCartCheckoutError(validation);
+      return;
+    }
+    if (!cartPaymentMethod) {
+      setCartCheckoutError("Choisis un mode de paiement");
+      return;
+    }
+    if (!cartPaymentPhone.trim()) {
+      setCartCheckoutError("Indique le numéro pour le paiement");
+      return;
+    }
+    if (cart.length === 0) {
+      setCartCheckoutError("Ton panier est vide");
+      return;
+    }
+
+    setCartCheckoutLoading(true);
+
+    try {
+      // 1) Formater le numéro de paiement
+      let phone = cartPaymentPhone.replace(/\s/g, "");
+      if (phone.startsWith("0")) phone = "237" + phone.slice(1);
+      if (!phone.startsWith("237")) phone = "237" + phone;
+
+      // 2) Générer la référence de commande
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0,10).replace(/-/g, '');
+      const randomPart = Math.floor(Math.random() * 9000 + 1000);
+      const orderRef = `CB-${dateStr}-${randomPart}`;
+
+      const zone = getCartSelectedZone();
+      const shippingFee = zone ? (zone.delivery_fee || 0) : 0;
+      const subtotal = cartSubtotal;
+      const total = subtotal + shippingFee;
+
+      // 3) Créer la commande dans cart_orders
+      const orderPayload = {
+        order_reference: orderRef,
+        user_id: user ? user.id : null,
+        customer_name: cartCheckoutForm.customer_name.trim(),
+        customer_phone: cartCheckoutForm.customer_phone.trim(),
+        customer_email: cartCheckoutForm.customer_email.trim() || null,
+        shipping_zone_id: cartCheckoutForm.shipping_zone_id,
+        shipping_city: zone ? zone.city : "",
+        shipping_address: cartCheckoutForm.shipping_address.trim() || null,
+        shipping_agency: cartCheckoutForm.shipping_agency.trim() || null,
+        shipping_notes: cartCheckoutForm.shipping_notes.trim() || null,
+        shipping_fee: shippingFee,
+        delivery_method: zone ? zone.delivery_method : "agence",
+        subtotal: subtotal,
+        total: total,
+        payment_method: cartPaymentMethod,
+        payment_phone: phone,
+        payment_status: "pending",
+        status: "pending"
+      };
+
+      const { data: newOrder, error: orderError } = await supabase
+        .from("cart_orders")
+        .insert([orderPayload])
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error("Erreur création commande:", orderError);
+        setCartCheckoutError("Erreur lors de la création de la commande : " + orderError.message);
+        setCartCheckoutLoading(false);
+        return;
+      }
+
+      // 4) Créer les items de la commande
+      const itemsPayload = cart.map(item => ({
+        order_id: newOrder.id,
+        book_id: item.book_id,
+        product_type: item.product_type,
+        title: item.title,
+        cover: item.cover,
+        unit_price: item.unit_price,
+        quantity: item.quantity,
+        subtotal: item.unit_price * item.quantity
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("cart_order_items")
+        .insert(itemsPayload);
+
+      if (itemsError) {
+        console.error("Erreur création items:", itemsError);
+        // On garde quand même la commande, on alerte
+        setCartCheckoutError("Commande créée mais erreur sur les articles : " + itemsError.message);
+        setCartCheckoutLoading(false);
+        return;
+      }
+
+      // 5) Marquer comme payée et décrémenter le stock
+      // (Pour l'instant on confirme directement la commande sans vrai paiement intégré.
+      //  Le paiement réel via CamPay/Monetbil sera branché plus tard.)
+      await supabase
+        .from("cart_orders")
+        .update({ payment_status: "paid", status: "confirmed", payment_paid_at: new Date().toISOString() })
+        .eq("id", newOrder.id);
+
+      // Décrémenter le stock via la fonction SQL
+      try {
+        await supabase.rpc("decrement_stock_for_order", { p_order_id: newOrder.id });
+      } catch (e) { console.error("Erreur decr stock:", e); }
+
+      // 6) Vider le panier et passer à la confirmation
+      setCartOrderRef(orderRef);
+      clearCart();
+      setCartCheckoutStep(3);
+      setCartCheckoutLoading(false);
+      window.scrollTo(0, 0);
+
+    } catch (e) {
+      console.error("Erreur globale checkout panier:", e);
+      setCartCheckoutError("Une erreur est survenue : " + e.message);
+      setCartCheckoutLoading(false);
+    }
+  }
+
 
   function validatePaperOrderForm() {
     if (!paperOrderForm.customer_name.trim()) return "Ton nom est requis";
@@ -16566,7 +16736,25 @@ export default function App() {
 
                 {/* Boutons */}
                 <button 
-                  onClick={() => alert("✨ Le checkout sera disponible bientôt (Étape 5)")} 
+                  onClick={() => {
+                    // Réinitialiser le formulaire de checkout et aller à l'étape 1
+                    setCartCheckoutForm({
+                      customer_name: "",
+                      customer_phone: "",
+                      customer_email: "",
+                      shipping_zone_id: null,
+                      shipping_city: "",
+                      shipping_address: "",
+                      shipping_agency: "",
+                      shipping_notes: ""
+                    });
+                    setCartCheckoutStep(1);
+                    setCartCheckoutError("");
+                    setCartPaymentMethod("");
+                    setCartPaymentPhone("");
+                    setPage("cart_checkout");
+                    window.scrollTo(0, 0);
+                  }} 
                   style={{ width: "100%", background: G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15, marginBottom: 8 }}
                 >
                   📦 Passer la commande
@@ -16582,6 +16770,275 @@ export default function App() {
                   style={{ width: "100%", background: "none", color: "#dc3545", border: "none", padding: "6px 0", cursor: "pointer", fontSize: 12 }}
                 >
                   🗑️ Vider le panier
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 🛒 PAGE CHECKOUT PANIER */}
+        {page === "cart_checkout" && (
+          <div style={{ padding: "20px 16px 80px" }}>
+            {/* En-t�te avec �tapes */}
+            <div style={{ marginBottom: 20 }}>
+              <button 
+                onClick={() => setPage("cart")}
+                style={{ background: "none", border: "none", color: G.gold, fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 8 }}
+              >
+                ← Retour au panier
+              </button>
+              <h1 style={{ fontSize: 22, color: G.text, margin: 0 }}>
+                {cartCheckoutStep === 1 && "📋 Tes informations"}
+                {cartCheckoutStep === 2 && "💳 Paiement"}
+                {cartCheckoutStep === 3 && "✅ Commande confirmée"}
+              </h1>
+              <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
+                {[1, 2, 3].map(s => (
+                  <div key={s} style={{ flex: 1, height: 4, background: cartCheckoutStep >= s ? G.gold : G.border, borderRadius: 2 }} />
+                ))}
+              </div>
+            </div>
+
+            {/* �TAPE 1 : INFOS CLIENTE + LIVRAISON */}
+            {cartCheckoutStep === 1 && (
+              <div>
+                {/* R�cap mini panier */}
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Ta commande</div>
+                  {cart.map(item => (
+                    <div key={item.book_id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: G.text, marginBottom: 4 }}>
+                      <span>{item.quantity}× {item.title}</span>
+                      <span style={{ fontWeight: "bold" }}>{(item.unit_price * item.quantity).toLocaleString()} F</span>
+                    </div>
+                  ))}
+                  <div style={{ height: 1, background: G.border, margin: "8px 0" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: G.text, fontWeight: "bold" }}>
+                    <span>Sous-total</span>
+                    <span>{cartSubtotal.toLocaleString()} F</span>
+                  </div>
+                </div>
+
+                {/* INFOS CLIENTE */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton nom complet *</label>
+                  <input type="text" value={cartCheckoutForm.customer_name}
+                    onChange={e => setCartCheckoutForm(f => ({ ...f, customer_name: e.target.value }))}
+                    placeholder="Ex: Marie Ndoumbe"
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Téléphone *</label>
+                  <input type="tel" value={cartCheckoutForm.customer_phone}
+                    onChange={e => setCartCheckoutForm(f => ({ ...f, customer_phone: e.target.value }))}
+                    placeholder="Ex: 6XX XXX XXX"
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Email (optionnel)</label>
+                  <input type="email" value={cartCheckoutForm.customer_email}
+                    onChange={e => setCartCheckoutForm(f => ({ ...f, customer_email: e.target.value }))}
+                    placeholder="Pour recevoir la confirmation"
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  />
+                </div>
+
+                {/* VILLE DE LIVRAISON */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ville de livraison *</label>
+                  <select value={cartCheckoutForm.shipping_zone_id || ""}
+                    onChange={e => {
+                      const id = e.target.value ? parseInt(e.target.value) : null;
+                      const zone = shippingZones.find(z => z.id === id);
+                      setCartCheckoutForm(f => ({
+                        ...f,
+                        shipping_zone_id: id,
+                        shipping_city: zone ? zone.city : "",
+                        shipping_address: "",
+                        shipping_agency: ""
+                      }));
+                    }}
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  >
+                    <option value="">-- Choisir ta ville --</option>
+                    {shippingZones.filter(z => z.is_active).map(z => (
+                      <option key={z.id} value={z.id}>{z.city} ({(z.delivery_fee || 0).toLocaleString()} F)</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* ADRESSE (si domicile) ou AGENCE (si agence) */}
+                {(() => {
+                  const zone = getCartSelectedZone();
+                  if (!zone) return null;
+                  if (zone.delivery_method === 'domicile') {
+                    return (
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Adresse complète *</label>
+                        <textarea value={cartCheckoutForm.shipping_address}
+                          onChange={e => setCartCheckoutForm(f => ({ ...f, shipping_address: e.target.value }))}
+                          placeholder="Ex: Quartier Bastos, derrière la pharmacie..."
+                          rows={2}
+                          style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text, resize: "vertical", fontFamily: "inherit" }}
+                        />
+                        <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 {zone.instructions || "Indique tous les détails pour qu'on te trouve facilement"}</div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Agence de voyage (optionnel)</label>
+                      <input type="text" value={cartCheckoutForm.shipping_agency}
+                        onChange={e => setCartCheckoutForm(f => ({ ...f, shipping_agency: e.target.value }))}
+                        placeholder="Ex: General Express... (ou laisser vide)"
+                        style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                      />
+                      <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 Si tu ne sais pas, laisse vide — on te proposera une agence au téléphone</div>
+                    </div>
+                  );
+                })()}
+
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Notes (optionnel)</label>
+                  <textarea value={cartCheckoutForm.shipping_notes}
+                    onChange={e => setCartCheckoutForm(f => ({ ...f, shipping_notes: e.target.value }))}
+                    placeholder="Ex: appeler avant de livrer..."
+                    rows={2}
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text, resize: "vertical", fontFamily: "inherit" }}
+                  />
+                </div>
+
+                {/* R�cap total */}
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: G.textDim, marginBottom: 6 }}>
+                    <span>Sous-total</span>
+                    <span>{cartSubtotal.toLocaleString()} F</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: G.textDim, marginBottom: 6 }}>
+                    <span>Frais de livraison</span>
+                    <span>{cartShippingFee > 0 ? cartShippingFee.toLocaleString() + " F" : (cartCheckoutForm.shipping_zone_id ? "Gratuit" : "—")}</span>
+                  </div>
+                  <div style={{ height: 1, background: G.border, margin: "8px 0" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, color: G.text, fontWeight: "bold" }}>
+                    <span>Total</span>
+                    <span style={{ color: G.gold }}>{(cartSubtotal + cartShippingFee).toLocaleString()} F</span>
+                  </div>
+                </div>
+
+                {cartCheckoutError && (
+                  <div style={{ background: "#3a1a1a", border: "1px solid #ef4444", color: "#f87171", padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 12 }}>
+                    ⚠️ {cartCheckoutError}
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => {
+                    const err = validateCartCheckoutForm();
+                    if (err) { setCartCheckoutError(err); window.scrollTo(0, 0); return; }
+                    setCartCheckoutError("");
+                    setCartCheckoutStep(2);
+                    window.scrollTo(0, 0);
+                  }}
+                  style={{ width: "100%", background: G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15 }}
+                >
+                  Continuer vers le paiement →
+                </button>
+              </div>
+            )}
+
+            {/* �TAPE 2 : PAIEMENT */}
+            {cartCheckoutStep === 2 && (
+              <div>
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Total à payer</div>
+                  <div style={{ fontSize: 28, color: G.gold, fontWeight: "bold" }}>{(cartSubtotal + cartShippingFee).toLocaleString()} F</div>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Mode de paiement *</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { id: "mtn_momo", label: "📱 MTN Mobile Money", desc: "Numéros 67, 65, 68, 50, 51, 53" },
+                      { id: "orange_money", label: "🍊 Orange Money", desc: "Numéros 69, 66, 55, 56, 57" },
+                      { id: "monetbil", label: "💳 Monetbil (autre)", desc: "MTN ou Orange via Monetbil" }
+                    ].map(m => (
+                      <button key={m.id} type="button"
+                        onClick={() => setCartPaymentMethod(m.id)}
+                        style={{
+                          padding: 12,
+                          background: cartPaymentMethod === m.id ? G.goldDim : "transparent",
+                          border: "2px solid " + (cartPaymentMethod === m.id ? G.gold : G.border),
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          textAlign: "left"
+                        }}
+                      >
+                        <div style={{ color: cartPaymentMethod === m.id ? G.gold : G.text, fontSize: 14, fontWeight: "bold" }}>{m.label}</div>
+                        <div style={{ color: G.textDim, fontSize: 11, marginTop: 2 }}>{m.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Numéro pour le paiement *</label>
+                  <input type="tel" value={cartPaymentPhone}
+                    onChange={e => setCartPaymentPhone(e.target.value)}
+                    placeholder="Ex: 67XXXXXXX"
+                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  />
+                </div>
+
+                {cartCheckoutError && (
+                  <div style={{ background: "#3a1a1a", border: "1px solid #ef4444", color: "#f87171", padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 12 }}>
+                    ⚠️ {cartCheckoutError}
+                  </div>
+                )}
+
+                <button 
+                  onClick={submitCartOrder}
+                  disabled={cartCheckoutLoading}
+                  style={{ width: "100%", background: cartCheckoutLoading ? "#888" : G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: cartCheckoutLoading ? "not-allowed" : "pointer", fontWeight: "bold", fontSize: 15, marginBottom: 8 }}
+                >
+                  {cartCheckoutLoading ? "⏳ Traitement en cours..." : `💳 Payer ${(cartSubtotal + cartShippingFee).toLocaleString()} F`}
+                </button>
+
+                <button 
+                  onClick={() => { setCartCheckoutStep(1); setCartCheckoutError(""); window.scrollTo(0, 0); }}
+                  style={{ width: "100%", background: "none", color: G.textDim, border: "1px solid " + G.border, padding: "10px 0", borderRadius: 6, cursor: "pointer", fontSize: 13 }}
+                >
+                  ← Retour
+                </button>
+
+                <div style={{ marginTop: 14, padding: 10, background: G.surface, border: "1px solid " + G.border, borderRadius: 6, fontSize: 11, color: G.textDim }}>
+                  ℹ️ Après le paiement, on te contactera par téléphone pour confirmer la livraison.
+                </div>
+              </div>
+            )}
+
+            {/* �TAPE 3 : CONFIRMATION */}
+            {cartCheckoutStep === 3 && (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+                <h2 style={{ color: G.text, fontSize: 22, marginBottom: 8 }}>Merci pour ta commande !</h2>
+                <p style={{ color: G.textDim, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+                  Ta commande <b style={{ color: G.gold }}>{cartOrderRef}</b> a été enregistrée.<br/>
+                  On te contactera par téléphone pour confirmer la livraison.
+                </p>
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20, textAlign: "left" }}>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>📋 Récapitulatif</div>
+                  <div style={{ fontSize: 13, color: G.text, marginBottom: 4 }}><b>Référence:</b> {cartOrderRef}</div>
+                  <div style={{ fontSize: 13, color: G.text, marginBottom: 4 }}><b>Téléphone:</b> {cartCheckoutForm.customer_phone}</div>
+                  <div style={{ fontSize: 13, color: G.text, marginBottom: 4 }}><b>Ville:</b> {cartCheckoutForm.shipping_city}</div>
+                </div>
+                <button 
+                  onClick={() => { setPage("home"); setCartCheckoutStep(1); }}
+                  style={{ background: G.gold, color: "#000", border: "none", padding: "14px 24px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}
+                >
+                  Retour à l'accueil
                 </button>
               </div>
             )}
