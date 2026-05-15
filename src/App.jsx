@@ -14953,7 +14953,7 @@ export default function App() {
               <h3 style={{ color: G.text, fontSize: 16, marginBottom: 14 }}>Tes informations</h3>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton nom complet *</label>
+                <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Nom et Prénom *</label>
                 <input
                   type="text"
                   value={paperOrderForm.customer_name}
@@ -16875,7 +16875,7 @@ export default function App() {
 
                 {/* INFOS CLIENTE */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Ton nom complet *</label>
+                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Nom et Prénom *</label>
                   <input type="text" value={cartCheckoutForm.customer_name}
                     onChange={e => setCartCheckoutForm(f => ({ ...f, customer_name: e.target.value }))}
                     placeholder="Ex: Marie Ndoumbe"
@@ -16973,7 +16973,11 @@ export default function App() {
                     <span>{cartSubtotal.toLocaleString()} F</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: G.textDim, marginBottom: 6 }}>
-                    <span>Frais de livraison</span>
+                    <span>{(() => {
+                      const zone = getCartSelectedZone();
+                      if (!zone) return "Frais de livraison";
+                      return zone.delivery_method === 'domicile' ? '🏠 Frais de livraison' : "🏢 Frais d'expédition";
+                    })()}</span>
                     <span>{cartShippingFee > 0 ? cartShippingFee.toLocaleString() + " F" : (cartCheckoutForm.shipping_zone_id ? "Gratuit" : "—")}</span>
                   </div>
                   <div style={{ height: 1, background: G.border, margin: "8px 0" }} />
@@ -17007,70 +17011,125 @@ export default function App() {
             {/* �TAPE 2 : PAIEMENT */}
             {cartCheckoutStep === 2 && (
               <div>
-                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 14, marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Total à payer</div>
-                  <div style={{ fontSize: 28, color: G.gold, fontWeight: "bold" }}>{(cartSubtotal + cartShippingFee).toLocaleString()} F</div>
+                {/* Ic�ne carte de paiement comme dans le modal num�rique */}
+                <div style={{ textAlign: "center", marginBottom: 18 }}>
+                  <div style={{ fontSize: 36, marginBottom: 8 }}>💳</div>
+                  <h3 style={{ color: G.text, fontSize: 17, marginBottom: 4, fontWeight: "bold" }}>Choisis ta méthode</h3>
+                  <div style={{ fontSize: 12, color: G.textDim }}>Avec quel opérateur veux-tu payer ?</div>
                 </div>
 
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Mode de paiement *</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {[
-                      { id: "mtn_momo", label: "📱 MTN Mobile Money", desc: "Numéros 67, 65, 68, 50, 51, 53" },
-                      { id: "orange_money", label: "🍊 Orange Money", desc: "Numéros 69, 66, 55, 56, 57" },
-                      { id: "monetbil", label: "💳 Monetbil (autre)", desc: "MTN ou Orange via Monetbil" }
-                    ].map(m => (
-                      <button key={m.id} type="button"
-                        onClick={() => setCartPaymentMethod(m.id)}
-                        style={{
-                          padding: 12,
-                          background: cartPaymentMethod === m.id ? G.goldDim : "transparent",
-                          border: "2px solid " + (cartPaymentMethod === m.id ? G.gold : G.border),
-                          borderRadius: 8,
-                          cursor: "pointer",
-                          textAlign: "left"
-                        }}
-                      >
-                        <div style={{ color: cartPaymentMethod === m.id ? G.gold : G.text, fontSize: 14, fontWeight: "bold" }}>{m.label}</div>
-                        <div style={{ color: G.textDim, fontSize: 11, marginTop: 2 }}>{m.desc}</div>
-                      </button>
-                    ))}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+                  {/* MTN — fond jaune comme dans modal num�rique */}
+                  <button
+                    onClick={() => setCartPaymentMethod('mtn')}
+                    style={{
+                      padding: "16px 18px",
+                      background: cartPaymentMethod === 'mtn' ? "#ffb800" : "#ffcc00",
+                      border: cartPaymentMethod === 'mtn' ? "3px solid #000" : "none",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#000",
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <span>📱</span>
+                    <span>MTN Mobile Money</span>
+                  </button>
+
+                  {/* Orange — fond orange comme dans modal num�rique */}
+                  <button
+                    onClick={() => setCartPaymentMethod('orange')}
+                    style={{
+                      padding: "16px 18px",
+                      background: cartPaymentMethod === 'orange' ? "#e56900" : "#ff7900",
+                      border: cartPaymentMethod === 'orange' ? "3px solid #fff" : "none",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#fff",
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6
+                    }}
+                  >
+                    <span>📱</span>
+                    <span>Orange Money</span>
+                  </button>
+                </div>
+
+                {cartPaymentMethod && (
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Numéro pour le paiement *</label>
+                    <input
+                      type="tel"
+                      value={cartPaymentPhone}
+                      onChange={e => setCartPaymentPhone(e.target.value)}
+                      placeholder="Ex: 6XX XX XX XX"
+                      style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    />
+                  </div>
+                )}
+
+                {/* R�cap commande */}
+                <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 10, padding: 16, marginBottom: 18 }}>
+                  <div style={{ fontSize: 13, color: G.text, marginBottom: 6 }}>🛒 {cart.length} article{cart.length > 1 ? "s" : ""} dans le panier</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 6 }}>
+                    {(() => {
+                      const zone = getCartSelectedZone();
+                      const isYde = zone && zone.delivery_method === 'domicile';
+                      return isYde 
+                        ? <>Livraison à <b>{cartCheckoutForm.shipping_city}</b> (domicile)</>
+                        : <>Expédition vers <b>{cartCheckoutForm.shipping_city}</b> (agence)</>;
+                    })()}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid " + G.gold, fontSize: 18, fontWeight: 700, color: G.gold }}>
+                    <span>TOTAL À PAYER</span>
+                    <span>{(cartSubtotal + cartShippingFee).toLocaleString()} F</span>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", color: G.textDim, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Numéro pour le paiement *</label>
-                  <input type="tel" value={cartPaymentPhone}
-                    onChange={e => setCartPaymentPhone(e.target.value)}
-                    placeholder="Ex: 67XXXXXXX"
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
-                  />
-                </div>
-
                 {cartCheckoutError && (
-                  <div style={{ background: "#3a1a1a", border: "1px solid #ef4444", color: "#f87171", padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 12 }}>
+                  <div style={{ padding: "12px 16px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, color: "#991b1b", fontSize: 13, marginBottom: 16 }}>
                     ⚠️ {cartCheckoutError}
                   </div>
                 )}
 
                 <button 
                   onClick={submitCartOrder}
-                  disabled={cartCheckoutLoading}
-                  style={{ width: "100%", background: cartCheckoutLoading ? "#888" : G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: cartCheckoutLoading ? "not-allowed" : "pointer", fontWeight: "bold", fontSize: 15, marginBottom: 8 }}
+                  disabled={cartCheckoutLoading || !cartPaymentMethod || !cartPaymentPhone.trim()}
+                  style={{ 
+                    width: "100%", 
+                    padding: 15,
+                    background: cartCheckoutLoading || !cartPaymentMethod || !cartPaymentPhone.trim() ? "#ccc" : G.gold, 
+                    border: "none",
+                    borderRadius: 8, 
+                    color: "#000", 
+                    fontSize: 14, 
+                    fontWeight: 700, 
+                    letterSpacing: 1, 
+                    textTransform: "uppercase",
+                    cursor: cartCheckoutLoading || !cartPaymentMethod || !cartPaymentPhone.trim() ? "not-allowed" : "pointer"
+                  }}
                 >
-                  {cartCheckoutLoading ? "⏳ Traitement en cours..." : `💳 Payer ${(cartSubtotal + cartShippingFee).toLocaleString()} F`}
+                  {cartCheckoutLoading ? "⏳ Création..." : `Confirmer ma commande (${(cartSubtotal + cartShippingFee).toLocaleString()} F)`}
                 </button>
 
                 <button 
                   onClick={() => { setCartCheckoutStep(1); setCartCheckoutError(""); window.scrollTo(0, 0); }}
-                  style={{ width: "100%", background: "none", color: G.textDim, border: "1px solid " + G.border, padding: "10px 0", borderRadius: 6, cursor: "pointer", fontSize: 13 }}
+                  disabled={cartCheckoutLoading}
+                  style={{ width: "100%", padding: 13, marginTop: 10, background: "none", border: "1px solid " + G.border, borderRadius: 8, color: G.textDim, fontSize: 13, cursor: "pointer" }}
                 >
                   ← Retour
                 </button>
-
-                <div style={{ marginTop: 14, padding: 10, background: G.surface, border: "1px solid " + G.border, borderRadius: 6, fontSize: 11, color: G.textDim }}>
-                  ℹ️ Après le paiement, on te contactera par téléphone pour confirmer la livraison.
-                </div>
               </div>
             )}
 
