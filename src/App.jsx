@@ -14043,12 +14043,14 @@ export default function App() {
 
   // READER
   if (page === "reader" && reading) {
-    // Mode PDF
-    if (reading.pdf_url && reading.pdf_url !== "pending") {
+    // Mode PDF : on entre dedans si on a un pdf_url valide OU (en mode extrait) un excerpt_pdf_url
+    const hasMainPdf = reading.pdf_url && reading.pdf_url !== "pending";
+    const hasExcerptPdf = reading.excerpt_pdf_url && reading.excerpt_pdf_url !== "";
+    if (hasMainPdf || (excerptMode && hasExcerptPdf)) {
       const savedPdfPage = parseInt(localStorage.getItem("pdfProgress_" + reading.id) || "0");
       const maxPage = excerptMode ? (reading.extract_pages || 5) : 9999;
       const startPage = excerptMode ? 1 : (savedPdfPage > 0 ? savedPdfPage : 1);
-      // Use excerpt_pdf_url if in excerpt mode and available
+      // Use excerpt_pdf_url if in excerpt mode and available, sinon fallback sur pdf_url principal
       const activePdfUrl = excerptMode && reading.excerpt_pdf_url ? reading.excerpt_pdf_url : reading.pdf_url;
       const pdfSrc = activePdfUrl + "#page=" + startPage;
       return (
@@ -15073,10 +15075,12 @@ export default function App() {
           })()}
 
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-            <button onClick={() => startReading(book, true)}
-              style={{ flex: 1, padding: "12px 8px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
-              📄 Extrait
-            </button>
+            {!isArticle(book) && (
+              <button onClick={() => startReading(book, true)}
+                style={{ flex: 1, padding: "12px 8px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                📄 Extrait
+              </button>
+            )}
             <button onClick={() => toggleFavorite(book.id)}
               style={{ flex: 1, padding: "12px 8px", background: isFav ? G.goldDim : "none", border: "1.5px solid " + (isFav ? G.gold : G.border), borderRadius: 6, color: isFav ? G.gold : G.textDim, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
               {isFav ? "♥ Favoris" : "♡ Favoris"}

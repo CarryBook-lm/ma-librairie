@@ -25,9 +25,10 @@ const CATEGORIES_FALLBACK = {
 
 const emptyForm = {
   title: "", author: "", price: "", original_price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
-  summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
+  summary: "", content: "", pdf_url: "", status: "actif", audio_url: "", excerpt_pdf_url: "",
   can_read: true, can_download: false, featured: false, exclude_from_subscription: false,
-  product_type: "numerique", stock: -1, images: [], audio_access_mode: "sale"
+  product_type: "numerique", stock: -1, images: [], audio_access_mode: "sale",
+  paper_pages: "", paper_description: "", paper_stock: -1, paper_price: ""
 };
 
 export default function Admin() {
@@ -948,11 +949,15 @@ export default function Admin() {
       payload.price = 0;  // pas de version numérique
       payload.has_paper_version = true;
       payload.paper_stock = form.paper_stock !== undefined && form.paper_stock !== "" ? parseInt(form.paper_stock) : -1;
+      payload.paper_pages = form.paper_pages ? parseInt(form.paper_pages) : null;
+      payload.paper_description = form.paper_description || null;
     } else if (form.product_type === "mixte") {
       // Mixte : le prix saisi est le prix numérique. Le paper_price doit être saisi séparément (form.paper_price)
       payload.has_paper_version = true;
       payload.paper_price = form.paper_price ? parseInt(form.paper_price) : priceInt;
       payload.paper_stock = form.paper_stock !== undefined && form.paper_stock !== "" ? parseInt(form.paper_stock) : -1;
+      payload.paper_pages = form.paper_pages ? parseInt(form.paper_pages) : null;
+      payload.paper_description = form.paper_description || null;
     } else if (form.product_type === "article") {
       // Article : le prix saisi va dans price normal, pas de version papier (mais utilise la même logique de commande)
       payload.has_paper_version = false;
@@ -1001,7 +1006,11 @@ export default function Admin() {
       product_type: book.product_type || "numerique",
       stock: book.stock !== undefined ? book.stock : -1,
       images: book.images || [],
-      audio_access_mode: book.audio_access_mode || "sale"
+      audio_access_mode: book.audio_access_mode || "sale",
+      paper_pages: book.paper_pages || "",
+      paper_description: book.paper_description || "",
+      paper_stock: book.paper_stock !== undefined && book.paper_stock !== null ? book.paper_stock : -1,
+      paper_price: book.paper_price ? String(book.paper_price) : ""
     });
     setShowForm(true);
     setActiveTab("info");
@@ -2985,14 +2994,15 @@ export default function Admin() {
                     placeholder={form.product_type === "article" ? "Ex: Bic, Crayola..." : "Nom et prénom"} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>{form.product_type === "papier" || form.product_type === "article" ? "PRIX (FCFA)" : "PRIX ACTUEL (FCFA)"}</label>
+                  <label style={labelStyle}>{form.product_type === "papier" || form.product_type === "article" || form.product_type === "audio" ? "PRIX (FCFA) *" : "PRIX ACTUEL (FCFA)"}</label>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder={form.product_type === "papier" ? "Laisse vide — utilise le prix papier" : "Ex: 2500"} type="number" style={inputStyle} />
+                    placeholder="Ex: 2500" type="number" style={inputStyle} />
                   <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
                     {form.product_type === "numerique" && "💰 Prix de la version numérique"}
-                    {form.product_type === "papier" && "📦 Laisse VIDE : le prix est défini dans la section 'Livre papier'"}
-                    {form.product_type === "mixte" && "💰 Prix de la version numérique (le prix papier sera défini séparément)"}
+                    {form.product_type === "papier" && "📦 Prix de vente du livre papier"}
+                    {form.product_type === "mixte" && "💰 Prix de la version numérique (le prix papier sera défini ci-dessous)"}
                     {form.product_type === "article" && "💰 Prix de vente unitaire"}
+                    {form.product_type === "audio" && "💰 Prix de vente de l'audio/podcast"}
                   </div>
                 </div>
                 {/* PROMO : seulement pour numerique, mixte, papier (pas article ni audio) */}
@@ -3043,6 +3053,83 @@ export default function Admin() {
                       📦 Nombre de pièces disponibles à la vente<br/>
                       💡 Laisse vide si tu ne veux pas gérer le stock (stock illimité)<br/>
                       ⚠️ Mets 0 pour marquer comme "Rupture de stock"
+                    </div>
+                  </div>
+                )}
+
+                {/* DÉTAILS PAPIER : pour livres papier et mixte */}
+                {(form.product_type === "papier" || form.product_type === "mixte") && (
+                  <div style={{ background: "#1a1a1a", padding: 14, borderRadius: 10, border: "1px solid #c9a84c44" }}>
+                    <label style={{ ...labelStyle, color: "#c9a84c", fontSize: 12, marginBottom: 12, display: "block" }}>📦 DÉTAILS DU LIVRE PAPIER</label>
+
+                    {/* Prix papier (seulement pour mixte, car papier utilise déjà le champ Prix au-dessus) */}
+                    {form.product_type === "mixte" && (
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>PRIX PAPIER (FCFA) *</label>
+                        <input 
+                          value={form.paper_price || ""} 
+                          onChange={e => setForm(f => ({ ...f, paper_price: e.target.value }))}
+                          placeholder="Ex: 5000" 
+                          type="number" 
+                          style={inputStyle} 
+                        />
+                        <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                          📦 Prix de la version papier (différent du prix numérique au-dessus)
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nombre de pages */}
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={labelStyle}>📄 NOMBRE DE PAGES</label>
+                      <input 
+                        value={form.paper_pages || ""} 
+                        onChange={e => setForm(f => ({ ...f, paper_pages: e.target.value }))}
+                        placeholder="Ex: 120" 
+                        type="number" 
+                        min="1"
+                        style={inputStyle} 
+                      />
+                    </div>
+
+                    {/* Description physique (style papier, format, etc.) */}
+                    <div style={{ marginBottom: 14 }}>
+                      <label style={labelStyle}>📝 DESCRIPTION PHYSIQUE</label>
+                      <textarea 
+                        value={form.paper_description || ""} 
+                        onChange={e => setForm(f => ({ ...f, paper_description: e.target.value }))}
+                        placeholder="Ex: Couverture souple 160g, format A5, papier 80g blanc..." 
+                        rows={3}
+                        style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} 
+                      />
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                        💡 Décris le format, la couverture, le papier (sera affiché à la cliente)
+                      </div>
+                    </div>
+
+                    {/* Stock papier */}
+                    <div>
+                      <label style={labelStyle}>📦 STOCK PAPIER DISPONIBLE</label>
+                      <input 
+                        value={form.paper_stock === -1 || form.paper_stock === undefined ? "" : form.paper_stock} 
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === "") {
+                            setForm(f => ({ ...f, paper_stock: -1 }));
+                          } else {
+                            setForm(f => ({ ...f, paper_stock: parseInt(val) || 0 }));
+                          }
+                        }}
+                        placeholder="Ex: 50 (laisse vide = stock illimité)" 
+                        type="number" 
+                        min="0" 
+                        style={inputStyle} 
+                      />
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                        📦 Nombre d'exemplaires disponibles<br/>
+                        💡 Laisse vide si stock illimité (impression à la demande)<br/>
+                        ⚠️ Mets 0 pour marquer comme "Rupture de stock"
+                      </div>
                     </div>
                   </div>
                 )}
