@@ -26,7 +26,8 @@ const CATEGORIES_FALLBACK = {
 const emptyForm = {
   title: "", author: "", price: "", original_price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
   summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
-  can_read: true, can_download: false, featured: false, exclude_from_subscription: false
+  can_read: true, can_download: false, featured: false, exclude_from_subscription: false,
+  product_type: "numerique", stock: -1, images: []
 };
 
 export default function Admin() {
@@ -959,8 +960,11 @@ export default function Admin() {
     setEditingBook(book);
     setForm({
       ...book,
-      price: String(book.price),
-      original_price: book.original_price ? String(book.original_price) : ""
+      price: book.price === null || book.price === undefined ? "" : String(book.price),
+      original_price: book.original_price ? String(book.original_price) : "",
+      product_type: book.product_type || "numerique",
+      stock: book.stock !== undefined ? book.stock : -1,
+      images: book.images || []
     });
     setShowForm(true);
     setActiveTab("info");
@@ -2641,23 +2645,63 @@ export default function Admin() {
 
             {activeTab === "info" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* ============ SÉLECTEUR DE TYPE DE PRODUIT ============ */}
+                <div style={{ background: "#1a1a1a", padding: 14, borderRadius: 10, border: "2px solid #c9a84c" }}>
+                  <label style={{ ...labelStyle, color: "#c9a84c", fontSize: 12, marginBottom: 10, display: "block" }}>🏷️ TYPE DE PRODUIT *</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+                    {[
+                      { id: "numerique", icon: "📖", label: "Numérique", desc: "Livre PDF/Liseuse" },
+                      { id: "papier", icon: "📦", label: "Papier uniquement", desc: "Livre physique seul" },
+                      { id: "mixte", icon: "📚", label: "Numérique + Papier", desc: "Les deux versions" },
+                      { id: "article", icon: "🎨", label: "Article divers", desc: "Feutre, pinceau, etc." }
+                    ].map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, product_type: t.id }))}
+                        style={{
+                          padding: "12px 10px",
+                          background: form.product_type === t.id ? "#c9a84c22" : "#0a0a0a",
+                          border: "2px solid " + (form.product_type === t.id ? "#c9a84c" : "#2a2a2a"),
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.2s"
+                        }}
+                      >
+                        <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
+                        <div style={{ color: form.product_type === t.id ? "#c9a84c" : "#fff", fontSize: 12, fontWeight: "bold" }}>{t.label}</div>
+                        <div style={{ color: "#888", fontSize: 10, marginTop: 2 }}>{t.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 10, padding: 8, background: "#0a0a0a", borderRadius: 6 }}>
+                    {form.product_type === "numerique" && "📖 Livre numérique seul : remplis prix + contenu (PDF ou texte)"}
+                    {form.product_type === "papier" && "📦 Livre papier uniquement : remplis prix papier + stock + extrait PDF"}
+                    {form.product_type === "mixte" && "📚 Version numérique + papier : remplis tout"}
+                    {form.product_type === "article" && "🎨 Article divers : remplis prix + stock + photos (pas de contenu/extrait)"}
+                  </div>
+                </div>
+
                 <div>
                   <label style={labelStyle}>TITRE *</label>
                   <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                    placeholder="Titre du livre" style={inputStyle} />
+                    placeholder={form.product_type === "article" ? "Nom de l'article (ex: Boîte de 12 feutres)" : "Titre du livre"} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>AUTEUR *</label>
+                  <label style={labelStyle}>{form.product_type === "article" ? "MARQUE / FABRICANT" : "AUTEUR *"}</label>
                   <input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}
-                    placeholder="Nom et prénom" style={inputStyle} />
+                    placeholder={form.product_type === "article" ? "Ex: Bic, Crayola..." : "Nom et prénom"} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>PRIX ACTUEL (FCFA)</label>
+                  <label style={labelStyle}>{form.product_type === "papier" || form.product_type === "article" ? "PRIX (FCFA)" : "PRIX ACTUEL (FCFA)"}</label>
                   <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder="Ex: 2500 (0 pour gratuit, vide si papier uniquement)" type="number" style={inputStyle} />
+                    placeholder={form.product_type === "papier" ? "Laisse vide — utilise le prix papier" : "Ex: 2500"} type="number" style={inputStyle} />
                   <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
-                    💰 Prix de la version numérique<br/>
-                    📦 <b style={{ color: "#c9a84c" }}>Livre papier uniquement</b> : laisse vide et n'ajoute pas de contenu/PDF
+                    {form.product_type === "numerique" && "💰 Prix de la version numérique"}
+                    {form.product_type === "papier" && "📦 Laisse VIDE : le prix est défini dans la section 'Livre papier'"}
+                    {form.product_type === "mixte" && "💰 Prix de la version numérique (le prix papier sera défini séparément)"}
+                    {form.product_type === "article" && "💰 Prix de vente unitaire"}
                   </div>
                 </div>
                 <div>
@@ -2735,12 +2779,40 @@ export default function Admin() {
 
             {activeTab === "content" && (
               <div>
-                <label style={labelStyle}>CONTENU DU LIVRE</label>
-                <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
-                  Choisis entre uploader un PDF ou coller le texte.
-                </p>
+                {/* Bandeau d'info selon le type de produit */}
+                {form.product_type === "article" && (
+                  <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>🎨 Article divers</div>
+                    <div style={{ fontSize: 12, color: "#aaa" }}>
+                      Cet onglet n'est pas utilisé pour les articles divers.<br/>
+                      Pas besoin d'extrait PDF ou de contenu numérique.<br/>
+                      Configure le <b style={{ color: "#c9a84c" }}>stock</b> et les <b style={{ color: "#c9a84c" }}>photos</b> dans l'onglet Infos.
+                    </div>
+                  </div>
+                )}
 
-                {/* ============ EXTRAIT PDF (toujours visible) ============ */}
+                {form.product_type === "papier" && (
+                  <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>📦 Livre papier uniquement</div>
+                    <div style={{ fontSize: 12, color: "#aaa" }}>
+                      <b style={{ color: "#c9a84c" }}>Extrait PDF obligatoire</b> ci-dessous.<br/>
+                      Pas besoin de remplir Contenu complet (PDF/Texte).<br/>
+                      Le prix papier se configure dans la section "📦 Livres papier" de l'admin.
+                    </div>
+                  </div>
+                )}
+
+                {(form.product_type === "numerique" || form.product_type === "mixte") && (
+                  <>
+                    <label style={labelStyle}>CONTENU DU LIVRE</label>
+                    <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
+                      Choisis entre uploader un PDF ou coller le texte.
+                    </p>
+                  </>
+                )}
+
+                {/* ============ EXTRAIT PDF (cach� pour articles) ============ */}
+                {form.product_type !== "article" && (
                 <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
                   <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                     📄 Extrait PDF (aperçu gratuit)
@@ -2782,7 +2854,11 @@ export default function Admin() {
                     </>
                   )}
                 </div>
+                )}
 
+                {/* Contenu complet PDF/Texte : seulement pour numerique et mixte */}
+                {(form.product_type === "numerique" || form.product_type === "mixte") && (
+                <>
                 <p style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>
                   ⬇️ <b>Contenu complet</b> (optionnel — laisse vide si le livre est uniquement disponible en papier)
                 </p>
@@ -2798,6 +2874,8 @@ export default function Admin() {
                     📄 PDF
                   </button>
                 </div>
+                </>
+                )}
 
                 {/* Upload PDF */}
                 {form.pdf_url !== "" && (

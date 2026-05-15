@@ -12097,17 +12097,29 @@ function isOnPromo(book) {
 }
 
 // Helper pour détecter un livre "papier uniquement"
-// Critère : has_paper_version = true ET (prix numérique = 0 ou vide) ET pas de PDF valide
+// CRITÈRE FIABLE : utilise le champ product_type de la BDD (saisi dans l'admin)
 function isPaperOnly(book) {
   if (!book) return false;
+  // Si product_type est défini, on l'utilise directement (méthode fiable)
+  if (book.product_type) {
+    return book.product_type === 'papier' || book.product_type === 'article';
+  }
+  // Fallback pour les anciens livres sans product_type (rétrocompatibilité)
   if (!book.has_paper_version) return false;
-  // Si le livre a un prix numérique > 0, ce n'est pas "papier uniquement" (c'est mixte)
   if (book.price && book.price > 0) return false;
-  // Si le livre a un PDF valide (pas "pending" ni vide), ce n'est pas "papier uniquement"
   const hasPdf = book.pdf_url && typeof book.pdf_url === 'string' && book.pdf_url.trim() !== "" && book.pdf_url !== "pending";
   if (hasPdf) return false;
-  // Sinon c'est un livre papier uniquement
   return true;
+}
+
+// Helper : est-ce un article divers ?
+function isArticle(book) {
+  return book && book.product_type === 'article';
+}
+
+// Helper : est-ce un livre mixte (numérique + papier) ?
+function isMixte(book) {
+  return book && book.product_type === 'mixte';
 }
 
 // Helper pour générer un code parrainage suggéré (style PRENOM + 4 caractères)
@@ -16049,7 +16061,7 @@ export default function App() {
                             ) : (
                               <>
                                 {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                                {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                                {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                               </>
                             )}
                           </div>
@@ -16092,7 +16104,7 @@ export default function App() {
                               ) : (
                                 <>
                                   {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                                  {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                                  {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                                 </>
                               )}
                             </div>
@@ -16158,7 +16170,7 @@ export default function App() {
                           ) : (
                             <>
                               {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                              {book.has_paper_version && <span style={{ color: G.gold, fontSize: 9 }}> · 📦 Papier</span>}
+                              {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold, fontSize: 9 }}> · 📦 Aussi en papier</span>}
                             </>
                           )}
                         </div>
