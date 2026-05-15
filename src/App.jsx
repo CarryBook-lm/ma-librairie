@@ -12096,14 +12096,18 @@ function isOnPromo(book) {
   return getDiscountPct(book) > 0;
 }
 
-// Helper pour détecter un livre "papier uniquement" : pas de contenu numérique, pas de PDF, mais a une version papier
+// Helper pour détecter un livre "papier uniquement"
+// Critère : has_paper_version = true ET (prix numérique = 0 ou vide) ET pas de PDF valide
 function isPaperOnly(book) {
   if (!book) return false;
   if (!book.has_paper_version) return false;
-  // Vérifier qu'il n'y a NI pdf NI texte (en gérant null, undefined, "", "pending", et espaces)
+  // Si le livre a un prix numérique > 0, ce n'est pas "papier uniquement" (c'est mixte)
+  if (book.price && book.price > 0) return false;
+  // Si le livre a un PDF valide (pas "pending" ni vide), ce n'est pas "papier uniquement"
   const hasPdf = book.pdf_url && typeof book.pdf_url === 'string' && book.pdf_url.trim() !== "" && book.pdf_url !== "pending";
-  const hasContent = book.content && typeof book.content === 'string' && book.content.trim() !== "";
-  return !hasPdf && !hasContent;
+  if (hasPdf) return false;
+  // Sinon c'est un livre papier uniquement
+  return true;
 }
 
 // Helper pour générer un code parrainage suggéré (style PRENOM + 4 caractères)
@@ -16147,17 +16151,17 @@ export default function App() {
                             ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
-                          {isPaperOnly(book) && <div style={{ position: "absolute", top: 8, left: 8, background: G.goldDim, color: G.gold, fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1, border: "1px solid " + G.gold }}>📦 PAPIER</div>}
+                          {isPaperOnly(book) && <div style={{ position: "absolute", top: 6, left: 6, background: G.goldDim, color: G.gold, fontSize: 7, padding: "1px 5px", borderRadius: 4, fontWeight: "bold", letterSpacing: 0.3, border: "1px solid " + G.gold }}>📦 PAPIER</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
                         </div>
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
-                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>
+                        <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>
                           {(isPaperOnly(book)) ? (
-                            <span style={{ color: G.gold }}>📦 Livre papier</span>
+                            <span style={{ color: G.gold, fontSize: 9 }}>📦 Livre papier</span>
                           ) : (
                             <>
                               {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
-                              {book.has_paper_version && <span style={{ color: G.gold }}> · 📦 Livre papier</span>}
+                              {book.has_paper_version && <span style={{ color: G.gold, fontSize: 9 }}> · 📦 Papier</span>}
                             </>
                           )}
                         </div>

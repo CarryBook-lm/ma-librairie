@@ -2758,9 +2758,8 @@ export default function Admin() {
                       </button>
                     </div>
                   ) : (
-                    <label style={{ display: "block", padding: "10px 12px", border: "2px dashed #c9a84c66", borderRadius: 6, cursor: "pointer", color: "#c9a84c", fontSize: 12, textAlign: "center", background: "#0a0a0a" }}>
-                      📁 Choisir un fichier PDF extrait
-                      <input type="file" accept=".pdf" style={{ display: "none" }} onChange={async e => {
+                    <>
+                      <input type="file" accept=".pdf" id="excerptPdfFileInput" style={{ display: "none" }} onChange={async e => {
                         const file = e.target.files[0];
                         if (!file) return;
                         const fileName = Date.now() + "_excerpt_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -2768,9 +2767,19 @@ export default function Admin() {
                         if (!error) {
                           const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
                           setForm(f => ({ ...f, excerpt_pdf_url: urlData.publicUrl }));
+                        } else {
+                          alert("Erreur upload : " + error.message);
                         }
+                        e.target.value = "";
                       }} />
-                    </label>
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById("excerptPdfFileInput").click()}
+                        style={{ width: "100%", padding: "10px 12px", border: "2px dashed #c9a84c66", borderRadius: 6, cursor: "pointer", color: "#c9a84c", fontSize: 12, textAlign: "center", background: "#0a0a0a", fontWeight: "bold" }}
+                      >
+                        📁 Choisir un fichier PDF extrait
+                      </button>
+                    </>
                   )}
                 </div>
 
