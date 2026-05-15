@@ -12096,6 +12096,22 @@ function isOnPromo(book) {
   return getDiscountPct(book) > 0;
 }
 
+// Helper : détecte si un produit physique est en rupture de stock
+// Retourne TRUE seulement si le stock = 0 ET que l'admin n'a PAS autorisé la pré-commande
+function isOutOfStock(book) {
+  if (!book) return false;
+  // Pour les articles : on regarde book.stock
+  // Pour les livres papier/mixte : on regarde book.paper_stock
+  const isArt = book.product_type === 'article';
+  const isPaper = book.product_type === 'papier' || book.has_paper_version;
+  if (!isArt && !isPaper) return false; // pas un produit physique → pas de rupture
+  const stock = isArt ? book.stock : book.paper_stock;
+  // Stock illimité (null, -1, undefined) → pas de rupture
+  if (stock === null || stock === undefined || stock === -1) return false;
+  // Si stock = 0 ET pré-commande non autorisée → rupture
+  return stock === 0 && !book.allow_oversell;
+}
+
 // Helper pour détecter un livre "papier uniquement"
 // CRITÈRE FIABLE : utilise le champ product_type de la BDD (saisi dans l'admin)
 function isPaperOnly(book) {
@@ -16104,9 +16120,14 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                            {isOutOfStock(book) && (
+                              <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 9, fontWeight: "bold", textAlign: "center", padding: "4px 0", letterSpacing: 1 }}>
+                                🚫 RUPTURE
+                              </div>
+                            )}
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
@@ -16178,9 +16199,14 @@ export default function App() {
                           <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
                             <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
-                                ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                              {isOutOfStock(book) && (
+                                <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 9, fontWeight: "bold", textAlign: "center", padding: "4px 0", letterSpacing: 1 }}>
+                                  🚫 RUPTURE
+                                </div>
+                              )}
                             </div>
                             <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                             <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
@@ -16244,10 +16270,15 @@ export default function App() {
                       <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                         <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
                           {book.cover
-                            ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
+                          {isOutOfStock(book) && (
+                            <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 12, fontWeight: "bold", textAlign: "center", padding: "6px 0", letterSpacing: 1.5 }}>
+                              🚫 RUPTURE DE STOCK
+                            </div>
+                          )}
                         </div>
                         <div style={{ fontSize: 13, color: G.text, marginBottom: 3, lineHeight: 1.3 }}>{book.title}</div>
                         <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>
