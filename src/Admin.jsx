@@ -42,6 +42,10 @@ export default function Admin() {
   const [recentReads, setRecentReads] = useState(0);
   const [topBooks, setTopBooks] = useState([]);
   const [view, setView] = useState("dashboard");
+  // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
+  const [productSubView, setProductSubView] = useState(null);
+  // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
+  const [productSubTab, setProductSubTab] = useState("list");
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
@@ -1104,10 +1108,8 @@ export default function Admin() {
         <div style={{ background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", zIndex: 40 }}>
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
-            { id: "books", label: "Livres", icon: "📚" },
+            { id: "books", label: "Produits", icon: "📚" },
             { id: "categories", label: "Catégories", icon: "🗂️" },
-            { id: "paper_books", label: "Livres papier", icon: "📦" },
-            { id: "shipping_zones", label: "Zones de livraison", icon: "🚚" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
@@ -1322,20 +1324,215 @@ export default function Admin() {
           </div>
         )}
 
-        {/* BOOKS */}
-        {view === "books" && (
+        {/* BOOKS / PRODUITS */}
+        {view === "books" && productSubView === null && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>Livres ({books.length})</h1>
-              <button onClick={openAdd}
-                style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}>
-                + AJOUTER
-              </button>
+            <div style={{ marginBottom: 24 }}>
+              <h1 style={{ fontSize: 24, color: "#c9a84c", marginBottom: 6 }}>📚 Produits</h1>
+              <p style={{ color: "#888", fontSize: 13 }}>Choisis le type de produit que tu veux gérer</p>
             </div>
 
-            {/* Liste cards sur mobile */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {books.map(book => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }}>
+              {/* CARTE 1 : LIVRES NUMÉRIQUES */}
+              <div
+                onClick={() => { setProductSubView("digital"); setProductSubTab("list"); }}
+                style={{
+                  background: "#1a1a1a",
+                  border: "2px solid #2a2a2a",
+                  borderRadius: 12,
+                  padding: 20,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "center"
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
+              >
+                <div style={{ fontSize: 36, marginBottom: 8 }}>📖</div>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Numériques</div>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>PDF, Liseuse, Mixte</div>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                  {books.filter(b => b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio').length} produits
+                </div>
+              </div>
+
+              {/* CARTE 2 : LIVRES PHYSIQUES */}
+              <div
+                onClick={() => { setProductSubView("physical"); setProductSubTab("list"); }}
+                style={{
+                  background: "#1a1a1a",
+                  border: "2px solid #2a2a2a",
+                  borderRadius: 12,
+                  padding: 20,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "center"
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
+              >
+                <div style={{ fontSize: 36, marginBottom: 8 }}>📦</div>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Physiques</div>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Livres papier</div>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                  {books.filter(b => b.product_type === 'papier').length} produits
+                </div>
+              </div>
+
+              {/* CARTE 3 : ARTICLES DIVERS */}
+              <div
+                onClick={() => { setProductSubView("article"); setProductSubTab("list"); }}
+                style={{
+                  background: "#1a1a1a",
+                  border: "2px solid #2a2a2a",
+                  borderRadius: 12,
+                  padding: 20,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "center"
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
+              >
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🎨</div>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Articles Divers</div>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Feutres, pinceaux, etc.</div>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                  {books.filter(b => b.product_type === 'article').length} produits
+                </div>
+              </div>
+
+              {/* CARTE 4 : LIVRES AUDIO & PODCASTS */}
+              <div
+                onClick={() => { setProductSubView("audio"); setProductSubTab("list"); }}
+                style={{
+                  background: "#1a1a1a",
+                  border: "2px solid #2a2a2a",
+                  borderRadius: 12,
+                  padding: 20,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "center",
+                  opacity: 0.7
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
+              >
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🎧</div>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Audio & Podcasts</div>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Bientôt disponible</div>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: "#33333322", border: "1px solid #555", borderRadius: 20, fontSize: 12, color: "#888", fontWeight: "bold" }}>
+                  À venir
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* BOOKS / PRODUITS — SOUS-VUE (liste filtrée par type) */}
+        {view === "books" && productSubView !== null && (
+          <div>
+            {/* Header avec bouton retour */}
+            <div style={{ marginBottom: 20 }}>
+              <button
+                onClick={() => { setProductSubView(null); setProductSubTab("list"); }}
+                style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, padding: "8px 14px", color: "#c9a84c", cursor: "pointer", fontSize: 12, marginBottom: 12 }}
+              >
+                ← Retour aux produits
+              </button>
+              <h1 style={{ fontSize: 22, color: "#c9a84c", margin: 0 }}>
+                {productSubView === "digital" && "📖 Livres Numériques"}
+                {productSubView === "physical" && "📦 Livres Physiques"}
+                {productSubView === "article" && "🎨 Articles Divers"}
+                {productSubView === "audio" && "🎧 Livres Audio & Podcasts"}
+              </h1>
+            </div>
+
+            {/* SOUS-VUE : Audio (vide) */}
+            {productSubView === "audio" && (
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 40, textAlign: "center" }}>
+                <div style={{ fontSize: 50, marginBottom: 14 }}>🎧</div>
+                <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>Bientôt disponible</h2>
+                <p style={{ color: "#888", fontSize: 13, lineHeight: 1.6 }}>
+                  La section <b style={{ color: "#fff" }}>Livres Audio & Podcasts</b> arrive prochainement.<br/>
+                  Tu pourras y ajouter des fichiers audio MP3, organiser des séries d'épisodes, etc.
+                </p>
+              </div>
+            )}
+
+            {/* SOUS-VUE : Digital/Physical/Article — onglets + liste */}
+            {productSubView !== "audio" && (
+              <>
+                {/* Onglets internes (pour Physical et Article qui ont plusieurs sections) */}
+                {(productSubView === "physical" || productSubView === "article") && (
+                  <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: "1px solid #2a2a2a" }}>
+                    <button
+                      onClick={() => setProductSubTab("list")}
+                      style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: "2px solid " + (productSubTab === "list" ? "#c9a84c" : "transparent"), color: productSubTab === "list" ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}
+                    >
+                      📋 Liste
+                    </button>
+                    <button
+                      onClick={() => setProductSubTab("shipping")}
+                      style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: "2px solid " + (productSubTab === "shipping" ? "#c9a84c" : "transparent"), color: productSubTab === "shipping" ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}
+                    >
+                      🚚 Zones de livraison
+                    </button>
+                  </div>
+                )}
+
+                {/* ONGLET LIST : la liste des produits filtrée */}
+                {productSubTab === "list" && (
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                      <h2 style={{ fontSize: 15, color: "#aaa", margin: 0 }}>
+                        {(() => {
+                          const filtered = books.filter(b => {
+                            if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
+                            if (productSubView === "physical") return b.product_type === 'papier';
+                            if (productSubView === "article") return b.product_type === 'article';
+                            return false;
+                          });
+                          return filtered.length + " produit" + (filtered.length > 1 ? "s" : "");
+                        })()}
+                      </h2>
+                      <button
+                        onClick={() => {
+                          // Pré-sélectionner le type selon la sous-vue
+                          let presetType = "numerique";
+                          if (productSubView === "physical") presetType = "papier";
+                          if (productSubView === "article") presetType = "article";
+                          setEditingBook(null);
+                          setForm({ ...emptyForm, product_type: presetType });
+                          setShowForm(true);
+                          setActiveTab("info");
+                        }}
+                        style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}
+                      >
+                        + AJOUTER
+                      </button>
+                    </div>
+
+                    {/* Liste des produits filtrée selon la sous-vue */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {books.filter(b => {
+                        if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
+                        if (productSubView === "physical") return b.product_type === 'papier';
+                        if (productSubView === "article") return b.product_type === 'article';
+                        return false;
+                      }).length === 0 ? (
+                        <div style={{ background: "#1a1a1a", border: "1px dashed #2a2a2a", borderRadius: 10, padding: 32, textAlign: "center", color: "#666" }}>
+                          <div style={{ fontSize: 36, marginBottom: 10 }}>📦</div>
+                          <div style={{ fontSize: 13, marginBottom: 12 }}>Aucun produit dans cette catégorie</div>
+                          <div style={{ fontSize: 11, color: "#555" }}>Clique sur "+ AJOUTER" pour créer ton premier produit</div>
+                        </div>
+                      ) : (
+                        books.filter(b => {
+                          if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
+                          if (productSubView === "physical") return b.product_type === 'papier';
+                          if (productSubView === "article") return b.product_type === 'article';
+                          return false;
+                        }).map(book => (
                 <div key={book.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
                   {book.cover
                     ? <img src={book.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", flexShrink: 0 }} />
@@ -1360,14 +1557,15 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
-              ))}
-              {books.length === 0 && (
-                <div style={{ textAlign: "center", padding: "40px 0", color: "#555" }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
-                  <div>Aucun livre ajouté</div>
-                </div>
-              )}
-            </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ONGLET SHIPPING : Zones de livraison (g�r� plus bas, voir bloc shipping_zones) */}
+              </>
+            )}
           </div>
         )}
         {view === "categories" && (
@@ -1753,7 +1951,7 @@ export default function Admin() {
           </div>
         )}
 
-        {view === "shipping_zones" && (
+        {(view === "shipping_zones" || (view === "books" && productSubTab === "shipping" && productSubView !== null && productSubView !== "audio" && productSubView !== "digital")) && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
               <h1 style={{ fontSize: 20, color: "#c9a84c" }}>🚚 Zones de livraison</h1>
@@ -2725,6 +2923,33 @@ export default function Admin() {
                     </div>
                   )}
                 </div>
+
+                {/* STOCK : visible uniquement pour les articles */}
+                {form.product_type === "article" && (
+                  <div>
+                    <label style={labelStyle}>📦 STOCK DISPONIBLE *</label>
+                    <input 
+                      value={form.stock === -1 ? "" : form.stock} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === "") {
+                          setForm(f => ({ ...f, stock: -1 }));
+                        } else {
+                          setForm(f => ({ ...f, stock: parseInt(val) || 0 }));
+                        }
+                      }}
+                      placeholder="Ex: 25 (laisse vide = stock illimité)" 
+                      type="number" 
+                      min="0" 
+                      style={inputStyle} 
+                    />
+                    <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                      📦 Nombre de pièces disponibles à la vente<br/>
+                      💡 Laisse vide si tu ne veux pas gérer le stock (stock illimité)<br/>
+                      ⚠️ Mets 0 pour marquer comme "Rupture de stock"
+                    </div>
+                  </div>
+                )}
 
                 {/* COUVERTURE */}
                 <div>
