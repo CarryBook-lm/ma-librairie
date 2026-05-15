@@ -46,6 +46,8 @@ export default function Admin() {
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
   const [productSubTab, setProductSubTab] = useState("list");
+  // Affiche ou cache le s�lecteur de type de produit dans le formulaire
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
@@ -2909,45 +2911,68 @@ export default function Admin() {
 
             {activeTab === "info" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* ============ SÉLECTEUR DE TYPE DE PRODUIT ============ */}
-                <div style={{ background: "#1a1a1a", padding: 14, borderRadius: 10, border: "2px solid #c9a84c" }}>
-                  <label style={{ ...labelStyle, color: "#c9a84c", fontSize: 12, marginBottom: 10, display: "block" }}>🏷️ TYPE DE PRODUIT *</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
-                    {[
-                      { id: "numerique", icon: "📖", label: "Numérique", desc: "Livre PDF/Liseuse" },
-                      { id: "papier", icon: "📦", label: "Papier uniquement", desc: "Livre physique seul" },
-                      { id: "mixte", icon: "📚", label: "Numérique + Papier", desc: "Les deux versions" },
-                      { id: "article", icon: "🎨", label: "Article divers", desc: "Feutre, pinceau, etc." },
-                      { id: "audio", icon: "🎧", label: "Audio / Podcast", desc: "MP3, MP4, vidéo" }
-                    ].map(t => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setForm(f => ({ ...f, product_type: t.id }))}
-                        style={{
-                          padding: "12px 10px",
-                          background: form.product_type === t.id ? "#c9a84c22" : "#0a0a0a",
-                          border: "2px solid " + (form.product_type === t.id ? "#c9a84c" : "#2a2a2a"),
-                          borderRadius: 8,
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.2s"
-                        }}
+                {/* ============ INDICATEUR DE TYPE (compact, cliquable pour changer) ============ */}
+                {(() => {
+                  const types = {
+                    numerique: { icon: "📖", label: "Numérique", desc: "Livre PDF/Liseuse" },
+                    papier: { icon: "📦", label: "Papier uniquement", desc: "Livre physique seul" },
+                    mixte: { icon: "📚", label: "Numérique + Papier", desc: "Les deux versions" },
+                    article: { icon: "🎨", label: "Article divers", desc: "Feutre, pinceau, etc." },
+                    audio: { icon: "🎧", label: "Audio / Podcast", desc: "MP3, MP4, vidéo" }
+                  };
+                  const currentType = types[form.product_type] || types.numerique;
+                  return (
+                    <div style={{ background: "#1a1a1a", padding: 12, borderRadius: 10, border: "1px solid #c9a84c44" }}>
+                      <div
+                        onClick={() => setShowTypeSelector(s => !s)}
+                        style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
                       >
-                        <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
-                        <div style={{ color: form.product_type === t.id ? "#c9a84c" : "#fff", fontSize: 12, fontWeight: "bold" }}>{t.label}</div>
-                        <div style={{ color: "#888", fontSize: 10, marginTop: 2 }}>{t.desc}</div>
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 10, padding: 8, background: "#0a0a0a", borderRadius: 6 }}>
-                    {form.product_type === "numerique" && "📖 Livre numérique seul : remplis prix + contenu (PDF ou texte)"}
-                    {form.product_type === "papier" && "📦 Livre papier uniquement : remplis prix papier + stock + extrait PDF"}
-                    {form.product_type === "mixte" && "📚 Version numérique + papier : remplis tout"}
-                    {form.product_type === "article" && "🎨 Article divers : remplis prix + stock + photos (pas de contenu/extrait)"}
-                    {form.product_type === "audio" && "🎧 Audio/Podcast : upload MP3 ou MP4 + couverture + choisis le mode d'accès (gratuit, vente, abonnement)"}
-                  </div>
-                </div>
+                        <div style={{ fontSize: 24 }}>{currentType.icon}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>Type de produit</div>
+                          <div style={{ color: "#c9a84c", fontSize: 14, fontWeight: "bold" }}>{currentType.label}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#888" }}>{showTypeSelector ? "▲ Replier" : "▼ Changer"}</div>
+                      </div>
+
+                      {/* Sélecteur déplié (caché par défaut) */}
+                      {showTypeSelector && (
+                        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #2a2a2a" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+                            {Object.entries(types).map(([id, t]) => (
+                              <button
+                                key={id}
+                                type="button"
+                                onClick={() => { setForm(f => ({ ...f, product_type: id })); setShowTypeSelector(false); }}
+                                style={{
+                                  padding: "10px 8px",
+                                  background: form.product_type === id ? "#c9a84c22" : "#0a0a0a",
+                                  border: "2px solid " + (form.product_type === id ? "#c9a84c" : "#2a2a2a"),
+                                  borderRadius: 8,
+                                  cursor: "pointer",
+                                  textAlign: "left"
+                                }}
+                              >
+                                <div style={{ fontSize: 16, marginBottom: 3 }}>{t.icon}</div>
+                                <div style={{ color: form.product_type === id ? "#c9a84c" : "#fff", fontSize: 11, fontWeight: "bold" }}>{t.label}</div>
+                                <div style={{ color: "#888", fontSize: 9, marginTop: 2 }}>{t.desc}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Message d'aide selon le type */}
+                      <div style={{ fontSize: 11, color: "#888", marginTop: 10, padding: 8, background: "#0a0a0a", borderRadius: 6 }}>
+                        {form.product_type === "numerique" && "📖 Livre numérique seul : remplis prix + contenu (PDF ou texte)"}
+                        {form.product_type === "papier" && "📦 Livre papier uniquement : remplis prix papier + stock + extrait PDF"}
+                        {form.product_type === "mixte" && "📚 Version numérique + papier : remplis tout"}
+                        {form.product_type === "article" && "🎨 Article divers : remplis prix + stock + photos (pas de contenu/extrait)"}
+                        {form.product_type === "audio" && "🎧 Audio/Podcast : upload MP3 ou MP4 + couverture + choisis le mode d'accès (gratuit, vente, abonnement)"}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div>
                   <label style={labelStyle}>TITRE *</label>
