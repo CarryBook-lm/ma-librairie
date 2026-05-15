@@ -27,7 +27,7 @@ const emptyForm = {
   title: "", author: "", price: "", original_price: "", cover: "", category: "Romans", subcategory: "", extract_pages: 5,
   summary: "", content: "", pdf_url: "", status: "actif", audio_url: "",
   can_read: true, can_download: false, featured: false, exclude_from_subscription: false,
-  product_type: "numerique", stock: -1, images: []
+  product_type: "numerique", stock: -1, images: [], audio_access_mode: "sale"
 };
 
 export default function Admin() {
@@ -968,7 +968,8 @@ export default function Admin() {
       original_price: book.original_price ? String(book.original_price) : "",
       product_type: book.product_type || "numerique",
       stock: book.stock !== undefined ? book.stock : -1,
-      images: book.images || []
+      images: book.images || [],
+      audio_access_mode: book.audio_access_mode || "sale"
     });
     setShowForm(true);
     setActiveTab("info");
@@ -1412,17 +1413,16 @@ export default function Admin() {
                   padding: 20,
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  textAlign: "center",
-                  opacity: 0.7
+                  textAlign: "center"
                 }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
               >
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🎧</div>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Audio & Podcasts</div>
-                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Bientôt disponible</div>
-                <div style={{ display: "inline-block", padding: "4px 10px", background: "#33333322", border: "1px solid #555", borderRadius: 20, fontSize: 12, color: "#888", fontWeight: "bold" }}>
-                  À venir
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>MP3, MP4, vidéo</div>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                  {books.filter(b => b.product_type === 'audio').length} produits
                 </div>
               </div>
             </div>
@@ -1448,16 +1448,52 @@ export default function Admin() {
               </h1>
             </div>
 
-            {/* SOUS-VUE : Audio (vide) */}
+            {/* SOUS-VUE : Audio/Podcasts (similaire aux autres) */}
             {productSubView === "audio" && (
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 40, textAlign: "center" }}>
-                <div style={{ fontSize: 50, marginBottom: 14 }}>🎧</div>
-                <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>Bientôt disponible</h2>
-                <p style={{ color: "#888", fontSize: 13, lineHeight: 1.6 }}>
-                  La section <b style={{ color: "#fff" }}>Livres Audio & Podcasts</b> arrive prochainement.<br/>
-                  Tu pourras y ajouter des fichiers audio MP3, organiser des séries d'épisodes, etc.
-                </p>
-              </div>
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h2 style={{ fontSize: 15, color: "#aaa", margin: 0 }}>
+                    {books.filter(b => b.product_type === 'audio').length} produit{books.filter(b => b.product_type === 'audio').length > 1 ? "s" : ""}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setEditingBook(null);
+                      setForm({ ...emptyForm, product_type: "audio" });
+                      setShowForm(true);
+                      setActiveTab("info");
+                    }}
+                    style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}
+                  >
+                    + AJOUTER
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {books.filter(b => b.product_type === 'audio').length === 0 ? (
+                    <div style={{ background: "#1a1a1a", border: "1px dashed #2a2a2a", borderRadius: 10, padding: 32, textAlign: "center", color: "#666" }}>
+                      <div style={{ fontSize: 36, marginBottom: 10 }}>🎧</div>
+                      <div style={{ fontSize: 13, marginBottom: 12 }}>Aucun livre audio ou podcast</div>
+                      <div style={{ fontSize: 11, color: "#555" }}>Clique sur "+ AJOUTER" pour créer ton premier audio/podcast</div>
+                    </div>
+                  ) : (
+                    books.filter(b => b.product_type === 'audio').map(book => (
+                      <div key={book.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                        {book.cover
+                          ? <img src={book.cover} alt={book.title} style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
+                          : <div style={{ width: 60, height: 84, background: "#2a2a2a", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🎧</div>}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ color: "#fff", fontSize: 14, fontWeight: "bold", marginBottom: 4 }}>{book.title}</div>
+                          <div style={{ color: "#888", fontSize: 12 }}>{book.author} • {book.audio_access_mode === "free" ? "🆓 Gratuit" : book.audio_access_mode === "subscription" ? "⭐ Abonnement" : "💰 " + (book.price || 0) + " F"}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => openEdit(book)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18 }}>✏️</button>
+                          <button onClick={() => handleDelete(book.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18 }}>🗑️</button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
             )}
 
             {/* SOUS-VUE : Digital/Physical/Article — onglets + liste */}
@@ -2851,7 +2887,8 @@ export default function Admin() {
                       { id: "numerique", icon: "📖", label: "Numérique", desc: "Livre PDF/Liseuse" },
                       { id: "papier", icon: "📦", label: "Papier uniquement", desc: "Livre physique seul" },
                       { id: "mixte", icon: "📚", label: "Numérique + Papier", desc: "Les deux versions" },
-                      { id: "article", icon: "🎨", label: "Article divers", desc: "Feutre, pinceau, etc." }
+                      { id: "article", icon: "🎨", label: "Article divers", desc: "Feutre, pinceau, etc." },
+                      { id: "audio", icon: "🎧", label: "Audio / Podcast", desc: "MP3, MP4, vidéo" }
                     ].map(t => (
                       <button
                         key={t.id}
@@ -2878,6 +2915,7 @@ export default function Admin() {
                     {form.product_type === "papier" && "📦 Livre papier uniquement : remplis prix papier + stock + extrait PDF"}
                     {form.product_type === "mixte" && "📚 Version numérique + papier : remplis tout"}
                     {form.product_type === "article" && "🎨 Article divers : remplis prix + stock + photos (pas de contenu/extrait)"}
+                    {form.product_type === "audio" && "🎧 Audio/Podcast : upload MP3 ou MP4 + couverture + choisis le mode d'accès (gratuit, vente, abonnement)"}
                   </div>
                 </div>
 
@@ -2902,6 +2940,8 @@ export default function Admin() {
                     {form.product_type === "article" && "💰 Prix de vente unitaire"}
                   </div>
                 </div>
+                {/* PROMO : seulement pour numerique, mixte, papier (pas article ni audio) */}
+                {form.product_type !== "article" && form.product_type !== "audio" && (
                 <div>
                   <label style={labelStyle}>PRIX D'AVANT — PROMO (FCFA)</label>
                   <input value={form.original_price || ""} onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))}
@@ -2923,6 +2963,7 @@ export default function Admin() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* STOCK : visible uniquement pour les articles */}
                 {form.product_type === "article" && (
@@ -3036,8 +3077,102 @@ export default function Admin() {
                   </>
                 )}
 
-                {/* ============ EXTRAIT PDF (cach� pour articles) ============ */}
-                {form.product_type !== "article" && (
+                {form.product_type === "audio" && (
+                  <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>🎧 Audio / Podcast</div>
+                    <div style={{ fontSize: 12, color: "#aaa" }}>
+                      Upload ton fichier <b style={{ color: "#c9a84c" }}>MP3 ou MP4</b> ci-dessous.<br/>
+                      Configure ensuite le <b style={{ color: "#c9a84c" }}>mode d'accès</b> (gratuit, vente, abonnement).
+                    </div>
+                  </div>
+                )}
+
+                {/* ============ AUDIO / VID�O UPLOAD (uniquement pour type audio) ============ */}
+                {form.product_type === "audio" && (
+                  <>
+                  {/* MODE D'ACC�S */}
+                  <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
+                    <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 10, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                      🎯 Mode d'accès *
+                    </label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                      {[
+                        { id: "free", icon: "🆓", label: "Gratuit", desc: "Podcast public" },
+                        { id: "sale", icon: "💰", label: "Vente", desc: "Achat à l'unité" },
+                        { id: "subscription", icon: "⭐", label: "Abonnement", desc: "Réservé abonnés" }
+                      ].map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, audio_access_mode: m.id }))}
+                          style={{
+                            padding: "10px 8px",
+                            background: form.audio_access_mode === m.id ? "#c9a84c22" : "#0a0a0a",
+                            border: "2px solid " + (form.audio_access_mode === m.id ? "#c9a84c" : "#2a2a2a"),
+                            borderRadius: 8,
+                            cursor: "pointer",
+                            textAlign: "center"
+                          }}
+                        >
+                          <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
+                          <div style={{ color: form.audio_access_mode === m.id ? "#c9a84c" : "#fff", fontSize: 11, fontWeight: "bold" }}>{m.label}</div>
+                          <div style={{ color: "#888", fontSize: 9, marginTop: 2 }}>{m.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* UPLOAD FICHIER AUDIO/VID�O */}
+                  <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
+                    <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                      🎵 Fichier audio / vidéo *
+                    </label>
+                    <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>
+                      💡 Formats acceptés : MP3, MP4, M4A, WAV<br/>
+                      📦 Taille max recommandée : 100 MB
+                    </div>
+                    {form.audio_url ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span style={{ color: "#4caf50", fontSize: 12 }}>✅ Fichier uploadé</span>
+                        <a href={form.audio_url} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", fontSize: 11, textDecoration: "underline" }}>Écouter / Voir</a>
+                        <button onClick={() => setForm(f => ({ ...f, audio_url: "" }))}
+                          style={{ background: "none", border: "1px solid #555", color: "#aaa", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: 11 }}>
+                          Supprimer
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <input type="file" accept="audio/*,video/mp4,video/*" id="audioFileInput" style={{ display: "none" }} onChange={async e => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          const fileName = Date.now() + "_audio_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+                          const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: file.type });
+                          if (!error) {
+                            const { data: urlData } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+                            setForm(f => ({ ...f, audio_url: urlData.publicUrl }));
+                          } else {
+                            alert("Erreur upload : " + error.message);
+                          }
+                          e.target.value = "";
+                        }} />
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById("audioFileInput").click()}
+                          style={{ width: "100%", padding: "12px 12px", border: "2px dashed #c9a84c66", borderRadius: 6, cursor: "pointer", color: "#c9a84c", fontSize: 13, textAlign: "center", background: "#0a0a0a", fontWeight: "bold" }}
+                        >
+                          🎵 Choisir un fichier audio / vidéo
+                        </button>
+                      </>
+                    )}
+                    <input value={form.audio_url || ""} onChange={e => setForm(f => ({ ...f, audio_url: e.target.value }))}
+                      placeholder="OU coller une URL externe (YouTube, Vimeo, etc.)"
+                      style={{ ...inputStyle, marginTop: 10, fontSize: 12 }} />
+                  </div>
+                  </>
+                )}
+
+                {/* ============ EXTRAIT PDF (cach� pour articles ET audio) ============ */}
+                {form.product_type !== "article" && form.product_type !== "audio" && (
                 <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
                   <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                     📄 Extrait PDF (aperçu gratuit)
