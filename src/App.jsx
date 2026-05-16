@@ -14089,26 +14089,65 @@ export default function App() {
   async function fetchBooks() {
     const hasCachedBooks = books.length > 0 || localStorage.getItem("cachedBooksList");
     if (!hasCachedBooks) setLoading(true);
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000));
+    // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
+    // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
+    const lightColumns = "id, title, author, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
+
+    // 🎯 ÉTAPE 1 : Charger les LIVRES (non-articles) en priorité — rapide car peu nombreux
+    // Supabase limite à 1000 lignes par défaut. Avec 1000+ articles, les livres seraient tronqués.
+    // Solution : 2 requêtes séparées par product_type.
+    const timeoutBooks = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000));
     try {
-      // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
-      // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
-      const lightColumns = "id, title, author, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
-      const fetchPromise = supabase.from("books").select(lightColumns).eq("status", "actif").order("created_at", { ascending: false });
-      const { data } = await Promise.race([fetchPromise, timeoutPromise]);
-      if (data && data.length > 0) {
-        setBooks(data);
-        // Sauvegarder en cache pour usage offline
-        try { localStorage.setItem("cachedBooksList", JSON.stringify(data)); } catch (e) {}
-      } else {
-        // Fallback offline: charger depuis le cache
-        const cached = localStorage.getItem("cachedBooksList");
-        if (cached) setBooks(JSON.parse(cached));
+      const booksPromise = supabase.from("books").select(lightColumns)
+        .eq("status", "actif")
+        .neq("product_type", "article")
+        .order("created_at", { ascending: false })
+        .range(0, 999);
+      const { data: booksData } = await Promise.race([booksPromise, timeoutBooks]);
+      if (booksData && booksData.length > 0) {
+        setBooks(booksData);
+        setLoading(false);
       }
     } catch (e) {
-      // Erreur réseau ou timeout (offline) : charger depuis le cache
+      // Fallback offline : charger depuis le cache
       const cached = localStorage.getItem("cachedBooksList");
-      if (cached) setBooks(JSON.parse(cached));
+      if (cached) {
+        try {
+          const all = JSON.parse(cached);
+          setBooks(all.filter(b => b.product_type !== "article"));
+        } catch (err) {}
+      }
+      setLoading(false);
+    }
+
+    // 🛍️ ÉTAPE 2 : Charger les ARTICLES CarryShop en arrière-plan — timeout plus long
+    const timeoutArticles = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 20000));
+    try {
+      const articlesPromise = supabase.from("books").select(lightColumns)
+        .eq("status", "actif")
+        .eq("product_type", "article")
+        .order("created_at", { ascending: false })
+        .range(0, 4999);
+      const { data: articlesData } = await Promise.race([articlesPromise, timeoutArticles]);
+      if (articlesData && articlesData.length > 0) {
+        // Merger avec les livres déjà en state
+        setBooks(prev => {
+          const nonArticles = prev.filter(b => b.product_type !== "article");
+          const combined = [...nonArticles, ...articlesData];
+          try { localStorage.setItem("cachedBooksList", JSON.stringify(combined)); } catch (e) {}
+          return combined;
+        });
+      }
+    } catch (e) {
+      // Articles non disponibles : tenter de récupérer depuis le cache
+      const cached = localStorage.getItem("cachedBooksList");
+      if (cached) {
+        try {
+          const all = JSON.parse(cached);
+          const articles = all.filter(b => b.product_type === "article");
+          if (articles.length > 0) setBooks(prev => [...prev.filter(b => b.product_type !== "article"), ...articles]);
+        } catch (err) {}
+      }
     }
     setLoading(false);
   }
