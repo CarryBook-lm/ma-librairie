@@ -12329,6 +12329,11 @@ export default function App() {
   const [excerptMode, setExcerptMode] = useState(false);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
+  // 🌸 Filtre cat�gorie sur la page CarryGoo
+  // 🌸 Filtre cat�gorie sur la page CARRYSHOP
+  const [selectedShopCategory, setSelectedShopCategory] = useState("Tous");
+  // 🎨 Filtre cat�gorie sur la page CARRYCOLOR
+  const [selectedColorCategory, setSelectedColorCategory] = useState("Tous");
   
   // 🛒 PANIER : �tat persist� dans localStorage (cl� "carrybooks_cart")
   // Format : [{ book_id, title, cover, unit_price, quantity, product_type }, ...]
@@ -16417,6 +16422,91 @@ export default function App() {
           <div style={{ paddingBottom: 80 }}>
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
+                {/* 🌟 3 CARTES UNIVERS : CarryBooks (num�rique) + CarryColor (papier) + CarryShop (articles) */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "12px 12px 0" }}>
+                  {/* Carte CARRYBOOKS - num�rique */}
+                  <div 
+                    onClick={() => {
+                      window.scrollTo({ top: 600, behavior: "smooth" });
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #c9a84c 0%, #b8862d 100%)",
+                      borderRadius: 12,
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                      transition: "transform 0.2s",
+                      color: "#1a1208"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                  >
+                    <div style={{ fontSize: 32, marginBottom: 4 }}>📚</div>
+                    <div style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5, marginBottom: 2 }}>CARRYBOOKS</div>
+                    <div style={{ fontSize: 9, opacity: 0.85, marginBottom: 6 }}>Livres numériques</div>
+                    <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.3)", display: "inline-block", padding: "2px 8px", borderRadius: 10 }}>
+                      {books.filter(b => b.product_type === 'numerique' || b.product_type === 'mixte' || !b.product_type).length}
+                    </div>
+                  </div>
+
+                  {/* Carte CARRYCOLOR - livres papier */}
+                  <div 
+                    onClick={() => {
+                      setPage("carrycolor");
+                      setSearchQuery("");
+                      window.scrollTo(0, 0);
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
+                      borderRadius: 12,
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 12px rgba(177,79,219,0.25)",
+                      transition: "transform 0.2s",
+                      color: "#fff"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                  >
+                    <div style={{ fontSize: 32, marginBottom: 4 }}>🎨</div>
+                    <div style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5, marginBottom: 2 }}>CARRYCOLOR</div>
+                    <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 6 }}>Livres papier</div>
+                    <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.25)", display: "inline-block", padding: "2px 8px", borderRadius: 10 }}>
+                      {books.filter(b => b.product_type === 'papier').length}
+                    </div>
+                  </div>
+
+                  {/* Carte CARRYSHOP - articles beaut�/bien-�tre */}
+                  <div 
+                    onClick={() => {
+                      setPage("carryshop");
+                      setSearchQuery("");
+                      window.scrollTo(0, 0);
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
+                      borderRadius: 12,
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 12px rgba(168,56,100,0.25)",
+                      transition: "transform 0.2s",
+                      color: "#fff"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                  >
+                    <div style={{ fontSize: 32, marginBottom: 4 }}>🌸</div>
+                    <div style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5, marginBottom: 2 }}>CARRYSHOP</div>
+                    <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 6 }}>Beauté</div>
+                    <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.25)", display: "inline-block", padding: "2px 8px", borderRadius: 10 }}>
+                      {books.filter(b => b.product_type === 'article').length}
+                    </div>
+                  </div>
+                </div>
+
                 {/* HERO CAROUSEL */}
                 {(() => {
                   const featuredBooks = books.filter(b => b.featured);
@@ -16878,6 +16968,296 @@ export default function App() {
             )}
           </div>
         )}
+
+        {/* 🎨 PAGE CARRYCOLOR (Univers Livres Papier) */}
+        {page === "carrycolor" && (() => {
+          // Filtrer uniquement les livres papier (papier ou mixte)
+          const paperBooks = books.filter(b => b.product_type === 'papier' && b.status !== 'inactif');
+          // Cat�gories uniques pour la nav
+          const paperCategories = [...new Set(paperBooks.map(b => b.category).filter(Boolean))];
+          // Filtre actif
+          const filteredPaper = selectedColorCategory === "Tous" 
+            ? paperBooks 
+            : paperBooks.filter(b => b.category === selectedColorCategory);
+          // Filtre par recherche
+          const paperSearch = searchQuery.toLowerCase().trim();
+          const finalPaper = paperSearch 
+            ? filteredPaper.filter(b => 
+                b.title?.toLowerCase().includes(paperSearch) ||
+                b.author?.toLowerCase().includes(paperSearch) ||
+                b.summary?.toLowerCase().includes(paperSearch)
+              )
+            : filteredPaper;
+
+          return (
+            <div style={{ padding: "12px 16px 80px" }}>
+              {/* Bandeau retour */}
+              <button 
+                onClick={() => { setPage("home"); setSelectedColorCategory("Tous"); setSearchQuery(""); window.scrollTo(0, 0); }}
+                style={{ background: "none", border: "none", color: G.gold, fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 12 }}
+              >
+                ← Retour à l'accueil
+              </button>
+
+              {/* Hero CarryColor multicolore */}
+              <div style={{ 
+                background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
+                borderRadius: 14,
+                padding: "30px 20px",
+                textAlign: "center",
+                color: "#fff",
+                marginBottom: 20,
+                boxShadow: "0 6px 20px rgba(177,79,219,0.25)"
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>🎨</div>
+                <div style={{ fontSize: 24, fontWeight: "bold", letterSpacing: 2, marginBottom: 6 }}>CARRYCOLOR</div>
+                <div style={{ fontSize: 13, opacity: 0.95, marginBottom: 4 }}>Livres papier</div>
+                <div style={{ fontSize: 11, opacity: 0.85 }}>Coloriages • Mangas • Romans papier</div>
+              </div>
+
+              {/* Recherche */}
+              <div style={{ position: "relative", marginBottom: 14 }}>
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
+                <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher un livre papier..."
+                  style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Filtres cat�gories */}
+              {paperCategories.length > 0 && (
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 16 }}>
+                  <button
+                    onClick={() => setSelectedColorCategory("Tous")}
+                    style={{
+                      flexShrink: 0,
+                      padding: "6px 14px",
+                      background: selectedColorCategory === "Tous" ? "#b14fdb" : "transparent",
+                      border: "1px solid " + (selectedColorCategory === "Tous" ? "#b14fdb" : G.border),
+                      color: selectedColorCategory === "Tous" ? "#fff" : G.text,
+                      borderRadius: 20,
+                      cursor: "pointer",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Tous ({paperBooks.length})
+                  </button>
+                  {paperCategories.map(cat => {
+                    const count = paperBooks.filter(b => b.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedColorCategory(cat)}
+                        style={{
+                          flexShrink: 0,
+                          padding: "6px 14px",
+                          background: selectedColorCategory === cat ? "#b14fdb" : "transparent",
+                          border: "1px solid " + (selectedColorCategory === cat ? "#b14fdb" : G.border),
+                          color: selectedColorCategory === cat ? "#fff" : G.text,
+                          borderRadius: 20,
+                          cursor: "pointer",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        {cat} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Compteur */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: 13, color: G.textDim }}>
+                  {finalPaper.length} livre{finalPaper.length > 1 ? "s" : ""} {selectedColorCategory !== "Tous" ? "dans " + selectedColorCategory : ""}
+                </div>
+              </div>
+
+              {/* Grille */}
+              {finalPaper.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: G.textDim }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>🎨</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Aucun livre trouvé</div>
+                  <div style={{ fontSize: 12 }}>De nouveaux livres papier arrivent bientôt !</div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                  {finalPaper.map(book => (
+                    <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
+                      <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                        {book.cover
+                          ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                          : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
+                        {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
+                        {isOutOfStock(book) && (
+                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 11, fontWeight: "bold", textAlign: "center", padding: "5px 0", letterSpacing: 1 }}>
+                            🚫 RUPTURE
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: G.text, fontWeight: 600, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 32 }}>{book.title}</div>
+                      <div style={{ fontSize: 10, color: "#b14fdb", fontWeight: 600, marginBottom: 4 }}>📦 Livre papier</div>
+                      <div style={{ fontSize: 13, color: "#b14fdb", fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString()} F</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* 🌸 PAGE CARRYSHOP (Univers Beaut� & Bien-�tre) */}
+        {page === "carryshop" && (() => {
+          // Filtrer uniquement les produits articles (beaut�/bien-�tre)
+          const beautyProducts = books.filter(b => b.product_type === 'article' && b.status !== 'inactif');
+          // Cat�gories uniques pour la nav
+          const beautyCategories = [...new Set(beautyProducts.map(b => b.category).filter(Boolean))];
+          // Filtre actif
+          const filteredBeauty = selectedShopCategory === "Tous" 
+            ? beautyProducts 
+            : beautyProducts.filter(b => b.category === selectedShopCategory);
+          // Filtre par recherche
+          const beautySearch = searchQuery.toLowerCase().trim();
+          const finalBeauty = beautySearch 
+            ? filteredBeauty.filter(b => 
+                b.title?.toLowerCase().includes(beautySearch) ||
+                b.author?.toLowerCase().includes(beautySearch) ||
+                b.summary?.toLowerCase().includes(beautySearch)
+              )
+            : filteredBeauty;
+
+          return (
+            <div style={{ padding: "12px 16px 80px" }}>
+              {/* Bandeau retour CarryBooks */}
+              <button 
+                onClick={() => { setPage("home"); setSelectedShopCategory("Tous"); setSearchQuery(""); window.scrollTo(0, 0); }}
+                style={{ background: "none", border: "none", color: G.gold, fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 12 }}
+              >
+                ← Retour à CarryBooks
+              </button>
+
+              {/* Hero CarryGoo */}
+              <div style={{ 
+                background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
+                borderRadius: 14,
+                padding: "30px 20px",
+                textAlign: "center",
+                color: "#fff",
+                marginBottom: 20,
+                boxShadow: "0 6px 20px rgba(168,56,100,0.25)"
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 8 }}>🌸</div>
+                <div style={{ fontSize: 24, fontWeight: "bold", letterSpacing: 2, marginBottom: 6 }}>CARRYSHOP</div>
+                <div style={{ fontSize: 13, opacity: 0.95, marginBottom: 4 }}>Beauté & Bien-être</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>Parfums • Compléments • Cosmétiques</div>
+              </div>
+
+              {/* Recherche CarryGoo */}
+              <div style={{ position: "relative", marginBottom: 14 }}>
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
+                <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher un produit beauté..."
+                  style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Filtres cat�gories (chips horizontales) */}
+              {beautyCategories.length > 0 && (
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 16 }}>
+                  <button
+                    onClick={() => setSelectedShopCategory("Tous")}
+                    style={{
+                      flexShrink: 0,
+                      padding: "6px 14px",
+                      background: selectedShopCategory === "Tous" ? "#a83864" : "transparent",
+                      border: "1px solid " + (selectedShopCategory === "Tous" ? "#a83864" : G.border),
+                      color: selectedShopCategory === "Tous" ? "#fff" : G.text,
+                      borderRadius: 20,
+                      cursor: "pointer",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Tous ({beautyProducts.length})
+                  </button>
+                  {beautyCategories.map(cat => {
+                    const count = beautyProducts.filter(b => b.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedShopCategory(cat)}
+                        style={{
+                          flexShrink: 0,
+                          padding: "6px 14px",
+                          background: selectedShopCategory === cat ? "#a83864" : "transparent",
+                          border: "1px solid " + (selectedShopCategory === cat ? "#a83864" : G.border),
+                          color: selectedShopCategory === cat ? "#fff" : G.text,
+                          borderRadius: 20,
+                          cursor: "pointer",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        {cat} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Titre et compteur */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: 13, color: G.textDim }}>
+                  {finalBeauty.length} produit{finalBeauty.length > 1 ? "s" : ""} {selectedShopCategory !== "Tous" ? "dans " + selectedShopCategory : ""}
+                </div>
+              </div>
+
+              {/* Grille de produits */}
+              {finalBeauty.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: G.textDim }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Aucun produit trouvé</div>
+                  <div style={{ fontSize: 12 }}>Reviens bientôt, de nouveaux produits arrivent !</div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                  {finalBeauty.map(book => (
+                    <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
+                      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                        {book.cover
+                          ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                          : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>🌸</div>}
+                        {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
+                        {isOutOfStock(book) && (
+                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 11, fontWeight: "bold", textAlign: "center", padding: "5px 0", letterSpacing: 1 }}>
+                            🚫 RUPTURE
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: G.text, fontWeight: 600, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 32 }}>{book.title}</div>
+                      <div style={{ fontSize: 10, color: "#a83864", fontWeight: 600, marginBottom: 4 }}>{getProductBadge(book)}</div>
+                      <div style={{ fontSize: 13, color: "#a83864", fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString()} F</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* 🛒 PAGE CHECKOUT PANIER */}
         {page === "cart_checkout" && (
