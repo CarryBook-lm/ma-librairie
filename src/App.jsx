@@ -16564,31 +16564,30 @@ export default function App() {
                 <div style={{
                   marginTop: 10,
                   marginBottom: 0,
-                  padding: "10px 14px",
+                  padding: "10px 8px",
                   background: "linear-gradient(90deg, #c9a84c 0%, #b14fdb 50%, #d4769e 100%)",
                   textAlign: "center",
                   width: "100%",
                   boxSizing: "border-box"
                 }}>
                   <div style={{ 
-                    fontSize: 12, 
+                    fontSize: 11, 
                     color: "#fff", 
                     fontWeight: 700, 
-                    letterSpacing: 1, 
+                    letterSpacing: 0.5, 
                     fontFamily: "Georgia, serif",
                     fontStyle: "italic",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis"
+                    lineHeight: 1.4
                   }}>
                     ✨ 3 univers à explorer — Lire, colorier, se faire plaisir ✨
                   </div>
                 </div>
 
-                {/* HERO CAROUSEL */}
+                {/* HERO CAROUSEL - num�rique uniquement */}
                 {(() => {
-                  const featuredBooks = books.filter(b => b.featured);
-                  const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.slice(0, 5);
+                  const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
+                  const featuredBooks = books.filter(b => b.featured && isDigitalBook(b));
+                  const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(isDigitalBook).slice(0, 5);
                   if (heroBooks.length === 0) return null;
                   const featuredBook = heroBooks[heroIndex % heroBooks.length];
                   return (
@@ -16671,16 +16670,15 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* BEST-SELLERS — Top 5 livres les plus achetés */}
+                {/* BEST-SELLERS — Top 5 livres les plus achetés (num�riques uniquement sur la home) */}
                 {(() => {
                   const bookSales = {};
-                  // Compter les ventes par livre
-                  // Note: bookRatings contient déjà count = nombre d'avis,
-                  // mais on veut vraiment les ventes. On utilise donc topPurchasedBooks
-                  // qui doit être chargé depuis Supabase
+                  // Filtrer pour ne garder que les livres num�riques
+                  const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const sortedBestSellers = topPurchasedBooks
                     .map(p => books.find(b => b.id === p.book_id))
                     .filter(Boolean)
+                    .filter(isDigitalBook)
                     .slice(0, 5);
                   if (sortedBestSellers.length === 0) return null;
                   return (
@@ -16773,15 +16771,18 @@ export default function App() {
 
                 {/* NOUVEAUTÉS (ARTICLES PHYSIQUES) - d�plac�e juste avant la cat�gorie 'Livres Papiers' */}
 
-                {/* CARROUSELS PAR CATÉGORIE */}
+                {/* CARROUSELS PAR CATÉGORIE - UNIQUEMENT LIVRES NUMÉRIQUES */}
                 {Object.keys(CATEGORIES).map(cat => {
-                  const catBooks = books.filter(b => b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")));
+                  // Filtrer par cat�gorie ET ne garder QUE les livres num�riques (num/mixte/audio/podcast)
+                  const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
+                  const catBooks = books.filter(b => 
+                    isDigitalBook(b) && 
+                    (b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")))
+                  );
                   if (catBooks.length === 0) return null;
-                  // Détecter si on est sur la catégorie "Livres Papiers" pour insérer les nouveautés physiques juste avant
-                  const isLivresPapiers = cat.toLowerCase().includes("livre") && cat.toLowerCase().includes("papier");
-                  const physicalNewBooks = isLivresPapiers
-                    ? books.filter(b => b.product_type === 'papier' || b.product_type === 'article').slice(0, 10)
-                    : [];
+                  // D�sactiver l'insertion des "Nouveaut�s Produits Physiques" sur la home num�rique
+                  const isLivresPapiers = false;
+                  const physicalNewBooks = [];
                   return (
                     <Fragment key={cat}>
                       {/* Nouveautés Produits Physiques (juste avant Livres Papiers) */}
