@@ -492,16 +492,19 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     if (error) {
       console.error("[AD] Erreur Supabase:", error);
     } else {
-      console.log("[AD] " + (allBooks?.length || 0) + " livres re�us avant filtrage");
-      // Filtrer c�t� JavaScript
+      console.log("[AD] " + (allBooks?.length || 0) + " livres reçus avant filtrage");
+      // Filtrer côté JavaScript : EXCLURE papier/article (autres univers)
+      // On garde tout le reste (digital, numerique, null, undefined, etc.)
       allPayBooks = (allBooks || []).filter(b => {
         // Exclure le livre actuel
         if (b.id === currentBookId) return false;
-        // Si product_type est d�fini, on garde seulement digital ou null/undefined
-        if (b.product_type && b.product_type !== "digital") return false;
+        // Exclure UNIQUEMENT les livres papier et articles (autres univers)
+        if (b.product_type === "papier") return false;
+        if (b.product_type === "article") return false;
         return true;
       });
-      console.log("[AD] " + allPayBooks.length + " livres apr�s filtrage");
+      console.log("[AD] " + allPayBooks.length + " livres après filtrage");
+      console.log("[AD] Exemples product_type:", (allBooks || []).slice(0, 5).map(b => b.product_type));
     }
   } catch (e) {
     console.warn("[AD] Exception r�cup�ration livres:", e.message);
