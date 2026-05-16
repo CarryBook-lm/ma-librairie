@@ -18117,14 +18117,73 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Grille de produits */}
+              {/* Affichage : Netflix si "Tous" + pas de recherche, sinon Grille */}
               {finalBeauty.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 20px", color: G.textDim }}>
                   <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
                   <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Aucun produit trouvé</div>
                   <div style={{ fontSize: 12 }}>Reviens bientôt, de nouveaux produits arrivent !</div>
                 </div>
+              ) : (selectedShopCategory === "Tous" && !beautySearch) ? (
+                /* 🎬 STYLE NETFLIX : rangées horizontales par catégorie, triées par nombre de produits */
+                <>
+                  {beautyCategories
+                    .slice()
+                    .sort((a, b) => 
+                      beautyProducts.filter(p => p.category === b).length - 
+                      beautyProducts.filter(p => p.category === a).length
+                    )
+                    .map(cat => {
+                      const catProducts = beautyProducts.filter(b => b.category === cat);
+                      const previewProducts = catProducts.slice(0, 12);
+                      return (
+                        <div key={cat} style={{ marginBottom: 28 }}>
+                          {/* En-tête de rangée avec "Voir tout" */}
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                            <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>
+                              {cat} <span style={{ color: G.textFaint, fontSize: 12, fontWeight: "normal" }}>({catProducts.length})</span>
+                            </div>
+                            {catProducts.length > 12 && (
+                              <button 
+                                onClick={() => setSelectedShopCategory(cat)}
+                                style={{ background: "none", border: "none", color: "#a83864", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
+                                Voir tout →
+                              </button>
+                            )}
+                          </div>
+                          {/* Rangée horizontale scrollable */}
+                          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", marginLeft: -16, marginRight: -16, padding: "0 16px 4px" }}>
+                            {previewProducts.map(book => (
+                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 120, cursor: "pointer", textAlign: "center" }}>
+                                <div style={{ position: "relative", width: 120, height: 120, background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
+                                  {book.cover
+                                    ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>🌸</div>}
+                                  {isOnPromo(book) && <div style={{ position: "absolute", top: 6, right: 6, background: "#dc3545", color: "#fff", fontSize: 9, padding: "2px 6px", borderRadius: 6, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
+                                  {isOutOfStock(book) && (
+                                    <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 9, fontWeight: "bold", textAlign: "center", padding: "4px 0", letterSpacing: 1 }}>
+                                      🚫 RUPTURE
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: 11, color: G.text, fontWeight: 600, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", height: 28 }}>{book.title}</div>
+                                <div style={{ fontSize: 12, color: "#a83864", fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString()} F</div>
+                              </div>
+                            ))}
+                            {/* Carte "Voir tout" en fin de rangée si plus de 12 produits */}
+                            {catProducts.length > 12 && (
+                              <div onClick={() => setSelectedShopCategory(cat)} style={{ flexShrink: 0, width: 120, height: 120, background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", marginTop: 0 }}>
+                                <div style={{ fontSize: 26, marginBottom: 4, fontWeight: "bold" }}>→</div>
+                                <div style={{ fontSize: 11, fontWeight: 600 }}>Voir les {catProducts.length}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </>
               ) : (
+                /* 📋 GRILLE CLASSIQUE pour filtre catégorie ou recherche */
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
                   {finalBeauty.map(book => (
                     <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
