@@ -8,20 +8,20 @@ import { createClient } from "@supabase/supabase-js";
 // 📧 ENVOI EMAIL DE NOTIFICATION (via Resend)
 // Sert pour TOUS les types d'achats :
 //   - cart (panier multi-articles)
-//   - digital (livre num�rique)
+//   - digital (livre numérique)
 //   - paper (livre papier direct)
-//   - carrycare (quiz beaut�)
+//   - carrycare (quiz beauté)
 // ============================================================
 async function sendOrderEmail({ type, order, items, extra }) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "carrybooks.com@gmail.com";
 
   if (!RESEND_API_KEY) {
-    console.warn("[EMAIL] RESEND_API_KEY non configur�e � email non envoy�");
+    console.warn("[EMAIL] RESEND_API_KEY non configurée — email non envoyé");
     return;
   }
 
-  // Couleurs et ic�nes selon le type
+  // Couleurs et icônes selon le type
   const typeConfig = {
     cart: {
       icon: "🛒",
@@ -39,7 +39,7 @@ async function sendOrderEmail({ type, order, items, extra }) {
     },
     digital: {
       icon: "📚",
-      title: "VENTE LIVRE NUM�RIQUE",
+      title: "VENTE LIVRE NUMÉRIQUE",
       gradient: "linear-gradient(135deg, #c9a84c 0%, #8b6f1e 100%)",
       textColor: "#1a1208",
       needsAction: false
@@ -77,7 +77,7 @@ async function sendOrderEmail({ type, order, items, extra }) {
 
     articlesHtml = `
       <div style="padding:20px 24px;">
-        <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">🛍️ Articles command�s (${items.length})</div>
+        <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">🛍️ Articles commandés (${items.length})</div>
         <table style="width:100%;border-collapse:collapse;">
           <thead>
             <tr style="background:#f5f0e8;">
@@ -94,7 +94,7 @@ async function sendOrderEmail({ type, order, items, extra }) {
             <span>${(order.subtotal || 0).toLocaleString()} F</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:8px;">
-            <span>Frais de ${order.delivery_method === 'domicile' ? 'livraison' : 'exp�dition'}</span>
+            <span>Frais de ${order.delivery_method === 'domicile' ? 'livraison' : 'expédition'}</span>
             <span>${(order.shipping_fee || 0).toLocaleString()} F</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:bold;color:#c9a84c;border-top:1px solid #eee;padding-top:8px;">
@@ -135,7 +135,7 @@ async function sendOrderEmail({ type, order, items, extra }) {
         <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📍 Livraison</div>
         <div style="font-size:15px;color:#1a1208;"><b>Ville :</b> ${order.shipping_city}</div>
         <div style="font-size:13px;color:#666;margin-top:4px;">
-          <b>Type :</b> ${isDomicile ? '🏠 Livraison � domicile' : "🏢 Exp�dition par agence"}
+          <b>Type :</b> ${isDomicile ? '🏠 Livraison à domicile' : "🏢 Expédition par agence"}
         </div>
         ${adresseHtml}
         ${notesHtml}
@@ -143,7 +143,7 @@ async function sendOrderEmail({ type, order, items, extra }) {
     `;
   }
 
-  // Section action (bouton appeler) - uniquement si la commande n�cessite une action
+  // Section action (bouton appeler) - uniquement si la commande nécessite une action
   let actionHtml = "";
   if (config.needsAction && order.customer_phone) {
     actionHtml = `
@@ -158,18 +158,21 @@ async function sendOrderEmail({ type, order, items, extra }) {
   // Total
   const totalAmount = order.total || order.amount || 0;
 
-  // R�f�rence affich�e
+  // Référence affich—e
   const refDisplayed = order.order_reference || order.payment_reference || extra?.reference || "N/A";
 
   // Nom client
-  const clientName = order.customer_name || extra?.customer_name || "Client invit�";
-  const clientPhone = order.customer_phone || extra?.customer_phone || "Non renseign�";
+  const clientName = order.customer_name || extra?.customer_name || "Client invité";
+  const clientPhone = order.customer_phone || extra?.customer_phone || "Non renseigné";
   const clientEmail = order.customer_email || extra?.customer_email || "";
 
   const emailHtml = `
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
 <body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f5f0e8;">
   <div style="max-width:600px;margin:0 auto;background:#fff;">
 
@@ -180,18 +183,18 @@ async function sendOrderEmail({ type, order, items, extra }) {
       <div style="font-size:13px;opacity:0.85;margin-top:4px;">CarryBooks</div>
     </div>
 
-    <!-- R�f�rence + Total -->
+    <!-- Référence + Total -->
     <div style="padding:24px 24px 12px;border-bottom:2px solid #f0e8d8;">
-      <div style="font-size:13px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">R�f�rence</div>
+      <div style="font-size:13px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Référence</div>
       <div style="font-size:18px;font-weight:bold;color:#1a1208;font-family:monospace;margin-bottom:14px;">${refDisplayed}</div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
         <div>
-          <div style="font-size:12px;color:#888;">${config.needsAction ? 'TOTAL � ENCAISSER' : 'MONTANT RE�U'}</div>
+          <div style="font-size:12px;color:#888;">${config.needsAction ? 'TOTAL À ENCAISSER' : 'MONTANT REÇU'}</div>
           <div style="font-size:28px;font-weight:bold;color:#c9a84c;">${totalAmount.toLocaleString()} F</div>
         </div>
         <div style="text-align:right;">
-          <div style="background:#d4edda;color:#155724;padding:6px 14px;border-radius:14px;font-weight:bold;font-size:13px;">✅ Pay�</div>
+          <div style="background:#d4edda;color:#155724;padding:6px 14px;border-radius:14px;font-weight:bold;font-size:13px;">✅ Payé</div>
         </div>
       </div>
     </div>
@@ -212,15 +215,15 @@ async function sendOrderEmail({ type, order, items, extra }) {
     <!-- Paiement -->
     <div style="padding:20px 24px;background:#fafaf5;border-top:1px solid #f5f0e8;">
       <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">💳 Paiement</div>
-      <div style="font-size:14px;color:#1a1208;"><b>M�thode :</b> ${(order.payment_method || extra?.payment_method || 'MTN').toUpperCase().replace('_',' ')}</div>
-      <div style="font-size:12px;color:#666;margin-top:4px;"><b>R�f. CamPay :</b> ${order.payment_reference || extra?.reference || 'N/A'}</div>
+      <div style="font-size:14px;color:#1a1208;"><b>Méthode :</b> ${(order.payment_method || extra?.payment_method || 'MTN').toUpperCase().replace('_',' ')}</div>
+      <div style="font-size:12px;color:#666;margin-top:4px;"><b>Réf. CamPay :</b> ${order.payment_reference || extra?.reference || 'N/A'}</div>
     </div>
 
     ${actionHtml}
 
     <!-- Footer -->
     <div style="padding:14px;text-align:center;background:#0f0a04;color:#888;font-size:11px;">
-      CarryBooks � Notification automatique
+      CarryBooks — Notification automatique
     </div>
 
   </div>
@@ -235,20 +238,24 @@ async function sendOrderEmail({ type, order, items, extra }) {
     digital: "📚",
     carrycare: "💜"
   };
-  const subject = `${typePrefix[type] || "🛒"} ${refDisplayed} � ${clientName} � ${totalAmount.toLocaleString()} F`;
+  const subject = `${typePrefix[type] || "🛒"} ${refDisplayed} — ${clientName} — ${totalAmount.toLocaleString()} F`;
 
-  // Appel API Resend
+  // Appel API Resend (avec encoding UTF-8 explicite pour les accents français)
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       "Authorization": "Bearer " + RESEND_API_KEY,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json; charset=utf-8",
+      "Accept-Charset": "utf-8"
     },
     body: JSON.stringify({
       from: "CarryBooks <onboarding@resend.dev>",
       to: ADMIN_EMAIL,
       subject: subject,
-      html: emailHtml
+      html: emailHtml,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8"
+      }
     })
   });
 
@@ -258,11 +265,11 @@ async function sendOrderEmail({ type, order, items, extra }) {
     throw new Error("Resend error: " + JSON.stringify(data));
   }
 
-  console.log("[EMAIL] ✅ Email envoy�:", data.id, "type:", type, "�", ADMIN_EMAIL);
+  console.log("[EMAIL] ✅ Email envoyé:", data.id, "type:", type, "—", ADMIN_EMAIL);
   return data;
 }
 
-// Ancien wrapper pour compatibilit�
+// Ancien wrapper pour compatibilit—
 async function sendCartOrderEmail(order, items) {
   return sendOrderEmail({ type: "cart", order, items });
 }
@@ -403,7 +410,7 @@ export default async function handler(req, res) {
 
       // 📧 ENVOI EMAIL DE NOTIFICATION (non bloquant)
       try {
-        // R�cup�rer le titre du livre + nom de l'utilisateur
+        // R—cup—rer le titre du livre + nom de l'utilisateur
         const { data: bookData } = await supabaseAdmin
           .from("books")
           .select("title, category")
@@ -421,7 +428,7 @@ export default async function handler(req, res) {
           order: {
             order_reference: external_reference,
             customer_name: userData?.email?.split('@')[0] || "Client",
-            customer_phone: phone || "Non renseign�",
+            customer_phone: phone || "Non renseigné",
             customer_email: userData?.email || "",
             amount: amount,
             total: amount,
@@ -429,7 +436,7 @@ export default async function handler(req, res) {
             payment_method: "MTN/Orange"
           },
           extra: {
-            bookTitle: bookData?.title || "Livre num�rique",
+            bookTitle: bookData?.title || "Livre numérique",
             bookSubtitle: bookData?.category || ""
           }
         });
@@ -636,7 +643,7 @@ export default async function handler(req, res) {
           order: {
             order_reference: external_reference,
             customer_name: result_data?.name || result_data?.firstname || "Cliente",
-            customer_phone: phone || "Non renseign�",
+            customer_phone: phone || "Non renseigné",
             customer_email: result_data?.email || "",
             amount: amount,
             total: amount,
@@ -645,7 +652,7 @@ export default async function handler(req, res) {
           },
           extra: {
             bookTitle: `💜 ${quizLabels[quiz_type] || quiz_type || "CarryCare"}`,
-            bookSubtitle: "Diagnostic personnalis� CarryCare"
+            bookSubtitle: "Diagnostic personnalis— CarryCare"
           }
         });
       } catch (emailErr) {
@@ -1135,7 +1142,7 @@ export default async function handler(req, res) {
       // 📧 ENVOI EMAIL DE NOTIFICATION (non bloquant)
       try {
         const orderForEmail = inserted[0];
-        // Items du paper_order sont stock�s en JSONB
+        // Items du paper_order sont stock—s en JSONB
         const items = Array.isArray(orderForEmail.items) ? orderForEmail.items : [];
         await sendOrderEmail({
           type: "paper",
@@ -1178,7 +1185,7 @@ export default async function handler(req, res) {
         external_reference
       } = params;
 
-      // 1) V�rifier que le paiement est bien confirm� par CamPay
+      // 1) V—rifier que le paiement est bien confirm— par CamPay
       const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
       const verifyRes = await fetch(verifyUrl, {
         headers: { Authorization: "Token " + CAMPAY_TOKEN },
@@ -1198,7 +1205,7 @@ export default async function handler(req, res) {
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
 
-      // 2) V�rifier qu'on n'a pas d�j� enregistr� cette commande (anti-doublon)
+      // 2) V—rifier qu'on n'a pas d—j— enregistr— cette commande (anti-doublon)
       if (order_data && order_data.order_reference) {
         const { data: existing } = await supabaseAdmin
           .from("cart_orders")
@@ -1217,7 +1224,7 @@ export default async function handler(req, res) {
         }
       }
 
-      // 3) Ins�rer la commande dans cart_orders
+      // 3) Ins—rer la commande dans cart_orders
       const { data: insertedOrder, error: insertOrderError } = await supabaseAdmin
         .from("cart_orders")
         .insert([{
@@ -1253,7 +1260,7 @@ export default async function handler(req, res) {
         });
       }
 
-      // 4) Ins�rer les items de la commande
+      // 4) Ins—rer les items de la commande
       if (order_data.items && Array.isArray(order_data.items) && order_data.items.length > 0) {
         const itemsPayload = order_data.items.map(item => ({
           order_id: insertedOrder.id,
@@ -1272,7 +1279,7 @@ export default async function handler(req, res) {
 
         if (insertItemsError) {
           console.error("[RECORD_CART_ORDER] Insert items error:", insertItemsError);
-          // Items pas inser�s mais commande oui : on alerte mais on continue
+          // Items pas inser—s mais commande oui : on alerte mais on continue
           return res.status(500).json({
             error: "Commande enregistrée mais erreur sur les articles",
             details: insertItemsError.message,
@@ -1281,7 +1288,7 @@ export default async function handler(req, res) {
         }
       }
 
-      // 5) D�cr�menter le stock via la fonction SQL
+      // 5) D—cr—menter le stock via la fonction SQL
       try {
         await supabaseAdmin.rpc("decrement_stock_for_order", { p_order_id: insertedOrder.id });
       } catch (e) {
@@ -1294,7 +1301,7 @@ export default async function handler(req, res) {
         await sendCartOrderEmail(insertedOrder, order_data.items || []);
       } catch (emailErr) {
         console.error("[RECORD_CART_ORDER] Email send error (non bloquant):", emailErr);
-        // Non bloquant : la commande reste valide m�me si l'email �choue
+        // Non bloquant : la commande reste valide m—me si l'email —choue
       }
 
       return res.status(200).json({

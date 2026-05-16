@@ -1918,11 +1918,11 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
             <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Paiement en cours...</h3>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, textAlign: "left", marginBottom: 16 }}>
               <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
-                ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
+                ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.
               </p>
             </div>
             <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
-              Confirme la transaction sur ton téléphone {quizPaymentMethod === "mtn" ? "MTN" : "Orange"}.<br/>
+              🔔 Un message de retrait va apparaître sur votre téléphone {quizPaymentMethod === "mtn" ? "MTN" : "Orange"}.<br/>Composez votre code PIN pour valider.<br/>
               Cela peut prendre jusqu'à 30 secondes.
             </p>
           </div>
@@ -4294,10 +4294,10 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
           <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
           <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
           <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
-            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.</div>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.</div>
           </div>
           <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>
-            Confirme la transaction sur ton téléphone {bfPaymentMethod}.<br/>Cela peut prendre jusqu'à 30 secondes.
+            🔔 Un message de retrait va apparaître sur votre téléphone {bfPaymentMethod}.<br/>Composez votre code PIN pour valider.<br/>⏱️ Cela peut prendre jusqu'à 30 secondes.
           </div>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
         </div>
@@ -6804,11 +6804,11 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
           <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
           <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
             <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>
-              ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu\'à la finalisation.
+              ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.
             </div>
           </div>
           <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>
-            Confirme la transaction sur ton téléphone {bbPaymentMethod}.<br/>
+            🔔 Un message de retrait va apparaître sur votre téléphone {bbPaymentMethod}.<br/>Composez votre code PIN pour valider.<br/>
             Cela peut prendre jusqu\'à 30 secondes.
           </div>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
@@ -8613,9 +8613,9 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
           <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
           <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
-            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ Ne quittez pas cet écran, veuillez patienter.</div>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.</div>
           </div>
-          <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>Confirme la transaction sur ton téléphone {lgPaymentMethod}.</div>
+          <div style={{ fontSize: 12, color: CC.textFaint, textAlign: "center", lineHeight: 1.5 }}>🔔 Un message de retrait va apparaître sur votre téléphone {lgPaymentMethod}.<br/>Composez votre code PIN pour valider.</div>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
         </div>
       );
@@ -11519,9 +11519,9 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
           <div style={{ fontSize: 70, marginBottom: 20, animation: "spin 2s linear infinite" }}>⏳</div>
           <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 12, textAlign: "center" }}>Paiement en cours...</div>
           <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, maxWidth: 360, marginBottom: 14 }}>
-            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ Ne quittez pas cet écran, veuillez patienter.</div>
+            <div style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, fontWeight: "bold" }}>⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.</div>
           </div>
-          <div style={{ fontSize: 12, color: CAP.textFaint, textAlign: "center", lineHeight: 1.5 }}>Confirme la transaction sur ton téléphone {capPaymentMethod}.</div>
+          <div style={{ fontSize: 12, color: CAP.textFaint, textAlign: "center", lineHeight: 1.5 }}>🔔 Un message de retrait va apparaître sur votre téléphone {capPaymentMethod}.<br/>Composez votre code PIN pour valider.</div>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); }}`}</style>
         </div>
       );
@@ -12300,6 +12300,8 @@ export default function App() {
     // Par défaut : accueil
     return urlPage || "home";
   });
+  // 🔙 M�morise l'univers d'origine pour le bouton retour intelligent
+  const [previousPage, setPreviousPage] = useState("home");
   const [books, setBooks] = useState(() => {
     try {
       const cached = localStorage.getItem("cachedBooksList");
@@ -13556,6 +13558,12 @@ export default function App() {
   }
 
   function openBook(book) {
+    // 🔙 M�moriser l'univers d'origine pour le bouton retour intelligent
+    if (page === "carryshop" || page === "carrycolor") {
+      setPreviousPage(page);
+    } else {
+      setPreviousPage("home");
+    }
     setSelectedBook(book);
     setPage("detail");
     loadBookRatings(book.id);
@@ -15244,7 +15252,7 @@ export default function App() {
               {/* MESSAGE PRINCIPAL — bien visible, persistant */}
               <div style={{ background: "#fff3cd", border: "2px solid #ffb800", borderRadius: 10, padding: 16, marginBottom: 18 }}>
                 <div style={{ fontSize: 14, color: "#664d03", fontWeight: 700, lineHeight: 1.6 }}>
-                  ⚠️ Ne quittez pas cet écran jusqu'au paiement complet
+                  ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement
                 </div>
                 <div style={{ fontSize: 13, color: "#664d03", marginTop: 8, lineHeight: 1.6 }}>
                   Vous recevrez un message de retrait directement sur cet écran.
@@ -15364,7 +15372,9 @@ export default function App() {
           </div>
         )}
         <div style={{ background: G.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
-          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>← Retour</button>
+          <button onClick={() => setPage(previousPage || "home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>
+            ← Retour {previousPage === "carryshop" ? "à CarryShop" : previousPage === "carrycolor" ? "à CarryColor" : ""}
+          </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <button onClick={() => shareBook(book)} style={{ background: "none", border: "none", color: G.textDim, fontSize: 20, cursor: "pointer" }}>🔗</button>
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
@@ -15971,12 +15981,13 @@ export default function App() {
                   <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Paiement en cours...</h3>
                   <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, textAlign: "left", marginBottom: 16 }}>
                     <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
-                      ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
+                      ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.
                     </p>
                   </div>
                   <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
-                    Confirme la transaction sur ton téléphone.<br/>
-                    Cela peut prendre jusqu'à 30 secondes.
+                    🔔 Un message de retrait va apparaître sur votre téléphone.<br/>
+                    Composez votre code PIN pour valider.<br/>
+                    ⏱️ Cela peut prendre jusqu'à 30 secondes.
                   </p>
                 </div>
               )}
@@ -17652,7 +17663,7 @@ export default function App() {
                 {/* MESSAGE PRINCIPAL — bien visible, persistant */}
                 <div style={{ background: "#fff3cd", border: "2px solid #ffb800", borderRadius: 10, padding: 16, marginBottom: 18 }}>
                   <div style={{ fontSize: 14, color: "#664d03", fontWeight: 700, lineHeight: 1.6 }}>
-                    ⚠️ Ne quittez pas cet écran jusqu'au paiement complet
+                    ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement
                   </div>
                   <div style={{ fontSize: 13, color: "#664d03", marginTop: 8, lineHeight: 1.6 }}>
                     Vous recevrez un message de retrait directement sur cet écran.
@@ -18681,11 +18692,11 @@ export default function App() {
                 <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Paiement en cours...</h3>
                 <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, textAlign: "left", marginBottom: 16 }}>
                   <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
-                    ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
+                    ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.
                   </p>
                 </div>
                 <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
-                  Confirme la transaction sur ton téléphone.<br/>
+                  🔔 Un message de retrait va apparaître sur votre téléphone. Composez votre code PIN.<br/>
                   Cela peut prendre jusqu'à 30 secondes.
                 </p>
               </div>
@@ -18794,11 +18805,11 @@ export default function App() {
                 <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Paiement en cours...</h3>
                 <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, textAlign: "left", marginBottom: 16 }}>
                   <p style={{ color: "#7a4a00", fontSize: 13, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
-                    ⚠️ Ne quittez pas cet écran, veuillez patienter jusqu'à la finalisation.
+                    ⚠️ NE QUITTEZ PAS CET ÉCRAN jusqu'à finalisation complète du paiement.
                   </p>
                 </div>
                 <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
-                  Confirme la transaction sur ton téléphone.<br/>
+                  🔔 Un message de retrait va apparaître sur votre téléphone. Composez votre code PIN.<br/>
                   Cela peut prendre jusqu'à 30 secondes.
                 </p>
               </div>
