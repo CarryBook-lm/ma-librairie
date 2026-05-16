@@ -331,40 +331,57 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   addLink(page1, headerStartX + prefixW - 2, y - 3, domainW + 4, headerSize + 4, "https://www.carrybooks.com");
 
   // Saut de lignes (proportionnel � la hauteur)
-  y -= PAGE_HEIGHT * 0.06;
+  y -= PAGE_HEIGHT * 0.04;
 
   // Section CarryCare - Titre (taille adapt�e � la largeur)
-  const titleSize = Math.min(20, PAGE_WIDTH * 0.045);
+  const titleSize = Math.min(24, PAGE_WIDTH * 0.055);
   drawCenteredText(page1, "DECOUVREZ CARRYCARE", y, titleSize, fontBold, purpleDark, PAGE_WIDTH);
-  y -= titleSize + 8;
+  y -= titleSize + 6;
 
   // Trait décoratif
   page1.drawLine({
-    start: { x: PAGE_WIDTH / 2 - 60, y: y + 4 },
-    end: { x: PAGE_WIDTH / 2 + 60, y: y + 4 },
-    thickness: 1,
+    start: { x: PAGE_WIDTH / 2 - 80, y: y + 4 },
+    end: { x: PAGE_WIDTH / 2 + 80, y: y + 4 },
+    thickness: 2,
     color: purple,
   });
   y -= 16;
 
-  // Sous-titre (plus compact)
-  const subSize = Math.min(11, PAGE_WIDTH * 0.025);
-  drawCenteredText(page1, "Votre diagnostic beaute personnalise,", y, subSize, fontItalic, grayMid, PAGE_WIDTH);
-  y -= subSize + 4;
-  drawCenteredText(page1, "adapte a VOUS en quelques clics.", y, subSize, fontItalic, grayMid, PAGE_WIDTH);
-  y -= 30;
+  // Slogan accrocheur
+  const sloganSize = Math.min(13, PAGE_WIDTH * 0.030);
+  drawCenteredText(page1, "Votre Beaute. Votre Diagnostic. Vos Resultats.", y, sloganSize, fontBold, grayDark, PAGE_WIDTH);
+  y -= sloganSize + 14;
+
+  // Texte vendeur (3-4 lignes)
+  const argSize = Math.min(11, PAGE_WIDTH * 0.025);
+  const pitches = [
+    "Marre des produits qui ne fonctionnent pas sur vous ?",
+    "Decouvrez ce que VOTRE corps a vraiment besoin",
+    "grace a nos diagnostics personnalises bases sur",
+    "vos donnees uniques. Resultats clairs en 5 minutes.",
+  ];
+  for (const line of pitches) {
+    drawCenteredText(page1, line, y, argSize, fontRegular, grayMid, PAGE_WIDTH);
+    y -= argSize + 4;
+  }
+  y -= 10;
+
+  // Sous-titre invitation
+  drawCenteredText(page1, "Choisissez votre diagnostic ci-dessous :", y, argSize, fontItalic, purpleDark, PAGE_WIDTH);
+  y -= argSize + 18;
 
   // 4 ZONES CLIQUABLES (2 colonnes × 2 lignes) - PROPORTIONNELLES
   const cardGap = 12;
   const cardWidth = (PAGE_WIDTH - margin * 2 - cardGap) / 2;
-  const cardHeight = Math.min(130, PAGE_HEIGHT * 0.17);
+  const cardHeight = Math.min(150, PAGE_HEIGHT * 0.18);
   const cardsStartX = margin;
 
+  // 4 quiz avec chacun sa couleur distincte (URLs r�elles d�j� en place)
   const quizzes = [
-    { emoji: "[ ]", title: "CORPS", subtitle: "Diagnostic corporel", url: "https://carrybooks.com/carrycare/body" },
-    { emoji: "[*]", title: "VISAGE", subtitle: "Diagnostic facial", url: "https://carrybooks.com/carrycare/facial" },
-    { emoji: "[~]", title: "CAPILLAIRE", subtitle: "Diagnostic cheveux", url: "https://carrybooks.com/carrycare/capillaire" },
-    { emoji: "[+]", title: "GARDE LA LIGNE", subtitle: "Diagnostic minceur", url: "https://carrybooks.com/carrycare/ligne" },
+    { title: "CORPS",          subtitle: "Diagnostic corporel", url: "https://carrybooks.com/diagnostic-corps",      color: rgb(0.616, 0.306, 0.867), colorDark: rgb(0.353, 0.094, 0.604) }, // Violet
+    { title: "VISAGE",         subtitle: "Diagnostic facial",   url: "https://carrybooks.com/diagnostic-facial",     color: rgb(0.957, 0.451, 0.671), colorDark: rgb(0.792, 0.224, 0.467) }, // Rose
+    { title: "CAPILLAIRE",     subtitle: "Diagnostic cheveux",  url: "https://carrybooks.com/diagnostic-capillaire", color: rgb(0.788, 0.659, 0.298), colorDark: rgb(0.541, 0.408, 0.118) }, // Doré
+    { title: "GARDE LA LIGNE", subtitle: "Diagnostic minceur",  url: "https://carrybooks.com/garde-la-ligne",        color: rgb(0.310, 0.612, 0.980), colorDark: rgb(0.114, 0.380, 0.690) }, // Bleu
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -373,47 +390,36 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     const cardX = cardsStartX + col * (cardWidth + cardGap);
     const cardY = y - row * (cardHeight + cardGap) - cardHeight;
 
-    // Fond de la carte (gradient simulé avec rectangle violet)
+    const q = quizzes[i];
+
+    // Fond de la carte avec la couleur sp�cifique du quiz
     page1.drawRectangle({
       x: cardX,
       y: cardY,
       width: cardWidth,
       height: cardHeight,
-      color: purple,
-      opacity: 0.9,
+      color: q.color,
     });
-    // Bordure
+    // Bordure plus fonc�e
     page1.drawRectangle({
       x: cardX,
       y: cardY,
       width: cardWidth,
       height: cardHeight,
-      borderColor: purpleDark,
+      borderColor: q.colorDark,
       borderWidth: 2,
     });
-
-    const q = quizzes[i];
     
-    // Tailles proportionnelles � la hauteur de carte
-    const cardEmojiSize = Math.max(16, cardHeight * 0.30);
-    const cardTitleSize = Math.max(11, cardHeight * 0.16);
-    const cardSubSize = Math.max(8, cardHeight * 0.10);
-    const cardBtnSize = Math.max(9, cardHeight * 0.11);
+    // Tailles proportionnelles � la hauteur de carte (sans emoji, plus de place pour texte)
+    const cardTitleSize = Math.max(13, cardHeight * 0.22);
+    const cardSubSize = Math.max(9, cardHeight * 0.13);
+    const cardBtnSize = Math.max(10, cardHeight * 0.13);
     
-    // Emoji (en haut)
-    const emojiW = fontRegular.widthOfTextAtSize(q.emoji, cardEmojiSize);
-    page1.drawText(q.emoji, {
-      x: cardX + (cardWidth - emojiW) / 2,
-      y: cardY + cardHeight - cardEmojiSize - 8,
-      size: cardEmojiSize,
-      font: fontRegular,
-      color: white,
-    });
-    // Titre
+    // Titre (gros, centr� en haut)
     const titleW = fontBold.widthOfTextAtSize(q.title, cardTitleSize);
     page1.drawText(q.title, {
       x: cardX + (cardWidth - titleW) / 2,
-      y: cardY + cardHeight * 0.35,
+      y: cardY + cardHeight * 0.60,
       size: cardTitleSize,
       font: fontBold,
       color: white,
@@ -422,17 +428,18 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     const subW = fontRegular.widthOfTextAtSize(q.subtitle, cardSubSize);
     page1.drawText(q.subtitle, {
       x: cardX + (cardWidth - subW) / 2,
-      y: cardY + cardHeight * 0.22,
+      y: cardY + cardHeight * 0.38,
       size: cardSubSize,
       font: fontRegular,
       color: white,
-      opacity: 0.9,
+      opacity: 0.95,
     });
-    // Bouton "Tester >"
-    const btnW = fontBold.widthOfTextAtSize("Tester >", cardBtnSize);
-    page1.drawText("Tester >", {
+    // Bouton "Tester maintenant >>"
+    const btnText = ">> Tester maintenant";
+    const btnW = fontBold.widthOfTextAtSize(btnText, cardBtnSize);
+    page1.drawText(btnText, {
       x: cardX + (cardWidth - btnW) / 2,
-      y: cardY + 8,
+      y: cardY + 10,
       size: cardBtnSize,
       font: fontBold,
       color: white,
@@ -443,7 +450,8 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   }
 
   // Footer page 1
-  drawCenteredText(page1, "Cliquez sur un diagnostic pour le demarrer immediatement", 60, 10, fontItalic, grayMid, PAGE_WIDTH);
+  // Footer page 1 - call to action fort
+  drawCenteredText(page1, "Cliquez sur une carte pour demarrer GRATUITEMENT", 35, 11, fontBold, purpleDark, PAGE_WIDTH);
 
   // ============================================================
   // 📄 PAGE 2 : 8 livres recommandés (rotation aléatoire)
@@ -501,16 +509,43 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
 
       if (itemY < 50) break; // Pas la place
 
-      // Essayer de télécharger la couverture
+      // Dessiner d'abord un placeholder color� (visible m�me si image rate)
+      const placeholderColors = [
+        rgb(0.788, 0.659, 0.298), // doré
+        rgb(0.616, 0.306, 0.867), // violet
+        rgb(0.957, 0.451, 0.671), // rose
+        rgb(0.310, 0.612, 0.980), // bleu
+      ];
+      const placeholderColor = placeholderColors[i % placeholderColors.length];
+      page2.drawRectangle({
+        x: marginLeft,
+        y: itemY,
+        width: coverWidth,
+        height: coverHeight,
+        color: placeholderColor,
+      });
+      // Initiale du titre au centre du placeholder
+      const initial = (book.title || "?").charAt(0).toUpperCase();
+      const initialSize = coverHeight * 0.5;
+      const initialW = fontBold.widthOfTextAtSize(initial, initialSize);
+      page2.drawText(initial, {
+        x: marginLeft + (coverWidth - initialW) / 2,
+        y: itemY + coverHeight / 2 - initialSize / 2.5,
+        size: initialSize,
+        font: fontBold,
+        color: white,
+      });
+
+      // Essayer de t�l�charger la couverture par-dessus le placeholder
       try {
         if (book.cover_url) {
-          const coverResponse = await fetch(book.cover_url);
+          const coverResponse = await fetch(book.cover_url, { mode: 'cors', credentials: 'omit' });
           if (coverResponse.ok) {
             const coverBytes = await coverResponse.arrayBuffer();
             let coverImg;
-            // Détecter le format
             const ct = coverResponse.headers.get("content-type") || "";
-            if (ct.includes("png")) {
+            const url = book.cover_url.toLowerCase();
+            if (ct.includes("png") || url.endsWith(".png")) {
               coverImg = await pdfDoc.embedPng(coverBytes);
             } else {
               coverImg = await pdfDoc.embedJpg(coverBytes);
@@ -521,17 +556,13 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
               width: coverWidth,
               height: coverHeight,
             });
+          } else {
+            console.warn("[AD] Cover fetch failed:", book.title, coverResponse.status);
           }
         }
       } catch (e) {
-        // Si l'image rate, on dessine un rectangle gris
-        page2.drawRectangle({
-          x: marginLeft,
-          y: itemY,
-          width: coverWidth,
-          height: coverHeight,
-          color: grayLight,
-        });
+        console.warn("[AD] Cover error pour", book.title, ":", e.message);
+        // Le placeholder color� reste visible
       }
 
       // Texte à côté de la couverture
@@ -1624,6 +1655,8 @@ const PAGE_TO_PATH = {
   library: "/ma-bibliotheque",
   catalog: "/catalogue",
   carrycare: "/carrycare",
+  carryshop: "/carryshop",
+  carrycolor: "/carrycolor",
   quiz: "/carry-quiz",
   detail: "/livre",
   reader: "/lecture",
@@ -1641,6 +1674,8 @@ const PATH_TO_PAGE = {
   "/ma-bibliotheque": "library",
   "/catalogue": "catalog",
   "/carrycare": "carrycare",
+  "/carryshop": "carryshop",
+  "/carrycolor": "carrycolor",
   "/carry-quiz": "quiz",
   "/mes-resultats": "myResults",
   "/a-propos": "about",
