@@ -330,8 +330,8 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   // Lien cliquable sur le domaine
   addLink(page1, headerStartX + prefixW - 2, y - 3, domainW + 4, headerSize + 4, "https://www.carrybooks.com");
 
-  // Saut de lignes (proportionnel � la hauteur)
-  y -= PAGE_HEIGHT * 0.04;
+  // Saut de lignes (gros espace entre header et titre CarryCare)
+  y -= PAGE_HEIGHT * 0.08;
 
   // Section CarryCare - Titre (taille adapt�e � la largeur)
   const titleSize = Math.min(24, PAGE_WIDTH * 0.055);
@@ -381,7 +381,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     { title: "CORPS",          subtitle: "Diagnostic corporel", url: "https://carrybooks.com/diagnostic-corps",      color: rgb(0.616, 0.306, 0.867), colorDark: rgb(0.353, 0.094, 0.604) }, // Violet
     { title: "VISAGE",         subtitle: "Diagnostic facial",   url: "https://carrybooks.com/diagnostic-facial",     color: rgb(0.957, 0.451, 0.671), colorDark: rgb(0.792, 0.224, 0.467) }, // Rose
     { title: "CAPILLAIRE",     subtitle: "Diagnostic cheveux",  url: "https://carrybooks.com/diagnostic-capillaire", color: rgb(0.788, 0.659, 0.298), colorDark: rgb(0.541, 0.408, 0.118) }, // Doré
-    { title: "GARDE LA LIGNE", subtitle: "Diagnostic minceur",  url: "https://carrybooks.com/garde-la-ligne",        color: rgb(0.310, 0.612, 0.980), colorDark: rgb(0.114, 0.380, 0.690) }, // Bleu
+    { title: "SANTE ET POIDS", subtitle: "Diagnostic minceur",  url: "https://carrybooks.com/garde-la-ligne",        color: rgb(0.310, 0.612, 0.980), colorDark: rgb(0.114, 0.380, 0.690) }, // Bleu
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -537,32 +537,51 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
       });
 
       // Essayer de t�l�charger la couverture par-dessus le placeholder
+      // M�thode : charger via <img> + canvas (contourne probl�mes CORS de fetch)
       try {
         if (book.cover_url) {
-          const coverResponse = await fetch(book.cover_url, { mode: 'cors', credentials: 'omit' });
-          if (coverResponse.ok) {
-            const coverBytes = await coverResponse.arrayBuffer();
-            let coverImg;
-            const ct = coverResponse.headers.get("content-type") || "";
-            const url = book.cover_url.toLowerCase();
-            if (ct.includes("png") || url.endsWith(".png")) {
-              coverImg = await pdfDoc.embedPng(coverBytes);
-            } else {
-              coverImg = await pdfDoc.embedJpg(coverBytes);
-            }
-            page2.drawImage(coverImg, {
-              x: marginLeft,
-              y: itemY,
-              width: coverWidth,
-              height: coverHeight,
-            });
-          } else {
-            console.warn("[AD] Cover fetch failed:", book.title, coverResponse.status);
-          }
+          const imgBlob = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              try {
+                const canvas = document.createElement("canvas");
+                // Limiter taille pour all�ger PDF
+                const maxSize = 300;
+                let w = img.naturalWidth;
+                let h = img.naturalHeight;
+                if (w > maxSize || h > maxSize) {
+                  if (w > h) { h = (h * maxSize) / w; w = maxSize; }
+                  else { w = (w * maxSize) / h; h = maxSize; }
+                }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")), "image/jpeg", 0.7);
+              } catch (err) {
+                reject(err);
+              }
+            };
+            img.onerror = () => reject(new Error("Image load failed"));
+            img.src = book.cover_url;
+            // Timeout 5s par image
+            setTimeout(() => reject(new Error("Image timeout")), 5000);
+          });
+
+          const coverBytes = await imgBlob.arrayBuffer();
+          const coverImg = await pdfDoc.embedJpg(coverBytes);
+          page2.drawImage(coverImg, {
+            x: marginLeft,
+            y: itemY,
+            width: coverWidth,
+            height: coverHeight,
+          });
+          console.log("[AD] ✅ Cover charg�e:", book.title);
         }
       } catch (e) {
         console.warn("[AD] Cover error pour", book.title, ":", e.message);
-        // Le placeholder color� reste visible
+        // Le placeholder color� avec initiale reste visible
       }
 
       // Texte à côté de la couverture
