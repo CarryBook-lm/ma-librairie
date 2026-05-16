@@ -3285,63 +3285,245 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
   }
 
   const quizCards = [
-    { id: "facial", emoji: "💄", title: "Beauté Faciale", subtitle: "Diagnostic peau + routine personnalisée", available: true, action: startFacial, gradient: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)" },
-    { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: true, action: startBody, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
-    { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: true, action: startHair, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
-    { id: "weight", emoji: "⚖️", title: "Sante et Poids", subtitle: "Plan nutrition personnalisé", available: true, action: startLine, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
+    {
+      id: "facial",
+      title: "Beauté Faciale",
+      subtitle: "Diagnostic peau + routine personnalisée",
+      bg: "linear-gradient(135deg, #fde4ea 0%, #f7c8d4 100%)",
+      accent: "#c2185b",
+      accentSoft: "rgba(194,24,91,0.12)",
+      circleBg: "radial-gradient(circle at 30% 30%, #fff 0%, #fde4ea 70%, #f5b7c5 100%)",
+      emoji: "💆🏽‍♀️",
+      decoration: "sparkles",
+      available: true,
+      action: startFacial
+    },
+    {
+      id: "body",
+      title: "Beauté Corporelle",
+      subtitle: "Vergetures, taches, hydratation",
+      bg: "linear-gradient(135deg, #fef4d8 0%, #f5e3a8 100%)",
+      accent: "#c9952a",
+      accentSoft: "rgba(201,149,42,0.12)",
+      circleBg: "radial-gradient(circle at 30% 30%, #fff 0%, #fef4d8 70%, #ead49a 100%)",
+      emoji: "🧴",
+      decoration: "leaves-gold",
+      available: true,
+      action: startBody
+    },
+    {
+      id: "hair",
+      title: "Beauté Capillaire",
+      subtitle: "Cheveux crépus, croissance, routines",
+      bg: "linear-gradient(135deg, #ebe0f7 0%, #d6c1ee 100%)",
+      accent: "#9c6bcc",
+      accentSoft: "rgba(156,107,204,0.12)",
+      circleBg: "radial-gradient(circle at 30% 30%, #fff 0%, #ebe0f7 70%, #c8aee6 100%)",
+      emoji: "💇🏾‍♀️",
+      decoration: "swirls",
+      available: true,
+      action: startHair
+    },
+    {
+      id: "weight",
+      title: "Santé et Poids",
+      subtitle: "Plan nutrition personnalisé",
+      bg: "linear-gradient(135deg, #d8eae0 0%, #b8d4c4 100%)",
+      accent: "#1f6b5b",
+      accentSoft: "rgba(31,107,91,0.12)",
+      circleBg: "radial-gradient(circle at 30% 30%, #fff 0%, #d8eae0 70%, #a8c8b8 100%)",
+      emoji: "⚖️",
+      decoration: "leaves-green",
+      available: true,
+      action: startLine
+    }
   ];
 
+  // SVG décoratifs pour le coin droit de chaque carte
+  function CardDecoration({ type, color }) {
+    if (type === "sparkles") {
+      return (
+        <svg width="80" height="100%" viewBox="0 0 80 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.5, pointerEvents: "none" }}>
+          <path d="M 65 25 L 67 30 L 72 32 L 67 34 L 65 39 L 63 34 L 58 32 L 63 30 Z" fill={color} opacity="0.7"/>
+          <path d="M 50 60 L 51 63 L 54 64 L 51 65 L 50 68 L 49 65 L 46 64 L 49 63 Z" fill={color} opacity="0.6"/>
+          <path d="M 70 90 L 71 93 L 74 94 L 71 95 L 70 98 L 69 95 L 66 94 L 69 93 Z" fill={color} opacity="0.8"/>
+          <circle cx="55" cy="100" r="2" fill={color} opacity="0.5"/>
+          <circle cx="62" cy="50" r="1.5" fill={color} opacity="0.6"/>
+        </svg>
+      );
+    }
+    if (type === "leaves-gold") {
+      return (
+        <svg width="90" height="100%" viewBox="0 0 90 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.35, pointerEvents: "none" }}>
+          <path d="M 70 20 Q 85 35 75 60 Q 60 55 70 20 Z" fill={color}/>
+          <path d="M 50 50 Q 70 65 55 90 Q 40 80 50 50 Z" fill={color} opacity="0.8"/>
+          <path d="M 65 90 Q 85 100 75 125 Q 60 120 65 90 Z" fill={color} opacity="0.6"/>
+          <path d="M 72 22 L 72 60" stroke={color} strokeWidth="1" opacity="0.5"/>
+          <path d="M 52 52 L 52 88" stroke={color} strokeWidth="1" opacity="0.5"/>
+        </svg>
+      );
+    }
+    if (type === "swirls") {
+      return (
+        <svg width="90" height="100%" viewBox="0 0 90 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.4, pointerEvents: "none" }}>
+          <path d="M 80 20 Q 60 40 75 60 Q 85 75 65 90 Q 50 105 70 125" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>
+          <path d="M 65 35 Q 55 50 70 60" stroke={color} strokeWidth="1.5" fill="none" opacity="0.6" strokeLinecap="round"/>
+          <path d="M 55 80 Q 50 95 65 100" stroke={color} strokeWidth="1.5" fill="none" opacity="0.6" strokeLinecap="round"/>
+        </svg>
+      );
+    }
+    if (type === "leaves-green") {
+      return (
+        <svg width="90" height="100%" viewBox="0 0 90 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.4, pointerEvents: "none" }}>
+          <path d="M 75 25 Q 90 40 80 65 Q 65 60 75 25 Z" fill={color}/>
+          <path d="M 55 55 Q 75 70 60 95 Q 45 85 55 55 Z" fill={color} opacity="0.8"/>
+          <path d="M 70 95 Q 88 105 80 125 Q 65 120 70 95 Z" fill={color} opacity="0.6"/>
+          <path d="M 77 27 L 77 63" stroke={color} strokeWidth="1" opacity="0.5"/>
+          <path d="M 57 57 L 57 93" stroke={color} strokeWidth="1" opacity="0.5"/>
+        </svg>
+      );
+    }
+    return null;
+  }
+
   return (
-    <div style={{ minHeight: "100vh", background: CC.blanc, padding: "0 0 80px" }}>
-      {/* Hero CarryCare */}
-      <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "32px 16px 36px", textAlign: "center", position: "relative", borderBottom: "1px solid " + CC.border }}>
+    <div style={{ minHeight: "100vh", background: "#fafafa", padding: "0 0 80px" }}>
+      {/* Hero CarryCare — épuré */}
+      <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5e1e6 100%)", padding: "26px 16px 32px", textAlign: "center", position: "relative", borderBottom: "1px solid " + CC.border }}>
         <button onClick={() => setPage("quiz")} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
-        <div style={{ fontSize: 56, marginBottom: 8 }}>🌸</div>
-        <div style={{ fontSize: 32, fontWeight: "bold", color: CC.noir, fontFamily: "Georgia, serif", marginBottom: 6, letterSpacing: 1 }}>CarryCare</div>
-        <div style={{ fontSize: 14, color: CC.textFaint, fontStyle: "italic", marginBottom: 4 }}>Ton diagnostic personnalisé</div>
-        <div style={{ fontSize: 13, color: CC.textFaint }}>Beauté & Santé</div>
+        <div style={{ fontSize: 48, marginBottom: 6 }}>🌸</div>
+        <div style={{ fontSize: 28, fontWeight: "bold", color: CC.noir, fontFamily: "Georgia, serif", marginBottom: 4, letterSpacing: 1 }}>CarryCare</div>
+        <div style={{ fontSize: 13, color: CC.textFaint, fontStyle: "italic" }}>Ton diagnostic personnalisé · Beauté & Santé</div>
       </div>
 
-      {/* Bouton Mes résultats */}
-      <div style={{ padding: "16px 16px 0" }}>
+      {/* Carte "Mes résultats" — style image */}
+      <div style={{ padding: "20px 16px 0" }}>
         <div onClick={() => setPage("myResults")} style={{
-          background: "#fff", border: "2px solid " + CC.noir, borderRadius: 14, padding: "14px 16px",
-          cursor: "pointer", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+          background: "#fff",
+          borderRadius: 18,
+          padding: "16px 18px",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          boxShadow: "0 4px 14px rgba(126,87,194,0.10)",
+          border: "1px solid rgba(126,87,194,0.12)"
         }}>
-          <div style={{ fontSize: 28 }}>💎</div>
+          {/* Icône diamant violet */}
+          <div style={{ fontSize: 38, lineHeight: 1, color: "#7e57c2" }}>💎</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 2 }}>Mes résultats</div>
-            <div style={{ fontSize: 11, color: CC.textFaint }}>Retrouve tous tes diagnostics passés</div>
+            <div style={{ fontSize: 17, fontWeight: "bold", color: "#2d1b4e", fontFamily: "Georgia, serif", marginBottom: 3 }}>Mes résultats</div>
+            <div style={{ fontSize: 12, color: "#6b5b8c" }}>Retrouvez tous vos diagnostics passés</div>
           </div>
-          <div style={{ fontSize: 18, color: CC.noir }}>›</div>
+          {/* Bouton rond violet */}
+          <div style={{
+            background: "#7e57c2",
+            color: "#fff",
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 20,
+            fontWeight: "bold",
+            boxShadow: "0 3px 10px rgba(126,87,194,0.35)"
+          }}>›</div>
         </div>
       </div>
 
-      {/* Cartes Quiz */}
-      <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Cartes Quiz — nouveau design pastel */}
+      <div style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
         {quizCards.map(card => (
           <div key={card.id} onClick={() => card.available && card.action && card.action()} style={{
-            background: card.gradient, borderRadius: 18, padding: "20px 18px", cursor: card.available ? "pointer" : "default",
-            position: "relative", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            opacity: card.available ? 1 : 0.7, transition: "transform 0.2s"
+            background: card.bg,
+            borderRadius: 20,
+            padding: "18px 16px",
+            cursor: card.available ? "pointer" : "default",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 3px 12px rgba(0,0,0,0.06)",
+            opacity: card.available ? 1 : 0.7,
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            minHeight: 120
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ fontSize: 44 }}>{card.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>{card.title}</div>
-                <div style={{ fontSize: 12, color: CC.noirSoft }}>{card.subtitle}</div>
-              </div>
-              {card.available ? (
-                <div style={{ background: CC.noir, color: "#fff", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: "bold" }}>Tester</div>
-              ) : (
-                <div style={{ background: "rgba(255,255,255,0.6)", color: CC.noir, borderRadius: 20, padding: "6px 12px", fontSize: 11, fontWeight: "bold" }}>Bientôt</div>
-              )}
+            {/* Décoration de fond (à droite) */}
+            <CardDecoration type={card.decoration} color={card.accent} />
+
+            {/* Cercle illustration à gauche */}
+            <div style={{
+              width: 92,
+              height: 92,
+              borderRadius: "50%",
+              background: card.circleBg,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              boxShadow: "inset 0 2px 8px rgba(255,255,255,0.6), 0 2px 6px rgba(0,0,0,0.05)",
+              fontSize: 46,
+              border: "2px solid rgba(255,255,255,0.7)"
+            }}>
+              {card.emoji}
             </div>
+
+            {/* Texte central */}
+            <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
+              <div style={{
+                fontSize: 19,
+                fontWeight: "bold",
+                color: card.accent,
+                fontFamily: "Georgia, serif",
+                marginBottom: 4,
+                lineHeight: 1.15
+              }}>{card.title}</div>
+              {/* Petite ligne accent sous le titre */}
+              <div style={{ width: 32, height: 3, background: card.accent, borderRadius: 2, marginBottom: 8, opacity: 0.7 }} />
+              <div style={{
+                fontSize: 12.5,
+                color: "#3a3a3a",
+                lineHeight: 1.35,
+                fontWeight: 500
+              }}>{card.subtitle}</div>
+            </div>
+
+            {/* Bouton Tester */}
+            {card.available ? (
+              <div style={{
+                background: card.accent,
+                color: "#fff",
+                borderRadius: 22,
+                padding: "9px 16px",
+                fontSize: 13,
+                fontWeight: "bold",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                boxShadow: "0 3px 10px " + card.accentSoft,
+                position: "relative",
+                zIndex: 1
+              }}>
+                Tester <span style={{ fontSize: 15 }}>→</span>
+              </div>
+            ) : (
+              <div style={{
+                background: "rgba(255,255,255,0.7)",
+                color: card.accent,
+                borderRadius: 22,
+                padding: "9px 14px",
+                fontSize: 12,
+                fontWeight: "bold",
+                flexShrink: 0
+              }}>Bientôt</div>
+            )}
           </div>
         ))}
       </div>
 
-      <div style={{ padding: "10px 20px", textAlign: "center", marginTop: 10 }}>
+      <div style={{ padding: "10px 20px", textAlign: "center", marginTop: 4 }}>
         <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic" }}>
           ✨ Diagnostic personnalisé propulsé par CarryCare
         </div>
