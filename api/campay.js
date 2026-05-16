@@ -410,26 +410,20 @@ export default async function handler(req, res) {
 
       // 📧 ENVOI EMAIL DE NOTIFICATION (non bloquant)
       try {
-        // R—cup—rer le titre du livre + nom de l'utilisateur
+        // Récupérer le titre du livre
         const { data: bookData } = await supabaseAdmin
           .from("books")
           .select("title, category")
           .eq("id", book_id)
           .single();
-        const { data: userData } = await supabaseAdmin
-          .from("auth.users")
-          .select("email")
-          .eq("id", user_id)
-          .single()
-          .catch(() => ({ data: null }));
 
         await sendOrderEmail({
           type: "digital",
           order: {
             order_reference: external_reference,
-            customer_name: userData?.email?.split('@')[0] || "Client",
+            customer_name: "Client " + (phone || "inconnu"),
             customer_phone: phone || "Non renseigné",
-            customer_email: userData?.email || "",
+            customer_email: "",
             amount: amount,
             total: amount,
             payment_reference: reference,
@@ -1308,6 +1302,40 @@ export default async function handler(req, res) {
         success: true,
         order: insertedOrder,
       });
+    }
+
+    // ========== ACTION : SEND_CARRYCARE_EMAIL (notification admin uniquement) ==========
+    if (action === "send_carrycare_email") {
+      const { quiz_type, amount, phone, result_data } = params;
+      try {
+        const quizLabels = {
+          body: "Diagnostic Corps",
+          facial: "Diagnostic Visage",
+          ligne: "Garde la Ligne",
+          capillaire: "Diagnostic Capillaire"
+        };
+        await sendOrderEmail({
+          type: "carrycare",
+          order: {
+            order_reference: "CC-" + Date.now(),
+            customer_name: result_data?.name || result_data?.firstname || "Cliente CarryCare",
+            customer_phone: phone || "Non renseigné",
+            customer_email: result_data?.email || "",
+            amount: amount || 0,
+            total: amount || 0,
+            payment_reference: "carrycare_" + Date.now(),
+            payment_method: "MTN/Orange"
+          },
+          extra: {
+            bookTitle: "💜 " + (quizLabels[quiz_type] || quiz_type || "CarryCare"),
+            bookSubtitle: "Diagnostic personnalisé CarryCare"
+          }
+        });
+        return res.status(200).json({ success: true });
+      } catch (emailErr) {
+        console.error("[SEND_CARRYCARE_EMAIL]", emailErr);
+        return res.status(500).json({ error: emailErr.message });
+      }
     }
 
     return res.status(400).json({ error: "Action inconnue" });

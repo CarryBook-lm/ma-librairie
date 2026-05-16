@@ -47,11 +47,32 @@ async function saveCarrycareResultRobust(payload) {
   // payload = { user_id, quiz_type, amount, result_data }
   console.log("[CarryCare] Tentative de sauvegarde...", payload.quiz_type);
   
+  // Fonction d'envoi email apr�s save r�ussi (non bloquant)
+  async function sendCarryCareEmail() {
+    try {
+      await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_carrycare_email",
+          quiz_type: payload.quiz_type,
+          amount: payload.amount,
+          phone: payload.result_data?.phone || payload.result_data?.payment_phone || "",
+          result_data: payload.result_data || {}
+        })
+      });
+      console.log("[CarryCare] 📧 Email admin envoyé");
+    } catch (e) {
+      console.warn("[CarryCare] Email admin failed (non bloquant):", e.message);
+    }
+  }
+  
   // Tentative 1 : INSERT direct
   try {
     const { error } = await supabase.from("carrycare_results").insert([payload]);
     if (!error) {
       console.log("[CarryCare] ✅ Sauvegarde réussie (1ère tentative)");
+      sendCarryCareEmail(); // 📧 Email admin (non bloquant)
       return { success: true };
     }
     console.warn("[CarryCare] Échec tentative 1:", error.message);
@@ -65,6 +86,7 @@ async function saveCarrycareResultRobust(payload) {
     const { error } = await supabase.from("carrycare_results").insert([payload]);
     if (!error) {
       console.log("[CarryCare] ✅ Sauvegarde réussie (2ème tentative)");
+      sendCarryCareEmail();
       return { success: true };
     }
     console.warn("[CarryCare] Échec tentative 2:", error.message);
@@ -78,6 +100,7 @@ async function saveCarrycareResultRobust(payload) {
     const { error } = await supabase.from("carrycare_results").insert([payload]);
     if (!error) {
       console.log("[CarryCare] ✅ Sauvegarde réussie (3ème tentative)");
+      sendCarryCareEmail();
       return { success: true };
     }
     console.warn("[CarryCare] Échec tentative 3:", error.message);
@@ -12421,7 +12444,7 @@ export default function App() {
   function showToast(message, type = "success") {
     console.log("🍞 [TOAST]", type, message);  // Debug
     setToast({ message, type, id: Date.now() });
-    setTimeout(() => setToast(null), 4000);  // 4 secondes au lieu de 2.5
+    setTimeout(() => setToast(null), 1500);  // 1.5 secondes (apparition rapide)
   }
 
   // 🛒 CHECKOUT PANIER (multi-articles)
