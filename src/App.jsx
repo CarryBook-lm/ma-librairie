@@ -3284,225 +3284,205 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     window.history.pushState({}, "", "/diagnostic-capillaire");
   }
 
-  // ═══ ILLUSTRATIONS SVG (1:1 avec l'image fournie) ═══
+  // ═══ ILLUSTRATIONS SVG (compact mobile, 1:1 image) ═══
 
-  // 1️⃣ Visage Beauté Faciale (femme métisse yeux fermés, points skincare, étincelles)
+  // 1️⃣ Visage Beauté Faciale
   function FaceIllustration() {
     return (
       <svg viewBox="0 0 140 140" width="100%" height="100%" style={{ display: "block" }}>
-        {/* Cheveux noirs */}
         <ellipse cx="70" cy="48" rx="40" ry="30" fill="#2d1810"/>
         <path d="M 32 58 Q 28 80 36 96 L 44 92 Q 40 75 42 60 Z" fill="#2d1810"/>
         <path d="M 108 58 Q 112 80 104 96 L 96 92 Q 100 75 98 60 Z" fill="#2d1810"/>
-        {/* Visage (peau métissée) */}
         <ellipse cx="70" cy="74" rx="30" ry="35" fill="#c89478"/>
-        {/* Front éclairé */}
         <ellipse cx="70" cy="58" rx="25" ry="11" fill="#d4a48a" opacity="0.5"/>
-        {/* Sourcils */}
         <path d="M 54 66 Q 60 64 65 66" stroke="#1a0e08" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
         <path d="M 75 66 Q 80 64 86 66" stroke="#1a0e08" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-        {/* Yeux fermés - paupières */}
         <path d="M 52 73 Q 59 77 66 73" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
         <path d="M 74 73 Q 81 77 88 73" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-        {/* Cils */}
         <line x1="52" y1="73" x2="49" y2="70" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="56" y1="76" x2="54" y2="72" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
         <line x1="60" y1="77" x2="60" y2="73" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="64" y1="76" x2="65" y2="72" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="76" y1="76" x2="75" y2="72" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
         <line x1="80" y1="77" x2="80" y2="73" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="84" y1="76" x2="85" y2="72" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
         <line x1="88" y1="73" x2="91" y2="70" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        {/* Nez */}
         <path d="M 70 79 Q 67 88 70 93 Q 73 88 70 79" fill="#a87560" opacity="0.4"/>
         <ellipse cx="68" cy="92" rx="1.5" ry="1" fill="#8a5a48" opacity="0.5"/>
         <ellipse cx="72" cy="92" rx="1.5" ry="1" fill="#8a5a48" opacity="0.5"/>
-        {/* Lèvres */}
         <path d="M 62 100 Q 70 103 78 100 Q 75 97 70 98 Q 65 97 62 100 Z" fill="#c54a5e"/>
-        <path d="M 62 100 Q 70 102 78 100" stroke="#a03048" strokeWidth="0.6" fill="none"/>
-        {/* Points skincare (touches lumineuses) */}
         <circle cx="50" cy="78" r="2" fill="#fff" opacity="0.85"/>
         <circle cx="90" cy="78" r="2" fill="#fff" opacity="0.85"/>
         <circle cx="55" cy="92" r="1.5" fill="#fff" opacity="0.75"/>
         <circle cx="85" cy="92" r="1.5" fill="#fff" opacity="0.75"/>
         <circle cx="70" cy="62" r="1.5" fill="#fff" opacity="0.7"/>
-        <circle cx="58" cy="100" r="1.2" fill="#fff" opacity="0.6"/>
-        <circle cx="82" cy="100" r="1.2" fill="#fff" opacity="0.6"/>
-        {/* Lignes de massage */}
-        <path d="M 48 80 Q 53 84 57 88" stroke="#fff" strokeWidth="0.8" fill="none" opacity="0.55" strokeLinecap="round"/>
-        <path d="M 92 80 Q 87 84 83 88" stroke="#fff" strokeWidth="0.8" fill="none" opacity="0.55" strokeLinecap="round"/>
-        {/* Étincelles autour (rose) */}
         <path d="M 22 32 L 24 36 L 28 38 L 24 40 L 22 44 L 20 40 L 16 38 L 20 36 Z" fill="#e7407a" opacity="0.85"/>
         <path d="M 116 28 L 117 31 L 120 32 L 117 33 L 116 36 L 115 33 L 112 32 L 115 31 Z" fill="#e7407a" opacity="0.7"/>
-        <circle cx="110" cy="58" r="1.3" fill="#e7407a" opacity="0.6"/>
         <circle cx="118" cy="85" r="1.5" fill="#e7407a" opacity="0.7"/>
       </svg>
     );
   }
 
-  // 2️⃣ Flacon Pompe turquoise + feuilles vertes (Beauté Corporelle)
+  // 2️⃣ Flacon Pompe turquoise + feuilles
   function BottleIllustration() {
     return (
       <svg viewBox="0 0 140 140" width="100%" height="100%" style={{ display: "block" }}>
-        {/* Feuilles fond gauche */}
         <path d="M 16 70 Q 4 60 8 42 Q 22 48 22 70 Z" fill="#7eb09a"/>
         <path d="M 12 92 Q 2 86 8 70 Q 20 78 18 92 Z" fill="#a3c9b5" opacity="0.85"/>
         <line x1="10" y1="46" x2="20" y2="68" stroke="#5a8a72" strokeWidth="0.6" opacity="0.6"/>
-        {/* Feuilles fond droite */}
         <path d="M 124 70 Q 136 60 132 42 Q 118 48 118 70 Z" fill="#7eb09a"/>
         <path d="M 128 92 Q 138 86 132 70 Q 120 78 122 92 Z" fill="#a3c9b5" opacity="0.85"/>
         <line x1="130" y1="46" x2="120" y2="68" stroke="#5a8a72" strokeWidth="0.6" opacity="0.6"/>
-        {/* Bec pompe */}
         <rect x="64" y="22" width="12" height="6" rx="1" fill="#cfd8dc"/>
         <rect x="74" y="24" width="10" height="3" rx="1.5" fill="#90a4ae"/>
-        {/* Col du flacon */}
         <rect x="58" y="28" width="24" height="14" rx="2" fill="#b0bec5"/>
-        {/* Corps du flacon turquoise */}
         <path d="M 48 42 L 92 42 Q 96 42 96 46 L 96 108 Q 96 116 88 116 L 52 116 Q 44 116 44 108 L 44 46 Q 44 42 48 42 Z" fill="#4db6ac"/>
-        {/* Reflet droit */}
         <path d="M 86 50 Q 90 70 88 100" stroke="#80cbc4" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7"/>
-        {/* Reflet gauche subtil */}
         <path d="M 52 50 Q 50 70 52 95" stroke="#26a69a" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
-        {/* Goutte d'eau au centre */}
         <path d="M 70 65 Q 64 75 70 84 Q 76 75 70 65 Z" fill="#fff" opacity="0.95"/>
         <ellipse cx="68" cy="73" rx="1.5" ry="2.5" fill="#fff" opacity="0.6"/>
       </svg>
     );
   }
 
-  // 3️⃣ Profil capillaire (femme cheveux longs violet foncé)
+  // 3️⃣ NOUVELLE Illustration Capillaire : Femme afrocaribéenne avec belle chevelure crépue
   function HairIllustration() {
     return (
       <svg viewBox="0 0 140 140" width="100%" height="100%" style={{ display: "block" }}>
-        {/* Étincelles fond gauche */}
-        <path d="M 18 38 L 19 41 L 22 42 L 19 43 L 18 46 L 17 43 L 14 42 L 17 41 Z" fill="#9966cc" opacity="0.75"/>
-        <circle cx="14" cy="60" r="1.3" fill="#9966cc" opacity="0.6"/>
-        <circle cx="20" cy="90" r="1.5" fill="#9966cc" opacity="0.7"/>
-        {/* Masse de cheveux derrière (couches violet foncé) */}
-        <path d="M 38 38 Q 30 60 32 95 Q 38 122 60 124 L 60 60 Q 50 50 38 38 Z" fill="#3d1f5e"/>
-        <path d="M 40 42 Q 34 65 38 100 Q 50 122 70 120" fill="none" stroke="#5e2f8c" strokeWidth="0.8" opacity="0.6"/>
-        {/* Crâne et visage de profil (teint moyen) */}
-        <path d="M 60 38 Q 88 32 96 56 Q 100 78 92 92 Q 86 100 80 102 L 75 105 Q 70 108 64 105 Q 56 90 56 70 Q 56 50 60 38 Z" fill="#c89478"/>
-        {/* Front éclairé */}
-        <path d="M 70 44 Q 86 42 92 56 Q 94 65 90 70 Q 80 60 70 56 Z" fill="#d4a48a" opacity="0.5"/>
-        {/* Cheveux qui retombent devant front */}
-        <path d="M 60 38 Q 72 36 88 44 Q 78 42 68 50 Q 62 50 58 48 Z" fill="#3d1f5e"/>
-        {/* Cheveux longs qui descendent à l'arrière */}
-        <path d="M 32 78 Q 28 105 40 130 L 80 130 Q 60 120 50 100 Q 38 88 32 78 Z" fill="#3d1f5e"/>
-        <path d="M 36 95 Q 42 115 60 128" stroke="#5e2f8c" strokeWidth="1" fill="none" opacity="0.5"/>
-        <path d="M 44 90 Q 50 110 68 125" stroke="#5e2f8c" strokeWidth="0.8" fill="none" opacity="0.4"/>
-        {/* Oreille */}
-        <ellipse cx="75" cy="78" rx="3" ry="5" fill="#a87560" opacity="0.7"/>
-        {/* Sourcil */}
-        <path d="M 82 65 Q 88 64 92 66" stroke="#1a0e08" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
-        {/* Œil fermé */}
-        <path d="M 82 72 Q 87 75 92 72" stroke="#1a0e08" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
-        <line x1="84" y1="73" x2="83" y2="70" stroke="#1a0e08" strokeWidth="0.7"/>
-        <line x1="88" y1="74" x2="88" y2="71" stroke="#1a0e08" strokeWidth="0.7"/>
-        {/* Nez de profil */}
-        <path d="M 92 76 L 97 82 L 95 86 L 92 84" fill="none" stroke="#a87560" strokeWidth="1.2" strokeLinecap="round"/>
-        {/* Lèvres profil */}
-        <path d="M 90 92 Q 93 93 95 92" stroke="#c54a5e" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        {/* Étincelles côté droit */}
-        <path d="M 116 50 L 117 53 L 120 54 L 117 55 L 116 58 L 115 55 L 112 54 L 115 53 Z" fill="#9966cc" opacity="0.7"/>
-        <circle cx="124" cy="80" r="1.2" fill="#9966cc" opacity="0.5"/>
+        {/* Étoiles décoratives */}
+        <path d="M 18 26 L 19 29 L 22 30 L 19 31 L 18 34 L 17 31 L 14 30 L 17 29 Z" fill="#9966cc" opacity="0.8"/>
+        <path d="M 120 30 L 121 32 L 123 33 L 121 34 L 120 36 L 119 34 L 117 33 L 119 32 Z" fill="#9966cc" opacity="0.7"/>
+        <circle cx="124" cy="60" r="1.3" fill="#9966cc" opacity="0.6"/>
+        <circle cx="16" cy="60" r="1.3" fill="#9966cc" opacity="0.6"/>
+
+        {/* Chevelure afro/crépue volumineuse (couches de boucles) */}
+        <ellipse cx="70" cy="52" rx="48" ry="38" fill="#3d1f5e"/>
+        {/* Boucles individuelles texturées sur la chevelure */}
+        <circle cx="32" cy="48" r="7" fill="#4a2870"/>
+        <circle cx="40" cy="32" r="7" fill="#4a2870"/>
+        <circle cx="54" cy="22" r="7" fill="#4a2870"/>
+        <circle cx="70" cy="18" r="7" fill="#4a2870"/>
+        <circle cx="86" cy="22" r="7" fill="#4a2870"/>
+        <circle cx="100" cy="32" r="7" fill="#4a2870"/>
+        <circle cx="108" cy="48" r="7" fill="#4a2870"/>
+        <circle cx="28" cy="62" r="6" fill="#4a2870"/>
+        <circle cx="112" cy="62" r="6" fill="#4a2870"/>
+        <circle cx="36" cy="76" r="6" fill="#4a2870"/>
+        <circle cx="104" cy="76" r="6" fill="#4a2870"/>
+        {/* Boucles plus claires (highlights) */}
+        <circle cx="46" cy="28" r="3" fill="#6e44a3" opacity="0.7"/>
+        <circle cx="64" cy="20" r="3" fill="#6e44a3" opacity="0.7"/>
+        <circle cx="80" cy="20" r="3" fill="#6e44a3" opacity="0.7"/>
+        <circle cx="94" cy="28" r="3" fill="#6e44a3" opacity="0.7"/>
+
+        {/* Visage rond (teint métissé/foncé) */}
+        <ellipse cx="70" cy="78" rx="22" ry="26" fill="#a87056"/>
+        {/* Lumière front */}
+        <ellipse cx="70" cy="68" rx="17" ry="7" fill="#c08465" opacity="0.5"/>
+
+        {/* Sourcils */}
+        <path d="M 56 72 Q 61 70 65 72" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+        <path d="M 75 72 Q 79 70 84 72" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+
+        {/* Yeux fermés sereins */}
+        <path d="M 54 80 Q 60 83 66 80" stroke="#1a0e08" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M 74 80 Q 80 83 86 80" stroke="#1a0e08" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <line x1="56" y1="80" x2="54" y2="78" stroke="#1a0e08" strokeWidth="0.8"/>
+        <line x1="60" y1="83" x2="60" y2="80" stroke="#1a0e08" strokeWidth="0.8"/>
+        <line x1="64" y1="82" x2="65" y2="79" stroke="#1a0e08" strokeWidth="0.8"/>
+        <line x1="76" y1="82" x2="75" y2="79" stroke="#1a0e08" strokeWidth="0.8"/>
+        <line x1="80" y1="83" x2="80" y2="80" stroke="#1a0e08" strokeWidth="0.8"/>
+        <line x1="84" y1="80" x2="86" y2="78" stroke="#1a0e08" strokeWidth="0.8"/>
+
+        {/* Nez petit */}
+        <path d="M 70 84 Q 68 92 70 95 Q 72 92 70 84" fill="#8a5a44" opacity="0.4"/>
+
+        {/* Lèvres rouges/roses pulpeuses */}
+        <path d="M 62 100 Q 70 104 78 100 Q 75 97 70 99 Q 65 97 62 100 Z" fill="#b8425a"/>
+        <path d="M 62 100 Q 70 102 78 100" stroke="#8a2a40" strokeWidth="0.5" fill="none"/>
+
+        {/* Boucles d'oreilles violettes */}
+        <circle cx="48" cy="82" r="2.5" fill="#9966cc"/>
+        <circle cx="92" cy="82" r="2.5" fill="#9966cc"/>
+
+        {/* Quelques boucles qui retombent sur les côtés du visage */}
+        <circle cx="48" cy="90" r="4" fill="#3d1f5e"/>
+        <circle cx="92" cy="90" r="4" fill="#3d1f5e"/>
+        <circle cx="44" cy="98" r="3" fill="#3d1f5e"/>
+        <circle cx="96" cy="98" r="3" fill="#3d1f5e"/>
       </svg>
     );
   }
 
-  // 4️⃣ Balance avec pommes (Santé et Poids)
+  // 4️⃣ Balance + pommes
   function ScaleIllustration() {
     return (
       <svg viewBox="0 0 140 140" width="100%" height="100%" style={{ display: "block" }}>
-        {/* Feuille fond */}
         <path d="M 18 100 Q 8 92 14 78 Q 26 84 24 102 Z" fill="#7fb89a" opacity="0.7"/>
         <path d="M 122 100 Q 132 92 126 78 Q 114 84 116 102 Z" fill="#7fb89a" opacity="0.7"/>
-        {/* Mât central */}
         <rect x="68" y="36" width="4" height="68" fill="#1a6b5b"/>
-        {/* Sommet du mât (boule) */}
         <circle cx="70" cy="34" r="3.5" fill="#1a6b5b"/>
-        {/* Bras horizontal de la balance */}
         <rect x="22" y="48" width="96" height="3" fill="#1a6b5b" rx="1.5"/>
-        {/* Anneau central */}
         <circle cx="70" cy="49" r="5" fill="none" stroke="#1a6b5b" strokeWidth="2"/>
-        {/* Chaînes plateau gauche */}
         <line x1="30" y1="51" x2="22" y2="68" stroke="#1a6b5b" strokeWidth="1.2"/>
         <line x1="30" y1="51" x2="38" y2="68" stroke="#1a6b5b" strokeWidth="1.2"/>
-        {/* Chaînes plateau droit */}
         <line x1="110" y1="51" x2="102" y2="68" stroke="#1a6b5b" strokeWidth="1.2"/>
         <line x1="110" y1="51" x2="118" y2="68" stroke="#1a6b5b" strokeWidth="1.2"/>
-        {/* Plateau gauche */}
         <ellipse cx="30" cy="71" rx="14" ry="3.5" fill="#1a6b5b"/>
         <path d="M 16 71 Q 30 80 44 71 L 42 73 Q 30 80 18 73 Z" fill="#0f4a3d"/>
-        {/* Plateau droit */}
         <ellipse cx="110" cy="71" rx="14" ry="3.5" fill="#1a6b5b"/>
         <path d="M 96 71 Q 110 80 124 71 L 122 73 Q 110 80 98 73 Z" fill="#0f4a3d"/>
-        {/* Pomme gauche (turquoise) */}
         <circle cx="30" cy="64" r="6" fill="#4db6ac"/>
         <path d="M 28 58 Q 30 56 32 58" stroke="#1a6b5b" strokeWidth="1" fill="none" strokeLinecap="round"/>
         <path d="M 30 58 Q 33 56 34 54" stroke="#5d8c4f" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
         <ellipse cx="28" cy="62" rx="1.5" ry="2" fill="#80cbc4" opacity="0.7"/>
-        {/* Pomme droite (turquoise) */}
         <circle cx="110" cy="64" r="6" fill="#4db6ac"/>
         <path d="M 108 58 Q 110 56 112 58" stroke="#1a6b5b" strokeWidth="1" fill="none" strokeLinecap="round"/>
         <path d="M 110 58 Q 113 56 114 54" stroke="#5d8c4f" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
         <ellipse cx="108" cy="62" rx="1.5" ry="2" fill="#80cbc4" opacity="0.7"/>
-        {/* Base / socle */}
         <rect x="58" y="104" width="24" height="4" fill="#1a6b5b" rx="1"/>
         <path d="M 50 108 L 90 108 L 86 116 L 54 116 Z" fill="#1a6b5b"/>
-        {/* Feuilles décor base */}
-        <path d="M 92 110 Q 100 108 102 102" stroke="#1a6b5b" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-        <path d="M 48 110 Q 40 108 38 102" stroke="#1a6b5b" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
         <path d="M 100 102 Q 104 100 106 96 Q 102 98 100 102" fill="#7fb89a"/>
         <path d="M 40 102 Q 36 100 34 96 Q 38 98 40 102" fill="#7fb89a"/>
       </svg>
     );
   }
 
-  // SVG décoratifs (coin droit de la carte)
+  // Décorations coin de carte
   function CardDecoration({ type, color }) {
     if (type === "star") {
       return (
-        <svg width="60" height="60" viewBox="0 0 60 60" style={{ position: "absolute", right: 14, top: 12, opacity: 0.7, pointerEvents: "none" }}>
+        <svg width="48" height="48" viewBox="0 0 60 60" style={{ position: "absolute", right: 10, top: 8, opacity: 0.7, pointerEvents: "none" }}>
           <path d="M 30 8 L 33 22 L 47 25 L 33 28 L 30 42 L 27 28 L 13 25 L 27 22 Z" fill={color} opacity="0.8"/>
-          <circle cx="48" cy="12" r="1.5" fill={color} opacity="0.6"/>
-          <circle cx="12" cy="45" r="1.5" fill={color} opacity="0.6"/>
         </svg>
       );
     }
     if (type === "leaves-gold") {
       return (
-        <svg width="60" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.3, pointerEvents: "none" }}>
+        <svg width="50" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.28, pointerEvents: "none" }}>
           <path d="M 35 18 Q 55 28 48 55 Q 30 50 35 18 Z" fill={color}/>
           <path d="M 20 55 Q 45 65 32 95 Q 14 85 20 55 Z" fill={color} opacity="0.85"/>
           <path d="M 40 95 Q 58 105 50 128 Q 32 122 40 95 Z" fill={color} opacity="0.65"/>
-          <line x1="38" y1="20" x2="40" y2="52" stroke={color} strokeWidth="1" opacity="0.6"/>
         </svg>
       );
     }
     if (type === "swirls") {
       return (
-        <svg width="60" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.5, pointerEvents: "none" }}>
+        <svg width="50" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.45, pointerEvents: "none" }}>
           <path d="M 50 18 Q 25 35 42 55 Q 55 70 30 85 Q 12 100 38 125" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>
           <path d="M 38 35 Q 28 50 42 60" stroke={color} strokeWidth="1.5" fill="none" opacity="0.7" strokeLinecap="round"/>
-          <path d="M 28 78 Q 22 92 38 100" stroke={color} strokeWidth="1.5" fill="none" opacity="0.7" strokeLinecap="round"/>
         </svg>
       );
     }
     if (type === "leaves-green") {
       return (
-        <svg width="60" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.4, pointerEvents: "none" }}>
+        <svg width="50" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.4, pointerEvents: "none" }}>
           <path d="M 38 22 Q 58 32 50 58 Q 32 53 38 22 Z" fill={color}/>
           <path d="M 22 58 Q 48 68 35 95 Q 16 87 22 58 Z" fill={color} opacity="0.85"/>
           <path d="M 42 98 Q 58 108 50 128 Q 34 122 42 98 Z" fill={color} opacity="0.65"/>
-          <line x1="40" y1="24" x2="42" y2="55" stroke={color} strokeWidth="1" opacity="0.6"/>
         </svg>
       );
     }
     return null;
   }
 
-  // ═══ DONNÉES DES 4 CARTES (matchant l'image fournie 1:1) ═══
+  // ═══ DONNÉES DES 4 CARTES ═══
   const quizCards = [
     {
       id: "facial",
@@ -3564,7 +3544,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa", padding: "0 0 80px" }}>
-      {/* Hero CarryCare — épuré */}
+      {/* Hero CarryCare */}
       <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5e1e6 100%)", padding: "26px 16px 32px", textAlign: "center", position: "relative", borderBottom: "1px solid " + CC.border }}>
         <button onClick={() => setPage("quiz")} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
         <div style={{ fontSize: 48, marginBottom: 6 }}>🌸</div>
@@ -3572,27 +3552,23 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <div style={{ fontSize: 13, color: CC.textFaint, fontStyle: "italic" }}>Ton diagnostic personnalisé · Beauté & Santé</div>
       </div>
 
-      {/* Carte "Mes résultats" — match image */}
+      {/* Carte "Mes résultats" */}
       <div style={{ padding: "20px 16px 0" }}>
         <div onClick={() => setPage("myResults")} style={{
           background: "#fff",
           borderRadius: 18,
-          padding: "18px 18px",
+          padding: "16px 16px",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          gap: 14,
+          gap: 12,
           boxShadow: "0 4px 14px rgba(126,87,194,0.10)",
           border: "1px solid rgba(126,87,194,0.10)"
         }}>
-          {/* Diamant + étoiles décoratives */}
-          <div style={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
-            <svg viewBox="0 0 56 56" width="56" height="56">
-              {/* Étoiles décoratives autour du diamant */}
+          <div style={{ position: "relative", width: 48, height: 48, flexShrink: 0 }}>
+            <svg viewBox="0 0 56 56" width="48" height="48">
               <path d="M 8 14 L 9 17 L 12 18 L 9 19 L 8 22 L 7 19 L 4 18 L 7 17 Z" fill="#9d7fff" opacity="0.7"/>
               <path d="M 46 8 L 47 11 L 50 12 L 47 13 L 46 16 L 45 13 L 42 12 L 45 11 Z" fill="#9d7fff" opacity="0.6"/>
-              <circle cx="50" cy="40" r="1.5" fill="#9d7fff" opacity="0.5"/>
-              {/* Diamant violet */}
               <path d="M 18 22 L 38 22 L 42 30 L 28 48 L 14 30 Z" fill="#9d7fff"/>
               <path d="M 18 22 L 28 30 L 38 22" stroke="#7e57c2" strokeWidth="1" fill="none"/>
               <path d="M 14 30 L 28 30 L 42 30" stroke="#7e57c2" strokeWidth="1" fill="none"/>
@@ -3601,20 +3577,19 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
             </svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 19, fontWeight: "bold", color: "#2d1b4e", fontFamily: "Georgia, serif", marginBottom: 3, lineHeight: 1.1 }}>Mes résultats</div>
-            <div style={{ fontSize: 12, color: "#6b5b8c", lineHeight: 1.3 }}>Retrouvez tous vos diagnostics passés</div>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: "#2d1b4e", fontFamily: "Georgia, serif", marginBottom: 2, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Mes résultats</div>
+            <div style={{ fontSize: 11, color: "#6b5b8c", lineHeight: 1.3 }}>Retrouvez tous vos diagnostics passés</div>
           </div>
-          {/* Bouton rond violet */}
           <div style={{
             background: "#7e57c2",
             color: "#fff",
-            width: 42,
-            height: 42,
+            width: 36,
+            height: 36,
             borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: "bold",
             flexShrink: 0,
             boxShadow: "0 3px 10px rgba(126,87,194,0.35)"
@@ -3622,15 +3597,15 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         </div>
       </div>
 
-      {/* 4 cartes diagnostic — match image 1:1 */}
-      <div style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* 4 cartes diagnostic — compact mobile */}
+      <div style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
         {quizCards.map(card => {
           const Illu = card.Illustration;
           return (
             <div key={card.id} onClick={() => card.available && card.action && card.action()} style={{
               background: card.bg,
-              borderRadius: 22,
-              padding: "16px 16px",
+              borderRadius: 20,
+              padding: "14px 12px",
               cursor: card.available ? "pointer" : "default",
               position: "relative",
               overflow: "hidden",
@@ -3638,16 +3613,15 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
               opacity: card.available ? 1 : 0.7,
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              minHeight: 140
+              gap: 10,
+              minHeight: 116
             }}>
-              {/* Décoration arrière-plan */}
               <CardDecoration type={card.decoration} color={card.accent} />
 
-              {/* Cercle illustration */}
+              {/* Cercle illustration (réduit 84px) */}
               <div style={{
-                width: 110,
-                height: 110,
+                width: 84,
+                height: 84,
                 borderRadius: "50%",
                 background: card.circleBg,
                 flexShrink: 0,
@@ -3659,52 +3633,54 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
                 <Illu />
               </div>
 
-              {/* Bloc texte (titre + 2 lignes sous-titre) */}
-              <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1, paddingRight: 4 }}>
+              {/* Bloc texte */}
+              <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
                 <div style={{
-                  fontSize: 20,
+                  fontSize: 15,
                   fontWeight: "bold",
                   color: card.accent,
                   fontFamily: "Georgia, serif",
-                  marginBottom: 5,
-                  lineHeight: 1.1
+                  marginBottom: 3,
+                  lineHeight: 1.1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  letterSpacing: -0.2
                 }}>{card.title}</div>
-                {/* Trait accent sous le titre */}
-                <div style={{ width: 36, height: 3, background: card.accent, borderRadius: 2, marginBottom: 9, opacity: 0.85 }} />
-                {/* Sous-titre EN 2 LIGNES exactes */}
-                <div style={{ fontSize: 12.5, color: "#2c2c2c", lineHeight: 1.35, fontWeight: 500 }}>
+                <div style={{ width: 28, height: 2.5, background: card.accent, borderRadius: 2, marginBottom: 6, opacity: 0.85 }} />
+                <div style={{ fontSize: 11.5, color: "#2c2c2c", lineHeight: 1.3, fontWeight: 500, fontFamily: "Georgia, serif" }}>
                   {card.line1}<br />
                   {card.line2}
                 </div>
               </div>
 
-              {/* Bouton Tester → */}
+              {/* Bouton Tester → compact */}
               {card.available ? (
                 <div style={{
                   background: card.btnBg,
                   color: "#fff",
-                  borderRadius: 24,
-                  padding: "10px 18px",
-                  fontSize: 13,
+                  borderRadius: 20,
+                  padding: "8px 12px",
+                  fontSize: 12,
                   fontWeight: "bold",
                   flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
+                  gap: 4,
                   position: "relative",
                   zIndex: 1,
                   boxShadow: "0 3px 8px rgba(0,0,0,0.12)",
                   whiteSpace: "nowrap"
                 }}>
-                  Tester <span style={{ fontSize: 15 }}>→</span>
+                  Tester <span style={{ fontSize: 13 }}>→</span>
                 </div>
               ) : (
                 <div style={{
                   background: "rgba(255,255,255,0.8)",
                   color: card.accent,
-                  borderRadius: 24,
-                  padding: "10px 14px",
-                  fontSize: 12,
+                  borderRadius: 20,
+                  padding: "8px 12px",
+                  fontSize: 11,
                   fontWeight: "bold",
                   flexShrink: 0
                 }}>Bientôt</div>
@@ -3720,7 +3696,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         </div>
       </div>
 
-      {/* Bouton de partage CarryCare */}
+      {/* Bouton de partage */}
       <div style={{ padding: "0 16px 20px" }}>
         <ShareCarryCare />
       </div>
