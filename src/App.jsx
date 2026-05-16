@@ -411,9 +411,14 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     });
     
     // Tailles proportionnelles � la hauteur de carte (sans emoji, plus de place pour texte)
-    const cardTitleSize = Math.max(13, cardHeight * 0.22);
-    const cardSubSize = Math.max(9, cardHeight * 0.13);
-    const cardBtnSize = Math.max(10, cardHeight * 0.13);
+    let cardTitleSize = Math.max(11, cardHeight * 0.18);
+    const cardSubSize = Math.max(9, cardHeight * 0.12);
+    const cardBtnSize = Math.max(10, cardHeight * 0.12);
+    
+    // Auto-fit : r�duire le titre s'il d�passe la largeur de la carte
+    while (fontBold.widthOfTextAtSize(q.title, cardTitleSize) > cardWidth - 14 && cardTitleSize > 8) {
+      cardTitleSize -= 0.5;
+    }
     
     // Titre (gros, centr� en haut)
     const titleW = fontBold.widthOfTextAtSize(q.title, cardTitleSize);
@@ -471,194 +476,77 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   });
   y2 -= 18;
 
-  // Récupérer 8 livres aléatoires
-  let recommendedBooks = [];
+
+  // R�cup�rer TOUS les livres num�riques payants
+  let allPayBooks = [];
   try {
     const { data: allBooks } = await supabase
       .from("books")
-      .select("id, title, author, cover_url, price, description")
+      .select("id, title, author, price")
       .neq("id", currentBookId || 0)
       .or("product_type.is.null,product_type.eq.digital")
       .eq("is_active", true)
-      .limit(50);
+      .gt("price", 0)
+      .order("title", { ascending: true })
+      .limit(80);
 
     if (allBooks && allBooks.length > 0) {
-      // Mélanger et prendre 8
-      const shuffled = allBooks.sort(() => Math.random() - 0.5);
-      recommendedBooks = shuffled.slice(0, 8);
+      allPayBooks = allBooks;
     }
   } catch (e) {
-    console.warn("[AD] Impossible de récupérer les livres:", e);
+    console.warn("[AD] Impossible de r�cup�rer les livres:", e);
   }
 
   // Si pas de livres, message simple
-  if (recommendedBooks.length === 0) {
+  if (allPayBooks.length === 0) {
     drawCenteredText(page2, "Decouvrez tous nos livres sur carrybooks.com", PAGE_HEIGHT / 2, 14, fontItalic, grayMid, PAGE_WIDTH);
   } else {
-    // Afficher les livres en liste avec couverture + résumé
-    // Tailles proportionnelles
-    const availHeight = y2 - 60;
-    const itemHeight = Math.min(80, availHeight / 8.5);
-    const coverHeight = itemHeight * 0.9;
-    const coverWidth = coverHeight * 0.7;
+    // Afficher liste simple : "Titre du livre - Telecharger ici" (texte cliquable)
+    const lineHeight = Math.max(14, PAGE_HEIGHT * 0.025);
+    const fontSize = Math.min(10, lineHeight * 0.65);
     const marginLeft = margin;
+    const linkLabel = " - Telecharger ici";
+    const maxLines = Math.floor((y2 - 60) / lineHeight);
 
-    for (let i = 0; i < recommendedBooks.length; i++) {
-      const book = recommendedBooks[i];
-      const itemY = y2 - i * itemHeight - itemHeight + 5;
+    for (let i = 0; i < Math.min(allPayBooks.length, maxLines); i++) {
+      const book = allPayBooks[i];
+      const lineY = y2 - (i + 1) * lineHeight;
 
-      if (itemY < 50) break; // Pas la place
-
-      // Dessiner d'abord un placeholder color� (visible m�me si image rate)
-      const placeholderColors = [
-        rgb(0.788, 0.659, 0.298), // doré
-        rgb(0.616, 0.306, 0.867), // violet
-        rgb(0.957, 0.451, 0.671), // rose
-        rgb(0.310, 0.612, 0.980), // bleu
-      ];
-      const placeholderColor = placeholderColors[i % placeholderColors.length];
-      page2.drawRectangle({
+      // Sanitize le titre (enlever emojis potentiels)
+      const title = sanitizeText(book.title || "Livre");
+      
+      // Dessiner le titre en noir
+      page2.drawText(title, {
         x: marginLeft,
-        y: itemY,
-        width: coverWidth,
-        height: coverHeight,
-        color: placeholderColor,
-      });
-      // Initiale du titre au centre du placeholder
-      const initial = (book.title || "?").charAt(0).toUpperCase();
-      const initialSize = coverHeight * 0.5;
-      const initialW = fontBold.widthOfTextAtSize(initial, initialSize);
-      page2.drawText(initial, {
-        x: marginLeft + (coverWidth - initialW) / 2,
-        y: itemY + coverHeight / 2 - initialSize / 2.5,
-        size: initialSize,
-        font: fontBold,
-        color: white,
-      });
-
-      // Essayer de t�l�charger la couverture par-dessus le placeholder
-      // M�thode : charger via <img> + canvas (contourne probl�mes CORS de fetch)
-      try {
-        if (book.cover_url) {
-          const imgBlob = await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              try {
-                const canvas = document.createElement("canvas");
-                // Limiter taille pour all�ger PDF
-                const maxSize = 300;
-                let w = img.naturalWidth;
-                let h = img.naturalHeight;
-                if (w > maxSize || h > maxSize) {
-                  if (w > h) { h = (h * maxSize) / w; w = maxSize; }
-                  else { w = (w * maxSize) / h; h = maxSize; }
-                }
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, w, h);
-                canvas.toBlob(b => b ? resolve(b) : reject(new Error("toBlob failed")), "image/jpeg", 0.7);
-              } catch (err) {
-                reject(err);
-              }
-            };
-            img.onerror = () => reject(new Error("Image load failed"));
-            img.src = book.cover_url;
-            // Timeout 5s par image
-            setTimeout(() => reject(new Error("Image timeout")), 5000);
-          });
-
-          const coverBytes = await imgBlob.arrayBuffer();
-          const coverImg = await pdfDoc.embedJpg(coverBytes);
-          page2.drawImage(coverImg, {
-            x: marginLeft,
-            y: itemY,
-            width: coverWidth,
-            height: coverHeight,
-          });
-          console.log("[AD] ✅ Cover charg�e:", book.title);
-        }
-      } catch (e) {
-        console.warn("[AD] Cover error pour", book.title, ":", e.message);
-        // Le placeholder color� avec initiale reste visible
-      }
-
-      // Texte à côté de la couverture
-      const textX = marginLeft + coverWidth + 14;
-      const textMaxWidth = PAGE_WIDTH - textX - marginLeft;
-
-      // Titre (max 50 chars)
-      const titleText = sanitizeText(book.title || "Sans titre").substring(0, 50);
-      page2.drawText(titleText, {
-        x: textX,
-        y: itemY + coverHeight - 14,
-        size: 12,
+        y: lineY,
+        size: fontSize,
         font: fontBold,
         color: grayDark,
       });
 
-      // Auteur + Prix sur même ligne
-      const authorText = sanitizeText(book.author || "Auteur inconnu");
-      page2.drawText("par " + authorText.substring(0, 30), {
-        x: textX,
-        y: itemY + coverHeight - 28,
-        size: 9,
-        font: fontItalic,
-        color: grayMid,
-      });
+      // Calculer position du "T�l�charger ici"
+      const titleW = fontBold.widthOfTextAtSize(title, fontSize);
+      const linkX = marginLeft + titleW;
 
-      // Prix
-      const priceText = (book.price || 0) > 0
-        ? (book.price || 0).toLocaleString() + " F"
-        : "GRATUIT";
-      const priceW = fontBold.widthOfTextAtSize(priceText, 10);
-      page2.drawText(priceText, {
-        x: PAGE_WIDTH - marginLeft - priceW,
-        y: itemY + coverHeight - 14,
-        size: 10,
+      // Dessiner "- Telecharger ici" en bleu cliquable
+      page2.drawText(linkLabel, {
+        x: linkX,
+        y: lineY,
+        size: fontSize,
         font: fontBold,
-        color: goldDark,
+        color: blueColor,
       });
 
-      // Résumé (2 lignes max, 80 chars par ligne)
-      const desc = sanitizeText(book.description || "").trim();
-      if (desc) {
-        const line1 = desc.substring(0, 75);
-        const line2 = desc.length > 75 ? desc.substring(75, 145) + (desc.length > 145 ? "..." : "") : "";
-        page2.drawText(line1, {
-          x: textX,
-          y: itemY + 26,
-          size: 9,
-          font: fontRegular,
-          color: grayMid,
-          maxWidth: textMaxWidth,
-        });
-        if (line2) {
-          page2.drawText(line2, {
-            x: textX,
-            y: itemY + 12,
-            size: 9,
-            font: fontRegular,
-            color: grayMid,
-            maxWidth: textMaxWidth,
-          });
-        }
-      }
-
-      // Lien cliquable sur tout l'item
+      // Lien cliquable sur le label "T�l�charger ici"
+      const linkW = fontBold.widthOfTextAtSize(linkLabel, fontSize);
       const slug = (book.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-      addLink(page2, marginLeft, itemY, PAGE_WIDTH - marginLeft * 2, coverHeight, "https://carrybooks.com/livre/" + slug);
+      addLink(page2, linkX - 2, lineY - 2, linkW + 4, fontSize + 4, "https://carrybooks.com/livre/" + slug);
+    }
 
-      // Ligne séparatrice
-      if (i < recommendedBooks.length - 1) {
-        page2.drawLine({
-          start: { x: marginLeft, y: itemY - 4 },
-          end: { x: PAGE_WIDTH - marginLeft, y: itemY - 4 },
-          thickness: 0.5,
-          color: grayLight,
-        });
-      }
+    // Si trop de livres pour la page, indiquer combien
+    if (allPayBooks.length > maxLines) {
+      const moreText = "+ " + (allPayBooks.length - maxLines) + " autres livres sur carrybooks.com";
+      drawCenteredText(page2, moreText, 55, fontSize, fontItalic, grayMid, PAGE_WIDTH);
     }
   }
 
@@ -699,18 +587,10 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     color: pinkDark,
   });
 
-  // Emoji
-  page3.drawText("[*]", {
-    x: margin + 12,
-    y: y3 - emojiSizeP3 - 10,
-    size: emojiSizeP3,
-    font: fontRegular,
-    color: white,
-  });
-
-  // Titre
+  // Titre (centr� et plus gros - sans emoji)
+  const csNameW = fontBold.widthOfTextAtSize("CARRYSHOP", titleSizeP3);
   page3.drawText("CARRYSHOP", {
-    x: margin + emojiSizeP3 + 24,
+    x: margin + (cardW3 - csNameW) / 2,
     y: y3 - titleSizeP3 - 14,
     size: titleSizeP3,
     font: fontBold,
@@ -761,18 +641,10 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     color: rgb(0.31, 0.61, 0.98),
   });
 
-  // Emoji
-  page3.drawText("[#]", {
-    x: margin + 12,
-    y: y3 - emojiSizeP3 - 10,
-    size: emojiSizeP3,
-    font: fontRegular,
-    color: white,
-  });
-
-  // Titre
+  // Titre (centr� - sans emoji)
+  const ccNameW = fontBold.widthOfTextAtSize("CARRYCOLOR", titleSizeP3);
   page3.drawText("CARRYCOLOR", {
-    x: margin + emojiSizeP3 + 24,
+    x: margin + (cardW3 - ccNameW) / 2,
     y: y3 - titleSizeP3 - 14,
     size: titleSizeP3,
     font: fontBold,
@@ -3370,7 +3242,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     { id: "facial", emoji: "💄", title: "Beauté Faciale", subtitle: "Diagnostic peau + routine personnalisée", available: true, action: startFacial, gradient: "linear-gradient(135deg, #f5d7d9 0%, #e8b4b8 100%)" },
     { id: "body", emoji: "🧴", title: "Beauté Corporelle", subtitle: "Vergetures, taches, hydratation", available: true, action: startBody, gradient: "linear-gradient(135deg, #f5ecec 0%, #d4b896 100%)" },
     { id: "hair", emoji: "💇🏾‍♀️", title: "Beauté Capillaire", subtitle: "Cheveux crépus, croissance, routines", available: true, action: startHair, gradient: "linear-gradient(135deg, #e8d4b8 0%, #c9a66b 100%)" },
-    { id: "weight", emoji: "⚖️", title: "Garde la Ligne", subtitle: "Plan nutrition personnalisé", available: true, action: startLine, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
+    { id: "weight", emoji: "⚖️", title: "Sante et Poids", subtitle: "Plan nutrition personnalisé", available: true, action: startLine, gradient: "linear-gradient(135deg, #d4e8d6 0%, #8eb896 100%)" },
   ];
 
   return (
@@ -8770,13 +8642,13 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
   if (lgStep === 0) {
     return (
       <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
-        <Header title="Garde la Ligne" onBack={() => setCarryCarePage("home")} />
+        <Header title="Sante et Poids" onBack={() => setCarryCarePage("home")} />
         <div style={{ padding: "20px 16px", maxWidth: 600, margin: "0 auto" }}>
 
           {/* Hero */}
           <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "24px 22px", marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 48, marginBottom: 10 }}>🥗</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Garde la Ligne</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Sante et Poids</div>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Plan nutrition adapté à ton profil avec aliments du Cameroun</div>
           </div>
 
@@ -8832,7 +8704,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
               url="https://carrybooks.com/garde-la-ligne"
-              title="Garde la Ligne CarryCare"
+              title="Sante et Poids CarryCare"
               message="⚖️ Plan nutrition personnalisé selon ton profil. Garde la ligne intelligemment avec CarryCare !"
             />
           </div>
@@ -9777,7 +9649,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
           url="https://carrybooks.com/garde-la-ligne"
-          title="Garde la Ligne CarryCare"
+          title="Sante et Poids CarryCare"
           message="⚖️ J'ai mon plan nutrition personnalisé sur CarryCare ! Garde la ligne intelligemment, fais-le aussi :"
         />
 
