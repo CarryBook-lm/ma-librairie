@@ -16431,48 +16431,7 @@ export default function App() {
                     width: "100%",
                     boxSizing: "border-box"
                   }}>
-                    {/* Carte CARRYBOOKS */}
-                    <div 
-                      onClick={() => {
-                        window.scrollTo({ top: 600, behavior: "smooth" });
-                      }}
-                      style={{
-                        background: "linear-gradient(135deg, #c9a84c 0%, #b8862d 100%)",
-                        borderRadius: 10,
-                        padding: "12px 6px",
-                        textAlign: "center",
-                        cursor: "pointer",
-                        boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
-                        transition: "transform 0.2s",
-                        color: "#1a1208",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minHeight: 80,
-                        minWidth: 0,
-                        overflow: "hidden",
-                        position: "relative"
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    >
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>📚</div>
-                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYBOOKS</div>
-                      <div style={{ fontSize: 9, opacity: 0.85, marginTop: 2 }}>Livres numériques</div>
-                      {/* Indicateur de clic : chevron anim� en haut � droite */}
-                      <div style={{ 
-                        position: "absolute", 
-                        top: 6, 
-                        right: 8, 
-                        fontSize: 14,
-                        fontWeight: "bold",
-                        opacity: 0.6,
-                        animation: "pulseArrow 1.8s ease-in-out infinite"
-                      }}>›</div>
-                    </div>
-
-                    {/* Carte CARRYCOLOR */}
+                    {/* Carte CARRYCOLOR (position 1) */}
                     <div 
                       onClick={() => {
                         setPage("carrycolor");
@@ -16514,7 +16473,7 @@ export default function App() {
                       }}>›</div>
                     </div>
 
-                    {/* Carte CARRYSHOP */}
+                    {/* Carte CARRYSHOP (position 2) */}
                     <div 
                       onClick={() => {
                         setPage("carryshop");
@@ -16555,6 +16514,48 @@ export default function App() {
                         animation: "pulseArrow 1.8s ease-in-out infinite"
                       }}>›</div>
                     </div>
+
+                    {/* Carte CARRYCARE (position 3) */}
+                    <div 
+                      onClick={() => {
+                        setPage("carrycare");
+                        setCarryCarePage("home");
+                        window.scrollTo(0, 0);
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #9d4edd 0%, #5a189a 100%)",
+                        borderRadius: 10,
+                        padding: "12px 6px",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 3px 10px rgba(90,24,154,0.25)",
+                        transition: "transform 0.2s",
+                        color: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 80,
+                        minWidth: 0,
+                        overflow: "hidden",
+                        position: "relative"
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                    >
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>💜</div>
+                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYCARE</div>
+                      <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Diagnostics</div>
+                      <div style={{ 
+                        position: "absolute", 
+                        top: 6, 
+                        right: 8, 
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        opacity: 0.8,
+                        animation: "pulseArrow 1.8s ease-in-out infinite"
+                      }}>›</div>
+                    </div>
                   </div>
                   {/* Animation du chevron */}
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
@@ -16564,22 +16565,22 @@ export default function App() {
                 <div style={{
                   marginTop: 10,
                   marginBottom: 0,
-                  padding: "10px 8px",
-                  background: "linear-gradient(90deg, #c9a84c 0%, #b14fdb 50%, #d4769e 100%)",
+                  padding: "9px 6px",
+                  background: "linear-gradient(90deg, #4f9cf9 0%, #b14fdb 50%, #9d4edd 100%)",
                   textAlign: "center",
                   width: "100%",
                   boxSizing: "border-box"
                 }}>
                   <div style={{ 
-                    fontSize: 11, 
+                    fontSize: 10.5, 
                     color: "#fff", 
-                    fontWeight: 700, 
-                    letterSpacing: 0.5, 
-                    fontFamily: "Georgia, serif",
+                    fontWeight: 600, 
+                    letterSpacing: 0, 
+                    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
                     fontStyle: "italic",
                     lineHeight: 1.4
                   }}>
-                    ✨ 3 univers à explorer — Lire, colorier, se faire plaisir ✨
+                    ✨ 3 autres univers — Colorier, se faire plaisir, se révéler ✨
                   </div>
                 </div>
 
