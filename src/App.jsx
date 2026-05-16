@@ -15331,6 +15331,33 @@ export default function App() {
     const isFav = favoriteBooks.includes(book.id);
     return (
       <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
+        {/* 🍞 TOAST DE NOTIFICATION sur la page d�tail (sinon il appara�t derri�re) */}
+        {toast && (
+          <div 
+            key={toast.id}
+            style={{
+              position: "fixed",
+              bottom: 30,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 99999,
+              background: toast.type === "success" ? "#16a34a" : "#dc2626",
+              color: "#fff",
+              border: "3px solid " + (toast.type === "success" ? "#15803d" : "#b91c1c"),
+              padding: "16px 28px",
+              borderRadius: 12,
+              fontSize: 15,
+              fontWeight: "bold",
+              boxShadow: "0 12px 30px rgba(0,0,0,0.5)",
+              maxWidth: "92vw",
+              minWidth: 280,
+              textAlign: "center",
+              animation: "slideUpIn 0.4s ease-out"
+            }}>
+            {toast.message}
+            <style>{`@keyframes slideUpIn { from{opacity:0; transform:translate(-50%, 30px)} to{opacity:1; transform:translate(-50%, 0)} }`}</style>
+          </div>
+        )}
         <div style={{ background: G.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>← Retour</button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
