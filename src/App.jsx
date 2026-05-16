@@ -17260,7 +17260,7 @@ export default function App() {
                     width: "100%",
                     boxSizing: "border-box"
                   }}>
-                    {/* Carte CARRYCOLOR (position 1) */}
+                    {/* Carte CARRYCOLOR (position 1) — découpe 1/3 gauche de home-cards.png */}
                     <div 
                       onClick={() => {
                         setPage("carrycolor");
@@ -17268,41 +17268,24 @@ export default function App() {
                         window.scrollTo(0, 0);
                       }}
                       style={{
-                        background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
+                        backgroundImage: "url(/home-cards.png)",
+                        backgroundSize: "300% 100%",
+                        backgroundPosition: "0% center",
+                        backgroundRepeat: "no-repeat",
                         borderRadius: 10,
-                        padding: "12px 6px",
-                        textAlign: "center",
                         cursor: "pointer",
                         boxShadow: "0 3px 10px rgba(177,79,219,0.22)",
                         transition: "transform 0.2s",
-                        color: "#fff",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minHeight: 80,
+                        aspectRatio: "1 / 1.1",
                         minWidth: 0,
                         overflow: "hidden",
                         position: "relative"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    >
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>🎨</div>
-                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYCOLOR</div>
-                      <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Livres papier</div>
-                      <div style={{ 
-                        position: "absolute", 
-                        top: 6, 
-                        right: 8, 
-                        fontSize: 14,
-                        fontWeight: "bold",
-                        opacity: 0.8,
-                        animation: "pulseArrow 1.8s ease-in-out infinite"
-                      }}>›</div>
-                    </div>
+                    />
 
-                    {/* Carte CARRYSHOP (position 2) */}
+                    {/* Carte CARRYSHOP (position 2) — découpe 1/3 milieu */}
                     <div 
                       onClick={() => {
                         setPage("carryshop");
@@ -17310,41 +17293,24 @@ export default function App() {
                         window.scrollTo(0, 0);
                       }}
                       style={{
-                        background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
+                        backgroundImage: "url(/home-cards.png)",
+                        backgroundSize: "300% 100%",
+                        backgroundPosition: "50% center",
+                        backgroundRepeat: "no-repeat",
                         borderRadius: 10,
-                        padding: "12px 6px",
-                        textAlign: "center",
                         cursor: "pointer",
                         boxShadow: "0 3px 10px rgba(168,56,100,0.22)",
                         transition: "transform 0.2s",
-                        color: "#fff",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minHeight: 80,
+                        aspectRatio: "1 / 1.1",
                         minWidth: 0,
                         overflow: "hidden",
                         position: "relative"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    >
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>🌸</div>
-                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYSHOP</div>
-                      <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Produits Divers</div>
-                      <div style={{ 
-                        position: "absolute", 
-                        top: 6, 
-                        right: 8, 
-                        fontSize: 14,
-                        fontWeight: "bold",
-                        opacity: 0.8,
-                        animation: "pulseArrow 1.8s ease-in-out infinite"
-                      }}>›</div>
-                    </div>
+                    />
 
-                    {/* Carte CARRYCARE (position 3) */}
+                    {/* Carte CARRYCARE (position 3) — découpe 1/3 droite */}
                     <div 
                       onClick={() => {
                         setPage("carrycare");
@@ -17352,39 +17318,22 @@ export default function App() {
                         window.scrollTo(0, 0);
                       }}
                       style={{
-                        background: "linear-gradient(135deg, #9d4edd 0%, #5a189a 100%)",
+                        backgroundImage: "url(/home-cards.png)",
+                        backgroundSize: "300% 100%",
+                        backgroundPosition: "100% center",
+                        backgroundRepeat: "no-repeat",
                         borderRadius: 10,
-                        padding: "12px 6px",
-                        textAlign: "center",
                         cursor: "pointer",
                         boxShadow: "0 3px 10px rgba(90,24,154,0.25)",
                         transition: "transform 0.2s",
-                        color: "#fff",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minHeight: 80,
+                        aspectRatio: "1 / 1.1",
                         minWidth: 0,
                         overflow: "hidden",
                         position: "relative"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    >
-                      <div style={{ fontSize: 22, marginBottom: 4 }}>💜</div>
-                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYCARE</div>
-                      <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Diagnostics</div>
-                      <div style={{ 
-                        position: "absolute", 
-                        top: 6, 
-                        right: 8, 
-                        fontSize: 14,
-                        fontWeight: "bold",
-                        opacity: 0.8,
-                        animation: "pulseArrow 1.8s ease-in-out infinite"
-                      }}>›</div>
-                    </div>
+                    />
                   </div>
                   {/* Animation du chevron */}
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
@@ -17909,20 +17858,18 @@ export default function App() {
                 ← Retour à l'accueil
               </button>
 
-              {/* Hero CarryColor multicolore */}
-              <div style={{ 
-                background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
+              {/* Hero CarryColor — image */}
+              <div style={{
                 borderRadius: 14,
-                padding: "30px 20px",
-                textAlign: "center",
-                color: "#fff",
+                overflow: "hidden",
                 marginBottom: 20,
                 boxShadow: "0 6px 20px rgba(177,79,219,0.25)"
               }}>
-                <div style={{ fontSize: 48, marginBottom: 8 }}>🎨</div>
-                <div style={{ fontSize: 24, fontWeight: "bold", letterSpacing: 2, marginBottom: 6 }}>CARRYCOLOR</div>
-                <div style={{ fontSize: 13, opacity: 0.95, marginBottom: 4 }}>Livres papier</div>
-                <div style={{ fontSize: 11, opacity: 0.85 }}>Coloriages • Mangas • Romans papier</div>
+                <img
+                  src="/hero-carrycolor.png"
+                  alt="CarryColor - Livres papier"
+                  style={{ width: "100%", display: "block", height: "auto" }}
+                />
               </div>
 
               {/* Recherche */}
@@ -18054,20 +18001,18 @@ export default function App() {
                 ← Retour à CarryBooks
               </button>
 
-              {/* Hero CarryGoo */}
-              <div style={{ 
-                background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
+              {/* Hero CarryShop — image */}
+              <div style={{
                 borderRadius: 14,
-                padding: "30px 20px",
-                textAlign: "center",
-                color: "#fff",
+                overflow: "hidden",
                 marginBottom: 20,
                 boxShadow: "0 6px 20px rgba(168,56,100,0.25)"
               }}>
-                <div style={{ fontSize: 48, marginBottom: 8 }}>🌸</div>
-                <div style={{ fontSize: 24, fontWeight: "bold", letterSpacing: 2, marginBottom: 6 }}>CARRYSHOP</div>
-                <div style={{ fontSize: 13, opacity: 0.95, marginBottom: 4 }}>Produits Divers</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>Parfums • Compléments • Cosmétiques • Accessoires</div>
+                <img
+                  src="/hero-carryshop.png"
+                  alt="CarryShop - Produits Divers"
+                  style={{ width: "100%", display: "block", height: "auto" }}
+                />
               </div>
 
               {/* Recherche CarryShop */}
