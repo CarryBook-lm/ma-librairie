@@ -925,6 +925,36 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: false, error: error.message, non_blocking: true });
       }
 
+      // 📧 ENVOI EMAIL DE NOTIFICATION (non bloquant)
+      try {
+        // R�cup�rer le titre du livre
+        const { data: bookData } = await supabaseAdmin
+          .from("books")
+          .select("title, category")
+          .eq("id", book_id)
+          .single();
+
+        await sendOrderEmail({
+          type: "digital",
+          order: {
+            order_reference: external_reference || reference,
+            customer_name: "Client invité " + normalizedPhone,
+            customer_phone: normalizedPhone,
+            customer_email: "",
+            amount: amount,
+            total: amount,
+            payment_reference: reference,
+            payment_method: "MTN/Orange"
+          },
+          extra: {
+            bookTitle: bookData?.title || "Livre numérique",
+            bookSubtitle: (bookData?.category || "") + " — Achat invité"
+          }
+        });
+      } catch (emailErr) {
+        console.error("[GUEST_PURCHASE] Email error (non bloquant):", emailErr);
+      }
+
       return res.status(200).json({ success: true, id: data.id });
     }
 
