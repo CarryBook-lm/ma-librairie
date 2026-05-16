@@ -240,61 +240,24 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     const purchaseDate = new Date().toLocaleDateString("fr-FR");
     const siteUrl = "https://carrybooks.com";
 
-    // 5. Ajouter le watermark sur CHAQUE page
+    // 5. Ajouter le watermark sur CHAQUE page (UNIQUEMENT EN BAS)
     const pages = pdfDoc.getPages();
     pages.forEach((page) => {
       const { width, height } = page.getSize();
 
-      // 🔝 EN HAUT GAUCHE : Nom + Email (discret, gris)
-      const topLeftText = clientEmail
-        ? clientName + " - " + clientEmail
-        : clientName;
-      page.drawText(topLeftText, {
-        x: 20,
-        y: height - 18,
-        size: 7,
-        font: helveticaFont,
-        color: rgb(0.55, 0.55, 0.55),
-      });
-
-      // 🔝 EN HAUT DROITE : Téléphone (discret, gris)
-      if (clientPhone) {
-        const phoneText = "Tel: " + clientPhone;
-        const phoneWidth = helveticaFont.widthOfTextAtSize(phoneText, 7);
-        page.drawText(phoneText, {
-          x: width - phoneWidth - 20,
-          y: height - 18,
-          size: 7,
-          font: helveticaFont,
-          color: rgb(0.55, 0.55, 0.55),
-        });
-      }
-
-      // 🎯 AU CENTRE : Nom du client en DIAGONALE (semi-transparent)
-      const diagText = clientName.toUpperCase();
-      const diagSize = 36;
-      const diagWidth = helveticaBold.widthOfTextAtSize(diagText, diagSize);
-      page.drawText(diagText, {
-        x: width / 2 - (diagWidth / 2) * 0.866,
-        y: height / 2 - (diagWidth / 2) * 0.5,
-        size: diagSize,
-        font: helveticaBold,
-        color: rgb(0.7, 0.7, 0.7),
-        opacity: 0.15,
-        rotate: degrees(-30),
-      });
-
-      // 🔻 EN BAS GAUCHE : Copyright + Date
-      const bottomLeftText = "(c) CarryBooks - Achete le " + purchaseDate;
+      // 🔻 EN BAS GAUCHE : "Acheté le [date] — Tél : [numéro]"
+      const bottomLeftText = clientPhone
+        ? "Achete le " + purchaseDate + " - Tel : " + clientPhone
+        : "Achete le " + purchaseDate;
       page.drawText(bottomLeftText, {
         x: 20,
         y: 12,
-        size: 7,
+        size: 8,
         font: helveticaFont,
-        color: rgb(0.55, 0.55, 0.55),
+        color: rgb(0.40, 0.40, 0.40),
       });
 
-      // 🔻 EN BAS DROITE : "Plus de livre sur" (noir) + "carrybooks.com" (bleu CLIQUABLE)
+      // 🔻 EN BAS DROITE : "Plus de livres sur" (noir) + "carrybooks.com" (bleu CLIQUABLE)
       const prefixText = "Plus de livres sur ";
       const linkText = "carrybooks.com";
       const linkSize = 8;
@@ -304,7 +267,7 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
       const startX = width - totalWidth - 20;
       const linkX = startX + prefixWidth;
       const linkY = 12;
-      // Dessiner "Plus de livre sur " en noir
+      // Dessiner "Plus de livres sur " en noir
       page.drawText(prefixText, {
         x: startX,
         y: linkY,
