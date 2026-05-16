@@ -259,6 +259,18 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     }
   }
 
+  // Helper : nettoyer texte (enlever emojis et caract�res unicode non support�s par Helvetica)
+  function sanitizeText(text) {
+    if (!text) return "";
+    return String(text)
+      // Enlever tous les emojis et caract�res unicode hors latin-1
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")  // emojis
+      .replace(/[\u{2600}-\u{27BF}]/gu, "")    // symboles divers
+      .replace(/[\u{1F000}-\u{1F2FF}]/gu, "")  // autres symboles
+      .replace(/[\u{2000}-\u{206F}]/gu, " ")   // ponctuation g�n�rale
+      .trim();
+  }
+
   // Helper : texte centré sur la page
   function drawCenteredText(page, text, y, size, font, color, pageWidth) {
     const w = font.widthOfTextAtSize(text, size);
@@ -323,7 +335,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
 
   // Section CarryCare - Titre (taille adapt�e � la largeur)
   const titleSize = Math.min(20, PAGE_WIDTH * 0.045);
-  drawCenteredText(page1, "DÉCOUVREZ CARRYCARE", y, titleSize, fontBold, purpleDark, PAGE_WIDTH);
+  drawCenteredText(page1, "DECOUVREZ CARRYCARE", y, titleSize, fontBold, purpleDark, PAGE_WIDTH);
   y -= titleSize + 8;
 
   // Trait décoratif
@@ -337,9 +349,9 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
 
   // Sous-titre (plus compact)
   const subSize = Math.min(11, PAGE_WIDTH * 0.025);
-  drawCenteredText(page1, "Votre diagnostic beauté personnalisé,", y, subSize, fontItalic, grayMid, PAGE_WIDTH);
+  drawCenteredText(page1, "Votre diagnostic beaute personnalise,", y, subSize, fontItalic, grayMid, PAGE_WIDTH);
   y -= subSize + 4;
-  drawCenteredText(page1, "adapté à VOUS en quelques clics.", y, subSize, fontItalic, grayMid, PAGE_WIDTH);
+  drawCenteredText(page1, "adapte a VOUS en quelques clics.", y, subSize, fontItalic, grayMid, PAGE_WIDTH);
   y -= 30;
 
   // 4 ZONES CLIQUABLES (2 colonnes × 2 lignes) - PROPORTIONNELLES
@@ -349,10 +361,10 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   const cardsStartX = margin;
 
   const quizzes = [
-    { emoji: "👤", title: "CORPS", subtitle: "Diagnostic corporel", url: "https://carrybooks.com/carrycare/body" },
-    { emoji: "✨", title: "VISAGE", subtitle: "Diagnostic facial", url: "https://carrybooks.com/carrycare/facial" },
-    { emoji: "💇", title: "CAPILLAIRE", subtitle: "Diagnostic cheveux", url: "https://carrybooks.com/carrycare/capillaire" },
-    { emoji: "🌿", title: "GARDE LA LIGNE", subtitle: "Diagnostic minceur", url: "https://carrybooks.com/carrycare/ligne" },
+    { emoji: "[ ]", title: "CORPS", subtitle: "Diagnostic corporel", url: "https://carrybooks.com/carrycare/body" },
+    { emoji: "[*]", title: "VISAGE", subtitle: "Diagnostic facial", url: "https://carrybooks.com/carrycare/facial" },
+    { emoji: "[~]", title: "CAPILLAIRE", subtitle: "Diagnostic cheveux", url: "https://carrybooks.com/carrycare/capillaire" },
+    { emoji: "[+]", title: "GARDE LA LIGNE", subtitle: "Diagnostic minceur", url: "https://carrybooks.com/carrycare/ligne" },
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -431,7 +443,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   }
 
   // Footer page 1
-  drawCenteredText(page1, "Cliquez sur un diagnostic pour le démarrer immédiatement", 60, 10, fontItalic, grayMid, PAGE_WIDTH);
+  drawCenteredText(page1, "Cliquez sur un diagnostic pour le demarrer immediatement", 60, 10, fontItalic, grayMid, PAGE_WIDTH);
 
   // ============================================================
   // 📄 PAGE 2 : 8 livres recommandés (rotation aléatoire)
@@ -441,7 +453,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   // Header proportionnel
   let y2 = PAGE_HEIGHT - 40;
   const headerSizeP2 = Math.min(18, PAGE_WIDTH * 0.04);
-  drawCenteredText(page2, "✨ NOS LIVRES POUR VOUS ✨", y2, headerSizeP2, fontBold, goldDark, PAGE_WIDTH);
+  drawCenteredText(page2, "NOS LIVRES POUR VOUS", y2, headerSizeP2, fontBold, goldDark, PAGE_WIDTH);
   y2 -= headerSizeP2 + 6;
   page2.drawLine({
     start: { x: PAGE_WIDTH / 2 - 80, y: y2 + 3 },
@@ -473,7 +485,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
 
   // Si pas de livres, message simple
   if (recommendedBooks.length === 0) {
-    drawCenteredText(page2, "Découvrez tous nos livres sur carrybooks.com", PAGE_HEIGHT / 2, 14, fontItalic, grayMid, PAGE_WIDTH);
+    drawCenteredText(page2, "Decouvrez tous nos livres sur carrybooks.com", PAGE_HEIGHT / 2, 14, fontItalic, grayMid, PAGE_WIDTH);
   } else {
     // Afficher les livres en liste avec couverture + résumé
     // Tailles proportionnelles
@@ -527,7 +539,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
       const textMaxWidth = PAGE_WIDTH - textX - marginLeft;
 
       // Titre (max 50 chars)
-      const titleText = (book.title || "Sans titre").substring(0, 50);
+      const titleText = sanitizeText(book.title || "Sans titre").substring(0, 50);
       page2.drawText(titleText, {
         x: textX,
         y: itemY + coverHeight - 14,
@@ -537,7 +549,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
       });
 
       // Auteur + Prix sur même ligne
-      const authorText = book.author || "Auteur inconnu";
+      const authorText = sanitizeText(book.author || "Auteur inconnu");
       page2.drawText("par " + authorText.substring(0, 30), {
         x: textX,
         y: itemY + coverHeight - 28,
@@ -560,7 +572,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
       });
 
       // Résumé (2 lignes max, 80 chars par ligne)
-      const desc = (book.description || "").trim();
+      const desc = sanitizeText(book.description || "").trim();
       if (desc) {
         const line1 = desc.substring(0, 75);
         const line2 = desc.length > 75 ? desc.substring(75, 145) + (desc.length > 145 ? "..." : "") : "";
@@ -601,8 +613,8 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   }
 
   // Footer page 2
-  drawCenteredText(page2, "➡️ Plus de livres sur carrybooks.com", 35, 11, fontBold, blueColor, PAGE_WIDTH);
-  const footer2W = fontBold.widthOfTextAtSize("➡️ Plus de livres sur carrybooks.com", 11);
+  drawCenteredText(page2, "-> Plus de livres sur carrybooks.com", 35, 11, fontBold, blueColor, PAGE_WIDTH);
+  const footer2W = fontBold.widthOfTextAtSize("-> Plus de livres sur carrybooks.com", 11);
   addLink(page2, (PAGE_WIDTH - footer2W) / 2 - 2, 30, footer2W + 4, 18, "https://carrybooks.com");
 
   // ============================================================
@@ -613,7 +625,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   // Header
   let y3 = PAGE_HEIGHT - 40;
   const headerSizeP3 = Math.min(15, PAGE_WIDTH * 0.035);
-  drawCenteredText(page3, "✨ DÉCOUVREZ NOS AUTRES UNIVERS ✨", y3, headerSizeP3, fontBold, grayDark, PAGE_WIDTH);
+  drawCenteredText(page3, "DECOUVREZ NOS AUTRES UNIVERS", y3, headerSizeP3, fontBold, grayDark, PAGE_WIDTH);
   y3 -= 30;
 
   // Dimensions proportionnelles des 2 cartes
@@ -638,7 +650,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   });
 
   // Emoji
-  page3.drawText("🌸", {
+  page3.drawText("[*]", {
     x: margin + 12,
     y: y3 - emojiSizeP3 - 10,
     size: emojiSizeP3,
@@ -658,8 +670,8 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   // Description (lignes courtes)
   let descY = y3 - titleSizeP3 - 36;
   const csLines = [
-    "Découvrez notre sélection de produits divers :",
-    "parfums, compléments, cosmétiques, accessoires...",
+    "Decouvrez notre selection de produits divers :",
+    "parfums, complements, cosmetiques, accessoires...",
     "Tout pour vous faire plaisir au quotidien."
   ];
   for (const line of csLines) {
@@ -677,7 +689,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     height: btnH3,
     color: white,
   });
-  page3.drawText("➡ Visiter CarryShop", {
+  page3.drawText(">> Visiter CarryShop", {
     x: margin + 22,
     y: y3 - cardH3 + 18,
     size: btnSizeP3,
@@ -700,7 +712,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   });
 
   // Emoji
-  page3.drawText("🎨", {
+  page3.drawText("[#]", {
     x: margin + 12,
     y: y3 - emojiSizeP3 - 10,
     size: emojiSizeP3,
@@ -720,9 +732,9 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   // Description
   descY = y3 - titleSizeP3 - 36;
   const ccLines = [
-    "Faites plaisir à vos enfants avec de magnifiques",
-    "livres de coloriage et d'activités créatives !",
-    "Cadeau idéal pour les anniversaires & fêtes."
+    "Faites plaisir a vos enfants avec de magnifiques",
+    "livres de coloriage et d'activites creatives !",
+    "Cadeau ideal pour les anniversaires & fetes."
   ];
   for (const line of ccLines) {
     page3.drawText(line, { x: margin + 12, y: descY, size: descSizeP3, font: fontRegular, color: white });
@@ -737,7 +749,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     height: btnH3,
     color: white,
   });
-  page3.drawText("➡ Visiter CarryColor", {
+  page3.drawText(">> Visiter CarryColor", {
     x: margin + 22,
     y: y3 - cardH3 + 18,
     size: btnSizeP3,
@@ -749,7 +761,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   addLink(page3, margin, y3 - cardH3, cardW3, cardH3, "https://carrybooks.com/carrycolor");
 
   // Footer page 3
-  drawCenteredText(page3, "Merci pour votre confiance — CarryBooks", 25, 9, fontItalic, grayMid, PAGE_WIDTH);
+  drawCenteredText(page3, "Merci pour votre confiance - CarryBooks", 25, 9, fontItalic, grayMid, PAGE_WIDTH);
 
   console.log("[AD] ✅ 3 pages publicité ajoutées");
 }
