@@ -16422,10 +16422,16 @@ export default function App() {
           <div style={{ paddingBottom: 80 }}>
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
-                {/* 🌟 3 CARTES UNIVERS - format paysage compact */}
-                <div style={{ padding: "12px 12px 0" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-                    {/* Carte CARRYBOOKS - num�rique */}
+                {/* 🌟 3 CARTES UNIVERS - format paysage compact, responsive */}
+                <div style={{ padding: "10px 10px 0" }}>
+                  <div style={{ 
+                    display: "grid", 
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))", 
+                    gap: 6,
+                    width: "100%",
+                    boxSizing: "border-box"
+                  }}>
+                    {/* Carte CARRYBOOKS */}
                     <div 
                       onClick={() => {
                         window.scrollTo({ top: 600, behavior: "smooth" });
@@ -16433,7 +16439,7 @@ export default function App() {
                       style={{
                         background: "linear-gradient(135deg, #c9a84c 0%, #b8862d 100%)",
                         borderRadius: 10,
-                        padding: "12px 8px",
+                        padding: "12px 6px",
                         textAlign: "center",
                         cursor: "pointer",
                         boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
@@ -16443,22 +16449,19 @@ export default function App() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        minHeight: 95
+                        minHeight: 80,
+                        minWidth: 0,
+                        overflow: "hidden"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontSize: 22 }}>📚</span>
-                        <span style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5 }}>CARRYBOOKS</span>
-                      </div>
-                      <div style={{ fontSize: 9, opacity: 0.85, marginBottom: 5 }}>Livres numériques</div>
-                      <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.35)", padding: "2px 8px", borderRadius: 10 }}>
-                        {books.filter(b => b.product_type === 'numerique' || b.product_type === 'mixte' || !b.product_type).length}
-                      </div>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>📚</div>
+                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYBOOKS</div>
+                      <div style={{ fontSize: 9, opacity: 0.85, marginTop: 2 }}>Livres numériques</div>
                     </div>
 
-                    {/* Carte CARRYCOLOR - papier */}
+                    {/* Carte CARRYCOLOR */}
                     <div 
                       onClick={() => {
                         setPage("carrycolor");
@@ -16468,7 +16471,7 @@ export default function App() {
                       style={{
                         background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
                         borderRadius: 10,
-                        padding: "12px 8px",
+                        padding: "12px 6px",
                         textAlign: "center",
                         cursor: "pointer",
                         boxShadow: "0 3px 10px rgba(177,79,219,0.22)",
@@ -16478,22 +16481,19 @@ export default function App() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        minHeight: 95
+                        minHeight: 80,
+                        minWidth: 0,
+                        overflow: "hidden"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontSize: 22 }}>🎨</span>
-                        <span style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5 }}>CARRYCOLOR</span>
-                      </div>
-                      <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 5 }}>Livres papier</div>
-                      <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.3)", padding: "2px 8px", borderRadius: 10 }}>
-                        {books.filter(b => b.product_type === 'papier').length}
-                      </div>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>🎨</div>
+                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYCOLOR</div>
+                      <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Livres papier</div>
                     </div>
 
-                    {/* Carte CARRYSHOP - articles */}
+                    {/* Carte CARRYSHOP */}
                     <div 
                       onClick={() => {
                         setPage("carryshop");
@@ -16503,7 +16503,7 @@ export default function App() {
                       style={{
                         background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
                         borderRadius: 10,
-                        padding: "12px 8px",
+                        padding: "12px 6px",
                         textAlign: "center",
                         cursor: "pointer",
                         boxShadow: "0 3px 10px rgba(168,56,100,0.22)",
@@ -16513,42 +16513,42 @@ export default function App() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        minHeight: 95
+                        minHeight: 80,
+                        minWidth: 0,
+                        overflow: "hidden"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontSize: 22 }}>🌸</span>
-                        <span style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5 }}>CARRYSHOP</span>
-                      </div>
-                      <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 5 }}>Produits Divers</div>
-                      <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.3)", padding: "2px 8px", borderRadius: 10 }}>
-                        {books.filter(b => b.product_type === 'article').length}
-                      </div>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>🌸</div>
+                      <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYSHOP</div>
+                      <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Produits Divers</div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Bande slogan �l�gante */}
-                  <div style={{
-                    marginTop: 10,
-                    padding: "10px 14px",
-                    background: "linear-gradient(90deg, rgba(201,168,76,0.08) 0%, rgba(177,79,219,0.08) 50%, rgba(212,118,158,0.08) 100%)",
-                    border: "1px solid rgba(201,168,76,0.3)",
-                    borderRadius: 8,
-                    textAlign: "center"
+                {/* Bande slogan PLEINE LARGEUR (sans marge) */}
+                <div style={{
+                  marginTop: 10,
+                  marginBottom: 14,
+                  padding: "10px 14px",
+                  background: "linear-gradient(90deg, #c9a84c 0%, #b14fdb 50%, #d4769e 100%)",
+                  textAlign: "center",
+                  width: "100%",
+                  boxSizing: "border-box"
+                }}>
+                  <div style={{ 
+                    fontSize: 12, 
+                    color: "#fff", 
+                    fontWeight: 700, 
+                    letterSpacing: 1, 
+                    fontFamily: "Georgia, serif",
+                    fontStyle: "italic",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis"
                   }}>
-                    <div style={{ 
-                      fontSize: 11, 
-                      color: G.text, 
-                      fontWeight: 600, 
-                      letterSpacing: 1.5, 
-                      textTransform: "uppercase",
-                      fontFamily: "Georgia, serif",
-                      fontStyle: "italic"
-                    }}>
-                      ✨ 3 univers à explorer — Lire, colorier, se faire plaisir ✨
-                    </div>
+                    ✨ 3 univers à explorer — Lire, colorier, se faire plaisir ✨
                   </div>
                 </div>
 
