@@ -12412,8 +12412,9 @@ export default function App() {
   // 🍞 Toast de notification (confirmation ajout panier, etc.)
   const [toast, setToast] = useState(null);  // { message, type: "success"|"error" }
   function showToast(message, type = "success") {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 2500);
+    console.log("🍞 [TOAST]", type, message);  // Debug
+    setToast({ message, type, id: Date.now() });
+    setTimeout(() => setToast(null), 4000);  // 4 secondes au lieu de 2.5
   }
 
   // 🛒 CHECKOUT PANIER (multi-articles)
@@ -16246,29 +16247,31 @@ export default function App() {
         </div>
       </nav>
 
-      {/* 🍞 TOAST DE NOTIFICATION */}
+      {/* 🍞 TOAST DE NOTIFICATION - en bas pour �tre toujours visible */}
       {toast && (
-        <div style={{
-          position: "fixed",
-          top: 80,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 9999,
-          background: toast.type === "success" ? "#16a34a" : "#dc2626",
-          color: "#fff",
-          border: "2px solid " + (toast.type === "success" ? "#15803d" : "#b91c1c"),
-          padding: "14px 24px",
-          borderRadius: 10,
-          fontSize: 14,
-          fontWeight: "bold",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
-          maxWidth: "92vw",
-          minWidth: 240,
-          textAlign: "center",
-          animation: "slideDownIn 0.3s ease-out"
-        }}>
+        <div 
+          key={toast.id}
+          style={{
+            position: "fixed",
+            bottom: 30,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 99999,
+            background: toast.type === "success" ? "#16a34a" : "#dc2626",
+            color: "#fff",
+            border: "3px solid " + (toast.type === "success" ? "#15803d" : "#b91c1c"),
+            padding: "16px 28px",
+            borderRadius: 12,
+            fontSize: 15,
+            fontWeight: "bold",
+            boxShadow: "0 12px 30px rgba(0,0,0,0.5)",
+            maxWidth: "92vw",
+            minWidth: 280,
+            textAlign: "center",
+            animation: "slideUpIn 0.4s ease-out"
+          }}>
           {toast.message}
-          <style>{`@keyframes slideDownIn { from{opacity:0; transform:translate(-50%, -20px)} to{opacity:1; transform:translate(-50%, 0)} }`}</style>
+          <style>{`@keyframes slideUpIn { from{opacity:0; transform:translate(-50%, 30px)} to{opacity:1; transform:translate(-50%, 0)} }`}</style>
         </div>
       )}
 
