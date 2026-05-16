@@ -480,21 +480,31 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   // R�cup�rer TOUS les livres num�riques payants
   let allPayBooks = [];
   try {
-    const { data: allBooks } = await supabase
+    console.log("[AD] R�cup�ration livres depuis Supabase...");
+    // Requ�te minimale : juste les livres avec prix > 0
+    const { data: allBooks, error } = await supabase
       .from("books")
-      .select("id, title, author, price")
-      .neq("id", currentBookId || 0)
-      .or("product_type.is.null,product_type.eq.digital")
-      .eq("is_active", true)
+      .select("id, title, author, price, product_type")
       .gt("price", 0)
       .order("title", { ascending: true })
-      .limit(80);
+      .limit(100);
 
-    if (allBooks && allBooks.length > 0) {
-      allPayBooks = allBooks;
+    if (error) {
+      console.error("[AD] Erreur Supabase:", error);
+    } else {
+      console.log("[AD] " + (allBooks?.length || 0) + " livres re�us avant filtrage");
+      // Filtrer c�t� JavaScript
+      allPayBooks = (allBooks || []).filter(b => {
+        // Exclure le livre actuel
+        if (b.id === currentBookId) return false;
+        // Si product_type est d�fini, on garde seulement digital ou null/undefined
+        if (b.product_type && b.product_type !== "digital") return false;
+        return true;
+      });
+      console.log("[AD] " + allPayBooks.length + " livres apr�s filtrage");
     }
   } catch (e) {
-    console.warn("[AD] Impossible de r�cup�rer les livres:", e);
+    console.warn("[AD] Exception r�cup�ration livres:", e.message);
   }
 
   // Si pas de livres, message simple
@@ -507,41 +517,74 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     const marginLeft = margin;
     const linkLabel = " - Telecharger ici";
     const maxLines = Math.floor((y2 - 60) / lineHeight);
+    console.log("[AD] Affichage liste : maxLines=" + maxLines + ", livres=" + allPayBooks.length);
 
+    // Sanitizer agressif : enlever TOUT caract�re non latin-1 standard
+    function safeText(s) {
+      if (!s) return "";
+      return String(s)
+        // Apostrophes typo -> simple
+        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+        // Guillemets typo -> simple
+        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+        // Tirets longs -> tiret simple
+        .replace(/[\u2010-\u2015]/g, "-")
+        // Espaces unicode -> espace simple
+        .replace(/[\u00A0\u2000-\u200B\u202F\u205F\u3000]/g, " ")
+        // Emojis et symboles
+        .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+        .replace(/[\u{2600}-\u{27BF}]/gu, "")
+        // Garder seulement caract�res latin-1 (jusqu'� \u00FF)
+        .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "")
+        .trim();
+    }
+
+    let linesDrawn = 0;
     for (let i = 0; i < Math.min(allPayBooks.length, maxLines); i++) {
       const book = allPayBooks[i];
       const lineY = y2 - (i + 1) * lineHeight;
 
-      // Sanitize le titre (enlever emojis potentiels)
-      const title = sanitizeText(book.title || "Livre");
-      
-      // Dessiner le titre en noir
-      page2.drawText(title, {
-        x: marginLeft,
-        y: lineY,
-        size: fontSize,
-        font: fontBold,
-        color: grayDark,
-      });
+      try {
+        // Sanitize agressif du titre
+        const title = safeText(book.title || "Livre");
+        if (!title) continue;
+        
+        // Dessiner le titre en noir
+        page2.drawText(title, {
+          x: marginLeft,
+          y: lineY,
+          size: fontSize,
+          font: fontBold,
+          color: grayDark,
+        });
 
-      // Calculer position du "T�l�charger ici"
-      const titleW = fontBold.widthOfTextAtSize(title, fontSize);
-      const linkX = marginLeft + titleW;
+        // Calculer position du "Telecharger ici"
+        const titleW = fontBold.widthOfTextAtSize(title, fontSize);
+        const linkX = marginLeft + titleW;
 
-      // Dessiner "- Telecharger ici" en bleu cliquable
-      page2.drawText(linkLabel, {
-        x: linkX,
-        y: lineY,
-        size: fontSize,
-        font: fontBold,
-        color: blueColor,
-      });
+        // Dessiner "- Telecharger ici" en bleu cliquable
+        page2.drawText(linkLabel, {
+          x: linkX,
+          y: lineY,
+          size: fontSize,
+          font: fontBold,
+          color: blueColor,
+        });
 
-      // Lien cliquable sur le label "T�l�charger ici"
-      const linkW = fontBold.widthOfTextAtSize(linkLabel, fontSize);
-      const slug = (book.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-      addLink(page2, linkX - 2, lineY - 2, linkW + 4, fontSize + 4, "https://carrybooks.com/livre/" + slug);
+        // Lien cliquable sur le label "Telecharger ici"
+        const linkW = fontBold.widthOfTextAtSize(linkLabel, fontSize);
+        const slug = (book.title || "").toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // enlever accents
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        addLink(page2, linkX - 2, lineY - 2, linkW + 4, fontSize + 4, "https://carrybooks.com/livre/" + slug);
+        
+        linesDrawn++;
+      } catch (drawErr) {
+        console.warn("[AD] Erreur dessin livre #" + i + " '" + book.title + "':", drawErr.message);
+        // Continue avec le suivant
+      }
     }
+    console.log("[AD] " + linesDrawn + " livres dessin�s sur " + allPayBooks.length);
 
     // Si trop de livres pour la page, indiquer combien
     if (allPayBooks.length > maxLines) {
