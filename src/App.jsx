@@ -218,12 +218,10 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // 4. Préparer les infos du client (avec fallbacks intelligents)
-    // Priorité : nom > email > téléphone > fallback générique
     const rawPhone = String(clientInfo.phone || "").trim();
     const rawEmail = String(clientInfo.email || "").trim();
     const rawName = String(clientInfo.name || "").trim();
 
-    // Si pas de nom, on utilise email ou téléphone comme identité
     let clientName;
     if (rawName && rawName !== "Client CarryBooks") {
       clientName = rawName.substring(0, 50);
@@ -236,8 +234,56 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     }
 
     const clientEmail = rawEmail.substring(0, 60);
-    const clientPhone = rawPhone.substring(0, 20);
-    const purchaseDate = new Date().toLocaleDateString("fr-FR");
+    let clientPhone = rawPhone.substring(0, 20);
+
+    // 🔄 Si pas de t�l�phone fourni, essayer de le r�cup�rer depuis Supabase
+    if (!clientPhone && clientInfo.userId && clientInfo.bookId) {
+      try {
+        const { data: purchaseData } = await supabase
+          .from("purchases")
+          .select("phone")
+          .eq("user_id", clientInfo.userId)
+          .eq("book_id", clientInfo.bookId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (purchaseData?.phone) {
+          clientPhone = String(purchaseData.phone).substring(0, 20);
+        }
+      } catch (e) {
+        // Si pas trouvé dans purchases, essayer guest_purchases
+        try {
+          const { data: guestData } = await supabase
+            .from("guest_purchases")
+            .select("phone")
+            .eq("book_id", clientInfo.bookId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          if (guestData?.phone) {
+            clientPhone = String(guestData.phone).substring(0, 20);
+          }
+        } catch (e2) { /* silent */ }
+      }
+    }
+
+    // Formater le t�l�phone en groupes de 3 chiffres (ex: 6 55 88 71 18)
+    function formatPhone(p) {
+      if (!p) return "";
+      const digits = p.replace(/\D/g, "").replace(/^237/, "");
+      if (digits.length === 9) {
+        return digits[0] + " " + digits.slice(1,3) + " " + digits.slice(3,5) + " " + digits.slice(5,7) + " " + digits.slice(7,9);
+      }
+      return p;
+    }
+    const formattedPhone = formatPhone(clientPhone);
+
+    // Date au format dd/mm/aa
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yy = String(now.getFullYear()).slice(-2);
+    const purchaseDate = dd + "/" + mm + "/" + yy;
     const siteUrl = "https://carrybooks.com";
 
     // 5. Ajouter le watermark sur CHAQUE page (UNIQUEMENT EN BAS)
@@ -245,10 +291,10 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     pages.forEach((page) => {
       const { width, height } = page.getSize();
 
-      // 🔻 EN BAS GAUCHE : "Acheté le [date] — Tél : [numéro]"
-      const bottomLeftText = clientPhone
-        ? "Achete le " + purchaseDate + " - Tel : " + clientPhone
-        : "Achete le " + purchaseDate;
+      // 🔻 EN BAS GAUCHE : "Le [date] - Tel : [numéro formaté]"
+      const bottomLeftText = formattedPhone
+        ? "Le " + purchaseDate + " - Tel : " + formattedPhone
+        : "Le " + purchaseDate;
       page.drawText(bottomLeftText, {
         x: 20,
         y: 12,
@@ -15617,6 +15663,8 @@ export default function App() {
                       name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
                       email: user?.email || "",
                       phone: user?.user_metadata?.phone || "",
+                      userId: user?.id,
+                      bookId: book.id,
                     }
                   );
                 } catch (e) {
@@ -16028,6 +16076,8 @@ export default function App() {
                               name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
                               email: user?.email || "",
                               phone: phoneNumber || user?.user_metadata?.phone || "",
+                              userId: user?.id,
+                              bookId: paymentBook?.id,
                             }
                           );
                         } catch (err) { alert("Erreur lors du téléchargement"); }
@@ -18851,6 +18901,8 @@ export default function App() {
                             name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
                             email: user?.email || "",
                             phone: phoneNumber || user?.user_metadata?.phone || "",
+                            userId: user?.id,
+                            bookId: paymentBook?.id,
                           }
                         );
                       } catch (err) { alert("Erreur lors du téléchargement"); }
