@@ -16422,87 +16422,132 @@ export default function App() {
           <div style={{ paddingBottom: 80 }}>
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
-                {/* 🌟 3 CARTES UNIVERS : CarryBooks (num�rique) + CarryColor (papier) + CarryShop (articles) */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "12px 12px 0" }}>
-                  {/* Carte CARRYBOOKS - num�rique */}
-                  <div 
-                    onClick={() => {
-                      window.scrollTo({ top: 600, behavior: "smooth" });
-                    }}
-                    style={{
-                      background: "linear-gradient(135deg, #c9a84c 0%, #b8862d 100%)",
-                      borderRadius: 12,
-                      padding: "16px 8px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                      transition: "transform 0.2s",
-                      color: "#1a1208"
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                  >
-                    <div style={{ fontSize: 32, marginBottom: 4 }}>📚</div>
-                    <div style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5, marginBottom: 2 }}>CARRYBOOKS</div>
-                    <div style={{ fontSize: 9, opacity: 0.85, marginBottom: 6 }}>Livres numériques</div>
-                    <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.3)", display: "inline-block", padding: "2px 8px", borderRadius: 10 }}>
-                      {books.filter(b => b.product_type === 'numerique' || b.product_type === 'mixte' || !b.product_type).length}
+                {/* 🌟 3 CARTES UNIVERS - format paysage compact */}
+                <div style={{ padding: "12px 12px 0" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+                    {/* Carte CARRYBOOKS - num�rique */}
+                    <div 
+                      onClick={() => {
+                        window.scrollTo({ top: 600, behavior: "smooth" });
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #c9a84c 0%, #b8862d 100%)",
+                        borderRadius: 10,
+                        padding: "12px 8px",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
+                        transition: "transform 0.2s",
+                        color: "#1a1208",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 95
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontSize: 22 }}>📚</span>
+                        <span style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5 }}>CARRYBOOKS</span>
+                      </div>
+                      <div style={{ fontSize: 9, opacity: 0.85, marginBottom: 5 }}>Livres numériques</div>
+                      <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.35)", padding: "2px 8px", borderRadius: 10 }}>
+                        {books.filter(b => b.product_type === 'numerique' || b.product_type === 'mixte' || !b.product_type).length}
+                      </div>
+                    </div>
+
+                    {/* Carte CARRYCOLOR - papier */}
+                    <div 
+                      onClick={() => {
+                        setPage("carrycolor");
+                        setSearchQuery("");
+                        window.scrollTo(0, 0);
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
+                        borderRadius: 10,
+                        padding: "12px 8px",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 3px 10px rgba(177,79,219,0.22)",
+                        transition: "transform 0.2s",
+                        color: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 95
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontSize: 22 }}>🎨</span>
+                        <span style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5 }}>CARRYCOLOR</span>
+                      </div>
+                      <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 5 }}>Livres papier</div>
+                      <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.3)", padding: "2px 8px", borderRadius: 10 }}>
+                        {books.filter(b => b.product_type === 'papier').length}
+                      </div>
+                    </div>
+
+                    {/* Carte CARRYSHOP - articles */}
+                    <div 
+                      onClick={() => {
+                        setPage("carryshop");
+                        setSearchQuery("");
+                        window.scrollTo(0, 0);
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
+                        borderRadius: 10,
+                        padding: "12px 8px",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 3px 10px rgba(168,56,100,0.22)",
+                        transition: "transform 0.2s",
+                        color: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 95
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontSize: 22 }}>🌸</span>
+                        <span style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5 }}>CARRYSHOP</span>
+                      </div>
+                      <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 5 }}>Produits Divers</div>
+                      <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.3)", padding: "2px 8px", borderRadius: 10 }}>
+                        {books.filter(b => b.product_type === 'article').length}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Carte CARRYCOLOR - livres papier */}
-                  <div 
-                    onClick={() => {
-                      setPage("carrycolor");
-                      setSearchQuery("");
-                      window.scrollTo(0, 0);
-                    }}
-                    style={{
-                      background: "linear-gradient(135deg, #4f9cf9 0%, #b14fdb 50%, #f95397 100%)",
-                      borderRadius: 12,
-                      padding: "16px 8px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(177,79,219,0.25)",
-                      transition: "transform 0.2s",
-                      color: "#fff"
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                  >
-                    <div style={{ fontSize: 32, marginBottom: 4 }}>🎨</div>
-                    <div style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5, marginBottom: 2 }}>CARRYCOLOR</div>
-                    <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 6 }}>Livres papier</div>
-                    <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.25)", display: "inline-block", padding: "2px 8px", borderRadius: 10 }}>
-                      {books.filter(b => b.product_type === 'papier').length}
-                    </div>
-                  </div>
-
-                  {/* Carte CARRYSHOP - articles beaut�/bien-�tre */}
-                  <div 
-                    onClick={() => {
-                      setPage("carryshop");
-                      setSearchQuery("");
-                      window.scrollTo(0, 0);
-                    }}
-                    style={{
-                      background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)",
-                      borderRadius: 12,
-                      padding: "16px 8px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(168,56,100,0.25)",
-                      transition: "transform 0.2s",
-                      color: "#fff"
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                  >
-                    <div style={{ fontSize: 32, marginBottom: 4 }}>🌸</div>
-                    <div style={{ fontSize: 12, fontWeight: "bold", letterSpacing: 0.5, marginBottom: 2 }}>CARRYSHOP</div>
-                    <div style={{ fontSize: 9, opacity: 0.95, marginBottom: 6 }}>Beauté</div>
-                    <div style={{ fontSize: 9, fontWeight: "bold", background: "rgba(255,255,255,0.25)", display: "inline-block", padding: "2px 8px", borderRadius: 10 }}>
-                      {books.filter(b => b.product_type === 'article').length}
+                  {/* Bande slogan �l�gante */}
+                  <div style={{
+                    marginTop: 10,
+                    padding: "10px 14px",
+                    background: "linear-gradient(90deg, rgba(201,168,76,0.08) 0%, rgba(177,79,219,0.08) 50%, rgba(212,118,158,0.08) 100%)",
+                    border: "1px solid rgba(201,168,76,0.3)",
+                    borderRadius: 8,
+                    textAlign: "center"
+                  }}>
+                    <div style={{ 
+                      fontSize: 11, 
+                      color: G.text, 
+                      fontWeight: 600, 
+                      letterSpacing: 1.5, 
+                      textTransform: "uppercase",
+                      fontFamily: "Georgia, serif",
+                      fontStyle: "italic"
+                    }}>
+                      ✨ 3 univers à explorer — Lire, colorier, se faire plaisir ✨
                     </div>
                   </div>
                 </div>
@@ -17156,15 +17201,15 @@ export default function App() {
               }}>
                 <div style={{ fontSize: 48, marginBottom: 8 }}>🌸</div>
                 <div style={{ fontSize: 24, fontWeight: "bold", letterSpacing: 2, marginBottom: 6 }}>CARRYSHOP</div>
-                <div style={{ fontSize: 13, opacity: 0.95, marginBottom: 4 }}>Beauté & Bien-être</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>Parfums • Compléments • Cosmétiques</div>
+                <div style={{ fontSize: 13, opacity: 0.95, marginBottom: 4 }}>Produits Divers</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>Parfums • Compléments • Cosmétiques • Accessoires</div>
               </div>
 
-              {/* Recherche CarryGoo */}
+              {/* Recherche CarryShop */}
               <div style={{ position: "relative", marginBottom: 14 }}>
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher un produit beauté..."
+                  placeholder="Rechercher un produit..."
                   style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
