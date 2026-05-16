@@ -16451,7 +16451,8 @@ export default function App() {
                         justifyContent: "center",
                         minHeight: 80,
                         minWidth: 0,
-                        overflow: "hidden"
+                        overflow: "hidden",
+                        position: "relative"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
@@ -16459,6 +16460,16 @@ export default function App() {
                       <div style={{ fontSize: 22, marginBottom: 4 }}>📚</div>
                       <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYBOOKS</div>
                       <div style={{ fontSize: 9, opacity: 0.85, marginTop: 2 }}>Livres numériques</div>
+                      {/* Indicateur de clic : chevron anim� en haut � droite */}
+                      <div style={{ 
+                        position: "absolute", 
+                        top: 6, 
+                        right: 8, 
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        opacity: 0.6,
+                        animation: "pulseArrow 1.8s ease-in-out infinite"
+                      }}>›</div>
                     </div>
 
                     {/* Carte CARRYCOLOR */}
@@ -16483,7 +16494,8 @@ export default function App() {
                         justifyContent: "center",
                         minHeight: 80,
                         minWidth: 0,
-                        overflow: "hidden"
+                        overflow: "hidden",
+                        position: "relative"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
@@ -16491,6 +16503,15 @@ export default function App() {
                       <div style={{ fontSize: 22, marginBottom: 4 }}>🎨</div>
                       <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYCOLOR</div>
                       <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Livres papier</div>
+                      <div style={{ 
+                        position: "absolute", 
+                        top: 6, 
+                        right: 8, 
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        opacity: 0.8,
+                        animation: "pulseArrow 1.8s ease-in-out infinite"
+                      }}>›</div>
                     </div>
 
                     {/* Carte CARRYSHOP */}
@@ -16515,7 +16536,8 @@ export default function App() {
                         justifyContent: "center",
                         minHeight: 80,
                         minWidth: 0,
-                        overflow: "hidden"
+                        overflow: "hidden",
+                        position: "relative"
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
@@ -16523,14 +16545,25 @@ export default function App() {
                       <div style={{ fontSize: 22, marginBottom: 4 }}>🌸</div>
                       <div style={{ fontSize: 11, fontWeight: "bold", letterSpacing: 0.5, whiteSpace: "nowrap" }}>CARRYSHOP</div>
                       <div style={{ fontSize: 9, opacity: 0.95, marginTop: 2 }}>Produits Divers</div>
+                      <div style={{ 
+                        position: "absolute", 
+                        top: 6, 
+                        right: 8, 
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        opacity: 0.8,
+                        animation: "pulseArrow 1.8s ease-in-out infinite"
+                      }}>›</div>
                     </div>
                   </div>
+                  {/* Animation du chevron */}
+                  <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
                 </div>
 
                 {/* Bande slogan PLEINE LARGEUR (sans marge) */}
                 <div style={{
                   marginTop: 10,
-                  marginBottom: 14,
+                  marginBottom: 0,
                   padding: "10px 14px",
                   background: "linear-gradient(90deg, #c9a84c 0%, #b14fdb 50%, #d4769e 100%)",
                   textAlign: "center",
@@ -16566,7 +16599,8 @@ export default function App() {
                           {book.cover
                             ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
-                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(245,240,232,0.7) 70%, " + G.bg + " 100%)" }} />
+                          {/* Gradient bas seulement (image visible en haut, coll�e � la bande) */}
+                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(245,240,232,0.7) 85%, " + G.bg + " 100%)" }} />
                         </div>
                       ))}
                       <div style={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
