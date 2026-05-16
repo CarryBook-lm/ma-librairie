@@ -3298,19 +3298,13 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <path d="M 75 66 Q 80 64 86 66" stroke="#1a0e08" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
         <path d="M 52 73 Q 59 77 66 73" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
         <path d="M 74 73 Q 81 77 88 73" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-        <line x1="52" y1="73" x2="49" y2="70" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="60" y1="77" x2="60" y2="73" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="80" y1="77" x2="80" y2="73" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
-        <line x1="88" y1="73" x2="91" y2="70" stroke="#1a0e08" strokeWidth="1" strokeLinecap="round"/>
         <path d="M 70 79 Q 67 88 70 93 Q 73 88 70 79" fill="#a87560" opacity="0.4"/>
         <path d="M 62 100 Q 70 103 78 100 Q 75 97 70 98 Q 65 97 62 100 Z" fill="#c54a5e"/>
         <circle cx="50" cy="78" r="2" fill="#fff" opacity="0.85"/>
         <circle cx="90" cy="78" r="2" fill="#fff" opacity="0.85"/>
         <circle cx="55" cy="92" r="1.5" fill="#fff" opacity="0.75"/>
         <circle cx="85" cy="92" r="1.5" fill="#fff" opacity="0.75"/>
-        <circle cx="70" cy="62" r="1.5" fill="#fff" opacity="0.7"/>
         <path d="M 22 32 L 24 36 L 28 38 L 24 40 L 22 44 L 20 40 L 16 38 L 20 36 Z" fill="#e7407a" opacity="0.85"/>
-        <path d="M 116 28 L 117 31 L 120 32 L 117 33 L 116 36 L 115 33 L 112 32 L 115 31 Z" fill="#e7407a" opacity="0.7"/>
       </svg>
     );
   }
@@ -3327,7 +3321,6 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <rect x="58" y="28" width="24" height="14" rx="2" fill="#b0bec5"/>
         <path d="M 48 42 L 92 42 Q 96 42 96 46 L 96 108 Q 96 116 88 116 L 52 116 Q 44 116 44 108 L 44 46 Q 44 42 48 42 Z" fill="#4db6ac"/>
         <path d="M 86 50 Q 90 70 88 100" stroke="#80cbc4" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7"/>
-        <path d="M 52 50 Q 50 70 52 95" stroke="#26a69a" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5"/>
         <path d="M 70 65 Q 64 75 70 84 Q 76 75 70 65 Z" fill="#fff" opacity="0.95"/>
       </svg>
     );
@@ -3335,46 +3328,23 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
 
   function HairIllustration() {
     return (
-      <svg viewBox="0 0 140 140" width="100%" height="100%" style={{ display: "block" }}>
-        <path d="M 18 26 L 19 29 L 22 30 L 19 31 L 18 34 L 17 31 L 14 30 L 17 29 Z" fill="#9966cc" opacity="0.8"/>
-        <path d="M 120 30 L 121 32 L 123 33 L 121 34 L 120 36 L 119 34 L 117 33 L 119 32 Z" fill="#9966cc" opacity="0.7"/>
-        <ellipse cx="70" cy="52" rx="48" ry="38" fill="#3d1f5e"/>
-        <circle cx="32" cy="48" r="7" fill="#4a2870"/>
-        <circle cx="40" cy="32" r="7" fill="#4a2870"/>
-        <circle cx="54" cy="22" r="7" fill="#4a2870"/>
-        <circle cx="70" cy="18" r="7" fill="#4a2870"/>
-        <circle cx="86" cy="22" r="7" fill="#4a2870"/>
-        <circle cx="100" cy="32" r="7" fill="#4a2870"/>
-        <circle cx="108" cy="48" r="7" fill="#4a2870"/>
-        <circle cx="28" cy="62" r="6" fill="#4a2870"/>
-        <circle cx="112" cy="62" r="6" fill="#4a2870"/>
-        <circle cx="36" cy="76" r="6" fill="#4a2870"/>
-        <circle cx="104" cy="76" r="6" fill="#4a2870"/>
-        <circle cx="46" cy="28" r="3" fill="#6e44a3" opacity="0.7"/>
-        <circle cx="64" cy="20" r="3" fill="#6e44a3" opacity="0.7"/>
-        <circle cx="80" cy="20" r="3" fill="#6e44a3" opacity="0.7"/>
-        <circle cx="94" cy="28" r="3" fill="#6e44a3" opacity="0.7"/>
-        <ellipse cx="70" cy="78" rx="22" ry="26" fill="#a87056"/>
-        <ellipse cx="70" cy="68" rx="17" ry="7" fill="#c08465" opacity="0.5"/>
-        <path d="M 56 72 Q 61 70 65 72" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-        <path d="M 75 72 Q 79 70 84 72" stroke="#1a0e08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-        <path d="M 54 80 Q 60 83 66 80" stroke="#1a0e08" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M 74 80 Q 80 83 86 80" stroke="#1a0e08" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M 70 84 Q 68 92 70 95 Q 72 92 70 84" fill="#8a5a44" opacity="0.4"/>
-        <path d="M 62 100 Q 70 104 78 100 Q 75 97 70 99 Q 65 97 62 100 Z" fill="#b8425a"/>
-        <circle cx="48" cy="82" r="2.5" fill="#9966cc"/>
-        <circle cx="92" cy="82" r="2.5" fill="#9966cc"/>
-        <circle cx="48" cy="90" r="4" fill="#3d1f5e"/>
-        <circle cx="92" cy="90" r="4" fill="#3d1f5e"/>
-      </svg>
+      <div style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 56,
+        lineHeight: 1
+      }}>
+        💇🏾‍♀️
+      </div>
     );
   }
 
   function ScaleIllustration() {
     return (
       <svg viewBox="0 0 140 140" width="100%" height="100%" style={{ display: "block" }}>
-        <path d="M 18 100 Q 8 92 14 78 Q 26 84 24 102 Z" fill="#7fb89a" opacity="0.7"/>
-        <path d="M 122 100 Q 132 92 126 78 Q 114 84 116 102 Z" fill="#7fb89a" opacity="0.7"/>
         <rect x="68" y="36" width="4" height="68" fill="#1a6b5b"/>
         <circle cx="70" cy="34" r="3.5" fill="#1a6b5b"/>
         <rect x="22" y="48" width="96" height="3" fill="#1a6b5b" rx="1.5"/>
@@ -3386,9 +3356,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <ellipse cx="30" cy="71" rx="14" ry="3.5" fill="#1a6b5b"/>
         <ellipse cx="110" cy="71" rx="14" ry="3.5" fill="#1a6b5b"/>
         <circle cx="30" cy="64" r="6" fill="#4db6ac"/>
-        <path d="M 30 58 Q 33 56 34 54" stroke="#5d8c4f" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
         <circle cx="110" cy="64" r="6" fill="#4db6ac"/>
-        <path d="M 110 58 Q 113 56 114 54" stroke="#5d8c4f" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
         <rect x="58" y="104" width="24" height="4" fill="#1a6b5b" rx="1"/>
         <path d="M 50 108 L 90 108 L 86 116 L 54 116 Z" fill="#1a6b5b"/>
       </svg>
@@ -3415,7 +3383,6 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
       return (
         <svg width="48" height="100%" viewBox="0 0 60 140" style={{ position: "absolute", right: 0, top: 0, height: "100%", opacity: 0.4, pointerEvents: "none" }}>
           <path d="M 50 18 Q 25 35 42 55 Q 55 70 30 85" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>
-          <path d="M 38 35 Q 28 50 42 60" stroke={color} strokeWidth="1.5" fill="none" opacity="0.7" strokeLinecap="round"/>
         </svg>
       );
     }
@@ -3436,61 +3403,45 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
       title: "Beauté Faciale",
       line1: "Diagnostic facial et",
       line2: "routine personnalisée",
-      bg: "#f6d4dc",
-      circleBg: "#fce4ea",
-      accent: "#d63384",
-      btnBg: "#e7407a",
-      Illustration: FaceIllustration,
-      decoration: "star",
-      available: true,
-      action: startFacial
+      bg: "#f6d4dc", circleBg: "#fce4ea",
+      accent: "#d63384", btnBg: "#e7407a",
+      Illustration: FaceIllustration, decoration: "star",
+      available: true, action: startFacial
     },
     {
       id: "body",
       title: "Beauté Corporelle",
       line1: "Diagnostic corporel et",
       line2: "routine personnalisée",
-      bg: "#fbecd4",
-      circleBg: "#fef4e0",
-      accent: "#c9952a",
-      btnBg: "#d4a13a",
-      Illustration: BottleIllustration,
-      decoration: "leaves-gold",
-      available: true,
-      action: startBody
+      bg: "#fbecd4", circleBg: "#fef4e0",
+      accent: "#c9952a", btnBg: "#d4a13a",
+      Illustration: BottleIllustration, decoration: "leaves-gold",
+      available: true, action: startBody
     },
     {
       id: "hair",
       title: "Beauté Capillaire",
-      line1: "Cheveux crépus,",
-      line2: "croissance, routines",
-      bg: "#e8dff5",
-      circleBg: "#f1ebfa",
-      accent: "#9966cc",
-      btnBg: "#a378ce",
-      Illustration: HairIllustration,
-      decoration: "swirls",
-      available: true,
-      action: startHair
+      line1: "Cheveux naturels et",
+      line2: "routine personnalisée",
+      bg: "#e8dff5", circleBg: "#f1ebfa",
+      accent: "#9966cc", btnBg: "#a378ce",
+      Illustration: HairIllustration, decoration: "swirls",
+      available: true, action: startHair
     },
     {
       id: "weight",
       title: "Santé et Poids",
       line1: "Plan nutrition",
       line2: "personnalisé",
-      bg: "#d6e8de",
-      circleBg: "#e5f0eb",
-      accent: "#1a6b5b",
-      btnBg: "#1e7561",
-      Illustration: ScaleIllustration,
-      decoration: "leaves-green",
-      available: true,
-      action: startLine
+      bg: "#d6e8de", circleBg: "#e5f0eb",
+      accent: "#1a6b5b", btnBg: "#1e7561",
+      Illustration: ScaleIllustration, decoration: "leaves-green",
+      available: true, action: startLine
     }
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fafafa", padding: "0 0 80px" }}>
+    <div style={{ minHeight: "100vh", background: "#fafafa", padding: "0 0 80px", textAlign: "left" }}>
       {/* Hero CarryCare */}
       <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5e1e6 100%)", padding: "26px 16px 32px", textAlign: "center", position: "relative", borderBottom: "1px solid " + CC.border }}>
         <button onClick={() => setPage("quiz")} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
@@ -3499,20 +3450,16 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <div style={{ fontSize: 13, color: CC.textFaint, fontStyle: "italic" }}>Ton diagnostic personnalisé · Beauté & Santé</div>
       </div>
 
-      {/* Carte "Mes résultats" */}
-      <div style={{ padding: "20px 16px 0" }}>
+      {/* Carte Mes résultats */}
+      <div style={{ padding: "20px 16px 0", textAlign: "left" }}>
         <div onClick={() => setPage("myResults")} style={{
-          background: "#fff",
-          borderRadius: 18,
-          padding: "16px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
+          background: "#fff", borderRadius: 18, padding: "16px",
+          cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
           boxShadow: "0 4px 14px rgba(126,87,194,0.10)",
-          border: "1px solid rgba(126,87,194,0.10)"
+          border: "1px solid rgba(126,87,194,0.10)",
+          textAlign: "left"
         }}>
-          <div style={{ position: "relative", width: 48, height: 48, flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, flexShrink: 0 }}>
             <svg viewBox="0 0 56 56" width="48" height="48">
               <path d="M 8 14 L 9 17 L 12 18 L 9 19 L 8 22 L 7 19 L 4 18 L 7 17 Z" fill="#9d7fff" opacity="0.7"/>
               <path d="M 46 8 L 47 11 L 50 12 L 47 13 L 46 16 L 45 13 L 42 12 L 45 11 Z" fill="#9d7fff" opacity="0.6"/>
@@ -3523,9 +3470,9 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
               <path d="M 18 22 L 22 30 L 28 48" fill="#b8a3ff" opacity="0.6"/>
             </svg>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: "bold", color: "#2d1b4e", fontFamily: "Georgia, serif", marginBottom: 2, lineHeight: 1.1 }}>Mes résultats</div>
-            <div style={{ fontSize: 11, color: "#6b5b8c", lineHeight: 1.3 }}>Retrouvez tous vos diagnostics passés</div>
+          <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: "#2d1b4e", fontFamily: "Georgia, serif", marginBottom: 2, lineHeight: 1.1, textAlign: "left" }}>Mes résultats</div>
+            <div style={{ fontSize: 11, color: "#6b5b8c", lineHeight: 1.3, textAlign: "left" }}>Retrouvez tous vos diagnostics passés</div>
           </div>
           <div style={{
             background: "#7e57c2", color: "#fff", width: 36, height: 36, borderRadius: "50%",
@@ -3536,89 +3483,74 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         </div>
       </div>
 
-      {/* 4 cartes diagnostic — bouton Tester en bas-droite */}
-      <div style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* 4 cartes diagnostic */}
+      <div style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
         {quizCards.map(card => {
           const Illu = card.Illustration;
           return (
             <div key={card.id} onClick={() => card.available && card.action && card.action()} style={{
               background: card.bg,
               borderRadius: 20,
-              padding: "14px 12px 14px 12px",
+              padding: "14px 12px 12px 12px",
               cursor: card.available ? "pointer" : "default",
               position: "relative",
               overflow: "hidden",
               boxShadow: "0 3px 12px rgba(0,0,0,0.05)",
               opacity: card.available ? 1 : 0.7,
               display: "flex",
-              alignItems: "flex-start",
-              gap: 12,
-              minHeight: 126
+              flexDirection: "column",
+              gap: 8,
+              textAlign: "left"
             }}>
               <CardDecoration type={card.decoration} color={card.accent} />
 
-              {/* Cercle illustration */}
-              <div style={{
-                width: 88,
-                height: 88,
-                borderRadius: "50%",
-                background: card.circleBg,
-                flexShrink: 0,
-                position: "relative",
-                zIndex: 1,
-                overflow: "hidden",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-              }}>
-                <Illu />
-              </div>
-
-              {/* Bloc texte (toute la largeur libre, le bouton est en absolute) */}
-              <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1, paddingBottom: 4 }}>
+              {/* Ligne du haut : cercle + texte (à gauche) */}
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", textAlign: "left", position: "relative", zIndex: 1 }}>
+                {/* Cercle illustration */}
                 <div style={{
-                  fontSize: 17,
-                  fontWeight: "bold",
-                  color: card.accent,
-                  fontFamily: "Georgia, serif",
-                  marginBottom: 4,
-                  lineHeight: 1.1,
-                  letterSpacing: -0.3
-                }}>{card.title}</div>
-                <div style={{ width: 32, height: 3, background: card.accent, borderRadius: 2, marginBottom: 7, opacity: 0.85 }} />
-                <div style={{ fontSize: 12, color: "#2c2c2c", lineHeight: 1.3, fontWeight: 500, fontFamily: "Georgia, serif" }}>
-                  {card.line1}<br />
-                  {card.line2}
-                </div>
-              </div>
-
-              {/* Bouton Tester → en BAS À DROITE (absolute) */}
-              {card.available ? (
-                <div style={{
-                  position: "absolute",
-                  bottom: 12,
-                  right: 12,
-                  background: card.btnBg,
-                  color: "#fff",
-                  borderRadius: 20,
-                  padding: "8px 14px",
-                  fontSize: 12.5,
-                  fontWeight: "bold",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  zIndex: 2,
-                  boxShadow: "0 3px 8px rgba(0,0,0,0.15)",
-                  whiteSpace: "nowrap"
+                  width: 88, height: 88, borderRadius: "50%",
+                  background: card.circleBg, flexShrink: 0, overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
                 }}>
-                  Tester <span style={{ fontSize: 14 }}>→</span>
+                  <Illu />
                 </div>
-              ) : (
-                <div style={{
-                  position: "absolute", bottom: 12, right: 12,
-                  background: "rgba(255,255,255,0.8)", color: card.accent,
-                  borderRadius: 20, padding: "8px 14px",
-                  fontSize: 12, fontWeight: "bold", zIndex: 2
-                }}>Bientôt</div>
-              )}
+
+                {/* Bloc texte aligné à gauche */}
+                <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                  <div style={{
+                    fontSize: 17, fontWeight: "bold", color: card.accent,
+                    fontFamily: "Georgia, serif", marginBottom: 4,
+                    lineHeight: 1.1, letterSpacing: -0.3, textAlign: "left"
+                  }}>{card.title}</div>
+                  <div style={{ width: 32, height: 3, background: card.accent, borderRadius: 2, marginBottom: 7, opacity: 0.85 }} />
+                  <div style={{ fontSize: 12, color: "#2c2c2c", lineHeight: 1.3, fontWeight: 500, fontFamily: "Georgia, serif", textAlign: "left" }}>
+                    {card.line1}<br />
+                    {card.line2}
+                  </div>
+                </div>
+              </div>
+
+              {/* Ligne du bas : bouton Tester aligné à droite */}
+              <div style={{ display: "flex", justifyContent: "flex-end", position: "relative", zIndex: 2 }}>
+                {card.available ? (
+                  <div style={{
+                    background: card.btnBg, color: "#fff",
+                    borderRadius: 20, padding: "8px 16px",
+                    fontSize: 13, fontWeight: "bold",
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    boxShadow: "0 3px 8px rgba(0,0,0,0.15)",
+                    whiteSpace: "nowrap"
+                  }}>
+                    Tester <span style={{ fontSize: 14 }}>→</span>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: "rgba(255,255,255,0.8)", color: card.accent,
+                    borderRadius: 20, padding: "8px 14px",
+                    fontSize: 12, fontWeight: "bold"
+                  }}>Bientôt</div>
+                )}
+              </div>
             </div>
           );
         })}
