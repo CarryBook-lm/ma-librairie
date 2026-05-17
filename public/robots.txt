@@ -1,0 +1,9 @@
+# robots.txt pour CarryBooks
+User-agent: *
+Allow: /
+
+# Pas d'indexation des routes techniques
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://carrybooks.com/sitemap.xml
