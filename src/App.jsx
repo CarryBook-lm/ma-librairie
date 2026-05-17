@@ -13499,8 +13499,11 @@ export default function App() {
     }
 
     const newPath = buildPath(page, selectedBook);
-    if (window.location.pathname !== newPath) {
-      window.history.pushState({ page, bookId: selectedBook?.id }, "", newPath);
+    // 🎯 PRÉSERVER le query string (notamment ?ref= pour parrainage)
+    const currentSearch = window.location.search || "";
+    const newFullPath = newPath + currentSearch;
+    if (window.location.pathname + window.location.search !== newFullPath) {
+      window.history.pushState({ page, bookId: selectedBook?.id }, "", newFullPath);
     }
   }, [page, selectedBook]);
 
@@ -16198,6 +16201,9 @@ export default function App() {
             ← Retour {previousPage === "carryshop" ? "à CarryShop" : previousPage === "carrycolor" ? "à CarryColor" : ""}
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            {!user && (
+              <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+            )}
             <button onClick={() => shareBook(book)} style={{ background: "none", border: "none", color: G.textDim, fontSize: 20, cursor: "pointer" }}>🔗</button>
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
           </div>
