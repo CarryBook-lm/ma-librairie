@@ -333,16 +333,59 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   }
 
   // ============================================================
-  // 📄 PAGE(S) 2 : Liste des livres (pagination automatique)
+  // 📄 PAGE 2 : Pub CarryShop + CarryColor (image plein écran)
+  // ============================================================
+  try {
+    const pageFin = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+
+    // Charger image univers
+    const imgResponse = await fetch('/pdf-pub-univers.jpeg');
+    if (!imgResponse.ok) throw new Error("Image Univers manquante (status " + imgResponse.status + ")");
+    const imgBytes = await imgResponse.arrayBuffer();
+    const universImg = await pdfDoc.embedJpg(imgBytes);
+
+    // Image plein écran
+    const imgDims = universImg.scaleToFit(PAGE_WIDTH - 20, PAGE_HEIGHT - 30);
+    const xImg = (PAGE_WIDTH - imgDims.width) / 2;
+    const yImg = PAGE_HEIGHT - imgDims.height - 10;
+
+    pageFin.drawImage(universImg, {
+      x: xImg, y: yImg,
+      width: imgDims.width, height: imgDims.height
+    });
+
+    // Zones cliquables : CarryShop (haut) et CarryColor (bas)
+    // Layout : header (0-15%), CarryShop (15-55%), CarryColor (55-95%), pied (95-100%)
+    const zones = [
+      [0.03, 0.17, 0.97, 0.55, baseUrl + "/?go=carryshop"],
+      [0.03, 0.58, 0.97, 0.96, baseUrl + "/?go=carrycolor"],
+    ];
+
+    zones.forEach(function(zone) {
+      const x1 = zone[0], y1Top = zone[1], x2 = zone[2], y2Bottom = zone[3], url = zone[4];
+      const linkX = xImg + x1 * imgDims.width;
+      const linkW = (x2 - x1) * imgDims.width;
+      const linkY = yImg + imgDims.height - y2Bottom * imgDims.height;
+      const linkH = (y2Bottom - y1Top) * imgDims.height;
+      addLink(pageFin, linkX, linkY, linkW, linkH, url);
+    });
+
+  } catch (pageFinErr) {
+    console.error("[AD] Erreur page CarryShop+CarryColor:", pageFinErr);
+  }
+
+  // ============================================================
+  // 📄 PAGE(S) 3+ : Liste des livres (à la fin) (pagination automatique)
   // ============================================================
   let allPayBooks = [];
   try {
     const { data: allBooks } = await supabase
       .from("books")
-      .select("id, title, status, product_type, pdf_url")
+      .select("id, title, status, product_type, pdf_url, category")
       .eq("status", "actif")
       .neq("product_type", "article")
-      .order("created_at", { ascending: false });
+      .order("category", { ascending: true })
+      .order("title", { ascending: true });
 
     if (allBooks && allBooks.length > 0) {
       allPayBooks = allBooks.filter(function(b) {
@@ -428,18 +471,32 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
 
       if (title) {
         try {
+          // Titre en gras noir
           page2.drawText(title, {
             x: margin, y: yLine,
             size: fontSize, font: fontBold, color: grayDark,
           });
           const titleW = fontBold.widthOfTextAtSize(title, fontSize);
+          
+          // Catégorie en gris italique (entre titre et lien)
+          const catText = book.category ? " - " + safeText(book.category) : "";
+          let catW = 0;
+          if (catText) {
+            page2.drawText(catText, {
+              x: margin + titleW, y: yLine,
+              size: fontSize - 1, font: fontItalic, color: grayMid,
+            });
+            catW = fontItalic.widthOfTextAtSize(catText, fontSize - 1);
+          }
+          
+          // Lien "Telecharger ici"
           page2.drawText(linkLabel, {
-            x: margin + titleW, y: yLine,
+            x: margin + titleW + catW, y: yLine,
             size: fontSize, font: fontBold, color: blueColor,
           });
           const linkW = fontBold.widthOfTextAtSize(linkLabel, fontSize);
           const bookUrl = baseUrl + "/?book=" + slugify(book.title);
-          addLink(page2, margin + titleW - 2, yLine - 3, linkW + 4, fontSize + 6, bookUrl);
+          addLink(page2, margin + titleW + catW - 2, yLine - 3, linkW + 4, fontSize + 6, bookUrl);
         } catch (e) {
           console.warn("[AD] Skip livre:", book.title, e.message);
         }
@@ -471,48 +528,6 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
         size: 10, font: fontItalic, color: grayMid,
       });
     }
-  }
-
-  // ============================================================
-  // 📄 PAGE FINALE : Pub CarryShop + CarryColor (image plein écran)
-  // ============================================================
-  try {
-    const pageFin = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-
-    // Charger image univers
-    const imgResponse = await fetch('/pdf-pub-univers.jpeg');
-    if (!imgResponse.ok) throw new Error("Image Univers manquante (status " + imgResponse.status + ")");
-    const imgBytes = await imgResponse.arrayBuffer();
-    const universImg = await pdfDoc.embedJpg(imgBytes);
-
-    // Image plein écran
-    const imgDims = universImg.scaleToFit(PAGE_WIDTH - 20, PAGE_HEIGHT - 30);
-    const xImg = (PAGE_WIDTH - imgDims.width) / 2;
-    const yImg = PAGE_HEIGHT - imgDims.height - 10;
-
-    pageFin.drawImage(universImg, {
-      x: xImg, y: yImg,
-      width: imgDims.width, height: imgDims.height
-    });
-
-    // Zones cliquables : CarryShop (haut) et CarryColor (bas)
-    // Layout : header (0-15%), CarryShop (15-55%), CarryColor (55-95%), pied (95-100%)
-    const zones = [
-      [0.03, 0.17, 0.97, 0.55, baseUrl + "/?go=carryshop"],
-      [0.03, 0.58, 0.97, 0.96, baseUrl + "/?go=carrycolor"],
-    ];
-
-    zones.forEach(function(zone) {
-      const x1 = zone[0], y1Top = zone[1], x2 = zone[2], y2Bottom = zone[3], url = zone[4];
-      const linkX = xImg + x1 * imgDims.width;
-      const linkW = (x2 - x1) * imgDims.width;
-      const linkY = yImg + imgDims.height - y2Bottom * imgDims.height;
-      const linkH = (y2Bottom - y1Top) * imgDims.height;
-      addLink(pageFin, linkX, linkY, linkW, linkH, url);
-    });
-
-  } catch (pageFinErr) {
-    console.error("[AD] Erreur page CarryShop+CarryColor:", pageFinErr);
   }
 
   console.log("[AD] ✅ Pages publicité ajoutées (CarryCare + Liste " + (allPayBooks.length || 0) + " livres + Univers)");
@@ -578,7 +593,7 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
             .eq("book_id", clientInfo.bookId)
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
           if (purchaseData?.phone) {
             clientPhone = String(purchaseData.phone).substring(0, 20);
             console.log("[PHONE] ✓ Trouvé via purchases (livre précis)");
@@ -596,7 +611,7 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
             .not("phone", "is", null)
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
           if (anyPurchase?.phone) {
             clientPhone = String(anyPurchase.phone).substring(0, 20);
             console.log("[PHONE] ✓ Trouvé via purchases (tous livres)");
@@ -613,7 +628,7 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
             .eq("book_id", clientInfo.bookId)
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
           if (guestData?.phone) {
             clientPhone = String(guestData.phone).substring(0, 20);
             console.log("[PHONE] ✓ Trouvé via guest_purchases");
@@ -13106,7 +13121,7 @@ export default function App() {
             .from("books")
             .select("*")
             .eq("id", paymentBook.id)
-            .single();
+            .maybeSingle();
           if (!error && data) {
             setPaymentBook(data);
           }
@@ -13338,6 +13353,23 @@ export default function App() {
     return () => clearInterval(interval);
   }, [books]);
 
+  // 🎯 Ouverture automatique d'un livre depuis ?book=slug (lien PDF)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.__pendingBookSlug || books.length === 0) return;
+    const slug = window.__pendingBookSlug;
+    const slugify = (s) => (s || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .substring(0, 80);
+    const match = books.find(b => slugify(b.title) === slug);
+    if (match) {
+      window.__pendingBookSlug = null;
+      openBook(match);
+    }
+  }, [books]);
+
   useEffect(() => {
     const on = () => setIsOnline(true);
     const off = () => setIsOnline(false);
@@ -13549,27 +13581,34 @@ export default function App() {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
-    // 🎯 Routing simple depuis les PDFs téléchargés (paramètre ?go=)
+    // 🎯 Routing simple depuis les PDFs téléchargés (paramètre ?go= ou ?book=)
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const go = urlParams.get("go");
+      const bookSlug = urlParams.get("book");
+
       if (go) {
-        // Mapper les valeurs vers les pages internes
-        const routeMap = {
-          "carrycare": "quiz",
-          "carrycare-facial": "quiz",
-          "carrycare-body": "quiz",
-          "carrycare-hair": "quiz",
-          "carrycare-line": "quiz",
-          "carryshop": "carryshop",
-          "carrycolor": "carrycolor",
-        };
-        const targetPage = routeMap[go];
-        if (targetPage) {
-          setPage(targetPage);
-          // Nettoyer l'URL pour ne pas re-rediriger au refresh
-          window.history.replaceState(null, "", window.location.pathname);
+        // Routing vers CarryCare avec sous-page (diagnostic spécifique)
+        if (go.startsWith("carrycare")) {
+          setPage("carrycare");
+          if (go === "carrycare-facial") setCarryCarePage("facialQuiz");
+          else if (go === "carrycare-body") setCarryCarePage("bodyQuiz");
+          else if (go === "carrycare-hair") setCarryCarePage("hairQuiz");
+          else if (go === "carrycare-line") setCarryCarePage("lineQuiz");
+          else setCarryCarePage("home");
+        } else if (go === "carryshop") {
+          setPage("carryshop");
+        } else if (go === "carrycolor") {
+          setPage("carrycolor");
         }
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
+      // Routing ?book=slug → ouvrir directement la fiche livre
+      if (bookSlug) {
+        // Stocker le slug pour traitement après chargement des livres
+        window.__pendingBookSlug = bookSlug;
+        window.history.replaceState(null, "", window.location.pathname);
       }
     } catch (e) { /* silent */ }
 
@@ -13807,7 +13846,7 @@ export default function App() {
         phone_number: "237" + phone,
         operator: phone[1] === "5" || phone[1] === "0" ? "MTN" : "ORANGE",
         status: "pending"
-      }]).select().single();
+      }]).select().maybeSingle();
       if (wdErr) throw new Error(wdErr.message);
       // Appel CamPay pour faire le versement automatique
       const payRes = await fetch("/api/campay", {
@@ -14020,7 +14059,7 @@ export default function App() {
         .from("books")
         .select("id, content, images")
         .eq("id", book.id)
-        .single();
+        .maybeSingle();
       if (!error && data) {
         bookDetailsCache.current[book.id] = { content: data.content, images: data.images };
         return { ...book, content: data.content, images: data.images };
