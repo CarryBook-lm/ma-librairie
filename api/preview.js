@@ -1,13 +1,10 @@
 // =============================================================
 // 🎯 OPEN GRAPH PREVIEW - CarryBooks
 // Edge Function Vercel qui sert un beau HTML aux bots
-// (Facebook, WhatsApp, Twitter, Telegram, Google...)
-// Les humains sont redirigés vers l'app React.
 // =============================================================
 
 import { createClient } from "@supabase/supabase-js";
 
-// Liste des User-Agents de bots qui veulent l'aperçu OG
 const BOT_AGENTS = [
   "facebookexternalhit", "Facebot", "Twitterbot", "WhatsApp",
   "Slackbot", "TelegramBot", "LinkedInBot", "Pinterest",
@@ -55,7 +52,7 @@ export default async function handler(req, res) {
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-    let testResult = "Non testé (pas de credentials)";
+    let testResult = "Non teste (pas de credentials)";
     try {
       if (supabaseUrl && (serviceKey || anonKey)) {
         const sb = createClient(supabaseUrl, serviceKey || anonKey);
@@ -97,8 +94,6 @@ Detecte comme bot: ${isBotVisit}
   }
 
   // === BOT ? On lui sert le HTML avec OG meta tags ===
-  // ⚠️ Côté serveur Vercel, les variables VITE_* sont VIDES
-  // On utilise SUPABASE_SERVICE_ROLE_KEY (la même que campay.js)
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY 
     || process.env.SUPABASE_ANON_KEY 
@@ -122,7 +117,7 @@ Detecte comme bot: ${isBotVisit}
     console.error("Erreur Supabase preview:", e);
   }
 
-  // Fallback si livre non trouvé
+  // Fallback si livre non trouve
   if (!book) {
     const fallbackHtml = `<!DOCTYPE html>
 <html lang="fr">
@@ -131,24 +126,21 @@ Detecte comme bot: ${isBotVisit}
 <title>CarryBooks</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="CarryBooks">
-<meta property="og:description" content="CarryBooks - Ta librairie numerique camerounaise. Lis. Apprends. Evolue.">
+<meta property="og:description" content="CarryBooks - Ta librairie numerique camerounaise.">
 <meta property="og:image" content="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg">
 <meta property="og:url" content="https://carrybooks.com">
 <meta property="og:site_name" content="CarryBooks">
 <meta name="twitter:card" content="summary_large_image">
 </head>
-<body>
-<h1>CarryBooks</h1>
-<p>Decouvre tous nos livres et produits sur <a href="https://carrybooks.com">carrybooks.com</a></p>
-</body>
+<body><h1>CarryBooks</h1></body>
 </html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     res.status(200).send(fallbackHtml);
     return;
   }
 
-  // Meta tags OG personnalisés
+  // Meta tags OG personnalises
   const title = escapeHtml(book.title || "Livre CarryBooks");
   const author = escapeHtml(book.author || "CarryBooks");
   const rawDesc = book.summary
@@ -161,6 +153,7 @@ Detecte comme bot: ${isBotVisit}
   const priceLabel = book.price > 0 ? `${book.price.toLocaleString("fr-FR")} FCFA` : "Gratuit";
   const ogType = book.product_type === "article" ? "product" : "book";
 
+  // ⚠️ PAS DE meta http-equiv="refresh" car Facebook le suit et lit la page d'accueil !
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -189,7 +182,6 @@ Detecte comme bot: ${isBotVisit}
 <meta property="product:price:currency" content="XAF">
 <meta property="og:price:amount" content="${book.price || 0}">
 <meta property="og:price:currency" content="XAF">
-
 <meta property="book:author" content="${author}">
 
 <script type="application/ld+json">
@@ -209,8 +201,6 @@ Detecte comme bot: ${isBotVisit}
   }
 }
 </script>
-
-<meta http-equiv="refresh" content="0; url=https://carrybooks.com/?book=${encodeURIComponent(slug)}">
 </head>
 <body>
 <h1>${title}</h1>
@@ -223,6 +213,6 @@ Detecte comme bot: ${isBotVisit}
 </html>`;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   res.status(200).send(html);
 }
