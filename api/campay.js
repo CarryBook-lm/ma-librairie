@@ -38,10 +38,11 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
     }
     const referrerId = parrCodeRows[0].user_id;
 
-    // 3) Anti-auto-parrainage : refuser si le filleul est le parrain
-    if (userId && referrerId === userId) {
-      return { skipped: true, reason: "self_referral" };
-    }
+    // 3) Anti-auto-parrainage DÉSACTIVÉ : on autorise le parrain à utiliser son propre code
+    //    (Limité quand même au 1er achat seulement grâce au check ci-dessous)
+    // if (userId && referrerId === userId) {
+    //   return { skipped: true, reason: "self_referral" };
+    // }
 
     // 4) Vérifier que c'est bien le PREMIER achat du filleul
     // (pour user connecté : check purchases / pour guest : check guest_purchases par phone)
