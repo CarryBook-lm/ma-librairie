@@ -14127,7 +14127,11 @@ export default function App() {
   }
 
   function shareBook(book) {
-    const url = window.location.origin + "/livre/" + slugify(book.title);
+    let url = window.location.origin + "/livre/" + slugify(book.title);
+    // 🎁 Ajouter le code parrainage si le user en a un
+    if (referralCode) {
+      url += "?ref=" + referralCode;
+    }
     const text = "📚 Découvrez \"" + book.title + "\" par " + book.author + " sur CarryBooks !";
     if (navigator.share) {
       navigator.share({ title: book.title, text, url }).catch(() => {});
@@ -14298,7 +14302,11 @@ export default function App() {
   }
 
   function shareBook(book) {
-    const url = window.location.origin + "/livre/" + slugify(book.title);
+    let url = window.location.origin + "/livre/" + slugify(book.title);
+    // 🎁 Ajouter le code parrainage si le user en a un
+    if (referralCode) {
+      url += "?ref=" + referralCode;
+    }
     const text = "📚 Découvre « " + book.title + " » de " + book.author + " sur CarryBooks !\n" + url;
     if (navigator.share) {
       navigator.share({ title: book.title, text: "Découvre ce livre sur CarryBooks !", url });
