@@ -221,21 +221,13 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const fontItalic = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  // Couleurs CarryBooks
-  const gold = rgb(0.788, 0.659, 0.298);    // #c9a84c
-  const goldDark = rgb(0.722, 0.525, 0.176); // #b8862d
-  const purple = rgb(0.616, 0.306, 0.867);  // #9d4edd
-  const purpleDark = rgb(0.353, 0.094, 0.604); // #5a189a
-  const pink = rgb(0.831, 0.463, 0.620);    // #d4769e
-  const pinkDark = rgb(0.659, 0.220, 0.392); // #a83864
-  const blueColor = rgb(0.10, 0.36, 0.74);  // bleu lien
+  // Couleurs
+  const blueColor = rgb(0.10, 0.36, 0.74);
   const grayDark = rgb(0.15, 0.15, 0.15);
   const grayMid = rgb(0.40, 0.40, 0.40);
-  const grayLight = rgb(0.70, 0.70, 0.70);
-  const white = rgb(1, 1, 1);
-  const cream = rgb(0.98, 0.95, 0.90);
+  const purple = rgb(0.616, 0.306, 0.867);
 
-  // Helper : créer un lien cliquable sur une zone
+  // Helper : créer un lien cliquable
   function addLink(page, x, y, width, height, url) {
     try {
       const linkAnnotation = pdfDoc.context.register(
@@ -244,11 +236,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
           Subtype: "Link",
           Rect: [x, y, x + width, y + height],
           Border: [0, 0, 0],
-          A: {
-            Type: "Action",
-            S: "URI",
-            URI: PDFLib.PDFString.of(url),
-          },
+          A: { Type: "Action", S: "URI", URI: PDFLib.PDFString.of(url) },
         })
       );
       const annots = page.node.Annots() || pdfDoc.context.obj([]);
@@ -259,479 +247,275 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
     }
   }
 
-  // Helper : nettoyer texte (enlever emojis et caract�res unicode non support�s par Helvetica)
-  function sanitizeText(text) {
-    if (!text) return "";
-    return String(text)
-      // Enlever tous les emojis et caract�res unicode hors latin-1
-      .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")  // emojis
-      .replace(/[\u{2600}-\u{27BF}]/gu, "")    // symboles divers
-      .replace(/[\u{1F000}-\u{1F2FF}]/gu, "")  // autres symboles
-      .replace(/[\u{2000}-\u{206F}]/gu, " ")   // ponctuation g�n�rale
-      .trim();
-  }
-
-  // Helper : texte centré sur la page
-  function drawCenteredText(page, text, y, size, font, color, pageWidth) {
-    const w = font.widthOfTextAtSize(text, size);
-    page.drawText(text, {
-      x: (pageWidth - w) / 2,
-      y: y,
-      size: size,
-      font: font,
-      color: color,
-    });
-  }
-
-  // 📐 Détecter la taille des pages du PDF existant (au lieu d'A4 fixe)
+  // Détection taille des pages
   const existingPages = pdfDoc.getPages();
   let PAGE_WIDTH = 595;
   let PAGE_HEIGHT = 842;
   if (existingPages.length > 0) {
-    const firstPage = existingPages[0];
-    const size = firstPage.getSize();
+    const size = existingPages[0].getSize();
     PAGE_WIDTH = size.width;
     PAGE_HEIGHT = size.height;
   }
-  console.log("[AD] Taille des pages détectée :", PAGE_WIDTH, "x", PAGE_HEIGHT);
+  console.log("[AD] Taille pages :", PAGE_WIDTH, "x", PAGE_HEIGHT);
 
-  // Marges proportionnelles (5% de la largeur)
   const margin = Math.round(PAGE_WIDTH * 0.07);
+  const baseUrl = "https://carrybooks.com";
 
   // ============================================================
-  // 📄 PAGE 1 : Header + CarryCare (4 zones cliquables)
+  // 📄 PAGE 1 : Pub CarryCare (image plein écran + 4 zones cliquables + bandeau)
   // ============================================================
-  const page1 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  try {
+    const page1 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  // HEADER : "Plus de livres sur www.carrybooks.com"
-  let y = PAGE_HEIGHT - 40;
-  const prefix = "Plus de livres sur ";
-  const domain = "www.carrybooks.com";
-  const headerSize = 13;
-  const prefixW = fontRegular.widthOfTextAtSize(prefix, headerSize);
-  const domainW = fontBold.widthOfTextAtSize(domain, headerSize);
-  const totalW = prefixW + domainW;
-  const headerStartX = (PAGE_WIDTH - totalW) / 2;
+    // Charger l'image CarryCare
+    const imgResponse = await fetch('/pdf-pub-carrycare.jpeg');
+    if (!imgResponse.ok) throw new Error("Image CarryCare manquante (status " + imgResponse.status + ")");
+    const imgBytes = await imgResponse.arrayBuffer();
+    const carrycareImg = await pdfDoc.embedJpg(imgBytes);
 
-  page1.drawText(prefix, {
-    x: headerStartX,
-    y: y,
-    size: headerSize,
-    font: fontRegular,
-    color: grayDark,
-  });
-  page1.drawText(domain, {
-    x: headerStartX + prefixW,
-    y: y,
-    size: headerSize,
-    font: fontBold,
-    color: blueColor,
-  });
-  // Lien cliquable sur le domaine
-  addLink(page1, headerStartX + prefixW - 2, y - 3, domainW + 4, headerSize + 4, "https://www.carrybooks.com");
+    // Image plein écran avec marge en bas pour le bandeau
+    const imgDims = carrycareImg.scaleToFit(PAGE_WIDTH - 20, PAGE_HEIGHT - 60);
+    const xImg = (PAGE_WIDTH - imgDims.width) / 2;
+    const yImg = PAGE_HEIGHT - imgDims.height - 10;
 
-  // Saut de lignes (gros espace entre header et titre CarryCare)
-  y -= PAGE_HEIGHT * 0.08;
-
-  // Section CarryCare - Titre (taille adapt�e � la largeur)
-  const titleSize = Math.min(24, PAGE_WIDTH * 0.055);
-  drawCenteredText(page1, "DECOUVREZ CARRYCARE", y, titleSize, fontBold, purpleDark, PAGE_WIDTH);
-  y -= titleSize + 6;
-
-  // Trait décoratif
-  page1.drawLine({
-    start: { x: PAGE_WIDTH / 2 - 80, y: y + 4 },
-    end: { x: PAGE_WIDTH / 2 + 80, y: y + 4 },
-    thickness: 2,
-    color: purple,
-  });
-  y -= 16;
-
-  // Slogan accrocheur
-  const sloganSize = Math.min(13, PAGE_WIDTH * 0.030);
-  drawCenteredText(page1, "Votre Beaute. Votre Diagnostic. Vos Resultats.", y, sloganSize, fontBold, grayDark, PAGE_WIDTH);
-  y -= sloganSize + 14;
-
-  // Texte vendeur (3-4 lignes)
-  const argSize = Math.min(11, PAGE_WIDTH * 0.025);
-  const pitches = [
-    "Marre des produits qui ne fonctionnent pas sur vous ?",
-    "Decouvrez ce que VOTRE corps a vraiment besoin",
-    "grace a nos diagnostics personnalises bases sur",
-    "vos donnees uniques. Resultats clairs en 5 minutes.",
-  ];
-  for (const line of pitches) {
-    drawCenteredText(page1, line, y, argSize, fontRegular, grayMid, PAGE_WIDTH);
-    y -= argSize + 4;
-  }
-  y -= 10;
-
-  // Sous-titre invitation
-  drawCenteredText(page1, "Choisissez votre diagnostic ci-dessous :", y, argSize, fontItalic, purpleDark, PAGE_WIDTH);
-  y -= argSize + 18;
-
-  // 4 ZONES CLIQUABLES (2 colonnes × 2 lignes) - PROPORTIONNELLES
-  const cardGap = 12;
-  const cardWidth = (PAGE_WIDTH - margin * 2 - cardGap) / 2;
-  const cardHeight = Math.min(150, PAGE_HEIGHT * 0.18);
-  const cardsStartX = margin;
-
-  // 4 quiz avec chacun sa couleur distincte (URLs r�elles d�j� en place)
-  const quizzes = [
-    { title: "CORPS",          subtitle: "Diagnostic corporel", url: "https://carrybooks.com/diagnostic-corps",      color: rgb(0.616, 0.306, 0.867), colorDark: rgb(0.353, 0.094, 0.604) }, // Violet
-    { title: "VISAGE",         subtitle: "Diagnostic facial",   url: "https://carrybooks.com/diagnostic-facial",     color: rgb(0.957, 0.451, 0.671), colorDark: rgb(0.792, 0.224, 0.467) }, // Rose
-    { title: "CAPILLAIRE",     subtitle: "Diagnostic cheveux",  url: "https://carrybooks.com/diagnostic-capillaire", color: rgb(0.788, 0.659, 0.298), colorDark: rgb(0.541, 0.408, 0.118) }, // Doré
-    { title: "SANTE ET POIDS", subtitle: "Diagnostic minceur",  url: "https://carrybooks.com/garde-la-ligne",        color: rgb(0.310, 0.612, 0.980), colorDark: rgb(0.114, 0.380, 0.690) }, // Bleu
-  ];
-
-  for (let i = 0; i < 4; i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const cardX = cardsStartX + col * (cardWidth + cardGap);
-    const cardY = y - row * (cardHeight + cardGap) - cardHeight;
-
-    const q = quizzes[i];
-
-    // Fond de la carte avec la couleur sp�cifique du quiz
-    page1.drawRectangle({
-      x: cardX,
-      y: cardY,
-      width: cardWidth,
-      height: cardHeight,
-      color: q.color,
+    page1.drawImage(carrycareImg, {
+      x: xImg, y: yImg,
+      width: imgDims.width, height: imgDims.height
     });
-    // Bordure plus fonc�e
-    page1.drawRectangle({
-      x: cardX,
-      y: cardY,
-      width: cardWidth,
-      height: cardHeight,
-      borderColor: q.colorDark,
-      borderWidth: 2,
+
+    // 4 zones cliquables sur les 4 cartes diagnostic
+    // Coords en % de l'image (image originale 853x1280)
+    // Layout : header (0-37%), texte (37-47%), 4 cartes 2x2 (47-85%), bandeau (87-95%)
+    // [xPct1, yPctTop, xPct2, yPctBottom, url]
+    const cardZones = [
+      [0.04, 0.43, 0.50, 0.62, baseUrl + "/?go=carrycare-body"],     // CORPS (haut gauche)
+      [0.50, 0.43, 0.96, 0.62, baseUrl + "/?go=carrycare-facial"],   // VISAGE (haut droite)
+      [0.04, 0.63, 0.50, 0.82, baseUrl + "/?go=carrycare-hair"],     // CAPILLAIRE (bas gauche)
+      [0.50, 0.63, 0.96, 0.82, baseUrl + "/?go=carrycare-line"],     // SANTÉ ET POIDS (bas droite)
+    ];
+
+    cardZones.forEach(function(zone) {
+      const x1 = zone[0], y1Top = zone[1], x2 = zone[2], y2Bottom = zone[3], url = zone[4];
+      const linkX = xImg + x1 * imgDims.width;
+      const linkW = (x2 - x1) * imgDims.width;
+      const linkY = yImg + imgDims.height - y2Bottom * imgDims.height;
+      const linkH = (y2Bottom - y1Top) * imgDims.height;
+      addLink(page1, linkX, linkY, linkW, linkH, url);
     });
-    
-    // Tailles proportionnelles � la hauteur de carte (sans emoji, plus de place pour texte)
-    let cardTitleSize = Math.max(11, cardHeight * 0.18);
-    const cardSubSize = Math.max(9, cardHeight * 0.12);
-    const cardBtnSize = Math.max(10, cardHeight * 0.12);
-    
-    // Auto-fit : r�duire le titre s'il d�passe la largeur de la carte
-    while (fontBold.widthOfTextAtSize(q.title, cardTitleSize) > cardWidth - 14 && cardTitleSize > 8) {
-      cardTitleSize -= 0.5;
-    }
-    
-    // Titre (gros, centr� en haut)
-    const titleW = fontBold.widthOfTextAtSize(q.title, cardTitleSize);
-    page1.drawText(q.title, {
-      x: cardX + (cardWidth - titleW) / 2,
-      y: cardY + cardHeight * 0.60,
-      size: cardTitleSize,
+
+    // Bandeau bas : "Cliquez ici pour accéder à CarryCare"
+    const bandText = "Cliquez ici pour acceder a CarryCare";
+    const bandSize = 13;
+    const bandW = fontBold.widthOfTextAtSize(bandText, bandSize);
+    const bandX = (PAGE_WIDTH - bandW) / 2;
+    const bandY = 22;
+
+    page1.drawText(bandText, {
+      x: bandX, y: bandY,
+      size: bandSize,
       font: fontBold,
-      color: white,
-    });
-    // Sous-titre
-    const subW = fontRegular.widthOfTextAtSize(q.subtitle, cardSubSize);
-    page1.drawText(q.subtitle, {
-      x: cardX + (cardWidth - subW) / 2,
-      y: cardY + cardHeight * 0.38,
-      size: cardSubSize,
-      font: fontRegular,
-      color: white,
-      opacity: 0.95,
-    });
-    // Bouton "Tester maintenant >>"
-    const btnText = ">> Tester maintenant";
-    const btnW = fontBold.widthOfTextAtSize(btnText, cardBtnSize);
-    page1.drawText(btnText, {
-      x: cardX + (cardWidth - btnW) / 2,
-      y: cardY + 10,
-      size: cardBtnSize,
-      font: fontBold,
-      color: white,
+      color: purple,
     });
 
-    // Lien cliquable sur toute la carte
-    addLink(page1, cardX, cardY, cardWidth, cardHeight, q.url);
+    // Soulignement
+    page1.drawLine({
+      start: { x: bandX, y: bandY - 3 },
+      end: { x: bandX + bandW, y: bandY - 3 },
+      thickness: 1,
+      color: purple,
+    });
+
+    // Zone cliquable autour du texte
+    addLink(page1, bandX - 10, bandY - 6, bandW + 20, bandSize + 12, baseUrl + "/?go=carrycare");
+
+  } catch (page1Err) {
+    console.error("[AD] Erreur page 1 CarryCare:", page1Err);
   }
 
-  // Footer page 1
-  // Footer page 1 - call to action fort
-  drawCenteredText(page1, "Cliquez sur une carte pour demarrer GRATUITEMENT", 35, 11, fontBold, purpleDark, PAGE_WIDTH);
-
   // ============================================================
-  // 📄 PAGE 2 : 8 livres recommandés (rotation aléatoire)
+  // 📄 PAGE(S) 2 : Liste des livres (pagination automatique)
   // ============================================================
-  const page2 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-
-  // Header proportionnel
-  let y2 = PAGE_HEIGHT - 40;
-  const headerSizeP2 = Math.min(18, PAGE_WIDTH * 0.04);
-  drawCenteredText(page2, "NOS LIVRES POUR VOUS", y2, headerSizeP2, fontBold, goldDark, PAGE_WIDTH);
-  y2 -= headerSizeP2 + 6;
-  page2.drawLine({
-    start: { x: PAGE_WIDTH / 2 - 80, y: y2 + 3 },
-    end: { x: PAGE_WIDTH / 2 + 80, y: y2 + 3 },
-    thickness: 1,
-    color: gold,
-  });
-  y2 -= 18;
-
-
-  // R�cup�rer TOUS les livres num�riques payants
   let allPayBooks = [];
   try {
-    console.log("[AD] R�cup�ration livres depuis Supabase...");
-    // Requ�te minimale : juste les livres avec prix > 0
-    const { data: allBooks, error } = await supabase
+    const { data: allBooks } = await supabase
       .from("books")
-      .select("id, title, author, price, product_type")
-      .gt("price", 0)
-      .order("title", { ascending: true })
-      .limit(100);
+      .select("id, title, status, product_type, pdf_url")
+      .eq("status", "actif")
+      .neq("product_type", "article")
+      .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("[AD] Erreur Supabase:", error);
-    } else {
-      console.log("[AD] " + (allBooks?.length || 0) + " livres reçus avant filtrage");
-      // Filtrer côté JavaScript : EXCLURE papier/article (autres univers)
-      // On garde tout le reste (digital, numerique, null, undefined, etc.)
-      allPayBooks = (allBooks || []).filter(b => {
-        // Exclure le livre actuel
+    if (allBooks && allBooks.length > 0) {
+      allPayBooks = allBooks.filter(function(b) {
         if (b.id === currentBookId) return false;
-        // Exclure UNIQUEMENT les livres papier et articles (autres univers)
         if (b.product_type === "papier") return false;
-        if (b.product_type === "article") return false;
         return true;
       });
-      console.log("[AD] " + allPayBooks.length + " livres après filtrage");
-      console.log("[AD] Exemples product_type:", (allBooks || []).slice(0, 5).map(b => b.product_type));
     }
+    console.log("[AD] Livres à lister : " + allPayBooks.length);
   } catch (e) {
-    console.warn("[AD] Exception r�cup�ration livres:", e.message);
+    console.warn("[AD] Exception récupération livres:", e.message);
   }
 
-  // Si pas de livres, message simple
-  if (allPayBooks.length === 0) {
-    drawCenteredText(page2, "Decouvrez tous nos livres sur carrybooks.com", PAGE_HEIGHT / 2, 14, fontItalic, grayMid, PAGE_WIDTH);
-  } else {
-    // Afficher liste simple : "Titre du livre - Telecharger ici" (texte cliquable)
-    const lineHeight = Math.max(14, PAGE_HEIGHT * 0.025);
-    const fontSize = Math.min(10, lineHeight * 0.65);
-    const marginLeft = margin;
+  // Sanitizer texte pour Helvetica (caractères latin-1 uniquement)
+  function safeText(s) {
+    if (!s) return "";
+    return String(s)
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/[\u2010-\u2015]/g, "-")
+      .replace(/[\u00A0\u2000-\u200B\u202F\u205F\u3000]/g, " ")
+      .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+      .replace(/[\u{2600}-\u{27BF}]/gu, "")
+      .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "")
+      .trim();
+  }
+
+  function slugify(s) {
+    return (s || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .substring(0, 80);
+  }
+
+  // Pagination automatique : créer autant de pages que nécessaire
+  const lineHeight = 18;
+  const fontSize = 11;
+  const titleSpace = 100;  // espace haut (titre + sous-titre)
+  const footerSpace = 50;  // espace bas (numéro de page + watermark)
+  const linesPerPage = Math.floor((PAGE_HEIGHT - titleSpace - footerSpace) / lineHeight);
+  const totalPages = Math.max(1, Math.ceil(allPayBooks.length / linesPerPage));
+
+  let bookIdx = 0;
+  for (let p = 1; p <= totalPages; p++) {
+    const page2 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+
+    // Header
+    const headerText = "Decouvrez nos autres livres";
+    const headerW = fontBold.widthOfTextAtSize(headerText, 20);
+    page2.drawText(headerText, {
+      x: (PAGE_WIDTH - headerW) / 2,
+      y: PAGE_HEIGHT - 50,
+      size: 20,
+      font: fontBold,
+      color: grayDark,
+    });
+
+    // Sous-titre
+    const subText = p === 1
+      ? "Cliquez sur un titre pour le decouvrir"
+      : "(suite)";
+    const subSize = p === 1 ? 11 : 14;
+    const subFont = p === 1 ? fontItalic : fontBold;
+    const subColor = p === 1 ? grayMid : grayDark;
+    const subW = subFont.widthOfTextAtSize(subText, subSize);
+    page2.drawText(subText, {
+      x: (PAGE_WIDTH - subW) / 2,
+      y: PAGE_HEIGHT - 75,
+      size: subSize,
+      font: subFont,
+      color: subColor,
+    });
+
+    // Liste des livres
+    let yLine = PAGE_HEIGHT - titleSpace;
+    let count = 0;
     const linkLabel = " - Telecharger ici";
-    const maxLines = Math.floor((y2 - 60) / lineHeight);
-    console.log("[AD] Affichage liste : maxLines=" + maxLines + ", livres=" + allPayBooks.length);
 
-    // Sanitizer agressif : enlever TOUT caract�re non latin-1 standard
-    function safeText(s) {
-      if (!s) return "";
-      return String(s)
-        // Apostrophes typo -> simple
-        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-        // Guillemets typo -> simple
-        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-        // Tirets longs -> tiret simple
-        .replace(/[\u2010-\u2015]/g, "-")
-        // Espaces unicode -> espace simple
-        .replace(/[\u00A0\u2000-\u200B\u202F\u205F\u3000]/g, " ")
-        // Emojis et symboles
-        .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
-        .replace(/[\u{2600}-\u{27BF}]/gu, "")
-        // Garder seulement caract�res latin-1 (jusqu'� \u00FF)
-        .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "")
-        .trim();
-    }
+    while (bookIdx < allPayBooks.length && count < linesPerPage) {
+      const book = allPayBooks[bookIdx];
+      const title = safeText(book.title || "Livre");
 
-    let linesDrawn = 0;
-    for (let i = 0; i < Math.min(allPayBooks.length, maxLines); i++) {
-      const book = allPayBooks[i];
-      const lineY = y2 - (i + 1) * lineHeight;
-
-      try {
-        // Sanitize agressif du titre
-        const title = safeText(book.title || "Livre");
-        if (!title) continue;
-        
-        // Dessiner le titre en noir
-        page2.drawText(title, {
-          x: marginLeft,
-          y: lineY,
-          size: fontSize,
-          font: fontBold,
-          color: grayDark,
-        });
-
-        // Calculer position du "Telecharger ici"
-        const titleW = fontBold.widthOfTextAtSize(title, fontSize);
-        const linkX = marginLeft + titleW;
-
-        // Dessiner "- Telecharger ici" en bleu cliquable
-        page2.drawText(linkLabel, {
-          x: linkX,
-          y: lineY,
-          size: fontSize,
-          font: fontBold,
-          color: blueColor,
-        });
-
-        // Lien cliquable sur le label "Telecharger ici"
-        const linkW = fontBold.widthOfTextAtSize(linkLabel, fontSize);
-        const slug = (book.title || "").toLowerCase()
-          .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // enlever accents
-          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-        addLink(page2, linkX - 2, lineY - 2, linkW + 4, fontSize + 4, "https://carrybooks.com/livre/" + slug);
-        
-        linesDrawn++;
-      } catch (drawErr) {
-        console.warn("[AD] Erreur dessin livre #" + i + " '" + book.title + "':", drawErr.message);
-        // Continue avec le suivant
+      if (title) {
+        try {
+          page2.drawText(title, {
+            x: margin, y: yLine,
+            size: fontSize, font: fontBold, color: grayDark,
+          });
+          const titleW = fontBold.widthOfTextAtSize(title, fontSize);
+          page2.drawText(linkLabel, {
+            x: margin + titleW, y: yLine,
+            size: fontSize, font: fontBold, color: blueColor,
+          });
+          const linkW = fontBold.widthOfTextAtSize(linkLabel, fontSize);
+          const bookUrl = baseUrl + "/?book=" + slugify(book.title);
+          addLink(page2, margin + titleW - 2, yLine - 3, linkW + 4, fontSize + 6, bookUrl);
+        } catch (e) {
+          console.warn("[AD] Skip livre:", book.title, e.message);
+        }
       }
-    }
-    console.log("[AD] " + linesDrawn + " livres dessin�s sur " + allPayBooks.length);
 
-    // Si trop de livres pour la page, indiquer combien
-    if (allPayBooks.length > maxLines) {
-      const moreText = "+ " + (allPayBooks.length - maxLines) + " autres livres sur carrybooks.com";
-      drawCenteredText(page2, moreText, 55, fontSize, fontItalic, grayMid, PAGE_WIDTH);
+      yLine -= lineHeight;
+      count++;
+      bookIdx++;
+    }
+
+    // Si aucun livre, message
+    if (allPayBooks.length === 0) {
+      const noText = "Decouvrez tous nos livres sur carrybooks.com";
+      const noW = fontItalic.widthOfTextAtSize(noText, 14);
+      page2.drawText(noText, {
+        x: (PAGE_WIDTH - noW) / 2,
+        y: PAGE_HEIGHT / 2,
+        size: 14, font: fontItalic, color: grayMid,
+      });
+    }
+
+    // Pied de page : Page X / Y si plusieurs pages
+    if (totalPages > 1) {
+      const pageInfo = "Page " + p + " / " + totalPages;
+      const pageInfoW = fontItalic.widthOfTextAtSize(pageInfo, 10);
+      page2.drawText(pageInfo, {
+        x: (PAGE_WIDTH - pageInfoW) / 2,
+        y: 30,
+        size: 10, font: fontItalic, color: grayMid,
+      });
     }
   }
-
-  // Footer page 2
-  drawCenteredText(page2, "-> Plus de livres sur carrybooks.com", 35, 11, fontBold, blueColor, PAGE_WIDTH);
-  const footer2W = fontBold.widthOfTextAtSize("-> Plus de livres sur carrybooks.com", 11);
-  addLink(page2, (PAGE_WIDTH - footer2W) / 2 - 2, 30, footer2W + 4, 18, "https://carrybooks.com");
 
   // ============================================================
-  // 📄 PAGE 3 : CarryShop + CarryColor
+  // 📄 PAGE FINALE : Pub CarryShop + CarryColor (image plein écran)
   // ============================================================
-  const page3 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  try {
+    const pageFin = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  // Header
-  let y3 = PAGE_HEIGHT - 40;
-  const headerSizeP3 = Math.min(15, PAGE_WIDTH * 0.035);
-  drawCenteredText(page3, "DECOUVREZ NOS AUTRES UNIVERS", y3, headerSizeP3, fontBold, grayDark, PAGE_WIDTH);
-  y3 -= 30;
+    // Charger image univers
+    const imgResponse = await fetch('/pdf-pub-univers.jpeg');
+    if (!imgResponse.ok) throw new Error("Image Univers manquante (status " + imgResponse.status + ")");
+    const imgBytes = await imgResponse.arrayBuffer();
+    const universImg = await pdfDoc.embedJpg(imgBytes);
 
-  // Dimensions proportionnelles des 2 cartes
-  const cardW3 = PAGE_WIDTH - margin * 2;
-  // Disponible apr�s header et footer
-  const availableH3 = y3 - 60;
-  const cardH3 = Math.min(220, (availableH3 - 20) / 2);
-  
-  // Tailles texte proportionnelles
-  const emojiSizeP3 = Math.min(36, cardH3 * 0.18);
-  const titleSizeP3 = Math.min(26, cardH3 * 0.13);
-  const descSizeP3 = Math.min(11, cardH3 * 0.055);
-  const btnSizeP3 = Math.min(11, cardH3 * 0.055);
+    // Image plein écran
+    const imgDims = universImg.scaleToFit(PAGE_WIDTH - 20, PAGE_HEIGHT - 30);
+    const xImg = (PAGE_WIDTH - imgDims.width) / 2;
+    const yImg = PAGE_HEIGHT - imgDims.height - 10;
 
-  // ===== CARRYSHOP =====
-  page3.drawRectangle({
-    x: margin,
-    y: y3 - cardH3,
-    width: cardW3,
-    height: cardH3,
-    color: pinkDark,
-  });
+    pageFin.drawImage(universImg, {
+      x: xImg, y: yImg,
+      width: imgDims.width, height: imgDims.height
+    });
 
-  // Titre (centr� et plus gros - sans emoji)
-  const csNameW = fontBold.widthOfTextAtSize("CARRYSHOP", titleSizeP3);
-  page3.drawText("CARRYSHOP", {
-    x: margin + (cardW3 - csNameW) / 2,
-    y: y3 - titleSizeP3 - 14,
-    size: titleSizeP3,
-    font: fontBold,
-    color: white,
-  });
+    // Zones cliquables : CarryShop (haut) et CarryColor (bas)
+    // Layout : header (0-15%), CarryShop (15-55%), CarryColor (55-95%), pied (95-100%)
+    const zones = [
+      [0.03, 0.17, 0.97, 0.55, baseUrl + "/?go=carryshop"],
+      [0.03, 0.58, 0.97, 0.96, baseUrl + "/?go=carrycolor"],
+    ];
 
-  // Description (lignes courtes)
-  let descY = y3 - titleSizeP3 - 36;
-  const csLines = [
-    "Decouvrez notre selection de produits divers :",
-    "parfums, complements, cosmetiques, accessoires...",
-    "Tout pour vous faire plaisir au quotidien."
-  ];
-  for (const line of csLines) {
-    page3.drawText(line, { x: margin + 12, y: descY, size: descSizeP3, font: fontRegular, color: white });
-    descY -= descSizeP3 + 4;
+    zones.forEach(function(zone) {
+      const x1 = zone[0], y1Top = zone[1], x2 = zone[2], y2Bottom = zone[3], url = zone[4];
+      const linkX = xImg + x1 * imgDims.width;
+      const linkW = (x2 - x1) * imgDims.width;
+      const linkY = yImg + imgDims.height - y2Bottom * imgDims.height;
+      const linkH = (y2Bottom - y1Top) * imgDims.height;
+      addLink(pageFin, linkX, linkY, linkW, linkH, url);
+    });
+
+  } catch (pageFinErr) {
+    console.error("[AD] Erreur page CarryShop+CarryColor:", pageFinErr);
   }
 
-  // Bouton
-  const btnW3 = cardW3 * 0.5;
-  const btnH3 = btnSizeP3 + 12;
-  page3.drawRectangle({
-    x: margin + 12,
-    y: y3 - cardH3 + 12,
-    width: btnW3,
-    height: btnH3,
-    color: white,
-  });
-  page3.drawText(">> Visiter CarryShop", {
-    x: margin + 22,
-    y: y3 - cardH3 + 18,
-    size: btnSizeP3,
-    font: fontBold,
-    color: pinkDark,
-  });
-
-  // Lien cliquable
-  addLink(page3, margin, y3 - cardH3, cardW3, cardH3, "https://carrybooks.com/carryshop");
-
-  y3 -= cardH3 + 20;
-
-  // ===== CARRYCOLOR =====
-  page3.drawRectangle({
-    x: margin,
-    y: y3 - cardH3,
-    width: cardW3,
-    height: cardH3,
-    color: rgb(0.31, 0.61, 0.98),
-  });
-
-  // Titre (centr� - sans emoji)
-  const ccNameW = fontBold.widthOfTextAtSize("CARRYCOLOR", titleSizeP3);
-  page3.drawText("CARRYCOLOR", {
-    x: margin + (cardW3 - ccNameW) / 2,
-    y: y3 - titleSizeP3 - 14,
-    size: titleSizeP3,
-    font: fontBold,
-    color: white,
-  });
-
-  // Description
-  descY = y3 - titleSizeP3 - 36;
-  const ccLines = [
-    "Faites plaisir a vos enfants avec de magnifiques",
-    "livres de coloriage et d'activites creatives !",
-    "Cadeau ideal pour les anniversaires & fetes."
-  ];
-  for (const line of ccLines) {
-    page3.drawText(line, { x: margin + 12, y: descY, size: descSizeP3, font: fontRegular, color: white });
-    descY -= descSizeP3 + 4;
-  }
-
-  // Bouton
-  page3.drawRectangle({
-    x: margin + 12,
-    y: y3 - cardH3 + 12,
-    width: btnW3,
-    height: btnH3,
-    color: white,
-  });
-  page3.drawText(">> Visiter CarryColor", {
-    x: margin + 22,
-    y: y3 - cardH3 + 18,
-    size: btnSizeP3,
-    font: fontBold,
-    color: rgb(0.31, 0.61, 0.98),
-  });
-
-  // Lien cliquable
-  addLink(page3, margin, y3 - cardH3, cardW3, cardH3, "https://carrybooks.com/carrycolor");
-
-  // Footer page 3
-  drawCenteredText(page3, "Merci pour votre confiance - CarryBooks", 25, 9, fontItalic, grayMid, PAGE_WIDTH);
-
-  console.log("[AD] ✅ 3 pages publicité ajoutées");
+  console.log("[AD] ✅ Pages publicité ajoutées (CarryCare + Liste " + (allPayBooks.length || 0) + " livres + Univers)");
 }
 
 // ============================================================
@@ -780,22 +564,48 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     const clientEmail = rawEmail.substring(0, 60);
     let clientPhone = rawPhone.substring(0, 20);
 
-    // 🔄 Si pas de t�l�phone fourni, essayer de le r�cup�rer depuis Supabase
-    if (!clientPhone && clientInfo.userId && clientInfo.bookId) {
-      try {
-        const { data: purchaseData } = await supabase
-          .from("purchases")
-          .select("phone")
-          .eq("user_id", clientInfo.userId)
-          .eq("book_id", clientInfo.bookId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-        if (purchaseData?.phone) {
-          clientPhone = String(purchaseData.phone).substring(0, 20);
-        }
-      } catch (e) {
-        // Si pas trouvé dans purchases, essayer guest_purchases
+    // 🔄 Cascade de fallbacks pour récupérer le téléphone
+    if (!clientPhone) {
+      console.log("[PHONE] Pas de phone dans clientInfo. userId:", clientInfo.userId, "bookId:", clientInfo.bookId);
+
+      // 1. Chercher dans purchases pour cet achat précis
+      if (clientInfo.userId && clientInfo.bookId) {
+        try {
+          const { data: purchaseData } = await supabase
+            .from("purchases")
+            .select("phone")
+            .eq("user_id", clientInfo.userId)
+            .eq("book_id", clientInfo.bookId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          if (purchaseData?.phone) {
+            clientPhone = String(purchaseData.phone).substring(0, 20);
+            console.log("[PHONE] ✓ Trouvé via purchases (livre précis)");
+          }
+        } catch (e) { console.log("[PHONE] Échec purchases livre précis:", e.message); }
+      }
+
+      // 2. Si toujours rien, n'importe quel achat du user (le tel le plus récent)
+      if (!clientPhone && clientInfo.userId) {
+        try {
+          const { data: anyPurchase } = await supabase
+            .from("purchases")
+            .select("phone")
+            .eq("user_id", clientInfo.userId)
+            .not("phone", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+          if (anyPurchase?.phone) {
+            clientPhone = String(anyPurchase.phone).substring(0, 20);
+            console.log("[PHONE] ✓ Trouvé via purchases (tous livres)");
+          }
+        } catch (e) { console.log("[PHONE] Échec purchases globaux:", e.message); }
+      }
+
+      // 3. guest_purchases pour ce livre (achats sans compte)
+      if (!clientPhone && clientInfo.bookId) {
         try {
           const { data: guestData } = await supabase
             .from("guest_purchases")
@@ -806,8 +616,27 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
             .single();
           if (guestData?.phone) {
             clientPhone = String(guestData.phone).substring(0, 20);
+            console.log("[PHONE] ✓ Trouvé via guest_purchases");
           }
-        } catch (e2) { /* silent */ }
+        } catch (e) { console.log("[PHONE] Échec guest_purchases:", e.message); }
+      }
+
+      // 4. Auth metadata (user.phone ou user_metadata.phone)
+      if (!clientPhone) {
+        try {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser?.phone) {
+            clientPhone = String(authUser.phone).substring(0, 20);
+            console.log("[PHONE] ✓ Trouvé via auth.user.phone");
+          } else if (authUser?.user_metadata?.phone) {
+            clientPhone = String(authUser.user_metadata.phone).substring(0, 20);
+            console.log("[PHONE] ✓ Trouvé via user_metadata.phone");
+          }
+        } catch (e) { console.log("[PHONE] Échec auth:", e.message); }
+      }
+
+      if (!clientPhone) {
+        console.warn("[PHONE] ⚠️ Téléphone introuvable - le PDF affichera seulement la date");
       }
     }
 
@@ -13719,6 +13548,30 @@ export default function App() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+
+    // 🎯 Routing simple depuis les PDFs téléchargés (paramètre ?go=)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const go = urlParams.get("go");
+      if (go) {
+        // Mapper les valeurs vers les pages internes
+        const routeMap = {
+          "carrycare": "quiz",
+          "carrycare-facial": "quiz",
+          "carrycare-body": "quiz",
+          "carrycare-hair": "quiz",
+          "carrycare-line": "quiz",
+          "carryshop": "carryshop",
+          "carrycolor": "carrycolor",
+        };
+        const targetPage = routeMap[go];
+        if (targetPage) {
+          setPage(targetPage);
+          // Nettoyer l'URL pour ne pas re-rediriger au refresh
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      }
+    } catch (e) { /* silent */ }
 
     // Traiter le hash de retour Google OAuth (mobile)
     const hash = window.location.hash;
