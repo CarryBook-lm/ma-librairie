@@ -48,6 +48,10 @@ export default function Admin() {
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
   const [productSubTab, setProductSubTab] = useState("list");
+  // 🆕 Filtre stock : "all" | "outOfStock" | "inStock"
+  const [stockFilter, setStockFilter] = useState("all");
+  // 🆕 Recherche dans la liste admin
+  const [productSearch, setProductSearch] = useState("");
   // Affiche ou cache le s�lecteur de type de produit dans le formulaire
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [books, setBooks] = useState([]);
@@ -56,8 +60,6 @@ export default function Admin() {
   const [quizPayments, setQuizPayments] = useState([]);
   const [carrycarePayments, setCarrycarePayments] = useState([]);
   const [bookViews, setBookViews] = useState([]);
-  // 🛒 Items des commandes panier (CarryShop + CarryColor) avec product_type, subtotal, created_at
-  const [cartItems, setCartItems] = useState([]);
   // Paramètres parrainage
   const [referralSettings, setReferralSettings] = useState({
     reward_per_referral: 500,
@@ -147,7 +149,7 @@ export default function Admin() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchCartItems(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
 
   // Auto-refresh des données de présence toutes les 10 secondes
   useEffect(() => {
@@ -929,33 +931,6 @@ export default function Admin() {
     setUsers(combined);
   }
 
-  // 🛒 Charge les items des commandes panier payées (CarryShop + CarryColor)
-  async function fetchCartItems() {
-    // 1) Récupérer toutes les commandes panier PAYÉES
-    const { data: orders, error: ordersErr } = await supabase
-      .from("cart_orders")
-      .select("id, created_at, payment_status")
-      .eq("payment_status", "paid");
-    if (ordersErr) { console.error("Cart orders error:", ordersErr); return; }
-    if (!orders || orders.length === 0) { setCartItems([]); return; }
-
-    // 2) Récupérer les items associés
-    const orderIds = orders.map(o => o.id);
-    const { data: items, error: itemsErr } = await supabase
-      .from("cart_order_items")
-      .select("book_id, product_type, unit_price, quantity, subtotal, order_id")
-      .in("order_id", orderIds);
-    if (itemsErr) { console.error("Cart items error:", itemsErr); return; }
-
-    // 3) Enrichir chaque item avec la date de sa commande
-    const orderDateMap = Object.fromEntries(orders.map(o => [o.id, o.created_at]));
-    const enriched = (items || []).map(i => ({
-      ...i,
-      created_at: orderDateMap[i.order_id] || null
-    }));
-    setCartItems(enriched);
-  }
-
   async function handleImageUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -1163,7 +1138,7 @@ export default function Admin() {
   }, 0);
 
   // ========== REVENUS PAR SOURCE ==========
-  // 📚 Revenus livres (ventes réelles - achats directs uniquement, panier ajouté plus bas)
+  // 📚 Revenus livres (ventes réelles uniquement)
   const revenueBooks = totalRevenue;
 
   // ⭐ Revenus abonnements
@@ -1175,72 +1150,8 @@ export default function Admin() {
   // 💜 Revenus CarryCare (uniquement amounts > 0)
   const revenueCarryCare = carrycarePayments.reduce((s, p) => s + (p.amount || 0), 0);
 
-  // ========== 🆕 REVENUS PAR UNIVERS (CarryBooks / CarryShop / CarryColor) ==========
-  // Helper : détermine l'univers d'un product_type
-  // CarryBooks = numerique + audio + mixte (et legacy null)
-  // CarryColor = papier
-  // CarryShop = article
-  const isCarryShop = (pt) => pt === "article";
-  const isCarryColor = (pt) => pt === "papier";
-  const isCarryBooks = (pt) => !isCarryShop(pt) && !isCarryColor(pt);
-
-  // --- Achats directs (purchases + guest_purchases) répartis par univers ---
-  // Chaque vente directe : on remonte au book pour connaître son product_type
-  const directSalesByUniverse = { books: 0, shop: 0, color: 0 };
-  const directCountsByUniverse = { books: 0, shop: 0, color: 0 };
-  const directSalesTodayByUniverse = { books: 0, shop: 0, color: 0 };
-  const directCountsTodayByUniverse = { books: 0, shop: 0, color: 0 };
-  realSales.forEach(p => {
-    const book = books.find(b => b.id === p.book_id);
-    const pt = book?.product_type;
-    const amount = (p.amount !== null && p.amount !== undefined) ? p.amount : (book?.price || 0);
-    const bucket = isCarryShop(pt) ? "shop" : isCarryColor(pt) ? "color" : "books";
-    directSalesByUniverse[bucket] += amount;
-    directCountsByUniverse[bucket] += 1;
-    if (p.created_at && new Date(p.created_at) >= today) {
-      directSalesTodayByUniverse[bucket] += amount;
-      directCountsTodayByUniverse[bucket] += 1;
-    }
-  });
-
-  // --- Items panier (cart_order_items) répartis par univers ---
-  // cart_order_items contient déjà product_type + subtotal, plus simple
-  const cartSalesByUniverse = { books: 0, shop: 0, color: 0 };
-  const cartCountsByUniverse = { books: 0, shop: 0, color: 0 };
-  const cartSalesTodayByUniverse = { books: 0, shop: 0, color: 0 };
-  const cartCountsTodayByUniverse = { books: 0, shop: 0, color: 0 };
-  cartItems.forEach(i => {
-    const amount = i.subtotal || ((i.unit_price || 0) * (i.quantity || 1));
-    const qty = i.quantity || 1;
-    const bucket = isCarryShop(i.product_type) ? "shop" : isCarryColor(i.product_type) ? "color" : "books";
-    cartSalesByUniverse[bucket] += amount;
-    cartCountsByUniverse[bucket] += qty;
-    if (i.created_at && new Date(i.created_at) >= today) {
-      cartSalesTodayByUniverse[bucket] += amount;
-      cartCountsTodayByUniverse[bucket] += qty;
-    }
-  });
-
-  // 📚 CarryBooks (numérique + audio + mixte) — achats directs + items panier numériques
-  const carryBooksRevenue = directSalesByUniverse.books + cartSalesByUniverse.books;
-  const carryBooksCount = directCountsByUniverse.books + cartCountsByUniverse.books;
-  const carryBooksTodayRevenue = directSalesTodayByUniverse.books + cartSalesTodayByUniverse.books;
-  const carryBooksTodayCount = directCountsTodayByUniverse.books + cartCountsTodayByUniverse.books;
-
-  // 🌸 CarryShop (articles divers) — uniquement panier
-  const carryShopRevenue = directSalesByUniverse.shop + cartSalesByUniverse.shop;
-  const carryShopCount = directCountsByUniverse.shop + cartCountsByUniverse.shop;
-  const carryShopTodayRevenue = directSalesTodayByUniverse.shop + cartSalesTodayByUniverse.shop;
-  const carryShopTodayCount = directCountsTodayByUniverse.shop + cartCountsTodayByUniverse.shop;
-
-  // 🎨 CarryColor (livres papier) — uniquement panier
-  const carryColorRevenue = directSalesByUniverse.color + cartSalesByUniverse.color;
-  const carryColorCount = directCountsByUniverse.color + cartCountsByUniverse.color;
-  const carryColorTodayRevenue = directSalesTodayByUniverse.color + cartSalesTodayByUniverse.color;
-  const carryColorTodayCount = directCountsTodayByUniverse.color + cartCountsTodayByUniverse.color;
-
-  // 💰 TOTAL CA — somme de tous les univers + abonnements + quiz + carrycare
-  const grandTotalRevenue = carryBooksRevenue + carryShopRevenue + carryColorRevenue + revenueSubscriptions + revenueQuiz + revenueCarryCare;
+  // 💰 TOTAL CA
+  const grandTotalRevenue = revenueBooks + revenueSubscriptions + revenueQuiz + revenueCarryCare;
 
   // 📅 CA AUJOURD'HUI (toutes sources)
   const todayBooksRevenue = todayRevenue;
@@ -1269,8 +1180,7 @@ export default function Admin() {
     if (!p.created_at) return false;
     return new Date(p.created_at) >= today && (p.amount || 0) > 0;
   }).length;
-  // 📅 CA du jour TOUTES SOURCES (livres+shop+color+abos+quiz+carrycare)
-  const grandTodayRevenue = carryBooksTodayRevenue + carryShopTodayRevenue + carryColorTodayRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue;
+  const grandTodayRevenue = todayBooksRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue;
 
   // 📖 Total lectures
   const totalBookViews = bookViews.length;
@@ -1362,65 +1272,22 @@ export default function Admin() {
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>Détail par source</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {/* 📚 CARRYBOOKS (livres numériques + audio + mixte) */}
+                {/* 📚 LIVRES */}
                 <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 18 }}>📚</span>
-                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryBooks</span>
-                    <span style={{ fontSize: 10, color: "#666", marginLeft: "auto" }}>numérique · audio</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>Livres</span>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{carryBooksRevenue.toLocaleString()} F</div>
-                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryBooksCount} vente{carryBooksCount > 1 ? "s" : ""}</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueBooks.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{totalSales} vente{totalSales > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{carryBooksTodayRevenue.toLocaleString()} F</div>
-                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryBooksTodayCount} vente{carryBooksTodayCount > 1 ? "s" : ""}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 🎨 CARRYCOLOR (livres papier) */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
-                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(90deg, rgba(177,79,219,0.08) 0%, transparent 100%)" }}>
-                    <span style={{ fontSize: 18 }}>🎨</span>
-                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryColor</span>
-                    <span style={{ fontSize: 10, color: "#666", marginLeft: "auto" }}>livres papier</span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#b14fdb" }}>{carryColorRevenue.toLocaleString()} F</div>
-                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryColorCount} vente{carryColorCount > 1 ? "s" : ""}</div>
-                    </div>
-                    <div style={{ padding: "12px", textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{carryColorTodayRevenue.toLocaleString()} F</div>
-                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryColorTodayCount} vente{carryColorTodayCount > 1 ? "s" : ""}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 🌸 CARRYSHOP (articles divers : parfums, cosmétiques, compléments) */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
-                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(90deg, rgba(168,56,100,0.08) 0%, transparent 100%)" }}>
-                    <span style={{ fontSize: 18 }}>🌸</span>
-                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryShop</span>
-                    <span style={{ fontSize: 10, color: "#666", marginLeft: "auto" }}>articles divers</span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#d4769e" }}>{carryShopRevenue.toLocaleString()} F</div>
-                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryShopCount} vente{carryShopCount > 1 ? "s" : ""}</div>
-                    </div>
-                    <div style={{ padding: "12px", textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{carryShopTodayRevenue.toLocaleString()} F</div>
-                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryShopTodayCount} vente{carryShopTodayCount > 1 ? "s" : ""}</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todayBooksRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todayBooksCount} vente{todayBooksCount > 1 ? "s" : ""}</div>
                     </div>
                   </div>
                 </div>
@@ -1761,16 +1628,82 @@ export default function Admin() {
                 {/* ONGLET LIST : la liste des produits filtrée */}
                 {productSubTab === "list" && (
                   <div>
+                    {/* 🆕 Filtres stock + recherche */}
+                    {(() => {
+                      const baseList = books.filter(b => {
+                        if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
+                        if (productSubView === "physical") return b.product_type === 'papier';
+                        if (productSubView === "article") return b.product_type === 'article';
+                        return false;
+                      });
+                      // Compteur rupture
+                      const isOut = b => {
+                        const isArt = b.product_type === 'article';
+                        const isPaper = b.product_type === 'papier';
+                        if (!isArt && !isPaper) return false;
+                        const s = isArt ? b.stock : b.paper_stock;
+                        if (s === null || s === undefined || s === -1) return false;
+                        return s === 0 && !b.allow_oversell;
+                      };
+                      const outCount = baseList.filter(isOut).length;
+                      const isPhysical = productSubView === "article" || productSubView === "physical";
+                      return (
+                        <>
+                          {/* Barre recherche */}
+                          <div style={{ marginBottom: 12 }}>
+                            <input
+                              type="text"
+                              value={productSearch}
+                              onChange={e => setProductSearch(e.target.value)}
+                              placeholder="🔍 Rechercher un produit (titre, auteur, catégorie...)"
+                              style={{ width: "100%", padding: "10px 14px", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#fff", fontSize: 13, boxSizing: "border-box" }}
+                            />
+                          </div>
+
+                          {/* Filtres stock (uniquement pour articles et physical) */}
+                          {isPhysical && (
+                            <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                              <button onClick={() => setStockFilter("all")}
+                                style={{ padding: "6px 14px", border: "1px solid " + (stockFilter === "all" ? "#c9a84c" : "#2a2a2a"), background: stockFilter === "all" ? "rgba(201,168,76,0.15)" : "transparent", color: stockFilter === "all" ? "#c9a84c" : "#aaa", borderRadius: 16, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                                Tous ({baseList.length})
+                              </button>
+                              <button onClick={() => setStockFilter("inStock")}
+                                style={{ padding: "6px 14px", border: "1px solid " + (stockFilter === "inStock" ? "#4caf50" : "#2a2a2a"), background: stockFilter === "inStock" ? "rgba(76,175,80,0.15)" : "transparent", color: stockFilter === "inStock" ? "#4caf50" : "#aaa", borderRadius: 16, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                                ✓ En stock ({baseList.length - outCount})
+                              </button>
+                              <button onClick={() => setStockFilter("outOfStock")}
+                                style={{ padding: "6px 14px", border: "1px solid " + (stockFilter === "outOfStock" ? "#f44336" : "#2a2a2a"), background: stockFilter === "outOfStock" ? "rgba(244,67,54,0.15)" : "transparent", color: stockFilter === "outOfStock" ? "#f44336" : "#aaa", borderRadius: 16, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                                🚫 Rupture ({outCount})
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                       <h2 style={{ fontSize: 15, color: "#aaa", margin: 0 }}>
                         {(() => {
+                          const isOut = b => {
+                            const isArt = b.product_type === 'article';
+                            const isPaper = b.product_type === 'papier';
+                            if (!isArt && !isPaper) return false;
+                            const s = isArt ? b.stock : b.paper_stock;
+                            if (s === null || s === undefined || s === -1) return false;
+                            return s === 0 && !b.allow_oversell;
+                          };
+                          const q = productSearch.toLowerCase().trim();
                           const filtered = books.filter(b => {
-                            if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
-                            if (productSubView === "physical") return b.product_type === 'papier';
-                            if (productSubView === "article") return b.product_type === 'article';
-                            return false;
+                            if (productSubView === "digital") { if (b.product_type === 'papier' || b.product_type === 'article' || b.product_type === 'audio') return false; }
+                            else if (productSubView === "physical") { if (b.product_type !== 'papier') return false; }
+                            else if (productSubView === "article") { if (b.product_type !== 'article') return false; }
+                            else return false;
+                            if (stockFilter === "outOfStock" && !isOut(b)) return false;
+                            if (stockFilter === "inStock" && isOut(b)) return false;
+                            if (q && !(b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q) || b.category?.toLowerCase().includes(q) || b.subcategory?.toLowerCase().includes(q))) return false;
+                            return true;
                           });
-                          return filtered.length + " produit" + (filtered.length > 1 ? "s" : "");
+                          return filtered.length + " produit" + (filtered.length > 1 ? "s" : "") + (productSearch || stockFilter !== "all" ? " (filtré)" : "");
                         })()}
                       </h2>
                       <button
@@ -1790,29 +1723,47 @@ export default function Admin() {
                       </button>
                     </div>
 
-                    {/* Liste des produits filtrée selon la sous-vue */}
+                    {/* Liste des produits filtrée selon la sous-vue + recherche + stock */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {books.filter(b => {
-                        if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
-                        if (productSubView === "physical") return b.product_type === 'papier';
-                        if (productSubView === "article") return b.product_type === 'article';
-                        return false;
-                      }).length === 0 ? (
+                      {(() => {
+                        const isOut = b => {
+                          const isArt = b.product_type === 'article';
+                          const isPaper = b.product_type === 'papier';
+                          if (!isArt && !isPaper) return false;
+                          const s = isArt ? b.stock : b.paper_stock;
+                          if (s === null || s === undefined || s === -1) return false;
+                          return s === 0 && !b.allow_oversell;
+                        };
+                        const q = productSearch.toLowerCase().trim();
+                        const filtered = books.filter(b => {
+                          if (productSubView === "digital") { if (b.product_type === 'papier' || b.product_type === 'article' || b.product_type === 'audio') return false; }
+                          else if (productSubView === "physical") { if (b.product_type !== 'papier') return false; }
+                          else if (productSubView === "article") { if (b.product_type !== 'article') return false; }
+                          else return false;
+                          if (stockFilter === "outOfStock" && !isOut(b)) return false;
+                          if (stockFilter === "inStock" && isOut(b)) return false;
+                          if (q && !(b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q) || b.category?.toLowerCase().includes(q) || b.subcategory?.toLowerCase().includes(q))) return false;
+                          return true;
+                        });
+                        return filtered.length === 0 ? (
                         <div style={{ background: "#1a1a1a", border: "1px dashed #2a2a2a", borderRadius: 10, padding: 32, textAlign: "center", color: "#666" }}>
                           <div style={{ fontSize: 36, marginBottom: 10 }}>📦</div>
-                          <div style={{ fontSize: 13, marginBottom: 12 }}>Aucun produit dans cette catégorie</div>
-                          <div style={{ fontSize: 11, color: "#555" }}>Clique sur "+ AJOUTER" pour créer ton premier produit</div>
+                          <div style={{ fontSize: 13, marginBottom: 12 }}>
+                            {productSearch || stockFilter !== "all" ? "Aucun produit ne correspond aux filtres" : "Aucun produit dans cette catégorie"}
+                          </div>
+                          {(productSearch || stockFilter !== "all") && (
+                            <button onClick={() => { setProductSearch(""); setStockFilter("all"); }} style={{ background: "#2a2a2a", color: "#c9a84c", border: "none", padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>
+                              Réinitialiser les filtres
+                            </button>
+                          )}
                         </div>
                       ) : (
-                        books.filter(b => {
-                          if (productSubView === "digital") return b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio';
-                          if (productSubView === "physical") return b.product_type === 'papier';
-                          if (productSubView === "article") return b.product_type === 'article';
-                          return false;
-                        }).map(book => (
-                <div key={book.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                        filtered.map(book => {
+                          const ruptured = isOut(book);
+                          return (
+                <div key={book.id} style={{ background: "#1a1a1a", border: "1px solid " + (ruptured ? "#7a1a1a" : "#2a2a2a"), borderRadius: 8, padding: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
                   {book.cover
-                    ? <img src={book.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", flexShrink: 0 }} />
+                    ? <img src={book.cover} alt="" style={{ width: 50, height: 70, objectFit: "cover", flexShrink: 0, filter: ruptured ? "grayscale(60%) brightness(0.7)" : "none" }} />
                     : <div style={{ width: 50, height: 70, background: "#2a2a2a", flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: "#e8e0d0", marginBottom: 2, fontWeight: "bold" }}>{book.title}</div>
@@ -1820,6 +1771,16 @@ export default function Admin() {
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       <span style={{ fontSize: 12, color: "#c9a84c" }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} F`}</span>
                       <span style={{ fontSize: 11, color: "#aaa" }}>{book.category}{book.subcategory ? " › " + book.subcategory : ""}</span>
+                      {(book.product_type === 'article' || book.product_type === 'papier') && (
+                        <span style={{ fontSize: 11, color: ruptured ? "#f44336" : "#4caf50", fontWeight: 600 }}>
+                          📦 Stock : {book.product_type === 'article' ? (book.stock ?? 0) : (book.paper_stock ?? 0)}
+                        </span>
+                      )}
+                      {ruptured && (
+                        <span style={{ fontSize: 10, background: "#7a1a1a", color: "#fff", padding: "2px 8px", borderRadius: 10, fontWeight: "bold", letterSpacing: 0.5 }}>
+                          🚫 RUPTURE
+                        </span>
+                      )}
                       <span style={{ fontSize: 11, color: book.content ? "#4caf50" : "#888" }}>{book.content ? "✓ Contenu" : "✗ Sans contenu"}</span>
                     </div>
                   </div>
@@ -1834,8 +1795,10 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
-                        ))
-                      )}
+                          );
+                        })
+                      );
+                      })()}
                     </div>
                   </div>
                 )}
