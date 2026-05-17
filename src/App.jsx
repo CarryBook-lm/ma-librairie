@@ -18068,12 +18068,25 @@ export default function App() {
 
           return (
             <div style={{ padding: "12px 16px 80px" }}>
-              {/* Bandeau retour CarryBooks */}
+              {/* Bandeau retour intelligent : si une catégorie est sélectionnée, retour à la vue Netflix de CarryShop. Sinon retour à CarryBooks. */}
               <button 
-                onClick={() => { setPage("home"); setSelectedShopCategory("Tous"); setSearchQuery(""); window.scrollTo(0, 0); }}
+                onClick={() => {
+                  if (selectedShopCategory !== "Tous" || searchQuery) {
+                    // On est dans une catégorie filtrée ou en recherche → retour à la vue Netflix
+                    setSelectedShopCategory("Tous");
+                    setSearchQuery("");
+                    window.scrollTo(0, 0);
+                  } else {
+                    // On est déjà sur "Tous" → retour à CarryBooks
+                    setPage("home");
+                    setSelectedShopCategory("Tous");
+                    setSearchQuery("");
+                    window.scrollTo(0, 0);
+                  }
+                }}
                 style={{ background: "none", border: "none", color: G.gold, fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 12 }}
               >
-                ← Retour à CarryBooks
+                {(selectedShopCategory !== "Tous" || searchQuery) ? "← Retour à CarryShop" : "← Retour à CarryBooks"}
               </button>
 
               {/* Hero CarryShop — image */}
