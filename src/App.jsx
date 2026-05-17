@@ -18630,30 +18630,178 @@ export default function App() {
 
         {/* ============== MON PARRAINAGE ============== */}
         {page === "referral" && (
-          <div style={{ padding: "20px 16px 80px", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "32px 20px", textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🚧</div>
-              <h2 style={{ fontSize: 18, color: G.gold, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Programme de parrainage</h2>
-              <p style={{ fontSize: 14, color: G.text, lineHeight: 1.6, marginBottom: 20 }}>
-                Notre programme de parrainage est en cours de finalisation pour vous offrir une expérience plus sûre et plus généreuse.
+          <div style={{ padding: "20px 16px 80px", maxWidth: 700, margin: "0 auto" }}>
+            {/* En-tête */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Parrainage</div>
+              <h2 style={{ fontSize: 22, color: G.text, margin: 0, fontFamily: "Georgia, serif" }}>Gagne de l'argent avec CarryBooks</h2>
+              <p style={{ fontSize: 13, color: G.textFaint, marginTop: 6, lineHeight: 1.5 }}>
+                Partage tes liens, tes ami(e)s achètent, tu touches une commission directement sur Mobile Money.
               </p>
-              <div style={{ background: G.surface2, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20, textAlign: "left" }}>
-                <div style={{ fontSize: 12, color: G.gold, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10, fontWeight: "bold" }}>Bientôt disponible</div>
-                <ul style={{ fontSize: 13, color: G.textDim, lineHeight: 1.8, listStyle: "none", padding: 0, margin: 0 }}>
-                  <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: G.gold }}>•</span> 30% de commission sur chaque nouveau filleul</li>
-                  <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: G.gold }}>•</span> Retraits sécurisés sur Mobile Money</li>
-                  <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: G.gold }}>•</span> Suivi en temps réel de tes gains</li>
-                  <li style={{ paddingLeft: 18, position: "relative", marginBottom: 4 }}><span style={{ position: "absolute", left: 0, color: G.gold }}>•</span> Système anti-fraude renforcé</li>
-                </ul>
-              </div>
-              <p style={{ fontSize: 12, color: G.textFaint, fontStyle: "italic", marginBottom: 16 }}>
-                Reviens bientôt pour découvrir tous les détails !
-              </p>
-              <p style={{ fontSize: 11, color: G.textFaint, marginBottom: 4 }}>Une question ?</p>
-              <a href="mailto:carrybooks.com@gmail.com" style={{ fontSize: 12, color: G.gold, textDecoration: "underline" }}>
-                carrybooks.com@gmail.com
-              </a>
             </div>
+
+            {/* Si pas connecté */}
+            {!user && (
+              <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "32px 20px", textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+                <p style={{ fontSize: 14, color: G.text, marginBottom: 16 }}>Connecte-toi pour accéder à ton programme de parrainage</p>
+                <button onClick={() => setShowAuthModal(true)} style={{ padding: "12px 28px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>SE CONNECTER</button>
+              </div>
+            )}
+
+            {/* Si connecté mais pas de code */}
+            {user && !referralCode && (
+              <div style={{ background: G.surface, border: "1px solid " + G.gold, borderRadius: 12, padding: 24 }}>
+                <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginBottom: 10, letterSpacing: 1, textTransform: "uppercase" }}>🎁 Crée ton code parrainage</div>
+                <p style={{ fontSize: 13, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>
+                  Choisis ton code unique (4-20 caractères, lettres et chiffres). Exemple : LANDRINE2026
+                </p>
+                <input
+                  type="text"
+                  value={createReferralInput}
+                  onChange={e => setCreateReferralInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                  placeholder="TONCODE2026"
+                  maxLength={20}
+                  style={{ width: "100%", padding: "12px 14px", border: "1px solid " + G.border, borderRadius: 8, fontSize: 16, color: G.text, background: G.surface2, boxSizing: "border-box", marginBottom: 10, fontWeight: "bold", letterSpacing: 1 }}
+                />
+                {referralCreateMessage.text && (
+                  <div style={{ padding: 10, marginBottom: 12, borderRadius: 6, fontSize: 12, background: referralCreateMessage.type === "success" ? "rgba(76,175,80,0.15)" : "rgba(244,67,54,0.15)", color: referralCreateMessage.type === "success" ? "#4caf50" : "#f44336" }}>
+                    {referralCreateMessage.text}
+                  </div>
+                )}
+                <button onClick={createMyReferralCode} disabled={createReferralInput.length < 4} style={{ width: "100%", padding: 12, background: createReferralInput.length < 4 ? "#888" : G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: createReferralInput.length < 4 ? "not-allowed" : "pointer", letterSpacing: 1 }}>
+                  CRÉER MON CODE
+                </button>
+              </div>
+            )}
+
+            {/* Si connecté avec code */}
+            {user && referralCode && (
+              <>
+                {/* MON CODE + LIEN */}
+                <div style={{ background: "linear-gradient(135deg, " + G.gold + " 0%, " + G.goldLight + " 100%)", borderRadius: 14, padding: 20, marginBottom: 16, color: "#1a1a1a" }}>
+                  <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, opacity: 0.7 }}>Mon code</div>
+                  <div style={{ fontSize: 28, fontWeight: "bold", letterSpacing: 2, fontFamily: "monospace", marginBottom: 14 }}>{referralCode}</div>
+                  <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>Mon lien à partager :</div>
+                  <div style={{ background: "rgba(255,255,255,0.4)", borderRadius: 8, padding: "8px 12px", fontSize: 11, fontFamily: "monospace", wordBreak: "break-all", marginBottom: 12 }}>
+                    https://carrybooks.com/?ref={referralCode}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                    <button onClick={() => {
+                      const url = "https://carrybooks.com/?ref=" + referralCode;
+                      const text = "📚 Découvre CarryBooks ! Des livres et articles de qualité au Cameroun. Avec mon lien tu as -10% sur ta 1ère commande :\n" + url;
+                      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+                    }} style={{ padding: "10px 8px", background: "#25D366", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
+                    <button onClick={() => {
+                      const url = "https://carrybooks.com/?ref=" + referralCode;
+                      window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
+                    }} style={{ padding: "10px 8px", background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
+                    <button onClick={() => {
+                      const url = "https://carrybooks.com/?ref=" + referralCode;
+                      navigator.clipboard?.writeText(url).then(() => alert("✅ Lien copié !")).catch(() => {});
+                    }} style={{ padding: "10px 8px", background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>🔗 Copier</button>
+                  </div>
+                </div>
+
+                {/* STATS */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 14 }}>
+                    <div style={{ fontSize: 10, color: G.textFaint, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>💰 Total gagné</div>
+                    <div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{(referralData?.total_earned || 0).toLocaleString()} F</div>
+                  </div>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 14 }}>
+                    <div style={{ fontSize: 10, color: G.textFaint, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>✅ Disponible</div>
+                    <div style={{ fontSize: 20, fontWeight: "bold", color: G.green }}>{(referralData?.available_amount || 0).toLocaleString()} F</div>
+                  </div>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 14 }}>
+                    <div style={{ fontSize: 10, color: G.textFaint, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>⏳ En attente</div>
+                    <div style={{ fontSize: 20, fontWeight: "bold", color: G.text }}>{(referralData?.pending_amount || 0).toLocaleString()} F</div>
+                  </div>
+                  <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 14 }}>
+                    <div style={{ fontSize: 10, color: G.textFaint, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>👥 Filleuls</div>
+                    <div style={{ fontSize: 20, fontWeight: "bold", color: G.text }}>{myReferrals.length}</div>
+                  </div>
+                </div>
+
+                {/* BOUTON RETRAIT */}
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={(referralData?.available_amount || 0) < (appReferralSettings?.min_withdrawal || 10000)}
+                  style={{
+                    width: "100%",
+                    padding: 14,
+                    background: (referralData?.available_amount || 0) < (appReferralSettings?.min_withdrawal || 10000) ? "#888" : G.gold,
+                    color: "#1a1a1a",
+                    border: "none",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    cursor: (referralData?.available_amount || 0) < (appReferralSettings?.min_withdrawal || 10000) ? "not-allowed" : "pointer",
+                    letterSpacing: 1,
+                    marginBottom: 20
+                  }}
+                >
+                  💸 DEMANDER UN RETRAIT (min {(appReferralSettings?.min_withdrawal || 10000).toLocaleString()} F)
+                </button>
+
+                {/* COMMENT ÇA MARCHE */}
+                <div style={{ background: G.surface2, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 10, letterSpacing: 1, textTransform: "uppercase" }}>💡 Comment ça marche</div>
+                  <ol style={{ fontSize: 12, color: G.textDim, lineHeight: 1.7, paddingLeft: 18, margin: 0 }}>
+                    <li>Partage ton lien sur WhatsApp, Facebook, etc.</li>
+                    <li>Ton ami(e) clique et achète sur CarryBooks</li>
+                    <li>Tu gagnes <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_digital || 20}%</strong> sur les livres numériques et <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_physical || 10}%</strong> sur les articles physiques</li>
+                    <li>Ton ami(e) bénéficie de <strong style={{ color: G.gold }}>{appReferralSettings?.referred_discount_pct || 10}%</strong> de réduction</li>
+                    <li>Tu reçois ton argent sur MTN/Orange après {appReferralSettings?.fraud_delay_days || 30} jours (anti-fraude)</li>
+                  </ol>
+                </div>
+
+                {/* MES FILLEULS */}
+                {myReferrals.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 10, letterSpacing: 1, textTransform: "uppercase" }}>👥 Mes filleuls ({myReferrals.length})</div>
+                    <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, overflow: "hidden" }}>
+                      {myReferrals.slice(0, 10).map((ref, i) => (
+                        <div key={ref.id} style={{ padding: "12px 14px", borderBottom: i < Math.min(myReferrals.length, 10) - 1 ? "1px solid " + G.border : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontSize: 12, color: G.text, marginBottom: 2 }}>
+                              {ref.referred_guest_phone ? "📱 " + ref.referred_guest_phone : "👤 Filleul " + (ref.referred_id ? ref.referred_id.substring(0, 8) : "?")}
+                            </div>
+                            <div style={{ fontSize: 10, color: G.textFaint }}>
+                              {ref.product_type === "article" || ref.product_type === "papier" ? "🛍️" : "📚"} {ref.first_purchase_amount ? ref.first_purchase_amount.toLocaleString() + " F" : "—"} · {ref.status === "available" ? "✅ Disponible" : ref.status === "pending" ? "⏳ En attente" : ref.status}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>+{(ref.reward_amount || 0).toLocaleString()} F</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* HISTORIQUE RETRAITS */}
+                {myWithdrawals.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 10, letterSpacing: 1, textTransform: "uppercase" }}>💸 Mes retraits</div>
+                    <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, overflow: "hidden" }}>
+                      {myWithdrawals.slice(0, 10).map((wd, i) => (
+                        <div key={wd.id} style={{ padding: "12px 14px", borderBottom: i < Math.min(myWithdrawals.length, 10) - 1 ? "1px solid " + G.border : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontSize: 12, color: G.text, marginBottom: 2 }}>📅 {new Date(wd.created_at).toLocaleDateString("fr-FR")}</div>
+                            <div style={{ fontSize: 10, color: G.textFaint }}>{wd.phone_number} · {wd.operator}</div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>{(wd.amount || 0).toLocaleString()} F</div>
+                            <div style={{ fontSize: 10, color: wd.status === "completed" ? G.green : wd.status === "failed" ? "#f44336" : G.textFaint }}>
+                              {wd.status === "completed" ? "✅ Versé" : wd.status === "processing" ? "⏳ En cours" : wd.status === "failed" ? "❌ Échec" : wd.status}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
