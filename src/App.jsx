@@ -2892,13 +2892,14 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
 
 
 // ─── PDF READER WITH LOADING SCREEN ───
-function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
+function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack, onDownload }) {
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [dots, setDots] = useState(".");
   const [elapsed, setElapsed] = useState(0);
   const [key, setKey] = useState(0);
   const [pageInput, setPageInput] = useState(String(startPage));
   const [pageSaved, setPageSaved] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
@@ -2920,15 +2921,37 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
     }
   }
 
+  async function handleDownload() {
+    if (!onDownload || downloading) return;
+    setDownloading(true);
+    try {
+      await onDownload();
+    } catch (e) {
+      console.warn("Erreur téléchargement:", e);
+    }
+    setDownloading(false);
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <div style={{ background: "#111", borderBottom: "1px solid #333", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14 }}>← Retour</button>
-        <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {reading.title}{excerptMode ? " — Extrait" : ""}
         </span>
-        <span style={{ opacity: 0, width: 48 }}>x</span>
+        {/* Bouton télécharger (si onDownload fourni et pas en mode extrait) */}
+        {onDownload && !excerptMode ? (
+          <button 
+            onClick={handleDownload} 
+            disabled={downloading}
+            title="Télécharger le PDF"
+            style={{ background: "#c9a84c", border: "none", borderRadius: 6, color: "#1a1208", cursor: downloading ? "wait" : "pointer", fontSize: 13, fontWeight: "bold", padding: "6px 12px", display: "flex", alignItems: "center", gap: 4 }}>
+            {downloading ? "..." : "⬇️ PDF"}
+          </button>
+        ) : (
+          <span style={{ opacity: 0, width: 48 }}>x</span>
+        )}
       </div>
 
       {/* Loading overlay */}
@@ -15170,6 +15193,23 @@ export default function App() {
           startPage={startPage}
           activePdfUrl={activePdfUrl}
           onBack={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
+          onDownload={
+            (reading.can_download && reading.pdf_url && reading.pdf_url !== "pending" && (hasAccess(reading) || reading.price === 0))
+              ? async () => {
+                  await downloadProtectedPDF(
+                    reading.pdf_url,
+                    (reading.title || "livre") + ".pdf",
+                    {
+                      name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                      email: user?.email || "",
+                      phone: user?.user_metadata?.phone || "",
+                      userId: user?.id,
+                      bookId: reading.id,
+                    }
+                  );
+                }
+              : null
+          }
         />
       );
     }
