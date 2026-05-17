@@ -26,8 +26,12 @@ function escapeXml(str) {
 }
 
 export default async function handler(req, res) {
+  // ⚠️ Côté serveur Vercel, les variables VITE_* sont VIDES
+  // On utilise SUPABASE_SERVICE_ROLE_KEY (la même que campay.js qui marche déjà)
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY 
+    || process.env.SUPABASE_ANON_KEY 
+    || process.env.VITE_SUPABASE_ANON_KEY;
 
   const urls = [
     { loc: "https://carrybooks.com/", priority: 1.0, changefreq: "daily" },
@@ -37,29 +41,35 @@ export default async function handler(req, res) {
   ];
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { data: books } = await supabase
-      .from("books")
-      .select("title, product_type, updated_at, created_at")
-      .eq("status", "actif")
-      .limit(5000);
+    if (supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data: books, error } = await supabase
+        .from("books")
+        .select("title, product_type, updated_at, created_at")
+        .eq("status", "actif")
+        .limit(5000);
 
-    if (books && books.length > 0) {
-      for (const b of books) {
-        const slug = slugify(b.title);
-        if (!slug) continue;
-        const urlPath = b.product_type === "article" ? "article" : "livre";
-        const lastmodDate = b.updated_at || b.created_at;
-        urls.push({
-          loc: `https://carrybooks.com/${urlPath}/${slug}`,
-          priority: b.product_type === "article" ? 0.6 : 0.7,
-          changefreq: "weekly",
-          lastmod: lastmodDate ? new Date(lastmodDate).toISOString().split("T")[0] : null,
-        });
+      if (error) {
+        console.error("Sitemap Supabase error:", error.message);
+      } else if (books && books.length > 0) {
+        for (const b of books) {
+          const slug = slugify(b.title);
+          if (!slug) continue;
+          const urlPath = b.product_type === "article" ? "article" : "livre";
+          const lastmodDate = b.updated_at || b.created_at;
+          urls.push({
+            loc: `https://carrybooks.com/${urlPath}/${slug}`,
+            priority: b.product_type === "article" ? 0.6 : 0.7,
+            changefreq: "weekly",
+            lastmod: lastmodDate ? new Date(lastmodDate).toISOString().split("T")[0] : null,
+          });
+        }
       }
+    } else {
+      console.error("Sitemap: missing Supabase credentials");
     }
   } catch (e) {
-    console.error("Sitemap error:", e);
+    console.error("Sitemap exception:", e.message);
   }
 
   const xmlUrls = urls

@@ -47,17 +47,49 @@ export default async function handler(req, res) {
   const userAgent = req.headers["user-agent"] || "";
   const isBotVisit = isBot(userAgent);
 
-  // Récupérer slug + type via query params (transmis par vercel.json rewrites)
   const slug = (req.query.slug || "").toString();
-  const type = (req.query.type || "book").toString(); // "book" ou "article"
+  const type = (req.query.type || "book").toString();
+
+  // 🐛 DEBUG endpoint : /api/preview?debug=1
+  if (req.query.debug === "1") {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    let testResult = "Non testé (pas de credentials)";
+    try {
+      if (supabaseUrl && (serviceKey || anonKey)) {
+        const sb = createClient(supabaseUrl, serviceKey || anonKey);
+        const { data, error, count } = await sb
+          .from("books")
+          .select("title", { count: "exact" })
+          .eq("status", "actif")
+          .limit(3);
+        if (error) testResult = "ERREUR Supabase : " + error.message;
+        else testResult = `OK ${count} livres actifs. Exemples : ${(data || []).map(b => b.title).join(" | ")}`;
+      }
+    } catch (e) {
+      testResult = "EXCEPTION : " + e.message;
+    }
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.status(200).send(
+`=== DIAGNOSTIC PREVIEW ===
+SUPABASE_URL: ${supabaseUrl ? "PRESENT" : "MANQUANT"}
+SUPABASE_SERVICE_ROLE_KEY: ${serviceKey ? "PRESENT" : "MANQUANT"}
+SUPABASE_ANON_KEY: ${anonKey ? "PRESENT" : "MANQUANT"}
+Connexion DB: ${testResult}
+User-Agent: ${userAgent}
+Detecte comme bot: ${isBotVisit}
+`
+    );
+    return;
+  }
 
   if (!slug) {
     res.status(400).send("Missing slug");
     return;
   }
 
-  // === HUMAIN ? Redirection immédiate vers l'app React ===
-  // L'app interceptera ?book=slug et ouvrira la fiche détail
+  // === HUMAIN ? Redirection vers l'app React ===
   if (!isBotVisit) {
     res.setHeader("Location", `https://carrybooks.com/?book=${encodeURIComponent(slug)}`);
     res.status(302).end();
@@ -65,27 +97,32 @@ export default async function handler(req, res) {
   }
 
   // === BOT ? On lui sert le HTML avec OG meta tags ===
+  // ⚠️ Côté serveur Vercel, les variables VITE_* sont VIDES
+  // On utilise SUPABASE_SERVICE_ROLE_KEY (la même que campay.js)
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY 
+    || process.env.SUPABASE_ANON_KEY 
+    || process.env.VITE_SUPABASE_ANON_KEY;
 
   let book = null;
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    // On récupère tous les actifs et on matche le slug côté Node (Postgres n'a pas de slugify natif simple)
-    const { data: books } = await supabase
-      .from("books")
-      .select("id, title, author, price, cover, category, summary, product_type")
-      .eq("status", "actif")
-      .limit(2000);
+    if (supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data: books } = await supabase
+        .from("books")
+        .select("id, title, author, price, cover, category, summary, product_type")
+        .eq("status", "actif")
+        .limit(5000);
 
-    if (books && books.length > 0) {
-      book = books.find(b => slugify(b.title) === slug);
+      if (books && books.length > 0) {
+        book = books.find(b => slugify(b.title) === slug);
+      }
     }
   } catch (e) {
     console.error("Erreur Supabase preview:", e);
   }
 
-  // Fallback : OG par défaut si livre non trouvé
+  // Fallback si livre non trouvé
   if (!book) {
     const fallbackHtml = `<!DOCTYPE html>
 <html lang="fr">
@@ -94,7 +131,7 @@ export default async function handler(req, res) {
 <title>CarryBooks</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="CarryBooks">
-<meta property="og:description" content="CarryBooks - Ta librairie numérique camerounaise. Lis. Apprends. Évolue.">
+<meta property="og:description" content="CarryBooks - Ta librairie numerique camerounaise. Lis. Apprends. Evolue.">
 <meta property="og:image" content="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg">
 <meta property="og:url" content="https://carrybooks.com">
 <meta property="og:site_name" content="CarryBooks">
@@ -102,7 +139,7 @@ export default async function handler(req, res) {
 </head>
 <body>
 <h1>CarryBooks</h1>
-<p>Découvre tous nos livres et produits sur <a href="https://carrybooks.com">carrybooks.com</a></p>
+<p>Decouvre tous nos livres et produits sur <a href="https://carrybooks.com">carrybooks.com</a></p>
 </body>
 </html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -111,12 +148,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Construire les meta tags OG
+  // Meta tags OG personnalisés
   const title = escapeHtml(book.title || "Livre CarryBooks");
   const author = escapeHtml(book.author || "CarryBooks");
   const rawDesc = book.summary
     ? book.summary.replace(/\s+/g, " ").substring(0, 200).trim()
-    : `Découvre "${book.title}" par ${book.author || "CarryBooks"}. ${book.price > 0 ? `Disponible pour ${book.price.toLocaleString("fr-FR")} FCFA.` : "Téléchargement gratuit."}`;
+    : `Decouvre "${book.title}" par ${book.author || "CarryBooks"}. ${book.price > 0 ? `Disponible pour ${book.price.toLocaleString("fr-FR")} FCFA.` : "Telechargement gratuit."}`;
   const description = escapeHtml(rawDesc);
   const cover = book.cover || "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
   const urlPath = book.product_type === "article" ? "article" : "livre";
@@ -132,7 +169,6 @@ export default async function handler(req, res) {
 <title>${title} — ${author} | CarryBooks</title>
 <meta name="description" content="${description}">
 
-<!-- Open Graph (Facebook, WhatsApp, LinkedIn, Telegram...) -->
 <meta property="og:type" content="${ogType}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
@@ -144,22 +180,18 @@ export default async function handler(req, res) {
 <meta property="og:site_name" content="CarryBooks">
 <meta property="og:locale" content="fr_FR">
 
-<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${escapeHtml(cover)}">
 
-<!-- Prix (Product) -->
 <meta property="product:price:amount" content="${book.price || 0}">
 <meta property="product:price:currency" content="XAF">
 <meta property="og:price:amount" content="${book.price || 0}">
 <meta property="og:price:currency" content="XAF">
 
-<!-- Auteur (Book) -->
 <meta property="book:author" content="${author}">
 
-<!-- Schema.org JSON-LD pour Google -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -178,7 +210,6 @@ export default async function handler(req, res) {
 }
 </script>
 
-<!-- Redirection humain au cas où -->
 <meta http-equiv="refresh" content="0; url=https://carrybooks.com/?book=${encodeURIComponent(slug)}">
 </head>
 <body>
