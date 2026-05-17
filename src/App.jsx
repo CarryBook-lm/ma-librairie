@@ -13376,6 +13376,31 @@ export default function App() {
     }
   }, [books]);
 
+  // 🎯 PARRAINAGE : Détecter ?ref= dans l'URL et stocker 30 jours
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const refCode = params.get("ref");
+      if (refCode && refCode.trim()) {
+        const code = refCode.trim().toUpperCase();
+        const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 jours
+        localStorage.setItem("carrybooks_referrer_code", code);
+        localStorage.setItem("carrybooks_referrer_expires", String(expiresAt));
+        console.log("🎁 Code parrainage détecté:", code);
+      } else {
+        // Nettoyer si expiré
+        const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+        if (expires && expires < Date.now()) {
+          localStorage.removeItem("carrybooks_referrer_code");
+          localStorage.removeItem("carrybooks_referrer_expires");
+        }
+      }
+    } catch (e) {
+      console.error("Erreur tracking parrainage:", e);
+    }
+  }, []);
+
   useEffect(() => {
     const on = () => setIsOnline(true);
     const off = () => setIsOnline(false);
@@ -14923,6 +14948,16 @@ export default function App() {
           const checkData = await checkRes.json();
 
           if (checkData.status === "SUCCESSFUL") {
+            // 🎯 PARRAINAGE : récupérer le code parrain depuis localStorage
+            let referrerCode = null;
+            try {
+              const code = localStorage.getItem("carrybooks_referrer_code");
+              const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+              if (code && expires > Date.now()) {
+                referrerCode = code;
+              }
+            } catch (e) {}
+
             // ✅ Paiement confirmé — on enregistre l'achat CÔTÉ SERVEUR (bypass RLS)
             if (user) {
               const recordRes = await fetch("/api/campay", {
@@ -14935,7 +14970,8 @@ export default function App() {
                   book_id: paymentBook.id,
                   amount: finalPrice,
                   phone: phone,
-                  external_reference: externalRef
+                  external_reference: externalRef,
+                  referrer_code: referrerCode
                 })
               });
               const recordData = await recordRes.json();
@@ -14961,7 +14997,8 @@ export default function App() {
                     amount: finalPrice,
                     phone: phone,
                     external_reference: externalRef,
-                    type: "book"
+                    type: "book",
+                    referrer_code: referrerCode
                   })
                 });
               } catch (guestErr) {

@@ -5,6 +5,147 @@
 import { createClient } from "@supabase/supabase-js";
 
 // ============================================================
+// 🎁 PARRAINAGE : Créditer le parrain au 1er achat du filleul
+// Appelé après chaque INSERT purchases / guest_purchases avec referrer_code
+// ============================================================
+async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId, guestPhone, bookId, amount }) {
+  try {
+    if (!referrerCode) return { skipped: true, reason: "no_code" };
+
+    // 1) Charger les settings parrainage (% digital/physique, délai anti-fraude)
+    const { data: settingsRows } = await supabaseAdmin
+      .from("referral_settings")
+      .select("*")
+      .eq("active", true)
+      .order("id", { ascending: true })
+      .limit(1);
+    const settings = settingsRows && settingsRows[0];
+    if (!settings) return { skipped: true, reason: "no_settings" };
+
+    const pctDigital = parseFloat(settings.reward_pct_digital) || 20;
+    const pctPhysical = parseFloat(settings.reward_pct_physical) || 10;
+    const delayDays = parseInt(settings.fraud_delay_days) || 30;
+
+    // 2) Trouver le parrain par son code
+    const code = String(referrerCode).trim().toUpperCase();
+    const { data: parrCodeRows } = await supabaseAdmin
+      .from("referral_codes")
+      .select("user_id, total_earned, pending_amount")
+      .eq("code", code)
+      .limit(1);
+    if (!parrCodeRows || parrCodeRows.length === 0) {
+      return { skipped: true, reason: "code_not_found", code };
+    }
+    const referrerId = parrCodeRows[0].user_id;
+
+    // 3) Anti-auto-parrainage : refuser si le filleul est le parrain
+    if (userId && referrerId === userId) {
+      return { skipped: true, reason: "self_referral" };
+    }
+
+    // 4) Vérifier que c'est bien le PREMIER achat du filleul
+    // (pour user connecté : check purchases / pour guest : check guest_purchases par phone)
+    let isFirstPurchase = true;
+    if (userId) {
+      const { data: prev } = await supabaseAdmin
+        .from("purchases")
+        .select("id")
+        .eq("user_id", userId)
+        .limit(2);
+      // On a inséré purchaseId juste avant. Si il y en a >=2, c'est PAS le premier
+      if (prev && prev.length >= 2) isFirstPurchase = false;
+    } else if (guestPhone) {
+      const { data: prev } = await supabaseAdmin
+        .from("guest_purchases")
+        .select("id")
+        .eq("phone", guestPhone)
+        .limit(2);
+      if (prev && prev.length >= 2) isFirstPurchase = false;
+    }
+    if (!isFirstPurchase) {
+      return { skipped: true, reason: "not_first_purchase" };
+    }
+
+    // 5) Anti-doublon : vérifier qu'aucune entrée referrals n'existe déjà pour ce purchase
+    const purchaseRefField = userId ? "first_purchase_id" : "first_guest_purchase_id";
+    const { data: existingRef } = await supabaseAdmin
+      .from("referrals")
+      .select("id")
+      .eq(purchaseRefField, purchaseId)
+      .limit(1);
+    if (existingRef && existingRef.length > 0) {
+      return { skipped: true, reason: "already_credited" };
+    }
+
+    // 6) Récupérer le product_type du livre pour appliquer le bon %
+    let productType = "digital";
+    if (bookId) {
+      const { data: bookRow } = await supabaseAdmin
+        .from("books")
+        .select("product_type")
+        .eq("id", bookId)
+        .single();
+      if (bookRow && bookRow.product_type) productType = bookRow.product_type;
+    }
+    const isPhysical = productType === "article" || productType === "papier";
+    const rewardPct = isPhysical ? pctPhysical : pctDigital;
+    const rewardAmount = Math.round((amount || 0) * rewardPct / 100);
+
+    if (rewardAmount <= 0) {
+      return { skipped: true, reason: "zero_reward" };
+    }
+
+    // 7) Insérer dans referrals
+    const availableAt = new Date();
+    availableAt.setDate(availableAt.getDate() + delayDays);
+
+    const referralPayload = {
+      referrer_id: referrerId,
+      referrer_code: code,
+      reward_amount: rewardAmount,
+      reward_pct: rewardPct,
+      first_purchase_amount: amount,
+      product_type: productType,
+      status: "pending",
+      available_at: availableAt.toISOString(),
+    };
+    if (userId) {
+      referralPayload.referred_id = userId;
+      referralPayload.first_purchase_id = purchaseId;
+    } else {
+      referralPayload.first_guest_purchase_id = purchaseId;
+      referralPayload.referred_guest_phone = guestPhone;
+    }
+
+    const { error: refInsertErr } = await supabaseAdmin
+      .from("referrals")
+      .insert([referralPayload]);
+
+    if (refInsertErr) {
+      console.error("[REFERRAL] Insert error:", refInsertErr);
+      return { error: refInsertErr.message };
+    }
+
+    // 8) Mettre à jour le solde pending du parrain
+    const currentTotal = parseInt(parrCodeRows[0].total_earned || 0);
+    const currentPending = parseInt(parrCodeRows[0].pending_amount || 0);
+    await supabaseAdmin
+      .from("referral_codes")
+      .update({
+        total_earned: currentTotal + rewardAmount,
+        pending_amount: currentPending + rewardAmount,
+      })
+      .eq("user_id", referrerId);
+
+    console.log("[REFERRAL] ✅ Crédité", rewardAmount, "F à", referrerId, "(", rewardPct, "% sur", productType, ")");
+    return { success: true, referrerId, rewardAmount, rewardPct, productType };
+  } catch (e) {
+    console.error("[REFERRAL] Exception:", e);
+    return { error: e.message };
+  }
+}
+
+// ============================================================
 // 📧 ENVOI EMAIL DE NOTIFICATION (via Resend)
 // Sert pour TOUS les types d'achats :
 //   - cart (panier multi-articles)
@@ -342,7 +483,7 @@ export default async function handler(req, res) {
 
     // ========== ACTION : RECORD_PURCHASE ==========
     if (action === "record_purchase") {
-      const { reference, user_id, book_id, amount, phone, external_reference } = params;
+      const { reference, user_id, book_id, amount, phone, external_reference, referrer_code } = params;
 
       const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
       const verifyRes = await fetch(verifyUrl, {
@@ -388,6 +529,7 @@ export default async function handler(req, res) {
             phone,
             external_reference,
             type: "sale",
+            referrer_code: referrer_code || null,
           },
         ])
         .select();
@@ -398,6 +540,20 @@ export default async function handler(req, res) {
           error: "Erreur enregistrement achat",
           details: insertError.message,
         });
+      }
+
+      // 🎁 PARRAINAGE : créditer le parrain si code valide
+      if (referrer_code && inserted && inserted[0]) {
+        const refResult = await creditReferrer({
+          supabaseAdmin,
+          referrerCode: referrer_code,
+          purchaseId: inserted[0].id,
+          userId: user_id,
+          guestPhone: null,
+          bookId: book_id,
+          amount: amount,
+        });
+        console.log("[RECORD_PURCHASE] Referral result:", refResult);
       }
 
       // 🔥 Marquer le pending comme completed si existait
@@ -878,7 +1034,7 @@ export default async function handler(req, res) {
     // Stocké avec le numéro de téléphone comme identifiant
     // Permettra plus tard de récupérer les livres si le client crée un compte
     if (action === "record_guest_purchase") {
-      const { phone, book_id, amount, reference, external_reference, type } = params;
+      const { phone, book_id, amount, reference, external_reference, type, referrer_code } = params;
 
       if (!phone || !reference) {
         return res.status(400).json({ error: "phone et reference requis" });
@@ -914,6 +1070,7 @@ export default async function handler(req, res) {
           reference: reference,
           external_reference: external_reference || null,
           type: type || "book",
+          referrer_code: referrer_code || null,
         }])
         .select()
         .single();
@@ -923,6 +1080,20 @@ export default async function handler(req, res) {
         // 🛡️ On retourne SUCCESS quand même pour ne pas casser le flow de paiement
         // L'achat est déjà dans CamPay + localStorage du client
         return res.status(200).json({ success: false, error: error.message, non_blocking: true });
+      }
+
+      // 🎁 PARRAINAGE : créditer le parrain si code valide
+      if (referrer_code && data) {
+        const refResult = await creditReferrer({
+          supabaseAdmin,
+          referrerCode: referrer_code,
+          purchaseId: data.id,
+          userId: null,
+          guestPhone: normalizedPhone,
+          bookId: book_id,
+          amount: amount,
+        });
+        console.log("[GUEST_PURCHASE] Referral result:", refResult);
       }
 
       // 📧 ENVOI EMAIL DE NOTIFICATION (non bloquant)
