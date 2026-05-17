@@ -1,8 +1,3 @@
-// =============================================================
-// 📋 SITEMAP.XML - CarryBooks
-// Liste tous les livres et articles pour Google Search Console
-// =============================================================
-
 import { createClient } from "@supabase/supabase-js";
 
 function slugify(str) {
@@ -26,11 +21,9 @@ function escapeXml(str) {
 }
 
 export default async function handler(req, res) {
-  // ⚠️ Côté serveur Vercel, les variables VITE_* sont VIDES
-  // On utilise SUPABASE_SERVICE_ROLE_KEY (la même que campay.js qui marche déjà)
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY 
-    || process.env.SUPABASE_ANON_KEY 
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    || process.env.SUPABASE_ANON_KEY
     || process.env.VITE_SUPABASE_ANON_KEY;
 
   const urls = [
@@ -40,8 +33,15 @@ export default async function handler(req, res) {
     { loc: "https://carrybooks.com/?go=carrycare", priority: 0.9, changefreq: "weekly" },
   ];
 
+  // Diagnostic visible dans le XML
+  let debugMsg = "INIT";
+
   try {
-    if (supabaseUrl && supabaseKey) {
+    if (!supabaseUrl) {
+      debugMsg = "MISSING_SUPABASE_URL";
+    } else if (!supabaseKey) {
+      debugMsg = "MISSING_SUPABASE_KEY";
+    } else {
       const supabase = createClient(supabaseUrl, supabaseKey);
       const { data: books, error } = await supabase
         .from("books")
@@ -50,8 +50,13 @@ export default async function handler(req, res) {
         .limit(5000);
 
       if (error) {
-        console.error("Sitemap Supabase error:", error.message);
-      } else if (books && books.length > 0) {
+        debugMsg = "DB_ERROR: " + error.message;
+      } else if (!books) {
+        debugMsg = "NO_DATA_RETURNED";
+      } else if (books.length === 0) {
+        debugMsg = "EMPTY_RESULT";
+      } else {
+        debugMsg = "OK_" + books.length + "_LIVRES_TROUVES";
         for (const b of books) {
           const slug = slugify(b.title);
           if (!slug) continue;
@@ -65,11 +70,9 @@ export default async function handler(req, res) {
           });
         }
       }
-    } else {
-      console.error("Sitemap: missing Supabase credentials");
     }
   } catch (e) {
-    console.error("Sitemap exception:", e.message);
+    debugMsg = "EXCEPTION: " + e.message;
   }
 
   const xmlUrls = urls
@@ -85,11 +88,15 @@ export default async function handler(req, res) {
     .join("\n");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!-- Debug status: ${debugMsg} -->
+<!-- Total URLs: ${urls.length} -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${xmlUrls}
 </urlset>`;
 
+  // CACHE DESACTIVE pour debug
   res.setHeader("Content-Type", "application/xml; charset=utf-8");
-  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
+  res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
   res.status(200).send(xml);
 }
+
