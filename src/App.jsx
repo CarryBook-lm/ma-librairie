@@ -16217,7 +16217,7 @@ export default function App() {
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
           </div>
         </div>
-        {/* 🎁 BANDEAU PARRAINAGE : visible si visiteur arrive avec ?ref= et n'a pas encore acheté */}
+        {/* 🎁 BANDEAU PARRAINAGE : visible si visiteur arrive avec ?ref= */}
         {(() => {
           try {
             const refCode = localStorage.getItem("carrybooks_referrer_code");
@@ -16225,7 +16225,7 @@ export default function App() {
             if (refCode && expires > Date.now() && appReferralSettings?.active !== false) {
               return (
                 <div style={{ background: "linear-gradient(90deg, #c9a84c 0%, #f5d782 50%, #c9a84c 100%)", padding: "12px 16px", textAlign: "center", color: "#1a1a1a", fontSize: 13, fontWeight: "bold", letterSpacing: 0.3 }}>
-                  🎁 Tu bénéficies de -{appReferralSettings?.referred_discount_pct || 10}% sur ton 1er achat
+                  🎁 Tu bénéficies de -{appReferralSettings?.referred_discount_pct || 10}% grâce au code parrainage
                 </div>
               );
             }
@@ -18838,7 +18838,7 @@ export default function App() {
                   </ol>
                   <div style={{ marginTop: 12, padding: 10, background: "rgba(201,152,42,0.1)", border: "1px solid " + G.gold, borderRadius: 6 }}>
                     <div style={{ fontSize: 11, color: G.gold, lineHeight: 1.5 }}>
-                      💡 <strong>Important :</strong> La commission est versée uniquement sur le 1er achat de ton/ta client(e). Si elle a déjà acheté avant ton invitation, malheureusement ça ne compte pas.
+                      💡 <strong>Important :</strong> La commission est versée sur les 3 premiers achats de ton/ta client(e) avec un code parrainage. Au 4ème achat avec code, plus de commission.
                     </div>
                   </div>
                 </div>

@@ -44,27 +44,33 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
     //   return { skipped: true, reason: "self_referral" };
     // }
 
-    // 4) Vérifier que c'est bien le PREMIER achat du filleul
-    // (pour user connecté : check purchases / pour guest : check guest_purchases par phone)
-    let isFirstPurchase = true;
+    // 4) Vérifier que le filleul a fait moins de 3 achats AVEC code parrainage
+    //    (Règle Option A : max 3 commissions par filleul, dans sa vie, peu importe le parrain)
+    const MAX_REFERRED_PURCHASES = 3;
+    let referredPurchasesCount = 0;
     if (userId) {
       const { data: prev } = await supabaseAdmin
         .from("purchases")
         .select("id")
         .eq("user_id", userId)
-        .limit(2);
-      // On a inséré purchaseId juste avant. Si il y en a >=2, c'est PAS le premier
-      if (prev && prev.length >= 2) isFirstPurchase = false;
+        .not("referrer_code", "is", null);
+      referredPurchasesCount = (prev || []).length;
     } else if (guestPhone) {
       const { data: prev } = await supabaseAdmin
         .from("guest_purchases")
         .select("id")
         .eq("phone", guestPhone)
-        .limit(2);
-      if (prev && prev.length >= 2) isFirstPurchase = false;
+        .not("referrer_code", "is", null);
+      referredPurchasesCount = (prev || []).length;
     }
-    if (!isFirstPurchase) {
-      return { skipped: true, reason: "not_first_purchase" };
+    // referredPurchasesCount inclut DÉJÀ l'achat actuel (inséré juste avant)
+    // Donc :
+    //   - 1 = c'est son 1er achat avec code → OK
+    //   - 2 = 2ème achat avec code → OK
+    //   - 3 = 3ème achat avec code → OK
+    //   - >= 4 = REFUSÉ
+    if (referredPurchasesCount > MAX_REFERRED_PURCHASES) {
+      return { skipped: true, reason: "max_referred_reached", count: referredPurchasesCount };
     }
 
     // 5) Anti-doublon : vérifier qu'aucune entrée referrals n'existe déjà pour ce purchase
