@@ -13464,10 +13464,15 @@ export default function App() {
     }
 
     // Méthode 2 : Ancien format ?book=XX (pour compatibilité)
+    // ?book= peut être soit un ID numérique, soit un slug (depuis api/preview.js)
     const params = new URLSearchParams(window.location.search);
     const bookId = params.get("book");
     if (bookId) {
-      const targetBook = books.find(b => String(b.id) === String(bookId));
+      // Cherche d'abord par id (cas legacy), puis par slug (cas preview.js redirection)
+      const targetBook = books.find(b => 
+        String(b.id) === String(bookId) || 
+        slugify(b.title || b.id) === String(bookId)
+      );
       if (targetBook) {
         setSelectedBook(targetBook);
         setPage("detail");
