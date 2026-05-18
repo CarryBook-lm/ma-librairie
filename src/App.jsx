@@ -17494,10 +17494,18 @@ export default function App() {
                     <span style={{ fontSize: 20 }}>📚</span>
                     <span style={{ lineHeight: 1.2, textAlign: "center" }}>Ma Bibliotheque</span>
                   </button>
-                  <button onClick={() => { setPage("carrycare"); setCarryCarePage("home"); }} style={{ flex: 1, padding: "14px 6px", background: "#f5d7d9", border: "none", borderLeft: "1px solid " + G.border, color: "#1a1a1a", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                    <span style={{ fontSize: 20 }}>🌸</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>CarryCare</span>
-                  </button>
+                  {(appReferralSettings?.active !== false) ? (
+                    <button onClick={() => setPage("referral")} style={{ flex: 1, padding: "10px 4px", background: "linear-gradient(135deg, #f5d782 0%, #c9a84c 100%)", border: "none", borderLeft: "1px solid " + G.border, color: "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, justifyContent: "center" }}>
+                      <span style={{ fontSize: 18 }}>🎁</span>
+                      <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 11, fontWeight: "bold" }}>Mon Parrainage</span>
+                      <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.85 }}>Gagne de l'argent</span>
+                    </button>
+                  ) : (
+                    <button onClick={() => { setPage("carrycare"); setCarryCarePage("home"); }} style={{ flex: 1, padding: "14px 6px", background: "#f5d7d9", border: "none", borderLeft: "1px solid " + G.border, color: "#1a1a1a", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <span style={{ fontSize: 20 }}>🌸</span>
+                      <span style={{ lineHeight: 1.2, textAlign: "center" }}>CarryCare</span>
+                    </button>
+                  )}
                   <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory("Tous"); }} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                     <span style={{ fontSize: 20 }}>🎯</span>
                     <span style={{ lineHeight: 1.2, textAlign: "center" }}>Carry'Quiz</span>
