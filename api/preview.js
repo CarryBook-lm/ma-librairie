@@ -17,6 +17,22 @@ const BOT_AGENTS = [
 function isBot(userAgent) {
   if (!userAgent) return false;
   const ua = userAgent.toLowerCase();
+
+  // 🎯 CAS SPÉCIAL WhatsApp : 
+  //   - Bot WhatsApp (pour les OG previews) → UA = "WhatsApp/2.21.x" (sans Mozilla)
+  //   - Navigateur in-app WhatsApp (humain) → UA contient "Mozilla" + "WhatsApp"
+  // On ne traite WhatsApp comme bot QUE si Mozilla est absent
+  if (ua.includes("whatsapp")) {
+    return !ua.includes("mozilla");
+  }
+
+  // 🎯 CAS SPÉCIAL Facebook : pareil
+  //   - Bot Facebook → "facebookexternalhit"
+  //   - Navigateur in-app Facebook → contient "FBAN" ou "FBAV"
+  if (ua.includes("fban") || ua.includes("fbav")) {
+    return false; // navigateur in-app Facebook = humain
+  }
+
   return BOT_AGENTS.some(bot => ua.includes(bot.toLowerCase()));
 }
 

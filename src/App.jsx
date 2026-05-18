@@ -13471,8 +13471,11 @@ export default function App() {
       if (targetBook) {
         setSelectedBook(targetBook);
         setPage("detail");
-        // Rediriger vers la nouvelle URL propre
-        window.history.replaceState({}, "", buildPath("detail", targetBook));
+        // 🎯 Rediriger vers /livre/slug en PRÉSERVANT ?ref= (et autres params)
+        params.delete("book"); // on enlève juste ?book= qui devient inutile
+        const remainingParams = params.toString();
+        const cleanUrl = buildPath("detail", targetBook) + (remainingParams ? "?" + remainingParams : "");
+        window.history.replaceState({}, "", cleanUrl);
       }
     }
 
