@@ -88,7 +88,12 @@ Detecte comme bot: ${isBotVisit}
 
   // === HUMAIN ? Redirection vers l'app React ===
   if (!isBotVisit) {
-    res.setHeader("Location", `https://carrybooks.com/?book=${encodeURIComponent(slug)}`);
+    // 🎯 PRÉSERVER les query params (notamment ?ref= pour parrainage)
+    const extraParams = Object.entries(req.query)
+      .filter(([key]) => key !== "type" && key !== "slug")
+      .map(([key, val]) => `&${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
+      .join("");
+    res.setHeader("Location", `https://carrybooks.com/?book=${encodeURIComponent(slug)}${extraParams}`);
     res.status(302).end();
     return;
   }
