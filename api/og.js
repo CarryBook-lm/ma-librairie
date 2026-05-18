@@ -225,7 +225,7 @@ export default async function handler(req) {
                     },
                   },
 
-                  // Prix + URL
+                  // Prix + CTA
                   {
                     type: "div",
                     props: {
@@ -243,36 +243,93 @@ export default async function handler(req) {
                                 props: {
                                   style: {
                                     display: "flex",
-                                    alignItems: "center",
-                                    background: isPromo ? "#dc3545" : "#c9a84c",
-                                    color: "#fff",
-                                    padding: "12px 20px",
-                                    borderRadius: "6px",
-                                    fontSize: "20px",
-                                    fontWeight: 700,
+                                    flexDirection: "column",
                                     marginRight: "20px",
                                   },
-                                  children: isPromo
-                                    ? "🔥 PROMO -" + promoPct + "% · " + price + " F"
-                                    : price + " FCFA",
+                                  children: [
+                                    ...(isPromo
+                                      ? [
+                                          {
+                                            type: "div",
+                                            props: {
+                                              style: {
+                                                fontSize: "16px",
+                                                color: "#999",
+                                                textDecoration: "line-through",
+                                              },
+                                              children: originalPrice + " FCFA",
+                                            },
+                                          },
+                                        ]
+                                      : []),
+                                    {
+                                      type: "div",
+                                      props: {
+                                        style: {
+                                          fontSize: "32px",
+                                          fontWeight: 700,
+                                          color: "#1a1a1a",
+                                          lineHeight: 1,
+                                        },
+                                        children: price + " FCFA",
+                                      },
+                                    },
+                                    ...(isPromo
+                                      ? [
+                                          {
+                                            type: "div",
+                                            props: {
+                                              style: {
+                                                fontSize: "13px",
+                                                color: "#dc3545",
+                                                fontWeight: 700,
+                                                marginTop: "4px",
+                                              },
+                                              children: "🔥 PROMO -" + promoPct + "%",
+                                            },
+                                          },
+                                        ]
+                                      : []),
+                                  ],
                                 },
                               },
                             ]
                           : []),
 
-                        // URL
+                        // CTA Button "PROFITER DE L'OFFRE"
                         {
                           type: "div",
                           props: {
                             style: {
-                              fontSize: "16px",
-                              color: "#7a6b4a",
+                              display: "flex",
+                              alignItems: "center",
+                              background: "#c9a84c",
+                              color: "#1a1a1a",
+                              padding: "16px 28px",
+                              borderRadius: "8px",
+                              fontSize: "22px",
+                              fontWeight: 700,
                               letterSpacing: "1px",
+                              boxShadow: "0 4px 12px rgba(201,168,76,0.4)",
                             },
-                            children: "www.carrybooks.com",
+                            children: isPromo ? "🔥 PROFITER DE L'OFFRE" : "📚 DÉCOUVRIR",
                           },
                         },
                       ],
+                    },
+                  },
+
+                  // URL en bas
+                  {
+                    type: "div",
+                    props: {
+                      style: {
+                        fontSize: "14px",
+                        color: "#7a6b4a",
+                        letterSpacing: "1px",
+                        marginTop: "16px",
+                      },
+                      children: "www.carrybooks.com",
                     },
                   },
                 ],
