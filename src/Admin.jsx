@@ -56,6 +56,7 @@ export default function Admin() {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [userStats, setUserStats] = useState({ total_users: 0, new_today: 0, new_this_week: 0, new_this_month: 0 });
   const [subscribers, setSubscribers] = useState([]);
   const [quizPayments, setQuizPayments] = useState([]);
   const [carrycarePayments, setCarrycarePayments] = useState([]);
@@ -150,7 +151,7 @@ export default function Admin() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchUserStats(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
 
   // Auto-refresh des données de présence toutes les 10 secondes
   useEffect(() => {
@@ -905,6 +906,23 @@ export default function Admin() {
   async function fetchBooks() {
     const { data } = await supabase.from("books").select("*").order("created_at", { ascending: false });
     if (data) setBooks(data);
+  }
+
+  async function fetchUserStats() {
+    try {
+      const { data, error } = await supabase.rpc("get_user_stats");
+      if (error) { console.error("UserStats error:", error); return; }
+      if (data && data.length > 0) {
+        setUserStats({
+          total_users: Number(data[0].total_users) || 0,
+          new_today: Number(data[0].new_today) || 0,
+          new_this_week: Number(data[0].new_this_week) || 0,
+          new_this_month: Number(data[0].new_this_month) || 0,
+        });
+      }
+    } catch (e) {
+      console.error("fetchUserStats exception:", e);
+    }
   }
 
   async function fetchUsers() {
@@ -2387,10 +2405,36 @@ export default function Admin() {
         {view === "users" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>Utilisateurs connectés</h1>
-              <button onClick={fetchUsers} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
+              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>Utilisateurs</h1>
+              <button onClick={() => { fetchUsers(); fetchUserStats(); }} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
             </div>
+
+            {/* 👥 STATS COMPTES UTILISATEURS */}
+            <div style={{ background: "linear-gradient(135deg, #2a1f0a 0%, #1a1208 100%)", border: "1px solid #c9a84c", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: "bold" }}>👥 Comptes utilisateurs CarryBooks</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", lineHeight: 1 }}>{userStats.total_users}</div>
+                  <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Total comptes</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#4caf50", lineHeight: 1 }}>+{userStats.new_today}</div>
+                  <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Aujourd'hui</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#fff", lineHeight: 1 }}>+{userStats.new_this_week}</div>
+                  <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>7 derniers jours</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#fff", lineHeight: 1 }}>+{userStats.new_this_month}</div>
+                  <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>30 derniers jours</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 🛒 STATS ACHETEURS */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: "bold" }}>🛒 Acheteurs</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 28, fontWeight: "bold", color: "#c9a84c" }}>{[...new Set(users.map(u => u.user_id))].length}</div>
