@@ -21,6 +21,19 @@ function slugify(str) {
     .substring(0, 80);
 }
 
+// Variante : supprime apostrophes/quotes avant de slugifier
+function slugifyAlt(str) {
+  return (str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .substring(0, 80);
+}
+
 function truncate(str, max) {
   if (!str) return "";
   if (str.length <= max) return str;
@@ -49,7 +62,7 @@ export default async function handler(req) {
         .limit(5000);
 
       if (books && books.length > 0) {
-        book = books.find((b) => slugify(b.title) === slug);
+        book = books.find((b) => slugify(b.title) === slug || slugifyAlt(b.title) === slug);
       }
     }
 

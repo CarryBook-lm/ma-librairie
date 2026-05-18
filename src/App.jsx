@@ -13369,7 +13369,14 @@ export default function App() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .substring(0, 80);
-    const match = books.find(b => slugify(b.title) === slug);
+    const slugifyAlt = (s) => (s || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .substring(0, 80);
+    const match = books.find(b => slugify(b.title) === slug || slugifyAlt(b.title) === slug);
     if (match) {
       window.__pendingBookSlug = null;
       openBook(match);
