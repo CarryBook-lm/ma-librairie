@@ -908,6 +908,22 @@ export default function Admin() {
     if (data) setBooks(data);
   }
 
+  // 🔄 Activer/Désactiver un compte parrain
+  async function toggleReferrerActive(c) {
+    const isActive = c.active !== false;
+    const action = isActive ? "désactiver" : "activer";
+    if (!window.confirm(`Voulez-vous vraiment ${action} le code parrainage "${c.code}" ?\n\n${isActive ? "Une fois désactivé, ce parrain ne pourra plus toucher de commissions sur les nouveaux achats." : "Le parrain pourra à nouveau toucher des commissions."}`)) return;
+    try {
+      const { error } = await supabase.from("referral_codes").update({ active: !isActive }).eq("id", c.id);
+      if (error) throw new Error(error.message);
+      alert(isActive ? "🚫 Code parrainage désactivé." : "✅ Code parrainage réactivé.");
+      fetchReferralData();
+    } catch (e) {
+      console.error("toggleReferrerActive:", e);
+      alert("❌ Erreur : " + e.message);
+    }
+  }
+
   // 🟢 APPROUVER une demande de retrait : déclenche le versement CamPay
   async function approveWithdrawal(wd) {
     if (!window.confirm(`Approuver le versement de ${wd.amount.toLocaleString()} F vers ${wd.phone_number} ?`)) return;
@@ -2848,18 +2864,45 @@ export default function Admin() {
               {referralCodes.length === 0 ? (
                 <div style={{ color: "#666", textAlign: "center", padding: 16, fontSize: 12 }}>Aucun parrain encore</div>
               ) : (
-                referralCodes.slice(0, 10).map((c, i) => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #2a2a2a" }}>
-                    <div>
-                      <div style={{ fontSize: 13, color: "#e8e0d0" }}>#{i+1} {c.code}</div>
-                      <div style={{ fontSize: 10, color: "#888" }}>Total gagné : {(c.total_earned || 0).toLocaleString()} F</div>
+                referralCodes.slice(0, 50).map((c, i) => {
+                  const isActive = c.active !== false; // Par défaut TRUE si non défini
+                  return (
+                    <div key={c.id} style={{ padding: "10px 0", borderBottom: "1px solid #2a2a2a" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, color: isActive ? "#e8e0d0" : "#888", textDecoration: isActive ? "none" : "line-through" }}>
+                            #{i+1} {c.code}
+                            {isActive
+                              ? <span style={{ color: "#4caf50", fontSize: 10, marginLeft: 6, fontWeight: "bold" }}>✅ ACTIF</span>
+                              : <span style={{ color: "#ff6b6b", fontSize: 10, marginLeft: 6, fontWeight: "bold" }}>🚫 DÉSACTIVÉ</span>
+                            }
+                          </div>
+                          <div style={{ fontSize: 10, color: "#888" }}>Total gagné : {(c.total_earned || 0).toLocaleString()} F</div>
+                        </div>
+                        <div style={{ textAlign: "right", marginRight: 10 }}>
+                          <div style={{ fontSize: 11, color: "#c9a84c", fontWeight: "bold" }}>{(c.available_amount || 0).toLocaleString()} F</div>
+                          <div style={{ fontSize: 9, color: "#666" }}>disponible</div>
+                        </div>
+                        <button
+                          onClick={() => toggleReferrerActive(c)}
+                          style={{
+                            background: isActive ? "transparent" : "#4caf50",
+                            border: "1px solid " + (isActive ? "#ff6b6b" : "#4caf50"),
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            color: isActive ? "#ff6b6b" : "#fff",
+                            fontSize: 11,
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          {isActive ? "🚫 Désactiver" : "✅ Activer"}
+                        </button>
+                      </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 11, color: "#c9a84c", fontWeight: "bold" }}>{(c.available_amount || 0).toLocaleString()} F</div>
-                      <div style={{ fontSize: 9, color: "#666" }}>disponible</div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
