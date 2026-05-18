@@ -16217,6 +16217,21 @@ export default function App() {
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
           </div>
         </div>
+        {/* 🎁 BANDEAU PARRAINAGE : visible si visiteur arrive avec ?ref= et n'a pas encore acheté */}
+        {(() => {
+          try {
+            const refCode = localStorage.getItem("carrybooks_referrer_code");
+            const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+            if (refCode && expires > Date.now() && appReferralSettings?.active !== false) {
+              return (
+                <div style={{ background: "linear-gradient(90deg, #c9a84c 0%, #f5d782 50%, #c9a84c 100%)", padding: "12px 16px", textAlign: "center", color: "#1a1a1a", fontSize: 13, fontWeight: "bold", letterSpacing: 0.3 }}>
+                  🎁 Tu bénéficies de -{appReferralSettings?.referred_discount_pct || 10}% sur ton 1er achat
+                </div>
+              );
+            }
+          } catch (e) {}
+          return null;
+        })()}
         <div style={{ padding: "24px 16px 40px" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             {book.cover
