@@ -14797,7 +14797,7 @@ export default function App() {
     }
   }
 
-  function startReading(book, excerpt = false) {
+  async function startReading(book, excerpt = false) {
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
     if (!excerpt && !hasAccess(bookToRead)) {
       // Si abonné et peut utiliser son abonnement → propose de débloquer via abo
@@ -14826,8 +14826,22 @@ export default function App() {
       });
       return;
     }
+    // 🔧 FIX BUG : Si pas de pdf_url ET pas de content (chargement light) → fetch le content avant
+    let finalBookToRead = bookToRead;
+    const hasPdf = bookToRead.pdf_url && bookToRead.pdf_url !== "pending";
+    const hasContent = bookToRead.content && bookToRead.content.length > 0;
+    if (!hasPdf && !hasContent && isOnline) {
+      try {
+        const { data: fullBook } = await supabase.from("books").select("content, images").eq("id", bookToRead.id).single();
+        if (fullBook && fullBook.content) {
+          finalBookToRead = { ...bookToRead, content: fullBook.content, images: fullBook.images };
+        }
+      } catch (e) {
+        console.error("[startReading] Erreur fetch content:", e);
+      }
+    }
     setExcerptMode(excerpt);
-    setReading(bookToRead);
+    setReading(finalBookToRead);
     if (!excerpt) {
       const saved = localStorage.getItem("readingProgress_" + bookToRead.id);
       setReadingPage(saved ? parseInt(saved) : 0);
