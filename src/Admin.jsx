@@ -908,6 +908,80 @@ export default function Admin() {
     if (data) setBooks(data);
   }
 
+  // 🟢 APPROUVER une demande de retrait : déclenche le versement CamPay
+  async function approveWithdrawal(wd) {
+    if (!window.confirm(`Approuver le versement de ${wd.amount.toLocaleString()} F vers ${wd.phone_number} ?`)) return;
+    try {
+      // Marquer comme "processing" pour éviter double-clic
+      await supabase.from("referral_withdrawals").update({ status: "processing" }).eq("id", wd.id);
+      // Appel CamPay
+      const payRes = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "withdraw",
+          amount: wd.amount,
+          phone: wd.phone_number,
+          description: "Récompense parrainage CarryBooks",
+          external_reference: "WD_" + wd.id + "_" + Date.now()
+        })
+      });
+      const payData = await payRes.json();
+      if (payData.reference) {
+        // Mettre à jour la demande + total_paid
+        await supabase.from("referral_withdrawals").update({
+          campay_reference: payData.reference,
+          status: "processing"
+        }).eq("id", wd.id);
+        // Incrémenter total_paid du parrain (le solde available a déjà été décrémenté lors de la demande)
+        const { data: rc } = await supabase.from("referral_codes").select("total_paid").eq("user_id", wd.user_id).single();
+        await supabase.from("referral_codes").update({
+          total_paid: (rc?.total_paid || 0) + wd.amount
+        }).eq("user_id", wd.user_id);
+        alert("✅ Versement déclenché ! L'argent est en cours d'envoi via CamPay.");
+        fetchReferralData();
+      } else {
+        // Échec : marquer comme failed
+        await supabase.from("referral_withdrawals").update({
+          status: "failed",
+          error_message: payData.message || "Erreur CamPay"
+        }).eq("id", wd.id);
+        alert("❌ Erreur CamPay : " + (payData.message || "Inconnue"));
+        fetchReferralData();
+      }
+    } catch (e) {
+      console.error("approveWithdrawal:", e);
+      alert("❌ Erreur : " + e.message);
+      // Rollback : remettre en pending
+      await supabase.from("referral_withdrawals").update({ status: "pending" }).eq("id", wd.id);
+      fetchReferralData();
+    }
+  }
+
+  // 🚫 REJETER une demande de retrait : remettre l'argent dans le solde du parrain
+  async function rejectWithdrawal(wd) {
+    const reason = window.prompt("Motif du rejet (visible par le parrain) :");
+    if (reason === null) return; // Annulé
+    if (!reason.trim()) { alert("Le motif est obligatoire"); return; }
+    try {
+      // Remettre l'argent dans available_amount
+      const { data: rc } = await supabase.from("referral_codes").select("available_amount").eq("user_id", wd.user_id).single();
+      await supabase.from("referral_codes").update({
+        available_amount: (rc?.available_amount || 0) + wd.amount
+      }).eq("user_id", wd.user_id);
+      // Marquer la demande comme rejected
+      await supabase.from("referral_withdrawals").update({
+        status: "rejected",
+        error_message: reason.trim()
+      }).eq("id", wd.id);
+      alert("🚫 Demande rejetée. L'argent a été remis dans le solde du parrain.");
+      fetchReferralData();
+    } catch (e) {
+      console.error("rejectWithdrawal:", e);
+      alert("❌ Erreur : " + e.message);
+    }
+  }
+
   async function fetchUserStats() {
     try {
       const { data, error } = await supabase.rpc("get_user_stats");
@@ -2726,18 +2800,43 @@ export default function Admin() {
                 <div style={{ color: "#666", textAlign: "center", padding: 16, fontSize: 12 }}>Aucune demande</div>
               ) : (
                 referralWithdrawals.slice(0, 20).map(wd => (
-                  <div key={wd.id} style={{ padding: "10px 0", borderBottom: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>{wd.amount.toLocaleString()} F → {wd.phone_number}</div>
-                      <div style={{ fontSize: 10, color: "#888" }}>
-                        {new Date(wd.created_at).toLocaleString("fr-FR")} - 
-                        {wd.status === "paid" ? " ✅ Versé" : 
-                         wd.status === "processing" ? " ⏳ En cours" : 
-                         wd.status === "failed" ? " ❌ Échec" : " ⏳ En attente"}
+                  <div key={wd.id} style={{ padding: "12px 0", borderBottom: "1px solid #2a2a2a" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, color: "#e8e0d0", fontWeight: "bold" }}>{wd.amount.toLocaleString()} F → {wd.phone_number}</div>
+                        <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
+                          {new Date(wd.created_at).toLocaleString("fr-FR")} · {wd.operator}
+                        </div>
+                        <div style={{ fontSize: 11, marginTop: 4, color:
+                          wd.status === "paid" ? "#4caf50" :
+                          wd.status === "processing" ? "#f0a020" :
+                          wd.status === "failed" ? "#ff6b6b" :
+                          wd.status === "rejected" ? "#888" : "#c9a84c"
+                        }}>
+                          {wd.status === "paid" ? "✅ Versé" :
+                           wd.status === "processing" ? "⏳ En cours chez CamPay" :
+                           wd.status === "failed" ? "❌ Échec" :
+                           wd.status === "rejected" ? "🚫 Rejeté" : "⏳ En attente de validation"}
+                        </div>
+                        {wd.error_message && <div style={{ fontSize: 10, color: "#ff6b6b", marginTop: 4 }}>Motif : {wd.error_message}</div>}
+                        {wd.campay_reference && <div style={{ fontSize: 9, color: "#666", marginTop: 2 }}>Ref CamPay : {wd.campay_reference}</div>}
                       </div>
-                      {wd.error_message && <div style={{ fontSize: 10, color: "#ff6b6b" }}>Erreur : {wd.error_message}</div>}
-                      {wd.campay_reference && <div style={{ fontSize: 9, color: "#666" }}>Ref CamPay : {wd.campay_reference}</div>}
                     </div>
+                    {/* BOUTONS ACTIONS : visibles uniquement si pending */}
+                    {wd.status === "pending" && (
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button
+                          onClick={() => approveWithdrawal(wd)}
+                          style={{ flex: 1, background: "#4caf50", border: "none", borderRadius: 6, padding: "10px", color: "#fff", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                          ✅ Approuver et verser
+                        </button>
+                        <button
+                          onClick={() => rejectWithdrawal(wd)}
+                          style={{ flex: 1, background: "transparent", border: "1px solid #ff6b6b", borderRadius: 6, padding: "10px", color: "#ff6b6b", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                          🚫 Rejeter
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

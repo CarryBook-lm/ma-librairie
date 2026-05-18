@@ -13888,7 +13888,8 @@ export default function App() {
     }
     setWithdrawLoading(true);
     try {
-      // Créer la demande de retrait
+      // Créer la demande de retrait (status pending)
+      // ⚠️ Le versement CamPay sera déclenché APRÈS validation manuelle par l'admin
       const { data: wdData, error: wdErr } = await supabase.from("referral_withdrawals").insert([{
         user_id: user.id,
         amount: amount,
@@ -13897,48 +13898,21 @@ export default function App() {
         status: "pending"
       }]).select().maybeSingle();
       if (wdErr) throw new Error(wdErr.message);
-      // Appel CamPay pour faire le versement automatique
-      const payRes = await fetch("/api/campay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "withdraw",
-          amount: amount,
-          phone: "237" + phone,
-          description: "Récompense parrainage CarryBooks",
-          external_reference: "WD_" + wdData.id + "_" + Date.now()
-        })
-      });
-      const payData = await payRes.json();
-      if (payData.reference) {
-        // Mettre à jour la demande avec la référence CamPay
-        await supabase.from("referral_withdrawals").update({
-          campay_reference: payData.reference,
-          status: "processing"
-        }).eq("id", wdData.id);
-        // Mettre à jour le solde du parrain
-        await supabase.from("referral_codes").update({
-          available_amount: (referralData.available_amount || 0) - amount,
-          total_paid: (referralData.total_paid || 0) + amount
-        }).eq("user_id", user.id);
-        setWithdrawMessage({ type: "success", text: "✅ Demande envoyée ! Tu recevras l'argent sous quelques minutes" });
-        setTimeout(() => {
-          setShowWithdrawModal(false);
-          setWithdrawAmount("");
-          setWithdrawPhone("");
-          setWithdrawMessage({ type: "", text: "" });
-          loadReferralData(user.id);
-        }, 3000);
-      } else {
-        // Échec : marquer la demande comme failed
-        await supabase.from("referral_withdrawals").update({
-          status: "failed",
-          error_message: payData.message || "Erreur CamPay"
-        }).eq("id", wdData.id);
-        throw new Error(payData.message || "Erreur lors du versement");
-      }
-    } catch (err) {
-      setWithdrawMessage({ type: "error", text: "Erreur : " + err.message });
+      // Décrémenter immédiatement le solde disponible (l'argent est "retenu" en attente de validation)
+      await supabase.from("referral_codes").update({
+        available_amount: (referralData.available_amount || 0) - amount
+      }).eq("user_id", user.id);
+      setWithdrawMessage({ type: "success", text: "✅ Demande envoyée ! Tu recevras ton argent après validation (24h max)" });
+      setTimeout(() => {
+        setShowWithdrawModal(false);
+        setWithdrawAmount("");
+        setWithdrawPhone("");
+        setWithdrawMessage({ type: "", text: "" });
+        loadReferralData(user.id);
+      }, 3000);
+    } catch (e) {
+      console.error("Erreur withdraw:", e);
+      setWithdrawMessage({ type: "error", text: "❌ Erreur : " + e.message });
     } finally {
       setWithdrawLoading(false);
     }
