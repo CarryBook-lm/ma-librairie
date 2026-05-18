@@ -15196,7 +15196,8 @@ export default function App() {
     { id: "subscription", label: "Abonnement" },
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
-    { id: "referral", label: "🎁 Mon parrainage" },
+    // 🎁 Parrainage : visible UNIQUEMENT si activé par l'admin (cache si active === false)
+    ...(appReferralSettings?.active !== false ? [{ id: "referral", label: "🎁 Mon parrainage" }] : []),
     { id: "quiz", label: "🎯 Quiz" },
     { id: "myResults", label: "💎 Mes résultats" },
     { id: "about", label: "À propos" },
@@ -18667,6 +18668,20 @@ export default function App() {
         {/* ============== MON PARRAINAGE ============== */}
         {page === "referral" && (
           <div style={{ padding: "20px 16px 80px", maxWidth: 700, margin: "0 auto" }}>
+            {/* Si parrainage DÉSACTIVÉ par admin */}
+            {appReferralSettings && appReferralSettings.active === false ? (
+              <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "32px 20px", textAlign: "center" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🚧</div>
+                <h2 style={{ fontSize: 18, color: G.gold, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Programme temporairement indisponible</h2>
+                <p style={{ fontSize: 14, color: G.textDim, lineHeight: 1.6, marginBottom: 20 }}>
+                  Notre programme de parrainage est en cours de finalisation. Reviens bientôt pour découvrir tous les détails !
+                </p>
+                <button onClick={() => setPage("home")} style={{ padding: "12px 28px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>
+                  ← RETOUR À L'ACCUEIL
+                </button>
+              </div>
+            ) : (
+            <>
             {/* En-tête */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Parrainage</div>
@@ -18837,6 +18852,8 @@ export default function App() {
                   </div>
                 )}
               </>
+            )}
+            </>
             )}
           </div>
         )}

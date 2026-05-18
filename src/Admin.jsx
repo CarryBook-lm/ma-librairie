@@ -69,9 +69,10 @@ export default function Admin() {
     active: true
   });
   const [refSettingsForm, setRefSettingsForm] = useState({
-    reward_per_referral: "500",
-    referred_discount_pct: "20",
-    min_withdrawal: "5000",
+    reward_pct_digital: "20",
+    reward_pct_physical: "10",
+    referred_discount_pct: "10",
+    min_withdrawal: "10000",
     fraud_delay_days: "30",
     active: true
   });
@@ -685,9 +686,10 @@ export default function Admin() {
       if (data && data.length > 0) {
         setReferralSettings(data[0]);
         setRefSettingsForm({
-          reward_per_referral: String(data[0].reward_per_referral || 500),
-          referred_discount_pct: String(data[0].referred_discount_pct || 20),
-          min_withdrawal: String(data[0].min_withdrawal || 5000),
+          reward_pct_digital: String(data[0].reward_pct_digital || 20),
+          reward_pct_physical: String(data[0].reward_pct_physical || 10),
+          referred_discount_pct: String(data[0].referred_discount_pct || 10),
+          min_withdrawal: String(data[0].min_withdrawal || 10000),
           fraud_delay_days: String(data[0].fraud_delay_days || 30),
           active: data[0].active !== false
         });
@@ -700,17 +702,20 @@ export default function Admin() {
       setRefSettingsMessage({ type: "error", text: "Erreur : paramètres non chargés" });
       return;
     }
-    const reward = parseInt(refSettingsForm.reward_per_referral);
-    const discount = parseInt(refSettingsForm.referred_discount_pct);
+    const pctDigital = parseFloat(refSettingsForm.reward_pct_digital);
+    const pctPhysical = parseFloat(refSettingsForm.reward_pct_physical);
+    const discount = parseFloat(refSettingsForm.referred_discount_pct);
     const minWd = parseInt(refSettingsForm.min_withdrawal);
     const delay = parseInt(refSettingsForm.fraud_delay_days);
-    if (!reward || reward < 0) { setRefSettingsMessage({ type: "error", text: "Récompense invalide" }); return; }
-    if (!discount || discount < 0 || discount > 100) { setRefSettingsMessage({ type: "error", text: "Réduction entre 0 et 100%" }); return; }
+    if (isNaN(pctDigital) || pctDigital < 0 || pctDigital > 100) { setRefSettingsMessage({ type: "error", text: "Commission digital entre 0 et 100%" }); return; }
+    if (isNaN(pctPhysical) || pctPhysical < 0 || pctPhysical > 100) { setRefSettingsMessage({ type: "error", text: "Commission physique entre 0 et 100%" }); return; }
+    if (isNaN(discount) || discount < 0 || discount > 100) { setRefSettingsMessage({ type: "error", text: "Réduction entre 0 et 100%" }); return; }
     if (!minWd || minWd < 100) { setRefSettingsMessage({ type: "error", text: "Minimum retrait au moins 100 F" }); return; }
     if (delay < 0) { setRefSettingsMessage({ type: "error", text: "Délai ne peut pas être négatif" }); return; }
     setRefSettingsSaving(true);
     const { error } = await supabase.from("referral_settings").update({
-      reward_per_referral: reward,
+      reward_pct_digital: pctDigital,
+      reward_pct_physical: pctPhysical,
       referred_discount_pct: discount,
       min_withdrawal: minWd,
       fraud_delay_days: delay,
@@ -2744,19 +2749,43 @@ export default function Admin() {
                 </label>
               </div>
 
-              {/* Récompense parrain */}
+              {/* Récompense parrain — Livres numériques */}
               <div style={{ marginBottom: 18 }}>
                 <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
-                  💰 Récompense PARRAIN par filleul
+                  📚 Commission PARRAIN — Livres numériques
                 </label>
-                <input
-                  type="number"
-                  value={refSettingsForm.reward_per_referral}
-                  onChange={e => setRefSettingsForm(f => ({ ...f, reward_per_referral: e.target.value }))}
-                  style={{ width: "100%", padding: "12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="number"
+                    value={refSettingsForm.reward_pct_digital}
+                    onChange={e => setRefSettingsForm(f => ({ ...f, reward_pct_digital: e.target.value }))}
+                    min="0" max="100" step="0.5"
+                    style={{ width: "100%", padding: "12px 38px 12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
+                  />
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#c9a84c", fontWeight: "bold" }}>%</span>
+                </div>
                 <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
-                  💡 Montant en FCFA que reçoit le parrain quand son filleul achète (ex: 500)
+                  💡 % du prix payé que reçoit le parrain quand un filleul achète un livre numérique (ex: 20)
+                </div>
+              </div>
+
+              {/* Récompense parrain — Articles physiques */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                  📦 Commission PARRAIN — Articles physiques / Livres papier
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="number"
+                    value={refSettingsForm.reward_pct_physical}
+                    onChange={e => setRefSettingsForm(f => ({ ...f, reward_pct_physical: e.target.value }))}
+                    min="0" max="100" step="0.5"
+                    style={{ width: "100%", padding: "12px 38px 12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
+                  />
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#c9a84c", fontWeight: "bold" }}>%</span>
+                </div>
+                <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
+                  💡 % du prix payé pour les articles physiques (montres, parfums, livres papier) — généralement plus bas que digital (ex: 10)
                 </div>
               </div>
 
@@ -2817,13 +2846,18 @@ export default function Admin() {
               <div style={{ background: "#0d1f2a", border: "1px solid #1976d2", borderRadius: 8, padding: 14, marginBottom: 16 }}>
                 <div style={{ fontSize: 11, color: "#64b5f6", marginBottom: 8, fontWeight: "bold" }}>📊 Aperçu du programme actuel :</div>
                 <div style={{ fontSize: 12, color: "#e8e0d0", lineHeight: 1.7 }}>
-                  💰 Le parrain gagne <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{(parseInt(refSettingsForm.reward_per_referral) || 0).toLocaleString()} F</span> par filleul qui achète
+                  📚 Sur livre numérique : parrain gagne <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.reward_pct_digital || 0}%</span> du prix payé
+                  <br />
+                  📦 Sur article physique : parrain gagne <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.reward_pct_physical || 0}%</span> du prix payé
                   <br />
                   🎁 Le filleul reçoit <span style={{ color: "#c9a84c", fontWeight: "bold" }}>-{refSettingsForm.referred_discount_pct || 0}%</span> sur son 1er achat
                   <br />
                   💸 Retrait possible à partir de <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{(parseInt(refSettingsForm.min_withdrawal) || 0).toLocaleString()} F</span>
                   <br />
                   ⏳ Délai d'attente : <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.fraud_delay_days || 0} jours</span>
+                </div>
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1976d2", fontSize: 11, color: "#aaa" }}>
+                  <strong style={{ color: "#64b5f6" }}>Exemple :</strong> Sur un livre numérique à 1000 F → le filleul paye {Math.round(1000 * (1 - (parseFloat(refSettingsForm.referred_discount_pct) || 0) / 100))} F · le parrain gagne {Math.round(1000 * (1 - (parseFloat(refSettingsForm.referred_discount_pct) || 0) / 100) * (parseFloat(refSettingsForm.reward_pct_digital) || 0) / 100)} F
                 </div>
               </div>
 
@@ -2849,10 +2883,11 @@ export default function Admin() {
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16 }}>
               <div style={{ fontSize: 12, color: "#c9a84c", fontWeight: "bold", marginBottom: 8 }}>💡 Conseils stratégiques</div>
               <div style={{ fontSize: 11, color: "#aaa", lineHeight: 1.6 }}>
-                <div style={{ marginBottom: 6 }}>📈 <strong style={{ color: "#e8e0d0" }}>Récompense parrain</strong> : Plus elle est élevée, plus les parrains sont motivés. Standard : 500-1000 F.</div>
-                <div style={{ marginBottom: 6 }}>🎯 <strong style={{ color: "#e8e0d0" }}>Réduction filleul</strong> : 20% est le standard de l'industrie. Tu peux monter à 30% pour booster.</div>
-                <div style={{ marginBottom: 6 }}>💸 <strong style={{ color: "#e8e0d0" }}>Minimum retrait</strong> : 5000 F évite les petits versements. Bon équilibre.</div>
-                <div>⏳ <strong style={{ color: "#e8e0d0" }}>Délai anti-fraude</strong> : 30 jours = sécurité maximale. Tu peux réduire à 7-14 jours pour plus de motivation.</div>
+                <div style={{ marginBottom: 6 }}>📚 <strong style={{ color: "#e8e0d0" }}>Commission digital</strong> : Tu peux te permettre 20-30% sur les livres numériques (marge ~100%, pas de coût de production).</div>
+                <div style={{ marginBottom: 6 }}>📦 <strong style={{ color: "#e8e0d0" }}>Commission physique</strong> : Reste prudente, 5-15% max. Tes marges sur les articles physiques sont plus serrées.</div>
+                <div style={{ marginBottom: 6 }}>🎯 <strong style={{ color: "#e8e0d0" }}>Réduction filleul</strong> : 10-20% est standard. Plus c'est élevé, plus ça incite à l'achat.</div>
+                <div style={{ marginBottom: 6 }}>💸 <strong style={{ color: "#e8e0d0" }}>Minimum retrait</strong> : 10 000 F évite les petits versements et réduit les frais Mobile Money.</div>
+                <div>⏳ <strong style={{ color: "#e8e0d0" }}>Délai anti-fraude</strong> : 30 jours = sécurité maximale (annulation/remboursement). Tu peux réduire si tu fais confiance à ta communauté.</div>
               </div>
             </div>
           </div>
