@@ -138,6 +138,10 @@ Detecte comme bot: ${isBotVisit}
     console.error("Erreur Supabase preview:", e);
   }
 
+  // 🎨 NOUVELLE IMAGE PROMO générée automatiquement (format Amazon/Audible)
+  // Au lieu d'utiliser la couverture brute, on génère une image 1200x630 jolie
+  const ogImageUrl = `https://carrybooks.com/api/og?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(type)}`;
+
   // Fallback si livre non trouve
   if (!book) {
     const fallbackHtml = `<!DOCTYPE html>
@@ -186,20 +190,20 @@ Detecte comme bot: ${isBotVisit}
 <meta property="og:type" content="${ogType}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
-<meta property="og:image" content="${escapeHtml(cover)}">
-<meta property="og:image:secure_url" content="${escapeHtml(cover)}">
-<meta property="og:image:width" content="400">
-<meta property="og:image:height" content="400">
-<meta property="og:image:alt" content="Couverture de ${title}">
+<meta property="og:image" content="${escapeHtml(ogImageUrl)}">
+<meta property="og:image:secure_url" content="${escapeHtml(ogImageUrl)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${title} — CarryBooks">
 <meta property="og:url" content="${escapeHtml(url)}">
 <meta property="og:site_name" content="CarryBooks">
 <meta property="og:locale" content="fr_FR">
 
-<!-- Format compact (image à gauche, texte à droite) -->
-<meta name="twitter:card" content="summary">
+<!-- Format LARGE pour grandes vignettes mobile -->
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
-<meta name="twitter:image" content="${escapeHtml(cover)}">
+<meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
 
 <meta property="product:price:amount" content="${book.price || 0}">
 <meta property="product:price:currency" content="XAF">
