@@ -225,94 +225,114 @@ export default async function handler(req) {
                     },
                   },
 
-                  // Prix + CTA
-                  {
-                    type: "div",
-                    props: {
-                      style: {
-                        display: "flex",
-                        alignItems: "center",
-                        marginTop: "auto",
-                      },
-                      children: [
-                        // Badge prix
-                        ...(price
-                          ? [
-                              {
-                                type: "div",
-                                props: {
-                                  style: {
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    marginRight: "20px",
-                                  },
-                                  children: [
-                                    ...(isPromo
-                                      ? [
-                                          {
-                                            type: "div",
-                                            props: {
-                                              style: {
-                                                fontSize: "16px",
-                                                color: "#999",
-                                                textDecoration: "line-through",
-                                              },
-                                              children: originalPrice + " FCFA",
-                                            },
-                                          },
-                                        ]
-                                      : []),
-                                    {
-                                      type: "div",
-                                      props: {
-                                        style: {
-                                          fontSize: "32px",
-                                          fontWeight: 700,
-                                          color: "#1a1a1a",
-                                          lineHeight: 1,
-                                        },
-                                        children: price + " FCFA",
-                                      },
-                                    },
-                                    ...(isPromo
-                                      ? [
-                                          {
-                                            type: "div",
-                                            props: {
-                                              style: {
-                                                fontSize: "13px",
-                                                color: "#dc3545",
-                                                fontWeight: 700,
-                                                marginTop: "4px",
-                                              },
-                                              children: "🔥 PROMO -" + promoPct + "%",
-                                            },
-                                          },
-                                        ]
-                                      : []),
-                                  ],
-                                },
-                              },
-                            ]
-                          : []),
-
-                        // CTA Button "PROFITER DE L'OFFRE"
+                  // Prix (au-dessus du CTA)
+                  ...(price
+                    ? [
                         {
                           type: "div",
                           props: {
                             style: {
                               display: "flex",
-                              alignItems: "center",
-                              background: "#c9a84c",
-                              color: "#1a1a1a",
-                              padding: "16px 28px",
-                              borderRadius: "8px",
-                              fontSize: "22px",
+                              alignItems: "baseline",
+                              gap: "16px",
+                              marginTop: "auto",
+                              marginBottom: "14px",
+                            },
+                            children: [
+                              ...(isPromo
+                                ? [
+                                    {
+                                      type: "div",
+                                      props: {
+                                        style: {
+                                          fontSize: "20px",
+                                          color: "#999",
+                                          textDecoration: "line-through",
+                                        },
+                                        children: originalPrice + " FCFA",
+                                      },
+                                    },
+                                  ]
+                                : []),
+                              {
+                                type: "div",
+                                props: {
+                                  style: {
+                                    fontSize: "38px",
+                                    fontWeight: 700,
+                                    color: "#1a1a1a",
+                                    lineHeight: 1,
+                                  },
+                                  children: price + " FCFA",
+                                },
+                              },
+                              ...(isPromo
+                                ? [
+                                    {
+                                      type: "div",
+                                      props: {
+                                        style: {
+                                          fontSize: "16px",
+                                          color: "#fff",
+                                          background: "#dc3545",
+                                          padding: "6px 12px",
+                                          borderRadius: "4px",
+                                          fontWeight: 700,
+                                        },
+                                        children: "🔥 -" + promoPct + "%",
+                                      },
+                                    },
+                                  ]
+                                : []),
+                            ],
+                          },
+                        },
+                      ]
+                    : []),
+
+                  // CTA Button "CLIQUEZ ICI ⬇️ / POUR PROFITER DE L'OFFRE"
+                  {
+                    type: "div",
+                    props: {
+                      style: {
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "#c9a84c",
+                        color: "#1a1a1a",
+                        padding: "20px 40px",
+                        borderRadius: "12px",
+                        boxShadow: "0 6px 20px rgba(201,168,76,0.5)",
+                        textAlign: "center",
+                      },
+                      children: [
+                        {
+                          type: "div",
+                          props: {
+                            style: {
+                              fontSize: "26px",
                               fontWeight: 700,
                               letterSpacing: "1px",
-                              boxShadow: "0 4px 12px rgba(201,168,76,0.4)",
+                              lineHeight: 1.1,
+                              display: "flex",
                             },
-                            children: isPromo ? "🔥 PROFITER DE L'OFFRE" : "📚 DÉCOUVRIR",
+                            children: "👉 CLIQUEZ ICI 👈",
+                          },
+                        },
+                        {
+                          type: "div",
+                          props: {
+                            style: {
+                              fontSize: "22px",
+                              fontWeight: 700,
+                              letterSpacing: "0.5px",
+                              marginTop: "6px",
+                              display: "flex",
+                            },
+                            children: isPromo
+                              ? "Pour profiter de l'offre"
+                              : "Pour découvrir ce livre",
                           },
                         },
                       ],
@@ -327,7 +347,10 @@ export default async function handler(req) {
                         fontSize: "14px",
                         color: "#7a6b4a",
                         letterSpacing: "1px",
-                        marginTop: "16px",
+                        marginTop: "14px",
+                        textAlign: "center",
+                        display: "flex",
+                        justifyContent: "center",
                       },
                       children: "www.carrybooks.com",
                     },
