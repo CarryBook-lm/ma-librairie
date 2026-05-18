@@ -18755,12 +18755,35 @@ export default function App() {
             {/* Si connecté avec code */}
             {user && referralCode && (
               <>
-                {/* MON CODE + LIEN */}
-                <div style={{ background: "linear-gradient(135deg, " + G.gold + " 0%, " + G.goldLight + " 100%)", borderRadius: 14, padding: 20, marginBottom: 16, color: "#1a1a1a" }}>
-                  <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, opacity: 0.7 }}>Mon code</div>
-                  <div style={{ fontSize: 28, fontWeight: "bold", letterSpacing: 2, fontFamily: "monospace", marginBottom: 14 }}>{referralCode}</div>
-                  <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>Mon lien à partager :</div>
-                  <div style={{ background: "rgba(255,255,255,0.4)", borderRadius: 8, padding: "8px 12px", fontSize: 11, fontFamily: "monospace", wordBreak: "break-all", marginBottom: 12 }}>
+                {/* MON CODE */}
+                <div style={{ background: "linear-gradient(135deg, " + G.gold + " 0%, " + G.goldLight + " 100%)", borderRadius: 14, padding: 20, marginBottom: 16, color: "#1a1a1a", textAlign: "center" }}>
+                  <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, opacity: 0.7 }}>Mon code parrainage</div>
+                  <div style={{ fontSize: 32, fontWeight: "bold", letterSpacing: 3, fontFamily: "monospace" }}>{referralCode}</div>
+                </div>
+
+                {/* 🎯 MÉTHODE 1 : PARTAGER UN LIVRE PRÉCIS (recommandé) */}
+                <div style={{ background: G.surface, border: "2px solid " + G.gold, borderRadius: 14, padding: 18, marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 20 }}>🎯</span>
+                    <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>Partager un livre précis</div>
+                    <span style={{ background: G.gold, color: "#1a1a1a", fontSize: 9, fontWeight: "bold", padding: "2px 6px", borderRadius: 4, marginLeft: "auto" }}>+ EFFICACE</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 12 }}>
+                    Va sur n'importe quel livre, clique sur <span style={{ color: G.gold }}>🔗</span> en haut à droite. Ton code sera automatiquement ajouté au lien partagé.
+                  </div>
+                  <button
+                    onClick={() => setPage("home")}
+                    style={{ width: "100%", padding: 12, background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 0.5 }}
+                  >
+                    📚 PARCOURIR LES LIVRES
+                  </button>
+                </div>
+
+                {/* 🌐 MÉTHODE 2 : LIEN GÉNÉRAL (pour bio Instagram/Facebook) */}
+                <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🌐 Ou lien général</div>
+                  <div style={{ fontSize: 11, color: G.textFaint, marginBottom: 10 }}>Idéal pour ta bio Facebook, Instagram, TikTok</div>
+                  <div style={{ background: G.surface2, borderRadius: 8, padding: "10px 12px", fontSize: 11, fontFamily: "monospace", wordBreak: "break-all", marginBottom: 10, color: G.text }}>
                     https://carrybooks.com/?ref={referralCode}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
