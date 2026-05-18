@@ -187,14 +187,16 @@ Detecte comme bot: ${isBotVisit}
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:image" content="${escapeHtml(cover)}">
-<meta property="og:image:width" content="600">
-<meta property="og:image:height" content="900">
+<meta property="og:image:secure_url" content="${escapeHtml(cover)}">
+<meta property="og:image:width" content="400">
+<meta property="og:image:height" content="400">
 <meta property="og:image:alt" content="Couverture de ${title}">
 <meta property="og:url" content="${escapeHtml(url)}">
 <meta property="og:site_name" content="CarryBooks">
 <meta property="og:locale" content="fr_FR">
 
-<meta name="twitter:card" content="summary_large_image">
+<!-- Format compact (image à gauche, texte à droite) -->
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${escapeHtml(cover)}">
