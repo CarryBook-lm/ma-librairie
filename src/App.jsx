@@ -3158,7 +3158,7 @@ function DiagnosticShareButtons({ url, title, message }) {
 function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers, setBfProblems, setBfLifestyle, setBfResult, setBbStep, setBbTypeAnswers, setBbProblems, setBbLifestyle, setBbResult, setLgStep, setLgData, setCapStep, setCapProfile, setCapTexture, setCapEtat, setCapLongueur, setCapProblems, setCapObjectives, setCapRoutine, setCapLifestyle, setCapBudget, setCapResult }) {
 
   function startFacial() {
-    setBfStep(1);
+    setBfStep(0);
     setBfTypeAnswers([]);
     setBfProblems([]);
     setBfLifestyle({ age: null, sun: null, spf: null, makeup: null, water: null, sleep: null });
@@ -3169,7 +3169,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
   }
 
   function startBody() {
-    setBbStep(1);
+    setBbStep(0);
     setBbTypeAnswers([]);
     setBbProblems([]);
     setBbLifestyle({ age: null, sun: null, scrub: null });
