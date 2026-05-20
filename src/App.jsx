@@ -19816,20 +19816,10 @@ export default function App() {
             </div>
             {/* Réseaux sociaux */}
             <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
-              <a href="https://www.facebook.com/CarryBooks" target="_blank" rel="noreferrer"
+              <a href="https://www.facebook.com/mycarrybooks" target="_blank" rel="noreferrer"
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
                 <span style={{ fontSize: 24 }}>📘</span>
                 <span style={{ fontSize: 10, color: G.textFaint }}>Facebook</span>
-              </a>
-              <a href="https://chat.whatsapp.com/CarryBooks" target="_blank" rel="noreferrer"
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
-                <span style={{ fontSize: 24 }}>💬</span>
-                <span style={{ fontSize: 10, color: G.textFaint }}>WhatsApp</span>
-              </a>
-              <a href="https://www.tiktok.com/@CarryBooks" target="_blank" rel="noreferrer"
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
-                <span style={{ fontSize: 24 }}>🎵</span>
-                <span style={{ fontSize: 10, color: G.textFaint }}>TikTok</span>
               </a>
             </div>
             <div style={{ color: G.textFaint, fontSize: 11, textAlign: "center" }}>© 2026 CarryBooks. Tous droits réservés.</div>
