@@ -2069,17 +2069,21 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
 // ═══════════════════════════════════════════════
 function ShareButtons({ quizName, quizType }) {
   const baseUrl = "https://carrybooks.com";
-  const carryCareUrl = baseUrl + "/carrycare";
+  // 🎁 Récupérer le code parrainage de l'utilisateur connecté depuis localStorage
+  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
+  const carryCareUrl = baseUrl + "/carrycare" + refSuffix;
+  const bookstoreUrl = baseUrl + refSuffix;
 
   const text = quizType === "carrycare"
     ? "🌸 Je viens de faire mon diagnostic " + quizName + " sur CarryCare !\n\n💜 Toi aussi, découvre ton type de peau et reçois une routine 100% personnalisée.\n\n🔥 OFFRE DE LANCEMENT : -50% pour les 100 premières inscrites !\n\n👉 " + carryCareUrl
-    : "🎯 Je viens de faire le quiz " + quizName + " sur Carry'Quiz ! Découvre la vérité sur toi-même 👉 " + baseUrl + "\n\n💜 Bonus : essaie aussi CarryCare, le diagnostic beauté personnalisé.\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl;
+    : "🎯 Je viens de faire le quiz " + quizName + " sur Carry'Quiz ! Découvre la vérité sur toi-même 👉 " + bookstoreUrl + "\n\n💜 Bonus : essaie aussi CarryCare, le diagnostic beauté personnalisé.\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
   }
   function shareFacebook() {
-    const shareUrl = quizType === "carrycare" ? carryCareUrl : baseUrl;
+    const shareUrl = quizType === "carrycare" ? carryCareUrl : bookstoreUrl;
     window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(shareUrl) + "&quote=" + encodeURIComponent(text), "_blank");
   }
   function copyLink() {
@@ -2101,8 +2105,11 @@ function ShareButtons({ quizName, quizType }) {
 // COMPOSANT PARTAGE CARRY'QUIZ — Bouton dédié sur la page Carry'Quiz
 // ═══════════════════════════════════════════════
 function ShareCarryQuiz() {
-  const quizUrl = "https://carrybooks.com/carry-quiz";
-  const carryCareUrl = "https://carrybooks.com/carrycare";
+  // 🎁 Code parrainage utilisateur
+  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
+  const quizUrl = "https://carrybooks.com/carry-quiz" + refSuffix;
+  const carryCareUrl = "https://carrybooks.com/carrycare" + refSuffix;
   const text = "🎯 Découvre Carry'Quiz sur CarryBooks !\n\n✨ Des quiz qui révèlent la vérité sur toi :\n• ❤️ Amour & Relations\n• 🧠 Personnalité & QI\n• 💰 Argent & Succès\n• 🔥 Quiz Choc\n\n💜 Et si tu cherches un accompagnement beauté personnalisé, découvre aussi CarryCare !\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl + "\n\n👉 Carry'Quiz : " + quizUrl;
 
   function shareWhatsApp() {
@@ -2131,7 +2138,10 @@ function ShareCarryQuiz() {
 // COMPOSANT PARTAGE CARRYCARE — Bouton dédié sur la page CarryCare
 // ═══════════════════════════════════════════════
 function ShareCarryCare() {
-  const carryCareUrl = "https://carrybooks.com/carrycare";
+  // 🎁 Code parrainage utilisateur
+  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
+  const carryCareUrl = "https://carrybooks.com/carrycare" + refSuffix;
   const text = "💜 Découvre CarryCare sur CarryBooks !\n\n🌸 Un accompagnement beauté 100% personnalisé selon ton profil :\n• 💄 Diagnostic peau du visage\n• 🧴 Soin du corps\n• 💇🏾‍♀️ Routine cheveux\n• ⚖️ Plan nutrition\n\n🔥 OFFRE DE LANCEMENT : -50% pour les 100 premières inscrites !\n\n👉 " + carryCareUrl;
 
   function shareWhatsApp() {
@@ -13874,9 +13884,12 @@ export default function App() {
       if (codeData && codeData.length > 0) {
         setReferralCode(codeData[0].code);
         setReferralData(codeData[0]);
+        // 💾 Stocker dans localStorage pour les composants externes (ShareButtons)
+        try { localStorage.setItem("carrybooks_my_ref_code", codeData[0].code); } catch (e) {}
       } else {
         setReferralCode(null);
         setReferralData(null);
+        try { localStorage.removeItem("carrybooks_my_ref_code"); } catch (e) {}
       }
       // Mes filleuls
       const { data: refsData } = await supabase.from("referrals").select("*").eq("referrer_id", userId).order("created_at", { ascending: false });
