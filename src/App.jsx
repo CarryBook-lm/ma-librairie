@@ -3090,24 +3090,30 @@ const CC = {
 function DiagnosticShareButtons({ url, title, message }) {
   const [copied, setCopied] = useState(false);
 
+  // 🎁 Récupérer le code parrainage de l'utilisateur connecté + l'ajouter à l'URL
+  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const finalUrl = myRefCode && url && !url.includes("?ref=") && !url.includes("&ref=")
+    ? url + (url.includes("?") ? "&" : "?") + "ref=" + myRefCode
+    : url;
+
   const handleWhatsApp = () => {
-    const text = encodeURIComponent((message || title || "Découvre ça !") + "\n\n" + url);
+    const text = encodeURIComponent((message || title || "Découvre ça !") + "\n\n" + finalUrl);
     window.open("https://wa.me/?text=" + text, "_blank");
   };
 
   const handleFacebook = () => {
-    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank", "width=600,height=400");
+    window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(finalUrl), "_blank", "width=600,height=400");
   };
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(finalUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
       // Fallback pour anciens navigateurs
       const input = document.createElement("input");
-      input.value = url;
+      input.value = finalUrl;
       document.body.appendChild(input);
       input.select();
       try { document.execCommand("copy"); } catch (e2) {}
