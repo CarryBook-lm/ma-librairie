@@ -13310,6 +13310,8 @@ export default function App() {
   const [signupReferralCode, setSignupReferralCode] = useState(""); // code utilisé à l'inscription
   const [createReferralInput, setCreateReferralInput] = useState("");
   const [referralCreateMessage, setReferralCreateMessage] = useState({ type: "", text: "" });
+  const [showEditCodeForm, setShowEditCodeForm] = useState(false);
+  const [editCodeInput, setEditCodeInput] = useState("");
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawPhone, setWithdrawPhone] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -13953,6 +13955,46 @@ export default function App() {
     }
     setReferralCreateMessage({ type: "success", text: "✅ Code créé avec succès !" });
     setCreateReferralInput("");
+    loadReferralData(user.id);
+  }
+
+  async function updateMyReferralCode(newCode) {
+    if (!user || !referralCode) return;
+    const code = String(newCode || "").trim().toUpperCase();
+    if (code.length < 4 || code.length > 20) {
+      setReferralCreateMessage({ type: "error", text: "Le code doit faire entre 4 et 20 caractères" });
+      return;
+    }
+    if (!/^[A-Z0-9]+$/.test(code)) {
+      setReferralCreateMessage({ type: "error", text: "Lettres et chiffres uniquement (sans espaces)" });
+      return;
+    }
+    if (code === referralCode) {
+      setReferralCreateMessage({ type: "error", text: "C'est déjà ton code actuel" });
+      return;
+    }
+    // Vérifier si le nouveau code est déjà pris (par quelqu'un d'autre)
+    const { data: existing } = await supabase.from("referral_codes").select("code, user_id").eq("code", code).limit(1);
+    if (existing && existing.length > 0 && existing[0].user_id !== user.id) {
+      setReferralCreateMessage({ type: "error", text: "Ce code est déjà pris par un autre parrain" });
+      return;
+    }
+    // Mettre à jour le code dans referral_codes
+    const { error: updErr } = await supabase
+      .from("referral_codes")
+      .update({ code: code })
+      .eq("user_id", user.id);
+    if (updErr) {
+      setReferralCreateMessage({ type: "error", text: "Erreur : " + updErr.message });
+      return;
+    }
+    // Mettre à jour aussi referrer_code dans toutes les commissions existantes (cohérence)
+    try {
+      await supabase.from("referrals").update({ referrer_code: code }).eq("referrer_id", user.id);
+    } catch (e) { console.warn("Update referrals failed (non bloquant):", e.message); }
+    setReferralCreateMessage({ type: "success", text: "✅ Ton code a été modifié en " + code });
+    setEditCodeInput("");
+    setShowEditCodeForm(false);
     loadReferralData(user.id);
   }
 
@@ -18846,7 +18888,42 @@ export default function App() {
                 <div style={{ background: "linear-gradient(135deg, " + G.gold + " 0%, " + G.goldLight + " 100%)", borderRadius: 14, padding: 20, marginBottom: 16, color: "#1a1a1a", textAlign: "center" }}>
                   <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, opacity: 0.7 }}>Mon code parrainage</div>
                   <div style={{ fontSize: 32, fontWeight: "bold", letterSpacing: 3, fontFamily: "monospace" }}>{referralCode}</div>
+                  <button
+                    onClick={() => { setShowEditCodeForm(!showEditCodeForm); setEditCodeInput(referralCode || ""); setReferralCreateMessage({ type: "", text: "" }); }}
+                    style={{ marginTop: 12, padding: "6px 14px", background: "rgba(26,26,26,0.15)", color: "#1a1a1a", border: "1px solid rgba(26,26,26,0.3)", borderRadius: 6, fontSize: 11, fontWeight: "bold", cursor: "pointer", letterSpacing: 0.5 }}
+                  >
+                    ✏️ {showEditCodeForm ? "ANNULER" : "MODIFIER MON CODE"}
+                  </button>
                 </div>
+
+                {/* FORMULAIRE DE MODIFICATION DU CODE */}
+                {showEditCodeForm && (
+                  <div style={{ background: G.surface, border: "1px dashed " + G.gold, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 12, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>
+                      ⚠️ Tous tes liens partagés avec l'ancien code continueront de fonctionner (les achats déjà effectués gardent ton ancien code). Mais ton NOUVEAU code remplace l'ancien partout sur le site.
+                    </div>
+                    <input
+                      type="text"
+                      value={editCodeInput}
+                      onChange={e => setEditCodeInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                      placeholder="NOUVEAU_CODE"
+                      maxLength={20}
+                      style={{ width: "100%", padding: "12px 14px", border: "1px solid " + G.border, borderRadius: 8, fontSize: 16, color: G.text, background: G.surface2, boxSizing: "border-box", marginBottom: 10, fontWeight: "bold", letterSpacing: 1 }}
+                    />
+                    {referralCreateMessage.text && (
+                      <div style={{ padding: 10, marginBottom: 12, borderRadius: 6, fontSize: 12, background: referralCreateMessage.type === "success" ? "rgba(76,175,80,0.15)" : "rgba(244,67,54,0.15)", color: referralCreateMessage.type === "success" ? "#4caf50" : "#f44336" }}>
+                        {referralCreateMessage.text}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => updateMyReferralCode(editCodeInput)}
+                      disabled={editCodeInput.length < 4 || editCodeInput === referralCode}
+                      style={{ width: "100%", padding: 12, background: (editCodeInput.length < 4 || editCodeInput === referralCode) ? "#888" : G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: (editCodeInput.length < 4 || editCodeInput === referralCode) ? "not-allowed" : "pointer", letterSpacing: 1 }}
+                    >
+                      ✅ ENREGISTRER LE NOUVEAU CODE
+                    </button>
+                  </div>
+                )}
 
                 {/* 🎯 MÉTHODE 1 : PARTAGER UN LIVRE PRÉCIS (recommandé) */}
                 <div style={{ background: G.surface, border: "2px solid " + G.gold, borderRadius: 14, padding: 18, marginBottom: 14 }}>
