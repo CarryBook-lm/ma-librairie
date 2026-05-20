@@ -60,6 +60,9 @@ export default function Admin() {
   const [subscribers, setSubscribers] = useState([]);
   const [quizPayments, setQuizPayments] = useState([]);
   const [carrycarePayments, setCarrycarePayments] = useState([]);
+  // 🛍️ Produits physiques : CarryShop et CarryColor (tables séparées)
+  const [carryshopOrders, setCarryshopOrders] = useState([]);
+  const [carrycolorOrders, setCarrycolorOrders] = useState([]);
   const [bookViews, setBookViews] = useState([]);
   // Paramètres parrainage
   const [referralSettings, setReferralSettings] = useState({
@@ -151,7 +154,7 @@ export default function Admin() {
     });
     return () => subscription.unsubscribe();
   }, []);
-  useEffect(() => { fetchBooks(); fetchUsers(); fetchUserStats(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
+  useEffect(() => { fetchBooks(); fetchUsers(); fetchUserStats(); fetchSubscribers(); fetchSubSettings(); fetchPromoCodes(); fetchStats(); fetchQuizPayments(); fetchCarrycarePayments(); fetchCarryshopOrders(); fetchCarrycolorOrders(); fetchBookViews(); fetchReferralData(); fetchReferralSettings(); fetchPresence(); fetchCategories(); fetchShippingZones(); }, []);
 
   // Auto-refresh des données de présence toutes les 10 secondes
   useEffect(() => {
@@ -160,6 +163,29 @@ export default function Admin() {
     }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // 🔄 Auto-refresh du dashboard toutes les 30 secondes quand on est dessus
+  useEffect(() => {
+    if (view !== "dashboard") return;
+    // Refresh immédiat au chargement / changement d'onglet vers dashboard
+    fetchStats();
+    fetchSubscribers();
+    fetchQuizPayments();
+    fetchCarrycarePayments();
+    fetchCarryshopOrders();
+    fetchCarrycolorOrders();
+    fetchUserStats();
+    // Puis refresh périodique
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchSubscribers();
+      fetchQuizPayments();
+      fetchCarrycarePayments();
+      fetchCarryshopOrders();
+      fetchCarrycolorOrders();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [view]);
 
   // ===== GESTION DES CATÉGORIES : Fonctions =====
   async function fetchCategories() {
@@ -604,6 +630,40 @@ export default function Admin() {
       const { data } = await supabase.from("carrycare_results").select("amount, created_at, quiz_type, user_id").order("created_at", { ascending: false });
       if (data) setCarrycarePayments(data);
     } catch (e) { console.error("Erreur fetch carrycare:", e); }
+  }
+
+  // 🛍️ Commandes CarryShop (produits physiques, table dédiée)
+  async function fetchCarryshopOrders() {
+    try {
+      const { data, error } = await supabase
+        .from("carryshop_orders")
+        .select("id, total, customer_phone, created_at, payment_status")
+        .eq("payment_status", "paid")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.warn("CarryShop table absente ou erreur (cartes affichées à 0) :", error.message);
+        setCarryshopOrders([]);
+        return;
+      }
+      if (data) setCarryshopOrders(data);
+    } catch (e) { console.error("Erreur fetch carryshop_orders:", e); setCarryshopOrders([]); }
+  }
+
+  // 💄 Commandes CarryColor (produits physiques, table dédiée)
+  async function fetchCarrycolorOrders() {
+    try {
+      const { data, error } = await supabase
+        .from("carrycolor_orders")
+        .select("id, total, customer_phone, created_at, payment_status")
+        .eq("payment_status", "paid")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.warn("CarryColor table absente ou erreur (cartes affichées à 0) :", error.message);
+        setCarrycolorOrders([]);
+        return;
+      }
+      if (data) setCarrycolorOrders(data);
+    } catch (e) { console.error("Erreur fetch carrycolor_orders:", e); setCarrycolorOrders([]); }
   }
 
   async function fetchBookViews() {
@@ -1263,8 +1323,14 @@ export default function Admin() {
   // 💜 Revenus CarryCare (uniquement amounts > 0)
   const revenueCarryCare = carrycarePayments.reduce((s, p) => s + (p.amount || 0), 0);
 
+  // 🛍️ Revenus CarryShop (produits physiques)
+  const revenueCarryShop = carryshopOrders.reduce((s, o) => s + (o.total || 0), 0);
+
+  // 💄 Revenus CarryColor (produits physiques)
+  const revenueCarryColor = carrycolorOrders.reduce((s, o) => s + (o.total || 0), 0);
+
   // 💰 TOTAL CA
-  const grandTotalRevenue = revenueBooks + revenueSubscriptions + revenueQuiz + revenueCarryCare;
+  const grandTotalRevenue = revenueBooks + revenueSubscriptions + revenueQuiz + revenueCarryCare + revenueCarryShop + revenueCarryColor;
 
   // 📅 CA AUJOURD'HUI (toutes sources)
   const todayBooksRevenue = todayRevenue;
@@ -1293,7 +1359,78 @@ export default function Admin() {
     if (!p.created_at) return false;
     return new Date(p.created_at) >= today && (p.amount || 0) > 0;
   }).length;
-  const grandTodayRevenue = todayBooksRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue;
+  // 🛍️ CarryShop aujourd'hui
+  const todayCarryShopRevenue = carryshopOrders.filter(o => {
+    if (!o.created_at) return false;
+    return new Date(o.created_at) >= today;
+  }).reduce((s, o) => s + (o.total || 0), 0);
+  const todayCarryShopCount = carryshopOrders.filter(o => {
+    if (!o.created_at) return false;
+    return new Date(o.created_at) >= today;
+  }).length;
+  // 💄 CarryColor aujourd'hui
+  const todayCarryColorRevenue = carrycolorOrders.filter(o => {
+    if (!o.created_at) return false;
+    return new Date(o.created_at) >= today;
+  }).reduce((s, o) => s + (o.total || 0), 0);
+  const todayCarryColorCount = carrycolorOrders.filter(o => {
+    if (!o.created_at) return false;
+    return new Date(o.created_at) >= today;
+  }).length;
+  const grandTodayRevenue = todayBooksRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue + todayCarryShopRevenue + todayCarryColorRevenue;
+
+  // ========== 📊 STATS HIER / 7 JOURS / 30 JOURS ==========
+  // Bornes temporelles
+  const yesterdayStart = new Date(today);
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  const yesterdayEnd = new Date(today); // exclusif (= début d'aujourd'hui)
+  const weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - 7);
+  const monthStart = new Date(today);
+  monthStart.setDate(monthStart.getDate() - 30);
+
+  // Helper : calcule revenu + count d'un dataset entre deux dates
+  function rangeRevenue(items, startDate, endDate, amountKey = "amount", dateKey = "created_at") {
+    const filtered = items.filter(it => {
+      const d = it[dateKey];
+      if (!d) return false;
+      const dt = new Date(d);
+      if (endDate) return dt >= startDate && dt < endDate;
+      return dt >= startDate;
+    });
+    const revenue = filtered.reduce((s, it) => s + (it[amountKey] || 0), 0);
+    return { revenue, count: filtered.length };
+  }
+
+  // 🟡 HIER (entre yesterdayStart et yesterdayEnd)
+  const yBooks = rangeRevenue(realSales, yesterdayStart, yesterdayEnd, "amount", "created_at");
+  const ySubs = rangeRevenue(subscribers, yesterdayStart, yesterdayEnd, "price", "started_at");
+  const yQuiz = rangeRevenue(quizPayments, yesterdayStart, yesterdayEnd);
+  const yCare = rangeRevenue(carrycarePayments.filter(p => (p.amount || 0) > 0), yesterdayStart, yesterdayEnd);
+  const yShop = rangeRevenue(carryshopOrders, yesterdayStart, yesterdayEnd, "total");
+  const yColor = rangeRevenue(carrycolorOrders, yesterdayStart, yesterdayEnd, "total");
+  const yesterdayTotal = yBooks.revenue + ySubs.revenue + yQuiz.revenue + yCare.revenue + yShop.revenue + yColor.revenue;
+  const yesterdayCount = yBooks.count + ySubs.count + yQuiz.count + yCare.count + yShop.count + yColor.count;
+
+  // 🟢 7 DERNIERS JOURS (du weekStart à maintenant)
+  const wBooks = rangeRevenue(realSales, weekStart, null, "amount", "created_at");
+  const wSubs = rangeRevenue(subscribers, weekStart, null, "price", "started_at");
+  const wQuiz = rangeRevenue(quizPayments, weekStart, null);
+  const wCare = rangeRevenue(carrycarePayments.filter(p => (p.amount || 0) > 0), weekStart, null);
+  const wShop = rangeRevenue(carryshopOrders, weekStart, null, "total");
+  const wColor = rangeRevenue(carrycolorOrders, weekStart, null, "total");
+  const weekTotal = wBooks.revenue + wSubs.revenue + wQuiz.revenue + wCare.revenue + wShop.revenue + wColor.revenue;
+  const weekCount = wBooks.count + wSubs.count + wQuiz.count + wCare.count + wShop.count + wColor.count;
+
+  // 🔵 30 DERNIERS JOURS
+  const mBooks = rangeRevenue(realSales, monthStart, null, "amount", "created_at");
+  const mSubs = rangeRevenue(subscribers, monthStart, null, "price", "started_at");
+  const mQuiz = rangeRevenue(quizPayments, monthStart, null);
+  const mCare = rangeRevenue(carrycarePayments.filter(p => (p.amount || 0) > 0), monthStart, null);
+  const mShop = rangeRevenue(carryshopOrders, monthStart, null, "total");
+  const mColor = rangeRevenue(carrycolorOrders, monthStart, null, "total");
+  const monthTotal = mBooks.revenue + mSubs.revenue + mQuiz.revenue + mCare.revenue + mShop.revenue + mColor.revenue;
+  const monthCount = mBooks.count + mSubs.count + mQuiz.count + mCare.count + mShop.count + mColor.count;
 
   // 📖 Total lectures
   const totalBookViews = bookViews.length;
@@ -1302,6 +1439,52 @@ export default function Admin() {
   const totalSales = realSales.length;
   const totalSubscriptionUnlocks = subscriptionUnlocks.length;
   const totalFreeUnlocks = freeUnlocks.length;
+
+  // 🃏 Helper : rend une carte de source de revenus avec breakdown Total / Aujourd'hui / Hier / 7j / 30j
+  function renderSourceCard(d) {
+    const u = d.unit;
+    const plural = (n) => n > 1 ? u + "s" : u;
+    return (
+      <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+        <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 18 }}>{d.icon}</span>
+          <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>{d.name}</span>
+          {d.subLabel && <span style={{ fontSize: 10, color: "#666", marginLeft: "auto" }}>{d.subLabel}</span>}
+        </div>
+        {/* Ligne 1 : Total + Aujourd'hui */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid #2a2a2a" }}>
+          <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: d.color }}>{d.total.toLocaleString()} F</div>
+            <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{d.cntTotal} {plural(d.cntTotal)}</div>
+          </div>
+          <div style={{ padding: "12px", textAlign: "center" }}>
+            <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+            <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{d.today.toLocaleString()} F</div>
+            <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{d.cntToday} {plural(d.cntToday)}</div>
+          </div>
+        </div>
+        {/* Ligne 2 : Hier / 7j / 30j */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", background: "#141414" }}>
+          <div style={{ padding: "8px 4px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+            <div style={{ fontSize: 9, color: "#9d7fff", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Hier</div>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: "#9d7fff" }}>{d.yesterday.toLocaleString()} F</div>
+            <div style={{ fontSize: 9, color: "#555" }}>{d.cntYesterday}</div>
+          </div>
+          <div style={{ padding: "8px 4px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+            <div style={{ fontSize: 9, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>7 jours</div>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: "#aaa" }}>{d.w7.toLocaleString()} F</div>
+            <div style={{ fontSize: 9, color: "#555" }}>{d.cnt7}</div>
+          </div>
+          <div style={{ padding: "8px 4px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>30 jours</div>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: "#aaa" }}>{d.m30.toLocaleString()} F</div>
+            <div style={{ fontSize: 9, color: "#555" }}>{d.cnt30}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "#e8e0d0", fontFamily: "Georgia, serif" }}>
@@ -1381,9 +1564,9 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* SECTION DÉTAIL PAR SOURCE */}
+            {/* SECTION DÉTAIL PAR SOURCE — PRODUITS NUMÉRIQUES */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>Détail par source</div>
+              <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>📱 Produits numériques</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {/* 📚 LIVRES */}
                 <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
@@ -1464,6 +1647,102 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* SECTION DÉTAIL PAR SOURCE — PRODUITS PHYSIQUES (CarryShop + CarryColor) */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>📦 Produits physiques</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* 🛍️ CARRYSHOP */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>🛍️</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryShop</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryShop.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryshopOrders.length} commande{carryshopOrders.length > 1 ? "s" : ""}</div>
+                    </div>
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todayCarryShopRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todayCarryShopCount} commande{todayCarryShopCount > 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 💄 CARRYCOLOR */}
+                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>💄</span>
+                    <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryColor</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryColor.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carrycolorOrders.length} commande{carrycolorOrders.length > 1 ? "s" : ""}</div>
+                    </div>
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Aujourd'hui</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#4caf50" }}>{todayCarryColorRevenue.toLocaleString()} F</div>
+                      <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{todayCarryColorCount} commande{todayCarryColorCount > 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 📊 SECTION HIER / 7 JOURS / 30 JOURS (toutes sources confondues) */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>📊 Périodes (toutes sources)</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                {/* HIER */}
+                <div style={{ background: "linear-gradient(135deg, #2a2418 0%, #1f1a10 100%)", border: "1px solid #c9a84c44", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>🟡 Hier</div>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: "#c9a84c", lineHeight: 1.1 }}>{yesterdayTotal.toLocaleString()} F</div>
+                  <div style={{ fontSize: 9, color: "#888", marginTop: 4 }}>{yesterdayCount} transaction{yesterdayCount > 1 ? "s" : ""}</div>
+                </div>
+                {/* 7 JOURS */}
+                <div style={{ background: "linear-gradient(135deg, #102818 0%, #0a1f12 100%)", border: "1px solid #4caf5044", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: "#4caf50", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>🟢 7 jours</div>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: "#4caf50", lineHeight: 1.1 }}>{weekTotal.toLocaleString()} F</div>
+                  <div style={{ fontSize: 9, color: "#888", marginTop: 4 }}>{weekCount} transaction{weekCount > 1 ? "s" : ""}</div>
+                </div>
+                {/* 30 JOURS */}
+                <div style={{ background: "linear-gradient(135deg, #101e2a 0%, #0a151f 100%)", border: "1px solid #4a9eff44", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: "#4a9eff", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>🔵 30 jours</div>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: "#4a9eff", lineHeight: 1.1 }}>{monthTotal.toLocaleString()} F</div>
+                  <div style={{ fontSize: 9, color: "#888", marginTop: 4 }}>{monthCount} transaction{monthCount > 1 ? "s" : ""}</div>
+                </div>
+              </div>
+
+              {/* Détail par source dans chaque période */}
+              <div style={{ marginTop: 10, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 6, fontSize: 10, color: "#888", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid #2a2a2a", letterSpacing: 1, textTransform: "uppercase" }}>
+                  <div>Source</div>
+                  <div style={{ textAlign: "right", color: "#c9a84c" }}>Hier</div>
+                  <div style={{ textAlign: "right", color: "#4caf50" }}>7 j</div>
+                  <div style={{ textAlign: "right", color: "#4a9eff" }}>30 j</div>
+                </div>
+                {[
+                  { label: "📚 Livres", y: yBooks, w: wBooks, m: mBooks },
+                  { label: "⭐ Abonnements", y: ySubs, w: wSubs, m: mSubs },
+                  { label: "🎯 Quiz", y: yQuiz, w: wQuiz, m: mQuiz },
+                  { label: "💜 CarryCare", y: yCare, w: wCare, m: mCare },
+                  { label: "🛍️ CarryShop", y: yShop, w: wShop, m: mShop },
+                  { label: "💄 CarryColor", y: yColor, w: wColor, m: mColor },
+                ].map((row, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 6, fontSize: 11, padding: "6px 0", borderBottom: i < 5 ? "1px solid #1f1f1f" : "none" }}>
+                    <div style={{ color: "#e8e0d0" }}>{row.label}</div>
+                    <div style={{ textAlign: "right", color: row.y.revenue > 0 ? "#c9a84c" : "#555" }}>{row.y.revenue.toLocaleString()}</div>
+                    <div style={{ textAlign: "right", color: row.w.revenue > 0 ? "#4caf50" : "#555" }}>{row.w.revenue.toLocaleString()}</div>
+                    <div style={{ textAlign: "right", color: row.m.revenue > 0 ? "#4a9eff" : "#555" }}>{row.m.revenue.toLocaleString()}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
