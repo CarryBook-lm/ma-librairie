@@ -44,10 +44,55 @@ const supabase = createClient(
 const PENDING_SAVES_KEY = "carrybooks_pending_carrycare_saves";
 
 async function saveCarrycareResultRobust(payload) {
-  // payload = { user_id, quiz_type, amount, result_data }
+  // payload = { user_id, quiz_type, amount, result_data, reference?, external_reference? }
   console.log("[CarryCare] Tentative de sauvegarde...", payload.quiz_type);
   
-  // Fonction d'envoi email apr�s save r�ussi (non bloquant)
+  // 🎁 Récupérer le code parrainage depuis localStorage (ou URL)
+  const referrerCode = (() => {
+    try {
+      const fromStorage = localStorage.getItem("carrybooks_ref_code");
+      if (fromStorage) return fromStorage;
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get("ref") || null;
+    } catch (e) { return null; }
+  })();
+  
+  // 🚀 NOUVEAU : Passer par /api/campay (action: record_carrycare) qui gère :
+  //    1. INSERT carrycare_results (avec user_id + referrer_code)
+  //    2. Appel creditReferrer si referrer_code présent
+  //    3. Idempotence via external_reference
+  //    4. Email admin
+  if (payload.reference && payload.external_reference) {
+    try {
+      const res = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "record_carrycare",
+          reference: payload.reference,
+          external_reference: payload.external_reference,
+          quiz_type: payload.quiz_type,
+          amount: payload.amount,
+          phone: payload.result_data?.phone || payload.result_data?.payment_phone || "",
+          result_data: payload.result_data || {},
+          user_id: payload.user_id || null,
+          referrer_code: referrerCode,
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log("[CarryCare] ✅ Sauvegarde + parrainage OK via /api/campay");
+        return { success: true, via: "api", referral: data.referral || null };
+      }
+      console.warn("[CarryCare] /api/campay retour non-success, fallback INSERT direct");
+    } catch (e) {
+      console.warn("[CarryCare] /api/campay exception, fallback INSERT direct:", e.message);
+    }
+  }
+  
+  // 📦 FALLBACK : INSERT direct (ancien comportement, sans parrainage)
+  // Utilisé si pas de reference ou si /api/campay échoue
+  // Fonction d'envoi email après save réussi (non bloquant)
   async function sendCarryCareEmail() {
     try {
       await fetch("/api/campay", {
@@ -61,19 +106,28 @@ async function saveCarrycareResultRobust(payload) {
           result_data: payload.result_data || {}
         })
       });
-      console.log("[CarryCare] 📧 Email admin envoyé");
+      console.log("[CarryCare] 📧 Email admin envoyé (fallback)");
     } catch (e) {
       console.warn("[CarryCare] Email admin failed (non bloquant):", e.message);
     }
   }
   
+  // Construire payload pour INSERT direct (sans reference/external_reference qui ne sont pas dans la table)
+  const directPayload = {
+    user_id: payload.user_id,
+    quiz_type: payload.quiz_type,
+    amount: payload.amount,
+    result_data: payload.result_data,
+    referrer_code: referrerCode,
+  };
+  
   // Tentative 1 : INSERT direct
   try {
-    const { error } = await supabase.from("carrycare_results").insert([payload]);
+    const { error } = await supabase.from("carrycare_results").insert([directPayload]);
     if (!error) {
-      console.log("[CarryCare] ✅ Sauvegarde réussie (1ère tentative)");
+      console.log("[CarryCare] ✅ Sauvegarde réussie (fallback 1ère tentative)");
       sendCarryCareEmail(); // 📧 Email admin (non bloquant)
-      return { success: true };
+      return { success: true, via: "fallback" };
     }
     console.warn("[CarryCare] Échec tentative 1:", error.message);
   } catch (e) {
@@ -83,11 +137,11 @@ async function saveCarrycareResultRobust(payload) {
   // Tentative 2 : retry après 3s
   await new Promise(r => setTimeout(r, 3000));
   try {
-    const { error } = await supabase.from("carrycare_results").insert([payload]);
+    const { error } = await supabase.from("carrycare_results").insert([directPayload]);
     if (!error) {
-      console.log("[CarryCare] ✅ Sauvegarde réussie (2ème tentative)");
+      console.log("[CarryCare] ✅ Sauvegarde réussie (fallback 2ème tentative)");
       sendCarryCareEmail();
-      return { success: true };
+      return { success: true, via: "fallback" };
     }
     console.warn("[CarryCare] Échec tentative 2:", error.message);
   } catch (e) {
@@ -97,11 +151,11 @@ async function saveCarrycareResultRobust(payload) {
   // Tentative 3 : retry après 10s
   await new Promise(r => setTimeout(r, 10000));
   try {
-    const { error } = await supabase.from("carrycare_results").insert([payload]);
+    const { error } = await supabase.from("carrycare_results").insert([directPayload]);
     if (!error) {
-      console.log("[CarryCare] ✅ Sauvegarde réussie (3ème tentative)");
+      console.log("[CarryCare] ✅ Sauvegarde réussie (fallback 3ème tentative)");
       sendCarryCareEmail();
-      return { success: true };
+      return { success: true, via: "fallback" };
     }
     console.warn("[CarryCare] Échec tentative 3:", error.message);
   } catch (e) {
@@ -4887,11 +4941,12 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
               const fullPhone = "237" + bfPaymentPhone;
               const userResp = await supabase.auth.getUser();
               const userId = userResp.data.user?.id;
+              const extRef = "carrycare_facial_" + Date.now();
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Faciale", external_reference: "carrycare_facial_" + Date.now() })
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Faciale", external_reference: extRef })
                 });
                 const data = await collect.json();
                 if (!data.reference) { setBfPaymentStep(5); return; }
@@ -4912,14 +4967,14 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
                       clearInterval(interval);
                       setBfPaymentStep(1);
                       setBfShowGift(true);
-                      if (userId) {
-                        saveCarrycareResultRobust({
-                          user_id: userId,
-                          quiz_type: "facial",
-                          amount: beautyQuizPrice || 0,
-                          result_data: { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult }
-                        });
-                      } else { console.warn("Pas de user_id, sauvegarde impossible"); }
+                      saveCarrycareResultRobust({
+                        user_id: userId || null,
+                        quiz_type: "facial",
+                        amount: beautyQuizPrice || 0,
+                        reference: ref,
+                        external_reference: extRef,
+                        result_data: { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult, phone: fullPhone }
+                      });
                       // 🔥 API Conversions Meta (serveur)
                       trackMetaConversion({
                         reference: ref,
@@ -7385,11 +7440,12 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
               // Récupérer user_id pour la sauvegarde
               const userResp = await supabase.auth.getUser();
               const userId = userResp.data.user?.id;
+              const extRef = "carrycare_body_" + Date.now();
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Corporelle", external_reference: "carrycare_body_" + Date.now() })
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Corporelle", external_reference: extRef })
                 });
                 const data = await collect.json();
                 if (!data.reference) { setBbPaymentStep(5); return; }
@@ -7412,16 +7468,14 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
                       setBbPaymentStep(1);
                       setBbShowGift(true);
                       // Sauvegarde robuste avec retry + backup localStorage
-                      if (userId) {
-                        saveCarrycareResultRobust({
-                          user_id: userId,
-                          quiz_type: "body",
-                          amount: beautyQuizPrice || 0,
-                          result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult }
-                        });
-                      } else {
-                        console.warn("Pas de user_id, sauvegarde impossible");
-                      }
+                      saveCarrycareResultRobust({
+                        user_id: userId || null,
+                        quiz_type: "body",
+                        amount: beautyQuizPrice || 0,
+                        reference: ref,
+                        external_reference: extRef,
+                        result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult, phone: fullPhone }
+                      });
                       // 🔥 API Conversions Meta (serveur)
                       trackMetaConversion({
                         reference: ref,
@@ -9219,11 +9273,12 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
               const fullPhone = "237" + lgPaymentPhone;
               const userResp = await supabase.auth.getUser();
               const userId = userResp.data.user?.id;
+              const extRef = "carrycare_ligne_" + Date.now();
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Garde la Ligne", external_reference: "carrycare_ligne_" + Date.now() })
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Garde la Ligne", external_reference: extRef })
                 });
                 const data = await collect.json();
                 if (!data.reference) { setLgPaymentStep(5); return; }
@@ -9239,9 +9294,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
                       clearInterval(interval);
                       setLgPaymentStep(1);
                       setLgShowGift(true);
-                      if (userId) {
-                        saveCarrycareResultRobust({ user_id: userId, quiz_type: "ligne", amount: beautyQuizPrice || 0, result_data: { profile: lgProfile, objective: lgObjective, conditions: lgConditions, habits: lgHabits, activity: lgActivity, result: lgResult } });
-                      }
+                      saveCarrycareResultRobust({ user_id: userId || null, quiz_type: "ligne", amount: beautyQuizPrice || 0, reference: ref, external_reference: extRef, result_data: { profile: lgProfile, objective: lgObjective, conditions: lgConditions, habits: lgHabits, activity: lgActivity, result: lgResult, phone: fullPhone } });
                       // 🔥 API Conversions Meta (serveur)
                       trackMetaConversion({
                         reference: ref,
@@ -12125,11 +12178,12 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
               const fullPhone = "237" + capPaymentPhone;
               const userResp = await supabase.auth.getUser();
               const userId = userResp.data.user?.id;
+              const extRef = "carrycare_capillaire_" + Date.now();
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Capillaire", external_reference: "carrycare_capillaire_" + Date.now() })
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Capillaire", external_reference: extRef })
                 });
                 const data = await collect.json();
                 if (!data.reference) { setCapPaymentStep(5); return; }
@@ -12145,9 +12199,7 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
                       clearInterval(interval);
                       setCapPaymentStep(1);
                       setCapShowGift(true);
-                      if (userId) {
-                        saveCarrycareResultRobust({ user_id: userId, quiz_type: "capillaire", amount: beautyQuizPrice || 0, result_data: { profile: capProfile, texture: capTexture, etat: capEtat, longueur: capLongueur, problems: capProblems, objectives: capObjectives, routine: capRoutine, lifestyle: capLifestyle, budget: capBudget, result: capResult } });
-                      }
+                      saveCarrycareResultRobust({ user_id: userId || null, quiz_type: "capillaire", amount: beautyQuizPrice || 0, reference: ref, external_reference: extRef, result_data: { profile: capProfile, texture: capTexture, etat: capEtat, longueur: capLongueur, problems: capProblems, objectives: capObjectives, routine: capRoutine, lifestyle: capLifestyle, budget: capBudget, result: capResult, phone: fullPhone } });
                       // 🔥 API Conversions Meta (serveur)
                       trackMetaConversion({
                         reference: ref,
@@ -12491,11 +12543,12 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
               const fullPhone = "237" + capPaymentPhone;
               const userResp = await supabase.auth.getUser();
               const userId = userResp.data.user?.id;
+              const extRef = "carrycare_hair_" + Date.now();
               try {
                 const collect = await fetch("/api/campay", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Capillaire", external_reference: "carrycare_hair_" + Date.now() })
+                  body: JSON.stringify({ action: "collect", amount: beautyQuizPrice, phone: fullPhone, description: "CarryCare — Beauté Capillaire", external_reference: extRef })
                 });
                 const data = await collect.json();
                 if (!data.reference) { setCapPaymentStep(5); return; }
@@ -12516,14 +12569,14 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
                       clearInterval(interval);
                       setCapPaymentStep(1);
                       setCapShowGift(true);
-                      if (userId) {
-                        saveCarrycareResultRobust({
-                          user_id: userId,
-                          quiz_type: "hair",
-                          amount: beautyQuizPrice || 0,
-                          result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult }
-                        });
-                      }
+                      saveCarrycareResultRobust({
+                        user_id: userId || null,
+                        quiz_type: "hair",
+                        amount: beautyQuizPrice || 0,
+                        reference: ref,
+                        external_reference: extRef,
+                        result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult, phone: fullPhone }
+                      });
                       // 🔥 API Conversions Meta (serveur)
                       trackMetaConversion({
                         reference: ref,

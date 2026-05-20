@@ -8,7 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 // 🎁 PARRAINAGE : Créditer le parrain au 1er achat du filleul
 // Appelé après chaque INSERT purchases / guest_purchases avec referrer_code
 // ============================================================
-async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId, guestPhone, bookId, amount }) {
+async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId, guestPhone, bookId, amount, carrycareId }) {
   try {
     if (!referrerCode) return { skipped: true, reason: "no_code" };
 
@@ -73,12 +73,18 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
       return { skipped: true, reason: "max_referred_reached", count: referredPurchasesCount };
     }
 
-    // 5) Anti-doublon : vérifier qu'aucune entrée referrals n'existe déjà pour ce purchase
-    const purchaseRefField = userId ? "first_purchase_id" : "first_guest_purchase_id";
+    // 5) Anti-doublon : vérifier qu'aucune entrée referrals n'existe déjà pour ce purchase/carrycare
+    let purchaseRefField;
+    if (carrycareId) {
+      purchaseRefField = "first_carrycare_id";
+    } else {
+      purchaseRefField = userId ? "first_purchase_id" : "first_guest_purchase_id";
+    }
+    const refCheckId = carrycareId || purchaseId;
     const { data: existingRef } = await supabaseAdmin
       .from("referrals")
       .select("id")
-      .eq(purchaseRefField, purchaseId)
+      .eq(purchaseRefField, refCheckId)
       .limit(1);
     if (existingRef && existingRef.length > 0) {
       return { skipped: true, reason: "already_credited" };
@@ -112,11 +118,16 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
       reward_amount: rewardAmount,
       reward_pct: rewardPct,
       first_purchase_amount: amount,
-      product_type: productType,
+      product_type: carrycareId ? "carrycare" : productType,
       status: "pending",
       available_at: availableAt.toISOString(),
     };
-    if (userId) {
+    if (carrycareId) {
+      // Cas CarryCare : on lie au quiz
+      referralPayload.first_carrycare_id = carrycareId;
+      if (userId) referralPayload.referred_id = userId;
+      if (guestPhone) referralPayload.referred_guest_phone = guestPhone;
+    } else if (userId) {
       referralPayload.referred_id = userId;
       referralPayload.first_purchase_id = purchaseId;
     } else {
@@ -714,6 +725,8 @@ export default async function handler(req, res) {
         amount,
         phone,
         result_data,
+        user_id,
+        referrer_code,
       } = params;
 
       // 1. VÉRIFIER auprès de CamPay
@@ -763,6 +776,8 @@ export default async function handler(req, res) {
             amount,
             phone,
             result_data,
+            user_id: user_id || null,
+            referrer_code: referrer_code || null,
           },
         ])
         .select()
@@ -777,6 +792,21 @@ export default async function handler(req, res) {
           warning: "Erreur enregistrement BD mais paiement OK",
           details: insertError.message,
         });
+      }
+
+      // 🎁 PARRAINAGE : créditer le parrain si code valide
+      if (referrer_code && inserted) {
+        const refResult = await creditReferrer({
+          supabaseAdmin,
+          referrerCode: referrer_code,
+          purchaseId: null,
+          userId: user_id || null,
+          guestPhone: phone || null,
+          bookId: null,
+          amount: amount,
+          carrycareId: inserted.id,
+        });
+        console.log("[RECORD_CARRYCARE] Referral result:", refResult);
       }
 
       // 🔥 Marquer le pending comme completed si existait
