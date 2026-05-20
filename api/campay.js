@@ -852,6 +852,96 @@ export default async function handler(req, res) {
       });
     }
 
+    // ========== 🎁 ACTION : RELEASE_REFERRALS ==========
+    // Libère les referrals "pending" dont la date available_at est passée
+    // Appelée automatiquement quand un parrain consulte sa page Mon Parrainage
+    // Peut aussi être appelée par un cron job (Vercel Cron) pour libérer tous les referrals
+    if (action === "release_referrals") {
+      const { user_id } = params; // Optionnel : si fourni, filtre par parrain. Sinon, traite TOUS les parrains.
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // 1. Trouver les referrals à libérer (status pending + available_at passé)
+      const nowIso = new Date().toISOString();
+      let query = supabaseAdmin
+        .from("referrals")
+        .select("id, referrer_id, reward_amount")
+        .eq("status", "pending")
+        .lte("available_at", nowIso);
+      if (user_id) {
+        query = query.eq("referrer_id", user_id);
+      }
+      const { data: toRelease, error: fetchErr } = await query;
+
+      if (fetchErr) {
+        console.error("[RELEASE_REFERRALS] Fetch error:", fetchErr);
+        return res.status(200).json({ success: false, error: fetchErr.message, released: 0 });
+      }
+
+      if (!toRelease || toRelease.length === 0) {
+        return res.status(200).json({ success: true, released: 0, message: "Aucun referral à libérer" });
+      }
+
+      // 2. Calculer le total à libérer par parrain
+      const totalsByReferrer = {};
+      for (const ref of toRelease) {
+        if (!ref.referrer_id) continue;
+        totalsByReferrer[ref.referrer_id] = (totalsByReferrer[ref.referrer_id] || 0) + parseInt(ref.reward_amount || 0);
+      }
+
+      // 3. UPDATE referrals → status="available"
+      const ids = toRelease.map(r => r.id);
+      const { error: updateErr } = await supabaseAdmin
+        .from("referrals")
+        .update({ status: "available" })
+        .in("id", ids);
+
+      if (updateErr) {
+        console.error("[RELEASE_REFERRALS] Update referrals error:", updateErr);
+        return res.status(200).json({ success: false, error: updateErr.message, released: 0 });
+      }
+
+      // 4. Pour chaque parrain : décrémenter pending_amount et incrémenter available_amount
+      const updateResults = [];
+      for (const referrerId of Object.keys(totalsByReferrer)) {
+        const total = totalsByReferrer[referrerId];
+        // Récupérer les soldes actuels
+        const { data: code } = await supabaseAdmin
+          .from("referral_codes")
+          .select("pending_amount, available_amount")
+          .eq("user_id", referrerId)
+          .single();
+        if (!code) continue;
+        // Décrémenter pending et incrémenter available
+        const newPending = Math.max(0, parseInt(code.pending_amount || 0) - total);
+        const newAvailable = parseInt(code.available_amount || 0) + total;
+        const { error: balanceErr } = await supabaseAdmin
+          .from("referral_codes")
+          .update({
+            pending_amount: newPending,
+            available_amount: newAvailable,
+          })
+          .eq("user_id", referrerId);
+        if (balanceErr) {
+          console.error("[RELEASE_REFERRALS] Update balance error for", referrerId, ":", balanceErr);
+        }
+        updateResults.push({ referrer_id: referrerId, amount_released: total, new_pending: newPending, new_available: newAvailable });
+      }
+
+      console.log("[RELEASE_REFERRALS] ✅ Libéré", toRelease.length, "referrals pour", Object.keys(totalsByReferrer).length, "parrain(s)");
+
+      return res.status(200).json({
+        success: true,
+        released: toRelease.length,
+        referrers_updated: Object.keys(totalsByReferrer).length,
+        details: updateResults,
+      });
+    }
+
     // ========== 🔥 ACTION : RECORD_PENDING ==========
     // Enregistre l'INTENTION d'achat AVANT confirmation CamPay
     // Permet de récupérer les achats perdus si la connexion coupe

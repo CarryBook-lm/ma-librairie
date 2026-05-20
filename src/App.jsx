@@ -13885,6 +13885,21 @@ export default function App() {
   // ========== PARRAINAGE - Fonctions ==========
   async function loadReferralData(userId) {
     try {
+      // 🎁 LIBÉRATION AUTO : Vérifier d'abord si des referrals sont à libérer (status pending → available)
+      try {
+        const releaseRes = await fetch("/api/campay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "release_referrals", user_id: userId })
+        });
+        const releaseData = await releaseRes.json();
+        if (releaseData?.released > 0) {
+          console.log("[PARRAINAGE] ✅", releaseData.released, "referral(s) libéré(s)");
+        }
+      } catch (e) {
+        console.warn("[PARRAINAGE] Release failed (non bloquant):", e.message);
+      }
+
       // Mon code
       const { data: codeData } = await supabase.from("referral_codes").select("*").eq("user_id", userId).limit(1);
       if (codeData && codeData.length > 0) {
