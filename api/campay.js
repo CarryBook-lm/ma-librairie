@@ -1666,6 +1666,199 @@ export default async function handler(req, res) {
       }
     }
 
+    // ========== ACTION : CLAIM_BOOK (Page de réclamation de livre) ==========
+    // Le client entre son email + numéro de téléphone ayant servi au paiement
+    // Le système cherche ses achats et envoie les PDFs par email automatiquement
+    if (action === "claim_book") {
+      const { email, phone } = params;
+
+      if (!email || !phone) {
+        return res.status(400).json({ error: "Email et numéro de téléphone requis" });
+      }
+
+      // Normaliser le numéro : enlever espaces, +237 ou 237 en tête
+      const rawPhone = String(phone).trim().replace(/\s+/g, "").replace(/^\+/, "");
+      const cleanPhone = rawPhone.replace(/^237/, ""); // ex: "237612345678" → "612345678"
+
+      if (cleanPhone.length < 8) {
+        return res.status(400).json({ error: "Numéro de téléphone invalide" });
+      }
+
+      const RESEND_API_KEY = process.env.RESEND_API_KEY;
+      if (!RESEND_API_KEY) {
+        return res.status(500).json({ error: "Service email non configuré" });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // ── Rate limiting : max 3 tentatives par numéro par 24h ──
+      try {
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentClaims } = await supabaseAdmin
+          .from("book_claims_log")
+          .select("id")
+          .eq("phone", cleanPhone)
+          .gte("created_at", oneDayAgo);
+
+        if (recentClaims && recentClaims.length >= 3) {
+          return res.status(429).json({
+            error: "Limite atteinte. Tu peux réessayer dans 24h ou nous contacter sur WhatsApp."
+          });
+        }
+      } catch (e) {
+        // Si la table n'existe pas encore, on ne bloque pas
+        console.warn("[CLAIM_BOOK] book_claims_log inaccessible:", e.message);
+      }
+
+      // ── Chercher les achats par numéro ──
+      // On essaie les 2 formats du numéro (avec/sans 237)
+      const phoneVariants = [cleanPhone, "237" + cleanPhone];
+
+      const { data: userPurchases } = await supabaseAdmin
+        .from("purchases")
+        .select("id, book_id, amount, created_at, books(title, pdf_url)")
+        .or(phoneVariants.map(p => `phone.eq.${p}`).join(","))
+        .eq("type", "sale");
+
+      const { data: guestPurchases } = await supabaseAdmin
+        .from("guest_purchases")
+        .select("id, book_id, amount, created_at, books(title, pdf_url)")
+        .or(phoneVariants.map(p => `phone.eq.${p}`).join(","));
+
+      // ── Fusionner et dédupliquer par book_id ──
+      const allPurchases = [...(userPurchases || []), ...(guestPurchases || [])];
+      const seenBooks = new Set();
+      const uniquePurchases = allPurchases.filter(p => {
+        if (!p.book_id || seenBooks.has(p.book_id)) return false;
+        seenBooks.add(p.book_id);
+        return true;
+      });
+
+      // ── Logger la tentative pour le rate limiting ──
+      try {
+        await supabaseAdmin
+          .from("book_claims_log")
+          .insert([{ phone: cleanPhone, email, found: uniquePurchases.length > 0 }]);
+      } catch (e) {
+        console.warn("[CLAIM_BOOK] Log insert failed (non bloquant):", e.message);
+      }
+
+      // ── Réponse vague pour la sécurité ──
+      const SAFE_RESPONSE = {
+        success: true,
+        message: "Si ce numéro correspond à un achat confirmé, un email a été envoyé."
+      };
+
+      // Filtrer les livres avec un PDF valide
+      const booksWithPdf = uniquePurchases.filter(p => p.books && p.books.pdf_url);
+
+      if (!booksWithPdf.length) {
+        return res.status(200).json(SAFE_RESPONSE);
+      }
+
+      // ── Construire l'email client ──
+      const booksCount = booksWithPdf.length;
+      const booksListHtml = booksWithPdf.map(p => `
+        <tr>
+          <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;vertical-align:middle;">
+            <div style="font-size:15px;font-weight:bold;color:#1a1208;">${p.books.title}</div>
+            <div style="font-size:12px;color:#999;margin-top:3px;">Livre numérique</div>
+          </td>
+          <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;text-align:right;vertical-align:middle;">
+            <a href="${p.books.pdf_url}"
+               style="display:inline-block;background:#c9952a;color:#fff;padding:9px 18px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">
+              📥 Télécharger
+            </a>
+          </td>
+        </tr>
+      `).join('');
+
+      const clientEmailHtml = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f5eedf;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="background:linear-gradient(135deg,#c9952a 0%,#8b6212 100%);padding:32px 24px;text-align:center;">
+      <div style="font-size:40px;margin-bottom:8px;">📚</div>
+      <div style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:1px;">
+        ${booksCount === 1 ? "Ton livre CarryBooks" : "Tes livres CarryBooks"}
+      </div>
+      <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:6px;">
+        Télécharge ${booksCount === 1 ? "ton livre" : "tes livres"} ci-dessous
+      </div>
+    </div>
+    <div style="background:#fff;padding:28px 24px;">
+      <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.6;">
+        Bonjour 👋<br><br>
+        Voici ${booksCount === 1 ? "ton livre" : "tes " + booksCount + " livres"} acheté${booksCount > 1 ? "s" : ""} sur CarryBooks.
+        Clique sur le bouton pour télécharger chaque livre.
+      </p>
+      <table style="width:100%;border-collapse:collapse;background:#faf7f0;border-radius:10px;overflow:hidden;">
+        <thead>
+          <tr style="background:#f0e8d8;">
+            <th style="padding:10px 16px;text-align:left;font-size:11px;color:#888;font-weight:600;letter-spacing:1px;">LIVRE</th>
+            <th style="padding:10px 16px;text-align:right;font-size:11px;color:#888;font-weight:600;letter-spacing:1px;">ACCÈS</th>
+          </tr>
+        </thead>
+        <tbody>${booksListHtml}</tbody>
+      </table>
+      <div style="margin-top:20px;padding:14px;background:#fff8e8;border-radius:8px;border-left:3px solid #c9952a;">
+        <div style="font-size:13px;color:#7a5500;">
+          ⚠️ <strong>Note :</strong> Ces liens donnent accès à tes livres. Ne les partage pas.
+        </div>
+      </div>
+      <p style="margin-top:20px;font-size:13px;color:#aaa;text-align:center;">
+        Problème ? Contacte-nous sur
+        <a href="https://wa.me/237000000000" style="color:#c9952a;text-decoration:none;">WhatsApp</a>
+      </p>
+    </div>
+    <div style="background:#1a1208;padding:16px;text-align:center;">
+      <div style="color:#c9952a;font-size:14px;font-weight:bold;margin-bottom:4px;">CarryBooks</div>
+      <div style="color:#555;font-size:11px;">carrybooks.com · Votre bibliothèque numérique</div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+      // ── Envoyer l'email via Resend ──
+      try {
+        const emailRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + RESEND_API_KEY,
+            "Content-Type": "application/json; charset=utf-8"
+          },
+          body: JSON.stringify({
+            from: "CarryBooks <livres@carrybooks.com>",
+            to: email.trim(),
+            subject: `📚 ${booksCount === 1 ? "Ton livre" : "Tes livres"} CarryBooks`,
+            html: clientEmailHtml
+          })
+        });
+
+        if (!emailRes.ok) {
+          const errData = await emailRes.json();
+          console.error("[CLAIM_BOOK] Resend error:", errData);
+          return res.status(500).json({ error: "Erreur lors de l'envoi. Vérifie ton adresse email." });
+        }
+
+        console.log("[CLAIM_BOOK] ✅ Email envoyé à", email, "—", booksCount, "livre(s) pour numéro", cleanPhone);
+      } catch (emailErr) {
+        console.error("[CLAIM_BOOK] Email exception:", emailErr);
+        return res.status(500).json({ error: "Erreur lors de l'envoi de l'email." });
+      }
+
+      return res.status(200).json(SAFE_RESPONSE);
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);

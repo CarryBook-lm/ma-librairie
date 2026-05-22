@@ -1518,6 +1518,7 @@ const PATH_TO_PAGE = {
   "/favoris": "favorites",
   "/parrainage": "referral",
   "/confidentialite": "confidentialite",
+  "/mon-livre": "reclamer",
 };
 
 const getPageFromURL = () => {
@@ -12989,6 +12990,123 @@ async function recoverLostPurchases(user_id) {
   }
 }
 
+// ============================================================
+// COMPOSANT : ReclamerLivre
+// Page /mon-livre — Le client entre email + numéro → reçoit ses PDFs par mail
+// ============================================================
+function ReclamerLivre({ G, setPage }) {
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null); // "success" | "error" | "ratelimit"
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async () => {
+    if (!email.trim() || !phone.trim()) {
+      setStatus("error"); setMessage("Remplis les deux champs."); return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setStatus("error"); setMessage("Adresse email invalide."); return;
+    }
+    const cleanPhone = phone.trim().replace(/\s+/g, "");
+    if (!/^\d{8,15}$/.test(cleanPhone.replace(/^\+/, "").replace(/^237/, ""))) {
+      setStatus("error"); setMessage("Numéro de téléphone invalide."); return;
+    }
+    setLoading(true); setStatus(null); setMessage("");
+    try {
+      const res = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "claim_book", email: email.trim(), phone: cleanPhone }),
+      });
+      const data = await res.json();
+      if (res.status === 429) { setStatus("ratelimit"); setMessage(data.error || "Limite atteinte. Réessaie dans 24h."); }
+      else if (!res.ok) { setStatus("error"); setMessage(data.error || "Une erreur est survenue. Réessaie."); }
+      else { setStatus("success"); setMessage(data.message || "Email envoyé !"); }
+    } catch (err) {
+      setStatus("error"); setMessage("Erreur réseau. Vérifie ta connexion et réessaie.");
+    } finally { setLoading(false); }
+  };
+
+  const gold = (G && G.gold) ? G.gold : "#c9952a";
+  const surface = (G && G.surface) ? G.surface : "#1a1208";
+  const bg = (G && G.bg) ? G.bg : "#0f0a04";
+
+  return (
+    <div style={{ minHeight: "100vh", background: bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+      <div style={{ background: surface, borderRadius: 16, padding: "36px 24px", maxWidth: 420, width: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+
+        {/* Retour */}
+        <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: gold, fontSize: 13, cursor: "pointer", marginBottom: 20, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          ← Retour à l'accueil
+        </button>
+
+        {/* Titre */}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 44, marginBottom: 10 }}>📖</div>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: "bold", color: gold }}>Recevoir mon livre par email</h1>
+          <p style={{ margin: "10px 0 0", fontSize: 13, color: "#888", lineHeight: 1.6 }}>
+            Tu as acheté un livre mais tu n'arrives pas à le télécharger ? Entre ton email et le numéro utilisé pour payer.
+          </p>
+        </div>
+
+        {status !== "success" && (
+          <div>
+            {/* Email */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: "600", color: "#aaa", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Ton adresse email</label>
+              <input type="email" placeholder="exemple@gmail.com" value={email} onChange={e => setEmail(e.target.value)} disabled={loading}
+                style={{ width: "100%", padding: "12px 14px", border: "1.5px solid #333", borderRadius: 8, fontSize: 15, color: "#fff", background: "#111", outline: "none", boxSizing: "border-box" }} />
+            </div>
+
+            {/* Téléphone */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: "600", color: "#aaa", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Numéro utilisé pour le paiement</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ padding: "12px 12px", background: "#222", border: "1.5px solid #333", borderRadius: 8, fontSize: 13, color: "#888", whiteSpace: "nowrap", display: "flex", alignItems: "center" }}>🇨🇲 +237</div>
+                <input type="tel" placeholder="6XXXXXXXX" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} disabled={loading} maxLength={9}
+                  style={{ flex: 1, padding: "12px 14px", border: "1.5px solid #333", borderRadius: 8, fontSize: 15, color: "#fff", background: "#111", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <p style={{ margin: "6px 0 0", fontSize: 12, color: "#555" }}>Le numéro MTN ou Orange Money avec lequel tu as payé</p>
+            </div>
+
+            {(status === "error" || status === "ratelimit") && (
+              <div style={{ background: status === "ratelimit" ? "#2a1f00" : "#2a0000", border: "1px solid " + (status === "ratelimit" ? "#7a5500" : "#5a0000"), borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: status === "ratelimit" ? "#f0c040" : "#ff6b6b" }}>
+                {status === "ratelimit" ? "⏳ " : "⚠️ "}{message}
+              </div>
+            )}
+
+            <button onClick={handleSubmit} disabled={loading}
+              style={{ width: "100%", padding: 14, background: loading ? "#5a4010" : gold, color: "#000", border: "none", borderRadius: 8, fontSize: 15, fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer", letterSpacing: 0.5 }}>
+              {loading ? "⏳ Envoi en cours..." : "📨 Recevoir mes livres par email"}
+            </button>
+          </div>
+        )}
+
+        {status === "success" && (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 52, marginBottom: 14 }}>✅</div>
+            <h2 style={{ margin: "0 0 10px", color: "#4caf50", fontSize: 18 }}>Email envoyé !</h2>
+            <p style={{ fontSize: 14, color: "#888", lineHeight: 1.6, margin: "0 0 12px" }}>
+              Si ce numéro correspond à un achat confirmé, tu vas recevoir tes livres dans ta boîte mail dans quelques secondes.
+            </p>
+            <p style={{ fontSize: 12, color: "#555", margin: "0 0 24px" }}>Vérifie aussi tes <strong style={{ color: "#888" }}>spams</strong> si tu ne vois rien.</p>
+            <button onClick={() => { setStatus(null); setMessage(""); setEmail(""); setPhone(""); }}
+              style={{ padding: "10px 24px", background: "transparent", border: "1.5px solid " + gold, borderRadius: 8, color: gold, fontSize: 14, fontWeight: "600", cursor: "pointer" }}>
+              Nouvelle recherche
+            </button>
+          </div>
+        )}
+
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#444" }}>
+          Toujours un problème ?{" "}
+          <a href="https://wa.me/237000000000" style={{ color: gold, textDecoration: "none" }} target="_blank" rel="noreferrer">Contacte-nous sur WhatsApp</a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
   const [CATEGORIES, setCATEGORIES] = useState(CATEGORIES_FALLBACK);
@@ -17035,6 +17153,14 @@ export default function App() {
                       📖 Lire maintenant
                     </button>
                   )}
+                  {/* Lien réclamation par email */}
+                  <p style={{ textAlign: "center", marginTop: 14, fontSize: 12, color: "#555" }}>
+                    Problème de téléchargement ?{" "}
+                    <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPage("reclamer"); }}
+                      style={{ background: "none", border: "none", color: G.gold, fontSize: 12, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                      Recevoir par email
+                    </button>
+                  </p>
                 </div>
               )}
               {paymentStep === 6 && (
@@ -19613,6 +19739,11 @@ export default function App() {
               Merci de faire confiance à CarryBooks 💜
             </div>
           </div>
+        )}
+
+        {/* PAGE : RECEVOIR MON LIVRE PAR EMAIL */}
+        {page === "reclamer" && (
+          <ReclamerLivre G={G} setPage={setPage} />
         )}
 
         {page === "quiz" && (
