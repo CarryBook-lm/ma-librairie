@@ -1778,18 +1778,61 @@ export default async function handler(req, res) {
         return res.status(200).json(SAFE_RESPONSE);
       }
 
-      // ── Construire l'email client ──
+      // ── Générer les PDFs watermarqués via generate-pdf.js ──
       const booksCount = booksWithPdf.length;
+      const attachments = [];
+      const HOST = process.env.VERCEL_URL
+        ? "https://" + process.env.VERCEL_URL
+        : "https://carrybooks.com";
+
+      for (const b of booksWithPdf) {
+        try {
+          const genRes = await fetch(HOST + "/api/generate-pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pdf_url: b.pdf_url,
+              phone: cleanPhone,
+              book_id: b.id,
+              book_title: b.title,
+            }),
+          });
+
+          if (genRes.ok) {
+            const genData = await genRes.json();
+            if (genData.base64) {
+              const safeTitle = (b.title || "livre")
+                .replace(/[^a-zA-Z0-9\s-]/g, "")
+                .trim().replace(/\s+/g, "_")
+                .substring(0, 60);
+              attachments.push({ filename: safeTitle + ".pdf", content: genData.base64 });
+              console.log("[CLAIM_BOOK] ✅ PDF watermarqué joint :", b.title);
+            }
+          } else {
+            console.warn("[CLAIM_BOOK] generate-pdf échoué pour", b.title, "— fallback lien");
+          }
+        } catch (genErr) {
+          console.warn("[CLAIM_BOOK] generate-pdf exception pour", b.title, ":", genErr.message);
+        }
+      }
+
+      // Si aucun PDF watermarqué généré → fallback : envoyer les liens
+      const useFallbackLinks = attachments.length === 0;
+
       const booksListHtml = booksWithPdf.map(b => `
         <tr>
           <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;vertical-align:middle;">
             <div style="font-size:15px;font-weight:bold;color:#1a1208;">${b.title}</div>
           </td>
+          ${useFallbackLinks ? `
           <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;text-align:right;vertical-align:middle;">
             <a href="${b.pdf_url}" style="display:inline-block;background:#c9952a;color:#fff;padding:9px 18px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:13px;">
               📥 Télécharger
             </a>
-          </td>
+          </td>` : `
+          <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;text-align:right;vertical-align:middle;">
+            <span style="font-size:13px;color:#2e7d32;">📎 En pièce jointe</span>
+          </td>`}
         </tr>
       `).join('');
 
@@ -1804,17 +1847,23 @@ export default async function handler(req, res) {
       <div style="color:#fff;font-size:22px;font-weight:bold;">
         ${booksCount === 1 ? "Ton livre CarryBooks" : "Tes livres CarryBooks"}
       </div>
+      <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:6px;">
+        ${useFallbackLinks ? "Clique sur le bouton pour télécharger" : "Ton livre est en pièce jointe"}
+      </div>
     </div>
     <div style="background:#fff;padding:28px 24px;">
       <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.6;">
         Bonjour 👋<br><br>
-        Clique sur le bouton pour télécharger ${booksCount === 1 ? "ton livre" : "tes livres"}.
+        ${useFallbackLinks
+          ? "Clique sur le bouton pour télécharger " + (booksCount === 1 ? "ton livre" : "tes livres") + "."
+          : (booksCount === 1 ? "Ton livre est" : "Tes livres sont") + " en pièce" + (booksCount > 1 ? "s" : "") + " jointe" + (booksCount > 1 ? "s" : "") + " de cet email."
+        }
       </p>
       <table style="width:100%;border-collapse:collapse;background:#faf7f0;border-radius:10px;overflow:hidden;">
         <tbody>${booksListHtml}</tbody>
       </table>
       <div style="margin-top:20px;padding:14px;background:#fff8e8;border-radius:8px;border-left:3px solid #c9952a;">
-        <div style="font-size:13px;color:#7a5500;">⚠️ <strong>Note :</strong> Ne partage pas ces liens.</div>
+        <div style="font-size:13px;color:#7a5500;">⚠️ <strong>Note :</strong> Ces fichiers sont personnalisés avec ton numéro. Ne les partage pas.</div>
       </div>
     </div>
     <div style="background:#1a1208;padding:16px;text-align:center;">
@@ -1827,18 +1876,23 @@ export default async function handler(req, res) {
 
       // ── Envoyer l'email via Resend ──
       try {
+        const emailPayload = {
+          from: "CarryBooks <onboarding@resend.dev>",
+          to: email.trim(),
+          subject: `📚 ${booksCount === 1 ? "Ton livre" : "Tes livres"} CarryBooks`,
+          html: clientEmailHtml,
+        };
+        if (attachments.length > 0) {
+          emailPayload.attachments = attachments;
+        }
+
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Authorization": "Bearer " + RESEND_API_KEY,
             "Content-Type": "application/json; charset=utf-8"
           },
-          body: JSON.stringify({
-            from: "CarryBooks <onboarding@resend.dev>",
-            to: email.trim(),
-            subject: `📚 ${booksCount === 1 ? "Ton livre" : "Tes livres"} CarryBooks`,
-            html: clientEmailHtml,
-          })
+          body: JSON.stringify(emailPayload)
         });
 
         if (!emailRes.ok) {
@@ -1847,7 +1901,7 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: "Erreur lors de l'envoi. Vérifie ton adresse email." });
         }
 
-        console.log("[CLAIM_BOOK] ✅ Email envoyé à", email, "—", booksCount, "livre(s) pour numéro", cleanPhone);
+        console.log("[CLAIM_BOOK] ✅ Email envoyé à", email, "—", booksCount, "livre(s) —", attachments.length > 0 ? "avec pièces jointes" : "avec liens");
       } catch (emailErr) {
         console.error("[CLAIM_BOOK] Email exception:", emailErr);
         return res.status(500).json({ error: "Erreur lors de l'envoi de l'email." });
