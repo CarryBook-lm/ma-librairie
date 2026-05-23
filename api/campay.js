@@ -1837,7 +1837,7 @@ export default async function handler(req, res) {
             "Content-Type": "application/json; charset=utf-8"
           },
           body: JSON.stringify({
-            from: "CarryBooks <livres@carrybooks.com>",
+            from: "CarryBooks <onboarding@resend.dev>",
             to: email.trim(),
             subject: `📚 ${booksCount === 1 ? "Ton livre" : "Tes livres"} CarryBooks`,
             html: clientEmailHtml

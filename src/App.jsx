@@ -1502,6 +1502,7 @@ const PAGE_TO_PATH = {
   favorites: "/favoris",
   referral: "/parrainage",
   confidentialite: "/confidentialite",
+  reclamer: "/mon-livre",
 };
 
 const PATH_TO_PAGE = {
@@ -12998,7 +12999,7 @@ function ReclamerLivre({ G, setPage }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(null); // "success" | "error" | "ratelimit"
+  const [status, setStatus] = useState(null);
   const [message, setMessage] = useState("");
 
   const handleSubmit = async () => {
@@ -13022,86 +13023,112 @@ function ReclamerLivre({ G, setPage }) {
       const data = await res.json();
       if (res.status === 429) { setStatus("ratelimit"); setMessage(data.error || "Limite atteinte. Réessaie dans 24h."); }
       else if (!res.ok) { setStatus("error"); setMessage(data.error || "Une erreur est survenue. Réessaie."); }
-      else { setStatus("success"); setMessage(data.message || "Email envoyé !"); }
+      else { setStatus("success"); }
     } catch (err) {
       setStatus("error"); setMessage("Erreur réseau. Vérifie ta connexion et réessaie.");
     } finally { setLoading(false); }
   };
 
-  const gold = (G && G.gold) ? G.gold : "#c9952a";
-  const surface = (G && G.surface) ? G.surface : "#1a1208";
-  const bg = (G && G.bg) ? G.bg : "#0f0a04";
+  const gold = (G && G.gold) ? G.gold : "#c9a84c";
+  const bg = (G && G.bg) ? G.bg : "#f5f0e8";
+  const surface = (G && G.surface) ? G.surface : "#ede7d9";
+  const border = (G && G.border) ? G.border : "#d8cdb8";
+  const text = (G && G.text) ? G.text : "#1a1208";
+  const textDim = (G && G.textDim) ? G.textDim : "#7a6a50";
 
   return (
-    <div style={{ minHeight: "100vh", background: bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
-      <div style={{ background: surface, borderRadius: 16, padding: "36px 24px", maxWidth: 420, width: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+    <div style={{ minHeight: "100vh", background: bg, padding: "16px", boxSizing: "border-box" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 80 }}>
 
         {/* Retour */}
-        <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: gold, fontSize: 13, cursor: "pointer", marginBottom: 20, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: gold, fontSize: 13, cursor: "pointer", marginBottom: 16, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
           ← Retour à l'accueil
         </button>
 
-        {/* Titre */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontSize: 44, marginBottom: 10 }}>📖</div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: "bold", color: gold }}>Recevoir mon livre par email</h1>
-          <p style={{ margin: "10px 0 0", fontSize: 13, color: "#888", lineHeight: 1.6 }}>
-            Tu as acheté un livre mais tu n'arrives pas à le télécharger ? Entre ton email et le numéro utilisé pour payer.
-          </p>
-        </div>
+        <div style={{ background: surface, borderRadius: 14, padding: "28px 20px", border: "1px solid " + border }}>
 
-        {status !== "success" && (
-          <div>
-            {/* Email */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: "600", color: "#aaa", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Ton adresse email</label>
-              <input type="email" placeholder="exemple@gmail.com" value={email} onChange={e => setEmail(e.target.value)} disabled={loading}
-                style={{ width: "100%", padding: "12px 14px", border: "1.5px solid #333", borderRadius: 8, fontSize: 15, color: "#fff", background: "#111", outline: "none", boxSizing: "border-box" }} />
-            </div>
-
-            {/* Téléphone */}
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: "600", color: "#aaa", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Numéro utilisé pour le paiement</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ padding: "12px 12px", background: "#222", border: "1.5px solid #333", borderRadius: 8, fontSize: 13, color: "#888", whiteSpace: "nowrap", display: "flex", alignItems: "center" }}>🇨🇲 +237</div>
-                <input type="tel" placeholder="6XXXXXXXX" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} disabled={loading} maxLength={9}
-                  style={{ flex: 1, padding: "12px 14px", border: "1.5px solid #333", borderRadius: 8, fontSize: 15, color: "#fff", background: "#111", outline: "none", boxSizing: "border-box" }} />
-              </div>
-              <p style={{ margin: "6px 0 0", fontSize: 12, color: "#555" }}>Le numéro MTN ou Orange Money avec lequel tu as payé</p>
-            </div>
-
-            {(status === "error" || status === "ratelimit") && (
-              <div style={{ background: status === "ratelimit" ? "#2a1f00" : "#2a0000", border: "1px solid " + (status === "ratelimit" ? "#7a5500" : "#5a0000"), borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: status === "ratelimit" ? "#f0c040" : "#ff6b6b" }}>
-                {status === "ratelimit" ? "⏳ " : "⚠️ "}{message}
-              </div>
-            )}
-
-            <button onClick={handleSubmit} disabled={loading}
-              style={{ width: "100%", padding: 14, background: loading ? "#5a4010" : gold, color: "#000", border: "none", borderRadius: 8, fontSize: 15, fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer", letterSpacing: 0.5 }}>
-              {loading ? "⏳ Envoi en cours..." : "📨 Recevoir mes livres par email"}
-            </button>
-          </div>
-        )}
-
-        {status === "success" && (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 52, marginBottom: 14 }}>✅</div>
-            <h2 style={{ margin: "0 0 10px", color: "#4caf50", fontSize: 18 }}>Email envoyé !</h2>
-            <p style={{ fontSize: 14, color: "#888", lineHeight: 1.6, margin: "0 0 12px" }}>
-              Si ce numéro correspond à un achat confirmé, tu vas recevoir tes livres dans ta boîte mail dans quelques secondes.
+          {/* Titre */}
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>📖</div>
+            <h1 style={{ margin: 0, fontSize: 19, fontWeight: "bold", color: gold, lineHeight: 1.3 }}>Recevoir mon livre par email</h1>
+            <p style={{ margin: "10px 0 0", fontSize: 13, color: textDim, lineHeight: 1.6 }}>
+              Tu as acheté un livre mais tu n'arrives pas à le télécharger ? Entre ton email et le numéro utilisé pour payer.
             </p>
-            <p style={{ fontSize: 12, color: "#555", margin: "0 0 24px" }}>Vérifie aussi tes <strong style={{ color: "#888" }}>spams</strong> si tu ne vois rien.</p>
-            <button onClick={() => { setStatus(null); setMessage(""); setEmail(""); setPhone(""); }}
-              style={{ padding: "10px 24px", background: "transparent", border: "1.5px solid " + gold, borderRadius: 8, color: gold, fontSize: 14, fontWeight: "600", cursor: "pointer" }}>
-              Nouvelle recherche
-            </button>
           </div>
-        )}
 
-        <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "#444" }}>
-          Toujours un problème ?{" "}
-          <a href="https://wa.me/237000000000" style={{ color: gold, textDecoration: "none" }} target="_blank" rel="noreferrer">Contacte-nous sur WhatsApp</a>
-        </p>
+          {status !== "success" && (
+            <div>
+              {/* Email */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: "700", color: textDim, marginBottom: 6, letterSpacing: 1.5, textTransform: "uppercase" }}>Ton adresse email</label>
+                <input
+                  type="email"
+                  placeholder="exemple@gmail.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  disabled={loading}
+                  style={{ width: "100%", padding: "12px 14px", border: "1.5px solid " + border, borderRadius: 8, fontSize: 15, color: text, background: bg, outline: "none", boxSizing: "border-box" }}
+                />
+              </div>
+
+              {/* Téléphone */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: "700", color: textDim, marginBottom: 6, letterSpacing: 1.5, textTransform: "uppercase" }}>Numéro utilisé pour le paiement</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ padding: "12px 10px", background: border, borderRadius: 8, fontSize: 13, color: text, whiteSpace: "nowrap", display: "flex", alignItems: "center", flexShrink: 0 }}>
+                    🇨🇲 +237
+                  </div>
+                  <input
+                    type="tel"
+                    placeholder="6XXXXXXXX"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+                    disabled={loading}
+                    maxLength={9}
+                    style={{ flex: 1, minWidth: 0, padding: "12px 14px", border: "1.5px solid " + border, borderRadius: 8, fontSize: 15, color: text, background: bg, outline: "none", boxSizing: "border-box" }}
+                  />
+                </div>
+                <p style={{ margin: "6px 0 0", fontSize: 12, color: textDim }}>Le numéro MTN ou Orange Money avec lequel tu as payé</p>
+              </div>
+
+              {/* Erreur */}
+              {(status === "error" || status === "ratelimit") && (
+                <div style={{ background: "#fff3cd", border: "1px solid #d4a017", borderRadius: 8, padding: "11px 14px", marginBottom: 14, fontSize: 13, color: "#7a4f00" }}>
+                  {status === "ratelimit" ? "⏳ " : "⚠️ "}{message}
+                </div>
+              )}
+
+              {/* Bouton */}
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{ width: "100%", padding: "14px 10px", background: loading ? "#d4b87a" : gold, color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer", letterSpacing: 0.3 }}
+              >
+                {loading ? "⏳ Envoi en cours..." : "📨 Recevoir mes livres par email"}
+              </button>
+            </div>
+          )}
+
+          {/* Succès */}
+          {status === "success" && (
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 52, marginBottom: 12 }}>✅</div>
+              <h2 style={{ margin: "0 0 10px", color: "#2e7d32", fontSize: 18 }}>Email envoyé !</h2>
+              <p style={{ fontSize: 14, color: textDim, lineHeight: 1.6, margin: "0 0 8px" }}>
+                Si ce numéro correspond à un achat confirmé, tu vas recevoir tes livres dans ta boîte mail dans quelques secondes.
+              </p>
+              <p style={{ fontSize: 12, color: textDim, margin: "0 0 22px" }}>
+                Vérifie aussi tes <strong>spams</strong> si tu ne vois rien.
+              </p>
+              <button
+                onClick={() => { setStatus(null); setMessage(""); setEmail(""); setPhone(""); }}
+                style={{ padding: "10px 24px", background: "transparent", border: "1.5px solid " + gold, borderRadius: 8, color: gold, fontSize: 14, fontWeight: "600", cursor: "pointer" }}
+              >
+                Nouvelle recherche
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
