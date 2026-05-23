@@ -1718,31 +1718,51 @@ export default async function handler(req, res) {
       // On essaie les 2 formats du numéro (avec/sans 237)
       const phoneVariants = [cleanPhone, "237" + cleanPhone];
 
-      const { data: userPurchases } = await supabaseAdmin
+      // Étape 1 : récupérer les book_ids achetés (sans join)
+      const { data: userPurchases, error: upErr } = await supabaseAdmin
         .from("purchases")
-        .select("id, book_id, amount, created_at, books(title, pdf_url)")
-        .or(phoneVariants.map(p => `phone.eq.${p}`).join(","))
-        .eq("type", "sale");
-
-      const { data: guestPurchases } = await supabaseAdmin
-        .from("guest_purchases")
-        .select("id, book_id, amount, created_at, books(title, pdf_url)")
+        .select("id, book_id")
         .or(phoneVariants.map(p => `phone.eq.${p}`).join(","));
 
-      // ── Fusionner et dédupliquer par book_id ──
+      const { data: guestPurchases, error: gpErr } = await supabaseAdmin
+        .from("guest_purchases")
+        .select("id, book_id")
+        .or(phoneVariants.map(p => `phone.eq.${p}`).join(","));
+
+      console.log("[CLAIM_BOOK] userPurchases:", JSON.stringify(userPurchases), "err:", upErr?.message);
+      console.log("[CLAIM_BOOK] guestPurchases:", JSON.stringify(guestPurchases), "err:", gpErr?.message);
+
+      // Fusionner et dédupliquer par book_id
       const allPurchases = [...(userPurchases || []), ...(guestPurchases || [])];
       const seenBooks = new Set();
-      const uniquePurchases = allPurchases.filter(p => {
-        if (!p.book_id || seenBooks.has(p.book_id)) return false;
-        seenBooks.add(p.book_id);
-        return true;
+      const uniqueBookIds = [];
+      allPurchases.forEach(p => {
+        if (p.book_id && !seenBooks.has(p.book_id)) {
+          seenBooks.add(p.book_id);
+          uniqueBookIds.push(p.book_id);
+        }
       });
+
+      console.log("[CLAIM_BOOK] uniqueBookIds:", uniqueBookIds);
+
+      // Étape 2 : récupérer les détails des livres séparément
+      let booksWithPdf = [];
+      if (uniqueBookIds.length > 0) {
+        const { data: booksData, error: booksErr } = await supabaseAdmin
+          .from("books")
+          .select("id, title, pdf_url")
+          .in("id", uniqueBookIds);
+
+        console.log("[CLAIM_BOOK] booksData:", JSON.stringify(booksData), "err:", booksErr?.message);
+
+        booksWithPdf = (booksData || []).filter(b => b.pdf_url && b.pdf_url !== "pending");
+      }
 
       // ── Logger la tentative pour le rate limiting ──
       try {
         await supabaseAdmin
           .from("book_claims_log")
-          .insert([{ phone: cleanPhone, email, found: uniquePurchases.length > 0 }]);
+          .insert([{ phone: cleanPhone, email, found: booksWithPdf.length > 0 }]);
       } catch (e) {
         console.warn("[CLAIM_BOOK] Log insert failed (non bloquant):", e.message);
       }
@@ -1753,23 +1773,21 @@ export default async function handler(req, res) {
         message: "Si ce numéro correspond à un achat confirmé, un email a été envoyé."
       };
 
-      // Filtrer les livres avec un PDF valide
-      const booksWithPdf = uniquePurchases.filter(p => p.books && p.books.pdf_url);
-
       if (!booksWithPdf.length) {
+        console.log("[CLAIM_BOOK] Aucun livre avec PDF trouvé pour", cleanPhone);
         return res.status(200).json(SAFE_RESPONSE);
       }
 
       // ── Construire l'email client ──
       const booksCount = booksWithPdf.length;
-      const booksListHtml = booksWithPdf.map(p => `
+      const booksListHtml = booksWithPdf.map(b => `
         <tr>
           <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;vertical-align:middle;">
-            <div style="font-size:15px;font-weight:bold;color:#1a1208;">${p.books.title}</div>
+            <div style="font-size:15px;font-weight:bold;color:#1a1208;">${b.title}</div>
             <div style="font-size:12px;color:#999;margin-top:3px;">Livre numérique</div>
           </td>
           <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;text-align:right;vertical-align:middle;">
-            <a href="${p.books.pdf_url}"
+            <a href="${b.pdf_url}"
                style="display:inline-block;background:#c9952a;color:#fff;padding:9px 18px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:13px;white-space:nowrap;">
               📥 Télécharger
             </a>

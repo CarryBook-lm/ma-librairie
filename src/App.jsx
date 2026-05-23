@@ -17800,7 +17800,7 @@ export default function App() {
                   )}
                   <button onClick={() => setPage("reclamer")} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                     <span style={{ fontSize: 20 }}>📧</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Reçois Ton Livre par mail</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Mon Livre<br/>par Mail</span>
                   </button>
                 </div>
 
