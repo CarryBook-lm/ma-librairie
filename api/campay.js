@@ -174,6 +174,7 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
 async function sendOrderEmail({ type, order, items, extra }) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "carrybooks.com@gmail.com";
+  const EMAIL_FROM = process.env.EMAIL_FROM || "CarryBooks <onboarding@resend.dev>";
 
   if (!RESEND_API_KEY) {
     console.warn("[EMAIL] RESEND_API_KEY non configurée — email non envoyé");
@@ -408,7 +409,7 @@ async function sendOrderEmail({ type, order, items, extra }) {
       "Accept-Charset": "utf-8"
     },
     body: JSON.stringify({
-      from: "CarryBooks <onboarding@resend.dev>",
+      from: EMAIL_FROM,
       to: ADMIN_EMAIL,
       subject: subject,
       html: emailHtml,
@@ -1979,8 +1980,9 @@ export default async function handler(req, res) {
 
       // ── Envoyer l'email via Resend ──
       try {
+        const EMAIL_FROM = process.env.EMAIL_FROM || "CarryBooks <onboarding@resend.dev>";
         const emailPayload = {
-          from: "CarryBooks <onboarding@resend.dev>",
+          from: EMAIL_FROM,
           to: email.trim(),
           subject: `📚 ${booksCount === 1 ? "Ton livre" : "Tes livres"} CarryBooks`,
           html: clientEmailHtml,
@@ -2000,8 +2002,25 @@ export default async function handler(req, res) {
 
         if (!emailRes.ok) {
           const errData = await emailRes.json();
-          console.error("[CLAIM_BOOK] Resend error:", errData);
-          return res.status(500).json({ error: "Erreur lors de l'envoi. Vérifie ton adresse email." });
+          console.error("[CLAIM_BOOK] Resend error:", JSON.stringify(errData), "— from:", EMAIL_FROM, "— to:", email);
+
+          // Messages d'erreur clairs selon la cause réelle
+          const errMsg = (errData?.message || "").toLowerCase();
+          let userError = "Erreur lors de l'envoi de l'email. Réessaie dans quelques minutes.";
+
+          if (errMsg.includes("testing emails") || errMsg.includes("verify a domain")) {
+            // Mode test Resend — domaine pas encore vérifié
+            userError = "Service email en cours de configuration. Contacte-nous sur WhatsApp pour recevoir tes livres.";
+            console.error("[CLAIM_BOOK] ⚠️ DOMAINE RESEND NON VÉRIFIÉ — vérifier carrybooks.com sur resend.com/domains");
+          } else if (errMsg.includes("invalid") && errMsg.includes("email")) {
+            userError = "Adresse email invalide. Vérifie l'orthographe.";
+          } else if (errMsg.includes("rate") || errMsg.includes("quota")) {
+            userError = "Trop de demandes. Réessaie dans 1 minute.";
+          } else if (errMsg.includes("attachment") || errMsg.includes("size")) {
+            userError = "Tes livres sont trop volumineux pour l'email. Contacte-nous sur WhatsApp.";
+          }
+
+          return res.status(500).json({ error: userError });
         }
 
         console.log("[CLAIM_BOOK] ✅ Email envoyé à", email, "—", booksCount, "livre(s) —", attachments.length > 0 ? "avec pièces jointes" : "avec liens");
