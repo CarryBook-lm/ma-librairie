@@ -1,10 +1,12 @@
 {
   "functions": {
     "api/campay.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "node_modules/pdf-lib/**"
     },
     "api/generate-pdf.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "node_modules/pdf-lib/**"
     }
   }
 }
