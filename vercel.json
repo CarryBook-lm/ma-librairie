@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/livre/:slug", "destination": "/api/preview?type=book&slug=:slug" },
-    { "source": "/article/:slug", "destination": "/api/preview?type=article&slug=:slug" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/(.*)", "destination": "/" }
-  ]
-}

@@ -3,7 +3,7 @@
 // + record_pending + recover_lost_purchases (système de récupération automatique des achats perdus)
 
 import { createClient } from "@supabase/supabase-js";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFName, PDFString } from "pdf-lib";
 
 // ============================================================
 // 🎁 PARRAINAGE : Créditer le parrain au 1er achat du filleul
@@ -484,6 +484,17 @@ async function applyWatermarkAndAds(pdfBytes, phone, bookId, supabaseAdmin) {
     const startX = width - prefixW - linkW - 20;
     page.drawText(prefixText, { x: startX, y: 12, size: 8, font: helveticaFont, color: rgb(0.15, 0.15, 0.15) });
     page.drawText(linkText, { x: startX + prefixW, y: 12, size: 8, font: helveticaBold, color: rgb(0.10, 0.36, 0.74) });
+    try {
+      const linkAnnotation = pdfDoc.context.register(pdfDoc.context.obj({
+        Type: "Annot", Subtype: "Link",
+        Rect: [startX + prefixW - 2, 10, startX + prefixW + linkW + 2, 22],
+        Border: [0, 0, 0],
+        A: { Type: "Action", S: "URI", URI: PDFString.of(siteUrl) },
+      }));
+      const existing = page.node.lookup(PDFName.of("Annots"));
+      if (existing) { existing.push(linkAnnotation); }
+      else { page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([linkAnnotation])); }
+    } catch (e) { /* non bloquant */ }
   }
 
   // ── Pages publicitaires ──
@@ -504,15 +515,18 @@ async function applyWatermarkAndAds(pdfBytes, phone, bookId, supabaseAdmin) {
 
   function addLink(page, x, y, width, height, url) {
     try {
-      const annot = pdfDoc.context.register(pdfDoc.context.obj({
+      const linkAnnotation = pdfDoc.context.register(pdfDoc.context.obj({
         Type: "Annot", Subtype: "Link",
         Rect: [x, y, x + width, y + height],
         Border: [0, 0, 0],
-        A: { Type: "Action", S: "URI", URI: { toString: () => url } },
+        A: { Type: "Action", S: "URI", URI: PDFString.of(url) },
       }));
-      const annots = page.node.Annots() || pdfDoc.context.obj([]);
-      annots.push(annot);
-      page.node.set(pdfDoc.context.obj("Annots"), annots);
+      const existing = page.node.lookup(PDFName.of("Annots"));
+      if (existing) {
+        existing.push(linkAnnotation);
+      } else {
+        page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([linkAnnotation]));
+      }
     } catch (e) { /* non bloquant */ }
   }
 
