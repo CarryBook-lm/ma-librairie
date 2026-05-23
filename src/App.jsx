@@ -13,7 +13,7 @@ const supabase = createClient(
         getItem: async (key) => {
           try {
             const { value } = await Preferences.get({ key });
-            return value;
+            return value ?? localStorage.getItem(key);
           } catch { return localStorage.getItem(key); }
         },
         setItem: async (key, value) => {
@@ -13002,6 +13002,8 @@ function ReclamerLivre({ G, setPage }) {
   const [status, setStatus] = useState(null);
   const [message, setMessage] = useState("");
 
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   const handleSubmit = async () => {
     if (!email.trim() || !phone.trim()) {
       setStatus("error"); setMessage("Remplis les deux champs."); return;
@@ -19771,7 +19773,7 @@ export default function App() {
 
         {/* PAGE : RECEVOIR MON LIVRE PAR EMAIL */}
         {page === "reclamer" && (
-          <ReclamerLivre G={G} setPage={setPage} />
+          <ReclamerLivre G={G} setPage={setPage} onMount={() => window.scrollTo(0, 0)} />
         )}
 
         {page === "quiz" && (
