@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/campay.js": {
+      "maxDuration": 60
+    }
+  }
+}

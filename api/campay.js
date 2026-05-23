@@ -3,7 +3,6 @@
 // + record_pending + recover_lost_purchases (système de récupération automatique des achats perdus)
 
 import { createClient } from "@supabase/supabase-js";
-import { PDFDocument, rgb, StandardFonts, PDFName, PDFString } from "pdf-lib";
 
 // ============================================================
 // 🎁 PARRAINAGE : Créditer le parrain au 1er achat du filleul
@@ -432,219 +431,6 @@ async function sendOrderEmail({ type, order, items, extra }) {
 // Ancien wrapper pour compatibilit—
 async function sendCartOrderEmail(order, items) {
   return sendOrderEmail({ type: "cart", order, items });
-}
-
-// ============================================================
-// 🛡️ WATERMARK + PAGES PUB — VERSION SERVEUR
-// Reproduit exactement la logique de downloadProtectedPDF côté client
-// ============================================================
-async function applyWatermarkAndAds(pdfBytes, phone, bookId, supabaseAdmin) {
-  const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  // ── Formater le numéro ──
-  function formatPhone(p) {
-    if (!p) return "";
-    const digits = String(p).replace(/\D/g, "").replace(/^237/, "");
-    if (digits.length === 9) {
-      return digits[0] + " " + digits.slice(1,3) + " " + digits.slice(3,5) + " " + digits.slice(5,7) + " " + digits.slice(7,9);
-    }
-    return p;
-  }
-
-  const formattedPhone = formatPhone(phone);
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, "0");
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yy = String(now.getFullYear()).slice(-2);
-  const purchaseDate = dd + "/" + mm + "/" + yy;
-  const siteUrl = "https://carrybooks.com";
-
-  // ── Watermark sur chaque page existante ──
-  const pages = pdfDoc.getPages();
-  for (const page of pages) {
-    const { width, height } = page.getSize();
-
-    // Bas gauche : date + téléphone
-    const bottomLeftText = formattedPhone
-      ? "Le " + purchaseDate + " - Tel : " + formattedPhone
-      : "Le " + purchaseDate;
-    page.drawText(bottomLeftText, {
-      x: 20, y: 12, size: 8,
-      font: helveticaFont,
-      color: rgb(0.40, 0.40, 0.40),
-    });
-
-    // Bas droite : "Plus de livres sur carrybooks.com"
-    const prefixText = "Plus de livres sur ";
-    const linkText = "carrybooks.com";
-    const prefixW = helveticaFont.widthOfTextAtSize(prefixText, 8);
-    const linkW = helveticaBold.widthOfTextAtSize(linkText, 8);
-    const startX = width - prefixW - linkW - 20;
-    page.drawText(prefixText, { x: startX, y: 12, size: 8, font: helveticaFont, color: rgb(0.15, 0.15, 0.15) });
-    page.drawText(linkText, { x: startX + prefixW, y: 12, size: 8, font: helveticaBold, color: rgb(0.10, 0.36, 0.74) });
-    try {
-      const linkAnnotation = pdfDoc.context.register(pdfDoc.context.obj({
-        Type: "Annot", Subtype: "Link",
-        Rect: [startX + prefixW - 2, 10, startX + prefixW + linkW + 2, 22],
-        Border: [0, 0, 0],
-        A: { Type: "Action", S: "URI", URI: PDFString.of(siteUrl) },
-      }));
-      const existing = page.node.lookup(PDFName.of("Annots"));
-      if (existing) { existing.push(linkAnnotation); }
-      else { page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([linkAnnotation])); }
-    } catch (e) { /* non bloquant */ }
-  }
-
-  // ── Pages publicitaires ──
-  const BASE_URL = "https://carrybooks.com";
-  const grayDark = rgb(0.15, 0.15, 0.15);
-  const grayMid  = rgb(0.40, 0.40, 0.40);
-  const blueColor = rgb(0.10, 0.36, 0.74);
-  const purple = rgb(0.616, 0.306, 0.867);
-
-  const existingPages = pdfDoc.getPages();
-  let PAGE_WIDTH = 419;  // A5 width en points
-  let PAGE_HEIGHT = 595; // A5 height en points
-  if (existingPages.length > 0) {
-    const size = existingPages[0].getSize();
-    PAGE_WIDTH = size.width;
-    PAGE_HEIGHT = size.height;
-  }
-
-  function addLink(page, x, y, width, height, url) {
-    try {
-      const linkAnnotation = pdfDoc.context.register(pdfDoc.context.obj({
-        Type: "Annot", Subtype: "Link",
-        Rect: [x, y, x + width, y + height],
-        Border: [0, 0, 0],
-        A: { Type: "Action", S: "URI", URI: PDFString.of(url) },
-      }));
-      const existing = page.node.lookup(PDFName.of("Annots"));
-      if (existing) {
-        existing.push(linkAnnotation);
-      } else {
-        page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([linkAnnotation]));
-      }
-    } catch (e) { /* non bloquant */ }
-  }
-
-  // PAGE 1 : CarryCare
-  try {
-    const imgRes = await fetch(BASE_URL + "/pdf-pub-carrycare.jpeg");
-    if (imgRes.ok) {
-      const imgBytes = await imgRes.arrayBuffer();
-      const img = await pdfDoc.embedJpg(imgBytes);
-      const page1 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      const dims = img.scaleToFit(PAGE_WIDTH - 20, PAGE_HEIGHT - 60);
-      const xImg = (PAGE_WIDTH - dims.width) / 2;
-      const yImg = PAGE_HEIGHT - dims.height - 10;
-      page1.drawImage(img, { x: xImg, y: yImg, width: dims.width, height: dims.height });
-
-      const cardZones = [
-        [0.04, 0.43, 0.50, 0.62, BASE_URL + "/?go=carrycare-body"],
-        [0.50, 0.43, 0.96, 0.62, BASE_URL + "/?go=carrycare-facial"],
-        [0.04, 0.63, 0.50, 0.82, BASE_URL + "/?go=carrycare-hair"],
-        [0.50, 0.63, 0.96, 0.82, BASE_URL + "/?go=carrycare-line"],
-      ];
-      cardZones.forEach(([x1, y1, x2, y2, url]) => {
-        addLink(page1, xImg + x1 * dims.width, yImg + dims.height - y2 * dims.height, (x2 - x1) * dims.width, (y2 - y1) * dims.height, url);
-      });
-
-      const bandText = "Cliquez ici pour acceder a CarryCare";
-      const fontB = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-      const bandW = fontB.widthOfTextAtSize(bandText, 13);
-      page1.drawText(bandText, { x: (PAGE_WIDTH - bandW) / 2, y: 22, size: 13, font: fontB, color: purple });
-    }
-  } catch (e) { console.warn("[WATERMARK] Page CarryCare échouée (non bloquant):", e.message); }
-
-  // PAGE 2 : Univers
-  try {
-    const imgRes = await fetch(BASE_URL + "/pdf-pub-univers.jpeg");
-    if (imgRes.ok) {
-      const imgBytes = await imgRes.arrayBuffer();
-      const img = await pdfDoc.embedJpg(imgBytes);
-      const page2 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      const dims = img.scaleToFit(PAGE_WIDTH - 20, PAGE_HEIGHT - 30);
-      const xImg = (PAGE_WIDTH - dims.width) / 2;
-      const yImg = PAGE_HEIGHT - dims.height - 10;
-      page2.drawImage(img, { x: xImg, y: yImg, width: dims.width, height: dims.height });
-    }
-  } catch (e) { console.warn("[WATERMARK] Page Univers échouée (non bloquant):", e.message); }
-
-  // PAGE(S) 3+ : Liste des livres
-  try {
-    const { data: allBooks } = await supabaseAdmin
-      .from("books")
-      .select("id, title, category, product_type")
-      .eq("status", "actif")
-      .neq("product_type", "article")
-      .order("category", { ascending: true })
-      .order("title", { ascending: true });
-
-    const payBooks = (allBooks || []).filter(b => b.id !== bookId && b.product_type !== "papier");
-
-    function safeText(s) {
-      if (!s) return "";
-      return String(s).replace(/[\u2018-\u201F]/g, "'").replace(/[\u2010-\u2015]/g, "-").replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "").trim();
-    }
-    function slugify(s) {
-      return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").substring(0, 80);
-    }
-
-    const fontBd = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const fontIt = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-    const lineH = 18, fs = 11, titleSpace = 100, footerSpace = 50;
-    const margin = Math.round(PAGE_WIDTH * 0.07);
-    const linesPerPage = Math.floor((PAGE_HEIGHT - titleSpace - footerSpace) / lineH);
-    const totalPages = Math.max(1, Math.ceil(payBooks.length / linesPerPage));
-    let bookIdx = 0;
-
-    for (let p = 1; p <= totalPages; p++) {
-      const pg = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      const headerText = "Decouvrez nos autres livres";
-      const headerW = fontBd.widthOfTextAtSize(headerText, 20);
-      pg.drawText(headerText, { x: (PAGE_WIDTH - headerW) / 2, y: PAGE_HEIGHT - 50, size: 20, font: fontBd, color: grayDark });
-
-      const subText = p === 1 ? "Cliquez sur un titre pour le decouvrir" : "(suite)";
-      const subFont = fontIt;
-      const subW = subFont.widthOfTextAtSize(subText, 11);
-      pg.drawText(subText, { x: (PAGE_WIDTH - subW) / 2, y: PAGE_HEIGHT - 75, size: 11, font: subFont, color: grayMid });
-
-      let yLine = PAGE_HEIGHT - titleSpace;
-      let count = 0;
-      while (bookIdx < payBooks.length && count < linesPerPage) {
-        const book = payBooks[bookIdx];
-        const title = safeText(book.title || "Livre");
-        if (title) {
-          const titleW = fontBd.widthOfTextAtSize(title, fs);
-          pg.drawText(title, { x: margin, y: yLine, size: fs, font: fontBd, color: grayDark });
-          const catText = book.category ? " - " + safeText(book.category) : "";
-          let catW = 0;
-          if (catText) {
-            pg.drawText(catText, { x: margin + titleW, y: yLine, size: fs - 1, font: fontIt, color: grayMid });
-            catW = fontIt.widthOfTextAtSize(catText, fs - 1);
-          }
-          const linkLabel = " - Telecharger ici";
-          const linkW = fontBd.widthOfTextAtSize(linkLabel, fs);
-          pg.drawText(linkLabel, { x: margin + titleW + catW, y: yLine, size: fs, font: fontBd, color: blueColor });
-          addLink(pg, margin + titleW + catW, yLine - 3, linkW, fs + 6, BASE_URL + "/?book=" + slugify(book.title));
-        }
-        yLine -= lineH;
-        count++;
-        bookIdx++;
-      }
-
-      if (totalPages > 1) {
-        const pageInfo = "Page " + p + " / " + totalPages;
-        const piW = fontIt.widthOfTextAtSize(pageInfo, 10);
-        pg.drawText(pageInfo, { x: (PAGE_WIDTH - piW) / 2, y: 30, size: 10, font: fontIt, color: grayMid });
-      }
-    }
-  } catch (e) { console.warn("[WATERMARK] Pages livres échouées (non bloquant):", e.message); }
-
-  return await pdfDoc.save();
 }
 
 export default async function handler(req, res) {
@@ -1994,25 +1780,18 @@ export default async function handler(req, res) {
 
       // ── Construire l'email client ──
       const booksCount = booksWithPdf.length;
-
-      // Générer les PDFs watermarqués et les attacher
-      const attachments = [];
-      for (const b of booksWithPdf) {
-        try {
-          const pdfRes = await fetch(b.pdf_url);
-          if (!pdfRes.ok) throw new Error("PDF inaccessible: " + b.pdf_url);
-          const pdfBytes = await pdfRes.arrayBuffer();
-          const watermarked = await applyWatermarkAndAds(pdfBytes, cleanPhone, b.id, supabaseAdmin);
-          const base64 = Buffer.from(watermarked).toString("base64");
-          const safeTitle = (b.title || "livre").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "_").substring(0, 60);
-          attachments.push({ filename: safeTitle + ".pdf", content: base64 });
-          console.log("[CLAIM_BOOK] ✅ PDF watermarqué:", b.title);
-        } catch (pdfErr) {
-          console.warn("[CLAIM_BOOK] Watermark échoué pour", b.title, "— fallback lien:", pdfErr.message);
-          // Fallback : on met quand même le lien direct si le watermark échoue
-          attachments.push({ filename: (b.title || "livre") + "_lien.txt", content: Buffer.from(b.pdf_url).toString("base64") });
-        }
-      }
+      const booksListHtml = booksWithPdf.map(b => `
+        <tr>
+          <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;vertical-align:middle;">
+            <div style="font-size:15px;font-weight:bold;color:#1a1208;">${b.title}</div>
+          </td>
+          <td style="padding:14px 16px;border-bottom:1px solid #f0e8d8;text-align:right;vertical-align:middle;">
+            <a href="${b.pdf_url}" style="display:inline-block;background:#c9952a;color:#fff;padding:9px 18px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:13px;">
+              📥 Télécharger
+            </a>
+          </td>
+        </tr>
+      `).join('');
 
       const clientEmailHtml = `
 <!DOCTYPE html>
@@ -2022,30 +1801,25 @@ export default async function handler(req, res) {
   <div style="max-width:560px;margin:0 auto;">
     <div style="background:linear-gradient(135deg,#c9952a 0%,#8b6212 100%);padding:32px 24px;text-align:center;">
       <div style="font-size:40px;margin-bottom:8px;">📚</div>
-      <div style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:1px;">
+      <div style="color:#fff;font-size:22px;font-weight:bold;">
         ${booksCount === 1 ? "Ton livre CarryBooks" : "Tes livres CarryBooks"}
-      </div>
-      <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:6px;">
-        ${booksCount === 1 ? "Ton livre est en pièce jointe" : "Tes livres sont en pièces jointes"}
       </div>
     </div>
     <div style="background:#fff;padding:28px 24px;">
-      <p style="margin:0 0 16px;font-size:15px;color:#444;line-height:1.6;">
+      <p style="margin:0 0 20px;font-size:15px;color:#444;line-height:1.6;">
         Bonjour 👋<br><br>
-        ${booksCount === 1 ? "Ton livre est" : "Tes " + booksCount + " livres sont"} en pièce${booksCount > 1 ? "s" : ""} jointe${booksCount > 1 ? "s" : ""} de cet email. Ouvre le${booksCount > 1 ? "s" : ""} directement depuis ta boîte mail.
+        Clique sur le bouton pour télécharger ${booksCount === 1 ? "ton livre" : "tes livres"}.
       </p>
-      <div style="background:#faf7f0;border-radius:10px;padding:16px;margin-bottom:16px;">
-        ${booksWithPdf.map(b => `<div style="padding:8px 0;border-bottom:1px solid #f0e8d8;font-size:14px;font-weight:bold;color:#1a1208;">📎 ${b.title}</div>`).join("")}
-      </div>
-      <div style="padding:14px;background:#fff8e8;border-radius:8px;border-left:3px solid #c9952a;">
-        <div style="font-size:13px;color:#7a5500;">
-          ⚠️ <strong>Note :</strong> Ces fichiers sont personnalisés avec ton numéro. Ne les partage pas.
-        </div>
+      <table style="width:100%;border-collapse:collapse;background:#faf7f0;border-radius:10px;overflow:hidden;">
+        <tbody>${booksListHtml}</tbody>
+      </table>
+      <div style="margin-top:20px;padding:14px;background:#fff8e8;border-radius:8px;border-left:3px solid #c9952a;">
+        <div style="font-size:13px;color:#7a5500;">⚠️ <strong>Note :</strong> Ne partage pas ces liens.</div>
       </div>
     </div>
     <div style="background:#1a1208;padding:16px;text-align:center;">
-      <div style="color:#c9952a;font-size:14px;font-weight:bold;margin-bottom:4px;">CarryBooks</div>
-      <div style="color:#555;font-size:11px;">carrybooks.com · Votre bibliothèque numérique</div>
+      <div style="color:#c9952a;font-size:14px;font-weight:bold;">CarryBooks</div>
+      <div style="color:#555;font-size:11px;">carrybooks.com</div>
     </div>
   </div>
 </body>
@@ -2064,7 +1838,6 @@ export default async function handler(req, res) {
             to: email.trim(),
             subject: `📚 ${booksCount === 1 ? "Ton livre" : "Tes livres"} CarryBooks`,
             html: clientEmailHtml,
-            attachments: attachments,
           })
         });
 
