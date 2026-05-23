@@ -1781,9 +1781,7 @@ export default async function handler(req, res) {
       // ── Générer les PDFs watermarqués via generate-pdf.js ──
       const booksCount = booksWithPdf.length;
       const attachments = [];
-      const HOST = process.env.VERCEL_URL
-        ? "https://" + process.env.VERCEL_URL
-        : "https://carrybooks.com";
+      const HOST = "https://carrybooks.com";
 
       for (const b of booksWithPdf) {
         try {

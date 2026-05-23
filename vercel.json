@@ -2,6 +2,9 @@
   "functions": {
     "api/campay.js": {
       "maxDuration": 60
+    },
+    "api/generate-pdf.js": {
+      "maxDuration": 60
     }
   }
 }
