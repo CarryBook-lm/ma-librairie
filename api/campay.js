@@ -1689,6 +1689,15 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Service email non configuré" });
       }
 
+      // Import dynamique pdf-lib (uniquement ici, pas au démarrage du module)
+      let PDFLib = null;
+      try {
+        PDFLib = await import("pdf-lib");
+        console.log("[CLAIM_BOOK] pdf-lib chargé ✅");
+      } catch (e) {
+        console.warn("[CLAIM_BOOK] pdf-lib non disponible — envoi lien simple:", e.message);
+      }
+
       const supabaseAdmin = createClient(
         process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -1778,39 +1787,135 @@ export default async function handler(req, res) {
         return res.status(200).json(SAFE_RESPONSE);
       }
 
-      // ── Générer les PDFs watermarqués via generate-pdf.js ──
+      // ── Générer les PDFs watermarqués directement ──
       const booksCount = booksWithPdf.length;
       const attachments = [];
-      const HOST = "https://carrybooks.com";
 
-      for (const b of booksWithPdf) {
-        try {
-          const genRes = await fetch(HOST + "/api/generate-pdf", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              pdf_url: b.pdf_url,
-              phone: cleanPhone,
-              book_id: b.id,
-              book_title: b.title,
-            }),
-          });
+      if (PDFLib) {
+        const { PDFDocument, rgb, StandardFonts, PDFName, PDFString } = PDFLib;
+        const BASE_URL = "https://carrybooks.com";
 
-          if (genRes.ok) {
-            const genData = await genRes.json();
-            if (genData.base64) {
-              const safeTitle = (b.title || "livre")
-                .replace(/[^a-zA-Z0-9\s-]/g, "")
-                .trim().replace(/\s+/g, "_")
-                .substring(0, 60);
-              attachments.push({ filename: safeTitle + ".pdf", content: genData.base64 });
-              console.log("[CLAIM_BOOK] ✅ PDF watermarqué joint :", b.title);
+        function addLink(pdfDoc, page, x, y, w, h, url) {
+          try {
+            const annot = pdfDoc.context.register(pdfDoc.context.obj({
+              Type: "Annot", Subtype: "Link",
+              Rect: [x, y, x + w, y + h],
+              Border: [0, 0, 0],
+              A: { Type: "Action", S: "URI", URI: PDFString.of(url) },
+            }));
+            const existing = page.node.lookup(PDFName.of("Annots"));
+            if (existing) { existing.push(annot); }
+            else { page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([annot])); }
+          } catch (e) { /* non bloquant */ }
+        }
+
+        function formatPhone(p) {
+          if (!p) return "";
+          const digits = String(p).replace(/\D/g, "").replace(/^237/, "");
+          if (digits.length === 9) return digits[0] + " " + digits.slice(1,3) + " " + digits.slice(3,5) + " " + digits.slice(5,7) + " " + digits.slice(7,9);
+          return p;
+        }
+
+        const formattedPhone = formatPhone(cleanPhone);
+        const now = new Date();
+        const purchaseDate = String(now.getDate()).padStart(2,"0") + "/" + String(now.getMonth()+1).padStart(2,"0") + "/" + String(now.getFullYear()).slice(-2);
+
+        for (const b of booksWithPdf) {
+          try {
+            const pdfRes = await fetch(b.pdf_url);
+            if (!pdfRes.ok) throw new Error("PDF inaccessible");
+            const pdfBytes = await pdfRes.arrayBuffer();
+            const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+            const fontR = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            const fontB = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+            // Watermark bas de page sur chaque page
+            for (const page of pdfDoc.getPages()) {
+              const { width } = page.getSize();
+              const leftText = formattedPhone ? "Le " + purchaseDate + " - Tel : " + formattedPhone : "Le " + purchaseDate;
+              page.drawText(leftText, { x: 20, y: 12, size: 8, font: fontR, color: rgb(0.40, 0.40, 0.40) });
+              const pre = "Plus de livres sur "; const lnk = "carrybooks.com";
+              const preW = fontR.widthOfTextAtSize(pre, 8); const lnkW = fontB.widthOfTextAtSize(lnk, 8);
+              const sx = width - preW - lnkW - 20;
+              page.drawText(pre, { x: sx, y: 12, size: 8, font: fontR, color: rgb(0.15,0.15,0.15) });
+              page.drawText(lnk, { x: sx + preW, y: 12, size: 8, font: fontB, color: rgb(0.10,0.36,0.74) });
+              addLink(pdfDoc, page, sx + preW - 2, 10, lnkW + 4, 12, BASE_URL);
             }
-          } else {
-            console.warn("[CLAIM_BOOK] generate-pdf échoué pour", b.title, "— fallback lien");
+
+            // Dimensions
+            const sz = pdfDoc.getPage(0).getSize();
+            const PW = sz.width, PH = sz.height;
+            const gD = rgb(0.15,0.15,0.15), gM = rgb(0.40,0.40,0.40), bC = rgb(0.10,0.36,0.74), pu = rgb(0.616,0.306,0.867);
+
+            // Page pub CarryCare
+            try {
+              const r = await fetch(BASE_URL + "/pdf-pub-carrycare.jpeg");
+              if (r.ok) {
+                const img = await pdfDoc.embedJpg(await r.arrayBuffer());
+                const pg = pdfDoc.addPage([PW, PH]);
+                const d = img.scaleToFit(PW - 20, PH - 60);
+                const xi = (PW - d.width) / 2, yi = PH - d.height - 10;
+                pg.drawImage(img, { x: xi, y: yi, width: d.width, height: d.height });
+                [[0.04,0.43,0.50,0.62,BASE_URL+"/?go=carrycare-body"],[0.50,0.43,0.96,0.62,BASE_URL+"/?go=carrycare-facial"],[0.04,0.63,0.50,0.82,BASE_URL+"/?go=carrycare-hair"],[0.50,0.63,0.96,0.82,BASE_URL+"/?go=carrycare-line"]].forEach(([x1,y1,x2,y2,u]) => addLink(pdfDoc, pg, xi+x1*d.width, yi+d.height-y2*d.height, (x2-x1)*d.width, (y2-y1)*d.height, u));
+                const fB2 = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+                const bt = "Cliquez ici pour acceder a CarryCare"; const bw = fB2.widthOfTextAtSize(bt,13);
+                pg.drawText(bt, { x: (PW-bw)/2, y: 22, size: 13, font: fB2, color: pu });
+              }
+            } catch(e) { console.warn("[PDF] CarryCare skip:", e.message); }
+
+            // Page pub Univers
+            try {
+              const r = await fetch(BASE_URL + "/pdf-pub-univers.jpeg");
+              if (r.ok) {
+                const img = await pdfDoc.embedJpg(await r.arrayBuffer());
+                const pg = pdfDoc.addPage([PW, PH]);
+                const d = img.scaleToFit(PW - 20, PH - 30);
+                pg.drawImage(img, { x: (PW-d.width)/2, y: PH-d.height-10, width: d.width, height: d.height });
+              }
+            } catch(e) { console.warn("[PDF] Univers skip:", e.message); }
+
+            // Pages liste livres
+            try {
+              const { data: allBooks } = await supabaseAdmin.from("books").select("id, title, category, product_type").eq("status","actif").neq("product_type","article").order("category",{ascending:true}).order("title",{ascending:true});
+              const payBooks = (allBooks||[]).filter(bk => bk.id !== b.id && bk.product_type !== "papier");
+              const safeT = s => s ? String(s).replace(/[\u2018-\u201F]/g,"'").replace(/[\u2010-\u2015]/g,"-").replace(/[^\x20-\x7E\u00A0-\u00FF]/g,"").trim() : "";
+              const slug = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").substring(0,80);
+              const fBd = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+              const fIt = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+              const mg = Math.round(PW*0.07), lH=18, fs=11, lpp=Math.floor((PH-100-50)/lH);
+              const tot = Math.max(1, Math.ceil(payBooks.length/lpp));
+              let bi = 0;
+              for (let p=1; p<=tot; p++) {
+                const pg = pdfDoc.addPage([PW, PH]);
+                const hw = fBd.widthOfTextAtSize("Decouvrez nos autres livres",20);
+                pg.drawText("Decouvrez nos autres livres",{x:(PW-hw)/2,y:PH-50,size:20,font:fBd,color:gD});
+                const st = p===1?"Cliquez sur un titre pour le decouvrir":"(suite)";
+                const sw = fIt.widthOfTextAtSize(st,11);
+                pg.drawText(st,{x:(PW-sw)/2,y:PH-75,size:11,font:fIt,color:gM});
+                let yL=PH-100, cnt=0;
+                while(bi<payBooks.length && cnt<lpp) {
+                  const bk=payBooks[bi]; const ti=safeT(bk.title||"Livre");
+                  if(ti) {
+                    const tw=fBd.widthOfTextAtSize(ti,fs);
+                    pg.drawText(ti,{x:mg,y:yL,size:fs,font:fBd,color:gD});
+                    const ct=bk.category?" - "+safeT(bk.category):""; let cw=0;
+                    if(ct){pg.drawText(ct,{x:mg+tw,y:yL,size:fs-1,font:fIt,color:gM});cw=fIt.widthOfTextAtSize(ct,fs-1);}
+                    const ll=" - Telecharger ici"; const lw=fBd.widthOfTextAtSize(ll,fs);
+                    pg.drawText(ll,{x:mg+tw+cw,y:yL,size:fs,font:fBd,color:bC});
+                    addLink(pdfDoc, pg, mg+tw+cw, yL-3, lw, fs+6, BASE_URL+"/?book="+slug(bk.title));
+                  }
+                  yL-=lH; cnt++; bi++;
+                }
+              }
+            } catch(e) { console.warn("[PDF] Pages livres skip:", e.message); }
+
+            const finalBytes = await pdfDoc.save();
+            const safeTitle = (b.title||"livre").replace(/[^a-zA-Z0-9\s-]/g,"").trim().replace(/\s+/g,"_").substring(0,60);
+            attachments.push({ filename: safeTitle+".pdf", content: Buffer.from(finalBytes).toString("base64") });
+            console.log("[CLAIM_BOOK] ✅ PDF watermarqué:", b.title, "- Taille:", finalBytes.length);
+          } catch(pdfErr) {
+            console.warn("[CLAIM_BOOK] Watermark échoué pour", b.title, ":", pdfErr.message);
           }
-        } catch (genErr) {
-          console.warn("[CLAIM_BOOK] generate-pdf exception pour", b.title, ":", genErr.message);
         }
       }
 
