@@ -17811,6 +17811,13 @@ export default function App() {
                 {item.label}
               </div>
             ))}
+            {/* 🔒 Bouton Stats PWA — visible uniquement pour l'admin */}
+            {user && user.id === "f8b0dcd2-bf6e-443f-b2ea-a03db4e979dc" && (
+              <div onClick={() => { setPage("pwa_stats"); setShowMenu(false); }}
+                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "pwa_stats" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "pwa_stats" ? G.gold : "transparent"), background: page === "pwa_stats" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
+                📱 Stats PWA <span style={{ fontSize: 10, color: G.textFaint, marginLeft: 6 }}>(admin)</span>
+              </div>
+            )}
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
