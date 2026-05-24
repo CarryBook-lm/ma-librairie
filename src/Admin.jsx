@@ -1522,6 +1522,7 @@ export default function Admin() {
             { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "stats", label: "Statistiques", icon: "📈" },
+            { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
           ].map(item => (
             <div key={item.id} onClick={() => { 
@@ -3476,6 +3477,9 @@ export default function Admin() {
           </div>
         )}
 
+        {/* STATS PWA - INSTALLATIONS MOBILE */}
+        {view === "pwa_stats" && <PwaStatsView />}
+
         {/* SECURITY - CHANGEMENT MOT DE PASSE */}
         {view === "security" && (
           <div>
@@ -4315,5 +4319,250 @@ const labelStyle = {
   display: "block", fontSize: 11, color: "#888", marginBottom: 6,
   letterSpacing: 1, textTransform: "uppercase"
 };
+
+// ============================================
+// COMPOSANT : Vue Statistiques PWA (Admin)
+// ============================================
+function PwaStatsView() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+    const interval = setInterval(loadStats, 30000); // Auto-refresh 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  async function loadStats() {
+    try {
+      // Total installations (depuis le début du tracking)
+      const { count: totalInstalls } = await supabase
+        .from("pwa_installs").select("*", { count: "exact", head: true });
+
+      // Aujourd'hui
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const { count: installsToday } = await supabase
+        .from("pwa_installs").select("*", { count: "exact", head: true })
+        .gte("installed_at", today.toISOString());
+
+      // Cette semaine
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+      const { count: installsThisWeek } = await supabase
+        .from("pwa_installs").select("*", { count: "exact", head: true })
+        .gte("installed_at", weekAgo.toISOString());
+
+      // Ce mois
+      const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+      const { count: installsThisMonth } = await supabase
+        .from("pwa_installs").select("*", { count: "exact", head: true })
+        .gte("installed_at", monthAgo.toISOString());
+
+      // Utilisateurs actifs (vus dans les 30 derniers jours)
+      const { count: activeUsers } = await supabase
+        .from("pwa_installs").select("*", { count: "exact", head: true })
+        .gte("last_seen_at", monthAgo.toISOString());
+
+      // Désinstallations estimées
+      const estimatedUninstalls = (totalInstalls || 0) - (activeUsers || 0);
+
+      // Lancements
+      const { count: launchesToday } = await supabase
+        .from("pwa_launches").select("*", { count: "exact", head: true })
+        .gte("launched_at", today.toISOString());
+
+      const { count: launchesThisWeek } = await supabase
+        .from("pwa_launches").select("*", { count: "exact", head: true })
+        .gte("launched_at", weekAgo.toISOString());
+
+      const { count: totalLaunches } = await supabase
+        .from("pwa_launches").select("*", { count: "exact", head: true });
+
+      // Plateformes
+      const { data: platformsData } = await supabase
+        .from("pwa_installs").select("platform");
+      const platformCounts = (platformsData || []).reduce((acc, row) => {
+        const p = row.platform || "other";
+        acc[p] = (acc[p] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Rétention 7j
+      const twoWeeksAgo = new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const { data: oldInstalls } = await supabase
+        .from("pwa_installs").select("device_id, last_seen_at")
+        .gte("installed_at", twoWeeksAgo.toISOString())
+        .lte("installed_at", oneWeekAgo.toISOString());
+
+      let retention7d = 0;
+      if (oldInstalls && oldInstalls.length > 0) {
+        const stillActive = oldInstalls.filter(i => new Date(i.last_seen_at) > oneWeekAgo).length;
+        retention7d = Math.round((stillActive / oldInstalls.length) * 100);
+      }
+
+      setStats({
+        totalInstalls: totalInstalls || 0,
+        installsToday: installsToday || 0,
+        installsThisWeek: installsThisWeek || 0,
+        installsThisMonth: installsThisMonth || 0,
+        activeUsers: activeUsers || 0,
+        estimatedUninstalls: Math.max(0, estimatedUninstalls),
+        launchesToday: launchesToday || 0,
+        launchesThisWeek: launchesThisWeek || 0,
+        totalLaunches: totalLaunches || 0,
+        platformCounts,
+        retention7d,
+      });
+    } catch (err) {
+      console.error("[PWA Stats] Erreur:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return <div style={{ color: "#888", padding: 40, textAlign: "center" }}>⏳ Chargement des stats PWA...</div>;
+  }
+
+  if (!stats) return <div style={{ color: "#888", padding: 40 }}>Erreur de chargement.</div>;
+
+  const totalPlatforms = Object.values(stats.platformCounts).reduce((a, b) => a + b, 0);
+  const platformLabels = { android: "🤖 Android", ios: "🍎 iPhone", desktop: "💻 Desktop", other: "❓ Autre" };
+
+  // Style de carte cohérent avec le panel admin
+  const card = { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16 };
+
+  return (
+    <div>
+      <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>📱 Statistiques PWA</h2>
+      <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>
+        Suivi des installations de l'application mobile CarryBooks
+      </p>
+
+      {/* Carte HÉRO : Total installations */}
+      <div style={{
+        background: "linear-gradient(135deg, #c9a84c 0%, #8b6914 100%)",
+        color: "#000", borderRadius: 12, padding: 24, marginBottom: 16,
+        boxShadow: "0 4px 12px rgba(201,168,76,0.2)"
+      }}>
+        <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4, fontWeight: 600, letterSpacing: 1 }}>
+          📲 TOTAL INSTALLATIONS
+        </div>
+        <div style={{ fontSize: 48, fontWeight: "bold", lineHeight: 1 }}>{stats.totalInstalls}</div>
+        <div style={{ fontSize: 13, opacity: 0.85, marginTop: 10 }}>
+          {stats.installsToday > 0
+            ? `+${stats.installsToday} aujourd'hui · +${stats.installsThisWeek} cette semaine`
+            : `+${stats.installsThisWeek} cette semaine`}
+        </div>
+      </div>
+
+      {/* Grille de stats */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+        gap: 12, marginBottom: 16
+      }}>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🆕 AUJOURD'HUI</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{stats.installsToday}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>📅 7 JOURS</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#e8e0d0" }}>{stats.installsThisWeek}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🗓️ 30 JOURS</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#e8e0d0" }}>{stats.installsThisMonth}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>✅ ACTIFS (30J)</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#22c55e" }}>{stats.activeUsers}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>❌ DÉSINSTALL.</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ef4444" }}>{stats.estimatedUninstalls}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🚀 OUVERTURES (24H)</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#e8e0d0" }}>{stats.launchesToday}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🚀 OUVERTURES (7J)</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#e8e0d0" }}>{stats.launchesThisWeek}</div>
+        </div>
+        <div style={card}>
+          <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🚀 TOTAL OUVERTURES</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{stats.totalLaunches}</div>
+        </div>
+      </div>
+
+      {/* Rétention */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <div style={{ fontSize: 11, color: "#888", marginBottom: 10, letterSpacing: 1 }}>📊 RÉTENTION 7 JOURS</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{
+            fontSize: 32, fontWeight: "bold",
+            color: stats.retention7d >= 70 ? "#22c55e" : stats.retention7d >= 40 ? "#f59e0b" : "#ef4444",
+            minWidth: 80
+          }}>
+            {stats.retention7d}%
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 8, background: "#0a0a0a", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{
+                width: `${stats.retention7d}%`, height: "100%",
+                background: stats.retention7d >= 70 ? "#22c55e" : stats.retention7d >= 40 ? "#f59e0b" : "#ef4444",
+                transition: "width 0.5s"
+              }} />
+            </div>
+            <div style={{ fontSize: 11, color: "#888", marginTop: 6 }}>
+              {stats.retention7d >= 70 ? "Excellent ! Tes utilisateurs reviennent." : stats.retention7d >= 40 ? "Correct, peut être amélioré" : "À améliorer — pas assez de retours"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Plateformes */}
+      {totalPlatforms > 0 && (
+        <div style={{ ...card, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: "#888", marginBottom: 12, letterSpacing: 1 }}>📱 RÉPARTITION PAR APPAREIL</div>
+          {Object.entries(stats.platformCounts).sort((a, b) => b[1] - a[1]).map(([p, count]) => {
+            const pct = Math.round((count / totalPlatforms) * 100);
+            return (
+              <div key={p} style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                  <span style={{ color: "#e8e0d0" }}>{platformLabels[p] || p}</span>
+                  <span style={{ color: "#888" }}>{count} ({pct}%)</span>
+                </div>
+                <div style={{ height: 6, background: "#0a0a0a", borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{
+                    width: `${pct}%`, height: "100%",
+                    background: "#c9a84c", transition: "width 0.5s"
+                  }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Note importante */}
+      <div style={{
+        background: "rgba(201,168,76,0.08)",
+        border: "1px solid rgba(201,168,76,0.2)",
+        borderRadius: 8, padding: 14, marginTop: 16
+      }}>
+        <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 6, fontWeight: 600 }}>💡 Note</div>
+        <div style={{ fontSize: 12, color: "#aaa", lineHeight: 1.5 }}>
+          Le tracking compte les installations depuis sa mise en place. Les anciens utilisateurs qui ont l'app installée sont récupérés automatiquement dès leur prochaine ouverture (backfill).
+        </div>
+      </div>
+
+      <div style={{ textAlign: "center", color: "#666", fontSize: 11, marginTop: 20 }}>
+        🔄 Mise à jour automatique toutes les 30 secondes
+      </div>
+    </div>
+  );
+}
 
 

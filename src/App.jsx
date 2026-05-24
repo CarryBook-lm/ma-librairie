@@ -13139,227 +13139,6 @@ function ReclamerLivre({ G, setPage }) {
 // ============================================
 // COMPOSANT : Page Statistiques PWA (Admin)
 // ============================================
-function PwaStatsPage({ G, setPage, user }) {
-  const ADMIN_USER_ID = "f8b0dcd2-bf6e-443f-b2ea-a03db4e979dc";
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if (user && user.id === ADMIN_USER_ID) {
-      loadStats();
-      const interval = setInterval(loadStats, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const loadStats = async () => {
-    try {
-      const { count: totalInstalls } = await supabase
-        .from("pwa_installs").select("*", { count: "exact", head: true });
-
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const { count: installsToday } = await supabase
-        .from("pwa_installs").select("*", { count: "exact", head: true })
-        .gte("installed_at", today.toISOString());
-
-      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-      const { count: installsThisWeek } = await supabase
-        .from("pwa_installs").select("*", { count: "exact", head: true })
-        .gte("installed_at", weekAgo.toISOString());
-
-      const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
-      const { count: activeUsers } = await supabase
-        .from("pwa_installs").select("*", { count: "exact", head: true })
-        .gte("last_seen_at", monthAgo.toISOString());
-
-      const estimatedUninstalls = (totalInstalls || 0) - (activeUsers || 0);
-
-      const { count: launchesToday } = await supabase
-        .from("pwa_launches").select("*", { count: "exact", head: true })
-        .gte("launched_at", today.toISOString());
-
-      const { count: launchesThisWeek } = await supabase
-        .from("pwa_launches").select("*", { count: "exact", head: true })
-        .gte("launched_at", weekAgo.toISOString());
-
-      const { data: platformsData } = await supabase
-        .from("pwa_installs").select("platform");
-      const platformCounts = (platformsData || []).reduce((acc, row) => {
-        const p = row.platform || "other";
-        acc[p] = (acc[p] || 0) + 1;
-        return acc;
-      }, {});
-
-      const twoWeeksAgo = new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-      const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const { data: oldInstalls } = await supabase
-        .from("pwa_installs").select("device_id, last_seen_at")
-        .gte("installed_at", twoWeeksAgo.toISOString())
-        .lte("installed_at", oneWeekAgo.toISOString());
-
-      let retention7d = 0;
-      if (oldInstalls && oldInstalls.length > 0) {
-        const stillActive = oldInstalls.filter(i => new Date(i.last_seen_at) > oneWeekAgo).length;
-        retention7d = Math.round((stillActive / oldInstalls.length) * 100);
-      }
-
-      setStats({
-        totalInstalls: totalInstalls || 0,
-        installsToday: installsToday || 0,
-        installsThisWeek: installsThisWeek || 0,
-        activeUsers: activeUsers || 0,
-        estimatedUninstalls: Math.max(0, estimatedUninstalls),
-        launchesToday: launchesToday || 0,
-        launchesThisWeek: launchesThisWeek || 0,
-        platformCounts,
-        retention7d,
-      });
-    } catch (err) {
-      console.error("[PWA Stats] Erreur:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Protection admin
-  if (!user || user.id !== ADMIN_USER_ID) {
-    return (
-      <div style={{ padding: 40, textAlign: "center", maxWidth: 500, margin: "0 auto" }}>
-        <h2 style={{ color: G?.gold || "#c9952a" }}>🔒 Accès réservé</h2>
-        <p style={{ color: "#666", marginTop: 16 }}>
-          Cette page est réservée à l'administration.
-        </p>
-        <button onClick={() => setPage("home")}
-          style={{ marginTop: 20, padding: "12px 24px", background: G?.gold || "#c9952a",
-            color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}>
-          ← Retour à l'accueil
-        </button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <div style={{ padding: 40, textAlign: "center" }}>⏳ Chargement des statistiques...</div>;
-  }
-
-  if (!stats) return null;
-
-  const totalPlatforms = Object.values(stats.platformCounts).reduce((a, b) => a + b, 0);
-  const platformLabels = { android: "🤖 Android", ios: "🍎 iPhone", desktop: "💻 Desktop", other: "❓ Autre" };
-
-  return (
-    <div style={{ padding: "20px 16px 80px", maxWidth: 900, margin: "0 auto" }}>
-      <button onClick={() => setPage("home")}
-        style={{ background: "none", border: "none", color: G?.gold || "#c9952a",
-          fontSize: 16, cursor: "pointer", marginBottom: 20 }}>
-        ← Retour à l'accueil
-      </button>
-
-      <h1 style={{ fontSize: 24, color: G?.text || "#333", marginBottom: 8 }}>
-        📱 Statistiques PWA
-      </h1>
-      <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>
-        Suivi des installations de l'application mobile CarryBooks
-      </p>
-
-      {/* Carte principale : Total installations */}
-      <div style={{
-        background: "linear-gradient(135deg, #c9952a 0%, #8b6914 100%)",
-        color: "white", borderRadius: 16, padding: 24, marginBottom: 16,
-        boxShadow: "0 4px 12px rgba(201,149,42,0.3)"
-      }}>
-        <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 4 }}>📲 Total installations</div>
-        <div style={{ fontSize: 42, fontWeight: "bold", lineHeight: 1 }}>{stats.totalInstalls}</div>
-        <div style={{ fontSize: 13, opacity: 0.85, marginTop: 8 }}>
-          {stats.installsToday > 0 ? `+${stats.installsToday} aujourd'hui` : "Aucune installation aujourd'hui"}
-        </div>
-      </div>
-
-      {/* Grille de stats */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-        gap: 12, marginBottom: 16
-      }}>
-        <div style={{ background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 4 }}>🆕 AUJOURD'HUI</div>
-          <div style={{ fontSize: 24, fontWeight: "bold", color: "#333" }}>{stats.installsToday}</div>
-        </div>
-        <div style={{ background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 4 }}>📅 CETTE SEMAINE</div>
-          <div style={{ fontSize: 24, fontWeight: "bold", color: "#333" }}>{stats.installsThisWeek}</div>
-        </div>
-        <div style={{ background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 4 }}>✅ ACTIFS (30J)</div>
-          <div style={{ fontSize: 24, fontWeight: "bold", color: "#22c55e" }}>{stats.activeUsers}</div>
-        </div>
-        <div style={{ background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 4 }}>❌ DÉSINSTALL.</div>
-          <div style={{ fontSize: 24, fontWeight: "bold", color: "#ef4444" }}>{stats.estimatedUninstalls}</div>
-        </div>
-        <div style={{ background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 4 }}>🚀 LANCEMENTS (24H)</div>
-          <div style={{ fontSize: 24, fontWeight: "bold", color: "#333" }}>{stats.launchesToday}</div>
-        </div>
-        <div style={{ background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 11, color: "#666", marginBottom: 4 }}>🚀 LANCEMENTS (7J)</div>
-          <div style={{ fontSize: 24, fontWeight: "bold", color: "#333" }}>{stats.launchesThisWeek}</div>
-        </div>
-      </div>
-
-      {/* Rétention */}
-      <div style={{ background: "#fff", padding: 20, borderRadius: 12, marginBottom: 16, border: "1px solid #eee" }}>
-        <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>📊 RÉTENTION 7 JOURS</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ fontSize: 32, fontWeight: "bold",
-            color: stats.retention7d >= 70 ? "#22c55e" : stats.retention7d >= 40 ? "#f59e0b" : "#ef4444"
-          }}>{stats.retention7d}%</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ height: 8, background: "#eee", borderRadius: 4, overflow: "hidden" }}>
-              <div style={{
-                width: `${stats.retention7d}%`, height: "100%",
-                background: stats.retention7d >= 70 ? "#22c55e" : stats.retention7d >= 40 ? "#f59e0b" : "#ef4444",
-                transition: "width 0.5s"
-              }} />
-            </div>
-            <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
-              {stats.retention7d >= 70 ? "Excellent !" : stats.retention7d >= 40 ? "Correct" : "À améliorer"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Plateformes */}
-      {totalPlatforms > 0 && (
-        <div style={{ background: "#fff", padding: 20, borderRadius: 12, marginBottom: 16, border: "1px solid #eee" }}>
-          <div style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>📱 RÉPARTITION PAR APPAREIL</div>
-          {Object.entries(stats.platformCounts).sort((a, b) => b[1] - a[1]).map(([p, count]) => {
-            const pct = Math.round((count / totalPlatforms) * 100);
-            return (
-              <div key={p} style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 4 }}>
-                  <span style={{ color: "#333" }}>{platformLabels[p] || p}</span>
-                  <span style={{ color: "#666" }}>{count} ({pct}%)</span>
-                </div>
-                <div style={{ height: 6, background: "#f3f3f3", borderRadius: 3, overflow: "hidden" }}>
-                  <div style={{
-                    width: `${pct}%`, height: "100%",
-                    background: G?.gold || "#c9952a", transition: "width 0.5s"
-                  }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div style={{ textAlign: "center", color: "#999", fontSize: 12, marginTop: 24 }}>
-        🔄 Mise à jour automatique toutes les 30 secondes
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
@@ -13483,11 +13262,23 @@ export default function App() {
         .insert([{ device_id: deviceId, platform }])
         .then(() => console.log("[PWA] Lancement enregistré"));
 
+      // 🔄 UPSERT : crée la ligne si elle n'existe pas (backfill anciens users)
       supabase
         .from("pwa_installs")
-        .update({ last_seen_at: new Date().toISOString(), is_active: true })
-        .eq("device_id", deviceId)
-        .then(() => console.log("[PWA] last_seen mis à jour"));
+        .upsert(
+          {
+            device_id: deviceId,
+            platform,
+            user_agent: navigator.userAgent.substring(0, 500),
+            last_seen_at: new Date().toISOString(),
+            is_active: true,
+          },
+          { onConflict: "device_id", ignoreDuplicates: false }
+        )
+        .then(({ error }) => {
+          if (error) console.error("[PWA] Erreur backfill:", error);
+          else console.log("[PWA] Backfill/update OK");
+        });
     }
 
     const handleAppInstalled = () => {
@@ -17811,13 +17602,6 @@ export default function App() {
                 {item.label}
               </div>
             ))}
-            {/* 🔒 Bouton Stats PWA — visible uniquement pour l'admin */}
-            {user && user.id === "f8b0dcd2-bf6e-443f-b2ea-a03db4e979dc" && (
-              <div onClick={() => { setPage("pwa_stats"); setShowMenu(false); }}
-                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "pwa_stats" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "pwa_stats" ? G.gold : "transparent"), background: page === "pwa_stats" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
-                📱 Stats PWA <span style={{ fontSize: 10, color: G.textFaint, marginLeft: 6 }}>(admin)</span>
-              </div>
-            )}
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
@@ -20076,11 +19860,6 @@ export default function App() {
         {/* PAGE : RECEVOIR MON LIVRE PAR EMAIL */}
         {page === "reclamer" && (
           <ReclamerLivre G={G} setPage={setPage} onMount={() => window.scrollTo(0, 0)} />
-        )}
-
-        {/* PAGE : STATISTIQUES PWA (Admin) */}
-        {page === "pwa_stats" && (
-          <PwaStatsPage G={G} setPage={setPage} user={user} />
         )}
 
         {page === "quiz" && (
