@@ -13225,6 +13225,76 @@ export default function App() {
   });
 
   // ============================================
+  // BANDEAU INSTALL PWA
+  // ============================================
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showIosInstructions, setShowIosInstructions] = useState(false);
+  const [installPlatform, setInstallPlatform] = useState("other"); // android, ios, desktop, other
+
+  useEffect(() => {
+    // Détecter si déjà installé
+    const isInstalled =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes("android-app://");
+
+    if (isInstalled) {
+      setShowInstallBanner(false);
+      return;
+    }
+
+    // Détecter la plateforme
+    const ua = navigator.userAgent.toLowerCase();
+    const isIos = /iphone|ipad|ipod/.test(ua);
+    const isAndroid = /android/.test(ua);
+    setInstallPlatform(isIos ? "ios" : isAndroid ? "android" : "desktop");
+
+    // Afficher le bandeau immédiatement sur iOS (pas d'event prompt)
+    if (isIos) {
+      setShowInstallBanner(true);
+    }
+
+    // Écouter l'event d'install (Android, Desktop Chrome/Edge)
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    // Cacher le bandeau dès l'installation
+    const handleAppInstalledBanner = () => {
+      setShowInstallBanner(false);
+      setInstallPrompt(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalledBanner);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalledBanner);
+    };
+  }, []);
+
+  // Fonction pour déclencher l'installation
+  const triggerInstall = async () => {
+    if (installPlatform === "ios") {
+      setShowIosInstructions(true);
+      return;
+    }
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      console.log("[PWA Install] Choix utilisateur:", outcome);
+      if (outcome === "accepted") {
+        setShowInstallBanner(false);
+      }
+      setInstallPrompt(null);
+    }
+  };
+
+  // ============================================
   // PWA TRACKER — Compteur d'installations
   // ============================================
   useEffect(() => {
@@ -17482,16 +17552,97 @@ export default function App() {
         </div>
       )}
 
+      {/* 📱 BANDEAU INSTALL PWA - affiché tant que l'app n'est pas installée */}
+      {showInstallBanner && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 201,
+          background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+          color: "#fff", padding: "10px 16px",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          fontSize: 14, fontWeight: 600,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          cursor: "pointer"
+        }}
+        onClick={triggerInstall}>
+          <span style={{ fontSize: 18, animation: "pulse 2s ease-in-out infinite" }}>📱</span>
+          <span style={{ flex: "0 1 auto" }}>Clique ici pour installer l'application CarryBooks</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); triggerInstall(); }}
+            style={{
+              background: "#fff", color: "#6a11cb", border: "none",
+              borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold",
+              cursor: "pointer", marginLeft: 6
+            }}>
+            INSTALLER
+          </button>
+          <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }`}</style>
+        </div>
+      )}
+
+      {/* 🍎 POPUP INSTRUCTIONS iOS */}
+      {showIosInstructions && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 9999, padding: 20
+        }} onClick={() => setShowIosInstructions(false)}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 16, padding: 28, maxWidth: 360, width: "100%",
+              textAlign: "center"
+            }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+            <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
+              Installer CarryBooks
+            </h2>
+            <p style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>
+              Pour ajouter l'app à ton iPhone :
+            </p>
+
+            <div style={{ textAlign: "left", marginBottom: 20 }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
+                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>1</div>
+                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
+                  Appuie sur le bouton <strong style={{ fontSize: 18 }}>⎙</strong> en bas de Safari (le carré avec une flèche vers le haut)
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
+                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>2</div>
+                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
+                  Fais défiler et sélectionne <strong>"Sur l'écran d'accueil"</strong>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>3</div>
+                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
+                  Appuie sur <strong>"Ajouter"</strong> en haut à droite
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => setShowIosInstructions(false)}
+              style={{
+                background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+                color: "#fff", border: "none", borderRadius: 8,
+                padding: "12px 32px", fontSize: 14, fontWeight: "bold",
+                cursor: "pointer", width: "100%"
+              }}>
+              J'ai compris 👍
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* BANNIÈRE OFFLINE */}
       {!isOnline && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, background: "#c9952a", color: "#000", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13, fontWeight: "bold", borderBottom: "1px solid #8b6f3a" }}>
+        <div style={{ position: "fixed", top: showInstallBanner ? 44 : 0, left: 0, right: 0, zIndex: 200, background: "#c9952a", color: "#000", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13, fontWeight: "bold", borderBottom: "1px solid #8b6f3a" }}>
           <span style={{ fontSize: 16 }}>🔌</span>
           <span>Mode hors ligne — Tu peux lire tes livres téléchargés</span>
         </div>
       )}
 
       {/* NAVBAR */}
-      <nav style={{ position: "fixed", top: !isOnline ? 36 : 0, left: 0, right: 0, zIndex: 100, background: "rgba(245,240,232,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: showInstallBanner ? (!isOnline ? 80 : 44) : (!isOnline ? 36 : 0), left: 0, right: 0, zIndex: 100, background: "rgba(245,240,232,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
           <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
         </div>
@@ -17632,7 +17783,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ paddingTop: 56 }}>
+      <div style={{ paddingTop: showInstallBanner ? (!isOnline ? 136 : 100) : 56 }}>
         {/* HERO */}
         {/* SEARCH + CATEGORIES - visible aussi sur la page d'accueil */}
         {(page === "home" || page === "catalog" || searchQuery || selectedCategory !== "Tous") && (
