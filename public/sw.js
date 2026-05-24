@@ -1,5 +1,5 @@
-// Service Worker CarryBooks v3 - Cache offline + PDF
-const CACHE_NAME = "carrybooks-v3";
+// Service Worker CarryBooks v4 - Cache offline + PDF
+const CACHE_NAME = "carrybooks-v4";
 const PDF_CACHE = "carrybooks-pdfs";
 const APP_SHELL = ["/", "/index.html", "/manifest.json"];
 
