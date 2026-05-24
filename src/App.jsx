@@ -13220,6 +13220,76 @@ export default function App() {
     return [];
   });
 
+  // ============================================
+  // PWA TRACKER — Compteur d'installations
+  // ============================================
+  useEffect(() => {
+    const detectPlatform = () => {
+      const ua = navigator.userAgent.toLowerCase();
+      if (/android/.test(ua)) return "android";
+      if (/iphone|ipad|ipod/.test(ua)) return "ios";
+      if (/windows|macintosh|linux/.test(ua)) return "desktop";
+      return "other";
+    };
+
+    const getDeviceId = () => {
+      let id = localStorage.getItem("cb_device_id");
+      if (!id) {
+        id = "dev_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("cb_device_id", id);
+      }
+      return id;
+    };
+
+    const isStandalone = () => {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes("android-app://")
+      );
+    };
+
+    const deviceId = getDeviceId();
+    const platform = detectPlatform();
+
+    if (isStandalone()) {
+      supabase
+        .from("pwa_launches")
+        .insert([{ device_id: deviceId, platform }])
+        .then(() => console.log("[PWA] Lancement enregistré"));
+
+      supabase
+        .from("pwa_installs")
+        .update({ last_seen_at: new Date().toISOString(), is_active: true })
+        .eq("device_id", deviceId)
+        .then(() => console.log("[PWA] last_seen mis à jour"));
+    }
+
+    const handleAppInstalled = () => {
+      console.log("[PWA] ✅ Application installée !");
+      supabase
+        .from("pwa_installs")
+        .upsert(
+          {
+            device_id: deviceId,
+            platform,
+            user_agent: navigator.userAgent.substring(0, 500),
+            installed_at: new Date().toISOString(),
+            last_seen_at: new Date().toISOString(),
+            is_active: true,
+          },
+          { onConflict: "device_id" }
+        )
+        .then(({ error }) => {
+          if (error) console.error("[PWA] Erreur tracking install:", error);
+          else console.log("[PWA] Install trackée");
+        });
+    };
+
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => window.removeEventListener("appinstalled", handleAppInstalled);
+  }, []);
+
   // Sauvegarde automatique du panier dans localStorage � chaque changement
   useEffect(() => {
     try {
