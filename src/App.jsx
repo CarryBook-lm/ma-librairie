@@ -46,6 +46,16 @@ const PENDING_SAVES_KEY = "carrybooks_pending_carrycare_saves";
 async function saveCarrycareResultRobust(payload) {
   // payload = { user_id, quiz_type, amount, result_data, reference?, external_reference? }
   console.log("[CarryCare] Tentative de sauvegarde...", payload.quiz_type);
+
+  // 📞 SAUVEGARDER LE NUMÉRO EN LOCALSTORAGE pour permettre la récupération après connexion
+  try {
+    const phone = payload.result_data?.phone || payload.result_data?.payment_phone;
+    if (phone) {
+      const normalized = String(phone).replace(/\D/g, "");
+      localStorage.setItem("carrybooks_last_payment_phone", normalized);
+      console.log("[CarryCare] 📞 Numéro sauvegardé en local pour récupération future");
+    }
+  } catch (e) {}
   
   // 🎁 Récupérer le code parrainage depuis localStorage (ou URL)
   const referrerCode = (() => {
@@ -14533,18 +14543,21 @@ export default function App() {
     setLoadingMyResults(true);
     try {
       // 🔍 RECHERCHE ÉLARGIE : on cherche les résultats par user_id ET par numéro de téléphone
-      // Cela permet de récupérer les résultats même si user_id n'a pas été correctement enregistré
-      // (cas où le quiz a été fait avant la connexion ou pendant un problème de session)
+      // Cela permet de récupérer les résultats même si le quiz a été fait sans connexion
 
-      // 1. Récupérer le numéro de téléphone de l'utilisateur (depuis user_metadata ou profile)
-      const userPhone = user.user_metadata?.phone || user.phone || null;
+      // 1. Récupérer le numéro de téléphone de l'utilisateur (depuis localStorage du dernier paiement)
       let userPhoneNormalized = null;
-      if (userPhone) {
-        // Normaliser le numéro : enlever tout sauf les chiffres
-        userPhoneNormalized = String(userPhone).replace(/\D/g, "");
-        // S'assurer qu'il commence par 237 (Cameroun)
-        if (userPhoneNormalized.length === 9) userPhoneNormalized = "237" + userPhoneNormalized;
-      }
+      try {
+        // Essayer plusieurs sources possibles pour le numéro
+        const phoneFromMeta = user.user_metadata?.phone || user.phone || null;
+        const phoneFromStorage = localStorage.getItem("carrybooks_user_phone");
+        const phoneFromLastPayment = localStorage.getItem("carrybooks_last_payment_phone");
+        const rawPhone = phoneFromMeta || phoneFromStorage || phoneFromLastPayment;
+        if (rawPhone) {
+          userPhoneNormalized = String(rawPhone).replace(/\D/g, "");
+          if (userPhoneNormalized.length === 9) userPhoneNormalized = "237" + userPhoneNormalized;
+        }
+      } catch (e) {}
 
       // 2. Récupérer les résultats par user_id
       const { data: dataByUserId, error: errUserId } = await supabase
@@ -14557,37 +14570,44 @@ export default function App() {
 
       let allResults = dataByUserId || [];
 
-      // 3. Récupérer aussi les résultats par phone (si user a un numéro et qu'il y a des résultats orphelins)
+      // 3. Si on connaît son numéro, chercher les résultats ORPHELINS (sans user_id) avec ce numéro
       if (userPhoneNormalized) {
-        const { data: dataByPhone, error: errPhone } = await supabase
+        // Chercher par la colonne phone d'abord (plus fiable)
+        const { data: byPhoneCol } = await supabase
           .from("carrycare_results")
           .select("*")
           .is("user_id", null)
-          .order("created_at", { ascending: false });
+          .eq("phone", userPhoneNormalized);
 
-        if (errPhone) {
-          console.warn("Erreur fetch résultats orphelins:", errPhone);
-        } else if (dataByPhone && dataByPhone.length > 0) {
-          // Filtrer ceux qui correspondent au numéro
-          const orphanMatches = dataByPhone.filter(r => {
-            const resultPhone = r.result_data?.phone || r.result_data?.payment_phone || "";
-            return String(resultPhone).replace(/\D/g, "") === userPhoneNormalized;
-          });
+        // Aussi chercher dans result_data.phone (pour les anciens quiz)
+        const { data: allOrphans } = await supabase
+          .from("carrycare_results")
+          .select("*")
+          .is("user_id", null);
 
-          if (orphanMatches.length > 0) {
-            console.log("[fetchMyResults] " + orphanMatches.length + " résultat(s) orphelin(s) trouvé(s) — réclamation auto");
-            // 🔗 RÉCLAMATION AUTO : associer ces résultats au user_id
-            for (const orphan of orphanMatches) {
-              await supabase
-                .from("carrycare_results")
-                .update({ user_id: user.id })
-                .eq("id", orphan.id);
-            }
-            // Ajouter les résultats à la liste affichée
-            allResults = [...allResults, ...orphanMatches.map(r => ({ ...r, user_id: user.id }))];
-            // Re-trier par date
-            allResults.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const orphansFromData = (allOrphans || []).filter(r => {
+          const resultPhone = String(r.result_data?.phone || r.result_data?.payment_phone || "").replace(/\D/g, "");
+          return resultPhone === userPhoneNormalized;
+        });
+
+        // Combiner les 2 sources (sans doublons)
+        const orphanMatches = [
+          ...(byPhoneCol || []),
+          ...orphansFromData.filter(r => !(byPhoneCol || []).some(b => b.id === r.id))
+        ];
+
+        if (orphanMatches.length > 0) {
+          console.log("[fetchMyResults] " + orphanMatches.length + " résultat(s) orphelin(s) trouvé(s) — réclamation auto");
+          // 🔗 RÉCLAMATION AUTO : associer ces résultats au user_id
+          for (const orphan of orphanMatches) {
+            await supabase
+              .from("carrycare_results")
+              .update({ user_id: user.id })
+              .eq("id", orphan.id);
           }
+          // Ajouter à la liste
+          allResults = [...allResults, ...orphanMatches.map(r => ({ ...r, user_id: user.id }))];
+          allResults.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
       }
 
