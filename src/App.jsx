@@ -16644,15 +16644,16 @@ export default function App() {
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
           </div>
         </div>
-        {/* 🎁 BANDEAU PARRAINAGE : visible si visiteur arrive avec ?ref= */}
+        {/* 🎁 BANDEAU PARRAINAGE : visible si visiteur arrive avec ?ref= ET si réduction filleul > 0 */}
         {(() => {
           try {
             const refCode = localStorage.getItem("carrybooks_referrer_code");
             const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
-            if (refCode && expires > Date.now() && appReferralSettings?.active !== false) {
+            const discount = parseFloat(appReferralSettings?.referred_discount_pct);
+            if (refCode && expires > Date.now() && appReferralSettings?.active !== false && discount > 0) {
               return (
                 <div style={{ background: "linear-gradient(90deg, #c9a84c 0%, #f5d782 50%, #c9a84c 100%)", padding: "12px 16px", textAlign: "center", color: "#1a1a1a", fontSize: 13, fontWeight: "bold", letterSpacing: 0.3 }}>
-                  🎁 Tu bénéficies de -{appReferralSettings?.referred_discount_pct || 10}% grâce au code parrainage
+                  🎁 Tu bénéficies de -{discount}% grâce au code parrainage
                 </div>
               );
             }
@@ -19346,7 +19347,9 @@ export default function App() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                     <button onClick={() => {
                       const url = "https://carrybooks.com/?ref=" + referralCode;
-                      const text = "📚 Découvre CarryBooks ! Des livres et articles de qualité au Cameroun. Avec mon lien tu as -10% sur ta 1ère commande :\n" + url;
+                      const discount = parseFloat(appReferralSettings?.referred_discount_pct);
+                      const discountTxt = discount > 0 ? ` Avec mon lien tu as -${discount}% sur ta 1ère commande :` : " :";
+                      const text = "📚 Découvre CarryBooks ! Des livres et articles de qualité au Cameroun." + discountTxt + "\n" + url;
                       window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
                     }} style={{ padding: "10px 8px", background: "#25D366", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
                     <button onClick={() => {
@@ -19407,9 +19410,11 @@ export default function App() {
                   <ol style={{ fontSize: 12, color: G.textDim, lineHeight: 1.7, paddingLeft: 18, margin: 0 }}>
                     <li>Partage ton lien sur WhatsApp, Facebook, etc.</li>
                     <li>Ton/ta client(e) clique et achète sur CarryBooks</li>
-                    <li>Tu gagnes <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_digital || 20}%</strong> sur les livres numériques et <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_physical || 10}%</strong> sur les articles physiques</li>
-                    <li>Ton/ta client(e) bénéficie de <strong style={{ color: G.gold }}>{appReferralSettings?.referred_discount_pct || 10}%</strong> de réduction</li>
-                    <li>Tu reçois ton argent sur MTN/Orange après {appReferralSettings?.fraud_delay_days || 30} jours (anti-fraude)</li>
+                    <li>Tu gagnes <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_digital ?? 20}%</strong> sur les livres numériques et <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_physical ?? 10}%</strong> sur les articles physiques</li>
+                    {(parseFloat(appReferralSettings?.referred_discount_pct) > 0) && (
+                      <li>Ton/ta client(e) bénéficie de <strong style={{ color: G.gold }}>{appReferralSettings?.referred_discount_pct}%</strong> de réduction</li>
+                    )}
+                    <li>Tu reçois ton argent sur MTN/Orange après {appReferralSettings?.fraud_delay_days ?? 30} jours (anti-fraude)</li>
                   </ol>
                   <div style={{ marginTop: 12, padding: 10, background: "rgba(201,152,42,0.1)", border: "1px solid " + G.gold, borderRadius: 6 }}>
                     <div style={{ fontSize: 11, color: G.gold, lineHeight: 1.5 }}>
