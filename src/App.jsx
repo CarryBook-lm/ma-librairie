@@ -14532,17 +14532,66 @@ export default function App() {
     }
     setLoadingMyResults(true);
     try {
-      const { data, error } = await supabase
+      // 🔍 RECHERCHE ÉLARGIE : on cherche les résultats par user_id ET par numéro de téléphone
+      // Cela permet de récupérer les résultats même si user_id n'a pas été correctement enregistré
+      // (cas où le quiz a été fait avant la connexion ou pendant un problème de session)
+
+      // 1. Récupérer le numéro de téléphone de l'utilisateur (depuis user_metadata ou profile)
+      const userPhone = user.user_metadata?.phone || user.phone || null;
+      let userPhoneNormalized = null;
+      if (userPhone) {
+        // Normaliser le numéro : enlever tout sauf les chiffres
+        userPhoneNormalized = String(userPhone).replace(/\D/g, "");
+        // S'assurer qu'il commence par 237 (Cameroun)
+        if (userPhoneNormalized.length === 9) userPhoneNormalized = "237" + userPhoneNormalized;
+      }
+
+      // 2. Récupérer les résultats par user_id
+      const { data: dataByUserId, error: errUserId } = await supabase
         .from("carrycare_results")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (error) {
-        console.error("Erreur fetch résultats:", error);
-        setMyResults([]);
-      } else {
-        setMyResults(data || []);
+
+      if (errUserId) console.error("Erreur fetch résultats (user_id):", errUserId);
+
+      let allResults = dataByUserId || [];
+
+      // 3. Récupérer aussi les résultats par phone (si user a un numéro et qu'il y a des résultats orphelins)
+      if (userPhoneNormalized) {
+        const { data: dataByPhone, error: errPhone } = await supabase
+          .from("carrycare_results")
+          .select("*")
+          .is("user_id", null)
+          .order("created_at", { ascending: false });
+
+        if (errPhone) {
+          console.warn("Erreur fetch résultats orphelins:", errPhone);
+        } else if (dataByPhone && dataByPhone.length > 0) {
+          // Filtrer ceux qui correspondent au numéro
+          const orphanMatches = dataByPhone.filter(r => {
+            const resultPhone = r.result_data?.phone || r.result_data?.payment_phone || "";
+            return String(resultPhone).replace(/\D/g, "") === userPhoneNormalized;
+          });
+
+          if (orphanMatches.length > 0) {
+            console.log("[fetchMyResults] " + orphanMatches.length + " résultat(s) orphelin(s) trouvé(s) — réclamation auto");
+            // 🔗 RÉCLAMATION AUTO : associer ces résultats au user_id
+            for (const orphan of orphanMatches) {
+              await supabase
+                .from("carrycare_results")
+                .update({ user_id: user.id })
+                .eq("id", orphan.id);
+            }
+            // Ajouter les résultats à la liste affichée
+            allResults = [...allResults, ...orphanMatches.map(r => ({ ...r, user_id: user.id }))];
+            // Re-trier par date
+            allResults.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          }
+        }
       }
+
+      setMyResults(allResults);
     } catch (e) {
       console.error("Erreur fetch résultats:", e);
       setMyResults([]);
