@@ -20082,6 +20082,256 @@ export default function App() {
           </div>
         )}
 
+        {/* PAGE : CONDITIONS GÉNÉRALES D'UTILISATION */}
+        {page === "cgu" && (
+          <div style={{ padding: "32px 16px 80px", maxWidth: 800, margin: "0 auto" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24, textAlign: "center" }}>Conditions Générales d'Utilisation</div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 12, lineHeight: 1.8, margin: 0, textAlign: "center", fontStyle: "italic" }}>
+                Dernière mise à jour : 26 mai 2026
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Bienvenue sur CarryBooks. En accédant à notre site et en utilisant nos services, vous acceptez les présentes Conditions Générales d'Utilisation (« CGU »). Veuillez les lire attentivement.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>1. ÉDITEUR DU SITE</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Le site <strong style={{ color: G.text }}>carrybooks.com</strong> est édité par <strong style={{ color: G.text }}>CARRY'GOO</strong>, établissement enregistré au Cameroun.<br /><br />
+                <strong style={{ color: G.text }}>Siège social :</strong> Nouvelle Route Mimboman, Yaoundé, Cameroun<br />
+                <strong style={{ color: G.text }}>RCCM :</strong> RC/YAE/2025/M/133<br />
+                <strong style={{ color: G.text }}>NIU :</strong> P028417945459A<br />
+                <strong style={{ color: G.text }}>Directrice de publication :</strong> Sylviane Landrine Maffo<br />
+                <strong style={{ color: G.text }}>Contact :</strong> carrybooks.com@gmail.com
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>2. OBJET</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                CarryBooks est une plateforme numérique proposant la vente et le téléchargement de livres digitaux (ebooks), guides pratiques, diagnostics CarryCare (quiz beauté et bien-être) et autres produits éducatifs en langue française destinés au public africain et international.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>3. COMPTE UTILISATEUR</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Pour acheter des produits, vous devez créer un compte via Google ou par e-mail. Vous vous engagez à :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>Fournir des informations exactes et à jour.</li>
+                <li>Garder confidentiels vos identifiants de connexion.</li>
+                <li>Ne pas créer plusieurs comptes pour contourner nos règles.</li>
+                <li>Avoir au moins 13 ans (ou l'âge légal de votre pays).</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>4. PRIX ET PAIEMENT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Les prix sont affichés en FCFA (XAF) toutes taxes comprises. Les paiements sont acceptés via :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>MTN Mobile Money</li>
+                <li>Orange Money</li>
+                <li>Cartes bancaires VISA / Mastercard</li>
+              </ul>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
+                Le paiement est effectué via nos partenaires sécurisés (CamPay, NotchPay). Aucune donnée bancaire n'est conservée par CarryBooks.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>5. LIVRAISON ET ACCÈS AUX PRODUITS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Les produits numériques sont accessibles <strong style={{ color: G.text }}>immédiatement</strong> après confirmation du paiement, depuis la section « Ma Bibliothèque » de votre compte. En cas de problème technique, écrivez-nous à carrybooks.com@gmail.com.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>6. DROIT DE RÉTRACTATION ET REMBOURSEMENT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Conformément à la nature numérique de nos produits (téléchargement instantané), le droit de rétractation ne s'applique pas une fois le contenu accédé. Toutefois, des remboursements peuvent être accordés dans certains cas. Consultez notre <button onClick={() => setPage("remboursement")} style={{ background: "none", border: "none", color: G.gold, fontSize: 14, cursor: "pointer", textDecoration: "underline", padding: 0 }}>Politique de Remboursement</button> pour plus de détails.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>7. PROPRIÉTÉ INTELLECTUELLE</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Tous les contenus (livres, guides, quiz, logos, textes, images) sont la propriété exclusive de CarryBooks ou de ses partenaires éditoriaux. <strong style={{ color: G.text }}>Toute reproduction, redistribution ou revente</strong> du contenu acheté est strictement interdite et constitue une violation du droit d'auteur. L'achat vous donne un droit d'usage personnel uniquement.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>8. PROGRAMME DE PARRAINAGE</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Le programme de parrainage permet aux utilisateurs de gagner des récompenses en partageant leur code. Les conditions, pourcentages et délais sont précisés dans la section « Parrainage » de votre compte. CarryBooks se réserve le droit de modifier ou suspendre ce programme à tout moment.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>9. COMPORTEMENTS INTERDITS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Il est interdit de :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>Pirater ou tenter de contourner les protections du site.</li>
+                <li>Partager, copier ou revendre les contenus achetés.</li>
+                <li>Utiliser de faux numéros ou comptes pour frauder le système.</li>
+                <li>Spammer ou nuire à la communauté CarryBooks.</li>
+              </ul>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
+                Tout manquement entraînera la suspension immédiate du compte sans remboursement.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>10. RESPONSABILITÉ</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                CarryBooks s'efforce d'assurer la disponibilité du service mais ne peut garantir une accessibilité ininterrompue (maintenance, pannes réseau, etc.). Notre responsabilité est limitée au montant payé pour le produit concerné.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>11. MODIFICATION DES CGU</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Nous pouvons modifier ces CGU à tout moment. La version en vigueur est celle publiée sur cette page. Les utilisateurs sont invités à les consulter régulièrement.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>12. DROIT APPLICABLE</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Les présentes CGU sont régies par le droit camerounais. Tout litige sera soumis aux tribunaux compétents de Yaoundé, après tentative de règlement amiable.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>13. CONTACT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Pour toute question concernant ces conditions : <strong style={{ color: G.text }}>carrybooks.com@gmail.com</strong>
+              </p>
+            </div>
+
+            <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
+              Merci d'utiliser CarryBooks 📚
+            </div>
+          </div>
+        )}
+
+        {/* PAGE : POLITIQUE DE REMBOURSEMENT */}
+        {page === "remboursement" && (
+          <div style={{ padding: "32px 16px 80px", maxWidth: 800, margin: "0 auto" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24, textAlign: "center" }}>Politique de Remboursement</div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 12, lineHeight: 1.8, margin: 0, textAlign: "center", fontStyle: "italic" }}>
+                Dernière mise à jour : 26 mai 2026
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Chez CarryBooks, nous prenons la satisfaction de nos clientes très au sérieux. Cette politique explique <strong style={{ color: G.text }}>quand</strong> et <strong style={{ color: G.text }}>comment</strong> un remboursement peut être accordé pour un achat effectué sur notre plateforme.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>1. PRINCIPE GÉNÉRAL</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Étant donné la nature numérique de nos produits (livres digitaux, guides, diagnostics CarryCare), accessibles immédiatement après paiement, <strong style={{ color: G.text }}>les achats sont en principe non remboursables</strong>. Néanmoins, dans plusieurs cas légitimes décrits ci-dessous, un remboursement total ou partiel peut être accordé.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>2. CAS OÙ UN REMBOURSEMENT EST ACCORDÉ</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Un remboursement intégral peut être demandé dans les situations suivantes :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li><strong style={{ color: G.text }}>Double paiement</strong> : si vous avez été débité deux fois pour le même produit par erreur technique.</li>
+                <li><strong style={{ color: G.text }}>Paiement effectué sans réception du produit</strong> : si après paiement confirmé, le contenu n'apparaît pas dans votre bibliothèque sous 24 heures.</li>
+                <li><strong style={{ color: G.text }}>Produit défectueux</strong> : si le fichier téléchargé est corrompu, illisible ou incomplet.</li>
+                <li><strong style={{ color: G.text }}>Erreur de description</strong> : si le produit reçu ne correspond manifestement pas à la description publiée.</li>
+                <li><strong style={{ color: G.text }}>Bug technique CarryCare</strong> : si votre résultat de diagnostic ne s'enregistre pas en raison d'un dysfonctionnement de notre plateforme.</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>3. CAS OÙ AUCUN REMBOURSEMENT N'EST POSSIBLE</div>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>Vous avez changé d'avis après avoir téléchargé/lu le produit.</li>
+                <li>Vous avez fait une erreur dans le choix du livre ou du guide.</li>
+                <li>Vous avez partagé votre compte avec quelqu'un d'autre.</li>
+                <li>Vous avez tenté de pirater, copier ou redistribuer le contenu.</li>
+                <li>Vous avez attendu plus de 14 jours après l'achat pour signaler un problème.</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>4. COMMENT DEMANDER UN REMBOURSEMENT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Pour faire une demande de remboursement, suivez ces étapes :
+              </p>
+              <ol style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>Envoyez un e-mail à <strong style={{ color: G.text }}>carrybooks.com@gmail.com</strong> dans les <strong style={{ color: G.text }}>14 jours</strong> suivant l'achat.</li>
+                <li>Indiquez en objet : « Demande de remboursement ».</li>
+                <li>Précisez : votre nom, votre numéro de téléphone de paiement, la date d'achat, le nom du produit et la raison de votre demande.</li>
+                <li>Joignez une preuve si possible (capture d'écran, code de transaction CamPay/NotchPay).</li>
+              </ol>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>5. DÉLAI DE TRAITEMENT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Toute demande est traitée sous <strong style={{ color: G.text }}>3 à 7 jours ouvrés</strong>. Vous recevrez une réponse par e-mail confirmant l'acceptation ou le refus de la demande, avec explication détaillée.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>6. MOYEN DE REMBOURSEMENT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                En cas d'acceptation, le remboursement est effectué <strong style={{ color: G.text }}>par le même moyen de paiement</strong> que celui utilisé lors de l'achat :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: "8px 0 0 0" }}>
+                <li><strong style={{ color: G.text }}>Mobile Money</strong> (MTN / Orange) : reversement sur le même numéro sous 24-48h.</li>
+                <li><strong style={{ color: G.text }}>Carte bancaire</strong> : crédit sur la carte d'origine sous 5 à 10 jours ouvrés (selon votre banque).</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>7. FRAIS DE TRANSACTION</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Les éventuels frais retenus par Mobile Money ou le partenaire bancaire (CamPay, NotchPay) lors du remboursement restent à la charge du client, sauf si l'erreur provient de CarryBooks (dans ce cas, frais pris en charge par nous).
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>8. ABONNEMENTS</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Pour les abonnements mensuels, vous pouvez résilier à tout moment depuis votre compte. Le service reste actif jusqu'à la fin de la période payée. Aucun remboursement au prorata n'est effectué.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>9. CONTACT</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Pour toute question ou demande : <strong style={{ color: G.text }}>carrybooks.com@gmail.com</strong><br /><br />
+                Nous répondons sous 24h en jours ouvrés.
+              </p>
+            </div>
+
+            <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
+              Notre engagement : ta satisfaction avant tout 💛
+            </div>
+          </div>
+        )}
+
         {/* PAGE : RECEVOIR MON LIVRE PAR EMAIL */}
         {page === "reclamer" && (
           <ReclamerLivre G={G} setPage={setPage} onMount={() => window.scrollTo(0, 0)} />
@@ -20285,6 +20535,12 @@ export default function App() {
               <button onClick={() => setPage("faq")} style={{ background: "none", border: "none", color: G.textDim, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>FAQ</button>
               <button onClick={() => setPage("about")} style={{ background: "none", border: "none", color: G.textDim, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>À propos de nous</button>
               <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
+            </div>
+            {/* Liens légaux */}
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 16px", marginBottom: 20 }}>
+              <button onClick={() => setPage("cgu")} style={{ background: "none", border: "none", color: G.textFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Conditions d'utilisation</button>
+              <button onClick={() => setPage("remboursement")} style={{ background: "none", border: "none", color: G.textFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de remboursement</button>
+              <button onClick={() => setPage("confidentialite")} style={{ background: "none", border: "none", color: G.textFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de confidentialité</button>
             </div>
             {/* Réseaux sociaux */}
             <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
