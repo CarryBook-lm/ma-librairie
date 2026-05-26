@@ -13767,7 +13767,7 @@ export default function App() {
     }
   }, [books]);
 
-  // 🎯 PARRAINAGE : Détecter ?ref= dans l'URL et stocker 30 jours
+  // 🎯 PARRAINAGE : Détecter ?ref= dans l'URL, stocker 30 jours, nettoyer URL, afficher confirmation
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -13779,6 +13779,48 @@ export default function App() {
         localStorage.setItem("carrybooks_referrer_code", code);
         localStorage.setItem("carrybooks_referrer_expires", String(expiresAt));
         console.log("🎁 Code parrainage détecté:", code);
+
+        // 🧹 NETTOYER L'URL : enlever ?ref= et &fbclid= et autres paramètres tracking
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("ref");
+          url.searchParams.delete("fbclid");
+          url.searchParams.delete("gclid");
+          url.searchParams.delete("utm_source");
+          url.searchParams.delete("utm_medium");
+          url.searchParams.delete("utm_campaign");
+          url.searchParams.delete("utm_content");
+          url.searchParams.delete("utm_term");
+          window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
+        } catch (e) {}
+
+        // 🎁 AFFICHER UNE CONFIRMATION VISUELLE (toast)
+        try {
+          const existingToast = document.getElementById("cb-ref-toast");
+          if (existingToast) existingToast.remove();
+          const toast = document.createElement("div");
+          toast.id = "cb-ref-toast";
+          toast.style.cssText = `
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #c9a84c 0%, #f5d782 100%);
+            color: #1a1a1a; padding: 14px 20px; border-radius: 10px;
+            font-family: Georgia, serif; font-size: 14px; font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25); z-index: 9999;
+            text-align: center; max-width: 90%;
+            animation: cbRefToastIn 0.4s ease-out;
+          `;
+          toast.innerHTML = "🎁 Code parrainage <strong>" + code + "</strong> activé ✓";
+          const style = document.createElement("style");
+          style.textContent = "@keyframes cbRefToastIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }";
+          document.head.appendChild(style);
+          document.body.appendChild(toast);
+          setTimeout(() => {
+            toast.style.transition = "opacity 0.5s, transform 0.5s";
+            toast.style.opacity = "0";
+            toast.style.transform = "translate(-50%, -20px)";
+            setTimeout(() => toast.remove(), 500);
+          }, 5000);
+        } catch (e) {}
       } else {
         // Nettoyer si expiré
         const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
@@ -13786,6 +13828,17 @@ export default function App() {
           localStorage.removeItem("carrybooks_referrer_code");
           localStorage.removeItem("carrybooks_referrer_expires");
         }
+        // 🧹 Nettoyer aussi les paramètres fbclid/utm même sans ref
+        try {
+          const url = new URL(window.location.href);
+          let cleaned = false;
+          ["fbclid", "gclid", "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].forEach(p => {
+            if (url.searchParams.has(p)) { url.searchParams.delete(p); cleaned = true; }
+          });
+          if (cleaned) {
+            window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
+          }
+        } catch (e) {}
       }
     } catch (e) {
       console.error("Erreur tracking parrainage:", e);
