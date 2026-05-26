@@ -13767,7 +13767,7 @@ export default function App() {
     }
   }, [books]);
 
-  // 🎯 PARRAINAGE : Détecter ?ref= dans l'URL, stocker 30 jours, nettoyer URL, afficher confirmation
+  // 🎯 PARRAINAGE : Détecter ?ref= dans l'URL, stocker 30 jours, nettoyer URL (silencieux)
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -13792,34 +13792,6 @@ export default function App() {
           url.searchParams.delete("utm_content");
           url.searchParams.delete("utm_term");
           window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
-        } catch (e) {}
-
-        // 🎁 AFFICHER UNE CONFIRMATION VISUELLE (toast)
-        try {
-          const existingToast = document.getElementById("cb-ref-toast");
-          if (existingToast) existingToast.remove();
-          const toast = document.createElement("div");
-          toast.id = "cb-ref-toast";
-          toast.style.cssText = `
-            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(135deg, #c9a84c 0%, #f5d782 100%);
-            color: #1a1a1a; padding: 14px 20px; border-radius: 10px;
-            font-family: Georgia, serif; font-size: 14px; font-weight: bold;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25); z-index: 9999;
-            text-align: center; max-width: 90%;
-            animation: cbRefToastIn 0.4s ease-out;
-          `;
-          toast.innerHTML = "🎁 Code parrainage <strong>" + code + "</strong> activé ✓";
-          const style = document.createElement("style");
-          style.textContent = "@keyframes cbRefToastIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }";
-          document.head.appendChild(style);
-          document.body.appendChild(toast);
-          setTimeout(() => {
-            toast.style.transition = "opacity 0.5s, transform 0.5s";
-            toast.style.opacity = "0";
-            toast.style.transform = "translate(-50%, -20px)";
-            setTimeout(() => toast.remove(), 500);
-          }, 5000);
         } catch (e) {}
       } else {
         // Nettoyer si expiré
