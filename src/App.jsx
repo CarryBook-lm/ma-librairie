@@ -20103,7 +20103,7 @@ export default function App() {
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>1. ÉDITEUR DU SITE</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
                 Le site <strong style={{ color: G.text }}>carrybooks.com</strong> est édité par <strong style={{ color: G.text }}>CARRY'GOO</strong>, établissement enregistré au Cameroun.<br /><br />
-                <strong style={{ color: G.text }}>Siège social :</strong> Nouvelle Route Mimboman, Yaoundé, Cameroun<br />
+                <strong style={{ color: G.text }}>Siège social :</strong> Carrefour Sapeurs Pompiers Mimboman, Yaoundé, Cameroun<br />
                 <strong style={{ color: G.text }}>RCCM :</strong> RC/YAE/2025/M/133<br />
                 <strong style={{ color: G.text }}>NIU :</strong> P028417945459A<br />
                 <strong style={{ color: G.text }}>Directrice de publication :</strong> Sylviane Landrine Maffo<br />
