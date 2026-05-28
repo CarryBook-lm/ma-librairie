@@ -65,13 +65,11 @@ export default async function handler(req) {
     toProcess = books.filter((b) => slugify(b.title) === slug);
   } else if (all) {
     let candidates = force ? books : books.filter((b) => !b.og_image);
-    // Par défaut : livres numériques seulement (exclure articles physiques).
-    // Ajouter &articles=1 pour inclure aussi les articles physiques.
+    // Par défaut : livres (numériques + papier/guides). Exclure SEULEMENT les
+    // articles boutique (montres, sacs...). Ajouter &articles=1 pour tout inclure.
     const includeArticles = url.searchParams.get("articles") === "1";
     if (!includeArticles) {
-      candidates = candidates.filter(
-        (b) => b.product_type !== "article" && b.product_type !== "papier"
-      );
+      candidates = candidates.filter((b) => b.product_type !== "article");
     }
     toProcess = candidates;
   } else {
@@ -97,8 +95,9 @@ export default async function handler(req) {
       }
       const buffer = await imgResp.arrayBuffer();
 
-      // 2. Upload dans Supabase Storage
-      const fileName = `${book.id}.png`;
+      // 2. Upload dans Supabase Storage avec un nom UNIQUE (cache-buster).
+      // Le timestamp dans le nom évite que le CDN serve une vieille version.
+      const fileName = `${book.id}-${Date.now()}.png`;
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
         .upload(fileName, buffer, {
