@@ -71,7 +71,7 @@ export default async function handler(req) {
     const author = book?.author || "Landrine Maff";
     const cover = book?.cover || "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
     const summary = book?.summary
-      ? truncate(book.summary.replace(/\n/g, " ").replace(/\s+/g, " "), 180)
+      ? truncate(book.summary.replace(/\n/g, " ").replace(/\s+/g, " "), 340)
       : "Découvrez ce contenu sur CarryBooks, ta librairie numérique camerounaise.";
     const price = book?.price ? parseInt(book.price).toLocaleString() : null;
     const originalPrice = book?.original_price ? parseInt(book.original_price).toLocaleString() : null;
@@ -230,9 +230,9 @@ export default async function handler(req) {
                     type: "div",
                     props: {
                       style: {
-                        fontSize: "18px",
+                        fontSize: "21px",
                         color: "#3a3a3a",
-                        lineHeight: 1.4,
+                        lineHeight: 1.5,
                         marginBottom: "24px",
                         display: "flex",
                       },
