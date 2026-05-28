@@ -139,7 +139,7 @@ Detecte comme bot: ${isBotVisit}
       const supabase = createClient(supabaseUrl, supabaseKey);
       const { data: books } = await supabase
         .from("books")
-        .select("id, title, author, price, cover, category, summary, product_type")
+        .select("id, title, author, price, cover, category, summary, product_type, og_image")
         .eq("status", "actif")
         .limit(5000);
 
@@ -151,9 +151,11 @@ Detecte comme bot: ${isBotVisit}
     console.error("Erreur Supabase preview:", e);
   }
 
-  // 🎯 IMAGE OG = couverture du livre directement (image statique, ultra-rapide, fiable)
-  // (au lieu de /api/og qui génère à la volée et timeout sur Facebook/WhatsApp)
-  const ogImageUrl = (book && book.cover) ? book.cover : "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
+  // 🎯 IMAGE OG : priorité à l'image composite pré-générée (og_image),
+  // sinon couverture du livre, sinon logo. Toutes sont statiques = rapides + fiables.
+  const ogImageUrl = (book && book.og_image) ? book.og_image
+    : (book && book.cover) ? book.cover
+    : "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
 
   // Fallback si livre non trouve
   if (!book) {

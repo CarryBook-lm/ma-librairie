@@ -91,7 +91,7 @@ export default async function handler(req) {
         props: {
           style: {
             width: "1200px",
-            height: "630px",
+            height: "960px",
             display: "flex",
             background: "linear-gradient(135deg, #f5ecd9 0%, #ebd9b0 100%)",
             padding: "50px",
@@ -103,8 +103,8 @@ export default async function handler(req) {
               type: "div",
               props: {
                 style: {
-                  width: "350px",
-                  height: "525px",
+                  width: "460px",
+                  height: "690px",
                   display: "flex",
                   flexShrink: 0,
                   marginRight: "40px",
@@ -376,7 +376,7 @@ export default async function handler(req) {
       },
       {
         width: 1200,
-        height: 630,
+        height: 960,
         headers: {
           "Cache-Control": "public, immutable, no-transform, max-age=86400, s-maxage=86400",
         },
@@ -391,7 +391,7 @@ export default async function handler(req) {
         props: {
           style: {
             width: "1200px",
-            height: "630px",
+            height: "960px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -413,7 +413,7 @@ export default async function handler(req) {
           ],
         },
       },
-      { width: 1200, height: 630 }
+      { width: 1200, height: 960 }
     );
   }
 }
