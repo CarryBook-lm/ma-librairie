@@ -47,7 +47,7 @@ export default async function handler(req) {
   // Récupérer les livres à traiter
   let query = supabase
     .from("books")
-    .select("id, title, og_image, status")
+    .select("id, title, og_image, status, product_type")
     .eq("status", "actif");
 
   const { data: books, error } = await query.limit(5000);
@@ -64,7 +64,16 @@ export default async function handler(req) {
   if (slug) {
     toProcess = books.filter((b) => slugify(b.title) === slug);
   } else if (all) {
-    toProcess = force ? books : books.filter((b) => !b.og_image);
+    let candidates = force ? books : books.filter((b) => !b.og_image);
+    // Par défaut : livres numériques seulement (exclure articles physiques).
+    // Ajouter &articles=1 pour inclure aussi les articles physiques.
+    const includeArticles = url.searchParams.get("articles") === "1";
+    if (!includeArticles) {
+      candidates = candidates.filter(
+        (b) => b.product_type !== "article" && b.product_type !== "papier"
+      );
+    }
+    toProcess = candidates;
   } else {
     return new Response(
       JSON.stringify({ error: "Préciser ?slug=... ou ?all=1" }),

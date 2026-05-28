@@ -106,6 +106,8 @@ export default async function handler(req) {
                   width: "460px",
                   height: "690px",
                   display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
                   marginRight: "40px",
                   borderRadius: "8px",
@@ -120,7 +122,7 @@ export default async function handler(req) {
                       style: {
                         width: "100%",
                         height: "100%",
-                        objectFit: "cover",
+                        objectFit: "contain",
                       },
                     },
                   },
