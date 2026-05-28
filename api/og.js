@@ -71,7 +71,7 @@ export default async function handler(req) {
     const author = book?.author || "Landrine Maff";
     const cover = book?.cover || "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
     const summary = book?.summary
-      ? truncate(book.summary.replace(/\n/g, " ").replace(/\s+/g, " "), 340)
+      ? truncate(book.summary.replace(/\n/g, " ").replace(/\s+/g, " "), 210)
       : "Découvrez ce contenu sur CarryBooks, ta librairie numérique camerounaise.";
     const price = book?.price ? parseInt(book.price).toLocaleString() : null;
     const originalPrice = book?.original_price ? parseInt(book.original_price).toLocaleString() : null;
@@ -91,10 +91,10 @@ export default async function handler(req) {
         props: {
           style: {
             width: "1200px",
-            height: "960px",
+            height: "630px",
             display: "flex",
             background: "linear-gradient(135deg, #f5ecd9 0%, #ebd9b0 100%)",
-            padding: "50px",
+            padding: "40px",
             fontFamily: "Georgia, serif",
           },
           children: [
@@ -103,8 +103,8 @@ export default async function handler(req) {
               type: "div",
               props: {
                 style: {
-                  width: "460px",
-                  height: "690px",
+                  width: "370px",
+                  height: "550px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -230,9 +230,9 @@ export default async function handler(req) {
                     type: "div",
                     props: {
                       style: {
-                        fontSize: "21px",
+                        fontSize: "19px",
                         color: "#3a3a3a",
-                        lineHeight: 1.5,
+                        lineHeight: 1.45,
                         marginBottom: "24px",
                         display: "flex",
                       },
@@ -378,7 +378,7 @@ export default async function handler(req) {
       },
       {
         width: 1200,
-        height: 960,
+        height: 630,
         headers: {
           "Cache-Control": "public, immutable, no-transform, max-age=86400, s-maxage=86400",
         },
@@ -393,7 +393,7 @@ export default async function handler(req) {
         props: {
           style: {
             width: "1200px",
-            height: "960px",
+            height: "630px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -415,7 +415,7 @@ export default async function handler(req) {
           ],
         },
       },
-      { width: 1200, height: 960 }
+      { width: 1200, height: 630 }
     );
   }
 }
