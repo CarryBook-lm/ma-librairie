@@ -377,6 +377,9 @@ export default async function handler(req) {
       {
         width: 1200,
         height: 630,
+        headers: {
+          "Cache-Control": "public, immutable, no-transform, max-age=86400, s-maxage=86400",
+        },
       }
     );
   } catch (e) {
