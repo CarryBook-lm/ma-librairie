@@ -85,6 +85,7 @@ export default function Admin() {
   const [referralCodes, setReferralCodes] = useState([]);
   const [allReferrals, setAllReferrals] = useState([]);
   const [referralWithdrawals, setReferralWithdrawals] = useState([]);
+  const [processingWithdrawalId, setProcessingWithdrawalId] = useState(null); // 🔒 retrait en cours de versement (bloque le bouton)
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
@@ -987,7 +988,14 @@ export default function Admin() {
   // 🟢 APPROUVER une demande de retrait : déclenche le versement CamPay
   // 🔒 IDEMPOTENT : un seul clic peut déclencher un paiement, même en cas de double-clic rapide.
   async function approveWithdrawal(wd) {
+    // 🔒 GARDE SYNCHRONE : si un versement est déjà en cours, on ignore tout clic supplémentaire.
+    // (Le bouton est aussi désactivé visuellement, mais cette garde protège même en cas de clic ultra-rapide.)
+    if (processingWithdrawalId) return;
     if (!window.confirm(`Approuver le versement de ${wd.amount.toLocaleString()} F vers ${wd.phone_number} ?`)) return;
+
+    // 🔒 On marque CE retrait comme "en cours" → le bouton se grise immédiatement, double-clic impossible.
+    setProcessingWithdrawalId(wd.id);
+    try {
 
     // 🔒 VERROU ATOMIQUE : on passe pending -> processing UNIQUEMENT si la ligne est encore pending,
     // et on VÉRIFIE qu'une ligne a bien été capturée grâce à .select().
@@ -1128,6 +1136,10 @@ export default function Admin() {
         "• S'il N'EST PAS parti → rejette la demande pour recréditer le parrain, puis recommence."
       );
       fetchReferralData();
+    }
+    } finally {
+      // ✅ Quoi qu'il arrive (succès, échec, refus, erreur), on réactive le bouton.
+      setProcessingWithdrawalId(null);
     }
   }
 
@@ -3220,12 +3232,14 @@ export default function Admin() {
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                         <button
                           onClick={() => approveWithdrawal(wd)}
-                          style={{ flex: 1, background: "#4caf50", border: "none", borderRadius: 6, padding: "10px", color: "#fff", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
-                          ✅ Approuver et verser
+                          disabled={processingWithdrawalId === wd.id}
+                          style={{ flex: 1, background: processingWithdrawalId === wd.id ? "#3a3a3a" : "#4caf50", border: "none", borderRadius: 6, padding: "10px", color: processingWithdrawalId === wd.id ? "#999" : "#fff", fontSize: 12, fontWeight: "bold", cursor: processingWithdrawalId === wd.id ? "not-allowed" : "pointer" }}>
+                          {processingWithdrawalId === wd.id ? "⏳ Versement en cours…" : "✅ Approuver et verser"}
                         </button>
                         <button
                           onClick={() => rejectWithdrawal(wd)}
-                          style={{ flex: 1, background: "transparent", border: "1px solid #ff6b6b", borderRadius: 6, padding: "10px", color: "#ff6b6b", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                          disabled={processingWithdrawalId === wd.id}
+                          style={{ flex: 1, background: "transparent", border: "1px solid #ff6b6b", borderRadius: 6, padding: "10px", color: "#ff6b6b", fontSize: 12, fontWeight: "bold", cursor: processingWithdrawalId === wd.id ? "not-allowed" : "pointer", opacity: processingWithdrawalId === wd.id ? 0.4 : 1 }}>
                           🚫 Rejeter
                         </button>
                       </div>
