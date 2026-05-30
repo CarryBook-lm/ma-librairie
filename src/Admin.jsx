@@ -985,46 +985,45 @@ export default function Admin() {
   }
 
   // 🟢 APPROUVER une demande de retrait : déclenche le versement CamPay
+  // 🔒 IDEMPOTENT : un seul clic peut déclencher un paiement, même en cas de double-clic rapide.
   async function approveWithdrawal(wd) {
     if (!window.confirm(`Approuver le versement de ${wd.amount.toLocaleString()} F vers ${wd.phone_number} ?`)) return;
-    try {
-      // 🔒 SÉCURITÉ : vérifier le status RÉEL en base (pas la version locale qui peut être périmée)
-      const { data: currentWd, error: checkErr } = await supabase
-        .from("referral_withdrawals")
-        .select("status, campay_reference")
-        .eq("id", wd.id)
-        .single();
-      if (checkErr) {
-        alert("❌ Erreur de vérification : " + checkErr.message);
-        return;
-      }
-      if (!currentWd || currentWd.status !== "pending") {
-        const statusLabels = {
-          processing: "⏳ déjà en cours de traitement",
-          completed: "✅ déjà complétée",
-          success: "✅ déjà complétée",
-          failed: "❌ déjà échouée",
-          rejected: "🚫 déjà rejetée"
-        };
-        alert(`⚠️ Cette demande est ${statusLabels[currentWd?.status] || ("au statut : " + currentWd?.status)}. Aucune action effectuée.`);
-        fetchReferralData();
-        return;
-      }
 
-      // 🔒 Marquer comme "processing" pour bloquer toute autre tentative
-      const { error: lockErr } = await supabase
+    // 🔒 VERROU ATOMIQUE : on passe pending -> processing UNIQUEMENT si la ligne est encore pending,
+    // et on VÉRIFIE qu'une ligne a bien été capturée grâce à .select().
+    // C'est ce contrôle du nombre de lignes qui empêche le double paiement :
+    // le 2ᵉ clic ne capture aucune ligne (déjà processing) et s'arrête AVANT d'appeler CamPay.
+    let claimed;
+    try {
+      const { data, error: lockErr } = await supabase
         .from("referral_withdrawals")
         .update({ status: "processing" })
         .eq("id", wd.id)
-        .eq("status", "pending"); // ⚠️ Condition : on ne lock que si status est encore pending (atomic)
+        .eq("status", "pending")   // condition atomique
+        .select();                 // ⚠️ INDISPENSABLE : permet de savoir si une ligne a été capturée
       if (lockErr) {
         alert("❌ Erreur de verrouillage : " + lockErr.message);
         return;
       }
+      claimed = data;
+    } catch (e) {
+      console.error("approveWithdrawal (verrou):", e);
+      alert("❌ Erreur de verrouillage : " + e.message);
+      return;
+    }
 
-      // Mettre à jour la vue locale immédiatement pour cacher le bouton
+    // 🚫 Aucune ligne capturée = la demande n'est plus "pending" (déjà cliquée / en cours / traitée).
+    // On refuse le clic SANS jamais appeler CamPay.
+    if (!claimed || claimed.length === 0) {
+      alert("⚠️ Cette demande a déjà été traitée ou est en cours de versement. Aucun paiement effectué.");
       fetchReferralData();
+      return;
+    }
 
+    // À partir d'ici, NOUS détenons le verrou. La ligne est en "processing", le bouton disparaît.
+    fetchReferralData();
+
+    try {
       // Appel CamPay
       const payRes = await fetch("/api/campay", {
         method: "POST",
@@ -1038,11 +1037,12 @@ export default function Admin() {
         })
       });
       const payData = await payRes.json();
+
       if (payData.reference) {
-        // ✅ Versement réussi : marquer comme "completed" (statut final)
+        // ✅ Versement déclenché : statut final "approved" (comme demandé).
         await supabase.from("referral_withdrawals").update({
           campay_reference: payData.reference,
-          status: "completed",
+          status: "approved",
           completed_at: new Date().toISOString()
         }).eq("id", wd.id);
         // Incrémenter total_paid du parrain (le solde available a déjà été décrémenté lors de la demande)
@@ -1053,22 +1053,28 @@ export default function Admin() {
         alert("✅ Versement déclenché ! L'argent est en cours d'envoi via CamPay.");
         fetchReferralData();
       } else {
-        // Échec : marquer comme failed
-        await supabase.from("referral_withdrawals").update({
-          status: "failed",
-          error_message: payData.message || "Erreur CamPay"
-        }).eq("id", wd.id);
-        alert("❌ Erreur CamPay : " + (payData.message || "Inconnue"));
+        // ❌ CamPay a renvoyé une erreur SANS référence = transaction NON initiée (aucun argent envoyé).
+        // On peut remettre en "pending" en toute sécurité pour permettre un nouvel essai.
+        await supabase.from("referral_withdrawals")
+          .update({ status: "pending", error_message: payData.message || "Erreur CamPay" })
+          .eq("id", wd.id)
+          .eq("status", "processing");
+        alert("❌ Erreur CamPay : " + (payData.message || "Inconnue") + "\nLa demande est remise en attente, tu peux réessayer.");
         fetchReferralData();
       }
     } catch (e) {
-      console.error("approveWithdrawal:", e);
-      alert("❌ Erreur : " + e.message);
-      // Rollback : remettre en pending UNIQUEMENT si le status est encore "processing" (pas si CamPay a réussi entre-temps)
-      await supabase.from("referral_withdrawals")
-        .update({ status: "pending" })
-        .eq("id", wd.id)
-        .eq("status", "processing");
+      // ⚠️ CAS AMBIGU (timeout / coupure réseau) : on NE SAIT PAS si CamPay a envoyé l'argent ou non.
+      // On NE remet PAS automatiquement en "pending" (sinon risque de double paiement).
+      // On laisse en "processing" et on demande une vérification manuelle dans le tableau de bord CamPay.
+      console.error("approveWithdrawal (CamPay):", e);
+      alert(
+        "⚠️ Connexion interrompue pendant l'appel à CamPay.\n\n" +
+        "La demande reste en \"⏳ En cours\" et le bouton est désactivé par sécurité.\n" +
+        "Vérifie dans ton tableau de bord CamPay si le versement de " +
+        wd.amount.toLocaleString() + " F est bien parti :\n" +
+        "• S'il EST parti → ne touche à rien (c'est déjà payé).\n" +
+        "• S'il N'EST PAS parti → tu pourras rejeter la demande pour rembourser le solde, puis recréer le retrait."
+      );
       fetchReferralData();
     }
   }
@@ -3143,12 +3149,12 @@ export default function Admin() {
                           {new Date(wd.created_at).toLocaleString("fr-FR")} · {wd.operator}
                         </div>
                         <div style={{ fontSize: 11, marginTop: 4, color:
-                          wd.status === "paid" ? "#4caf50" :
+                          (wd.status === "approved" || wd.status === "paid" || wd.status === "completed") ? "#4caf50" :
                           wd.status === "processing" ? "#f0a020" :
                           wd.status === "failed" ? "#ff6b6b" :
                           wd.status === "rejected" ? "#888" : "#c9a84c"
                         }}>
-                          {wd.status === "paid" ? "✅ Versé" :
+                          {(wd.status === "approved" || wd.status === "paid" || wd.status === "completed") ? "✅ Versé" :
                            wd.status === "processing" ? "⏳ En cours chez CamPay" :
                            wd.status === "failed" ? "❌ Échec" :
                            wd.status === "rejected" ? "🚫 Rejeté" : "⏳ En attente de validation"}
