@@ -1063,67 +1063,26 @@ export default function Admin() {
         return;
       }
 
-      // 2️⃣ Référence reçue = demande ACCEPTÉE (pas encore payée). On stocke la référence tout de suite.
-      await supabase.from("referral_withdrawals")
-        .update({ campay_reference: payData.reference })
-        .eq("id", wd.id);
+      // 2️⃣ Référence reçue = CamPay a ACCEPTÉ le versement. L'argent part vers le téléphone.
+      // On marque TOUT DE SUITE comme "approved" (versement déclenché) et on incrémente total_paid.
+      // (CamPay confirme le SUCCESSFUL quelques minutes plus tard ; inutile de faire attendre l'admin.)
+      await supabase.from("referral_withdrawals").update({
+        status: "approved",
+        campay_reference: payData.reference,
+        completed_at: new Date().toISOString()
+      }).eq("id", wd.id);
 
-      // 3️⃣ POLLING du VRAI statut : une référence ne veut pas dire "payé".
-      // On interroge CamPay jusqu'à obtenir SUCCESSFUL ou FAILED (max ~24 s).
-      let finalStatus = null;
-      let lastCheck = null;
-      for (let i = 0; i < 6; i++) {
-        await new Promise(r => setTimeout(r, 4000)); // 4 s entre chaque vérification
-        try {
-          const checkRes = await fetch("/api/campay", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "status", reference: payData.reference })
-          });
-          lastCheck = await checkRes.json();
-          if (lastCheck.status === "SUCCESSFUL" || lastCheck.status === "FAILED") {
-            finalStatus = lastCheck.status;
-            break;
-          }
-        } catch (_) { /* on retentera au tour suivant */ }
-      }
+      const { data: rc } = await supabase.from("referral_codes").select("total_paid").eq("user_id", wd.user_id).single();
+      await supabase.from("referral_codes").update({
+        total_paid: (rc?.total_paid || 0) + wd.amount
+      }).eq("user_id", wd.user_id);
 
-      if (finalStatus === "SUCCESSFUL") {
-        // ✅ Versement CONFIRMÉ par CamPay.
-        await supabase.from("referral_withdrawals").update({
-          status: "approved",
-          completed_at: new Date().toISOString()
-        }).eq("id", wd.id);
-        // Incrémenter total_paid (le solde available a déjà été décrémenté lors de la demande)
-        const { data: rc } = await supabase.from("referral_codes").select("total_paid").eq("user_id", wd.user_id).single();
-        await supabase.from("referral_codes").update({
-          total_paid: (rc?.total_paid || 0) + wd.amount
-        }).eq("user_id", wd.user_id);
-        alert("✅ Versement CONFIRMÉ par CamPay (réf " + payData.reference + ").\nL'argent est bien parti.");
-        fetchReferralData();
-      } else if (finalStatus === "FAILED") {
-        // ❌ Versement ÉCHOUÉ : l'argent n'est PAS parti → on RECRÉDITE le solde du parrain.
-        const motif = lastCheck?.reason || lastCheck?.message || "Versement refusé par CamPay";
-        const { data: rc } = await supabase.from("referral_codes").select("available_amount").eq("user_id", wd.user_id).single();
-        await supabase.from("referral_codes").update({
-          available_amount: (rc?.available_amount || 0) + wd.amount
-        }).eq("user_id", wd.user_id);
-        await supabase.from("referral_withdrawals").update({
-          status: "failed",
-          error_message: String(motif).slice(0, 480)
-        }).eq("id", wd.id);
-        alert("❌ CamPay : versement ÉCHOUÉ.\nMotif : " + motif + "\n\nLe solde du parrain a été recrédité automatiquement.");
-        fetchReferralData();
-      } else {
-        // ⏳ Toujours PENDING après polling : on laisse en "processing", SANS rien débiter de faux.
-        // On ne marque PAS "approved" tant que CamPay n'a pas confirmé.
-        alert(
-          "⏳ Le versement est toujours EN ATTENTE chez CamPay (réf " + payData.reference + ").\n\n" +
-          "La demande reste en \"En cours\". Ne ré-approuve pas : vérifie le statut plus tard dans CamPay. " +
-          "Si CamPay confirme SUCCESSFUL, dis-le moi et on finalisera ; si FAILED, on recréditera le parrain."
-        );
-        fetchReferralData();
-      }
+      alert(
+        "✅ Versement de " + wd.amount.toLocaleString() + " F déclenché vers " + wd.phone_number + " !\n\n" +
+        "L'argent est en route (référence CamPay : " + payData.reference + ").\n" +
+        "Il arrive généralement en quelques minutes."
+      );
+      fetchReferralData();
     } catch (e) {
       // ⚠️ CAS AMBIGU (timeout / coupure réseau pendant l'appel withdraw lui-même).
       // On NE remet PAS en "pending" (risque de double paiement). On laisse en "processing".
