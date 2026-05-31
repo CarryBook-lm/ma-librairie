@@ -1518,6 +1518,7 @@ const PAGE_TO_PATH = {
   favorites: "/favoris",
   referral: "/parrainage",
   confidentialite: "/confidentialite",
+  suppressionCompte: "/suppression-compte",
   reclamer: "/mon-livre",
 };
 
@@ -1535,6 +1536,7 @@ const PATH_TO_PAGE = {
   "/favoris": "favorites",
   "/parrainage": "referral",
   "/confidentialite": "confidentialite",
+  "/suppression-compte": "suppressionCompte",
   "/mon-livre": "reclamer",
 };
 
@@ -20109,7 +20111,66 @@ export default function App() {
           </div>
         )}
 
-        {/* PAGE : CONDITIONS GÉNÉRALES D'UTILISATION */}
+        {/* PAGE : SUPPRESSION DE COMPTE ET DONNÉES */}
+        {page === "suppressionCompte" && (
+          <div style={{ padding: "32px 16px 80px", maxWidth: 800, margin: "0 auto" }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24, textAlign: "center" }}>Suppression de Compte</div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Chez <strong style={{ color: G.text }}>CarryBooks</strong> (opérée par CARRY'GOO, Yaoundé, Cameroun), vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>COMMENT DEMANDER LA SUPPRESSION</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Pour supprimer votre compte CarryBooks et vos données, envoyez un e-mail à l'adresse ci-dessous depuis l'adresse e-mail liée à votre compte :
+              </p>
+              <p style={{ color: G.text, fontSize: 15, lineHeight: 1.9, margin: "0 0 12px 0", textAlign: "center" }}>
+                📧 <strong style={{ color: G.gold }}>carrybooks.com@gmail.com</strong>
+              </p>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Indiquez en objet : <strong style={{ color: G.text }}>« Suppression de mon compte »</strong>. Nous vérifierons votre identité, puis traiterons votre demande.
+              </p>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>DONNÉES QUI SERONT SUPPRIMÉES</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
+                Lorsque vous supprimez votre compte, nous effaçons définitivement :
+              </p>
+              <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
+                <li>Vos informations de compte (nom, adresse e-mail, photo de profil).</li>
+                <li>Votre historique d'achats et votre bibliothèque.</li>
+                <li>Votre progression de lecture et vos favoris.</li>
+                <li>Vos résultats de diagnostics CarryCare.</li>
+                <li>Vos données de parrainage.</li>
+              </ul>
+            </div>
+
+            <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>DÉLAI ET CONSERVATION</div>
+              <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                Votre demande est traitée sous <strong style={{ color: G.text }}>30 jours maximum</strong>. Certaines données peuvent être conservées plus longtemps uniquement si la loi l'exige (par exemple, les factures pour des raisons fiscales et comptables).
+              </p>
+            </div>
+
+            <div style={{ background: G.goldDim, border: "1px solid " + G.gold, borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>NOUS CONTACTER</div>
+              <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
+                📧 <strong>E-mail :</strong> carrybooks.com@gmail.com<br />
+                🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
+                📍 <strong>Adresse :</strong> Yaoundé, Cameroun
+              </p>
+            </div>
+
+            <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
+              Merci de faire confiance à CarryBooks 💜
+            </div>
+          </div>
+        )}
+
         {page === "cgu" && (
           <div style={{ padding: "32px 16px 80px", maxWidth: 800, margin: "0 auto" }}>
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24, textAlign: "center" }}>Conditions Générales d'Utilisation</div>
