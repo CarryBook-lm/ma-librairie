@@ -3116,11 +3116,17 @@ const CC = {
 function DiagnosticShareButtons({ url, title, message }) {
   const [copied, setCopied] = useState(false);
 
-  // 🎁 Récupérer le code parrainage de l'utilisateur connecté + l'ajouter à l'URL
-  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
-  const finalUrl = myRefCode && url && !url.includes("?ref=") && !url.includes("&ref=")
-    ? url + (url.includes("?") ? "&" : "?") + "ref=" + myRefCode
+  // 🎯 Transformer l'URL réelle (/diagnostic-facial) en URL de partage (/partage/diagnostic-facial)
+  // pour que Facebook/WhatsApp affichent la belle image dédiée au lieu du logo.
+  const shareUrl = url && url.includes("carrybooks.com/") && !url.includes("/partage/")
+    ? url.replace("carrybooks.com/", "carrybooks.com/partage/")
     : url;
+
+  // 🎁 Récupérer le code parrainage de l'utilisateur connecté + l'ajouter à l'URL de partage
+  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const finalUrl = myRefCode && shareUrl && !shareUrl.includes("?ref=") && !shareUrl.includes("&ref=")
+    ? shareUrl + (shareUrl.includes("?") ? "&" : "?") + "ref=" + myRefCode
+    : shareUrl;
 
   const handleWhatsApp = () => {
     const text = encodeURIComponent((message || title || "Découvre ça !") + "\n\n" + finalUrl);
