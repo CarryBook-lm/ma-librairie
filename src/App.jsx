@@ -2090,12 +2090,20 @@ function ShareButtons({ quizName, quizType }) {
   // 🎁 Récupérer le code parrainage de l'utilisateur connecté depuis localStorage
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
-  const carryCareUrl = baseUrl + "/carrycare" + refSuffix;
+  // 🎯 Image de partage par diagnostic (chaque page a sa propre image OG via /partage/)
+  const ccPageMap = {
+    "Beauté Faciale": "diagnostic-facial",
+    "Beauté Corporelle": "diagnostic-corporel",
+    "Beauté Capillaire": "diagnostic-capillaire",
+    "Santé et Poids": "garde-la-ligne",
+  };
+  const ccPage = ccPageMap[quizName] || "carrycare";
+  const carryCareUrl = baseUrl + "/partage/" + ccPage + refSuffix;
   const bookstoreUrl = baseUrl + refSuffix;
 
   const text = quizType === "carrycare"
-    ? "🌸 Je viens de faire mon diagnostic " + quizName + " sur CarryCare !\n\n💜 Toi aussi, découvre ton type de peau et reçois une routine 100% personnalisée.\n\n🔥 OFFRE DE LANCEMENT : -50% pour les 100 premières inscrites !\n\n👉 " + carryCareUrl
-    : "🎯 Je viens de faire le quiz " + quizName + " sur Carry'Quiz ! Découvre la vérité sur toi-même 👉 " + bookstoreUrl + "\n\n💜 Bonus : essaie aussi CarryCare, le diagnostic beauté personnalisé.\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl;
+    ? "💜 Fais ton diagnostic " + quizName + " personnalisé sur CarryCare 👇\n" + carryCareUrl
+    : "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + bookstoreUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -2127,8 +2135,8 @@ function ShareCarryQuiz() {
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   const quizUrl = "https://carrybooks.com/carry-quiz" + refSuffix;
-  const carryCareUrl = "https://carrybooks.com/carrycare" + refSuffix;
-  const text = "🎯 Découvre Carry'Quiz sur CarryBooks !\n\n✨ Des quiz qui révèlent la vérité sur toi :\n• ❤️ Amour & Relations\n• 🧠 Personnalité & QI\n• 💰 Argent & Succès\n• 🔥 Quiz Choc\n\n💜 Et si tu cherches un accompagnement beauté personnalisé, découvre aussi CarryCare !\n🔥 -50% pour les 100 premières inscrites !\n👉 " + carryCareUrl + "\n\n👉 Carry'Quiz : " + quizUrl;
+  const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
+  const text = "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + quizUrl + "\n\n💜 Et ton diagnostic beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -2159,8 +2167,8 @@ function ShareCarryCare() {
   // 🎁 Code parrainage utilisateur
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
-  const carryCareUrl = "https://carrybooks.com/carrycare" + refSuffix;
-  const text = "💜 Découvre CarryCare sur CarryBooks !\n\n🌸 Un accompagnement beauté 100% personnalisé selon ton profil :\n• 💄 Diagnostic peau du visage\n• 🧴 Soin du corps\n• 💇🏾‍♀️ Routine cheveux\n• ⚖️ Plan nutrition\n\n🔥 OFFRE DE LANCEMENT : -50% pour les 100 premières inscrites !\n\n👉 " + carryCareUrl;
+  const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
+  const text = "💜 Découvre ton diagnostic beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
