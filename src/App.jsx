@@ -57,13 +57,19 @@ async function saveCarrycareResultRobust(payload) {
     }
   } catch (e) {}
   
-  // 🎁 Récupérer le code parrainage depuis localStorage (ou URL)
+  // 🎁 Récupérer le code parrainage — MÊME logique que les achats de livres
+  // (clé "carrybooks_referrer_code" + vérification de l'expiration).
+  // ⚠️ Avant, on lisait "carrybooks_referrer_code" (mauvaise clé) → le code n'était jamais trouvé
+  //    et le parrain ne recevait pas sa commission sur CarryCare.
   const referrerCode = (() => {
     try {
-      const fromStorage = localStorage.getItem("carrybooks_ref_code");
-      if (fromStorage) return fromStorage;
+      const code = localStorage.getItem("carrybooks_referrer_code");
+      const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+      if (code && expires > Date.now()) return code;
+      // Fallback : code présent directement dans l'URL (?ref=CODE)
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get("ref") || null;
+      const fromUrl = urlParams.get("ref");
+      return fromUrl ? fromUrl.trim().toUpperCase() : null;
     } catch (e) { return null; }
   })();
   
