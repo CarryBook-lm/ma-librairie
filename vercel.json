@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/livre/:slug",   "destination": "/api/preview?slug=:slug&type=book" },
     { "source": "/article/:slug", "destination": "/api/preview?slug=:slug&type=article" },
+    { "source": "/partage/:page", "destination": "/api/carrycare-preview?page=:page" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
