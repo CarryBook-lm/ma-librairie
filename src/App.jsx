@@ -8911,7 +8911,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
 
           {/* Acceptation */}
           <button onClick={() => setLgStep(1)} style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", marginBottom: 8 }}>
-            J'ai compris, je commence le diagnostic →
+            J'ai compris, je commence le test →
           </button>
           <div style={{ fontSize: 11, color: CC.textFaint, textAlign: "center", fontStyle: "italic", lineHeight: 1.5 }}>
             En continuant, tu confirmes avoir lu l'avertissement ci-dessus et comprendre que ce diagnostic ne remplace pas un avis médical.
