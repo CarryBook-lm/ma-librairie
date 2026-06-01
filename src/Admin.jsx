@@ -32,6 +32,225 @@ const emptyForm = {
   allow_oversell: false
 };
 
+// ════════════════════════════════════════════════════════════════
+// MODULE COMPTABILITÉ / RENTABILITÉ
+// ════════════════════════════════════════════════════════════════
+function ComptabiliteView() {
+  const [loading, setLoading] = useState(true);
+  const [purchases, setPurchases] = useState([]);
+  const [guestPurchases, setGuestPurchases] = useState([]);
+  const [cartOrders, setCartOrders] = useState([]);
+  const [carrycare, setCarrycare] = useState([]);
+  const [quizPays, setQuizPays] = useState([]);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+
+  // Saisie des charges pour une date (par défaut aujourd'hui)
+  const todayStr = new Date().toLocaleDateString("fr-CA"); // YYYY-MM-DD local
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [adSpendInput, setAdSpendInput] = useState("");
+  const [otherInput, setOtherInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState("");
+
+  async function loadAll() {
+    setLoading(true);
+    try {
+      const [p, g, c, cc, qp, wd, ex] = await Promise.all([
+        supabase.from("purchases").select("amount, created_at"),
+        supabase.from("guest_purchases").select("amount, created_at"),
+        supabase.from("cart_orders").select("total, created_at, payment_status").eq("payment_status", "paid"),
+        supabase.from("carrycare_results").select("amount, created_at"),
+        supabase.from("quiz_payments").select("amount, created_at"),
+        supabase.from("referral_withdrawals").select("amount, created_at, status").eq("status", "approved"),
+        supabase.from("daily_expenses").select("expense_date, ad_spend, other_charges"),
+      ]);
+      setPurchases(p.data || []);
+      setGuestPurchases(g.data || []);
+      setCartOrders(c.data || []);
+      setCarrycare(cc.data || []);
+      setQuizPays(qp.data || []);
+      setWithdrawals(wd.data || []);
+      setExpenses(ex.data || []);
+    } catch (e) {
+      console.error("Erreur chargement comptabilité:", e);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { loadAll(); }, []);
+
+  // Quand on change de date sélectionnée (ou que les charges se rechargent),
+  // pré-remplir les champs avec la valeur déjà enregistrée pour cette date
+  useEffect(() => {
+    const row = expenses.find(e => e.expense_date === selectedDate);
+    setAdSpendInput(row ? String(row.ad_spend ?? "") : "");
+    setOtherInput(row ? String(row.other_charges ?? "") : "");
+  }, [selectedDate, expenses]);
+
+  async function saveCharges() {
+    setSaving(true);
+    setSavedMsg("");
+    try {
+      const { error } = await supabase.from("daily_expenses").upsert(
+        {
+          expense_date: selectedDate,
+          ad_spend: Number(adSpendInput) || 0,
+          other_charges: Number(otherInput) || 0,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "expense_date" }
+      );
+      if (error) {
+        setSavedMsg("❌ Erreur : " + error.message);
+      } else {
+        setSavedMsg("✅ Charges enregistrées pour le " + selectedDate);
+        await loadAll();
+      }
+    } catch (e) {
+      setSavedMsg("❌ Erreur : " + (e.message || e));
+    }
+    setSaving(false);
+  }
+
+  // ── Helpers de période ──
+  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  const weekStart = (() => { const x = startOfDay(now); const dow = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dow); return x; })(); // lundi
+  const monthStart = (() => { const x = startOfDay(now); x.setDate(1); return x; })();
+  const yearStart = (() => { const x = startOfDay(now); x.setMonth(0, 1); return x; })();
+  const selStart = startOfDay(new Date(selectedDate + "T00:00:00"));
+  const selEnd = new Date(selStart); selEnd.setDate(selEnd.getDate() + 1);
+
+  const inRange = (iso, start, end) => { const t = new Date(iso); return t >= start && t < end; };
+  const sumAmt = (arr, field, start, end) =>
+    arr.filter(r => inRange(r.created_at, start, end)).reduce((s, r) => s + (Number(r[field]) || 0), 0);
+
+  const expInRange = (start, end) =>
+    expenses
+      .filter(e => { const d = new Date(e.expense_date + "T00:00:00"); return d >= start && d < end; })
+      .reduce((s, e) => s + (Number(e.ad_spend) || 0) + (Number(e.other_charges) || 0), 0);
+
+  // Calcul complet pour une période [start, end[
+  function compute(start, end) {
+    const ventes = sumAmt(purchases, "amount", start, end)
+      + sumAmt(guestPurchases, "amount", start, end)
+      + sumAmt(cartOrders, "total", start, end);
+    const quiz = sumAmt(carrycare, "amount", start, end) + sumAmt(quizPays, "amount", start, end);
+    const revenus = ventes + quiz;
+    const parrains = sumAmt(withdrawals, "amount", start, end);
+    const charges = expInRange(start, end);
+    const benefice = revenus - charges - parrains;
+    return { ventes, quiz, revenus, parrains, charges, benefice };
+  }
+
+  const sel = compute(selStart, selEnd);
+  const hier = compute(yesterdayStart, todayStart);
+  const semaine = compute(weekStart, tomorrowStart);
+  const mois = compute(monthStart, tomorrowStart);
+  const annee = compute(yearStart, tomorrowStart);
+
+  const fmt = (n) => (Math.round(n)).toLocaleString("fr-FR") + " F";
+  const GOLD = "#c9a84c";
+
+  const box = (label, value, color, emoji) => (
+    <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, flex: "1 1 160px", minWidth: 150 }}>
+      <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>{emoji} {label}</div>
+      <div style={{ fontSize: 22, fontWeight: "bold", color: color || "#fff" }}>{value}</div>
+    </div>
+  );
+
+  const beneficeCard = (titre, data) => (
+    <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, flex: "1 1 200px", minWidth: 180 }}>
+      <div style={{ fontSize: 13, color: GOLD, fontWeight: "bold", marginBottom: 10 }}>{titre}</div>
+      <div style={{ fontSize: 26, fontWeight: "bold", color: data.benefice >= 0 ? "#4CAF50" : "#e74c3c", marginBottom: 10 }}>
+        {fmt(data.benefice)}
+      </div>
+      <div style={{ fontSize: 11, color: "#888", lineHeight: 1.7 }}>
+        Revenus : {fmt(data.revenus)}<br />
+        Charges : {fmt(data.charges)}<br />
+        Parrains : {fmt(data.parrains)}
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <div style={{ padding: 24, color: "#888", textAlign: "center" }}>Chargement de la comptabilité…</div>;
+  }
+
+  return (
+    <div style={{ padding: "8px 4px 60px" }}>
+      <h2 style={{ color: GOLD, fontSize: 20, marginBottom: 4 }}>💰 Comptabilité</h2>
+      <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>
+        Saisis tes charges du jour. Les ventes, quiz et gains des parrains se calculent automatiquement.
+      </p>
+
+      {/* SAISIE DES CHARGES */}
+      <div style={{ background: "#151515", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <div style={{ fontSize: 13, color: GOLD, fontWeight: "bold", marginBottom: 12 }}>Charges de la journée</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: "1 1 140px" }}>
+            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 4 }}>Date</label>
+            <input type="date" value={selectedDate} max={todayStr}
+              onChange={e => setSelectedDate(e.target.value)}
+              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 14 }} />
+          </div>
+          <div style={{ flex: "1 1 140px" }}>
+            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 4 }}>Montant publicitaire (F)</label>
+            <input type="number" value={adSpendInput} placeholder="0"
+              onChange={e => setAdSpendInput(e.target.value)}
+              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 14 }} />
+          </div>
+          <div style={{ flex: "1 1 140px" }}>
+            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 4 }}>Autres charges (F)</label>
+            <input type="number" value={otherInput} placeholder="0"
+              onChange={e => setOtherInput(e.target.value)}
+              style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 14 }} />
+          </div>
+        </div>
+        <button onClick={saveCharges} disabled={saving}
+          style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: GOLD, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
+          {saving ? "Enregistrement…" : "💾 Enregistrer les charges"}
+        </button>
+        {savedMsg && <div style={{ marginTop: 10, fontSize: 13, color: savedMsg.startsWith("✅") ? "#4CAF50" : "#e74c3c" }}>{savedMsg}</div>}
+      </div>
+
+      {/* RÉSUMÉ DE LA DATE SÉLECTIONNÉE (4 cases) */}
+      <div style={{ fontSize: 13, color: "#aaa", marginBottom: 10 }}>
+        Résumé du <strong style={{ color: "#fff" }}>{selectedDate === todayStr ? "jour (aujourd'hui)" : selectedDate}</strong>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+        {box("Charges (pub + autres)", fmt(sel.charges), "#e67e22", "💸")}
+        {box("Ventes + Quiz", fmt(sel.revenus), "#fff", "🛒")}
+        {box("Gains des parrains", fmt(sel.parrains), "#9b59b6", "🎁")}
+        {box("Bénéfice", fmt(sel.benefice), sel.benefice >= 0 ? "#4CAF50" : "#e74c3c", "📈")}
+      </div>
+      <div style={{ fontSize: 11, color: "#666", marginBottom: 28 }}>
+        Détail ventes/quiz du jour : ventes {fmt(sel.ventes)} · quiz {fmt(sel.quiz)}
+      </div>
+
+      {/* BÉNÉFICES PAR PÉRIODE */}
+      <div style={{ fontSize: 15, color: GOLD, fontWeight: "bold", marginBottom: 12 }}>Bénéfices</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+        {beneficeCard("Hier", hier)}
+        {beneficeCard("Cette semaine", semaine)}
+        {beneficeCard("Ce mois", mois)}
+        {beneficeCard("Cette année", annee)}
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <button onClick={loadAll}
+          style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #333", background: "#1a1a1a", color: "#aaa", cursor: "pointer", fontSize: 13 }}>
+          🔄 Actualiser
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
   // ===== AUTH ADMIN : États (les hooks vont plus bas, avant les early returns) =====
   const [adminAuth, setAdminAuth] = useState(false);
@@ -1588,6 +1807,7 @@ export default function Admin() {
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
             { id: "referrals", label: "Parrainages", icon: "🎁" },
             { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
+            { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
@@ -3549,6 +3769,8 @@ export default function Admin() {
 
         {/* STATS PWA - INSTALLATIONS MOBILE */}
         {view === "pwa_stats" && <PwaStatsView />}
+
+        {view === "comptabilite" && <ComptabiliteView />}
 
         {/* SECURITY - CHANGEMENT MOT DE PASSE */}
         {view === "security" && (
