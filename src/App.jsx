@@ -2104,7 +2104,7 @@ function ShareButtons({ quizName, quizType }) {
   const bookstoreUrl = baseUrl + refSuffix;
 
   const text = quizType === "carrycare"
-    ? "💜 Fais ton diagnostic " + quizName + " personnalisé sur CarryCare 👇\n" + carryCareUrl
+    ? "💜 Fais ton test " + quizName + " personnalisé sur CarryCare 👇\n" + carryCareUrl
     : "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + bookstoreUrl;
 
   function shareWhatsApp() {
@@ -3355,7 +3355,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     {
       id: "facial",
       title: "Beauté Faciale",
-      line1: "Diagnostic facial et",
+      line1: "Test facial et",
       line2: "routine personnalisée",
       bg: "#f6d4dc", circleBg: "#fce4ea",
       accent: "#d63384", btnBg: "#e7407a",
@@ -3365,7 +3365,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     {
       id: "body",
       title: "Beauté Corporelle",
-      line1: "Diagnostic corporel et",
+      line1: "Test corporel et",
       line2: "routine personnalisée",
       bg: "#fbecd4", circleBg: "#fef4e0",
       accent: "#c9952a", btnBg: "#d4a13a",
@@ -3385,7 +3385,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
     {
       id: "weight",
       title: "Santé et Poids",
-      line1: "Plan nutrition",
+      line1: "Plan alimentaire",
       line2: "personnalisé",
       bg: "#d6e8de", circleBg: "#e5f0eb",
       accent: "#1a6b5b", btnBg: "#1e7561",
@@ -6206,7 +6206,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
         <DiagnosticShareButtons
           url="https://carrybooks.com/diagnostic-facial"
           title="Diagnostic Beauté Faciale CarryCare"
-          message="🪞 J'ai fait mon Diagnostic Facial sur CarryCare et c'est incroyable ! Découvre ta routine personnalisée :"
+          message="🪞 J'ai fait mon Test Facial sur CarryCare et c'est incroyable ! Découvre ta routine personnalisée :"
         />
 
       </div>
@@ -8363,7 +8363,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
         <DiagnosticShareButtons
           url="https://carrybooks.com/diagnostic-corporel"
           title="Diagnostic Beauté Corporelle CarryCare"
-          message="🧴 J'ai fait mon Diagnostic Corporel sur CarryCare ! Vergetures, taches, hydratation... découvre ta routine corps :"
+          message="🧴 J'ai fait mon Test Corporel sur CarryCare ! Vergetures, taches, hydratation... découvre ta routine corps :"
         />
 
       </div>
@@ -8748,7 +8748,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
     return (
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
         <div style={{ fontSize: 100, marginBottom: 24, animation: "giftShake 0.6s ease-in-out 0s 3, giftOpen 1s ease-out 1.8s forwards" }}>🎁</div>
-        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>✨ Voici ton plan nutrition ✨</div>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>✨ Voici ton plan alimentaire ✨</div>
         <div style={{ fontSize: 14, color: CC.textDim, textAlign: "center" }}>Préparé spécialement pour toi</div>
         <style>{`@keyframes giftShake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } } @keyframes giftOpen { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(20deg); opacity: 1; } 100% { transform: scale(2.5) rotate(-10deg); opacity: 0; } }`}</style>
       </div>
@@ -8864,7 +8864,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "24px 22px", marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 48, marginBottom: 10 }}>🥗</div>
             <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Sante et Poids</div>
-            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Plan nutrition adapté à ton profil avec aliments du Cameroun</div>
+            <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Plan alimentaire adapté à ton profil avec aliments du Cameroun</div>
           </div>
 
           {/* AVERTISSEMENT IMPORTANT — bloquant */}
@@ -8920,7 +8920,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
             <DiagnosticShareButtons
               url="https://carrybooks.com/garde-la-ligne"
               title="Sante et Poids CarryCare"
-              message="⚖️ Plan nutrition personnalisé selon ton profil. Garde la ligne intelligemment avec CarryCare !"
+              message="⚖️ Plan alimentaire personnalisé selon ton profil. Garde la ligne intelligemment avec CarryCare !"
             />
           </div>
         </div>
@@ -9249,7 +9249,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
             setLgPaymentStep(1);
             setTimeout(() => setLgStep(7), 2500);
           }} disabled={!ok} style={{ width: "100%", padding: 16, background: ok ? CC.noir : "#ccc", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: ok ? "pointer" : "not-allowed" }}>
-            {ok ? "Voir mon plan nutrition ✨" : "Réponds aux questions"}
+            {ok ? "Voir mon plan alimentaire ✨" : "Réponds aux questions"}
           </button>
         </div>
       </div>
@@ -9262,7 +9262,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
         <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>🥗</div>
         <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Calcul de tes besoins...</div>
-        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton plan nutrition personnalisé</div>
+        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton plan alimentaire personnalisé</div>
         <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }`}</style>
       </div>
     );
@@ -9277,7 +9277,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
-              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton plan nutrition est prêt</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton plan alimentaire est prêt</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6 }}>Calculé spécialement pour toi avec aliments du Cameroun</div>
             </div>
             <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
@@ -9561,14 +9561,14 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
     <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
       <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", padding: "12px 16px", borderBottom: "1px solid " + CC.border, display: "flex", alignItems: "center", gap: 12, position: "sticky", top: 56, zIndex: 49 }}>
         <button onClick={onBack} style={{ background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer", flexShrink: 0 }}>← Retour</button>
-        <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🥗 Ton plan nutrition</div>
+        <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>🥗 Ton plan alimentaire</div>
       </div>
 
       <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Plan nutrition personnalisé</div>
+          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Plan alimentaire personnalisé</div>
           <div style={{ fontSize: 56, marginBottom: 12 }}>🥗</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{displayedCalories} kcal/jour</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>Tes besoins énergétiques approximatifs</div>
@@ -9864,7 +9864,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
         <DiagnosticShareButtons
           url="https://carrybooks.com/garde-la-ligne"
           title="Sante et Poids CarryCare"
-          message="⚖️ J'ai mon plan nutrition personnalisé sur CarryCare ! Garde la ligne intelligemment, fais-le aussi :"
+          message="⚖️ J'ai mon plan alimentaire personnalisé sur CarryCare ! Garde la ligne intelligemment, fais-le aussi :"
         />
 
       </div>
