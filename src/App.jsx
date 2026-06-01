@@ -902,7 +902,7 @@ async function downloadBodyDiagnosticPDF(result) {
       doc.setTextColor(...GRIS);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text("Diagnostic Beaute Corporelle", pageW - margin, 12, { align: "right" });
+      doc.text("Test Beaute Corporelle", pageW - margin, 12, { align: "right" });
       doc.setDrawColor(...GRIS_CLAIR);
       doc.line(margin, 14, pageW - margin, 14);
     }
@@ -2138,7 +2138,7 @@ function ShareCarryQuiz() {
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   const quizUrl = "https://carrybooks.com/carry-quiz" + refSuffix;
   const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
-  const text = "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + quizUrl + "\n\n💜 Et ton diagnostic beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
+  const text = "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + quizUrl + "\n\n💜 Et ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -2170,7 +2170,7 @@ function ShareCarryCare() {
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
-  const text = "💜 Découvre ton diagnostic beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
+  const text = "💜 Découvre ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -3401,7 +3401,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
         <button onClick={() => setPage("quiz")} style={{ position: "absolute", left: 14, top: 14, background: CC.noir, border: "none", borderRadius: 8, color: "#fff", padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>← Retour</button>
         <div style={{ fontSize: 48, marginBottom: 6 }}>🌸</div>
         <div style={{ fontSize: 28, fontWeight: "bold", color: CC.noir, fontFamily: "Georgia, serif", marginBottom: 4, letterSpacing: 1 }}>CarryCare</div>
-        <div style={{ fontSize: 13, color: CC.textFaint, fontStyle: "italic" }}>Ton diagnostic personnalisé · Beauté & Santé</div>
+        <div style={{ fontSize: 13, color: CC.textFaint, fontStyle: "italic" }}>Ton test personnalisé · Beauté & Santé</div>
       </div>
 
       {/* Carte Mes résultats */}
@@ -3426,7 +3426,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
           </div>
           <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
             <div style={{ fontSize: 16, fontWeight: "bold", color: "#2d1b4e", fontFamily: "Georgia, serif", marginBottom: 2, lineHeight: 1.1, textAlign: "left" }}>Mes résultats</div>
-            <div style={{ fontSize: 11, color: "#6b5b8c", lineHeight: 1.3, textAlign: "left" }}>Retrouvez tous vos diagnostics passés</div>
+            <div style={{ fontSize: 11, color: "#6b5b8c", lineHeight: 1.3, textAlign: "left" }}>Retrouvez tous vos tests passés</div>
           </div>
           <div style={{
             background: "#7e57c2", color: "#fff", width: 36, height: 36, borderRadius: "50%",
@@ -3512,7 +3512,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
 
       <div style={{ padding: "10px 20px", textAlign: "center", marginTop: 4 }}>
         <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic" }}>
-          ✨ Diagnostic personnalisé propulsé par CarryCare
+          ✨ Test personnalisé propulsé par CarryCare
         </div>
       </div>
 
@@ -4688,7 +4688,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
         <div style={{ padding: "24px 16px", maxWidth: 600, margin: "0 auto" }}>
           <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "28px 22px", marginBottom: 18, textAlign: "center" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Diagnostic Beauté Faciale</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Test Beauté Faciale</div>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Personnalisé selon ton profil</div>
           </div>
           <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
@@ -4704,7 +4704,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>🎯</div>
-                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>Un diagnostic <strong>complet et professionnel</strong></div>
+                <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>Un test <strong>complet et professionnel</strong></div>
               </div>
             </div>
           </div>
@@ -4732,7 +4732,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
               url="https://carrybooks.com/diagnostic-facial"
-              title="Diagnostic Beauté Faciale CarryCare"
+              title="Test Beauté Faciale CarryCare"
               message="🪞 Découvre ton type de peau exact + ta routine personnalisée en 5 min sur CarryCare !"
             />
           </div>
@@ -4926,7 +4926,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
         <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>🌸</div>
         <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse de ton profil...</div>
-        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton diagnostic personnalisé</div>
+        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton test personnalisé</div>
         <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }`}</style>
       </div>
     );
@@ -4941,7 +4941,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
           <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
-              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton diagnostic personnalisé</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton test personnalisé</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Type de peau identifié : <strong>{bfResult?.skinType?.name}</strong></div>
             </div>
             <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
@@ -5639,7 +5639,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton diagnostic personnalisé</div>
+          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton test personnalisé</div>
           <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>{skinType.desc}</div>
@@ -6161,7 +6161,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
           <div style={{ background: "#fff", borderRadius: 10, padding: 14, marginBottom: 12 }}>
             <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
-              ✓ Diagnostic <strong>complet et personnalisé</strong><br/>
+              ✓ Test <strong>complet et personnalisé</strong><br/>
               ✓ Routine matin et soir adaptée<br/>
               ✓ Produits précis avec lieux d'achat<br/>
               ✓ Soins ciblés pour tes problèmes
@@ -6205,7 +6205,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
           url="https://carrybooks.com/diagnostic-facial"
-          title="Diagnostic Beauté Faciale CarryCare"
+          title="Test Beauté Faciale CarryCare"
           message="🪞 J'ai fait mon Test Facial sur CarryCare et c'est incroyable ! Découvre ta routine personnalisée :"
         />
 
@@ -6455,7 +6455,7 @@ async function downloadFacialDiagnosticPDF(result) {
       doc.setTextColor(...GRIS);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
-      doc.text("Diagnostic Beaute Faciale", pageW - margin, 12, { align: "right" });
+      doc.text("Test Beaute Faciale", pageW - margin, 12, { align: "right" });
       doc.setDrawColor(...GRIS_CLAIR);
       doc.line(margin, 14, pageW - margin, 14);
     }
@@ -7148,7 +7148,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
           
           <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "28px 22px", marginBottom: 18, textAlign: "center" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Diagnostic Beauté Corporelle</div>
+            <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Test Beauté Corporelle</div>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Personnalisé selon ton profil</div>
           </div>
 
@@ -7170,7 +7170,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>🎯</div>
                 <div style={{ flex: 1, fontSize: 14, color: CC.noir }}>
-                  Un diagnostic <strong>complet et professionnel</strong>
+                  Un test <strong>complet et professionnel</strong>
                 </div>
               </div>
             </div>
@@ -7201,7 +7201,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
               url="https://carrybooks.com/diagnostic-corporel"
-              title="Diagnostic Beauté Corporelle CarryCare"
+              title="Test Beauté Corporelle CarryCare"
               message="🧴 Vergetures, taches, hydratation... Découvre la routine corps parfaite pour toi sur CarryCare !"
             />
           </div>
@@ -7394,7 +7394,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
       <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 20 }}>
         <div style={{ fontSize: 60, marginBottom: 24, animation: "pulse 1.5s ease-in-out infinite" }}>🌸</div>
         <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 8, textAlign: "center" }}>Analyse de ton profil...</div>
-        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton diagnostic personnalisé</div>
+        <div style={{ fontSize: 13, color: CC.textDim, textAlign: "center", maxWidth: 280 }}>On prépare ton test personnalisé</div>
         <style>{`
           @keyframes pulse {
             0%, 100% { transform: scale(1); opacity: 1; }
@@ -7415,7 +7415,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
           <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", borderRadius: 18, padding: "32px 20px", marginBottom: 16, textAlign: "center", border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 64, marginBottom: 12 }}>🔒</div>
-              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton diagnostic personnalisé</div>
+              <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton test personnalisé</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Type de peau identifié : <strong>{bbResult?.skinType?.name}</strong></div>
             </div>
 
@@ -7943,7 +7943,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton diagnostic personnalisé</div>
+          <div style={{ fontSize: 14, color: CC.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton test personnalisé</div>
           <div style={{ fontSize: 56, marginBottom: 12 }}>{skinType.emoji}</div>
           <div style={{ fontSize: 26, fontWeight: "bold", color: CC.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{skinType.name}</div>
           <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic", maxWidth: 400, margin: "0 auto", marginBottom: 14 }}>{skinType.desc}</div>
@@ -8326,7 +8326,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
           <div style={{ background: "#fff", borderRadius: 10, padding: 14, marginBottom: 12 }}>
             <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
-              ✓ Diagnostic <strong>complet et personnalisé</strong><br/>
+              ✓ Test <strong>complet et personnalisé</strong><br/>
               ✓ Routine matin et soir adaptée<br/>
               ✓ Produits précis avec lieux d'achat<br/>
               ✓ Soins ciblés pour tes problèmes
@@ -8362,7 +8362,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
           url="https://carrybooks.com/diagnostic-corporel"
-          title="Diagnostic Beauté Corporelle CarryCare"
+          title="Test Beauté Corporelle CarryCare"
           message="🧴 J'ai fait mon Test Corporel sur CarryCare ! Vergetures, taches, hydratation... découvre ta routine corps :"
         />
 
@@ -8911,7 +8911,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
 
           {/* Acceptation */}
           <button onClick={() => setLgStep(1)} style={{ width: "100%", padding: 18, background: CC.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", marginBottom: 8 }}>
-            J'ai compris, je commence le test →
+            Je commence mon test →
           </button>
           <div style={{ fontSize: 11, color: CC.textFaint, textAlign: "center", fontStyle: "italic", lineHeight: 1.5 }}>
             En continuant, tu confirmes avoir lu l'avertissement ci-dessus et comprendre que ce diagnostic ne remplace pas un avis médical.
@@ -10882,7 +10882,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* HERO */}
         <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", border: "1px solid " + CAP.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
-          <div style={{ fontSize: 14, color: CAP.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton diagnostic personnalisé</div>
+          <div style={{ fontSize: 14, color: CAP.textFaint, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold", marginBottom: 8 }}>Ton test personnalisé</div>
           <div style={{ fontSize: 48, marginBottom: 12 }}>💆</div>
           <div style={{ fontSize: 22, fontWeight: "bold", color: CAP.noir, marginBottom: 6, fontFamily: "Georgia, serif" }}>{textureLabel}</div>
           <div style={{ fontSize: 13, color: CAP.noirSoft, fontStyle: "italic", marginBottom: 14 }}>{etatLabel} · {longueurLabel}</div>
@@ -11284,7 +11284,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
           url="https://carrybooks.com/diagnostic-capillaire"
-          title="Diagnostic Beauté Capillaire CarryCare"
+          title="Test Beauté Capillaire CarryCare"
           message="💇‍♀️ J'ai ma routine capillaire sur mesure grâce à CarryCare ! Découvre la tienne :"
         />
 
@@ -11810,12 +11810,12 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
           </div>
 
           <button onClick={() => setCapStep(1)} style={{ width: "100%", padding: 18, background: CAP.noir, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-            Commencer mon diagnostic ✨
+            Commencer mon test ✨
           </button>
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
               url="https://carrybooks.com/diagnostic-capillaire"
-              title="Diagnostic Beauté Capillaire CarryCare"
+              title="Test Beauté Capillaire CarryCare"
               message="💇‍♀️ Cheveux crépus, croissance, routines... Découvre LA routine capillaire faite pour toi !"
             />
           </div>
@@ -19668,7 +19668,7 @@ export default function App() {
           <div style={{ padding: "32px 16px 80px" }}>
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 8 }}>Mes résultats</div>
             <div style={{ fontSize: 22, color: G.text, marginBottom: 6 }}>💎 Tous tes diagnostics CarryCare</div>
-            <div style={{ fontSize: 13, color: G.textDim, marginBottom: 24 }}>Retrouve à tout moment les résultats des quiz que tu as déjà payés.</div>
+            <div style={{ fontSize: 13, color: G.textDim, marginBottom: 24 }}>Retrouve à tout moment les résultats des tests que tu as déjà payés.</div>
 
             {!user && (
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 24, textAlign: "center" }}>
