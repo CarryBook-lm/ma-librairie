@@ -135,6 +135,7 @@ export default async function handler(req, res) {
         { id: "cc-corporel", title: "Diagnostic CarryCare - Soin du Corps", page: "diagnostic-corporel", price: carrycarePrice, desc: "Diagnostic personnalise pour la peau de ton corps, avec conseils et routine adaptee. A but educatif." },
         { id: "cc-capillaire", title: "Diagnostic CarryCare - Cheveux", page: "diagnostic-capillaire", price: carrycarePrice, desc: "Diagnostic capillaire personnalise selon ton type de cheveux, avec une routine adaptee. A but educatif." },
         { id: "cc-ligne", title: "Diagnostic CarryCare - Sante et Poids", page: "garde-la-ligne", price: quizPrice, desc: "Bilan personnalise de tes besoins et conseils nutritionnels adaptes a ton profil. A but educatif, ne remplace pas un avis medical." },
+        { id: "cc-pack", title: "Pack CarryCare - Tous les diagnostics", page: "carrycare", price: (carrycarePrice * 3 + quizPrice), desc: "Accede a tous les diagnostics CarryCare : visage, corps, cheveux et sante. Des conseils personnalises pour ton bien-etre, a but educatif." },
       ];
       for (const d of ccDiagnostics) {
         if (!d.price || d.price <= 0) continue;
@@ -144,7 +145,8 @@ export default async function handler(req, res) {
       }
     }
 
-    const csvText = rows.join("\n");
+    // BOM UTF-8 (\uFEFF) pour forcer la lecture correcte des accents
+    const csvText = "\uFEFF" + rows.join("\n");
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=3600");
