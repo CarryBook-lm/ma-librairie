@@ -226,6 +226,7 @@ function ComptabiliteView() {
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
         {box("Charges (pub + autres)", fmt(sel.charges), "#e67e22", "💸")}
+        {box("Frais CamPay (2%)", fmt(sel.fraisCampay), "#00BCD4", "")}
         {box("Ventes + Quiz", fmt(sel.revenus), "#fff", "🛒")}
         {box("Gains des parrains", fmt(sel.parrains), "#9b59b6", "🎁")}
         {box("Bénéfice", fmt(sel.benefice), sel.benefice >= 0 ? "#4CAF50" : "#e74c3c", "📈")}
