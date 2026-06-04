@@ -143,8 +143,9 @@ function ComptabiliteView() {
     const revenus = ventes + quiz;
     const parrains = sumAmt(withdrawals, "amount", start, end);
     const charges = expInRange(start, end);
-    const benefice = revenus - charges - parrains;
-    return { ventes, quiz, revenus, parrains, charges, benefice };
+    const fraisCampay = Math.round(revenus * 0.02);
+    const benefice = revenus - charges - parrains - fraisCampay;
+    return { ventes, quiz, revenus, parrains, charges, benefice, fraisCampay };
   }
 
   const sel = compute(selStart, selEnd);
@@ -172,7 +173,8 @@ function ComptabiliteView() {
       <div style={{ fontSize: 11, color: "#888", lineHeight: 1.7 }}>
         Revenus : {fmt(data.revenus)}<br />
         Charges : {fmt(data.charges)}<br />
-        Parrains : {fmt(data.parrains)}
+        Parrains : {fmt(data.parrains)}<br />
+        Frais CamPay (2%) : {fmt(data.fraisCampay)}
       </div>
     </div>
   );
