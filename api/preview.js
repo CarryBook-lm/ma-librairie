@@ -134,6 +134,7 @@ Detecte comme bot: ${isBotVisit}
     || process.env.VITE_SUPABASE_ANON_KEY;
 
   let book = null;
+  let aggregateRating = null; // ⭐ rempli si le livre a des avis approuves
   try {
     if (supabaseUrl && supabaseKey) {
       const supabase = createClient(supabaseUrl, supabaseKey);
@@ -145,6 +146,32 @@ Detecte comme bot: ${isBotVisit}
 
       if (books && books.length > 0) {
         book = books.find(b => slugify(b.title) === slug || slugifyAlt(b.title) === slug);
+      }
+
+      // ⭐ AVIS APPROUVES → aggregateRating (Google Search Console)
+      if (book && book.id) {
+        const { data: reviews } = await supabase
+          .from("book_reviews")
+          .select("rating")
+          .eq("book_id", book.id)
+          .eq("approved", true);
+
+        if (reviews && reviews.length > 0) {
+          const ratings = reviews
+            .map(r => Number(r.rating))
+            .filter(n => !isNaN(n) && n > 0);
+
+          if (ratings.length > 0) {
+            const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+            aggregateRating = {
+              "@type": "AggregateRating",
+              ratingValue: avg.toFixed(1),
+              reviewCount: String(ratings.length),
+              bestRating: "5",
+              worstRating: "1",
+            };
+          }
+        }
       }
     }
   } catch (e) {
@@ -193,6 +220,30 @@ Detecte comme bot: ${isBotVisit}
   const priceLabel = book.price > 0 ? `${book.price.toLocaleString("fr-FR")} FCFA` : "Gratuit";
   const ogType = book.product_type === "article" ? "product" : "book";
 
+  // === DONNEES STRUCTUREES schema.org (JSON-LD) ===
+  // On construit un objet JS puis JSON.stringify → echappement automatique fiable.
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": ogType === "product" ? "Product" : "Book",
+    name: book.title || "Livre CarryBooks",
+    author: { "@type": "Person", name: book.author || "CarryBooks" },
+    image: cover,
+    description: rawDesc,
+    offers: {
+      "@type": "Offer",
+      price: String(book.price || 0),
+      priceCurrency: "XAF",
+      availability: "https://schema.org/InStock",
+      url: url,
+    },
+  };
+  // ⭐ aggregateRating ajoute UNIQUEMENT s'il y a au moins 1 avis approuve
+  if (aggregateRating) {
+    structuredData.aggregateRating = aggregateRating;
+  }
+  // .replace(/</g) : evite qu'un "</script>" dans un champ casse le bloc
+  const jsonLd = JSON.stringify(structuredData, null, 2).replace(/</g, "\\u003c");
+
   // ⚠️ PAS DE meta http-equiv="refresh" car Facebook le suit et lit la page d'accueil !
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -225,21 +276,7 @@ Detecte comme bot: ${isBotVisit}
 <meta property="book:author" content="${author}">
 
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "${ogType === "product" ? "Product" : "Book"}",
-  "name": "${title.replace(/"/g, "\\\"")}",
-  "author": { "@type": "Person", "name": "${author.replace(/"/g, "\\\"")}" },
-  "image": "${cover}",
-  "description": "${description.replace(/"/g, "\\\"")}",
-  "offers": {
-    "@type": "Offer",
-    "price": "${book.price || 0}",
-    "priceCurrency": "XAF",
-    "availability": "https://schema.org/InStock",
-    "url": "${url}"
-  }
-}
+${jsonLd}
 </script>
 </head>
 <body>
