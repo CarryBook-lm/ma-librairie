@@ -2032,6 +2032,74 @@ export default async function handler(req, res) {
       return res.status(200).json(SAFE_RESPONSE);
     }
 
+    // ========== ACTION : RECOVER_CARRYCARE ==========
+    // Le client connecte entre le numero utilise au paiement. On rattache
+    // (cle service = ignore le RLS) tous les resultats orphelins (user_id null)
+    // qui matchent ce numero, colonne phone OU result_data.phone.
+    if (action === "recover_carrycare") {
+      const { user_id, phone } = params;
+      if (!user_id || !phone) {
+        return res.status(400).json({ error: "user_id et phone requis" });
+      }
+
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // Variantes du numero (avec/sans 237, avec/sans +)
+      const digits = String(phone).replace(/\D/g, "");
+      const local = digits.replace(/^237/, "");
+      const localTail = local.slice(-9);
+      const candidates = Array.from(new Set([digits, local, "237" + local, "+237" + local].filter(Boolean)));
+
+      try {
+        // 1. Match sur la colonne phone
+        const { data: byCol } = await supabaseAdmin
+          .from("carrycare_results")
+          .select("id")
+          .is("user_id", null)
+          .in("phone", candidates);
+
+        // 2. Match sur result_data.phone (anciens quiz) — on recupere les orphelins et on filtre
+        const { data: allOrphans } = await supabaseAdmin
+          .from("carrycare_results")
+          .select("id, result_data")
+          .is("user_id", null);
+
+        const matchIds = new Set((byCol || []).map((r) => r.id));
+        (allOrphans || []).forEach((r) => {
+          const rd = r.result_data || {};
+          const rp = String(rd.phone || rd.payment_phone || "").replace(/\D/g, "");
+          if (rp && localTail && (rp === localTail || rp.endsWith(localTail) || localTail.endsWith(rp.slice(-9)))) {
+            matchIds.add(r.id);
+          }
+        });
+
+        const ids = Array.from(matchIds);
+        if (ids.length === 0) {
+          return res.status(200).json({ success: true, recovered: 0 });
+        }
+
+        const { error: updErr } = await supabaseAdmin
+          .from("carrycare_results")
+          .update({ user_id })
+          .in("id", ids);
+
+        if (updErr) {
+          console.error("[RECOVER_CARRYCARE] Update error:", updErr);
+          return res.status(200).json({ success: false, recovered: 0, error: updErr.message });
+        }
+
+        console.log("[RECOVER_CARRYCARE] ", ids.length, "resultat(s) rattache(s) a", user_id);
+        return res.status(200).json({ success: true, recovered: ids.length });
+      } catch (e) {
+        console.error("[RECOVER_CARRYCARE] Exception:", e);
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // ========== ACTION : EMAIL_CARRYCARE_RESULT ==========
     // Le client (connecte ou invite) genere son PDF de diagnostic CarryCare
     // cote navigateur (jsPDF), puis l'envoie ici en base64 pour le recevoir

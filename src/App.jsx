@@ -19765,18 +19765,19 @@ export default function App() {
                         try { localStorage.setItem("carrybooks_user_phone", normalized); } catch (err) {}
                         setRecovering(true);
                         setRecoverMsg("🔍 Recherche en cours...");
-                        let found = 0;
+                        let recovered = 0;
                         try {
-                          const { data: m } = await supabase
-                            .from("carrycare_results")
-                            .select("id")
-                            .is("user_id", null)
-                            .eq("phone", normalized);
-                          found = (m || []).length;
+                          const resp = await fetch("/api/campay", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ action: "recover_carrycare", user_id: user.id, phone: normalized }),
+                          });
+                          const data = await resp.json().catch(() => ({}));
+                          recovered = (data && data.recovered) || 0;
                         } catch (e) {}
                         await fetchMyResults();
                         setRecovering(false);
-                        if (found > 0) {
+                        if (recovered > 0) {
                           setRecoverMsg("");
                           setShowRecoverModal(false);
                         } else {
