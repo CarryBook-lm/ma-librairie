@@ -853,7 +853,38 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
   }
 }
 
-async function downloadBodyDiagnosticPDF(result) {
+// 📧 Envoie le PDF CarryCare par email si opts.email est fourni, sinon télécharge.
+async function outputCarryCarePDF(doc, fileName, opts = {}) {
+  if (opts && opts.email) {
+    try {
+      const dataUri = doc.output("datauristring");
+      const base64 = (dataUri.split(",")[1]) || "";
+      const res = await fetch("/api/campay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "email_carrycare_result",
+          email: opts.email,
+          filename: fileName,
+          pdf_base64: base64,
+          quiz_label: opts.quizLabel || "CarryCare",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success) {
+        alert("✅ Ton diagnostic a été envoyé à " + opts.email + " !\nPense à vérifier tes spams.");
+      } else {
+        alert("❌ Envoi impossible : " + ((data && data.error) || "réessaie plus tard."));
+      }
+    } catch (e) {
+      alert("❌ Erreur d'envoi : " + e.message);
+    }
+    return;
+  }
+  doc.save(fileName);
+}
+
+async function downloadBodyDiagnosticPDF(result, opts = {}) {
   if (!result) { alert("Diagnostic non disponible."); return; }
 
   try {
@@ -1477,7 +1508,7 @@ async function downloadBodyDiagnosticPDF(result) {
     // Télécharger
     const dateStr = new Date().toISOString().split("T")[0];
     const fileName = "Diagnostic-CarryBooks-Corps-" + dateStr + ".pdf";
-    doc.save(fileName);
+    await outputCarryCarePDF(doc, fileName, opts);
 
     console.log("[CarryCare] PDF telecharge:", fileName);
   } catch (err) {
@@ -6197,6 +6228,14 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
           }}>
             📥 Télécharger mon diagnostic en PDF
           </button>
+          <button onClick={async () => {
+            const email = window.prompt("📧 Entre ton adresse email pour recevoir ton diagnostic en PDF :");
+            if (email === null) return;
+            if (!email.includes("@")) { alert("Adresse email invalide."); return; }
+            await downloadFacialDiagnosticPDF(result, { email, quizLabel: "Diagnostic Visage" });
+          }} style={{ marginTop: 10, padding: "12px 24px", background: "transparent", color: "#5D4E8C", border: "1px solid #5D4E8C", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>
+            📧 Recevoir par email
+          </button>
           <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>
             Garde-le sur ton téléphone, partage-le, imprime-le
           </div>
@@ -6408,7 +6447,7 @@ function getFacialTargetedAdvice(pid, skinCode, isPregnant) {
 // ═══════════════════════════════════════════════════
 // PDF FACIAL — DOWNLOAD
 // ═══════════════════════════════════════════════════
-async function downloadFacialDiagnosticPDF(result) {
+async function downloadFacialDiagnosticPDF(result, opts = {}) {
   if (!result) { alert("Diagnostic non disponible."); return; }
 
   try {
@@ -6982,7 +7021,7 @@ async function downloadFacialDiagnosticPDF(result) {
 
     const dateStr = new Date().toISOString().split("T")[0];
     const fileName = "Diagnostic-CarryBooks-Visage-" + dateStr + ".pdf";
-    doc.save(fileName);
+    await outputCarryCarePDF(doc, fileName, opts);
     console.log("[CarryCare] PDF Facial telecharge:", fileName);
   } catch (err) {
     console.error("[CarryCare] Erreur PDF Facial:", err);
@@ -8354,6 +8393,14 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
           }}>
             📥 Télécharger mon diagnostic en PDF
           </button>
+          <button onClick={async () => {
+            const email = window.prompt("📧 Entre ton adresse email pour recevoir ton diagnostic en PDF :");
+            if (email === null) return;
+            if (!email.includes("@")) { alert("Adresse email invalide."); return; }
+            await downloadBodyDiagnosticPDF(result, { email, quizLabel: "Diagnostic Corps" });
+          }} style={{ marginTop: 10, padding: "12px 24px", background: "transparent", color: "#5D4E8C", border: "1px solid #5D4E8C", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>
+            📧 Recevoir par email
+          </button>
           <div style={{ fontSize: 11, color: CC.textFaint, marginTop: 8, fontStyle: "italic" }}>
             Garde-le sur ton téléphone, partage-le, imprime-le
           </div>
@@ -9549,6 +9596,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
           <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
             <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mes conseils en PDF</button>
+          <button onClick={async () => { const email = window.prompt("📧 Entre ton adresse email pour recevoir ton diagnostic en PDF :"); if (email === null) return; if (!email.includes("@")) { alert("Adresse email invalide."); return; } await downloadLigneDiagnosticPDF(result, { email, quizLabel: "Garde la Ligne" }); }} style={{ marginLeft: 8, padding: "14px 28px", background: "transparent", color: "#5D4E8C", border: "1px solid #5D4E8C", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>📧 Recevoir par email</button>
           </div>
 
         </div>
@@ -9858,6 +9906,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* Bouton télécharger PDF en bas */}
         <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
           <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon plan en PDF</button>
+          <button onClick={async () => { const email = window.prompt("📧 Entre ton adresse email pour recevoir ton diagnostic en PDF :"); if (email === null) return; if (!email.includes("@")) { alert("Adresse email invalide."); return; } await downloadLigneDiagnosticPDF(result, { email, quizLabel: "Garde la Ligne" }); }} style={{ marginLeft: 8, padding: "14px 28px", background: "transparent", color: "#5D4E8C", border: "1px solid #5D4E8C", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>📧 Recevoir par email</button>
         </div>
 
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
@@ -9875,7 +9924,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
 // ═══════════════════════════════════════════════════
 // PDF GARDE LA LIGNE — version Phase 1 (basique mais complet)
 // ═══════════════════════════════════════════════════
-async function downloadLigneDiagnosticPDF(result) {
+async function downloadLigneDiagnosticPDF(result, opts = {}) {
   if (!result) { alert("Plan non disponible."); return; }
 
   try {
@@ -10205,7 +10254,7 @@ async function downloadLigneDiagnosticPDF(result) {
     }
 
     const dateStr = new Date().toISOString().split("T")[0];
-    doc.save("Plan-CarryBooks-Garde-la-Ligne-" + dateStr + ".pdf");
+    await outputCarryCarePDF(doc, "Plan-CarryBooks-Garde-la-Ligne-" + dateStr + ".pdf", opts);
   } catch (err) {
     console.error("[CarryCare] Erreur PDF Ligne:", err);
     alert("Erreur lors du telechargement du PDF. Verifie ta connexion internet et reessaie.");
@@ -11279,6 +11328,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         {/* PDF en bas */}
         <div style={{ marginTop: 8, marginBottom: 16, textAlign: "center" }}>
           <button onClick={() => downloadCapDiagnosticPDF(result)} style={{ padding: "14px 28px", background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon diagnostic en PDF</button>
+          <button onClick={async () => { const email = window.prompt("📧 Entre ton adresse email pour recevoir ton diagnostic en PDF :"); if (email === null) return; if (!email.includes("@")) { alert("Adresse email invalide."); return; } await downloadCapDiagnosticPDF(result, { email, quizLabel: "Diagnostic Capillaire" }); }} style={{ marginLeft: 8, padding: "14px 28px", background: "transparent", color: "#5D4E8C", border: "1px solid #5D4E8C", borderRadius: 12, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>📧 Recevoir par email</button>
         </div>
 
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
@@ -11297,7 +11347,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
 // ═══════════════════════════════════════════════════
 // PDF QUIZ CAPILLAIRE
 // ═══════════════════════════════════════════════════
-async function downloadCapDiagnosticPDF(result) {
+async function downloadCapDiagnosticPDF(result, opts = {}) {
   if (!result) { alert("Diagnostic non disponible."); return; }
   
   try {
@@ -11681,7 +11731,7 @@ async function downloadCapDiagnosticPDF(result) {
     }
     
     const dateStr = new Date().toISOString().split("T")[0];
-    doc.save("Diagnostic-CarryBooks-Capillaire-" + dateStr + ".pdf");
+    await outputCarryCarePDF(doc, "Diagnostic-CarryBooks-Capillaire-" + dateStr + ".pdf", opts);
   } catch (err) {
     console.error("[CarryCare] Erreur PDF Capillaire:", err);
     alert("Erreur lors du telechargement du PDF. Verifie ta connexion internet et reessaie.");
@@ -13516,6 +13566,10 @@ export default function App() {
   const [myResults, setMyResults] = useState([]);
   const [loadingMyResults, setLoadingMyResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
+  const [recoverPhone, setRecoverPhone] = useState("");
+  const [recoverMsg, setRecoverMsg] = useState("");
+  const [recovering, setRecovering] = useState(false);
+  const [showRecoverModal, setShowRecoverModal] = useState(false);
   const [cachedBooks, setCachedBooks] = useState({});
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
@@ -19669,6 +19723,72 @@ export default function App() {
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 8 }}>Mes résultats</div>
             <div style={{ fontSize: 22, color: G.text, marginBottom: 6 }}>💎 Tous tes diagnostics CarryCare</div>
             <div style={{ fontSize: 13, color: G.textDim, marginBottom: 24 }}>Retrouve à tout moment les résultats des tests que tu as déjà payés.</div>
+
+            {/* 🔎 Encart : récupérer des résultats payés sans connexion */}
+            {user && (
+              <button onClick={() => { setRecoverMsg(""); setRecoverPhone(""); setShowRecoverModal(true); }} style={{ width: "100%", textAlign: "left", background: G.surface, border: "1px dashed " + G.gold, borderRadius: 10, padding: 16, marginBottom: 20, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 26 }}>🔎</span>
+                <span style={{ flex: 1 }}>
+                  <span style={{ display: "block", fontSize: 14, color: G.text, fontWeight: "bold" }}>As-tu perdu tes résultats ?</span>
+                  <span style={{ display: "block", fontSize: 12, color: G.textDim }}>Tu as payé un test sans être connectée ? Récupère-les avec ton numéro.</span>
+                </span>
+                <span style={{ color: G.gold, fontWeight: "bold", fontSize: 13, whiteSpace: "nowrap" }}>Récupère-les ›</span>
+              </button>
+            )}
+
+            {/* 🔎 MODAL de récupération par numéro */}
+            {showRecoverModal && (
+              <div onClick={() => { if (!recovering) setShowRecoverModal(false); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
+                <div onClick={e => e.stopPropagation()} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 14, padding: 24, width: "100%", maxWidth: 380 }}>
+                  <div style={{ fontSize: 18, color: G.text, fontWeight: "bold", marginBottom: 6 }}>🔎 Récupérer mes résultats</div>
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 16 }}>Entre le numéro de téléphone utilisé pour payer ton test. Tes résultats apparaîtront aussitôt dans « Mes résultats ».</div>
+                  <input
+                    type="tel"
+                    autoFocus
+                    value={recoverPhone}
+                    onChange={e => setRecoverPhone(e.target.value)}
+                    placeholder="Ex : 6 12 34 56 78"
+                    style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 15, marginBottom: 12 }}
+                  />
+                  {recoverMsg && <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12 }}>{recoverMsg}</div>}
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                      onClick={() => { if (!recovering) setShowRecoverModal(false); }}
+                      style={{ flex: 1, background: "transparent", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, padding: "11px 0", fontSize: 14, cursor: "pointer" }}
+                    >Annuler</button>
+                    <button
+                      disabled={recovering}
+                      onClick={async () => {
+                        const raw = String(recoverPhone || "").replace(/\D/g, "");
+                        if (raw.length < 8) { setRecoverMsg("⚠️ Entre un numéro valide (celui utilisé pour payer)."); return; }
+                        const normalized = raw.length === 9 ? "237" + raw : raw;
+                        try { localStorage.setItem("carrybooks_user_phone", normalized); } catch (err) {}
+                        setRecovering(true);
+                        setRecoverMsg("🔍 Recherche en cours...");
+                        let found = 0;
+                        try {
+                          const { data: m } = await supabase
+                            .from("carrycare_results")
+                            .select("id")
+                            .is("user_id", null)
+                            .eq("phone", normalized);
+                          found = (m || []).length;
+                        } catch (e) {}
+                        await fetchMyResults();
+                        setRecovering(false);
+                        if (found > 0) {
+                          setRecoverMsg("");
+                          setShowRecoverModal(false);
+                        } else {
+                          setRecoverMsg("Aucun résultat trouvé pour ce numéro. Vérifie-le et réessaie, ou contacte-nous sur WhatsApp.");
+                        }
+                      }}
+                      style={{ flex: 1, background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "11px 0", fontSize: 14, fontWeight: "bold", cursor: recovering ? "wait" : "pointer", opacity: recovering ? 0.7 : 1 }}
+                    >{recovering ? "..." : "Récupérer"}</button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {!user && (
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 24, textAlign: "center" }}>

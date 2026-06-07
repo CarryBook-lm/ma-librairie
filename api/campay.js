@@ -2032,6 +2032,94 @@ export default async function handler(req, res) {
       return res.status(200).json(SAFE_RESPONSE);
     }
 
+    // ========== ACTION : EMAIL_CARRYCARE_RESULT ==========
+    // Le client (connecte ou invite) genere son PDF de diagnostic CarryCare
+    // cote navigateur (jsPDF), puis l'envoie ici en base64 pour le recevoir
+    // par email avec piece jointe. Equivalent CarryCare de claim_book (livres).
+    if (action === "email_carrycare_result") {
+      const { email, pdf_base64, filename, quiz_label } = params;
+
+      if (!email || !String(email).includes("@")) {
+        return res.status(400).json({ error: "Adresse email invalide" });
+      }
+      if (!pdf_base64) {
+        return res.status(400).json({ error: "PDF manquant" });
+      }
+
+      const RESEND_API_KEY = process.env.RESEND_API_KEY;
+      if (!RESEND_API_KEY) {
+        return res.status(500).json({ error: "Service email non configure" });
+      }
+
+      const EMAIL_FROM = process.env.EMAIL_FROM || "CarryBooks <onboarding@resend.dev>";
+      const label = quiz_label || "CarryCare";
+      const safeFilename = String(filename || "Diagnostic-CarryCare.pdf").replace(/[^A-Za-z0-9._-]/g, "-");
+
+      const html = `<!DOCTYPE html>
+<html lang="fr"><body style="margin:0;background:#f4f0fa;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="background:linear-gradient(135deg,#5D4E8C,#9d4edd);padding:28px 24px;text-align:center;">
+      <div style="color:#fff;font-size:22px;font-weight:bold;">&#128156; ${label}</div>
+      <div style="color:#eadcff;font-size:13px;margin-top:6px;">Ton diagnostic CarryCare personnalise</div>
+    </div>
+    <div style="background:#fff;padding:28px 24px;">
+      <p style="margin:0 0 18px;font-size:15px;color:#444;line-height:1.6;">
+        Bonjour &#128075;<br><br>
+        Ton diagnostic <strong>${label}</strong> est en piece jointe de cet email, au format PDF.
+        Tu peux le garder sur ton telephone, l'imprimer ou le consulter quand tu veux.
+      </p>
+      <div style="margin-top:16px;padding:14px;background:#f4f0fa;border-radius:8px;border-left:3px solid #5D4E8C;">
+        <div style="font-size:13px;color:#5D4E8C;">Tu peux aussi retrouver tous tes diagnostics dans <strong>Menu &rarr; Mes resultats</strong> sur carrybooks.com.</div>
+      </div>
+    </div>
+    <div style="background:#2d1b4e;padding:16px;text-align:center;">
+      <div style="color:#c9a6ff;font-size:14px;font-weight:bold;">CarryCare by CarryBooks</div>
+      <div style="color:#777;font-size:11px;">carrybooks.com</div>
+    </div>
+  </div>
+</body></html>`.trim();
+
+      try {
+        const emailRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + RESEND_API_KEY,
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: JSON.stringify({
+            from: EMAIL_FROM,
+            to: String(email).trim(),
+            subject: "Ton diagnostic " + label + " - CarryCare",
+            html,
+            attachments: [{ filename: safeFilename, content: pdf_base64 }],
+          }),
+        });
+
+        if (!emailRes.ok) {
+          const errData = await emailRes.json().catch(() => ({}));
+          console.error("[EMAIL_CARRYCARE] Resend error:", JSON.stringify(errData));
+          const errMsg = (errData && errData.message ? errData.message : "").toLowerCase();
+          let userError = "Erreur lors de l'envoi de l'email. Reessaie dans quelques minutes.";
+          if (errMsg.includes("testing emails") || errMsg.includes("verify a domain")) {
+            userError = "Service email en cours de configuration. Contacte-nous sur WhatsApp.";
+          } else if (errMsg.includes("invalid") && errMsg.includes("email")) {
+            userError = "Adresse email invalide. Verifie l'orthographe.";
+          } else if (errMsg.includes("rate") || errMsg.includes("quota")) {
+            userError = "Trop de demandes. Reessaie dans 1 minute.";
+          } else if (errMsg.includes("attachment") || errMsg.includes("size")) {
+            userError = "Le PDF est trop volumineux pour l'email. Contacte-nous sur WhatsApp.";
+          }
+          return res.status(500).json({ error: userError });
+        }
+
+        console.log("[EMAIL_CARRYCARE] Email envoye a", email, "-", label);
+        return res.status(200).json({ success: true });
+      } catch (emailErr) {
+        console.error("[EMAIL_CARRYCARE] Exception:", emailErr);
+        return res.status(500).json({ error: "Erreur lors de l'envoi de l'email." });
+      }
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);
