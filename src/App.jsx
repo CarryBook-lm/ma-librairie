@@ -13943,6 +13943,7 @@ export default function App() {
   // Détecter livre dans l'URL (slug /livre/xxx OU ?book=XX) et ouvrir
   useEffect(() => {
     if (books.length === 0) return;
+    if (selectedBook) return; // déjà ouvert (ex: via /api/book instantané) → ne pas écraser
 
     // Méthode 1 : Slug dans le path (/livre/le-quartier-silencieux)
     const slug = getSlugFromURL();
@@ -13982,6 +13983,30 @@ export default function App() {
     // Nettoyer aussi tout code en attente résiduel
     try { localStorage.removeItem("pendingReferralCode"); } catch (e) {}
   }, [books]);
+
+  // ⚡ AFFICHAGE INSTANTANÉ du livre cliqué : on récupère CE seul livre via /api/book
+  // sans attendre le chargement complet du catalogue (qui continue en arrière-plan).
+  // → l'acheteur voit le produit en ~0,2 s au lieu d'attendre toute la liste.
+  useEffect(() => {
+    if (selectedBook) return;
+    let slug = getSlugFromURL();
+    if (!slug) {
+      const p = new URLSearchParams(window.location.search);
+      slug = p.get("book") || "";
+    }
+    if (!slug) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await fetch("/api/book?slug=" + encodeURIComponent(slug));
+        const data = await resp.json().catch(() => ({}));
+        if (!cancelled && data && data.book && data.book.id) {
+          openBook(data.book);
+        }
+      } catch (e) { /* le catalogue prendra le relais */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Synchroniser l'URL à chaque changement de page (pour partage et tracking)
   useEffect(() => {
