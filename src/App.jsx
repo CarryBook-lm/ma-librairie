@@ -13004,6 +13004,28 @@ function trackPixelEvent(eventName, params = {}) {
   }
 }
 
+// 📊 Correspondance avancée Meta (advanced matching) : on transmet email/téléphone
+// au pixel (qui les hache en SHA-256 automatiquement) pour mieux relier les
+// conversions aux comptes Facebook → meilleur ciblage et suivi des ventes.
+// ⚠️ Vérifie que cet ID correspond bien à celui de ton index.html / Events Manager.
+const META_PIXEL_ID = "1482084486156586";
+function setPixelAdvancedMatching({ email, phone } = {}) {
+  try {
+    if (typeof window === "undefined" || typeof window.fbq !== "function") return;
+    const am = {};
+    if (email) am.em = String(email).trim().toLowerCase();
+    if (phone) {
+      const digits = String(phone).replace(/\D/g, "");
+      const local = digits.replace(/^237/, "");
+      am.ph = local.length === 9 ? "237" + local : digits; // indicatif pays sans +
+    }
+    if (Object.keys(am).length === 0) return;
+    window.fbq("init", META_PIXEL_ID, am);
+  } catch (e) {
+    // Silent fail
+  }
+}
+
 // 🔥 Helper pour envoyer les conversions à l'API Meta côté serveur (Supabase)
 // Capte 100% des conversions, même celles bloquées par AdBlock/iOS/data savers
 // Fonctionne en parallèle du Pixel JS - Meta dédoublonne automatiquement
@@ -14214,6 +14236,8 @@ export default function App() {
       setUser(session?.user ?? null);
       if (session?.user) {
         loadUserPurchases(session.user.id);
+        // 📊 Correspondance avancée Meta : on connaît l'email du client connecté
+        setPixelAdvancedMatching({ email: session.user.email, phone: session.user.user_metadata?.phone });
         // Re-tente les sauvegardes CarryCare en attente (en cas de coupure réseau précédente)
         flushPendingCarrycareSaves().catch(() => {});
         // Sauvegarder session dans Preferences
@@ -15695,6 +15719,7 @@ export default function App() {
             cacheBook(paymentBook);
 
             // 📊 Pixel Meta : Purchase
+            setPixelAdvancedMatching({ email: user?.email, phone: phone });
             trackPixelEvent("Purchase", {
               content_ids: [String(paymentBook.id)],
               content_name: paymentBook.title || "",
