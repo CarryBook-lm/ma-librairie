@@ -191,6 +191,42 @@ async function saveCarrycareResultRobust(payload) {
   }
 }
 
+// PHASE 2 : pre-enregistre le diagnostic CarryCare AVANT confirmation du paiement
+// (table carrycare_pending) pour que le webhook puisse le debloquer si
+// l'operateur (Orange) confirme APRES l'abandon du navigateur.
+async function savePendingCarrycare(payload) {
+  // payload = { quiz_type, amount, user_id, reference, external_reference, result_data }
+  try {
+    const referrerCode = (() => {
+      try {
+        const code = localStorage.getItem("carrybooks_referrer_code");
+        const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+        if (code && expires > Date.now()) return code;
+        const fromUrl = new URLSearchParams(window.location.search).get("ref");
+        return fromUrl ? fromUrl.trim().toUpperCase() : null;
+      } catch (e) { return null; }
+    })();
+    await fetch("/api/campay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "pending_carrycare",
+        reference: payload.reference,
+        external_reference: payload.external_reference,
+        quiz_type: payload.quiz_type,
+        amount: payload.amount,
+        phone: payload.result_data?.phone || "",
+        result_data: payload.result_data || {},
+        user_id: payload.user_id || null,
+        referrer_code: referrerCode,
+      })
+    });
+    console.log("[CarryCare] Pre-enregistrement pending OK:", payload.quiz_type);
+  } catch (e) {
+    console.warn("[CarryCare] pending_carrycare echec (non bloquant):", e && e.message);
+  }
+}
+
 // Tente de sauvegarder les résultats en attente (au login)
 async function flushPendingCarrycareSaves() {
   try {
@@ -2487,7 +2523,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
             <div style={{ textAlign: "center", marginBottom: 18 }}>
               <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
               <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
-              <p style={{ color: "#888", fontSize: 13 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+              <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</p>
             </div>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
               <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
@@ -5032,6 +5068,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
                 const data = await collect.json();
                 if (!data.reference) { setBfPaymentStep(5); return; }
                 const ref = data.reference;
+                savePendingCarrycare({ quiz_type: "facial", amount: beautyQuizPrice || 0, user_id: userId || null, reference: ref, external_reference: extRef, result_data: { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult, phone: fullPhone } });
                 let attempts = 0;
                 const maxAttempts = 60;
                 const interval = setInterval(async () => {
@@ -5100,7 +5137,7 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
               <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>Paiement non finalisé</h3>
-              <p style={{ color: CC.textFaint, fontSize: 14 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+              <p style={{ color: CC.textFaint, fontSize: 14 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</p>
             </div>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 16, borderRadius: 10, marginBottom: 20 }}>
               <p style={{ color: "#7a4a00", fontSize: 13, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
@@ -7540,6 +7577,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
                 if (!data.reference) { setBbPaymentStep(5); return; }
                 // Polling check
                 const ref = data.reference;
+                savePendingCarrycare({ quiz_type: "body", amount: beautyQuizPrice || 0, user_id: userId || null, reference: ref, external_reference: extRef, result_data: { profile: bbProfile, objectives: bbObjectives, typeAnswers: bbTypeAnswers, problems: bbProblems, lifestyle: bbLifestyle, result: bbResult, phone: fullPhone } });
                 let attempts = 0;
                 const maxAttempts = 60;
                 const interval = setInterval(async () => {
@@ -7620,7 +7658,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
           <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
-              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>Paiement non finalisé</h3>
+              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</h3>
               <p style={{ color: CC.textFaint, fontSize: 14 }}>Le réseau de l\'opérateur est peut-être occupé.</p>
             </div>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 16, borderRadius: 10, marginBottom: 20 }}>
@@ -9380,6 +9418,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
                 const data = await collect.json();
                 if (!data.reference) { setLgPaymentStep(5); return; }
                 const ref = data.reference;
+                savePendingCarrycare({ quiz_type: "ligne", amount: beautyQuizPrice || 0, user_id: userId || null, reference: ref, external_reference: extRef, result_data: { profile: lgProfile, objective: lgObjective, conditions: lgConditions, habits: lgHabits, activity: lgActivity, result: lgResult, phone: fullPhone } });
                 let attempts = 0;
                 const interval = setInterval(async () => {
                   attempts++;
@@ -9430,7 +9469,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
           <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
-              <h3 style={{ color: "#c62828", marginBottom: 8 }}>Paiement non finalisé</h3>
+              <h3 style={{ color: "#c62828", marginBottom: 8 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</h3>
               <p style={{ color: CC.textFaint, fontSize: 14 }}>Réessaie ou change de méthode</p>
             </div>
             <button onClick={() => { setLgPaymentStep(2); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10 }}>🔁 Réessayer</button>
@@ -12288,6 +12327,7 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
                 const data = await collect.json();
                 if (!data.reference) { setCapPaymentStep(5); return; }
                 const ref = data.reference;
+                savePendingCarrycare({ quiz_type: "capillaire", amount: beautyQuizPrice || 0, user_id: userId || null, reference: ref, external_reference: extRef, result_data: { profile: capProfile, texture: capTexture, etat: capEtat, longueur: capLongueur, problems: capProblems, objectives: capObjectives, routine: capRoutine, lifestyle: capLifestyle, budget: capBudget, result: capResult, phone: fullPhone } });
                 let attempts = 0;
                 const interval = setInterval(async () => {
                   attempts++;
@@ -12653,6 +12693,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
                 const data = await collect.json();
                 if (!data.reference) { setCapPaymentStep(5); return; }
                 const ref = data.reference;
+                savePendingCarrycare({ quiz_type: "hair", amount: beautyQuizPrice || 0, user_id: userId || null, reference: ref, external_reference: extRef, result_data: { texture: capTexture, problems: capProblems, lifestyle: capLifestyle, result: capResult, phone: fullPhone } });
                 let attempts = 0;
                 const maxAttempts = 25;
                 const interval = setInterval(async () => {
@@ -12726,7 +12767,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
           <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
             <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
             <div style={{ fontSize: 20, fontWeight: "bold", color: "#d32f2f", marginBottom: 12 }}>Paiement non finalisé</div>
-            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20 }}>Le réseau de l'opérateur est peut-être occupé.</div>
+            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</div>
             <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
               <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.8, textAlign: "center" }}>
@@ -14580,11 +14621,45 @@ export default function App() {
       }
     } catch (e) {}
 
+    // Détecte l'app native du Play Store (WebView Capacitor)
+    const isNativeApp = typeof window !== "undefined"
+      && window.Capacitor
+      && typeof window.Capacitor.isNativePlatform === "function"
+      && window.Capacitor.isNativePlatform();
+
+    if (isNativeApp) {
+      // Google refuse la connexion dans la WebView de l'app (erreur 403).
+      // On ouvre le site dans le navigateur système (Chrome), où la connexion
+      // Google fonctionne. Le paramètre ?app_login=1 relance Google automatiquement.
+      try {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: "https://www.carrybooks.com/?app_login=1" });
+      } catch (e) {
+        try { window.open("https://www.carrybooks.com/?app_login=1", "_system"); } catch (e2) {}
+      }
+      return;
+    }
+
+    // Navigateur + PWA : connexion Google directe (inchangée)
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: "https://www.carrybooks.com" }
     });
   }
+
+  // Depuis l'app : Chrome ouvre le site avec ?app_login=1 -> on relance Google
+  useEffect(() => {
+    try {
+      const isNativeApp = typeof window !== "undefined"
+        && window.Capacitor
+        && typeof window.Capacitor.isNativePlatform === "function"
+        && window.Capacitor.isNativePlatform();
+      const params = new URLSearchParams(window.location.search);
+      if (!isNativeApp && params.get("app_login") === "1") {
+        signInWithGoogle();
+      }
+    } catch (e) {}
+  }, []);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -15747,7 +15822,7 @@ export default function App() {
           // Toujours PENDING : on continue le polling
           if (attempts >= maxAttempts) {
             // Timeout : on affiche un message clair (pas "échec" car le paiement peut encore arriver)
-            alert("⏱️ Délai dépassé. Si vous avez confirmé le paiement, contactez le support avec la référence : " + payData.reference);
+            alert("⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Si tu as été débité(e), ton livre sera débloqué automatiquement dès confirmation — tu peux fermer cette page. Tu le retrouveras dans « Ma bibliothèque ».");
             setPaymentStep(6);
             return;
           }
@@ -17556,7 +17631,7 @@ export default function App() {
                   <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
                     <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
-                    <p style={{ color: "#888", fontSize: 13 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+                    <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Si tu as été débité(e), ton livre sera débloqué automatiquement dès confirmation — tu peux fermer cette page. Tu le retrouveras dans « Ma bibliothèque ».</p>
                   </div>
                   <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
                     <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
@@ -21128,7 +21203,7 @@ export default function App() {
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                   <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
                   <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
-                  <p style={{ color: "#888", fontSize: 13 }}>Le réseau de l'opérateur est peut-être occupé.</p>
+                  <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Si tu as été débité(e), ton livre sera débloqué automatiquement dès confirmation — tu peux fermer cette page. Tu le retrouveras dans « Ma bibliothèque ».</p>
                 </div>
                 <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
                   <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
