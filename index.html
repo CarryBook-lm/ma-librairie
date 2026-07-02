@@ -6,6 +6,11 @@
     <meta name="facebook-domain-verification" content="fanzr6ipm9uccl2oopvw1cueec72qm" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#f5f0e8">
+    <!-- Preconnexions : démarre les connexions réseau au plus tôt (gain de vitesse) -->
+    <link rel="preconnect" href="https://huikxujxsklboejkbnda.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://huikxujxsklboejkbnda.supabase.co">
+    <link rel="preconnect" href="https://connect.facebook.net">
+    <link rel="preconnect" href="https://i.ibb.co">
     <link rel="icon" type="image/jpeg" href="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <link rel="apple-touch-icon" href="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <meta name="description" content="CarryBooks — Ta librairie numérique camerounaise. Lis. Apprends. Évolue." />
@@ -24,21 +29,16 @@
 
     <!-- Meta Pixel Code (CarryBooks) -->
     <script>
-      (function () {
-        // ⚡ Pixel actif UNIQUEMENT sur le vrai domaine (pas sur les previews Vercel ni en local)
-        var h = window.location.hostname;
-        if (h !== "carrybooks.com" && h !== "www.carrybooks.com") return;
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '1482084486156586');
-        fbq('track', 'PageView');
-      })();
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '1482084486156586');
+      fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1482084486156586&ev=PageView&noscript=1"
@@ -131,18 +131,36 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Cacher le splash screen quand React a fini de charger
-      window.addEventListener("load", function () {
-        setTimeout(function () {
+      // Cacher le splash DES QUE React a affiche l'app (sans attendre les
+      // ressources externes lentes : logo distant, pixel Facebook...).
+      (function () {
+        var done = false;
+        function hideSplash() {
+          if (done) return;
+          done = true;
           var splash = document.getElementById("splash-screen");
-          if (splash) {
-            splash.classList.add("fade-out");
-            setTimeout(function () {
-              if (splash.parentNode) splash.parentNode.removeChild(splash);
-            }, 500);
-          }
-        }, 300);
-      });
+          if (!splash) return;
+          splash.classList.add("fade-out");
+          setTimeout(function () {
+            if (splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 500);
+        }
+        // 1) Des que le conteneur #root recoit du contenu (React a rendu)
+        var root = document.getElementById("root");
+        if (root && "MutationObserver" in window) {
+          var obs = new MutationObserver(function () {
+            if (root.childNodes && root.childNodes.length > 0) {
+              obs.disconnect();
+              // petit delai pour laisser le 1er paint se faire
+              setTimeout(hideSplash, 120);
+            }
+          });
+          obs.observe(root, { childList: true, subtree: false });
+        }
+        // 2) Replis de securite : au load complet + timeout maxi
+        window.addEventListener("load", function () { setTimeout(hideSplash, 200); });
+        setTimeout(hideSplash, 6000);
+      })();
     </script>
   </body>
 </html>
