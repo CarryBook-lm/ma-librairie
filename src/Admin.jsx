@@ -311,6 +311,11 @@ export default function Admin() {
   const [subSettings, setSubSettings] = useState({ monthly_price: 2000, annual_price: 20000, books_per_month: 3 });
   const [quizPrice, setQuizPrice] = useState(500);
   const [quizPriceSaving, setQuizPriceSaving] = useState(false);
+  const [campaySoldeBase, setCampaySoldeBase] = useState(0);
+  const [campaySoldeInput, setCampaySoldeInput] = useState("");
+  const [campaySoldeSaving, setCampaySoldeSaving] = useState(false);
+  const [campaySoldeMsg, setCampaySoldeMsg] = useState("");
+  const [campaySoldeUpdatedAt, setCampaySoldeUpdatedAt] = useState(null);
   const [carrycarePrice, setCarrycarePrice] = useState(500);
   const [carrycarePriceSaving, setCarrycarePriceSaving] = useState(false);
   // États pour le changement de mot de passe admin
@@ -1146,6 +1151,11 @@ export default function Admin() {
       setSubSettings(data[0]);
       if (data[0].quiz_price) setQuizPrice(data[0].quiz_price);
       if (data[0].carrycare_price) setCarrycarePrice(data[0].carrycare_price);
+      if (data[0].campay_solde_base !== null && data[0].campay_solde_base !== undefined) {
+        setCampaySoldeBase(Number(data[0].campay_solde_base) || 0);
+        setCampaySoldeInput(String(data[0].campay_solde_base));
+      }
+      if (data[0].campay_solde_updated_at) setCampaySoldeUpdatedAt(data[0].campay_solde_updated_at);
     }
   }
 
@@ -1162,6 +1172,27 @@ export default function Admin() {
     alert("Prix quiz sauvegardé !");
   }
 
+  async function saveCampaySolde() {
+    const val = Math.round(Number(campaySoldeInput) || 0);
+    if (isNaN(val) || val < 0) { setCampaySoldeMsg("Montant invalide"); return; }
+    setCampaySoldeSaving(true);
+    setCampaySoldeMsg("");
+    try {
+      const nowIso = new Date().toISOString();
+      const { data: existing } = await supabase.from("sub_settings").select("id").limit(1);
+      if (existing && existing.length > 0) {
+        await supabase.from("sub_settings").update({ campay_solde_base: val, campay_solde_updated_at: nowIso }).eq("id", existing[0].id);
+      } else {
+        await supabase.from("sub_settings").insert([{ campay_solde_base: val, campay_solde_updated_at: nowIso }]);
+      }
+      setCampaySoldeBase(val);
+      setCampaySoldeUpdatedAt(nowIso);
+      setCampaySoldeMsg("✅ Solde de base enregistré");
+    } catch (e) {
+      setCampaySoldeMsg("❌ Erreur : " + (e.message || e));
+    }
+    setCampaySoldeSaving(false);
+  }
   async function saveCarrycarePrice() {
     setCarrycarePriceSaving(true);
     const { data: existing } = await supabase.from("sub_settings").select("id").limit(1);
@@ -1668,6 +1699,10 @@ export default function Admin() {
     return new Date(o.created_at) >= today;
   }).length;
   const grandTodayRevenue = todayBooksRevenue + todaySubsRevenue + todayQuizRevenue + todayCarryCareRevenue + todayCarryShopRevenue + todayCarryColorRevenue;
+  // Solde CamPay : base saisie manuellement + ventes NETTES du jour (frais CamPay 2%)
+  const CAMPAY_FEE_RATE = 0.02;
+  const todayNetRevenue = Math.round(grandTodayRevenue * (1 - CAMPAY_FEE_RATE));
+  const campaySoldeTotal = (Number(campaySoldeBase) || 0) + todayNetRevenue;
 
   // ========== 📊 STATS HIER / 7 JOURS / 30 JOURS ==========
   // Bornes temporelles
@@ -1856,6 +1891,25 @@ export default function Admin() {
               </div>
             </div>
 
+            {/* SECTION SOLDE CAMPAY A RETIRER */}
+            <div style={{ background: "linear-gradient(135deg, #101a2a 0%, #0d2540 100%)", border: "1.5px solid #2196f3", borderRadius: 10, padding: 18, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#64b5f6", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase", textAlign: "center" }}>🏦 Solde CamPay à retirer</div>
+              <div style={{ fontSize: 30, fontWeight: "bold", color: "#64b5f6", marginBottom: 10, textAlign: "center" }}>{campaySoldeTotal.toLocaleString()} F</div>
+              <div style={{ display: "flex", justifyContent: "center", gap: 18, fontSize: 12, color: "#9fb8d0", marginBottom: 14, flexWrap: "wrap" }}>
+                <span>Solde de base : <strong style={{ color: "#e8e0d0" }}>{(Number(campaySoldeBase) || 0).toLocaleString()} F</strong></span>
+                <span>+ Ventes du jour (net) : <strong style={{ color: "#4caf50" }}>{todayNetRevenue.toLocaleString()} F</strong></span>
+              </div>
+              <div style={{ background: "#0a1420", borderRadius: 8, padding: 12 }}>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>Après un retrait sur CamPay, saisis ici ton nouveau solde CamPay :</div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="number" value={campaySoldeInput} onChange={(e) => setCampaySoldeInput(e.target.value)} placeholder="Ex: 10000" style={{ flex: 1, padding: "10px 12px", borderRadius: 6, border: "1px solid #2a3a4a", background: "#0d1a28", color: "#fff", fontSize: 14 }} />
+                  <button onClick={saveCampaySolde} disabled={campaySoldeSaving} style={{ padding: "10px 16px", borderRadius: 6, border: "none", background: "#2196f3", color: "#fff", fontWeight: "bold", fontSize: 13, cursor: "pointer", opacity: campaySoldeSaving ? 0.6 : 1 }}>{campaySoldeSaving ? "..." : "Mettre à jour"}</button>
+                </div>
+                {campaySoldeMsg && <div style={{ marginTop: 8, fontSize: 12, color: campaySoldeMsg.indexOf("✅") === 0 ? "#4caf50" : "#e74c3c" }}>{campaySoldeMsg}</div>}
+                {campaySoldeUpdatedAt && <div style={{ marginTop: 6, fontSize: 10, color: "#666" }}>Dernière maj du solde de base : {new Date(campaySoldeUpdatedAt).toLocaleString("fr-FR")}</div>}
+              </div>
+              <div style={{ marginTop: 10, fontSize: 10, color: "#5a7a9a", textAlign: "center" }}>Ventes du jour nettes = brut − 2% frais CamPay. Le total se met à jour à chaque vente.</div>
+            </div>
             {/* SECTION DÉTAIL PAR SOURCE — PRODUITS NUMÉRIQUES */}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>📱 Produits numériques</div>
