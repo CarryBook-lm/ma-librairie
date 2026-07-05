@@ -13397,14 +13397,14 @@ export default function App() {
 
     // Afficher le bandeau immédiatement sur iOS (pas d'event prompt)
     if (isIos) {
-      setShowInstallBanner(true);
+      setShowInstallBanner(false);
     }
 
     // Écouter l'event d'install (Android, Desktop Chrome/Edge)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
-      setShowInstallBanner(true);
+      setShowInstallBanner(false);
     };
 
     // Cacher le bandeau dès l'installation
@@ -14628,14 +14628,24 @@ export default function App() {
       && window.Capacitor.isNativePlatform();
 
     if (isNativeApp) {
-      // Google refuse la connexion dans la WebView de l'app (erreur 403).
-      // On ouvre le site dans le navigateur système (Chrome), où la connexion
-      // Google fonctionne. Le paramètre ?app_login=1 relance Google automatiquement.
+      // Google refuse la connexion dans la WebView (erreur 403). On ouvre la page
+      // Google dans le navigateur système (Chrome), puis le retour se fait via un
+      // lien de retour (deep link) capté plus bas -> la session est enregistrée
+      // DANS l'app (donc conservée au redémarrage, plus de reconnexion).
       try {
         const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: "https://www.carrybooks.com/?app_login=1" });
+        const { data } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: "com.carrybooks.bibliotheque://login-callback",
+            skipBrowserRedirect: true,
+          },
+        });
+        if (data && data.url) {
+          await Browser.open({ url: data.url });
+        }
       } catch (e) {
-        try { window.open("https://www.carrybooks.com/?app_login=1", "_system"); } catch (e2) {}
+        console.error("[OAuth natif] erreur ouverture:", e);
       }
       return;
     }
@@ -14647,18 +14657,38 @@ export default function App() {
     });
   }
 
-  // Depuis l'app : Chrome ouvre le site avec ?app_login=1 -> on relance Google
+  // App native : au retour de Google (deep link), on récupère les jetons et on
+  // enregistre la session dans l'app -> reste connecté au redémarrage.
   useEffect(() => {
-    try {
-      const isNativeApp = typeof window !== "undefined"
-        && window.Capacitor
-        && typeof window.Capacitor.isNativePlatform === "function"
-        && window.Capacitor.isNativePlatform();
-      const params = new URLSearchParams(window.location.search);
-      if (!isNativeApp && params.get("app_login") === "1") {
-        signInWithGoogle();
-      }
-    } catch (e) {}
+    const isNativeApp = typeof window !== "undefined"
+      && window.Capacitor
+      && typeof window.Capacitor.isNativePlatform === "function"
+      && window.Capacitor.isNativePlatform();
+    if (!isNativeApp) return;
+    let sub;
+    (async () => {
+      try {
+        const { App: CapApp } = await import("@capacitor/app");
+        sub = await CapApp.addListener("appUrlOpen", async (event) => {
+          const url = event && event.url;
+          if (!url || url.indexOf("login-callback") === -1) return;
+          try {
+            const hash = url.split("#")[1] || "";
+            const qp = new URLSearchParams(hash);
+            const access_token = qp.get("access_token");
+            const refresh_token = qp.get("refresh_token");
+            if (access_token && refresh_token) {
+              await supabase.auth.setSession({ access_token, refresh_token });
+            }
+          } catch (e) { console.error("[OAuth natif] setSession:", e); }
+          try {
+            const { Browser } = await import("@capacitor/browser");
+            await Browser.close();
+          } catch (e) {}
+        });
+      } catch (e) { console.error("[OAuth natif] listener:", e); }
+    })();
+    return () => { try { if (sub && sub.remove) sub.remove(); } catch (e) {} };
   }, []);
 
   async function signOut() {
