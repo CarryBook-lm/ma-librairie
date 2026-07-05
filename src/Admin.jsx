@@ -316,6 +316,7 @@ export default function Admin() {
   const [campaySoldeSaving, setCampaySoldeSaving] = useState(false);
   const [campaySoldeMsg, setCampaySoldeMsg] = useState("");
   const [campaySoldeUpdatedAt, setCampaySoldeUpdatedAt] = useState(null);
+  const [showCampaySoldeInput, setShowCampaySoldeInput] = useState(false);
   const [carrycarePrice, setCarrycarePrice] = useState(500);
   const [carrycarePriceSaving, setCarrycarePriceSaving] = useState(false);
   // États pour le changement de mot de passe admin
@@ -1188,6 +1189,7 @@ export default function Admin() {
       setCampaySoldeBase(val);
       setCampaySoldeUpdatedAt(nowIso);
       setCampaySoldeMsg("✅ Solde de base enregistré");
+      setShowCampaySoldeInput(false);
     } catch (e) {
       setCampaySoldeMsg("❌ Erreur : " + (e.message || e));
     }
@@ -1899,15 +1901,26 @@ export default function Admin() {
                 <span>Solde de base : <strong style={{ color: "#e8e0d0" }}>{(Number(campaySoldeBase) || 0).toLocaleString()} F</strong></span>
                 <span>+ Ventes du jour (net) : <strong style={{ color: "#4caf50" }}>{todayNetRevenue.toLocaleString()} F</strong></span>
               </div>
-              <div style={{ background: "#0a1420", borderRadius: 8, padding: 12 }}>
-                <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>Après un retrait sur CamPay, saisis ici ton nouveau solde CamPay :</div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input type="number" value={campaySoldeInput} onChange={(e) => setCampaySoldeInput(e.target.value)} placeholder="Ex: 10000" style={{ flex: 1, padding: "10px 12px", borderRadius: 6, border: "1px solid #2a3a4a", background: "#0d1a28", color: "#fff", fontSize: 14 }} />
-                  <button onClick={saveCampaySolde} disabled={campaySoldeSaving} style={{ padding: "10px 16px", borderRadius: 6, border: "none", background: "#2196f3", color: "#fff", fontWeight: "bold", fontSize: 13, cursor: "pointer", opacity: campaySoldeSaving ? 0.6 : 1 }}>{campaySoldeSaving ? "..." : "Mettre à jour"}</button>
+              {!showCampaySoldeInput ? (
+                <div style={{ textAlign: "center" }}>
+                  <button onClick={() => { setCampaySoldeInput(String(campaySoldeBase || "")); setCampaySoldeMsg(""); setShowCampaySoldeInput(true); }} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid #2196f3", background: "transparent", color: "#64b5f6", fontWeight: "bold", fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 18, lineHeight: 1 }}>＋</span> Nouveau solde
+                  </button>
+                  {campaySoldeUpdatedAt && <div style={{ marginTop: 8, fontSize: 10, color: "#666" }}>Dernière maj : {new Date(campaySoldeUpdatedAt).toLocaleString("fr-FR")}</div>}
                 </div>
-                {campaySoldeMsg && <div style={{ marginTop: 8, fontSize: 12, color: campaySoldeMsg.indexOf("✅") === 0 ? "#4caf50" : "#e74c3c" }}>{campaySoldeMsg}</div>}
-                {campaySoldeUpdatedAt && <div style={{ marginTop: 6, fontSize: 10, color: "#666" }}>Dernière maj du solde de base : {new Date(campaySoldeUpdatedAt).toLocaleString("fr-FR")}</div>}
-              </div>
+              ) : (
+                <div style={{ background: "#0a1420", borderRadius: 8, padding: 12 }}>
+                  <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>Après un retrait sur CamPay, saisis ton nouveau solde CamPay :</div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="number" autoFocus value={campaySoldeInput} onChange={(e) => setCampaySoldeInput(e.target.value)} placeholder="Ex: 10000" style={{ flex: 1, padding: "10px 12px", borderRadius: 6, border: "1px solid #2a3a4a", background: "#0d1a28", color: "#fff", fontSize: 14 }} />
+                    <button onClick={saveCampaySolde} disabled={campaySoldeSaving} style={{ padding: "10px 16px", borderRadius: 6, border: "none", background: "#2196f3", color: "#fff", fontWeight: "bold", fontSize: 13, cursor: "pointer", opacity: campaySoldeSaving ? 0.6 : 1 }}>{campaySoldeSaving ? "..." : "Enregistrer"}</button>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                    {campaySoldeMsg ? <div style={{ fontSize: 12, color: campaySoldeMsg.indexOf("✅") === 0 ? "#4caf50" : "#e74c3c" }}>{campaySoldeMsg}</div> : <span />}
+                    <button onClick={() => { setShowCampaySoldeInput(false); setCampaySoldeMsg(""); }} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>Fermer</button>
+                  </div>
+                </div>
+              )}
               <div style={{ marginTop: 10, fontSize: 10, color: "#5a7a9a", textAlign: "center" }}>Ventes du jour nettes = brut − 2% frais CamPay. Le total se met à jour à chaque vente.</div>
             </div>
             {/* SECTION DÉTAIL PAR SOURCE — PRODUITS NUMÉRIQUES */}
