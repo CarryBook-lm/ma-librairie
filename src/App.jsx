@@ -18375,7 +18375,7 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                         {sortedBestSellers.map((book, idx) => (
-                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 130, cursor: "pointer", position: "relative" }}>
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", position: "relative" }}>
                             {/* Badge classement */}
                             <div style={{
                               position: "absolute", top: 6, left: 6, zIndex: 2,
@@ -18386,7 +18386,7 @@ export default function App() {
                             }}>
                               {idx + 1}
                             </div>
-                            <div style={{ width: 130, height: 180, background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
+                            <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
                               {book.cover
                                 ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
@@ -18421,8 +18421,8 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Produits Numériques)</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {digitalBooks.map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
-                          <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
+                          <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
                               ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
@@ -18473,8 +18473,8 @@ export default function App() {
                           <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Produits Physiques)</div>
                           <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                             {physicalNewBooks.map(book => (
-                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
-                                <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
+                                <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                                   {book.cover
                                     ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
@@ -18503,8 +18503,8 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                         {catBooks.map(book => (
-                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
-                            <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
+                            <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
                                 ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
@@ -18546,8 +18546,8 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Mes favoris</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 110, cursor: "pointer", textAlign: "center" }}>
-                          <div style={{ width: 110, height: 155, background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
+                          <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover && <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                             <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
                           </div>
