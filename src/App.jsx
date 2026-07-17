@@ -13031,19 +13031,13 @@ function generateSuggestedReferralCode(name) {
 
 // Helper pour tracker les événements Meta Pixel (Facebook)
 // Vérifie que fbq existe (le Pixel peut être bloqué par AdBlock ou indisponible)
-function trackPixelEvent(eventName, params = {}, eventID = null) {
+function trackPixelEvent(eventName, params = {}) {
   try {
     if (typeof window !== "undefined" && typeof window.fbq === "function") {
-      // 4e argument fbq = { eventID } : c'est LUI qui permet a Meta de recoller
-      // l'evenement navigateur avec le meme evenement envoye par l'API Conversions
-      // (Edge Function meta-conversion). Sans lui, Meta compte la vente 2 fois.
-      const opts = eventID ? { eventID: String(eventID) } : undefined;
       if (Object.keys(params).length > 0) {
-        if (opts) window.fbq("track", eventName, params, opts);
-        else window.fbq("track", eventName, params);
+        window.fbq("track", eventName, params);
       } else {
-        if (opts) window.fbq("track", eventName, {}, opts);
-        else window.fbq("track", eventName);
+        window.fbq("track", eventName);
       }
     }
   } catch (e) {
@@ -15830,18 +15824,15 @@ export default function App() {
             cacheBook(paymentBook);
 
             // 📊 Pixel Meta : Purchase
-            // eventID = EXACTEMENT la meme chaine que celle construite par
-            // l'Edge Function meta-conversion (`carrybooks_purchase_${reference}`).
-            // Si tu changes l'une, change l'autre, sinon la vente est comptee 2 fois.
             setPixelAdvancedMatching({ email: user?.email, phone: phone });
             trackPixelEvent("Purchase", {
               content_ids: [String(paymentBook.id)],
               content_name: paymentBook.title || "",
               content_type: "product",
-              value: finalPrice || 0,
+              value: paymentBook.price || 0,
               currency: "XAF",
               num_items: 1,
-            }, "carrybooks_purchase_" + payData.reference);
+            });
             // 🔥 API Conversions Meta (serveur)
             trackMetaConversion({
               reference: payData.reference,
