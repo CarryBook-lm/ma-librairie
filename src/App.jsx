@@ -18174,7 +18174,7 @@ export default function App() {
 
                   {/* Carte CARRYCARE - banniere pleine largeur */}
                   <img
-                    src="/carrycare-banner.png"
+                    src="/carrycare-banner.png?v=2"
                     alt="CarryCare"
                     onClick={() => {
                       setPage("carrycare");
@@ -18182,7 +18182,7 @@ export default function App() {
                       window.scrollTo(0, 0);
                     }}
                     onError={(e) => {
-                      if (!e.target.dataset.retry) { e.target.dataset.retry = "1"; e.target.src = "/carrycare-banner.jpg"; }
+                      if (!e.target.dataset.retry) { e.target.dataset.retry = "1"; e.target.src = "/carrycare-banner.jpg?v=2"; }
                     }}
                     style={{
                       width: "100%",
