@@ -1573,7 +1573,6 @@ const PAGE_TO_PATH = {
   library: "/ma-bibliotheque",
   catalog: "/catalogue",
   carrycare: "/carrycare",
-  carryshop: "/carryshop",
   carrycolor: "/carrycolor",
   quiz: "/carry-quiz",
   detail: "/livre",
@@ -1594,7 +1593,6 @@ const PATH_TO_PAGE = {
   "/ma-bibliotheque": "library",
   "/catalogue": "catalog",
   "/carrycare": "carrycare",
-  "/carryshop": "carryshop",
   "/carrycolor": "carrycolor",
   "/carry-quiz": "quiz",
   "/mes-resultats": "myResults",
@@ -14224,8 +14222,6 @@ export default function App() {
           else if (go === "carrycare-hair") setCarryCarePage("hairQuiz");
           else if (go === "carrycare-line") setCarryCarePage("lineQuiz");
           else setCarryCarePage("home");
-        } else if (go === "carryshop") {
-          setPage("carryshop");
         } else if (go === "carrycolor") {
           setPage("carrycolor");
         }
@@ -15116,7 +15112,7 @@ export default function App() {
 
   function openBook(book) {
     // 🔙 M�moriser l'univers d'origine pour le bouton retour intelligent
-    if (page === "carryshop" || page === "carrycolor") {
+    if (page === "carrycolor") {
       setPreviousPage(page);
     } else {
       setPreviousPage("home");
@@ -16968,7 +16964,7 @@ export default function App() {
         )}
         <div style={{ background: G.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => setPage(previousPage || "home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>
-            ← Retour {previousPage === "carryshop" ? "à CarryShop" : previousPage === "carrycolor" ? "à CarryColor" : ""}
+            ← Retour {previousPage === "carrycolor" ? "à CarryColor" : ""}
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {!user && (
@@ -18154,90 +18150,51 @@ export default function App() {
           <div style={{ paddingBottom: 80 }}>
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
-                {/* 🌟 3 CARTES UNIVERS - format paysage compact, responsive */}
+                {/* CARTE UNIVERS - CarryCare pleine largeur */}
                 <div style={{ padding: "10px 10px 0" }}>
-                  <div style={{ 
-                    display: "grid", 
-                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))", 
-                    gap: 6,
-                    width: "100%",
-                    boxSizing: "border-box"
-                  }}>
-                    {/* Carte CARRYCOLOR (position 1) — découpe 1/3 gauche de home-cards.png */}
-                    <div 
-                      onClick={() => {
-                        setPage("carrycolor");
-                        setSearchQuery("");
-                        window.scrollTo(0, 0);
-                      }}
-                      style={{
-                        backgroundImage: "url(/home-cards.png)",
-                        backgroundSize: "300% 100%",
-                        backgroundPosition: "0% center",
-                        backgroundRepeat: "no-repeat",
-                        borderRadius: 10,
-                        cursor: "pointer",
-                        boxShadow: "0 3px 10px rgba(177,79,219,0.22)",
-                        transition: "transform 0.2s",
-                        aspectRatio: "1 / 1.1",
-                        minWidth: 0,
-                        overflow: "hidden",
-                        position: "relative"
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    />
+                  {/* Carte CARRYCOLOR - MASQUEE (remettre display:"block" pour la reafficher) */}
+                  <div
+                    onClick={() => {
+                      setPage("carrycolor");
+                      setSearchQuery("");
+                      window.scrollTo(0, 0);
+                    }}
+                    style={{
+                      display: "none",
+                      backgroundImage: "url(/home-cards.png)",
+                      backgroundSize: "300% 100%",
+                      backgroundPosition: "0% center",
+                      backgroundRepeat: "no-repeat",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      aspectRatio: "1 / 1.1",
+                      overflow: "hidden"
+                    }}
+                  />
 
-                    {/* Carte CARRYSHOP (position 2) — découpe 1/3 milieu */}
-                    <div 
-                      onClick={() => {
-                        setPage("carryshop");
-                        setSearchQuery("");
-                        window.scrollTo(0, 0);
-                      }}
-                      style={{
-                        backgroundImage: "url(/home-cards.png)",
-                        backgroundSize: "300% 100%",
-                        backgroundPosition: "50% center",
-                        backgroundRepeat: "no-repeat",
-                        borderRadius: 10,
-                        cursor: "pointer",
-                        boxShadow: "0 3px 10px rgba(168,56,100,0.22)",
-                        transition: "transform 0.2s",
-                        aspectRatio: "1 / 1.1",
-                        minWidth: 0,
-                        overflow: "hidden",
-                        position: "relative"
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    />
-
-                    {/* Carte CARRYCARE (position 3) — découpe 1/3 droite */}
-                    <div 
-                      onClick={() => {
-                        setPage("carrycare");
-                        setCarryCarePage("home");
-                        window.scrollTo(0, 0);
-                      }}
-                      style={{
-                        backgroundImage: "url(/home-cards.png)",
-                        backgroundSize: "300% 100%",
-                        backgroundPosition: "100% center",
-                        backgroundRepeat: "no-repeat",
-                        borderRadius: 10,
-                        cursor: "pointer",
-                        boxShadow: "0 3px 10px rgba(90,24,154,0.25)",
-                        transition: "transform 0.2s",
-                        aspectRatio: "1 / 1.1",
-                        minWidth: 0,
-                        overflow: "hidden",
-                        position: "relative"
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-                    />
-                  </div>
+                  {/* Carte CARRYCARE - banniere pleine largeur */}
+                  <img
+                    src="/carrycare-banner.png"
+                    alt="CarryCare"
+                    onClick={() => {
+                      setPage("carrycare");
+                      setCarryCarePage("home");
+                      window.scrollTo(0, 0);
+                    }}
+                    onError={(e) => {
+                      if (!e.target.dataset.retry) { e.target.dataset.retry = "1"; e.target.src = "/carrycare-banner.jpg"; }
+                    }}
+                    style={{
+                      width: "100%",
+                      display: "block",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      boxShadow: "0 3px 10px rgba(90,24,154,0.25)",
+                      transition: "transform 0.2s"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+                  />
                   {/* Animation du chevron */}
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
                 </div>
@@ -18875,221 +18832,6 @@ export default function App() {
                       <div style={{ fontSize: 12, color: G.text, fontWeight: 600, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 32 }}>{book.title}</div>
                       <div style={{ fontSize: 10, color: "#b14fdb", fontWeight: 600, marginBottom: 4 }}>📦 Livre papier</div>
                       <div style={{ fontSize: 13, color: "#b14fdb", fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString()} F</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* 🌸 PAGE CARRYSHOP (Univers Beaut� & Bien-�tre) */}
-        {page === "carryshop" && (() => {
-          // Filtrer uniquement les produits articles (beaut�/bien-�tre)
-          const beautyProducts = books.filter(b => b.product_type === 'article' && b.status !== 'inactif');
-          // Cat�gories uniques pour la nav
-          const beautyCategories = [...new Set(beautyProducts.map(b => b.category).filter(Boolean))];
-          // Filtre actif
-          const filteredBeauty = selectedShopCategory === "Tous" 
-            ? beautyProducts 
-            : beautyProducts.filter(b => b.category === selectedShopCategory);
-          // Filtre par recherche
-          const beautySearch = searchQuery.toLowerCase().trim();
-          const finalBeauty = beautySearch 
-            ? filteredBeauty.filter(b => 
-                b.title?.toLowerCase().includes(beautySearch) ||
-                b.author?.toLowerCase().includes(beautySearch) ||
-                b.summary?.toLowerCase().includes(beautySearch)
-              )
-            : filteredBeauty;
-
-          return (
-            <div style={{ padding: "12px 16px 80px" }}>
-              {/* Bandeau retour intelligent : si une catégorie est sélectionnée, retour à la vue Netflix de CarryShop. Sinon retour à CarryBooks. */}
-              <button 
-                onClick={() => {
-                  if (selectedShopCategory !== "Tous" || searchQuery) {
-                    // On est dans une catégorie filtrée ou en recherche → retour à la vue Netflix
-                    setSelectedShopCategory("Tous");
-                    setSearchQuery("");
-                    window.scrollTo(0, 0);
-                  } else {
-                    // On est déjà sur "Tous" → retour à CarryBooks
-                    setPage("home");
-                    setSelectedShopCategory("Tous");
-                    setSearchQuery("");
-                    window.scrollTo(0, 0);
-                  }
-                }}
-                style={{ background: "none", border: "none", color: G.gold, fontSize: 13, cursor: "pointer", padding: 0, marginBottom: 12 }}
-              >
-                {(selectedShopCategory !== "Tous" || searchQuery) ? "← Retour à CarryShop" : "← Retour à CarryBooks"}
-              </button>
-
-              {/* Hero CarryShop — image */}
-              <div style={{
-                borderRadius: 14,
-                overflow: "hidden",
-                marginBottom: 20,
-                boxShadow: "0 6px 20px rgba(168,56,100,0.25)"
-              }}>
-                <img
-                  src="/hero-carryshop.png"
-                  alt="CarryShop - Produits Divers"
-                  style={{ width: "100%", display: "block", height: "auto" }}
-                />
-              </div>
-
-              {/* Recherche CarryShop */}
-              <div style={{ position: "relative", marginBottom: 14 }}>
-                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
-                <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher un produit..."
-                  style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {/* Filtres cat�gories (chips horizontales) */}
-              {beautyCategories.length > 0 && (
-                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 16 }}>
-                  <button
-                    onClick={() => setSelectedShopCategory("Tous")}
-                    style={{
-                      flexShrink: 0,
-                      padding: "6px 14px",
-                      background: selectedShopCategory === "Tous" ? "#a83864" : "transparent",
-                      border: "1px solid " + (selectedShopCategory === "Tous" ? "#a83864" : G.border),
-                      color: selectedShopCategory === "Tous" ? "#fff" : G.text,
-                      borderRadius: 20,
-                      cursor: "pointer",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    Tous ({beautyProducts.length})
-                  </button>
-                  {beautyCategories.map(cat => {
-                    const count = beautyProducts.filter(b => b.category === cat).length;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedShopCategory(cat)}
-                        style={{
-                          flexShrink: 0,
-                          padding: "6px 14px",
-                          background: selectedShopCategory === cat ? "#a83864" : "transparent",
-                          border: "1px solid " + (selectedShopCategory === cat ? "#a83864" : G.border),
-                          color: selectedShopCategory === cat ? "#fff" : G.text,
-                          borderRadius: 20,
-                          cursor: "pointer",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          whiteSpace: "nowrap"
-                        }}
-                      >
-                        {cat} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Titre et compteur */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <div style={{ fontSize: 13, color: G.textDim }}>
-                  {finalBeauty.length} produit{finalBeauty.length > 1 ? "s" : ""} {selectedShopCategory !== "Tous" ? "dans " + selectedShopCategory : ""}
-                </div>
-              </div>
-
-              {/* Affichage : Netflix si "Tous" + pas de recherche, sinon Grille */}
-              {finalBeauty.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "60px 20px", color: G.textDim }}>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
-                  <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 6 }}>Aucun produit trouvé</div>
-                  <div style={{ fontSize: 12 }}>Reviens bientôt, de nouveaux produits arrivent !</div>
-                </div>
-              ) : (selectedShopCategory === "Tous" && !beautySearch) ? (
-                /* 🎬 STYLE NETFLIX : rangées horizontales par catégorie, triées par nombre de produits */
-                <>
-                  {beautyCategories
-                    .slice()
-                    .sort((a, b) => 
-                      beautyProducts.filter(p => p.category === b).length - 
-                      beautyProducts.filter(p => p.category === a).length
-                    )
-                    .map(cat => {
-                      const catProducts = beautyProducts.filter(b => b.category === cat);
-                      const previewProducts = catProducts.slice(0, 12);
-                      return (
-                        <div key={cat} style={{ marginBottom: 28 }}>
-                          {/* En-tête de rangée avec "Voir tout" */}
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                            <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>
-                              {cat} <span style={{ color: G.textFaint, fontSize: 12, fontWeight: "normal" }}>({catProducts.length})</span>
-                            </div>
-                            {catProducts.length > 12 && (
-                              <button 
-                                onClick={() => setSelectedShopCategory(cat)}
-                                style={{ background: "none", border: "none", color: "#a83864", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
-                                Voir tout →
-                              </button>
-                            )}
-                          </div>
-                          {/* Rangée horizontale scrollable */}
-                          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", marginLeft: -16, marginRight: -16, padding: "0 16px 4px" }}>
-                            {previewProducts.map(book => (
-                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: 120, cursor: "pointer", textAlign: "center" }}>
-                                <div style={{ position: "relative", width: 120, height: 120, background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
-                                  {book.cover
-                                    ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
-                                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>🌸</div>}
-                                  {isOnPromo(book) && <div style={{ position: "absolute", top: 6, right: 6, background: "#dc3545", color: "#fff", fontSize: 9, padding: "2px 6px", borderRadius: 6, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
-                                  {isOutOfStock(book) && (
-                                    <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 9, fontWeight: "bold", textAlign: "center", padding: "4px 0", letterSpacing: 1 }}>
-                                      🚫 RUPTURE
-                                    </div>
-                                  )}
-                                </div>
-                                <div style={{ fontSize: 11, color: G.text, fontWeight: 600, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", height: 28 }}>{book.title}</div>
-                                <div style={{ fontSize: 12, color: "#a83864", fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString()} F</div>
-                              </div>
-                            ))}
-                            {/* Carte "Voir tout" en fin de rangée si plus de 12 produits */}
-                            {catProducts.length > 12 && (
-                              <div onClick={() => setSelectedShopCategory(cat)} style={{ flexShrink: 0, width: 120, height: 120, background: "linear-gradient(135deg, #d4769e 0%, #a83864 100%)", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", marginTop: 0 }}>
-                                <div style={{ fontSize: 26, marginBottom: 4, fontWeight: "bold" }}>→</div>
-                                <div style={{ fontSize: 11, fontWeight: 600 }}>Voir les {catProducts.length}</div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                </>
-              ) : (
-                /* 📋 GRILLE CLASSIQUE pour filtre catégorie ou recherche */
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-                  {finalBeauty.map(book => (
-                    <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
-                      <div style={{ position: "relative", width: "100%", paddingBottom: "100%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
-                        {book.cover
-                          ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
-                          : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>🌸</div>}
-                        {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
-                        {isOutOfStock(book) && (
-                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 11, fontWeight: "bold", textAlign: "center", padding: "5px 0", letterSpacing: 1 }}>
-                            🚫 RUPTURE
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 12, color: G.text, fontWeight: 600, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 32 }}>{book.title}</div>
-                      <div style={{ fontSize: 10, color: "#a83864", fontWeight: 600, marginBottom: 4 }}>{getProductBadge(book)}</div>
-                      <div style={{ fontSize: 13, color: "#a83864", fontWeight: "bold" }}>{getDisplayPrice(book).toLocaleString()} F</div>
                     </div>
                   ))}
                 </div>
