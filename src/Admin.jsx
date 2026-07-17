@@ -1704,7 +1704,25 @@ export default function Admin() {
   // Solde CamPay : base saisie manuellement + ventes NETTES du jour (frais CamPay 2%)
   const CAMPAY_FEE_RATE = 0.02;
   const todayNetRevenue = Math.round(grandTodayRevenue * (1 - CAMPAY_FEE_RATE));
-  const campaySoldeTotal = (Number(campaySoldeBase) || 0) + todayNetRevenue;
+  const soldeSince = campaySoldeUpdatedAt ? new Date(campaySoldeUpdatedAt) : today;
+  const sumSince = (arr, dateField, amountField) =>
+    (arr || []).filter(x => x && x[dateField] && new Date(x[dateField]) > soldeSince)
+      .reduce((s, x) => s + (x[amountField] || 0), 0);
+  const sinceBooksRevenue = (realSales || [])
+    .filter(p => p && p.created_at && new Date(p.created_at) > soldeSince)
+    .reduce((s, purchase) => {
+      if (purchase.amount !== null && purchase.amount !== undefined) return s + purchase.amount;
+      const book = books.find(b => b.id === purchase.book_id);
+      return s + (book ? (book.price || 0) : 0);
+    }, 0);
+  const grandSinceRevenue = sinceBooksRevenue
+    + sumSince(subscribers, "started_at", "price")
+    + sumSince(quizPayments, "created_at", "amount")
+    + sumSince(carrycarePayments, "created_at", "amount")
+    + sumSince(carryshopOrders, "created_at", "total")
+    + sumSince(carrycolorOrders, "created_at", "total");
+  const sinceNetRevenue = Math.round(grandSinceRevenue * (1 - CAMPAY_FEE_RATE));
+  const campaySoldeTotal = (Number(campaySoldeBase) || 0) + sinceNetRevenue;
 
   // ========== 📊 STATS HIER / 7 JOURS / 30 JOURS ==========
   // Bornes temporelles
@@ -1899,7 +1917,7 @@ export default function Admin() {
               <div style={{ fontSize: 30, fontWeight: "bold", color: "#64b5f6", marginBottom: 10, textAlign: "center" }}>{campaySoldeTotal.toLocaleString()} F</div>
               <div style={{ display: "flex", justifyContent: "center", gap: 18, fontSize: 12, color: "#9fb8d0", marginBottom: 14, flexWrap: "wrap" }}>
                 <span>Solde de base : <strong style={{ color: "#e8e0d0" }}>{(Number(campaySoldeBase) || 0).toLocaleString()} F</strong></span>
-                <span>+ Ventes du jour (net) : <strong style={{ color: "#4caf50" }}>{todayNetRevenue.toLocaleString()} F</strong></span>
+                <span>+ Ventes depuis (net) : <strong style={{ color: "#4caf50" }}>{sinceNetRevenue.toLocaleString()} F</strong></span>
               </div>
               {!showCampaySoldeInput ? (
                 <div style={{ textAlign: "center" }}>
