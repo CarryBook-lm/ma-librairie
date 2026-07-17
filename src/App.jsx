@@ -18326,10 +18326,10 @@ export default function App() {
                   {/* Install button — hidden once app is installed */}
                   {!window.matchMedia("(display-mode: standalone)").matches && (
                     <button onClick={async () => {
-                      if (deferredPrompt) {
-                        deferredPrompt.prompt();
-                        const { outcome } = await deferredPrompt.userChoice;
-                        if (outcome === "accepted") setDeferredPrompt(null);
+                      if (deferredPrompt || window.__pwaPrompt) {
+                        (deferredPrompt || window.__pwaPrompt).prompt();
+                        const { outcome } = await (deferredPrompt || window.__pwaPrompt).userChoice;
+                        if (outcome === "accepted") { setDeferredPrompt(null); window.__pwaPrompt = null; }
                       } else {
                         setShowInstallModal(true);
                       }

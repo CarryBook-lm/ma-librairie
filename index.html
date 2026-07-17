@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="facebook-domain-verification" content="fanzr6ipm9uccl2oopvw1cueec72qm" />
     <link rel="manifest" href="/manifest.json">
+    <script>
+      window.__pwaPrompt = null;
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        window.__pwaPrompt = e;
+        try { window.dispatchEvent(new Event("pwa-can-install")); } catch (err) {}
+      });
+      window.addEventListener("appinstalled", function () { window.__pwaPrompt = null; });
+    </script>
     <meta name="theme-color" content="#f5f0e8">
     <!-- Preconnexions : démarre les connexions réseau au plus tôt (gain de vitesse) -->
     <link rel="preconnect" href="https://huikxujxsklboejkbnda.supabase.co" crossorigin>
