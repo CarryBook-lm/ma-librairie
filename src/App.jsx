@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import { Preferences } from "@capacitor/preferences";
 import { createClient } from "@supabase/supabase-js";
 
+// 🌍 PayDunya (paiement international) : mettre à true UNIQUEMENT quand le
+// compte PayDunya est validé et les clés PRODUCTION en place (PAYDUNYA_MODE=live).
+const PAYDUNYA_ENABLED = false;
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -17635,7 +17639,7 @@ export default function App() {
                   <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
                   <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
                   <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>Avec quel opérateur veux-tu payer ?</p>
-                  {visitorCountry && visitorCountry !== "CM" && (
+                  {PAYDUNYA_ENABLED && visitorCountry && visitorCountry !== "CM" && (
                     <div style={{ background: "#e3f2fd", border: "1px solid #1e88e5", borderRadius: 8, padding: "8px 12px", marginBottom: 14, fontSize: 12, color: "#0d47a1", lineHeight: 1.5 }}>
                       🌍 Tu sembles être hors Cameroun. Utilise « Carte / Mobile Money » ci-dessous.
                     </div>
@@ -17648,10 +17652,12 @@ export default function App() {
                     width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
                   }}>📱 Orange Money</button>
+                  {PAYDUNYA_ENABLED && (
                   <button onClick={payWithPaydunya} disabled={paydunyaLoading} style={{
                     width: "100%", padding: 16, marginBottom: 14, background: "#1e88e5", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", opacity: paydunyaLoading ? 0.6 : 1
                   }}>{paydunyaLoading ? "Redirection en cours..." : "🌍 Carte / Mobile Money (hors Cameroun)"}</button>
+                  )}
                   <button onClick={() => setPaymentStep(1)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>← Retour</button>
                 </div>
               )}
