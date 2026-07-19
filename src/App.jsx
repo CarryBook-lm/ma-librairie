@@ -13657,6 +13657,8 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("paydunya_return") === "1") {
         setPaydunyaReturn(true);
+        setPage("library");
+        setTimeout(() => setPaydunyaReturn(false), 8000);
         try { window.history.replaceState({}, "", "/"); } catch (e) {}
       }
     } catch (e) {}
@@ -17505,13 +17507,10 @@ export default function App() {
 
         {/* PAYMENT MODAL in detail page */}
         {paydunyaReturn && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 20 }}>
-            <div style={{ background: "#fff", borderRadius: 14, padding: 24, maxWidth: 360, textAlign: "center" }}>
-              <div style={{ fontSize: 40, marginBottom: 10 }}>⏳</div>
-              <h3 style={{ color: "#1a1a1a", fontSize: 17, marginBottom: 10 }}>Paiement en cours de confirmation</h3>
-              <p style={{ color: "#666", fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>Merci ! Si ton paiement a été validé, ton livre sera débloqué automatiquement dans quelques instants. Tu le retrouveras dans « Ma bibliothèque ».</p>
-              <button onClick={() => setPaydunyaReturn(false)} style={{ width: "100%", padding: 12, background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", cursor: "pointer" }}>OK, j'ai compris</button>
-            </div>
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 300, background: "#1c8a3e", color: "#fff", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
+            <span style={{ fontSize: 18 }}>✅</span>
+            <span style={{ fontSize: 13, fontWeight: "bold", textAlign: "center" }}>Paiement reçu ! Ton livre se débloque dans « Ma bibliothèque ».</span>
+            <button onClick={() => setPaydunyaReturn(false)} style={{ background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", marginLeft: 6 }}>OK</button>
           </div>
         )}
 
