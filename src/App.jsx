@@ -13641,6 +13641,26 @@ export default function App() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
+  const [visitorCountry, setVisitorCountry] = useState(null);
+  const [paydunyaLoading, setPaydunyaLoading] = useState(false);
+  const [paydunyaReturn, setPaydunyaReturn] = useState(false);
+  // Détection pays (Cameroun -> CamPay, ailleurs -> PayDunya) + retour PayDunya
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/geo");
+        const d = await r.json();
+        if (d && d.country) setVisitorCountry(d.country);
+      } catch (e) {}
+    })();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("paydunya_return") === "1") {
+        setPaydunyaReturn(true);
+        try { window.history.replaceState({}, "", "/"); } catch (e) {}
+      }
+    } catch (e) {}
+  }, []);
 
   // 🔄 Recharger le livre complet depuis Supabase quand le paiement est validé
   // pour s'assurer d'avoir can_download et pdf_url à jour
@@ -15657,6 +15677,49 @@ export default function App() {
     });
   }
 
+  // 🌍 Paiement international via PayDunya (clients hors Cameroun)
+  async function payWithPaydunya() {
+    try {
+      setPaydunyaLoading(true);
+      const basePrice = paymentBook.price || 0;
+      const promoDiscount = appliedPromo ? Math.round(basePrice * appliedPromo.discount_pct / 100) : 0;
+      const finalPrice = basePrice - promoDiscount;
+      if (finalPrice < 200) {
+        alert("Le montant minimum pour un paiement international est de 200 FCFA.");
+        setPaydunyaLoading(false);
+        return;
+      }
+      let referrerCode = null;
+      try {
+        const code = localStorage.getItem("carrybooks_referrer_code");
+        const exp = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+        if (code && exp > Date.now()) referrerCode = code;
+      } catch (e) {}
+      const res = await fetch("/api/paydunya-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: finalPrice,
+          book_id: paymentBook.id,
+          book_title: paymentBook.title,
+          user_id: user ? user.id : "",
+          email: user ? (user.email || "") : "",
+          referrer_code: referrerCode,
+        }),
+      });
+      const data = await res.json();
+      if (data && data.success && data.url) {
+        window.location.href = data.url;
+      } else {
+        setPaydunyaLoading(false);
+        alert("Impossible de lancer le paiement international. Réessaie dans un instant.");
+      }
+    } catch (e) {
+      setPaydunyaLoading(false);
+      alert("Erreur de connexion. Réessaie.");
+    }
+  }
+
  async function handlePurchase() {
     setPaymentStep(4);
     try {
@@ -17441,6 +17504,17 @@ export default function App() {
         </div>
 
         {/* PAYMENT MODAL in detail page */}
+        {paydunyaReturn && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 20 }}>
+            <div style={{ background: "#fff", borderRadius: 14, padding: 24, maxWidth: 360, textAlign: "center" }}>
+              <div style={{ fontSize: 40, marginBottom: 10 }}>⏳</div>
+              <h3 style={{ color: "#1a1a1a", fontSize: 17, marginBottom: 10 }}>Paiement en cours de confirmation</h3>
+              <p style={{ color: "#666", fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>Merci ! Si ton paiement a été validé, ton livre sera débloqué automatiquement dans quelques instants. Tu le retrouveras dans « Ma bibliothèque ».</p>
+              <button onClick={() => setPaydunyaReturn(false)} style={{ width: "100%", padding: 12, background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", cursor: "pointer" }}>OK, j'ai compris</button>
+            </div>
+          </div>
+        )}
+
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
             <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
@@ -17562,6 +17636,11 @@ export default function App() {
                   <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
                   <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
                   <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>Avec quel opérateur veux-tu payer ?</p>
+                  {visitorCountry && visitorCountry !== "CM" && (
+                    <div style={{ background: "#e3f2fd", border: "1px solid #1e88e5", borderRadius: 8, padding: "8px 12px", marginBottom: 14, fontSize: 12, color: "#0d47a1", lineHeight: 1.5 }}>
+                      🌍 Tu sembles être hors Cameroun. Utilise « Carte / Mobile Money » ci-dessous.
+                    </div>
+                  )}
                   <button onClick={() => { setPaymentMethod("mtn"); setPaymentStep(3); }} style={{
                     width: "100%", padding: 16, marginBottom: 10, background: "#FFCC00", color: "#000",
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
@@ -17570,6 +17649,10 @@ export default function App() {
                     width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
                   }}>📱 Orange Money</button>
+                  <button onClick={payWithPaydunya} disabled={paydunyaLoading} style={{
+                    width: "100%", padding: 16, marginBottom: 14, background: "#1e88e5", color: "#fff",
+                    border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", opacity: paydunyaLoading ? 0.6 : 1
+                  }}>{paydunyaLoading ? "Redirection en cours..." : "🌍 Carte / Mobile Money (hors Cameroun)"}</button>
                   <button onClick={() => setPaymentStep(1)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>← Retour</button>
                 </div>
               )}
