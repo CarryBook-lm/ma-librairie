@@ -50,13 +50,28 @@ function ComptabiliteView() {
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [adSpendInput, setAdSpendInput] = useState("");
   const [otherInput, setOtherInput] = useState("");
+  const [adBudgets, setAdBudgets] = useState([]);
+  const [budgetInput, setBudgetInput] = useState("");
+  const [budgetSaving, setBudgetSaving] = useState(false);
+  const [budgetMsg, setBudgetMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+
+  const toDateStr = (d) => new Date(d).toLocaleDateString("fr-CA");
+  // Budget pub applicable à un jour = valeur la plus récente dont la date d'effet <= ce jour
+  function budgetForDay(dayDate) {
+    const dayStr = toDateStr(dayDate);
+    let amt = 0, best = "";
+    for (const b of adBudgets) {
+      if (b.effective_date <= dayStr && b.effective_date >= best) { best = b.effective_date; amt = Number(b.daily_amount) || 0; }
+    }
+    return amt;
+  }
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [p, g, c, cc, qp, wd, ex] = await Promise.all([
+      const [p, g, c, cc, qp, wd, ex, ab] = await Promise.all([
         supabase.from("purchases").select("amount, created_at"),
         supabase.from("guest_purchases").select("amount, created_at"),
         supabase.from("cart_orders").select("total, created_at, payment_status").eq("payment_status", "paid"),
@@ -64,6 +79,7 @@ function ComptabiliteView() {
         supabase.from("quiz_payments").select("amount, created_at"),
         supabase.from("referral_withdrawals").select("amount, created_at, status").eq("status", "approved"),
         supabase.from("daily_expenses").select("expense_date, ad_spend, other_charges"),
+        supabase.from("ad_budget").select("effective_date, daily_amount").order("effective_date", { ascending: true }),
       ]);
       setPurchases(p.data || []);
       setGuestPurchases(g.data || []);
@@ -72,6 +88,9 @@ function ComptabiliteView() {
       setQuizPays(qp.data || []);
       setWithdrawals(wd.data || []);
       setExpenses(ex.data || []);
+      setAdBudgets(ab.data || []);
+      const _latest = (ab.data || []).slice(-1)[0];
+      if (_latest) setBudgetInput(String(_latest.daily_amount));
     } catch (e) {
       console.error("Erreur chargement comptabilité:", e);
     }
@@ -84,9 +103,14 @@ function ComptabiliteView() {
   // pré-remplir les champs avec la valeur déjà enregistrée pour cette date
   useEffect(() => {
     const row = expenses.find(e => e.expense_date === selectedDate);
-    setAdSpendInput(row ? String(row.ad_spend ?? "") : "");
+    if (row && row.ad_spend !== null && row.ad_spend !== undefined && row.ad_spend !== "") {
+      setAdSpendInput(String(row.ad_spend));
+    } else {
+      const b = budgetForDay(selectedDate);
+      setAdSpendInput(b ? String(b) : "");
+    }
     setOtherInput(row ? String(row.other_charges ?? "") : "");
-  }, [selectedDate, expenses]);
+  }, [selectedDate, expenses, adBudgets]);
 
   async function saveCharges() {
     setSaving(true);
@@ -113,6 +137,22 @@ function ComptabiliteView() {
     setSaving(false);
   }
 
+  async function saveBudget() {
+    const val = Math.round(Number(budgetInput) || 0);
+    if (isNaN(val) || val < 0) { setBudgetMsg("Montant invalide"); return; }
+    setBudgetSaving(true); setBudgetMsg("");
+    try {
+      const today = new Date().toLocaleDateString("fr-CA");
+      const { error } = await supabase.from("ad_budget").upsert(
+        { effective_date: today, daily_amount: val },
+        { onConflict: "effective_date" }
+      );
+      if (error) setBudgetMsg("❌ " + error.message);
+      else { setBudgetMsg("✅ Budget pub : " + val.toLocaleString() + " F/jour"); await loadAll(); }
+    } catch (e) { setBudgetMsg("❌ " + (e.message || e)); }
+    setBudgetSaving(false);
+  }
+
   // ── Helpers de période ──
   const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   const now = new Date();
@@ -129,10 +169,24 @@ function ComptabiliteView() {
   const sumAmt = (arr, field, start, end) =>
     arr.filter(r => inRange(r.created_at, start, end)).reduce((s, r) => s + (Number(r[field]) || 0), 0);
 
-  const expInRange = (start, end) =>
-    expenses
-      .filter(e => { const d = new Date(e.expense_date + "T00:00:00"); return d >= start && d < end; })
-      .reduce((s, e) => s + (Number(e.ad_spend) || 0) + (Number(e.other_charges) || 0), 0);
+  const expInRange = (start, end) => {
+    let total = 0;
+    const cap = end < tomorrowStart ? end : tomorrowStart; // ne pas compter les jours futurs
+    const cur = new Date(start);
+    let guard = 0;
+    while (cur < cap && guard < 4000) {
+      const dayStr = toDateStr(cur);
+      const row = expenses.find(e => e.expense_date === dayStr);
+      const adForDay = (row && row.ad_spend !== null && row.ad_spend !== undefined && row.ad_spend !== "")
+        ? (Number(row.ad_spend) || 0)
+        : budgetForDay(cur);
+      const otherForDay = row ? (Number(row.other_charges) || 0) : 0;
+      total += adForDay + otherForDay;
+      cur.setDate(cur.getDate() + 1);
+      guard++;
+    }
+    return total;
+  };
 
   // Calcul complet pour une période [start, end[
   function compute(start, end) {
@@ -192,6 +246,19 @@ function ComptabiliteView() {
 
       {/* SAISIE DES CHARGES */}
       <div style={{ background: "#151515", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <div style={{ background: "#12100a", border: "1px solid #3a3320", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: GOLD, fontWeight: "bold", marginBottom: 6 }}>📢 Budget pub quotidien (fixe)</div>
+          <div style={{ fontSize: 11, color: "#999", marginBottom: 10, lineHeight: 1.5 }}>Compté automatiquement CHAQUE jour (jusqu'à aujourd'hui) sans le ressaisir. Change-le seulement quand ton budget change.</div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="number" value={budgetInput} placeholder="Ex: 2000" onChange={e => setBudgetInput(e.target.value)}
+              style={{ flex: "1 1 140px", padding: 10, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 14 }} />
+            <button onClick={saveBudget} disabled={budgetSaving}
+              style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: GOLD, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>
+              {budgetSaving ? "..." : "Enregistrer le budget"}
+            </button>
+          </div>
+          {budgetMsg && <div style={{ marginTop: 8, fontSize: 12, color: budgetMsg.indexOf("✅") === 0 ? "#4CAF50" : "#e74c3c" }}>{budgetMsg}</div>}
+        </div>
         <div style={{ fontSize: 13, color: GOLD, fontWeight: "bold", marginBottom: 12 }}>Charges de la journée</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: "1 1 140px" }}>
@@ -201,7 +268,7 @@ function ComptabiliteView() {
               style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 14 }} />
           </div>
           <div style={{ flex: "1 1 140px" }}>
-            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 4 }}>Montant publicitaire (F)</label>
+            <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 4 }}>Pub ce jour (exception)</label>
             <input type="number" value={adSpendInput} placeholder="0"
               onChange={e => setAdSpendInput(e.target.value)}
               style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 14 }} />
