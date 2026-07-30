@@ -6,6 +6,9 @@ import { createClient } from "@supabase/supabase-js";
 // compte PayDunya est validé et les clés PRODUCTION en place (PAYDUNYA_MODE=live).
 const PAYDUNYA_ENABLED = false;
 
+// 🔐 Bouton admin visible UNIQUEMENT pour cet email connecté
+const ADMIN_EMAIL = "carrybooks.com@gmail.com";
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -18052,44 +18055,17 @@ export default function App() {
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
-          {/* 🛒 IC�NE PANIER avec compteur */}
-          <button 
-            onClick={() => { setPage("cart"); setShowMenu(false); }} 
-            style={{ 
-              background: "none", 
-              border: "none", 
-              color: "#1a1208", 
-              fontSize: 24, 
-              cursor: "pointer", 
-              padding: 4, 
-              position: "relative" 
-            }}
-          >
-            🛒
-            {cartItemCount > 0 && (
-              <span style={{ 
-                position: "absolute", 
-                top: -2, 
-                right: -2, 
-                background: "#dc3545", 
-                color: "#fff", 
-                fontSize: 10, 
-                fontWeight: "bold", 
-                minWidth: 18, 
-                height: 18, 
-                borderRadius: 9, 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center", 
-                padding: "0 4px",
-                lineHeight: 1,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
-              }}>
-                {cartItemCount > 99 ? "99+" : cartItemCount}
-              </span>
-            )}
-          </button>
-          <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
+          {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
+          {user && user.email === ADMIN_EMAIL && (
+            <button
+              onClick={() => { window.location.href = "/admin"; }}
+              title="Espace admin"
+              style={{ background: "none", border: "none", color: "#1a1208", fontSize: 24, cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}
+            >
+              ⚙️
+            </button>
+          )}
+                    <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
         </div>
