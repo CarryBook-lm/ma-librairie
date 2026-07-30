@@ -5709,6 +5709,10 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
       </div>
 
       <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+        {/* Bouton télécharger en HAUT (bien visible) */}
+        <div style={{ marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadFacialDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon diagnostic en PDF</button>
+        </div>
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
@@ -8022,6 +8026,10 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
       </div>
 
       <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+        {/* Bouton télécharger en HAUT (bien visible) */}
+        <div style={{ marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadBodyDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon diagnostic en PDF</button>
+        </div>
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
@@ -9555,6 +9563,10 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, flex: 1, textAlign: "center" }}>👨‍👩‍👧 Conseils alimentation famille</div>
         </div>
         <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+          {/* Bouton télécharger en HAUT (bien visible) */}
+          <div style={{ marginBottom: 16, textAlign: "center" }}>
+            <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mes conseils en PDF</button>
+          </div>
 
           <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: 22, marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 56, marginBottom: 12 }}>👨‍👩‍👧</div>
@@ -9657,6 +9669,10 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
       </div>
 
       <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+        {/* Bouton télécharger en HAUT (bien visible) */}
+        <div style={{ marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadLigneDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon plan en PDF</button>
+        </div>
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
@@ -10972,6 +10988,10 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
       </div>
 
       <div style={{ padding: "16px", maxWidth: 720, margin: "0 auto" }}>
+        {/* Bouton télécharger en HAUT (bien visible) */}
+        <div style={{ marginBottom: 16, textAlign: "center" }}>
+          <button onClick={() => downloadCapDiagnosticPDF(result)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>📥 Télécharger mon diagnostic en PDF</button>
+        </div>
 
         {/* HERO */}
         <div style={{ background: "linear-gradient(135deg, #fdf6e3 0%, #f0d999 100%)", border: "1px solid " + CAP.border, borderRadius: 18, padding: "26px 22px", marginBottom: 18, textAlign: "center" }}>
