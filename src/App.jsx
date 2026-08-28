@@ -16129,12 +16129,12 @@ export default function App() {
     const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
     const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
     const PAYS_LISTE = [
-      { nom: "Bénin", code: "+229" }, { nom: "Burkina Faso", code: "+226" }, { nom: "Burundi", code: "+257" },
-      { nom: "Cameroun", code: "+237" }, { nom: "Congo (Brazzaville)", code: "+242" }, { nom: "Congo (RDC)", code: "+243" },
-      { nom: "Côte d'Ivoire", code: "+225" }, { nom: "Gabon", code: "+241" }, { nom: "Guinée", code: "+224" },
-      { nom: "Mali", code: "+223" }, { nom: "Niger", code: "+227" }, { nom: "République centrafricaine", code: "+236" },
-      { nom: "Rwanda", code: "+250" }, { nom: "Sénégal", code: "+221" }, { nom: "Tchad", code: "+235" },
-      { nom: "Togo", code: "+228" }, { nom: "Autre pays", code: "" },
+      { nom: "Bénin", code: "+229", flag: "🇧🇯" }, { nom: "Burkina Faso", code: "+226", flag: "🇧🇫" }, { nom: "Burundi", code: "+257", flag: "🇧🇮" },
+      { nom: "Cameroun", code: "+237", flag: "🇨🇲" }, { nom: "Congo (Brazzaville)", code: "+242", flag: "🇨🇬" }, { nom: "Congo (RDC)", code: "+243", flag: "🇨🇩" },
+      { nom: "Côte d'Ivoire", code: "+225", flag: "🇨🇮" }, { nom: "Gabon", code: "+241", flag: "🇬🇦" }, { nom: "Guinée", code: "+224", flag: "🇬🇳" },
+      { nom: "Mali", code: "+223", flag: "🇲🇱" }, { nom: "Niger", code: "+227", flag: "🇳🇪" }, { nom: "République centrafricaine", code: "+236", flag: "🇨🇫" },
+      { nom: "Rwanda", code: "+250", flag: "🇷🇼" }, { nom: "Sénégal", code: "+221", flag: "🇸🇳" }, { nom: "Tchad", code: "+235", flag: "🇹🇩" },
+      { nom: "Togo", code: "+228", flag: "🇹🇬" }, { nom: "Autre pays", code: "", flag: "🌍" },
     ];
     const indicatif = (PAYS_LISTE.find(p => p.nom === auteurPays) || {}).code || "";
     return (
@@ -16179,12 +16179,12 @@ export default function App() {
               <label style={labelSt}>Pays *</label>
               <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
                 <option value="">— Choisis ton pays —</option>
-                {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.nom}</option>)}
+                {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
               </select>
               <div style={{ height: 14 }} />
               <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
               <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-                <div style={{ display: "flex", alignItems: "center", padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{indicatif || "+___"}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
                 <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder={auteurPays ? "Ton numéro" : "Choisis d'abord ton pays"} disabled={!auteurPays} style={{ ...champ, flex: 1, marginBottom: 0, opacity: auteurPays ? 1 : 0.6 }} />
               </div>
               <div style={{ height: 14 }} />
