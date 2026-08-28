@@ -333,6 +333,9 @@ export default function Admin() {
   const [recentReads, setRecentReads] = useState(0);
   const [topBooks, setTopBooks] = useState([]);
   const [view, setView] = useState("dashboard");
+  const [auteursList, setAuteursList] = useState([]);
+  const [auteursLoading, setAuteursLoading] = useState(false);
+  const [auteursFilter, setAuteursFilter] = useState("en_attente");
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -1097,6 +1100,33 @@ export default function Admin() {
   async function fetchPromoCodes() {
     const { data } = await supabase.from("promo_codes").select("*").order("created_at", { ascending: false });
     if (data) setPromoCodes(data);
+  }
+
+  async function loadAuteurBooks(filter = "en_attente") {
+    setAuteursLoading(true);
+    try {
+      let q = supabase.from("books").select("id,title,cover,price,category,subcategory,summary,extract_pages,content,pdf_url,product_type,status,moderation,motif_refus,author,auteur_id,created_at").not("auteur_id", "is", null).order("created_at", { ascending: false });
+      if (filter !== "all") q = q.eq("moderation", filter);
+      const { data } = await q;
+      setAuteursList(data || []);
+    } catch (e) { setAuteursList([]); }
+    setAuteursLoading(false);
+  }
+  async function approuverLivre(b) {
+    if (!window.confirm("Approuver « " + b.title + " » ? Il deviendra visible dans la boutique.")) return;
+    await supabase.from("books").update({ moderation: "valide", status: "actif" }).eq("id", b.id);
+    loadAuteurBooks(auteursFilter);
+  }
+  async function refuserLivre(b) {
+    const motif = window.prompt("Motif du refus (visible par l'auteur) :", "");
+    if (motif === null) return;
+    await supabase.from("books").update({ moderation: "refuse", status: "en_attente", motif_refus: motif }).eq("id", b.id);
+    loadAuteurBooks(auteursFilter);
+  }
+  async function retirerLivre(b) {
+    if (!window.confirm("Retirer « " + b.title + " » de la boutique ? Il repassera en attente.")) return;
+    await supabase.from("books").update({ moderation: "en_attente", status: "en_attente" }).eq("id", b.id);
+    loadAuteurBooks(auteursFilter);
   }
 
   async function loadPendingReviews(filter = "pending") {
@@ -1934,6 +1964,7 @@ export default function Admin() {
             { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
             { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
+            { id: "auteurs", label: "Espace auteurs", icon: "✍️" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
@@ -1942,6 +1973,7 @@ export default function Admin() {
               setView(item.id); 
               setShowMenu(false);
               if (item.id === "reviews") loadPendingReviews(reviewsFilter);
+              if (item.id === "auteurs") loadAuteurBooks(auteursFilter);
             }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                 background: view === item.id ? "#2a2a2a" : "transparent",
@@ -3928,6 +3960,68 @@ export default function Admin() {
         {view === "comptabilite" && <ComptabiliteView />}
 
         {/* SECURITY - CHANGEMENT MOT DE PASSE */}
+        {view === "auteurs" && (
+          <div>
+            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>✍️ Espace auteurs — validation des livres</h2>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+              {[
+                { id: "en_attente", label: "⏳ En attente", color: "#f5a623" },
+                { id: "valide", label: "✅ Validés", color: "#4CAF50" },
+                { id: "refuse", label: "❌ Refusés", color: "#e53935" },
+                { id: "all", label: "📋 Tous", color: "#888" },
+              ].map(f => (
+                <button key={f.id} onClick={() => { setAuteursFilter(f.id); loadAuteurBooks(f.id); }}
+                  style={{ padding: "8px 14px", background: auteursFilter === f.id ? f.color : "transparent", border: "1px solid " + (auteursFilter === f.id ? f.color : "#2a2a2a"), borderRadius: 6, color: auteursFilter === f.id ? "#000" : "#aaa", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                  {f.label}
+                </button>
+              ))}
+              <button onClick={() => loadAuteurBooks(auteursFilter)} style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 12, cursor: "pointer" }}>🔄 Rafraîchir</button>
+            </div>
+            {auteursLoading ? (
+              <p style={{ color: "#888", textAlign: "center", padding: 30 }}>⏳ Chargement...</p>
+            ) : auteursList.length === 0 ? (
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 30, textAlign: "center" }}>
+                <p style={{ color: "#888", fontSize: 14, margin: 0 }}>{auteursFilter === "en_attente" ? "✨ Aucun livre en attente de validation !" : "Aucun livre dans cette catégorie."}</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {auteursList.map(b => (
+                  <div key={b.id} style={{ background: "#1a1a1a", border: "1px solid " + (b.moderation === "valide" ? "#4CAF50" : b.moderation === "refuse" ? "#e53935" : "#f5a623"), borderRadius: 10, padding: 16 }}>
+                    <div style={{ display: "flex", gap: 14 }}>
+                      {b.cover ? <img src={b.cover} alt="" style={{ width: 70, height: 99, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} /> : <div style={{ width: 70, height: 99, background: "#0a0a0a", borderRadius: 6, flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff" }}>{b.title}</div>
+                        <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 4 }}>✍️ {b.author}</div>
+                        <div style={{ fontSize: 11, color: "#888" }}>{b.category}{b.subcategory ? " › " + b.subcategory : ""} · {b.price} F · {b.pdf_url ? "📥 Guide PDF" : "📖 Roman"}{b.extract_pages ? " · " + b.extract_pages + " pages gratuites" : ""}</div>
+                        <div style={{ fontSize: 12, color: "#bbb", marginTop: 8, lineHeight: 1.5 }}>{b.summary}</div>
+                        {b.content ? (
+                          <details style={{ marginTop: 8 }}>
+                            <summary style={{ cursor: "pointer", color: "#c9a84c", fontSize: 12 }}>📖 Lire le texte du roman</summary>
+                            <div style={{ whiteSpace: "pre-wrap", maxHeight: 320, overflow: "auto", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 6, padding: 12, marginTop: 8, fontSize: 13, color: "#ddd", lineHeight: 1.6 }}>{b.content}</div>
+                          </details>
+                        ) : null}
+                        {b.pdf_url ? <a href={b.pdf_url} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8, color: "#c9a84c", fontSize: 12 }}>📥 Ouvrir le PDF pour vérifier</a> : null}
+                        {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 12, color: "#e53935", marginTop: 8 }}>Motif du refus : {b.motif_refus}</div> : null}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                      {b.moderation !== "valide" && (
+                        <button onClick={() => approuverLivre(b)} style={{ padding: "8px 16px", background: "#4CAF50", border: "none", borderRadius: 6, color: "#fff", fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>✅ Approuver</button>
+                      )}
+                      {b.moderation !== "refuse" && (
+                        <button onClick={() => refuserLivre(b)} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #e53935", borderRadius: 6, color: "#e53935", fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>❌ Refuser</button>
+                      )}
+                      {b.moderation === "valide" && (
+                        <button onClick={() => retirerLivre(b)} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #888", borderRadius: 6, color: "#aaa", fontSize: 13, cursor: "pointer" }}>Retirer de la boutique</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {view === "security" && (
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🔐 Sécurité</h2>
