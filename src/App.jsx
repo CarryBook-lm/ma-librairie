@@ -16098,7 +16098,11 @@ export default function App() {
         user_id: user.id,
         nom_complet: auteurNom.trim(),
         email: user.email || null,
-        telephone: auteurTel.trim(),
+        telephone: (function(){
+          const CODES = {"Bénin":"+229","Burkina Faso":"+226","Burundi":"+257","Cameroun":"+237","Congo (Brazzaville)":"+242","Congo (RDC)":"+243","Côte d'Ivoire":"+225","Gabon":"+241","Guinée":"+224","Mali":"+223","Niger":"+227","République centrafricaine":"+236","Rwanda":"+250","Sénégal":"+221","Tchad":"+235","Togo":"+228"};
+          const ind = CODES[auteurPays] || "";
+          return (ind ? ind + " " : "") + auteurTel.trim();
+        })(),
         pays: auteurPays.trim(),
         pixel_meta: auteurPixel.trim() || null,
         bio: auteurBio.trim() || null,
@@ -16124,6 +16128,15 @@ export default function App() {
   if (page === "espace_auteur") {
     const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
     const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
+    const PAYS_LISTE = [
+      { nom: "Bénin", code: "+229" }, { nom: "Burkina Faso", code: "+226" }, { nom: "Burundi", code: "+257" },
+      { nom: "Cameroun", code: "+237" }, { nom: "Congo (Brazzaville)", code: "+242" }, { nom: "Congo (RDC)", code: "+243" },
+      { nom: "Côte d'Ivoire", code: "+225" }, { nom: "Gabon", code: "+241" }, { nom: "Guinée", code: "+224" },
+      { nom: "Mali", code: "+223" }, { nom: "Niger", code: "+227" }, { nom: "République centrafricaine", code: "+236" },
+      { nom: "Rwanda", code: "+250" }, { nom: "Sénégal", code: "+221" }, { nom: "Tchad", code: "+235" },
+      { nom: "Togo", code: "+228" }, { nom: "Autre pays", code: "" },
+    ];
+    const indicatif = (PAYS_LISTE.find(p => p.nom === auteurPays) || {}).code || "";
     return (
       <div style={{ minHeight: "100vh", background: G.bg }}>
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
@@ -16163,14 +16176,17 @@ export default function App() {
               <label style={labelSt}>Nom complet *</label>
               <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} placeholder="Ton nom d'auteur" style={champ} />
               <div style={{ height: 14 }} />
-              <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
-              <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ex : 6XX XX XX XX" style={champ} />
-              <div style={{ height: 14 }} />
               <label style={labelSt}>Pays *</label>
               <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
                 <option value="">— Choisis ton pays —</option>
-                {["Bénin","Burkina Faso","Burundi","Cameroun","Congo (Brazzaville)","Congo (RDC)","Côte d'Ivoire","Gabon","Guinée","Mali","Niger","République centrafricaine","Rwanda","Sénégal","Tchad","Togo","Autre pays"].map(p => <option key={p} value={p}>{p}</option>)}
+                {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.nom}</option>)}
               </select>
+              <div style={{ height: 14 }} />
+              <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
+              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                <div style={{ display: "flex", alignItems: "center", padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{indicatif || "+___"}</div>
+                <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder={auteurPays ? "Ton numéro" : "Choisis d'abord ton pays"} disabled={!auteurPays} style={{ ...champ, flex: 1, marginBottom: 0, opacity: auteurPays ? 1 : 0.6 }} />
+              </div>
               <div style={{ height: 14 }} />
               <label style={labelSt}>Petite présentation (facultatif)</label>
               <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
