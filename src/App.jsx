@@ -13671,6 +13671,15 @@ export default function App() {
   const [visitorCountry, setVisitorCountry] = useState(null);
   const [paydunyaLoading, setPaydunyaLoading] = useState(false);
   const [paydunyaReturn, setPaydunyaReturn] = useState(false);
+  const [auteurProfil, setAuteurProfil] = useState(null);
+  const [auteurChecked, setAuteurChecked] = useState(false);
+  const [auteurNom, setAuteurNom] = useState("");
+  const [auteurTel, setAuteurTel] = useState("");
+  const [auteurPays, setAuteurPays] = useState("");
+  const [auteurPixel, setAuteurPixel] = useState("");
+  const [auteurBio, setAuteurBio] = useState("");
+  const [auteurSaving, setAuteurSaving] = useState(false);
+  const [auteurMsg, setAuteurMsg] = useState("");
   // Détection pays (Cameroun -> CamPay, ailleurs -> PayDunya) + retour PayDunya
   useEffect(() => {
     (async () => {
@@ -13828,6 +13837,18 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showMenu, setShowMenu] = useState(false);
   const [user, setUser] = useState(null);
+  // Charge le profil auteur de la personne connectée
+  useEffect(() => {
+    if (!user) { setAuteurProfil(null); setAuteurChecked(true); return; }
+    (async () => {
+      try {
+        const { data } = await supabase.from("auteurs").select("*").eq("user_id", user.id).maybeSingle();
+        setAuteurProfil(data || null);
+        if (data) { setAuteurNom(data.nom_complet || ""); setAuteurTel(data.telephone || ""); setAuteurPays(data.pays || ""); setAuteurPixel(data.pixel_meta || ""); setAuteurBio(data.bio || ""); }
+      } catch (e) {}
+      setAuteurChecked(true);
+    })();
+  }, [user]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [readerScrollMode, setReaderScrollMode] = useState(false);
@@ -16063,6 +16084,108 @@ export default function App() {
     { id: "confidentialite", label: "🔒 Confidentialité" },
   ];
 
+  // ── ESPACE AUTEUR (Publie ton livre) ──
+  async function saveAuteur() {
+    if (!user) return;
+    if (!auteurNom.trim() || !auteurTel.trim() || !auteurPays.trim()) {
+      setAuteurMsg("Merci de remplir ton nom, ton téléphone et ton pays."); return;
+    }
+    setAuteurSaving(true); setAuteurMsg("");
+    try {
+      const base = (auteurNom.trim().split(/\s+/)[0] || "auteur").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const genCode = (base || "auteur") + Math.random().toString(36).slice(2, 7);
+      const payload = {
+        user_id: user.id,
+        nom_complet: auteurNom.trim(),
+        email: user.email || null,
+        telephone: auteurTel.trim(),
+        pays: auteurPays.trim(),
+        pixel_meta: auteurPixel.trim() || null,
+        bio: auteurBio.trim() || null,
+      };
+      if (auteurProfil) {
+        const { data, error } = await supabase.from("auteurs").update(payload).eq("id", auteurProfil.id).select().maybeSingle();
+        if (error) throw error;
+        setAuteurProfil(data);
+        setAuteurMsg("✅ Profil mis à jour.");
+      } else {
+        payload.code_source = genCode;
+        const { data, error } = await supabase.from("auteurs").insert(payload).select().maybeSingle();
+        if (error) throw error;
+        setAuteurProfil(data);
+        setAuteurMsg("✅ Bienvenue ! Ton espace auteur est créé.");
+      }
+    } catch (e) {
+      setAuteurMsg("❌ " + (e.message || e));
+    }
+    setAuteurSaving(false);
+  }
+
+  if (page === "espace_auteur") {
+    const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
+    const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
+    return (
+      <div style={{ minHeight: "100vh", background: G.bg }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 10, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>📖 Publie ton livre</div>
+        </div>
+        <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
+
+          {!user && (
+            <div style={{ textAlign: "center", padding: 30 }}>
+              <p style={{ color: G.textDim, fontSize: 14, marginBottom: 16 }}>Connecte-toi pour publier tes livres sur CarryBooks.</p>
+              <button onClick={signInWithGoogle} style={{ padding: "12px 24px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>Se connecter avec Google</button>
+            </div>
+          )}
+
+          {user && !auteurChecked && (
+            <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Chargement…</div>
+          )}
+
+          {user && auteurChecked && auteurProfil && (
+            <div>
+              <div style={{ background: G.greenDim, border: "1px solid " + G.green, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Bienvenue, {auteurProfil.nom_complet} 👋</div>
+                <div style={{ fontSize: 12, color: G.textDim }}>Ton espace auteur est actif. Tu pourras bientôt publier tes livres ici.</div>
+              </div>
+              <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
+                <div style={{ fontSize: 13, color: G.textDim, lineHeight: 1.6 }}>La publication de livres arrive à la prochaine étape. Ton profil est prêt.</div>
+              </div>
+              <button onClick={() => { setAuteurProfil(null); setAuteurMsg(""); }} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, padding: "10px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>✏️ Modifier mon profil</button>
+            </div>
+          )}
+
+          {user && auteurChecked && !auteurProfil && (
+            <div>
+              <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>Crée ton profil auteur pour publier tes livres sur CarryBooks. Tes livres seront vérifiés avant leur mise en ligne.</p>
+              <label style={labelSt}>Nom complet *</label>
+              <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} placeholder="Ton nom d'auteur" style={champ} />
+              <div style={{ height: 14 }} />
+              <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
+              <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ex : 6XX XX XX XX" style={champ} />
+              <div style={{ height: 14 }} />
+              <label style={labelSt}>Pays *</label>
+              <input value={auteurPays} onChange={e => setAuteurPays(e.target.value)} placeholder="Ex : Cameroun" style={champ} />
+              <div style={{ height: 14 }} />
+              <label style={labelSt}>Ton pixel Facebook (facultatif)</label>
+              <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Pour suivre tes pubs (optionnel)" style={champ} />
+              <div style={{ height: 14 }} />
+              <label style={labelSt}>Petite présentation (facultatif)</label>
+              <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
+              <div style={{ height: 20 }} />
+              <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Créer mon espace auteur"}</button>
+            </div>
+          )}
+
+          {auteurMsg && <div style={{ marginTop: 14, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
+
+        </div>
+      </div>
+    );
+  }
+
   // READER
   if (page === "reader" && reading) {
     // Mode PDF : on entre dedans si on a un pdf_url valide OU (en mode extrait) un excerpt_pdf_url
@@ -18150,6 +18273,12 @@ export default function App() {
                 {item.label}
               </div>
             ))}
+            {user && (
+              <div onClick={() => { setPage("espace_auteur"); setShowMenu(false); }}
+                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "espace_auteur" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "espace_auteur" ? G.gold : "transparent"), background: page === "espace_auteur" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
+                📖 Publie ton livre
+              </div>
+            )}
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
