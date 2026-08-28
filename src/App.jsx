@@ -13842,9 +13842,10 @@ export default function App() {
     if (!user) { setAuteurProfil(null); setAuteurChecked(true); return; }
     (async () => {
       try {
-        const { data } = await supabase.from("auteurs").select("*").eq("user_id", user.id).maybeSingle();
-        setAuteurProfil(data || null);
-        if (data) { setAuteurNom(data.nom_complet || ""); setAuteurTel(data.telephone || ""); setAuteurPays(data.pays || ""); setAuteurPixel(data.pixel_meta || ""); setAuteurBio(data.bio || ""); }
+        const { data } = await supabase.from("auteurs").select("*").eq("user_id", user.id).order("id", { ascending: false }).limit(1);
+        const prof = (data && data.length) ? data[0] : null;
+        setAuteurProfil(prof);
+        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurBio(prof.bio || ""); }
       } catch (e) {}
       setAuteurChecked(true);
     })();
@@ -16113,11 +16114,20 @@ export default function App() {
         setAuteurProfil(data);
         setAuteurMsg("✅ Profil mis à jour.");
       } else {
-        payload.code_source = genCode;
-        const { data, error } = await supabase.from("auteurs").insert(payload).select().maybeSingle();
-        if (error) throw error;
-        setAuteurProfil(data);
-        setAuteurMsg("✅ Bienvenue ! Ton espace auteur est créé.");
+        // Anti-doublon : si un profil existe déjà pour cet utilisateur, on le met à jour
+        const { data: existing } = await supabase.from("auteurs").select("*").eq("user_id", user.id).order("id", { ascending: false }).limit(1);
+        if (existing && existing.length) {
+          const { data, error } = await supabase.from("auteurs").update(payload).eq("id", existing[0].id).select().maybeSingle();
+          if (error) throw error;
+          setAuteurProfil(data);
+          setAuteurMsg("✅ Profil mis à jour.");
+        } else {
+          payload.code_source = genCode;
+          const { data, error } = await supabase.from("auteurs").insert(payload).select().maybeSingle();
+          if (error) throw error;
+          setAuteurProfil(data);
+          setAuteurMsg("✅ Bienvenue ! Ton espace auteur est créé.");
+        }
       }
     } catch (e) {
       setAuteurMsg("❌ " + (e.message || e));
