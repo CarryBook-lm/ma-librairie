@@ -1956,6 +1956,7 @@ export default function Admin() {
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Produits", icon: "📚" },
+            { id: "auteurs", label: "Espace auteurs", icon: "✍️" },
             { id: "categories", label: "Catégories", icon: "🗂️" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
@@ -1964,7 +1965,6 @@ export default function Admin() {
             { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
             { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
-            { id: "auteurs", label: "Espace auteurs", icon: "✍️" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
