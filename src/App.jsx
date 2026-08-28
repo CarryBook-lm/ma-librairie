@@ -13688,8 +13688,21 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
   const [pubEditId, setPubEditId] = useState(null);
-  const [auteurTab, setAuteurTab] = useState("dashboard");
+  const [auteurTab, setAuteurTab] = useState("stats");
   const [auteurMenu, setAuteurMenu] = useState(false);
+  const [statsSubTab, setStatsSubTab] = useState("board");
+  const [statsPeriod, setStatsPeriod] = useState("today");
+  const [statsDate, setStatsDate] = useState("");
+  const [ventesAuteur, setVentesAuteur] = useState([]);
+  useEffect(() => {
+    if (!auteurProfil) { setVentesAuteur([]); return; }
+    (async () => {
+      try {
+        const { data } = await supabase.from("ventes_auteurs").select("*").eq("auteur_id", auteurProfil.id).order("created_at", { ascending: false });
+        setVentesAuteur(data || []);
+      } catch (e) {}
+    })();
+  }, [auteurProfil]);
   // Charge les catégories + les livres de l'auteur
   useEffect(() => {
     if (!auteurProfil) { setMesLivres([]); return; }
@@ -16180,6 +16193,21 @@ export default function App() {
     setPubUploading(false);
     e.target.value = "";
   }
+  function filterVentesByPeriod(list, period, dateStr) {
+    const now = new Date();
+    const sod = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const todayStart = sod(now);
+    return (list || []).filter(v => {
+      const t = new Date(v.created_at).getTime();
+      if (period === "date" && dateStr) { const d = new Date(dateStr + "T00:00:00"); const s = sod(d); return t >= s && t < s + 86400000; }
+      if (period === "today") return t >= todayStart;
+      if (period === "yesterday") return t >= todayStart - 86400000 && t < todayStart;
+      if (period === "week") { const wk = todayStart - ((now.getDay() + 6) % 7) * 86400000; return t >= wk; }
+      if (period === "month") return t >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      if (period === "year") return t >= new Date(now.getFullYear(), 0, 1).getTime();
+      return true;
+    });
+  }
   function editLivre(b) {
     setPubForm({
       title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
@@ -16429,16 +16457,102 @@ export default function App() {
                 </div>
               )}
               {/* STATS */}
-              {auteurTab === "stats" && (
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📊 Statistiques</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Livres en ligne</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.filter(b => b.status === "actif").length)}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Livres en attente</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length)}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Livres refusés</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.filter(b => b.moderation === "refuse").length)}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Total</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.length)}</span></div>
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 12 }}>Les ventes et gains apparaîtront ici prochainement.</div>
-                </div>
-              )}
+              {auteurTab === "stats" && (() => {
+                const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
+                const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
+                const vv = filterVentesByPeriod(ventesAuteur, statsPeriod, statsDate);
+                const avec = vv.filter(v => v.source === "auteur");
+                const sans = vv.filter(v => v.source !== "auteur");
+                const gains = arr => arr.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                const periods = [["today", "Aujourd'hui"], ["yesterday", "Hier"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
+                const subtabs = [["board", "Tableau de bord"], ["sold", "Livres vendus"], ["charts", "Statistiques"]];
+                // ventes groupées par livre (période) pour la liste
+                const grpP = {}; vv.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
+                // best-sellers (tout l'historique)
+                const grpAll = {}; ventesAuteur.forEach(v => { const k = v.book_id; (grpAll[k] = grpAll[k] || { n: 0, g: 0 }); grpAll[k].n++; grpAll[k].g += v.part_auteur || 0; });
+                const best = Object.keys(grpAll).map(k => ({ id: k, ...grpAll[k] })).sort((a, b) => b.n - a.n).slice(0, 5);
+                // graphique 7 derniers jours
+                const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i); days.push(d); }
+                const dayGains = days.map(d => { const s = d.getTime(), e = s + 86400000; return ventesAuteur.filter(v => { const t = new Date(v.created_at).getTime(); return t >= s && t < e; }).reduce((a, v) => a + (v.part_auteur || 0), 0); });
+                const maxG = Math.max(1, ...dayGains);
+                const compteur = (lab, n, g, col) => (
+                  <div style={{ flex: 1, background: G.bg, border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{lab}</div>
+                    <div style={{ fontSize: 20, fontWeight: "bold", color: col }}>{n}</div>
+                    <div style={{ fontSize: 12, color: G.text, fontWeight: "bold" }}>{fmt(g)}</div>
+                  </div>
+                );
+                return (
+                  <div>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 16, background: G.bg, borderRadius: 10, padding: 4 }}>
+                      {subtabs.map(([id, lab]) => (
+                        <button key={id} onClick={() => setStatsSubTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: "none", background: statsSubTab === id ? G.gold : "transparent", color: statsSubTab === id ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>{lab}</button>
+                      ))}
+                    </div>
+
+                    {statsSubTab === "board" && (
+                      <div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                          {periods.map(([id, lab]) => (
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 12, cursor: "pointer" }}>{lab}</button>
+                          ))}
+                        </div>
+                        <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
+                        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                          {compteur("Sans lien (50%)", sans.length, gains(sans), G.text)}
+                          {compteur("Avec lien (70%)", avec.length, gains(avec), G.gold)}
+                        </div>
+                        <div style={{ background: G.gold + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
+                          <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>TOTAL — {vv.length} livre(s) vendu(s)</div>
+                          <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{fmt(gains(vv))}</div>
+                          <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions CarryBooks)</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {statsSubTab === "sold" && (
+                      <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Livres vendus (mes gains)</div>
+                        {Object.keys(grpP).length === 0 ? (
+                          <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
+                        ) : Object.keys(grpP).map(k => (
+                          <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + G.border }}>
+                            <div style={{ fontSize: 13, color: G.text }}>{titleOf(Number(k))}<div style={{ fontSize: 11, color: G.textDim }}>{grpP[k].n} vendu(s)</div></div>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>{fmt(grpP[k].g)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {statsSubTab === "charts" && (
+                      <div>
+                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📈 Gains — 7 derniers jours</div>
+                          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120 }}>
+                            {dayGains.map((g, i) => (
+                              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                                <div style={{ width: "100%", height: Math.round((g / maxG) * 90) + 2, background: G.gold, borderRadius: "4px 4px 0 0" }} title={fmt(g)}></div>
+                                <div style={{ fontSize: 9, color: G.textDim }}>{["Di","Lu","Ma","Me","Je","Ve","Sa"][days[i].getDay()]}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>🏆 Best-sellers</div>
+                          {best.length === 0 ? (
+                            <div style={{ fontSize: 13, color: G.textDim }}>Pas encore de ventes.</div>
+                          ) : best.map((b, i) => (
+                            <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid " + G.border }}>
+                              <div style={{ fontSize: 13, color: G.text }}>{i + 1}. {titleOf(Number(b.id))}</div>
+                              <div style={{ fontSize: 12, color: G.textDim }}>{b.n} vendu(s) · <b style={{ color: G.gold }}>{fmt(b.g)}</b></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {/* MON COMPTE */}
               {auteurTab === "compte" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
@@ -16529,7 +16643,7 @@ export default function App() {
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
-            <button onClick={() => { setAuteurTab("dashboard"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "dashboard" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "dashboard" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>📊</span> Tableau de bord</button>
+            <button onClick={() => { setAuteurTab("stats"); setStatsSubTab("board"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "dashboard" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "dashboard" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>📊</span> Tableau de bord</button>
             <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon compte</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("aide"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "aide" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "aide" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>❓</span> Comment publier</button>
