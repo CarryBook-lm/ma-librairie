@@ -16277,7 +16277,7 @@ export default function App() {
                   <input type="number" value={pubForm.extract_pages} onChange={e => setPubForm(f => ({ ...f, extract_pages: e.target.value }))} placeholder="Ex : 10" style={champ} />
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Texte du roman *</label>
-                  <textarea value={pubForm.content} onChange={e => setPubForm(f => ({ ...f, content: e.target.value }))} rows={8} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical" }} />
+                  <textarea value={pubForm.content} onChange={e => setPubForm(f => ({ ...f, content: e.target.value }))} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6 }} />
                   <div style={{ height: 18 }} />
                   <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "Envoyer pour validation"}</button>
                   <button onClick={() => { setPubOpen(false); setPubMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
