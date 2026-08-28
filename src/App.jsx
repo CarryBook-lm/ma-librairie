@@ -13680,6 +13680,28 @@ export default function App() {
   const [auteurBio, setAuteurBio] = useState("");
   const [auteurSaving, setAuteurSaving] = useState(false);
   const [auteurMsg, setAuteurMsg] = useState("");
+  const [pubOpen, setPubOpen] = useState(false);
+  const [pubForm, setPubForm] = useState({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "" });
+  const [pubCats, setPubCats] = useState({});
+  const [pubUploading, setPubUploading] = useState(false);
+  const [pubSaving, setPubSaving] = useState(false);
+  const [pubMsg, setPubMsg] = useState("");
+  const [mesLivres, setMesLivres] = useState([]);
+  // Charge les catégories + les livres de l'auteur
+  useEffect(() => {
+    if (!auteurProfil) { setMesLivres([]); return; }
+    (async () => {
+      try {
+        const { data: cats } = await supabase.from("categories").select("*").order("display_order", { ascending: true });
+        const { data: subs } = await supabase.from("subcategories").select("*").order("display_order", { ascending: true });
+        const obj = {};
+        (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
+        setPubCats(obj);
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+        setMesLivres(livres || []);
+      } catch (e) {}
+    })();
+  }, [auteurProfil]);
   // Détection pays (Cameroun -> CamPay, ailleurs -> PayDunya) + retour PayDunya
   useEffect(() => {
     (async () => {
@@ -16135,6 +16157,45 @@ export default function App() {
     setAuteurSaving(false);
   }
 
+  async function pubUploadCover(e) {
+    const file = e.target.files[0]; if (!file) return;
+    setPubUploading(true); setPubMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const key = import.meta.env.VITE_IMGBB_KEY;
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.success) setPubForm(f => ({ ...f, cover: data.data.url }));
+      else setPubMsg("❌ Échec de l'envoi de la couverture.");
+    } catch (e2) { setPubMsg("❌ Erreur réseau (couverture)."); }
+    setPubUploading(false);
+    e.target.value = "";
+  }
+  async function pubSaveRoman() {
+    const f = pubForm;
+    if (!f.title.trim() || !f.category || !f.subcategory || !String(f.price).trim() || !f.cover || !f.summary.trim() || !String(f.extract_pages).trim() || !f.content.trim()) {
+      setPubMsg("Merci de remplir TOUS les champs (tout est obligatoire)."); return;
+    }
+    setPubSaving(true); setPubMsg("");
+    try {
+      const payload = {
+        title: f.title.trim(), author: auteurProfil.nom_complet, price: parseInt(f.price) || 0,
+        cover: f.cover, category: f.category, subcategory: f.subcategory,
+        summary: f.summary.trim(), content: f.content, extract_pages: parseInt(f.extract_pages) || 1,
+        status: "en_attente", moderation: "en_attente", auteur_id: auteurProfil.id,
+        product_type: "numerique", can_read: true, can_download: false,
+      };
+      const { error } = await supabase.from("books").insert(payload);
+      if (error) throw error;
+      setPubMsg("✅ Ton roman a été envoyé ! Il sera visible après validation.");
+      setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "" });
+      setPubOpen(false);
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      setMesLivres(livres || []);
+    } catch (e) { setPubMsg("❌ " + (e.message || e)); }
+    setPubSaving(false);
+  }
+
   if (page === "espace_auteur") {
     const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
     const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
@@ -16172,10 +16233,78 @@ export default function App() {
                 <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Bienvenue, {auteurProfil.nom_complet} 👋</div>
                 <div style={{ fontSize: 12, color: G.textDim }}>Ton espace auteur est actif. Tu pourras bientôt publier tes livres ici.</div>
               </div>
+              {!pubOpen ? (
+                <button onClick={() => { setPubOpen(true); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", marginBottom: 16 }}>➕ Publier un roman</button>
+              ) : (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Publier un roman</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton roman sera vérifié avant sa mise en ligne.</div>
+                  <label style={labelSt}>Titre *</label>
+                  <input value={pubForm.title} onChange={e => setPubForm(f => ({ ...f, title: e.target.value }))} style={champ} />
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Catégorie *</label>
+                  <select value={pubForm.category} onChange={e => setPubForm(f => ({ ...f, category: e.target.value, subcategory: "" }))} style={champ}>
+                    <option value="">— Choisis —</option>
+                    {Object.keys(pubCats).map(cn => <option key={cn} value={cn}>{cn}</option>)}
+                  </select>
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Sous-catégorie *</label>
+                  <select value={pubForm.subcategory} onChange={e => setPubForm(f => ({ ...f, subcategory: e.target.value }))} disabled={!pubForm.category} style={{ ...champ, opacity: pubForm.category ? 1 : 0.6 }}>
+                    <option value="">{pubForm.category ? "— Choisis —" : "Choisis d'abord la catégorie"}</option>
+                    {(pubCats[pubForm.category] || []).map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Prix (FCFA) *</label>
+                  <input type="number" value={pubForm.price} onChange={e => setPubForm(f => ({ ...f, price: e.target.value }))} placeholder="Ex : 1000" style={champ} />
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Couverture * (portrait, ex : 660 × 930)</label>
+                  {pubForm.cover ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                      <img src={pubForm.cover} alt="" style={{ width: 66, height: 93, objectFit: "cover", borderRadius: 6, border: "1px solid " + G.border }} />
+                      <button onClick={() => setPubForm(f => ({ ...f, cover: "" }))} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button>
+                    </div>
+                  ) : (
+                    <>
+                      <input type="file" accept="image/*" id="pubCoverInput" style={{ display: "none" }} onChange={pubUploadCover} />
+                      <button onClick={() => document.getElementById("pubCoverInput").click()} disabled={pubUploading} style={{ width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold" }}>{pubUploading ? "Envoi…" : "🖼️ Choisir la couverture"}</button>
+                    </>
+                  )}
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Résumé *</label>
+                  <textarea value={pubForm.summary} onChange={e => setPubForm(f => ({ ...f, summary: e.target.value }))} rows={3} style={{ ...champ, resize: "vertical" }} />
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Pages gratuites (extrait) *</label>
+                  <input type="number" value={pubForm.extract_pages} onChange={e => setPubForm(f => ({ ...f, extract_pages: e.target.value }))} placeholder="Ex : 10" style={champ} />
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Texte du roman *</label>
+                  <textarea value={pubForm.content} onChange={e => setPubForm(f => ({ ...f, content: e.target.value }))} rows={8} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical" }} />
+                  <div style={{ height: 18 }} />
+                  <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "Envoyer pour validation"}</button>
+                  <button onClick={() => { setPubOpen(false); setPubMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                </div>
+              )}
               <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
-                <div style={{ fontSize: 13, color: G.textDim, lineHeight: 1.6 }}>La publication de livres arrive à la prochaine étape. Ton profil est prêt.</div>
+                {mesLivres.length === 0 ? (
+                  <div style={{ fontSize: 13, color: G.textDim }}>Tu n'as pas encore publié de livre.</div>
+                ) : (
+                  mesLivres.map(b => {
+                    const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                    return (
+                      <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + G.border }}>
+                        {b.cover ? <img src={b.cover} alt="" style={{ width: 34, height: 48, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 34, height: 48, background: G.bg, borderRadius: 4 }} />}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{b.title}</div>
+                          <div style={{ fontSize: 12, color: st.c }}>{st.t}</div>
+                          {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935" }}>{b.motif_refus}</div> : null}
+                        </div>
+                        <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
+              {pubMsg && <div style={{ marginBottom: 14, fontSize: 13, textAlign: "center", color: pubMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{pubMsg}</div>}
               <button onClick={() => { setAuteurProfil(null); setAuteurMsg(""); }} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, padding: "10px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>✏️ Modifier mon profil</button>
             </div>
           )}
