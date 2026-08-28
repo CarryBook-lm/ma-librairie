@@ -16499,19 +16499,32 @@ export default function App() {
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
                         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                          {compteur("Sans lien (50%)", sans.length, gains(sans), G.text)}
-                          {compteur("Avec lien (70%)", avec.length, gains(avec), G.gold)}
+                          {compteur("Ventes CarryBooks (50%)", sans.length, gains(sans), G.text)}
+                          {compteur("Ventes via mon lien (70%)", avec.length, gains(avec), G.gold)}
                         </div>
                         <div style={{ background: G.gold + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
                           <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>TOTAL — {vv.length} livre(s) vendu(s)</div>
                           <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{fmt(gains(vv))}</div>
                           <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions CarryBooks)</div>
                         </div>
+                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
+                          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>En ligne</span><span style={{ color: G.green, fontWeight: "bold" }}>{mesLivres.filter(b => b.status === "actif").length}</span></div>
+                          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>En attente</span><span style={{ color: "#c9a84c", fontWeight: "bold" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</span></div>
+                          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Refusés</span><span style={{ color: "#e53935", fontWeight: "bold" }}>{mesLivres.filter(b => b.moderation === "refuse").length}</span></div>
+                          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13 }}><span style={{ color: G.textDim }}>Total</span><span style={{ color: G.text, fontWeight: "bold" }}>{mesLivres.length}</span></div>
+                        </div>
                       </div>
                     )}
 
                     {statsSubTab === "sold" && (
-                      <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                      <div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                          {periods.map(([id, lab]) => (
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 12, cursor: "pointer" }}>{lab}</button>
+                          ))}
+                        </div>
+                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                         <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Livres vendus (mes gains)</div>
                         {Object.keys(grpP).length === 0 ? (
                           <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
@@ -16521,6 +16534,7 @@ export default function App() {
                             <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>{fmt(grpP[k].g)}</div>
                           </div>
                         ))}
+                        </div>
                       </div>
                     )}
 
