@@ -16257,7 +16257,7 @@ export default function App() {
                   <label style={labelSt}>Prix (FCFA) *</label>
                   <input type="number" value={pubForm.price} onChange={e => setPubForm(f => ({ ...f, price: e.target.value }))} placeholder="Ex : 1000" style={champ} />
                   <div style={{ height: 14 }} />
-                  <label style={labelSt}>Couverture * (portrait, ex : 660 × 930)</label>
+                  <label style={labelSt}>Couverture * (A4 portrait, ex : 1240 × 1754 px)</label>
                   {pubForm.cover ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                       <img src={pubForm.cover} alt="" style={{ width: 66, height: 93, objectFit: "cover", borderRadius: 6, border: "1px solid " + G.border }} />
