@@ -13687,6 +13687,7 @@ export default function App() {
   const [pubSaving, setPubSaving] = useState(false);
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
+  const [pubEditId, setPubEditId] = useState(null);
   // Charge les catégories + les livres de l'auteur
   useEffect(() => {
     if (!auteurProfil) { setMesLivres([]); return; }
@@ -13697,7 +13698,7 @@ export default function App() {
         const obj = {};
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
-        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
         setMesLivres(livres || []);
       } catch (e) {}
     })();
@@ -16171,6 +16172,33 @@ export default function App() {
     setPubUploading(false);
     e.target.value = "";
   }
+  function editLivre(b) {
+    setPubForm({
+      title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
+      price: b.price != null ? String(b.price) : "", cover: b.cover || "", summary: b.summary || "",
+      extract_pages: b.extract_pages != null ? String(b.extract_pages) : "",
+      content: b.content || "", type: b.pdf_url ? "guide" : "roman", pdf_url: b.pdf_url || "",
+    });
+    setPubEditId(b.id); setPubOpen(true); setPubMsg("");
+  }
+  async function pubMakeExcerpt(pdfUrl, nPages) {
+    const { PDFDocument } = await loadPdfLib();
+    const bytes = await fetch(pdfUrl).then(r => r.arrayBuffer());
+    const src = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    const total = src.getPageCount();
+    const count = Math.max(1, Math.min(nPages, total));
+    const out = await PDFDocument.create();
+    const idx = Array.from({ length: count }, (_, i) => i);
+    const copied = await out.copyPages(src, idx);
+    copied.forEach(p => out.addPage(p));
+    const outBytes = await out.save();
+    const fileName = Date.now() + "_extrait.pdf";
+    const blob = new Blob([outBytes], { type: "application/pdf" });
+    const { error } = await supabase.storage.from("books-pdf").upload(fileName, blob, { contentType: "application/pdf" });
+    if (error) throw error;
+    const { data } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+    return data.publicUrl;
+  }
   async function pubUploadPdf(e) {
     const file = e.target.files[0]; if (!file) return;
     setPubUploading(true); setPubMsg("");
@@ -16194,21 +16222,34 @@ export default function App() {
     if ((parseInt(f.extract_pages) || 0) < 1) { setPubMsg("Le nombre de pages gratuites doit être au moins 1."); return; }
     setPubSaving(true); setPubMsg("");
     try {
+      let excerptUrl = "";
+      if (f.type === "guide" && f.pdf_url) {
+        setPubMsg("⏳ Préparation de l'extrait…");
+        excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
+      }
       const payload = {
         title: f.title.trim(), author: auteurProfil.nom_complet, price: parseInt(f.price) || 0,
         cover: f.cover, category: f.category, subcategory: f.subcategory,
         summary: f.summary.trim(), extract_pages: parseInt(f.extract_pages) || 1,
         content: f.type === "roman" ? f.content : "",
         pdf_url: f.type === "guide" ? f.pdf_url : "",
+        excerpt_pdf_url: f.type === "guide" ? excerptUrl : "",
         status: "en_attente", moderation: "en_attente", auteur_id: auteurProfil.id,
         product_type: "numerique", can_read: true, can_download: f.type === "guide",
       };
-      const { error } = await supabase.from("books").insert(payload);
-      if (error) throw error;
-      setPubMsg("✅ Ton livre a été envoyé ! Il sera visible après validation.");
+      if (pubEditId) {
+        const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
+        if (error) throw error;
+        setPubMsg("✅ Ton livre a été modifié et renvoyé pour validation.");
+      } else {
+        const { error } = await supabase.from("books").insert(payload);
+        if (error) throw error;
+        setPubMsg("✅ Ton livre a été envoyé ! Il sera visible après validation.");
+      }
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "" });
+      setPubEditId(null);
       setPubOpen(false);
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
@@ -16252,10 +16293,10 @@ export default function App() {
                 <div style={{ fontSize: 12, color: G.textDim }}>Ton espace auteur est actif. Tu pourras bientôt publier tes livres ici.</div>
               </div>
               {!pubOpen ? (
-                <button onClick={() => { setPubOpen(true); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", marginBottom: 16 }}>➕ Publier un livre</button>
+                <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "" }); setPubOpen(true); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", marginBottom: 16 }}>➕ Publier un livre</button>
               ) : (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Publier un livre</div>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : "➕ Publier un livre"}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton livre sera vérifié avant sa mise en ligne.</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                     <button onClick={() => setPubForm(f => ({ ...f, type: "roman" }))} style={{ flex: 1, padding: 10, borderRadius: 8, border: "2px solid " + (pubForm.type === "roman" ? G.gold : G.border), background: pubForm.type === "roman" ? G.gold + "22" : "#fff", color: pubForm.type === "roman" ? G.gold : G.textDim, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>📖 Roman (texte)</button>
@@ -16321,7 +16362,7 @@ export default function App() {
                   )}
                   <div style={{ height: 18 }} />
                   <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "Envoyer pour validation"}</button>
-                  <button onClick={() => { setPubOpen(false); setPubMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                 </div>
               )}
               <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
@@ -16339,7 +16380,10 @@ export default function App() {
                           <div style={{ fontSize: 12, color: st.c }}>{st.t}</div>
                           {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935" }}>{b.motif_refus}</div> : null}
                         </div>
-                        <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                          <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
+                          <button onClick={() => editLivre(b)} style={{ background: "none", border: "1px solid " + G.gold, color: G.gold, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11 }}>✏️ Modifier</button>
+                        </div>
                       </div>
                     );
                   })
