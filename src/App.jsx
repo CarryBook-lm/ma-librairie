@@ -14010,6 +14010,12 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const refCode = params.get("ref");
+      // 🔗 Capture de la source auteur (?src=CODE) — pour les commissions auteurs (30 jours)
+      const srcCodeCap = params.get("src");
+      if (srcCodeCap && srcCodeCap.trim()) {
+        localStorage.setItem("carrybooks_src_code", srcCodeCap.trim());
+        localStorage.setItem("carrybooks_src_expires", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+      }
       if (refCode && refCode.trim()) {
         const code = refCode.trim().toUpperCase();
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 jours
@@ -16379,6 +16385,15 @@ export default function App() {
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{b.title}</div>
                           <div style={{ fontSize: 12, color: st.c }}>{st.t}</div>
                           {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935" }}>{b.motif_refus}</div> : null}
+                          {b.status === "actif" && auteurProfil.code_source ? (
+                            <div style={{ marginTop: 6 }}>
+                              <div style={{ fontSize: 10, color: G.textDim, marginBottom: 2 }}>🔗 Ton lien de pub (70% pour toi) :</div>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <input readOnly value={"https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 10, padding: "4px 6px", border: "1px solid " + G.border, borderRadius: 4, color: G.textDim, background: G.bg, minWidth: 0 }} />
+                                <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source); setPubMsg("✅ Lien copié !"); } catch (e) {} }} style={{ fontSize: 10, padding: "4px 8px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap" }}>Copier</button>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                           <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
