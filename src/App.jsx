@@ -16167,10 +16167,10 @@ export default function App() {
               <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ex : 6XX XX XX XX" style={champ} />
               <div style={{ height: 14 }} />
               <label style={labelSt}>Pays *</label>
-              <input value={auteurPays} onChange={e => setAuteurPays(e.target.value)} placeholder="Ex : Cameroun" style={champ} />
-              <div style={{ height: 14 }} />
-              <label style={labelSt}>Ton pixel Facebook (facultatif)</label>
-              <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Pour suivre tes pubs (optionnel)" style={champ} />
+              <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
+                <option value="">— Choisis ton pays —</option>
+                {["Bénin","Burkina Faso","Burundi","Cameroun","Congo (Brazzaville)","Congo (RDC)","Côte d'Ivoire","Gabon","Guinée","Mali","Niger","République centrafricaine","Rwanda","Sénégal","Tchad","Togo","Autre pays"].map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
               <div style={{ height: 14 }} />
               <label style={labelSt}>Petite présentation (facultatif)</label>
               <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
