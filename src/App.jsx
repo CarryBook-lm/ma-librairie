@@ -13688,6 +13688,8 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
   const [pubEditId, setPubEditId] = useState(null);
+  const [auteurTab, setAuteurTab] = useState("dashboard");
+  const [auteurMenu, setAuteurMenu] = useState(false);
   // Charge les catégories + les livres de l'auteur
   useEffect(() => {
     if (!auteurProfil) { setMesLivres([]); return; }
@@ -16185,7 +16187,7 @@ export default function App() {
       extract_pages: b.extract_pages != null ? String(b.extract_pages) : "",
       content: b.content || "", type: b.pdf_url ? "guide" : "roman", pdf_url: b.pdf_url || "",
     });
-    setPubEditId(b.id); setPubOpen(true); setPubMsg("");
+    setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
   async function pubMakeExcerpt(pdfUrl, nPages) {
     const { PDFDocument } = await loadPdfLib();
@@ -16274,10 +16276,15 @@ export default function App() {
     ];
     const indicatif = (PAYS_LISTE.find(p => p.nom === auteurPays) || {}).code || "";
     return (
-      <div style={{ minHeight: "100vh", background: G.bg }}>
-        <div style={{ position: "sticky", top: 0, zIndex: 10, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>
-          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>📖 Publie ton livre</div>
+      <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: auteurProfil ? 74 : 0 }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {auteurProfil
+              ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>☰</button>
+              : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
+            <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
+          </div>
+          {auteurProfil && <button onClick={() => setAuteurTab("notifs")} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
         </div>
         <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
 
@@ -16294,13 +16301,24 @@ export default function App() {
 
           {user && auteurChecked && auteurProfil && (
             <div>
-              <div style={{ background: G.greenDim, border: "1px solid " + G.green, borderRadius: 10, padding: 16, marginBottom: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Bienvenue, {auteurProfil.nom_complet} 👋</div>
-                <div style={{ fontSize: 12, color: G.textDim }}>Ton espace auteur est actif. Tu pourras bientôt publier tes livres ici.</div>
-              </div>
-              {!pubOpen ? (
-                <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "" }); setPubOpen(true); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", marginBottom: 16 }}>➕ Publier un livre</button>
-              ) : (
+              {/* TABLEAU DE BORD */}
+              {auteurTab === "dashboard" && (
+                <div>
+                  <div style={{ background: G.greenDim, border: "1px solid " + G.green, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>Bienvenue, {auteurProfil.nom_complet} 👋</div>
+                    <div style={{ fontSize: 12, color: G.textDim }}>Voici ton tableau de bord auteur.</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                    <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{mesLivres.filter(b => b.status === "actif").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En ligne</div></div>
+                    <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
+                    <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
+                  </div>
+                  <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                </div>
+              )}
+              {/* PUBLIER */}
+              {auteurTab === "publier" && (
+                <div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : "➕ Publier un livre"}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton livre sera vérifié avant sa mise en ligne.</div>
@@ -16368,48 +16386,103 @@ export default function App() {
                   )}
                   <div style={{ height: 18 }} />
                   <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "Envoyer pour validation"}</button>
-                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                </div>
                 </div>
               )}
-              <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
-                {mesLivres.length === 0 ? (
-                  <div style={{ fontSize: 13, color: G.textDim }}>Tu n'as pas encore publié de livre.</div>
-                ) : (
-                  mesLivres.map(b => {
-                    const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
-                    return (
-                      <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + G.border }}>
-                        {b.cover ? <img src={b.cover} alt="" style={{ width: 34, height: 48, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 34, height: 48, background: G.bg, borderRadius: 4 }} />}
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{b.title}</div>
-                          <div style={{ fontSize: 12, color: st.c }}>{st.t}</div>
-                          {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935" }}>{b.motif_refus}</div> : null}
-                          {b.status === "actif" && auteurProfil.code_source ? (
-                            <div style={{ marginTop: 6 }}>
-                              <div style={{ fontSize: 10, color: G.textDim, marginBottom: 2 }}>🔗 Ton lien de pub (70% pour toi) :</div>
-                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                                <input readOnly value={"https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 10, padding: "4px 6px", border: "1px solid " + G.border, borderRadius: 4, color: G.textDim, background: G.bg, minWidth: 0 }} />
-                                <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source); setPubMsg("✅ Lien copié !"); } catch (e) {} }} style={{ fontSize: 10, padding: "4px 8px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap" }}>Copier</button>
+              {/* MES LIVRES */}
+              {auteurTab === "meslivres" && (
+                <div>
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
+                  {mesLivres.length === 0 ? (
+                    <div style={{ fontSize: 13, color: G.textDim }}>Tu n'as pas encore publié de livre.</div>
+                  ) : (
+                    mesLivres.map(b => {
+                      const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                      return (
+                        <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + G.border }}>
+                          {b.cover ? <img src={b.cover} alt="" style={{ width: 34, height: 48, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 34, height: 48, background: G.bg, borderRadius: 4 }} />}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{b.title}</div>
+                            <div style={{ fontSize: 12, color: st.c }}>{st.t}</div>
+                            {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935" }}>{b.motif_refus}</div> : null}
+                            {b.status === "actif" && auteurProfil.code_source ? (
+                              <div style={{ marginTop: 6 }}>
+                                <div style={{ fontSize: 10, color: G.textDim, marginBottom: 2 }}>🔗 Ton lien de pub (70% pour toi) :</div>
+                                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                  <input readOnly value={"https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 10, padding: "4px 6px", border: "1px solid " + G.border, borderRadius: 4, color: G.textDim, background: G.bg, minWidth: 0 }} />
+                                  <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source); setPubMsg("✅ Lien copié !"); } catch (e) {} }} style={{ fontSize: 10, padding: "4px 8px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap" }}>Copier</button>
+                                </div>
                               </div>
-                            </div>
-                          ) : null}
+                            ) : null}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                            <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
+                            <button onClick={() => editLivre(b)} style={{ background: "none", border: "1px solid " + G.gold, color: G.gold, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11 }}>✏️ Modifier</button>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                          <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
-                          <button onClick={() => editLivre(b)} style={{ background: "none", border: "1px solid " + G.gold, color: G.gold, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11 }}>✏️ Modifier</button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              {pubMsg && <div style={{ marginBottom: 14, fontSize: 13, textAlign: "center", color: pubMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{pubMsg}</div>}
-              <button onClick={() => { setAuteurProfil(null); setAuteurMsg(""); }} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, padding: "10px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>✏️ Modifier mon profil</button>
+                      );
+                    })
+                  )}
+                </div>
+                </div>
+              )}
+              {/* STATS */}
+              {auteurTab === "stats" && (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📊 Statistiques</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Livres en ligne</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.filter(b => b.status === "actif").length)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Livres en attente</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Livres refusés</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.filter(b => b.moderation === "refuse").length)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Total</span><span style={{ color: G.text, fontWeight: "bold" }}>{String(mesLivres.length)}</span></div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 12 }}>Les ventes et gains apparaîtront ici prochainement.</div>
+                </div>
+              )}
+              {/* MON COMPTE */}
+              {auteurTab === "compte" && (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>👤 Mon compte</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Nom d\'auteur</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.nom_complet}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>E-mail</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.email || "—"}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone || "—"}</span></div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 12 }}>Pour modifier ces informations, va dans Paramètres.</div>
+                </div>
+              )}
+              {/* PARAMÈTRES */}
+              {auteurTab === "parametres" && (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>⚙️ Paramètres</div>
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 14 }}>Modifier tes informations d'auteur (nom, pays, numéro Mobile Money, présentation).</div>
+                  <button onClick={() => { setAuteurProfil(null); setAuteurMsg(""); }} style={{ padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier mon profil</button>
+                </div>
+              )}
+              {/* COMMENT PUBLIER */}
+              {auteurTab === "aide" && (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 12 }}>❓ Comment publier</div>
+                  <p><b>1.</b> Clique sur <b>➕ Publier un livre</b>.</p>
+                  <p><b>2.</b> Choisis le type : <b>Roman</b> (tu colles le texte, lu dans la liseuse) ou <b>Guide</b> (tu téléverses un PDF téléchargeable).</p>
+                  <p><b>3.</b> Remplis tous les champs : titre, catégorie, prix, couverture (A4 portrait), résumé, et le nombre de pages gratuites (l'extrait).</p>
+                  <p><b>4.</b> Pour un guide PDF : format A5, avec le numéro de page en bas au centre.</p>
+                  <p><b>5.</b> Envoie : ton livre passe en <b>validation</b>. Une fois approuvé, il apparaît dans la boutique.</p>
+                  <p><b>6.</b> Partage ton <b>lien de pub</b> (dans Mes livres) : si un client achète via ton lien, tu touches <b>70%</b> (sinon 50%).</p>
+                </div>
+              )}
+              {/* NOTIFICATIONS */}
+              {auteurTab === "notifs" && (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
+                  <div style={{ fontSize: 30, marginBottom: 8 }}>🔔</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Notifications</div>
+                  <div style={{ fontSize: 13, color: G.textDim }}>Les messages de CarryBooks apparaîtront ici. (Bientôt disponible)</div>
+                </div>
+              )}
+              {pubMsg && <div style={{ marginTop: 14, fontSize: 13, textAlign: "center", color: pubMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{pubMsg}</div>}
             </div>
           )}
 
-          {user && auteurChecked && !auteurProfil && (
+                    {user && auteurChecked && !auteurProfil && (
             <div>
               <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>Crée ton profil auteur pour publier tes livres sur CarryBooks. Tes livres seront vérifiés avant leur mise en ligne.</p>
               <label style={labelSt}>Nom complet *</label>
@@ -16437,6 +16510,35 @@ export default function App() {
           {auteurMsg && <div style={{ marginTop: 14, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
 
         </div>
+
+        {/* BARRE DU BAS */}
+        {auteurProfil && (
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
+            <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10 }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
+            <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10 }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
+          </div>
+        )}
+
+        {/* MENU HAMBURGER */}
+        {auteurMenu && (
+          <div onClick={() => setAuteurMenu(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }}>
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 270, maxWidth: "80%", background: G.navSurface, boxShadow: "2px 0 12px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: 16, borderBottom: "1px solid " + G.navBorder }}>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil ? auteurProfil.nom_complet : ""}</div>
+                <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
+              </div>
+              <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
+            <button onClick={() => { setAuteurTab("dashboard"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "dashboard" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "dashboard" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>📊</span> Tableau de bord</button>
+            <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon compte</button>
+            <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
+            <button onClick={() => { setAuteurTab("aide"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "aide" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "aide" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>❓</span> Comment publier</button>
+            <button onClick={() => { setAuteurTab("notifs"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "notifs" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "notifs" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔔</span> Activer les notifications</button>
+                <button onClick={() => { setAuteurMenu(false); setPage("home"); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: G.textDim, fontSize: 14, cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏠</span> Retour à la boutique</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
