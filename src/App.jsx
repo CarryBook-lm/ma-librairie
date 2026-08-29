@@ -18456,7 +18456,6 @@ export default function App() {
                   ))}
 
                   <button onClick={() => {
-                    setPaymentStep(2);
                     // 📊 Pixel Meta : InitiateCheckout (a commencé le paiement)
                     trackPixelEvent("InitiateCheckout", {
                       content_ids: [String(paymentBook.id)],
@@ -18465,6 +18464,13 @@ export default function App() {
                       currency: "XAF",
                       num_items: 1,
                     });
+                    // Lecteur hors Cameroun (pays PawaPay activé) → paiement direct, sans écran de choix
+                    const iso = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
+                    if (lecteur && lecteur.pays !== "Cameroun" && iso) {
+                      payWithPawapay(iso);
+                    } else {
+                      setPaymentStep(2);
+                    }
                   }} style={{
                     width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
