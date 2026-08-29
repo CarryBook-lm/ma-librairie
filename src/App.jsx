@@ -4641,7 +4641,7 @@ const CAP_CONTENT = {
   }
 };
 
-function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProfile, setBfProfile, bfObjectives, setBfObjectives, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
+function BeautyFacialQuiz({ lecteur, payerCarrycarePawapay, setPage, setCarryCarePage, bfStep, setBfStep, bfProfile, setBfProfile, bfObjectives, setBfObjectives, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [bfStep, bfPaymentStep]);
 
@@ -5052,17 +5052,25 @@ function BeautyFacialQuiz({ setPage, setCarryCarePage, bfStep, setBfStep, bfProf
       );
     }
     if (bfPaymentStep === 2) {
+      const isoPP = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
+      const international = !!(lecteur && isoPP && lecteur.pays !== "Cameroun");
       return (
         <div style={{ minHeight: "100vh", background: CC.blanc, paddingBottom: 80 }}>
           <Header title="Méthode de paiement" onBack={() => setBfPaymentStep(1)} />
           <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ fontSize: 14, color: CC.noir, marginBottom: 16, textAlign: "center" }}>Choisis ta méthode de paiement</div>
+            {international ? (
+              <button onClick={() => payerCarrycarePawapay("facial", { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult, phone: lecteur.telephone }, beautyQuizPrice)} style={{ width: "100%", padding: 18, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+                📱 Payer avec Mobile Money
+              </button>
+            ) : (<>
             <button onClick={() => { setBfPaymentMethod("MTN"); setBfPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FFCC00", color: "#000", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
               📱 MTN Mobile Money
             </button>
             <button onClick={() => { setBfPaymentMethod("ORANGE"); setBfPaymentStep(3); }} style={{ width: "100%", padding: 18, background: "#FF6600", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               📱 Orange Money
             </button>
+            </>)}
           </div>
         </div>
       );
@@ -13437,32 +13445,28 @@ export default function App() {
       return;
     }
 
-    // A-t-on déjà fermé le bandeau ? (mémorisé)
-    let refuse = false;
-    try { refuse = localStorage.getItem("carrybooks_install_refuse") === "1"; } catch (e) {}
-
     // Détecter la plateforme
     const ua = navigator.userAgent.toLowerCase();
     const isIos = /iphone|ipad|ipod/.test(ua);
     const isAndroid = /android/.test(ua);
     setInstallPlatform(isIos ? "ios" : isAndroid ? "android" : "desktop");
 
-    // Afficher le bandeau pour TOUT LE MONDE tant qu'il n'a pas installé ni fermé
-    if (!refuse) setShowInstallBanner(true);
+    // Afficher le bandeau immédiatement sur iOS (pas d'event prompt)
+    if (isIos) {
+      setShowInstallBanner(false);
+    }
 
-    // Écouter l'event d'install (Android, Desktop Chrome/Edge) : on garde l'événement
-    // pour l'installation directe, et on LAISSE le bandeau affiché.
+    // Écouter l'event d'install (Android, Desktop Chrome/Edge)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
-      if (!refuse) setShowInstallBanner(true);
+      setShowInstallBanner(false);
     };
 
-    // Cacher le bandeau dès l'installation (et ne plus le reproposer)
+    // Cacher le bandeau dès l'installation
     const handleAppInstalledBanner = () => {
       setShowInstallBanner(false);
       setInstallPrompt(null);
-      try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -13490,19 +13494,6 @@ export default function App() {
       setInstallPrompt(null);
     }
   };
-
-  const fermerBandeauInstall = () => {
-    setShowInstallBanner(false);
-    try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
-  };
-  const bandeauInstallNode = showInstallBanner ? (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, background: "rgba(106,17,203,0.88)", color: "#fff", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.15)", backdropFilter: "blur(2px)" }}>
-      <span style={{ fontSize: 16 }}>📱</span>
-      <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application CarryBooks</span>
-      <button onClick={triggerInstall} style={{ background: "#fff", color: "#6a11cb", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Installer</button>
-      <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
-    </div>
-  ) : null;
 
   // ============================================
   // PWA TRACKER — Compteur d'installations
@@ -13791,6 +13782,38 @@ export default function App() {
         } else {
           setPage("library");
         }
+        try { window.history.replaceState({}, "", "/"); } catch (e) {}
+      }
+      // Retour d'un paiement DIAGNOSTIC CarryCare : on récupère le résultat et on l'affiche
+      const ccRef = params.get("cc");
+      if (params.get("pawapay") === "return" && ccRef) {
+        (async () => {
+          let found = null;
+          for (let i = 0; i < 8; i++) {
+            try {
+              const { data } = await supabase.from("carrycare_results").select("quiz_type, result_data").eq("external_reference", ccRef).limit(1);
+              if (data && data[0]) { found = data[0]; break; }
+            } catch (e) {}
+            await new Promise(r => setTimeout(r, 1500));
+          }
+          if (found) {
+            const rd = found.result_data || {};
+            const qt = found.quiz_type;
+            if (qt === "facial") {
+              if (rd.profile) setBfProfile(rd.profile);
+              if (rd.objectives) setBfObjectives(rd.objectives);
+              if (rd.typeAnswers) setBfTypeAnswers(rd.typeAnswers);
+              if (rd.problems) setBfProblems(rd.problems);
+              if (rd.lifestyle) setBfLifestyle(rd.lifestyle);
+              if (rd.result) setBfResult(rd.result);
+              setPage("carrycare"); setCarryCarePage("facialQuiz"); setBfStep(8);
+            } else {
+              alert("✅ Paiement reçu ! Ton diagnostic est enregistré.");
+            }
+          } else {
+            alert("✅ Paiement reçu ! Ton diagnostic sera disponible dans un instant.");
+          }
+        })();
         try { window.history.replaceState({}, "", "/"); } catch (e) {}
       }
     } catch (e) {}
@@ -15945,6 +15968,42 @@ export default function App() {
 
   // 🌍 Paiement international via PayDunya (clients hors Cameroun)
   // 🌍 Paiement international via PawaPay (Mobile Money multi-pays)
+  // Paiement PawaPay pour un DIAGNOSTIC CarryCare (international). Pré-enregistre
+  // le diagnostic (via pawapay-create) puis redirige vers PawaPay.
+  async function payerCarrycarePawapay(quizType, resultData, amount) {
+    try {
+      const iso = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
+      if (!iso) { alert("Le paiement Mobile Money n'est pas encore disponible pour ton pays."); return; }
+      const userResp = await supabase.auth.getUser();
+      const userId = userResp.data.user?.id || null;
+      let referrerCode = null;
+      try {
+        const code = localStorage.getItem("carrybooks_referrer_code");
+        const expires = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+        if (code && expires > Date.now()) referrerCode = code;
+      } catch (e) {}
+      const res = await fetch("/api/pawapay-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "carrycare",
+          quiz_type: quizType,
+          amount: amount,
+          result_data: resultData,
+          country: iso,
+          phone: lecteur ? lecteur.telephone : "",
+          user_id: userId || "guest",
+          referrer_code: referrerCode,
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.redirectUrl) { window.location.href = data.redirectUrl; }
+      else { alert("Le paiement n'a pas pu démarrer. Réessaie, ou choisis un autre opérateur."); }
+    } catch (e) {
+      alert("Le paiement n'a pas pu démarrer. Vérifie ta connexion et réessaie.");
+    }
+  }
+
   async function payWithPawapay(forceCountry) {
     try {
       const country = forceCountry || pawapayCountry;
@@ -17923,8 +17982,7 @@ export default function App() {
     const owned = hasAccess(book);
     const isFav = favoriteBooks.includes(book.id);
     return (
-      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
-        {bandeauInstallNode}
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
         {/* 🍞 TOAST DE NOTIFICATION sur la page d�tail (sinon il appara�t derri�re) */}
         {toast && (
           <div 
@@ -18914,7 +18972,31 @@ export default function App() {
       )}
 
       {/* 📱 BANDEAU INSTALL PWA - affiché tant que l'app n'est pas installée */}
-      {bandeauInstallNode}
+      {showInstallBanner && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 201,
+          background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+          color: "#fff", padding: "10px 16px",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          fontSize: 14, fontWeight: 600,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          cursor: "pointer"
+        }}
+        onClick={triggerInstall}>
+          <span style={{ fontSize: 18, animation: "pulse 2s ease-in-out infinite" }}>📱</span>
+          <span style={{ flex: "0 1 auto" }}>Clique ici pour installer l'application CarryBooks</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); triggerInstall(); }}
+            style={{
+              background: "#fff", color: "#6a11cb", border: "none",
+              borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold",
+              cursor: "pointer", marginLeft: 6
+            }}>
+            INSTALLER
+          </button>
+          <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }`}</style>
+        </div>
+      )}
 
       {/* 🍎 POPUP INSTRUCTIONS iOS */}
       {showIosInstructions && (
@@ -21494,6 +21576,8 @@ export default function App() {
             )}
             {carryCarePage === "facialQuiz" && (
               <BeautyFacialQuiz
+                lecteur={lecteur}
+                payerCarrycarePawapay={payerCarrycarePawapay}
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 bfStep={bfStep} setBfStep={setBfStep}
