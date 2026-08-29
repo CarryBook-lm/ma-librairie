@@ -2486,7 +2486,12 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
                 <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{price} FCFA</div>
               </div>
             </div>
-            <button onClick={() => setQuizPaymentStep(2)} style={{
+            <button onClick={() => {
+              const isoPP = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
+              const international = !!(lecteur && isoPP && lecteur.pays !== "Cameroun");
+              if (international) { payerCarrycarePawapay("carry_quiz", { quiz: quiz, result: quizResult, phone: lecteur.telephone }, price); }
+              else { setQuizPaymentStep(2); }
+            }} style={{
               width: "100%", padding: 14, background: "linear-gradient(135deg, #c9a84c, #e0be7a)", color: "#1a1208",
               border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10
             }}>
@@ -5056,7 +5061,7 @@ function BeautyFacialQuiz({ lecteur, payerCarrycarePawapay, setPage, setCarryCar
                 ✅ PDF téléchargeable
               </div>
             </div>
-            <button onClick={() => setBfPaymentStep(2)} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+            <button onClick={() => { const isoPP = lecteur ? PAYS_TO_PP[lecteur.pays] : null; const international = !!(lecteur && isoPP && lecteur.pays !== "Cameroun"); if (international) { payerCarrycarePawapay("facial", { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult, phone: lecteur.telephone }, beautyQuizPrice); } else { setBfPaymentStep(2); } }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
             </button>
           </div>
