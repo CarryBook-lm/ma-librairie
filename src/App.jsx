@@ -2110,6 +2110,7 @@ const QUIZ_DATA = [
 // ============================================================
 
 function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuestion, quizCategory, setQuizCategory, G, quizPrice, setPage, setCarryCarePage }) {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   const filtered = quizCategory === "Tous" ? QUIZ_DATA : QUIZ_DATA.filter(q => q.category === quizCategory);
 
   function startQuiz(quiz) {
