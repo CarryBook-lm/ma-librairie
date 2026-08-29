@@ -18430,14 +18430,9 @@ export default function App() {
                         <option value="CIV">🇨🇮 Côte d'Ivoire</option>
                         <option value="SEN">🇸🇳 Sénégal</option>
                         <option value="BEN">🇧🇯 Bénin</option>
-                        <option value="TGO">🇹🇬 Togo</option>
-                        <option value="BFA">🇧🇫 Burkina Faso</option>
-                        <option value="MLI">🇲🇱 Mali</option>
-                        <option value="NER">🇳🇪 Niger</option>
                         <option value="GAB">🇬🇦 Gabon</option>
                         <option value="COG">🇨🇬 Congo-Brazzaville</option>
                         <option value="TCD">🇹🇩 Tchad</option>
-                        <option value="CAF">🇨🇫 Centrafrique</option>
                         <option value="COD">🇨🇩 RD Congo</option>
                       </select>
                       <button onClick={payWithPawapay} disabled={pawapayLoading || !pawapayCountry} style={{ width: "100%", padding: 14, background: pawapayCountry ? "#6d28d9" : "#bbb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: pawapayCountry ? "pointer" : "not-allowed", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "Payer avec Mobile Money"}</button>
