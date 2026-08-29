@@ -18804,9 +18804,7 @@ export default function App() {
             </div>
             <div style={{ height: 18 }} />
             <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
-            <div style={{ textAlign: "center", marginTop: 12 }}>
-              <button onClick={signInWithGoogle} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>ou continuer avec Google</button>
-            </div>
+
           </div>
         </div>
       )}
