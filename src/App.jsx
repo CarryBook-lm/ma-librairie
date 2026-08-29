@@ -13691,6 +13691,7 @@ export default function App() {
   const [pubEditId, setPubEditId] = useState(null);
   const [auteurTab, setAuteurTab] = useState("stats");
   const [auteurMenu, setAuteurMenu] = useState(false);
+  const [compteEdit, setCompteEdit] = useState(false);
   const [statsSubTab, setStatsSubTab] = useState("board");
   const [statsPeriod, setStatsPeriod] = useState("today");
   const [statsDate, setStatsDate] = useState("");
@@ -16179,6 +16180,7 @@ export default function App() {
       setAuteurMsg("❌ " + (e.message || e));
     }
     setAuteurSaving(false);
+    setTimeout(() => setAuteurMsg(""), 4000);
   }
 
   async function pubUploadCover(e) {
@@ -16314,7 +16316,7 @@ export default function App() {
               : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
             <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
           </div>
-          {auteurProfil && <button onClick={() => setAuteurTab("notifs")} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
+          {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
         </div>
         <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
 
@@ -16354,7 +16356,7 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton livre sera vérifié avant sa mise en ligne.</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                     <button onClick={() => setPubForm(f => ({ ...f, type: "roman" }))} style={{ flex: 1, padding: 10, borderRadius: 8, border: "2px solid " + (pubForm.type === "roman" ? G.gold : G.border), background: pubForm.type === "roman" ? G.gold + "22" : "#fff", color: pubForm.type === "roman" ? G.gold : G.textDim, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>📖 Roman (texte)</button>
-                    <button onClick={() => setPubForm(f => ({ ...f, type: "guide" }))} style={{ flex: 1, padding: 10, borderRadius: 8, border: "2px solid " + (pubForm.type === "guide" ? G.gold : G.border), background: pubForm.type === "guide" ? G.gold + "22" : "#fff", color: pubForm.type === "guide" ? G.gold : G.textDim, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>📥 Guide (PDF)</button>
+                    <button onClick={() => setPubForm(f => ({ ...f, type: "guide" }))} style={{ flex: 1, padding: 10, borderRadius: 8, border: "2px solid " + (pubForm.type === "guide" ? G.gold : G.border), background: pubForm.type === "guide" ? G.gold + "22" : "#fff", color: pubForm.type === "guide" ? G.gold : G.textDim, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>📥 Livres PDF</button>
                   </div>
                   <label style={labelSt}>Titre *</label>
                   <input value={pubForm.title} onChange={e => setPubForm(f => ({ ...f, title: e.target.value }))} style={champ} />
@@ -16400,7 +16402,7 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      <label style={labelSt}>Fichier PDF du guide * (A5, numéro de page en bas au centre)</label>
+                      <label style={labelSt}>Fichier PDF du livre * (A5, numéro de page en bas au centre)</label>
                       {pubForm.pdf_url ? (
                         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                           <div style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ PDF ajouté</div>
@@ -16569,30 +16571,43 @@ export default function App() {
                   </div>
                 );
               })()}
-              {/* MON COMPTE (modifiable) */}
+              {/* MON COMPTE — lecture seule + Modifier */}
               {auteurTab === "compte" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>👤 Mon compte</div>
-                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Modifie tes informations, puis enregistre.</div>
-                  <label style={labelSt}>Nom d'auteur *</label>
-                  <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} style={champ} />
-                  <div style={{ height: 14 }} />
-                  <label style={labelSt}>Pays *</label>
-                  <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
-                    <option value="">— Choisis ton pays —</option>
-                    {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
-                  </select>
-                  <div style={{ height: 14 }} />
-                  <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
-                  <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
-                    <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
-                  </div>
-                  <div style={{ height: 14 }} />
-                  <label style={labelSt}>Présentation (facultatif)</label>
-                  <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={3} style={{ ...champ, resize: "vertical" }} />
-                  <div style={{ fontSize: 11, color: G.textDim, margin: "10px 0" }}>E-mail : {auteurProfil.email || "—"}</div>
-                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>👤 Mon compte</div>
+                  {!compteEdit ? (
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Nom</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.nom_complet}</span></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>E-mail</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.email || "—"}</span></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone || "—"}</span></div>
+                      {auteurProfil.bio ? <div style={{ padding: "8px 0", fontSize: 13, color: G.textDim }}>{auteurProfil.bio}</div> : null}
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <label style={labelSt}>Nom d'auteur *</label>
+                      <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} style={champ} />
+                      <div style={{ height: 14 }} />
+                      <label style={labelSt}>Pays *</label>
+                      <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
+                        <option value="">— Choisis ton pays —</option>
+                        {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
+                      </select>
+                      <div style={{ height: 14 }} />
+                      <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
+                      <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
+                        <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
+                      </div>
+                      <div style={{ height: 14 }} />
+                      <label style={labelSt}>Présentation (facultatif)</label>
+                      <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={3} style={{ ...champ, resize: "vertical" }} />
+                      <div style={{ height: 16 }} />
+                      <button onClick={() => { saveAuteur(); setCompteEdit(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                      <button onClick={() => { setCompteEdit(false); setAuteurMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                    </div>
+                  )}
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
               )}
@@ -16619,7 +16634,7 @@ export default function App() {
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 2 types de livres</div>
                   <p><b>📖 Roman (texte)</b> : tu colles le texte complet. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
-                  <p><b>📥 Guide (PDF)</b> : tu téléverses un fichier PDF. Il est téléchargeable par le client après achat.</p>
+                  <p><b>📥 Livres PDF</b> : tu téléverses un fichier PDF. Il est téléchargeable par le client après achat.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>2. La couverture</div>
                   <p>Format <b>A4 portrait</b> (plus haut que large). Taille conseillée : <b>1240 × 1754 pixels</b>. Une belle couverture nette donne envie d'acheter.</p>
