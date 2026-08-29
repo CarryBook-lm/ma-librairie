@@ -51,8 +51,10 @@ export default async function handler(req, res) {
     if (typeof body === "string") { try { body = JSON.parse(body); } catch (e) { body = {}; } }
     body = body || {};
 
-    const { amount, book_id, book_title, user_id, phone, country, referrer_code } = body;
-    if (!amount || !book_id) {
+    const { amount, book_id, book_title, user_id, phone, country, referrer_code,
+            kind, quiz_type, result_data } = body;
+    const estCarrycare = kind === "carrycare";
+    if (!amount || (!estCarrycare && !book_id)) {
       return res.status(400).json({ error: "amount et book_id requis" });
     }
 
@@ -88,14 +90,44 @@ export default async function handler(req, res) {
     }
 
     const depositId = uuidv4();
-    const title = book_title || ("Livre #" + book_id);
+    const title = estCarrycare
+      ? ("Diagnostic " + (quiz_type || "CarryCare"))
+      : (book_title || ("Livre #" + book_id));
 
-    // On garde la trace de la commande dans la référence + les métadonnées.
-    // extRef sert d'identifiant unique côté CarryBooks (anti-doublon dans le notify).
-    const extRef = "PP_" + book_id + "_" + (user_id || "guest") + "_" + Date.now();
+    // extRef : identifiant unique côté CarryBooks (anti-doublon dans le notify).
+    const extRef = estCarrycare
+      ? ("PPCC_" + (quiz_type || "cc") + "_" + (user_id || "guest") + "_" + Date.now())
+      : ("PP_" + book_id + "_" + (user_id || "guest") + "_" + Date.now());
 
-    const returnUrl =
-      "https://www.carrybooks.com/?pawapay=return&book=" + encodeURIComponent(book_id);
+    // Au retour : pour un livre on rouvre le livre ; pour un diagnostic on
+    // revient sur une page dédiée qui récupère et affiche le résultat.
+    const returnUrl = estCarrycare
+      ? ("https://www.carrybooks.com/?pawapay=return&cc=" + encodeURIComponent(extRef))
+      : ("https://www.carrybooks.com/?pawapay=return&book=" + encodeURIComponent(book_id));
+
+    // Diagnostic trop volumineux pour les métadonnées PawaPay : on le pré-enregistre
+    // dans carrycare_pending. Le webhook le lira au retour confirmé.
+    if (estCarrycare) {
+      try {
+        const supaCC = createClient(
+          process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY,
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+        await supaCC.from("carrycare_pending").upsert([{
+          external_reference: extRef,
+          quiz_type: quiz_type || null,
+          amount: prixFcfa,
+          phone: phone ? String(phone) : null,
+          result_data: result_data || {},
+          user_id: (user_id && user_id !== "guest") ? user_id : null,
+          referrer_code: referrer_code || null,
+        }], { onConflict: "external_reference" });
+      } catch (e) {
+        console.error("[PAWAPAY-CREATE] pré-enregistrement carrycare échoué:", e && e.message);
+        return res.status(500).json({ error: "Impossible de préparer le diagnostic" });
+      }
+    }
 
     // Payment Page v2 : le montant est dans amountDetails { amount, currency }.
     // On fixe aussi le pays ; le client choisit son opérateur Mobile Money.
@@ -107,7 +139,9 @@ export default async function handler(req, res) {
       language: "FR",
       reason: ("Achat " + title).slice(0, 22), // 4-22 caractères
       metadata: [
-        { book_id: String(book_id) },
+        { kind: estCarrycare ? "carrycare" : "book" },
+        { book_id: String(book_id || "") },
+        { quiz_type: String(quiz_type || "") },
         { user_id: user_id ? String(user_id) : "guest" },
         { ext_ref: extRef },
         { referrer_code: referrer_code ? String(referrer_code) : "" },
