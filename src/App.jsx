@@ -13938,6 +13938,9 @@ export default function App() {
     if (authChecked && !user && !lecteur) setShowLecteurModal(true);
     else setShowLecteurModal(false);
   }, [authChecked, user, lecteur]);
+  useEffect(() => {
+    if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
+  }, [lecteur]);
   async function saveLecteur() {
     const prenom = lecteurPrenom.trim();
     const pays = lecteurPays;
@@ -14733,6 +14736,29 @@ export default function App() {
     }
   }
 
+  function deconnecterLecteur() {
+    try { localStorage.removeItem("carrybooks_lecteur"); } catch (e) {}
+    setLecteur(null);
+    setLecteurPrenom(""); setLecteurPays(""); setLecteurTel("");
+  }
+  async function loadLecteurPurchases(phone) {
+    if (!phone) return;
+    try {
+      const { data } = await supabase.from("guest_purchases").select("book_id, created_at, amount").eq("phone", phone).order("created_at", { ascending: false });
+      if (data && data.length) {
+        const ids = data.map(p => p.book_id);
+        setPurchasedBooks(prev => {
+          const merged = [...new Set([...(prev || []), ...ids])];
+          try { localStorage.setItem("purchasedBooks", JSON.stringify(merged)); } catch (e) {}
+          return merged;
+        });
+        setPurchaseHistory(prev => {
+          const seen = new Set((prev || []).map(x => x.book_id));
+          return [...(prev || []), ...data.filter(d => !seen.has(d.book_id))];
+        });
+      }
+    } catch (e) {}
+  }
   async function loadUserPurchases(userId) {
     // 🛡️ ÉTAPE 1 : Récupérer les achats perdus AVANT de charger la liste
     // (paiements CamPay réussis mais non enregistrés à cause de déconnexion)
@@ -17841,7 +17867,7 @@ export default function App() {
             ← Retour {previousPage === "carrycolor" ? "à CarryColor" : ""}
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            {!user && (
+            {!user && !lecteur && (
               <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
             )}
             <button onClick={() => shareBook(book)} style={{ background: "none", border: "none", color: G.textDim, fontSize: 20, cursor: "pointer" }}>🔗</button>
@@ -18912,7 +18938,9 @@ export default function App() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
           {user
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
-            : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+            : lecteur
+              ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
+              : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
           {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
           {user && user.email === ADMIN_EMAIL && (
@@ -18997,7 +19025,9 @@ export default function App() {
             )}
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
-              : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
+              : lecteur
+                ? <div onClick={() => { deconnecterLecteur(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
+                : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
             }
           </div>
         </div>
