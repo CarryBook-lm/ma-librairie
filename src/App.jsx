@@ -15907,7 +15907,7 @@ export default function App() {
         window.location.href = data.redirectUrl;
       } else {
         setPawapayLoading(false);
-        alert("Erreur PawaPay : " + ((data && data.error) || "inconnue") + "\n\nDétail : " + (data && data.details ? JSON.stringify(data.details) : "aucun"));
+        alert("Le paiement n'a pas pu démarrer. Vérifie ta connexion et réessaie, ou choisis un autre opérateur.");
       }
     } catch (e) {
       setPawapayLoading(false);
