@@ -15816,7 +15816,7 @@ export default function App() {
         window.location.href = data.redirectUrl;
       } else {
         setPawapayLoading(false);
-        alert((data && data.error) || "Impossible de lancer le paiement. Réessaie dans un instant.");
+        alert("Erreur PawaPay : " + ((data && data.error) || "inconnue") + "\n\nDétail : " + (data && data.details ? JSON.stringify(data.details) : "aucun"));
       }
     } catch (e) {
       setPawapayLoading(false);
