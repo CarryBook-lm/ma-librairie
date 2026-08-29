@@ -19248,47 +19248,25 @@ export default function App() {
                   );
                 })()}
 
-                {/* HERO BUTTONS */}
+                {/* 3 CARRÉS : Publier · Installer · Bibliothèque */}
                 <div style={{ display: "flex", gap: 0, margin: "0 0 20px 0" }}>
-                  {/* Install button — hidden once app is installed */}
-                  {!window.matchMedia("(display-mode: standalone)").matches && (
-                    <button onClick={async () => {
-                      if (deferredPrompt || window.__pwaPrompt) {
-                        (deferredPrompt || window.__pwaPrompt).prompt();
-                        const { outcome } = await (deferredPrompt || window.__pwaPrompt).userChoice;
-                        if (outcome === "accepted") { setDeferredPrompt(null); window.__pwaPrompt = null; }
-                      } else {
-                        setShowInstallModal(true);
-                      }
-                    }} style={{ flex: 1, padding: "14px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, borderRight: "1px solid rgba(0,0,0,0.1)" }}>
-                      <span style={{ fontSize: 20 }}>📲</span>
-                      <span style={{ lineHeight: 1.2, textAlign: "center" }}>Installer CarryBooks</span>
-                    </button>
-                  )}
-                  <button onClick={() => setPage("library")} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: window.matchMedia("(display-mode: standalone)").matches ? "none" : "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                    <span style={{ fontSize: 20 }}>📚</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>Ma Bibliotheque</span>
+                  <button onClick={() => setPage("espace_auteur")} style={{ flex: 1, padding: "14px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, borderRight: "1px solid rgba(0,0,0,0.12)" }}>
+                    <span style={{ fontSize: 20 }}>📖</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>PUBLIE UN LIVRE</span>
+                    <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 9, fontWeight: "normal", opacity: 0.8 }}>Vends tes livres sur CarryBooks</span>
                   </button>
-                  {(appReferralSettings?.active !== false) ? (
-                    <button onClick={() => setPage("referral")} style={{ flex: 1, padding: "10px 4px", background: "linear-gradient(135deg, #f5d782 0%, #c9a84c 100%)", border: "none", borderLeft: "1px solid " + G.border, color: "#1a1208", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, justifyContent: "center" }}>
-                      <span style={{ fontSize: 18 }}>🎁</span>
-                      <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 11, fontWeight: "bold" }}>Mon Parrainage</span>
-                      <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.85 }}>Gagne de l'argent</span>
-                    </button>
-                  ) : (
-                    <button onClick={() => { setPage("carrycare"); setCarryCarePage("home"); }} style={{ flex: 1, padding: "14px 6px", background: "#f5d7d9", border: "none", borderLeft: "1px solid " + G.border, color: "#1a1a1a", fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                      <span style={{ fontSize: 20 }}>🌸</span>
-                      <span style={{ lineHeight: 1.2, textAlign: "center" }}>CarryCare</span>
-                    </button>
-                  )}
-                  <button onClick={() => setPage("reclamer")} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderLeft: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                    <span style={{ fontSize: 20 }}>📧</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Reçois ton livre</span>
-                    <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11, fontWeight: "normal" }}>Par mail</span>
+                  <button onClick={async () => { if (deferredPrompt || window.__pwaPrompt) { (deferredPrompt || window.__pwaPrompt).prompt(); const { outcome } = await (deferredPrompt || window.__pwaPrompt).userChoice; if (outcome === "accepted") { setDeferredPrompt(null); window.__pwaPrompt = null; } } else { setShowInstallModal(true); } }} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", borderRight: "1px solid " + G.border, color: G.text, fontWeight: "bold", fontSize: 11, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 20 }}>📲</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 10.5 }}>INSTALLE L'APPLICATION CARRYBOOKS SUR TON TÉLÉPHONE</span>
+                  </button>
+                  <button onClick={() => setPage("library")} style={{ flex: 1, padding: "14px 6px", background: G.surface, border: "none", color: G.text, fontWeight: "bold", fontSize: 12, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 20 }}>📚</span>
+                    <span style={{ lineHeight: 1.2, textAlign: "center" }}>MA BIBLIOTHÈQUE</span>
+                    <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 9, fontWeight: "normal", opacity: 0.8 }}>Mes livres achetés</span>
                   </button>
                 </div>
 
-                {/* BEST-SELLERS — Top 5 livres les plus achetés (num�riques uniquement sur la home) */}
+                                {/* BEST-SELLERS — Top 5 livres les plus achetés (num�riques uniquement sur la home) */}
                 {(() => {
                   const bookSales = {};
                   // Filtrer pour ne garder que les livres num�riques
