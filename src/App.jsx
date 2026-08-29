@@ -13741,8 +13741,6 @@ export default function App() {
         try { window.history.replaceState({}, "", "/"); } catch (e) {}
       }
       if (params.get("pawapay") === "return") {
-        setPaydunyaReturn(true);
-        setTimeout(() => setPaydunyaReturn(false), 8000);
         const bId = params.get("book");
         if (bId) {
           (async () => {
@@ -18401,7 +18399,11 @@ export default function App() {
                 <div style={{ textAlign: "center", padding: "20px 0" }}>
                   <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
                   <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
-                  <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>Avec quel opérateur veux-tu payer ?</p>
+                  <p style={{ color: "#888", fontSize: 12, marginBottom: 14 }}>Avec quel opérateur veux-tu payer ?</p>
+                  <div style={{ background: "#f6f2fc", border: "1px solid #d6c8f0", borderRadius: 8, padding: "10px 12px", marginBottom: 16, fontSize: 12, color: "#4c1d95", lineHeight: 1.6, textAlign: "left" }}>
+                    🇨🇲 <b>Tu es au Cameroun ?</b> Choisis MTN ou Orange.<br />
+                    🌍 <b>Tu es dans un autre pays ?</b> Clique sur « Autre pays » plus bas.
+                  </div>
                   {PAYDUNYA_ENABLED && visitorCountry && visitorCountry !== "CM" && (
                     <div style={{ background: "#e3f2fd", border: "1px solid #1e88e5", borderRadius: 8, padding: "8px 12px", marginBottom: 14, fontSize: 12, color: "#0d47a1", lineHeight: 1.5 }}>
                       🌍 Tu sembles être hors Cameroun. Utilise « Carte / Mobile Money » ci-dessous.
