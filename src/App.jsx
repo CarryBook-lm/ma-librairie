@@ -18804,6 +18804,10 @@ export default function App() {
             </div>
             <div style={{ height: 18 }} />
             <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
+            <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
+              <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Déjà un compte Google ?</div>
+              <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
+            </div>
 
           </div>
         </div>
