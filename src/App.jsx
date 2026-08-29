@@ -1578,6 +1578,12 @@ const PAYS_TEL = [
 const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
 const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
+// Capture globale de l'événement d'installation PWA (Android/Chrome) dès le chargement,
+// pour que le bouton "Installe l'application" puisse installer en un clic.
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); window.__pwaPrompt = e; });
+  window.addEventListener("appinstalled", () => { window.__pwaPrompt = null; });
+}
 
 const slugify = (str) => {
   if (!str) return "";
