@@ -14429,6 +14429,7 @@ export default function App() {
         if (session?.user) {
           setUser(session.user);
           loadUserPurchases(session.user.id);
+          if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
           window.history.replaceState(null, "", window.location.pathname);
         }
         setAuthChecked(true);
@@ -14438,6 +14439,7 @@ export default function App() {
         setUser(session?.user ?? null);
         if (session?.user) {
           loadUserPurchases(session.user.id);
+          if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
           // Re-tente les sauvegardes CarryCare en attente
           flushPendingCarrycareSaves().catch(() => {});
         }
@@ -14506,8 +14508,9 @@ export default function App() {
       if (event === "SIGNED_OUT") {
         setPurchasedBooks([]);
         localStorage.removeItem("purchasedBooks");
-        setShowAuthModal(false);
+        setShowLecteurModal(false);
         Preferences.remove({ key: "sb-session" }).catch(() => {});
+        if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
       }
     });
     return () => subscription.unsubscribe();
@@ -14907,6 +14910,8 @@ export default function App() {
     setUser(null);
     setPurchasedBooks([]);
     localStorage.removeItem("purchasedBooks");
+    // Si un lecteur (téléphone) reste connecté, recharger SA bibliothèque
+    if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
   }
 
   async function fetchBooks() {
