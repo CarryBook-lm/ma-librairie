@@ -14441,7 +14441,7 @@ export default function App() {
           // Re-tente les sauvegardes CarryCare en attente
           flushPendingCarrycareSaves().catch(() => {});
         }
-        // 🚫 SUPPRIMÉ: setShowAuthModal(true) qui forçait la modal au démarrage
+        // 🚫 SUPPRIMÉ: setShowLecteurModal(true) qui forçait la modal au démarrage
         // Le visiteur peut maintenant naviguer librement sans être bloqué
         setAuthChecked(true);
       });
@@ -17872,7 +17872,7 @@ export default function App() {
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {!user && !lecteur && (
-              <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+              <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
             )}
             <button onClick={() => shareBook(book)} style={{ background: "none", border: "none", color: G.textDim, fontSize: 20, cursor: "pointer" }}>🔗</button>
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
@@ -18959,7 +18959,7 @@ export default function App() {
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : lecteur
               ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
-              : <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+              : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
           {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
           {user && user.email === ADMIN_EMAIL && (
@@ -19046,7 +19046,7 @@ export default function App() {
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : lecteur
                 ? <div onClick={() => { deconnecterLecteur(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
-                : <div onClick={() => { signInWithGoogle(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter avec Google</div>
+                : <div onClick={() => { setShowLecteurModal(true); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.gold, borderBottom: "1px solid " + G.navBorder }}>🔑 Se connecter</div>
             }
           </div>
         </div>
@@ -20261,7 +20261,7 @@ export default function App() {
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "32px 20px", textAlign: "center" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
                 <p style={{ fontSize: 14, color: G.text, marginBottom: 16 }}>Connecte-toi pour accéder à ton programme de parrainage</p>
-                <button onClick={() => setShowAuthModal(true)} style={{ padding: "12px 28px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>SE CONNECTER</button>
+                <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 28px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>SE CONNECTER</button>
               </div>
             )}
 
@@ -20566,7 +20566,7 @@ export default function App() {
               </div>
             </div>
 
-            <button onClick={() => { if (!user) { setShowAuthModal(true); return; } setShowSubModal(true); setSubPaymentStep(1); setSubPaymentMethod(null); setSubPhone(""); }}
+            <button onClick={() => { if (!user && !lecteur) { setShowLecteurModal(true); return; } setShowSubModal(true); setSubPaymentStep(1); setSubPaymentMethod(null); setSubPhone(""); }}
               style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
               {subscription ? "Renouveler l'abonnement" : "S'abonner maintenant"}
             </button>
@@ -20659,7 +20659,7 @@ export default function App() {
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 24, textAlign: "center" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
                 <div style={{ fontSize: 15, color: G.text, marginBottom: 16 }}>Connecte-toi pour voir tes résultats sauvegardés</div>
-                <button onClick={() => setShowAuthModal(true)} style={{ background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Se connecter</button>
+                <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Se connecter</button>
               </div>
             )}
 
