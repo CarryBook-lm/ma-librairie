@@ -14000,17 +14000,18 @@ export default function App() {
     </div>
   );
   const fbBannerNode = (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "#c9a84c", color: "#1a1208", padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.25)" }}>
-      <span style={{ fontSize: 20 }}>📲</span>
-      <span style={{ flex: 1, fontSize: 12, fontWeight: "bold", lineHeight: 1.3 }}>Ouvre dans ton navigateur pour installer l'application et lire tes romans</span>
+    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "#faf7f0", color: "#1a1208", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 28, textAlign: "center" }}>
+      <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 60, marginBottom: 22 }} />
+      <h2 style={{ fontSize: 22, margin: "0 0 12px", color: "#1a1208" }}>Bienvenue sur CarryBooks 📚</h2>
+      <p style={{ fontSize: 15, color: "#5a5040", lineHeight: 1.6, margin: "0 0 26px", maxWidth: 320 }}>Appuie sur <b>« Continuer »</b> pour lire et télécharger tes livres dans ton navigateur.</p>
       <button onClick={() => {
         const ua = (navigator.userAgent || "").toLowerCase();
         if (/android/.test(ua)) {
           const bare = window.location.href.replace(/^https?:\/\//, "");
           window.location.href = "intent://" + bare + "#Intent;scheme=https;end";
         } else { setShowInstallModal(true); }
-      }} style={{ background: "#1a1208", color: "#fff", border: "none", borderRadius: 8, padding: "8px 12px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Ouvrir</button>
-      <button onClick={() => setFbBannerDismissed(true)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
+      }} style={{ background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 12, padding: "16px 40px", fontSize: 17, fontWeight: "bold", cursor: "pointer", boxShadow: "0 6px 18px rgba(201,168,76,0.4)" }}>Continuer</button>
+      <button onClick={() => setFbBannerDismissed(true)} style={{ marginTop: 22, background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Rester ici et lire dans Facebook</button>
     </div>
   );
   const [readerScrollMode, setReaderScrollMode] = useState(false);
