@@ -13671,6 +13671,9 @@ export default function App() {
   const [visitorCountry, setVisitorCountry] = useState(null);
   const [paydunyaLoading, setPaydunyaLoading] = useState(false);
   const [paydunyaReturn, setPaydunyaReturn] = useState(false);
+  const [pawapayLoading, setPawapayLoading] = useState(false);
+  const [pawapayCountry, setPawapayCountry] = useState("");
+  const [showPawapayCountries, setShowPawapayCountries] = useState(false);
   const [auteurProfil, setAuteurProfil] = useState(null);
   const [auteurChecked, setAuteurChecked] = useState(false);
   const [auteurNom, setAuteurNom] = useState("");
@@ -13732,6 +13735,12 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get("paydunya_return") === "1") {
+        setPaydunyaReturn(true);
+        setPage("library");
+        setTimeout(() => setPaydunyaReturn(false), 8000);
+        try { window.history.replaceState({}, "", "/"); } catch (e) {}
+      }
+      if (params.get("pawapay") === "return") {
         setPaydunyaReturn(true);
         setPage("library");
         setTimeout(() => setPaydunyaReturn(false), 8000);
@@ -15775,6 +15784,46 @@ export default function App() {
   }
 
   // 🌍 Paiement international via PayDunya (clients hors Cameroun)
+  // 🌍 Paiement international via PawaPay (Mobile Money multi-pays)
+  async function payWithPawapay() {
+    try {
+      if (!pawapayCountry) { alert("Choisis d'abord ton pays."); return; }
+      setPawapayLoading(true);
+      const basePrice = paymentBook.price || 0;
+      const promoDiscount = appliedPromo ? Math.round(basePrice * appliedPromo.discount_pct / 100) : 0;
+      const finalPrice = basePrice - promoDiscount;
+      let referrerCode = null;
+      try {
+        const code = localStorage.getItem("carrybooks_referrer_code");
+        const exp = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+        if (code && exp > Date.now()) referrerCode = code;
+      } catch (e) {}
+      const res = await fetch("/api/pawapay-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: finalPrice,
+          book_id: paymentBook.id,
+          book_title: paymentBook.title,
+          user_id: user ? user.id : "",
+          phone: "",
+          country: pawapayCountry,
+          referrer_code: referrerCode,
+        }),
+      });
+      const data = await res.json();
+      if (data && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        setPawapayLoading(false);
+        alert((data && data.error) || "Impossible de lancer le paiement. Réessaie dans un instant.");
+      }
+    } catch (e) {
+      setPawapayLoading(false);
+      alert("Erreur de connexion. Réessaie.");
+    }
+  }
+
   async function payWithPaydunya() {
     try {
       setPaydunyaLoading(true);
@@ -18354,6 +18403,32 @@ export default function App() {
                     width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
                   }}>📱 Orange Money</button>
+                  <button onClick={() => setShowPawapayCountries(v => !v)} style={{
+                    width: "100%", padding: 16, marginBottom: showPawapayCountries ? 8 : 14, background: "#6d28d9", color: "#fff",
+                    border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer"
+                  }}>🌍 Autre pays (Mobile Money international)</button>
+                  {showPawapayCountries && (
+                    <div style={{ background: "#f3effc", border: "1px solid #6d28d9", borderRadius: 10, padding: 12, marginBottom: 14, textAlign: "left" }}>
+                      <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8 }}>Choisis ton pays, puis paie avec ton Mobile Money local :</div>
+                      <select value={pawapayCountry} onChange={e => setPawapayCountry(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #ccc", fontSize: 14, marginBottom: 10, background: "#fff", color: "#1a1a1a" }}>
+                        <option value="">— Choisis ton pays —</option>
+                        <option value="CMR">🇨🇲 Cameroun</option>
+                        <option value="CIV">🇨🇮 Côte d'Ivoire</option>
+                        <option value="SEN">🇸🇳 Sénégal</option>
+                        <option value="BEN">🇧🇯 Bénin</option>
+                        <option value="TGO">🇹🇬 Togo</option>
+                        <option value="BFA">🇧🇫 Burkina Faso</option>
+                        <option value="MLI">🇲🇱 Mali</option>
+                        <option value="NER">🇳🇪 Niger</option>
+                        <option value="GAB">🇬🇦 Gabon</option>
+                        <option value="COG">🇨🇬 Congo-Brazzaville</option>
+                        <option value="TCD">🇹🇩 Tchad</option>
+                        <option value="CAF">🇨🇫 Centrafrique</option>
+                        <option value="COD">🇨🇩 RD Congo</option>
+                      </select>
+                      <button onClick={payWithPawapay} disabled={pawapayLoading || !pawapayCountry} style={{ width: "100%", padding: 14, background: pawapayCountry ? "#6d28d9" : "#bbb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: pawapayCountry ? "pointer" : "not-allowed", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "Payer avec Mobile Money"}</button>
+                    </div>
+                  )}
                   {PAYDUNYA_ENABLED && (
                   <button onClick={payWithPaydunya} disabled={paydunyaLoading} style={{
                     width: "100%", padding: 16, marginBottom: 14, background: "#1e88e5", color: "#fff",
