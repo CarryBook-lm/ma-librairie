@@ -13684,6 +13684,7 @@ export default function App() {
   const [cachedBooks, setCachedBooks] = useState({});
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
+  const [pendingBuyBook, setPendingBuyBook] = useState(null);
   const [paymentStep, setPaymentStep] = useState(1);
   const [visitorCountry, setVisitorCountry] = useState(null);
   const [paydunyaLoading, setPaydunyaLoading] = useState(false);
@@ -13940,9 +13941,8 @@ export default function App() {
     try { const raw = localStorage.getItem("carrybooks_lecteur"); if (raw) { const o = JSON.parse(raw); if (o && o.telephone) setLecteur(o); } } catch (e) {}
   }, []);
   useEffect(() => {
-    if (authChecked && !user && !lecteur) setShowLecteurModal(true);
-    else setShowLecteurModal(false);
-  }, [authChecked, user, lecteur]);
+    if (user || lecteur) setShowLecteurModal(false);
+  }, [user, lecteur]);
   useEffect(() => {
     if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
   }, [lecteur]);
@@ -13962,7 +13962,42 @@ export default function App() {
     setLecteur(obj);
     setShowLecteurModal(false);
     setLecteurSaving(false);
+    if (pendingBuyBook) {
+      const b = pendingBuyBook; setPendingBuyBook(null);
+      setPaymentBook(b); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber("");
+    }
   }
+  const lecteurModalNode = (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+        <div style={{ textAlign: "center", marginBottom: 18 }}>
+          <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 44, marginBottom: 12 }} />
+          <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur CarryBooks 📚</h2>
+          <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
+        </div>
+        <label style={LEC_LABEL}>Ton prénom *</label>
+        <input value={lecteurPrenom} onChange={e => setLecteurPrenom(e.target.value)} placeholder="Ex : Nadia" style={LEC_INPUT} />
+        <div style={{ height: 12 }} />
+        <label style={LEC_LABEL}>Ton pays *</label>
+        <select value={lecteurPays} onChange={e => setLecteurPays(e.target.value)} style={LEC_INPUT}>
+          <option value="">— Choisis ton pays —</option>
+          {PAYS_TEL.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
+        </select>
+        <div style={{ height: 12 }} />
+        <label style={LEC_LABEL}>Ton numéro de téléphone *</label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", padding: "0 12px", borderRadius: 8, border: "1px solid #ddd", background: "#f7f5f0", fontSize: 14, fontWeight: "bold", color: "#333", whiteSpace: "nowrap" }}>{(() => { const p = PAYS_TEL.find(x => x.nom === lecteurPays); return p ? (p.flag + " " + (p.code || "")) : "🌍 +__"; })()}</div>
+          <input type="tel" value={lecteurTel} onChange={e => setLecteurTel(e.target.value.replace(/\D/g, ""))} placeholder="6XXXXXXXX" style={{ ...LEC_INPUT, flex: 1 }} />
+        </div>
+        <div style={{ height: 18 }} />
+        <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
+        <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
+          <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Déjà un compte Google ?</div>
+          <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
+        </div>
+      </div>
+    </div>
+  );
   const [readerScrollMode, setReaderScrollMode] = useState(false);
   const [pageSlideDir, setPageSlideDir] = useState(0); // -1 = retour, 0 = idle, 1 = avance
   const [touchStart, setTouchStart] = useState(null);
@@ -15765,6 +15800,8 @@ export default function App() {
         setShowSubLimitModal(book);
         return;
       }
+      // Option B : au moment d'acheter, si pas connecté, ouvrir le modal de connexion
+      if (!lecteur && !user) { setPendingBuyBook(book); setShowLecteurModal(true); return; }
       // Sinon, achat individuel
       setPaymentBook(book);
       setShowPayment(true);
@@ -16449,6 +16486,7 @@ export default function App() {
     const indicatif = (PAYS_LISTE.find(p => p.nom === auteurPays) || {}).code || "";
     return (
       <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: auteurProfil ? 74 : 0 }}>
+        {showLecteurModal && lecteurModalNode}
         <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {auteurProfil
@@ -18366,6 +18404,8 @@ export default function App() {
           </div>
         )}
 
+        {showLecteurModal && lecteurModalNode}
+
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
             <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
@@ -18779,39 +18819,7 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
       <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
 
-      {/* MODAL DE CONNEXION PAR TÉLÉPHONE */}
-      {showLecteurModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
-            <div style={{ textAlign: "center", marginBottom: 18 }}>
-              <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 44, marginBottom: 12 }} />
-              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur CarryBooks 📚</h2>
-              <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
-            </div>
-            <label style={LEC_LABEL}>Ton prénom *</label>
-            <input value={lecteurPrenom} onChange={e => setLecteurPrenom(e.target.value)} placeholder="Ex : Nadia" style={LEC_INPUT} />
-            <div style={{ height: 12 }} />
-            <label style={LEC_LABEL}>Ton pays *</label>
-            <select value={lecteurPays} onChange={e => setLecteurPays(e.target.value)} style={LEC_INPUT}>
-              <option value="">— Choisis ton pays —</option>
-              {PAYS_TEL.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
-            </select>
-            <div style={{ height: 12 }} />
-            <label style={LEC_LABEL}>Ton numéro de téléphone *</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", padding: "0 12px", borderRadius: 8, border: "1px solid #ddd", background: "#f7f5f0", fontSize: 14, fontWeight: "bold", color: "#333", whiteSpace: "nowrap" }}>{(() => { const p = PAYS_TEL.find(x => x.nom === lecteurPays); return p ? (p.flag + " " + (p.code || "")) : "🌍 +__"; })()}</div>
-              <input type="tel" value={lecteurTel} onChange={e => setLecteurTel(e.target.value.replace(/\D/g, ""))} placeholder="6XXXXXXXX" style={{ ...LEC_INPUT, flex: 1 }} />
-            </div>
-            <div style={{ height: 18 }} />
-            <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
-            <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
-              <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Déjà un compte Google ?</div>
-              <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
-            </div>
-
-          </div>
-        </div>
-      )}
+      {showLecteurModal && lecteurModalNode}
 
       {/* POPUP : Ouvrir dans le navigateur (pour les utilisateurs venant de Facebook/Instagram) */}
       {showOpenBrowserModal && (
