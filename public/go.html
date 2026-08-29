@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarryBooks</title>
+  <style>
+    html,body{margin:0;height:100%}
+    body{font-family:Georgia,serif;background:#1a1208;color:#f5f0e8;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;box-sizing:border-box}
+    .card{max-width:340px}
+    img{height:56px;margin-bottom:16px}
+    h2{font-size:19px;margin:0 0 8px}
+    p{opacity:.85;font-size:14px;line-height:1.6;margin:0}
+    .btn{display:none;margin-top:20px;background:#c9a84c;color:#1a1208;padding:14px 24px;border-radius:10px;font-weight:bold;text-decoration:none;font-size:15px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks">
+    <h2 id="t">Ouverture de CarryBooks…</h2>
+    <p id="p">Un instant…</p>
+    <a id="manual" class="btn" href="#">Continuer</a>
+  </div>
+  <script>
+  (function () {
+    var BASE = "https://www.carrybooks.com";
+    function param(n) { try { return new URLSearchParams(location.search).get(n); } catch (e) { return null; } }
+
+    // Destination : ?to=/livre/mon-roman  (par défaut l'accueil)
+    var to = param("to") || "/";
+    if (to.charAt(0) !== "/") to = "/" + to;
+    var target = BASE + to;
+
+    var ua = (navigator.userAgent || "").toLowerCase();
+    var isAndroid = /android/.test(ua);
+    var isIOS = /iphone|ipad|ipod/.test(ua);
+    var inApp = /fban|fbav|fb_iab|instagram|musical_ly|bytedancewebview|snapchat|linkedinapp/i.test(ua);
+
+    var tEl = document.getElementById("t");
+    var pEl = document.getElementById("p");
+    var manual = document.getElementById("manual");
+    manual.href = target;
+
+    // Pas dans un navigateur d'appli (déjà dans un vrai navigateur) : on va direct au site
+    if (!inApp) { location.replace(target); return; }
+
+    if (isAndroid) {
+      // Forcer l'ouverture dans le navigateur PAR DÉFAUT du téléphone (Chrome, Firefox, etc.)
+      var bare = target.replace(/^https?:\/\//, "");
+      var intentUrl = "intent://" + bare + "#Intent;scheme=https;end";
+      window.location.href = intentUrl;
+      // Si rien ne se passe (bascule refusée) : proposer un bouton après 2,5 s
+      setTimeout(function () {
+        tEl.textContent = "Ouvre dans ton navigateur";
+        pEl.innerHTML = "Si rien ne s'est passé, appuie sur le bouton ci-dessous, ou ouvre le menu (\u22EE) puis « Ouvrir dans le navigateur ».";
+        manual.style.display = "inline-block";
+      }, 2500);
+      return;
+    }
+
+    if (isIOS) {
+      // Apple interdit la bascule automatique : instructions
+      tEl.textContent = "Ouvre dans Safari";
+      pEl.innerHTML = "Appuie sur <b>\u2022\u2022\u2022</b> en haut à droite, puis <b>« Ouvrir dans Safari »</b>, pour installer l'application CarryBooks.";
+      manual.textContent = "Continuer quand même";
+      manual.style.display = "inline-block";
+      return;
+    }
+
+    // Autre navigateur intégré : proposer le bouton
+    tEl.textContent = "Ouvre dans ton navigateur";
+    pEl.textContent = "Appuie sur le bouton pour continuer.";
+    manual.style.display = "inline-block";
+  })();
+  </script>
+</body>
+</html>
