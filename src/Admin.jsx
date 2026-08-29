@@ -333,9 +333,10 @@ export default function Admin() {
   const [recentReads, setRecentReads] = useState(0);
   const [topBooks, setTopBooks] = useState([]);
   const [view, setView] = useState("dashboard");
-  const [auteursList, setAuteursList] = useState([]);
-  const [auteursLoading, setAuteursLoading] = useState(false);
-  const [auteursFilter, setAuteursFilter] = useState("en_attente");
+  const [tauxCdf, setTauxCdf] = useState("");
+  const [tauxCdfLoading, setTauxCdfLoading] = useState(false);
+  const [tauxCdfSaving, setTauxCdfSaving] = useState(false);
+  const [tauxCdfMsg, setTauxCdfMsg] = useState("");
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -411,6 +412,28 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  useEffect(() => {
+    if (view !== "reglages") return;
+    (async () => {
+      setTauxCdfLoading(true);
+      try {
+        const { data } = await supabase.from("reglages").select("valeur").eq("cle", "taux_xaf_cdf").maybeSingle();
+        if (data && data.valeur != null) setTauxCdf(String(data.valeur));
+      } catch (e) {}
+      setTauxCdfLoading(false);
+    })();
+  }, [view]);
+  async function saveTauxCdf() {
+    const v = parseFloat(String(tauxCdf).replace(",", "."));
+    if (!v || v <= 0) { setTauxCdfMsg("❌ Entre un taux valide (ex : 4.5)"); return; }
+    setTauxCdfSaving(true); setTauxCdfMsg("");
+    try {
+      const { error } = await supabase.from("reglages").upsert({ cle: "taux_xaf_cdf", valeur: String(v), updated_at: new Date().toISOString() }, { onConflict: "cle" });
+      if (error) throw error;
+      setTauxCdfMsg("✅ Taux enregistré : 1 FCFA = " + v + " CDF");
+    } catch (e) { setTauxCdfMsg("❌ " + (e.message || e)); }
+    setTauxCdfSaving(false);
+  }
   const fileInputRef = useRef(null);
 
   // ===== GESTION DES CATÉGORIES (chargées depuis Supabase) =====
@@ -1100,33 +1123,6 @@ export default function Admin() {
   async function fetchPromoCodes() {
     const { data } = await supabase.from("promo_codes").select("*").order("created_at", { ascending: false });
     if (data) setPromoCodes(data);
-  }
-
-  async function loadAuteurBooks(filter = "en_attente") {
-    setAuteursLoading(true);
-    try {
-      let q = supabase.from("books").select("id,title,cover,price,category,subcategory,summary,extract_pages,content,pdf_url,product_type,status,moderation,motif_refus,author,auteur_id,created_at").not("auteur_id", "is", null).order("created_at", { ascending: false });
-      if (filter !== "all") q = q.eq("moderation", filter);
-      const { data } = await q;
-      setAuteursList(data || []);
-    } catch (e) { setAuteursList([]); }
-    setAuteursLoading(false);
-  }
-  async function approuverLivre(b) {
-    if (!window.confirm("Approuver « " + b.title + " » ? Il deviendra visible dans la boutique.")) return;
-    await supabase.from("books").update({ moderation: "valide", status: "actif" }).eq("id", b.id);
-    loadAuteurBooks(auteursFilter);
-  }
-  async function refuserLivre(b) {
-    const motif = window.prompt("Motif du refus (visible par l'auteur) :", "");
-    if (motif === null) return;
-    await supabase.from("books").update({ moderation: "refuse", status: "en_attente", motif_refus: motif }).eq("id", b.id);
-    loadAuteurBooks(auteursFilter);
-  }
-  async function retirerLivre(b) {
-    if (!window.confirm("Retirer « " + b.title + " » de la boutique ? Il repassera en attente.")) return;
-    await supabase.from("books").update({ moderation: "en_attente", status: "en_attente" }).eq("id", b.id);
-    loadAuteurBooks(auteursFilter);
   }
 
   async function loadPendingReviews(filter = "pending") {
@@ -1956,7 +1952,6 @@ export default function Admin() {
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Produits", icon: "📚" },
-            { id: "auteurs", label: "Espace auteurs", icon: "✍️" },
             { id: "categories", label: "Catégories", icon: "🗂️" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
@@ -1968,12 +1963,12 @@ export default function Admin() {
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
+            { id: "reglages", label: "Réglages", icon: "🌍" },
           ].map(item => (
             <div key={item.id} onClick={() => { 
               setView(item.id); 
               setShowMenu(false);
               if (item.id === "reviews") loadPendingReviews(reviewsFilter);
-              if (item.id === "auteurs") loadAuteurBooks(auteursFilter);
             }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                 background: view === item.id ? "#2a2a2a" : "transparent",
@@ -3959,69 +3954,24 @@ export default function Admin() {
 
         {view === "comptabilite" && <ComptabiliteView />}
 
-        {/* SECURITY - CHANGEMENT MOT DE PASSE */}
-        {view === "auteurs" && (
+        {/* RÉGLAGES — Taux de conversion FCFA -> CDF (RDC) */}
+        {view === "reglages" && (
           <div>
-            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>✍️ Espace auteurs — validation des livres</h2>
-            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[
-                { id: "en_attente", label: "⏳ En attente", color: "#f5a623" },
-                { id: "valide", label: "✅ Validés", color: "#4CAF50" },
-                { id: "refuse", label: "❌ Refusés", color: "#e53935" },
-                { id: "all", label: "📋 Tous", color: "#888" },
-              ].map(f => (
-                <button key={f.id} onClick={() => { setAuteursFilter(f.id); loadAuteurBooks(f.id); }}
-                  style={{ padding: "8px 14px", background: auteursFilter === f.id ? f.color : "transparent", border: "1px solid " + (auteursFilter === f.id ? f.color : "#2a2a2a"), borderRadius: 6, color: auteursFilter === f.id ? "#000" : "#aaa", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
-                  {f.label}
-                </button>
-              ))}
-              <button onClick={() => loadAuteurBooks(auteursFilter)} style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 12, cursor: "pointer" }}>🔄 Rafraîchir</button>
+            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🌍 Réglages</h2>
+            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
+              <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → CDF (RD Congo)</h3>
+              <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>
+                Les prix sont fixés en FCFA. Pour un client de RD Congo qui paie en francs congolais (CDF), le montant est multiplié par ce taux. Exemple : à 4.5, un livre à 1000 FCFA sera facturé 4500 CDF.
+              </p>
+              <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>1 FCFA = combien de CDF ?</label>
+              <input type="text" inputMode="decimal" value={tauxCdf} onChange={e => setTauxCdf(e.target.value)} placeholder={tauxCdfLoading ? "Chargement…" : "Ex : 4.5"} disabled={tauxCdfLoading} style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
+              <button onClick={saveTauxCdf} disabled={tauxCdfSaving || tauxCdfLoading} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: (tauxCdfSaving || tauxCdfLoading) ? 0.6 : 1 }}>{tauxCdfSaving ? "Enregistrement…" : "Enregistrer le taux"}</button>
+              {tauxCdfMsg && <div style={{ marginTop: 14, fontSize: 13, color: tauxCdfMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{tauxCdfMsg}</div>}
             </div>
-            {auteursLoading ? (
-              <p style={{ color: "#888", textAlign: "center", padding: 30 }}>⏳ Chargement...</p>
-            ) : auteursList.length === 0 ? (
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 30, textAlign: "center" }}>
-                <p style={{ color: "#888", fontSize: 14, margin: 0 }}>{auteursFilter === "en_attente" ? "✨ Aucun livre en attente de validation !" : "Aucun livre dans cette catégorie."}</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {auteursList.map(b => (
-                  <div key={b.id} style={{ background: "#1a1a1a", border: "1px solid " + (b.moderation === "valide" ? "#4CAF50" : b.moderation === "refuse" ? "#e53935" : "#f5a623"), borderRadius: 10, padding: 16 }}>
-                    <div style={{ display: "flex", gap: 14 }}>
-                      {b.cover ? <img src={b.cover} alt="" style={{ width: 70, height: 99, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} /> : <div style={{ width: 70, height: 99, background: "#0a0a0a", borderRadius: 6, flexShrink: 0 }} />}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff" }}>{b.title}</div>
-                        <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 4 }}>✍️ {b.author}</div>
-                        <div style={{ fontSize: 11, color: "#888" }}>{b.category}{b.subcategory ? " › " + b.subcategory : ""} · {b.price} F · {b.pdf_url ? "📥 Guide PDF" : "📖 Roman"}{b.extract_pages ? " · " + b.extract_pages + " pages gratuites" : ""}</div>
-                        <div style={{ fontSize: 12, color: "#bbb", marginTop: 8, lineHeight: 1.5 }}>{b.summary}</div>
-                        {b.content ? (
-                          <details style={{ marginTop: 8 }}>
-                            <summary style={{ cursor: "pointer", color: "#c9a84c", fontSize: 12 }}>📖 Lire le texte du roman</summary>
-                            <div style={{ whiteSpace: "pre-wrap", maxHeight: 320, overflow: "auto", background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 6, padding: 12, marginTop: 8, fontSize: 13, color: "#ddd", lineHeight: 1.6 }}>{b.content}</div>
-                          </details>
-                        ) : null}
-                        {b.pdf_url ? <a href={b.pdf_url} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 8, color: "#c9a84c", fontSize: 12 }}>📥 Ouvrir le PDF pour vérifier</a> : null}
-                        {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 12, color: "#e53935", marginTop: 8 }}>Motif du refus : {b.motif_refus}</div> : null}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-                      {b.moderation !== "valide" && (
-                        <button onClick={() => approuverLivre(b)} style={{ padding: "8px 16px", background: "#4CAF50", border: "none", borderRadius: 6, color: "#fff", fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>✅ Approuver</button>
-                      )}
-                      {b.moderation !== "refuse" && (
-                        <button onClick={() => refuserLivre(b)} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #e53935", borderRadius: 6, color: "#e53935", fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>❌ Refuser</button>
-                      )}
-                      {b.moderation === "valide" && (
-                        <button onClick={() => retirerLivre(b)} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #888", borderRadius: 6, color: "#aaa", fontSize: 13, cursor: "pointer" }}>Retirer de la boutique</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
+        {/* SECURITY - CHANGEMENT MOT DE PASSE */}
         {view === "security" && (
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🔐 Sécurité</h2>
