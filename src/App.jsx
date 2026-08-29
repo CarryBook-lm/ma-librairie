@@ -13685,6 +13685,7 @@ export default function App() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [pendingBuyBook, setPendingBuyBook] = useState(null);
+  const [fbBannerDismissed, setFbBannerDismissed] = useState(false);
   const [paymentStep, setPaymentStep] = useState(1);
   const [visitorCountry, setVisitorCountry] = useState(null);
   const [paydunyaLoading, setPaydunyaLoading] = useState(false);
@@ -13996,6 +13997,20 @@ export default function App() {
           <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
         </div>
       </div>
+    </div>
+  );
+  const fbBannerNode = (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "#c9a84c", color: "#1a1208", padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.25)" }}>
+      <span style={{ fontSize: 20 }}>📲</span>
+      <span style={{ flex: 1, fontSize: 12, fontWeight: "bold", lineHeight: 1.3 }}>Ouvre dans ton navigateur pour installer l'application et lire tes romans</span>
+      <button onClick={() => {
+        const ua = (navigator.userAgent || "").toLowerCase();
+        if (/android/.test(ua)) {
+          const bare = window.location.href.replace(/^https?:\/\//, "");
+          window.location.href = "intent://" + bare + "#Intent;scheme=https;end";
+        } else { setShowInstallModal(true); }
+      }} style={{ background: "#1a1208", color: "#fff", border: "none", borderRadius: 8, padding: "8px 12px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Ouvrir</button>
+      <button onClick={() => setFbBannerDismissed(true)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
     </div>
   );
   const [readerScrollMode, setReaderScrollMode] = useState(false);
@@ -16487,6 +16502,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: auteurProfil ? 74 : 0 }}>
         {showLecteurModal && lecteurModalNode}
+        {isInAppBrowser() && !fbBannerDismissed && fbBannerNode}
         <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {auteurProfil
@@ -18405,6 +18421,7 @@ export default function App() {
         )}
 
         {showLecteurModal && lecteurModalNode}
+        {isInAppBrowser() && !fbBannerDismissed && fbBannerNode}
 
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
@@ -18813,6 +18830,7 @@ export default function App() {
       <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
 
       {showLecteurModal && lecteurModalNode}
+      {isInAppBrowser() && !fbBannerDismissed && fbBannerNode}
 
       {/* POPUP : Ouvrir dans le navigateur (pour les utilisateurs venant de Facebook/Instagram) */}
       {showOpenBrowserModal && (
