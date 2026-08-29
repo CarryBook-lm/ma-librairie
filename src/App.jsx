@@ -13742,8 +13742,20 @@ export default function App() {
       }
       if (params.get("pawapay") === "return") {
         setPaydunyaReturn(true);
-        setPage("library");
         setTimeout(() => setPaydunyaReturn(false), 8000);
+        const bId = params.get("book");
+        if (bId) {
+          (async () => {
+            try {
+              const resp = await fetch("/api/book?slug=" + encodeURIComponent(bId));
+              const d = await resp.json().catch(() => ({}));
+              if (d && d.book && d.book.id) { openBook(d.book); }
+              else { setPage("library"); }
+            } catch (e) { setPage("library"); }
+          })();
+        } else {
+          setPage("library");
+        }
         try { window.history.replaceState({}, "", "/"); } catch (e) {}
       }
     } catch (e) {}
@@ -18264,7 +18276,7 @@ export default function App() {
         {paydunyaReturn && (
           <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 300, background: "#1c8a3e", color: "#fff", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
             <span style={{ fontSize: 18 }}>✅</span>
-            <span style={{ fontSize: 13, fontWeight: "bold", textAlign: "center" }}>Paiement reçu ! Ton livre se débloque dans « Ma bibliothèque ».</span>
+            <span style={{ fontSize: 13, fontWeight: "bold", textAlign: "center" }}>✅ Paiement effectué ! Retrouve ton livre dans « Ma bibliothèque ».</span>
             <button onClick={() => setPaydunyaReturn(false)} style={{ background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", marginLeft: 6 }}>OK</button>
           </div>
         )}
