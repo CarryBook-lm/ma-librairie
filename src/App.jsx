@@ -19282,7 +19282,7 @@ export default function App() {
                       else { setShowInstallModal(true); }
                     }} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", borderRight: "1px solid " + G.border, color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                       <span style={{ fontSize: 18 }}>📲</span>
-                      <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Télécharger l'application</span>
+                      <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Télécharger l'app</span>
                       <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>CarryBooks</span>
                     </button>
                   )}
