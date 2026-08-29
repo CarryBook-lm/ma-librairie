@@ -97,13 +97,13 @@ export default async function handler(req, res) {
     const returnUrl =
       "https://www.carrybooks.com/?pawapay=return&book=" + encodeURIComponent(book_id);
 
-    // Payment Page v2 : on fixe le montant et la devise ; le client choisit son
-    // opérateur Mobile Money sur la page PawaPay.
+    // Payment Page v2 : le montant est dans amountDetails { amount, currency }.
+    // On fixe aussi le pays ; le client choisit son opérateur Mobile Money.
     const payload = {
       depositId: depositId,
       returnUrl: returnUrl,
-      amount: String(montant),
-      currency: devise,
+      amountDetails: { amount: String(montant), currency: devise },
+      country: iso,
       reason: ("Achat " + title).slice(0, 22), // 4-22 caractères
       metadata: [
         { book_id: String(book_id) },
