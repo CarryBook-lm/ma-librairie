@@ -13699,6 +13699,7 @@ export default function App() {
   const [auteurPixel, setAuteurPixel] = useState("");
   const [auteurPixelTiktok, setAuteurPixelTiktok] = useState("");
   const [auteurBio, setAuteurBio] = useState("");
+  const [auteurEmail, setAuteurEmail] = useState("");
   const [auteurSaving, setAuteurSaving] = useState(false);
   const [auteurMsg, setAuteurMsg] = useState("");
   const [pubOpen, setPubOpen] = useState(false);
@@ -13919,19 +13920,20 @@ export default function App() {
   const [lecteurPays, setLecteurPays] = useState("");
   const [lecteurTel, setLecteurTel] = useState("");
   const [lecteurSaving, setLecteurSaving] = useState(false);
-  // Charge le profil auteur de la personne connectée
+  // Charge le profil auteur de la personne connectée (identité = téléphone du lecteur)
   useEffect(() => {
-    if (!user) { setAuteurProfil(null); setAuteurChecked(true); return; }
+    if (!lecteur) { setAuteurProfil(null); setAuteurChecked(true); return; }
     (async () => {
       try {
-        const { data } = await supabase.from("auteurs").select("*").eq("user_id", user.id).order("id", { ascending: false }).limit(1);
+        const { data } = await supabase.from("auteurs").select("*").eq("telephone_login", lecteur.telephone).order("id", { ascending: false }).limit(1);
         const prof = (data && data.length) ? data[0] : null;
         setAuteurProfil(prof);
-        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || ""); setAuteurBio(prof.bio || ""); }
+        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || ""); setAuteurBio(prof.bio || ""); }
+        else { setAuteurNom(lecteur.prenom || ""); setAuteurPays(lecteur.pays || ""); setAuteurTel(""); setAuteurEmail(""); setAuteurBio(""); }
       } catch (e) {}
       setAuteurChecked(true);
     })();
-  }, [user]);
+  }, [lecteur]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   useEffect(() => {
@@ -16271,18 +16273,18 @@ export default function App() {
 
   // ── ESPACE AUTEUR (Publie ton livre) ──
   async function saveAuteur() {
-    if (!user) return;
-    if (!auteurNom.trim() || !auteurTel.trim() || !auteurPays.trim()) {
-      setAuteurMsg("Merci de remplir ton nom, ton téléphone et ton pays."); return;
+    if (!lecteur) return;
+    if (!auteurNom.trim() || !auteurTel.trim() || !auteurPays.trim() || !auteurEmail.trim()) {
+      setAuteurMsg("Merci de remplir ton nom, ton email, ton téléphone et ton pays."); return;
     }
     setAuteurSaving(true); setAuteurMsg("");
     try {
       const base = (auteurNom.trim().split(/\s+/)[0] || "auteur").toLowerCase().replace(/[^a-z0-9]/g, "");
       const genCode = (base || "auteur") + Math.random().toString(36).slice(2, 7);
       const payload = {
-        user_id: user.id,
+        telephone_login: lecteur.telephone,
         nom_complet: auteurNom.trim(),
-        email: user.email || null,
+        email: auteurEmail.trim() || null,
         telephone: (function(){
           const CODES = {"Bénin":"+229","Burkina Faso":"+226","Burundi":"+257","Cameroun":"+237","Congo (Brazzaville)":"+242","Congo (RDC)":"+243","Côte d'Ivoire":"+225","Gabon":"+241","Guinée":"+224","Mali":"+223","Niger":"+227","République centrafricaine":"+236","Rwanda":"+250","Sénégal":"+221","Tchad":"+235","Togo":"+228"};
           const ind = CODES[auteurPays] || "";
@@ -16300,7 +16302,7 @@ export default function App() {
         setAuteurMsg("✅ Profil mis à jour.");
       } else {
         // Anti-doublon : si un profil existe déjà pour cet utilisateur, on le met à jour
-        const { data: existing } = await supabase.from("auteurs").select("*").eq("user_id", user.id).order("id", { ascending: false }).limit(1);
+        const { data: existing } = await supabase.from("auteurs").select("*").eq("telephone_login", lecteur.telephone).order("id", { ascending: false }).limit(1);
         if (existing && existing.length) {
           const { data, error } = await supabase.from("auteurs").update(payload).eq("id", existing[0].id).select().maybeSingle();
           if (error) throw error;
@@ -16458,18 +16460,18 @@ export default function App() {
         </div>
         <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
 
-          {!user && (
+          {!lecteur && (
             <div style={{ textAlign: "center", padding: 30 }}>
               <p style={{ color: G.textDim, fontSize: 14, marginBottom: 16 }}>Connecte-toi pour publier tes livres sur CarryBooks.</p>
-              <button onClick={signInWithGoogle} style={{ padding: "12px 24px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>Se connecter avec Google</button>
+              <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 24px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>🔑 Se connecter</button>
             </div>
           )}
 
-          {user && !auteurChecked && (
+          {lecteur && !auteurChecked && (
             <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Chargement…</div>
           )}
 
-          {user && auteurChecked && auteurProfil && (
+          {lecteur && auteurChecked && auteurProfil && (
             <div>
               {/* TABLEAU DE BORD */}
               {auteurTab === "dashboard" && (
@@ -16720,7 +16722,7 @@ export default function App() {
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone || "—"}</span></div>
                       {auteurProfil.bio ? <div style={{ padding: "8px 0", fontSize: 13, color: G.textDim }}>{auteurProfil.bio}</div> : null}
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
                     </div>
                   ) : (
                     <div>
@@ -16738,6 +16740,9 @@ export default function App() {
                         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
                         <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
                       </div>
+                      <div style={{ height: 14 }} />
+                      <label style={labelSt}>Ton adresse email *</label>
+                      <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Présentation (facultatif)</label>
                       <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={3} style={{ ...champ, resize: "vertical" }} />
@@ -16819,7 +16824,7 @@ export default function App() {
             </div>
           )}
 
-                    {user && auteurChecked && !auteurProfil && (
+                    {lecteur && auteurChecked && !auteurProfil && (
             <div>
               <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>Crée ton profil auteur pour publier tes livres sur CarryBooks. Tes livres seront vérifiés avant leur mise en ligne.</p>
               <label style={labelSt}>Nom complet *</label>
@@ -16836,6 +16841,9 @@ export default function App() {
                 <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
                 <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder={auteurPays ? "Ton numéro" : "Choisis d'abord ton pays"} disabled={!auteurPays} style={{ ...champ, flex: 1, marginBottom: 0, opacity: auteurPays ? 1 : 0.6 }} />
               </div>
+              <div style={{ height: 14 }} />
+              <label style={labelSt}>Ton adresse email *</label>
+              <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
               <div style={{ height: 14 }} />
               <label style={labelSt}>Petite présentation (facultatif)</label>
               <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
