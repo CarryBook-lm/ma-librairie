@@ -1575,6 +1575,7 @@ const PAYS_TEL = [
   { nom: "Guinée", code: "+224", flag: "🇬🇳" }, { nom: "Rwanda", code: "+250", flag: "🇷🇼" },
   { nom: "Burundi", code: "+257", flag: "🇧🇮" }, { nom: "République centrafricaine", code: "+236", flag: "🇨🇫" },
 ];
+const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
 const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
 
@@ -15865,9 +15866,10 @@ export default function App() {
 
   // 🌍 Paiement international via PayDunya (clients hors Cameroun)
   // 🌍 Paiement international via PawaPay (Mobile Money multi-pays)
-  async function payWithPawapay() {
+  async function payWithPawapay(forceCountry) {
     try {
-      if (!pawapayCountry) { alert("Choisis d'abord ton pays."); return; }
+      const country = forceCountry || pawapayCountry;
+      if (!country) { alert("Choisis d'abord ton pays."); return; }
       setPawapayLoading(true);
       const basePrice = paymentBook.price || 0;
       const promoDiscount = appliedPromo ? Math.round(basePrice * appliedPromo.discount_pct / 100) : 0;
@@ -15886,8 +15888,8 @@ export default function App() {
           book_id: paymentBook.id,
           book_title: paymentBook.title,
           user_id: user ? user.id : "",
-          phone: "",
-          country: pawapayCountry,
+          phone: lecteur ? lecteur.telephone : "",
+          country: country,
           referrer_code: referrerCode,
         }),
       });
@@ -18470,15 +18472,18 @@ export default function App() {
                   <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
                   <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
                   <p style={{ color: "#888", fontSize: 12, marginBottom: 14 }}>Avec quel opérateur veux-tu payer ?</p>
+                  {!lecteur && (
                   <div style={{ background: "#f6f2fc", border: "1px solid #d6c8f0", borderRadius: 8, padding: "10px 12px", marginBottom: 16, fontSize: 12, color: "#4c1d95", lineHeight: 1.6, textAlign: "left" }}>
                     🇨🇲 <b>Tu es au Cameroun ?</b> Choisis MTN ou Orange.<br />
                     🌍 <b>Tu es dans un autre pays ?</b> Clique sur « Autre pays » plus bas.
                   </div>
+                  )}
                   {PAYDUNYA_ENABLED && visitorCountry && visitorCountry !== "CM" && (
                     <div style={{ background: "#e3f2fd", border: "1px solid #1e88e5", borderRadius: 8, padding: "8px 12px", marginBottom: 14, fontSize: 12, color: "#0d47a1", lineHeight: 1.5 }}>
                       🌍 Tu sembles être hors Cameroun. Utilise « Carte / Mobile Money » ci-dessous.
                     </div>
                   )}
+                  {(!lecteur || lecteur.pays === "Cameroun") && (<>
                   <button onClick={() => { setPaymentMethod("mtn"); setPaymentStep(3); }} style={{
                     width: "100%", padding: 16, marginBottom: 10, background: "#FFCC00", color: "#000",
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
@@ -18487,10 +18492,16 @@ export default function App() {
                     width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
                   }}>📱 Orange Money</button>
-                  <button onClick={() => setShowPawapayCountries(v => !v)} style={{
+                  </>)}
+                  {lecteur && lecteur.pays !== "Cameroun" && (
+                    PAYS_TO_PP[lecteur.pays]
+                      ? <button onClick={() => payWithPawapay(PAYS_TO_PP[lecteur.pays])} disabled={pawapayLoading} style={{ width: "100%", padding: 16, marginBottom: 14, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "📱 Payer avec Mobile Money"}</button>
+                      : <div style={{ background: "#fff3cd", border: "1px solid #ffc107", borderRadius: 8, padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "#7a5c00", lineHeight: 1.5 }}>Le paiement Mobile Money n'est pas encore disponible dans ton pays ({lecteur.pays}). Écris-nous pour être prévenu(e) dès son ouverture.</div>
+                  )}
+                  {!lecteur && (<button onClick={() => setShowPawapayCountries(v => !v)} style={{
                     width: "100%", padding: 16, marginBottom: showPawapayCountries ? 8 : 14, background: "#6d28d9", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer"
-                  }}>🌍 Autre pays (Mobile Money international)</button>
+                  }}>🌍 Autre pays (Mobile Money international)</button>)}
                   {showPawapayCountries && (
                     <div style={{ background: "#f3effc", border: "1px solid #6d28d9", borderRadius: 10, padding: 12, marginBottom: 14, textAlign: "left" }}>
                       <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8 }}>Choisis ton pays, puis paie avec ton Mobile Money local :</div>
