@@ -13677,6 +13677,7 @@ export default function App() {
   const [auteurTel, setAuteurTel] = useState("");
   const [auteurPays, setAuteurPays] = useState("");
   const [auteurPixel, setAuteurPixel] = useState("");
+  const [auteurPixelTiktok, setAuteurPixelTiktok] = useState("");
   const [auteurBio, setAuteurBio] = useState("");
   const [auteurSaving, setAuteurSaving] = useState(false);
   const [auteurMsg, setAuteurMsg] = useState("");
@@ -13883,7 +13884,7 @@ export default function App() {
         const { data } = await supabase.from("auteurs").select("*").eq("user_id", user.id).order("id", { ascending: false }).limit(1);
         const prof = (data && data.length) ? data[0] : null;
         setAuteurProfil(prof);
-        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurBio(prof.bio || ""); }
+        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || ""); setAuteurBio(prof.bio || ""); }
       } catch (e) {}
       setAuteurChecked(true);
     })();
@@ -16150,6 +16151,7 @@ export default function App() {
         })(),
         pays: auteurPays.trim(),
         pixel_meta: auteurPixel.trim() || null,
+        pixel_tiktok: auteurPixelTiktok.trim() || null,
         bio: auteurBio.trim() || null,
       };
       if (auteurProfil) {
@@ -16567,35 +16569,81 @@ export default function App() {
                   </div>
                 );
               })()}
-              {/* MON COMPTE */}
+              {/* MON COMPTE (modifiable) */}
               {auteurTab === "compte" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>👤 Mon compte</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Nom d\'auteur</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.nom_complet}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>E-mail</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.email || "—"}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone || "—"}</span></div>
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: 12 }}>Pour modifier ces informations, va dans Paramètres.</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>👤 Mon compte</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Modifie tes informations, puis enregistre.</div>
+                  <label style={labelSt}>Nom d'auteur *</label>
+                  <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} style={champ} />
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Pays *</label>
+                  <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
+                    <option value="">— Choisis ton pays —</option>
+                    {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
+                  </select>
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
+                  <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
+                    <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
+                  </div>
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Présentation (facultatif)</label>
+                  <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={3} style={{ ...champ, resize: "vertical" }} />
+                  <div style={{ fontSize: 11, color: G.textDim, margin: "10px 0" }}>E-mail : {auteurProfil.email || "—"}</div>
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                  {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
               )}
-              {/* PARAMÈTRES */}
+              {/* PARAMÈTRES : pixels */}
               {auteurTab === "parametres" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>⚙️ Paramètres</div>
-                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 14 }}>Modifier tes informations d'auteur (nom, pays, numéro Mobile Money, présentation).</div>
-                  <button onClick={() => { setAuteurProfil(null); setAuteurMsg(""); }} style={{ padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier mon profil</button>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>⚙️ Paramètres — Pixels publicitaires</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
+                  <label style={labelSt}>Pixel Facebook (ID)</label>
+                  <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Ex : 1234567890123456" style={champ} />
+                  <div style={{ height: 14 }} />
+                  <label style={labelSt}>Pixel TikTok (ID)</label>
+                  <input value={auteurPixelTiktok} onChange={e => setAuteurPixelTiktok(e.target.value)} placeholder="Ex : C1A2B3..." style={champ} />
+                  <div style={{ height: 18 }} />
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
+                  {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
               )}
               {/* COMMENT PUBLIER */}
               {auteurTab === "aide" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 12 }}>❓ Comment publier</div>
-                  <p><b>1.</b> Clique sur <b>➕ Publier un livre</b>.</p>
-                  <p><b>2.</b> Choisis le type : <b>Roman</b> (tu colles le texte, lu dans la liseuse) ou <b>Guide</b> (tu téléverses un PDF téléchargeable).</p>
-                  <p><b>3.</b> Remplis tous les champs : titre, catégorie, prix, couverture (A4 portrait), résumé, et le nombre de pages gratuites (l'extrait).</p>
-                  <p><b>4.</b> Pour un guide PDF : format A5, avec le numéro de page en bas au centre.</p>
-                  <p><b>5.</b> Envoie : ton livre passe en <b>validation</b>. Une fois approuvé, il apparaît dans la boutique.</p>
-                  <p><b>6.</b> Partage ton <b>lien de pub</b> (dans Mes livres) : si un client achète via ton lien, tu touches <b>70%</b> (sinon 50%).</p>
+                  <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur CarryBooks</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tout ce que tu dois savoir de A à Z. Un PDF téléchargeable sera bientôt disponible.</div>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 2 types de livres</div>
+                  <p><b>📖 Roman (texte)</b> : tu colles le texte complet. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
+                  <p><b>📥 Guide (PDF)</b> : tu téléverses un fichier PDF. Il est téléchargeable par le client après achat.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>2. La couverture</div>
+                  <p>Format <b>A4 portrait</b> (plus haut que large). Taille conseillée : <b>1240 × 1754 pixels</b>. Une belle couverture nette donne envie d'acheter.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>3. Le fichier PDF (guides)</div>
+                  <p>Format <b>A5</b>. La <b>police est libre</b> (choisis ce que tu veux) mais le texte doit rester <b>net et lisible</b>. Le <b>numéro de page</b> est obligatoire, placé <b>en bas au centre</b> de chaque page (tu l'ajoutes toi-même avant de téléverser). Pages illimitées.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>4. Résumé et extrait gratuit</div>
+                  <p>Le <b>résumé</b> donne envie de lire. L'<b>extrait</b> = le nombre de premières pages visibles gratuitement avant l'achat (mets une valeur qui donne envie sans tout dévoiler).</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>5. Catégories</div>
+                  <p>Choisis la catégorie et la sous-catégorie dans les listes proposées. Tous les livres sont mélangés dans la boutique CarryBooks.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>6. Validation</div>
+                  <p>Après l'envoi, ton livre passe en <b>« en attente »</b>. L'équipe CarryBooks le vérifie, puis l'approuve. Une fois approuvé, il apparaît dans la boutique et devient achetable. Tu peux <b>modifier</b> un livre à tout moment (il repasse alors en validation).</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>7. Tes gains (commissions)</div>
+                  <p>Sur chaque vente : tu touches <b>70 %</b> si le client vient par <b>ton lien de pub</b> (que tu trouves dans « Mes livres »), et <b>50 %</b> si c'est CarryBooks qui vend. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>8. Publicité (pixels)</div>
+                  <p>Dans <b>Paramètres</b>, ajoute ton pixel <b>Facebook</b> et/ou <b>TikTok</b> pour suivre l'efficacité de tes publicités.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>9. Contenu interdit</div>
+                  <p>Sont refusés : le contenu volé ou piraté (dont tu n'es pas l'auteur), le contenu illégal, haineux ou pornographique. Publie uniquement tes propres œuvres.</p>
                 </div>
               )}
               {/* NOTIFICATIONS */}
@@ -16657,7 +16705,6 @@ export default function App() {
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
-            <button onClick={() => { setAuteurTab("stats"); setStatsSubTab("board"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "dashboard" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "dashboard" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>📊</span> Tableau de bord</button>
             <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon compte</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("aide"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "aide" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "aide" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>❓</span> Comment publier</button>
