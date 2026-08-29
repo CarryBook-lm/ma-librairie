@@ -104,6 +104,7 @@ export default async function handler(req, res) {
       returnUrl: returnUrl,
       amountDetails: { amount: String(montant), currency: devise },
       country: iso,
+      language: "FR",
       reason: ("Achat " + title).slice(0, 22), // 4-22 caractères
       metadata: [
         { book_id: String(book_id) },
