@@ -16067,7 +16067,7 @@ export default function App() {
                     reference: payData.reference,
                     book_id: paymentBook.id,
                     amount: finalPrice,
-                    phone: phone,
+                    phone: lecteur ? lecteur.telephone : phone,
                     external_reference: externalRef,
                     type: "book",
                     referrer_code: referrerCode
