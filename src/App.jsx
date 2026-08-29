@@ -16468,7 +16468,7 @@ export default function App() {
                 const avec = vv.filter(v => v.source === "auteur");
                 const sans = vv.filter(v => v.source !== "auteur");
                 const gains = arr => arr.reduce((s, v) => s + (v.part_auteur || 0), 0);
-                const periods = [["today", "Aujourd'hui"], ["yesterday", "Hier"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
+                const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
                 const subtabs = [["board", "Tableau de bord"], ["sold", "Livres vendus"], ["charts", "Statistiques"]];
                 // ventes groupées par livre (période) pour la liste
                 const grpP = {}; vv.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
@@ -16496,9 +16496,9 @@ export default function App() {
 
                     {statsSubTab === "board" && (
                       <div>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                        <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 12, cursor: "pointer" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
@@ -16523,9 +16523,9 @@ export default function App() {
 
                     {statsSubTab === "sold" && (
                       <div>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                        <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 12, cursor: "pointer" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
                         <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
@@ -16661,6 +16661,14 @@ export default function App() {
                   <p>Sont refusés : le contenu volé ou piraté (dont tu n'es pas l'auteur), le contenu illégal, haineux ou pornographique. Publie uniquement tes propres œuvres.</p>
                 </div>
               )}
+              {/* SUPPORT (bientôt) */}
+              {auteurTab === "support" && (
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
+                  <div style={{ fontSize: 30, marginBottom: 8 }}>💬</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Support</div>
+                  <div style={{ fontSize: 13, color: G.textDim }}>Bientôt : écris-nous depuis ici, nous te répondrons directement dans l'application.</div>
+                </div>
+              )}
               {/* NOTIFICATIONS */}
               {auteurTab === "notifs" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
@@ -16705,9 +16713,9 @@ export default function App() {
         {/* BARRE DU BAS */}
         {auteurProfil && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
-            <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10 }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
+            <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
             <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
-            <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10 }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
+            <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
         )}
 
@@ -16723,6 +16731,7 @@ export default function App() {
             <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon compte</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("aide"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "aide" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "aide" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>❓</span> Comment publier</button>
+            <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support</button>
             <button onClick={() => { setAuteurTab("notifs"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "notifs" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "notifs" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔔</span> Activer les notifications</button>
                 <button onClick={() => { setAuteurMenu(false); setPage("home"); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: G.textDim, fontSize: 14, cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏠</span> Retour à la boutique</button>
               </div>
