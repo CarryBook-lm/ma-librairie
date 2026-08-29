@@ -1564,6 +1564,20 @@ async function downloadBodyDiagnosticPDF(result, opts = {}) {
 // URL ROUTING — Sync URL avec state pour partage et tracking
 // ============================================================
 
+// Connexion par téléphone — liste des pays francophones avec indicatif
+const PAYS_TEL = [
+  { nom: "Cameroun", code: "+237", flag: "🇨🇲" }, { nom: "Côte d'Ivoire", code: "+225", flag: "🇨🇮" },
+  { nom: "Sénégal", code: "+221", flag: "🇸🇳" }, { nom: "Bénin", code: "+229", flag: "🇧🇯" },
+  { nom: "Gabon", code: "+241", flag: "🇬🇦" }, { nom: "Congo (Brazzaville)", code: "+242", flag: "🇨🇬" },
+  { nom: "Congo (RDC)", code: "+243", flag: "🇨🇩" }, { nom: "Tchad", code: "+235", flag: "🇹🇩" },
+  { nom: "Togo", code: "+228", flag: "🇹🇬" }, { nom: "Burkina Faso", code: "+226", flag: "🇧🇫" },
+  { nom: "Mali", code: "+223", flag: "🇲🇱" }, { nom: "Niger", code: "+227", flag: "🇳🇪" },
+  { nom: "Guinée", code: "+224", flag: "🇬🇳" }, { nom: "Rwanda", code: "+250", flag: "🇷🇼" },
+  { nom: "Burundi", code: "+257", flag: "🇧🇮" }, { nom: "République centrafricaine", code: "+236", flag: "🇨🇫" },
+];
+const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
+const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
+
 const slugify = (str) => {
   if (!str) return "";
   return String(str)
@@ -13896,6 +13910,12 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showMenu, setShowMenu] = useState(false);
   const [user, setUser] = useState(null);
+  const [lecteur, setLecteur] = useState(null);
+  const [showLecteurModal, setShowLecteurModal] = useState(false);
+  const [lecteurPrenom, setLecteurPrenom] = useState("");
+  const [lecteurPays, setLecteurPays] = useState("");
+  const [lecteurTel, setLecteurTel] = useState("");
+  const [lecteurSaving, setLecteurSaving] = useState(false);
   // Charge le profil auteur de la personne connectée
   useEffect(() => {
     if (!user) { setAuteurProfil(null); setAuteurChecked(true); return; }
@@ -13911,6 +13931,30 @@ export default function App() {
   }, [user]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  useEffect(() => {
+    try { const raw = localStorage.getItem("carrybooks_lecteur"); if (raw) { const o = JSON.parse(raw); if (o && o.telephone) setLecteur(o); } } catch (e) {}
+  }, []);
+  useEffect(() => {
+    if (authChecked && !user && !lecteur) setShowLecteurModal(true);
+    else setShowLecteurModal(false);
+  }, [authChecked, user, lecteur]);
+  async function saveLecteur() {
+    const prenom = lecteurPrenom.trim();
+    const pays = lecteurPays;
+    const tel = lecteurTel.replace(/\D/g, "").replace(/^0+/, "");
+    const p = PAYS_TEL.find(x => x.nom === pays);
+    if (!prenom) { alert("Entre ton prénom."); return; }
+    if (!pays || !p) { alert("Choisis ton pays."); return; }
+    if (!tel || tel.length < 6) { alert("Entre ton numéro de téléphone."); return; }
+    const telephone = (p.code || "") + tel;
+    setLecteurSaving(true);
+    try { await supabase.from("lecteurs").upsert({ telephone, prenom, pays, indicatif: p.code || "", last_seen: new Date().toISOString() }, { onConflict: "telephone" }); } catch (e) {}
+    const obj = { prenom, pays, indicatif: p.code || "", telephone };
+    try { localStorage.setItem("carrybooks_lecteur", JSON.stringify(obj)); } catch (e) {}
+    setLecteur(obj);
+    setShowLecteurModal(false);
+    setLecteurSaving(false);
+  }
   const [readerScrollMode, setReaderScrollMode] = useState(false);
   const [pageSlideDir, setPageSlideDir] = useState(0); // -1 = retour, 0 = idle, 1 = avance
   const [touchStart, setTouchStart] = useState(null);
@@ -18676,6 +18720,38 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
       <style>{`* { box-sizing: border-box; } input, select { outline: none; } ::-webkit-scrollbar { display: none; }`}</style>
+
+      {/* MODAL DE CONNEXION PAR TÉLÉPHONE */}
+      {showLecteurModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+            <div style={{ textAlign: "center", marginBottom: 18 }}>
+              <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 44, marginBottom: 12 }} />
+              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur CarryBooks 📚</h2>
+              <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
+            </div>
+            <label style={LEC_LABEL}>Ton prénom *</label>
+            <input value={lecteurPrenom} onChange={e => setLecteurPrenom(e.target.value)} placeholder="Ex : Nadia" style={LEC_INPUT} />
+            <div style={{ height: 12 }} />
+            <label style={LEC_LABEL}>Ton pays *</label>
+            <select value={lecteurPays} onChange={e => setLecteurPays(e.target.value)} style={LEC_INPUT}>
+              <option value="">— Choisis ton pays —</option>
+              {PAYS_TEL.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
+            </select>
+            <div style={{ height: 12 }} />
+            <label style={LEC_LABEL}>Ton numéro de téléphone *</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", padding: "0 12px", borderRadius: 8, border: "1px solid #ddd", background: "#f7f5f0", fontSize: 14, fontWeight: "bold", color: "#333", whiteSpace: "nowrap" }}>{(() => { const p = PAYS_TEL.find(x => x.nom === lecteurPays); return p ? (p.flag + " " + (p.code || "")) : "🌍 +__"; })()}</div>
+              <input type="tel" value={lecteurTel} onChange={e => setLecteurTel(e.target.value.replace(/\D/g, ""))} placeholder="6XXXXXXXX" style={{ ...LEC_INPUT, flex: 1 }} />
+            </div>
+            <div style={{ height: 18 }} />
+            <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
+            <div style={{ textAlign: "center", marginTop: 12 }}>
+              <button onClick={signInWithGoogle} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>ou continuer avec Google</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* POPUP : Ouvrir dans le navigateur (pour les utilisateurs venant de Facebook/Instagram) */}
       {showOpenBrowserModal && (
