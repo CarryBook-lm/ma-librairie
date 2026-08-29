@@ -1971,6 +1971,7 @@ export default function Admin() {
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Produits", icon: "📚" },
+            { id: "espace_auteur", label: "Espace auteur", icon: "✍️" },
             { id: "categories", label: "Catégories", icon: "🗂️" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
             { id: "subscription", label: "Abonnements", icon: "⭐" },
@@ -1982,7 +1983,6 @@ export default function Admin() {
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
-            { id: "espace_auteur", label: "Espace auteur", icon: "✍️" },
           ].map(item => (
             <div key={item.id} onClick={() => { 
               setView(item.id); 
