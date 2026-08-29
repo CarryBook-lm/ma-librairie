@@ -337,6 +337,10 @@ export default function Admin() {
   const [tauxCdfLoading, setTauxCdfLoading] = useState(false);
   const [tauxCdfSaving, setTauxCdfSaving] = useState(false);
   const [tauxCdfMsg, setTauxCdfMsg] = useState("");
+  const [eaTab, setEaTab] = useState("livres");
+  const [eaAuteurs, setEaAuteurs] = useState([]);
+  const [eaBooks, setEaBooks] = useState([]);
+  const [eaLoading, setEaLoading] = useState(false);
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -413,7 +417,7 @@ export default function Admin() {
   const [uploadError, setUploadError] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   useEffect(() => {
-    if (view !== "reglages") return;
+    if (view !== "espace_auteur") return;
     (async () => {
       setTauxCdfLoading(true);
       try {
@@ -434,6 +438,21 @@ export default function Admin() {
     } catch (e) { setTauxCdfMsg("❌ " + (e.message || e)); }
     setTauxCdfSaving(false);
   }
+  useEffect(() => {
+    if (view !== "espace_auteur") return;
+    (async () => {
+      setEaLoading(true);
+      try {
+        const [{ data: aut }, { data: bks }] = await Promise.all([
+          supabase.from("auteurs").select("id, nom_complet, telephone, email").order("nom_complet", { ascending: true }),
+          supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
+        ]);
+        setEaAuteurs(aut || []);
+        setEaBooks(bks || []);
+      } catch (e) {}
+      setEaLoading(false);
+    })();
+  }, [view]);
   const fileInputRef = useRef(null);
 
   // ===== GESTION DES CATÉGORIES (chargées depuis Supabase) =====
@@ -1963,7 +1982,7 @@ export default function Admin() {
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
-            { id: "reglages", label: "Réglages", icon: "🌍" },
+            { id: "espace_auteur", label: "Espace auteur", icon: "✍️" },
           ].map(item => (
             <div key={item.id} onClick={() => { 
               setView(item.id); 
@@ -3955,19 +3974,62 @@ export default function Admin() {
         {view === "comptabilite" && <ComptabiliteView />}
 
         {/* RÉGLAGES — Taux de conversion FCFA -> CDF (RDC) */}
-        {view === "reglages" && (
+        {view === "espace_auteur" && (
           <div>
-            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🌍 Réglages</h2>
-            <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
-              <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → CDF (RD Congo)</h3>
-              <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>
-                Les prix sont fixés en FCFA. Pour un client de RD Congo qui paie en francs congolais (CDF), le montant est multiplié par ce taux. Exemple : à 4.5, un livre à 1000 FCFA sera facturé 4500 CDF.
-              </p>
-              <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>1 FCFA = combien de CDF ?</label>
-              <input type="text" inputMode="decimal" value={tauxCdf} onChange={e => setTauxCdf(e.target.value)} placeholder={tauxCdfLoading ? "Chargement…" : "Ex : 4.5"} disabled={tauxCdfLoading} style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
-              <button onClick={saveTauxCdf} disabled={tauxCdfSaving || tauxCdfLoading} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: (tauxCdfSaving || tauxCdfLoading) ? 0.6 : 1 }}>{tauxCdfSaving ? "Enregistrement…" : "Enregistrer le taux"}</button>
-              {tauxCdfMsg && <div style={{ marginTop: 14, fontSize: 13, color: tauxCdfMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{tauxCdfMsg}</div>}
+            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+              {[["livres","📚 Livres publiés"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+                <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
+              ))}
             </div>
+
+            {eaTab === "livres" && (
+              <div>
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
+                  eaAuteurs.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun auteur inscrit pour le moment.</div> : (
+                    eaAuteurs.map(a => {
+                      const livres = eaBooks.filter(b => b.auteur_id === a.id);
+                      return (
+                        <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                            <div>
+                              <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold" }}>{a.nom_complet || "Auteur sans nom"}</div>
+                              <div style={{ color: "#777", fontSize: 11 }}>{a.telephone || ""}{a.email ? " · " + a.email : ""}</div>
+                            </div>
+                            <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap" }}>{livres.length} livre{livres.length>1?"s":""}</div>
+                          </div>
+                          {livres.length === 0 ? <div style={{ color: "#666", fontSize: 12, fontStyle: "italic" }}>Aucun livre publié.</div> : (
+                            livres.map(b => {
+                              const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
+                              return (
+                                <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #262626" }}>
+                                  <div style={{ color: "#e8e0d0", fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.title}</div>
+                                  <div style={{ color: "#888", fontSize: 12, margin: "0 12px", whiteSpace: "nowrap" }}>{(b.price||0).toLocaleString()} F</div>
+                                  <div style={{ color: st.c, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>{st.t}</div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      );
+                    })
+                  )
+                )}
+              </div>
+            )}
+
+            {eaTab === "params" && (
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
+                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → CDF (RD Congo)</h3>
+                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>
+                  Les prix sont fixés en FCFA. Pour un client de RD Congo qui paie en francs congolais (CDF), le montant est multiplié par ce taux. Exemple : à 4.5, un livre à 1000 FCFA sera facturé 4500 CDF.
+                </p>
+                <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>1 FCFA = combien de CDF ?</label>
+                <input type="text" inputMode="decimal" value={tauxCdf} onChange={e => setTauxCdf(e.target.value)} placeholder={tauxCdfLoading ? "Chargement…" : "Ex : 4.5"} disabled={tauxCdfLoading} style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
+                <button onClick={saveTauxCdf} disabled={tauxCdfSaving || tauxCdfLoading} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: (tauxCdfSaving || tauxCdfLoading) ? 0.6 : 1 }}>{tauxCdfSaving ? "Enregistrement…" : "Enregistrer le taux"}</button>
+                {tauxCdfMsg && <div style={{ marginTop: 14, fontSize: 13, color: tauxCdfMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{tauxCdfMsg}</div>}
+              </div>
+            )}
           </div>
         )}
 
