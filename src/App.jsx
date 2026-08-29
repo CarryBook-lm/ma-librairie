@@ -18667,14 +18667,7 @@ export default function App() {
                       📖 Lire maintenant
                     </button>
                   )}
-                  {/* Lien réclamation par email */}
-                  <p style={{ textAlign: "center", marginTop: 14, fontSize: 12, color: "#555" }}>
-                    Problème de téléchargement ?{" "}
-                    <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPage("reclamer"); }}
-                      style={{ background: "none", border: "none", color: G.gold, fontSize: 12, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
-                      Recevoir par email
-                    </button>
-                  </p>
+
                 </div>
               )}
               {paymentStep === 6 && (
@@ -19159,9 +19152,21 @@ export default function App() {
                     <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>Vends tes livres sur CarryBooks</span>
                   </button>
                   {!window.matchMedia("(display-mode: standalone)").matches && (
-                    <button onClick={async () => { if (deferredPrompt || window.__pwaPrompt) { (deferredPrompt || window.__pwaPrompt).prompt(); const { outcome } = await (deferredPrompt || window.__pwaPrompt).userChoice; if (outcome === "accepted") { setDeferredPrompt(null); window.__pwaPrompt = null; } } else { setShowInstallModal(true); } }} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", borderRight: "1px solid " + G.border, color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <button onClick={() => {
+                      const ua = (navigator.userAgent || "").toLowerCase();
+                      if (isInAppBrowser()) {
+                        if (/android/.test(ua)) {
+                          const bare = window.location.href.replace(/^https?:\/\//, "");
+                          window.location.href = "intent://" + bare + "#Intent;scheme=https;end";
+                        } else { setShowInstallModal(true); }
+                        return;
+                      }
+                      const p = deferredPrompt || window.__pwaPrompt;
+                      if (p) { p.prompt(); p.userChoice.then(({ outcome }) => { if (outcome === "accepted") { setDeferredPrompt(null); window.__pwaPrompt = null; } }); }
+                      else { setShowInstallModal(true); }
+                    }} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", borderRight: "1px solid " + G.border, color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                       <span style={{ fontSize: 18 }}>📲</span>
-                      <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Installe l'application</span>
+                      <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Télécharger sur</span>
                       <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>CarryBooks</span>
                     </button>
                   )}
@@ -21600,6 +21605,15 @@ export default function App() {
                 <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208" }}>Installer CarryBooks</div>
                 <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>Acces rapide depuis ton ecran</div>
               </div>
+              {isInAppBrowser() ? (
+                <div style={{ background: "#fff3cd", border: "1px solid #ffc107", borderRadius: 12, padding: "16px", marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#7a5c00", marginBottom: 10 }}>⚠️ Tu es dans le navigateur de Facebook</div>
+                  <div style={{ fontSize: 13, color: "#555", lineHeight: 1.6, marginBottom: 12 }}>Facebook ne permet pas d'installer l'application. Ouvre d'abord la page dans Chrome :</div>
+                  <div style={{ fontSize: 13, color: "#333", marginBottom: 8 }}>1. Appuie sur les <b>3 points (⋮)</b> en haut à droite</div>
+                  <div style={{ fontSize: 13, color: "#333", marginBottom: 8 }}>2. Choisis <b>« Ouvrir dans Chrome »</b></div>
+                  <div style={{ fontSize: 13, color: "#333" }}>3. Dans Chrome, réappuie sur <b>« Installe l'application »</b> ✅</div>
+                </div>
+              ) : (<>
               <div style={{ background: "#f9f9f9", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#333", marginBottom: 10 }}>🍎 Sur iPhone (Safari)</div>
                 <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>1. Appuie sur le bouton Partager ⬆️ en bas</div>
@@ -21612,6 +21626,7 @@ export default function App() {
                 <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>2. Appuie sur Ajouter a l'ecran d'accueil ➕</div>
                 <div style={{ fontSize: 13, color: "#555" }}>3. Confirme en appuyant Ajouter ✅</div>
               </div>
+              </>)}
               <button onClick={() => setShowInstallModal(false)} style={{ width: "100%", padding: 14, background: "#c9a84c", border: "none", borderRadius: 12, color: "#1a1208", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>
                 OK compris !
               </button>
