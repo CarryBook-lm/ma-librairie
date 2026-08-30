@@ -13745,6 +13745,7 @@ export default function App() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentBook, setPaymentBook] = useState(null);
   const [pendingBuyBook, setPendingBuyBook] = useState(null);
+  const [pendingEspaceAuteur, setPendingEspaceAuteur] = useState(false);
   const [fbBannerDismissed, setFbBannerDismissed] = useState(false);
   const [paymentStep, setPaymentStep] = useState(1);
   const [visitorCountry, setVisitorCountry] = useState(null);
@@ -14148,6 +14149,7 @@ export default function App() {
       const b = pendingBuyBook; setPendingBuyBook(null);
       setPaymentBook(b); setShowPayment(true); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber("");
     }
+    if (pendingEspaceAuteur) { setPendingEspaceAuteur(false); setPage("espace_auteur"); }
   }
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
@@ -19896,12 +19898,10 @@ export default function App() {
                 {item.label}
               </div>
             ))}
-            {user && (
-              <div onClick={() => { setPage("espace_auteur"); setShowMenu(false); }}
-                style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "espace_auteur" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "espace_auteur" ? G.gold : "transparent"), background: page === "espace_auteur" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
-                📖 Publie ton livre
-              </div>
-            )}
+            <div onClick={() => { setShowMenu(false); if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }}
+              style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "espace_auteur" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "espace_auteur" ? G.gold : "transparent"), background: page === "espace_auteur" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
+              📖 Publie ton livre
+            </div>
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : lecteur
@@ -19990,7 +19990,7 @@ export default function App() {
               <>
                 {/* 3 RECTANGLES : Publier · Installer · Bibliothèque */}
                 <div style={{ display: "flex", gap: 0, padding: "10px 10px 0" }}>
-                  <button onClick={() => setPage("espace_auteur")} style={{ flex: 1, padding: "10px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "8px 0 0 8px", borderRight: "1px solid rgba(0,0,0,0.12)" }}>
+                  <button onClick={() => { if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }} style={{ flex: 1, padding: "10px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "8px 0 0 8px", borderRight: "1px solid rgba(0,0,0,0.12)" }}>
                     <span style={{ fontSize: 18 }}>📖</span>
                     <span style={{ lineHeight: 1.15, textAlign: "center", fontSize: 11.5 }}>PUBLIE UN LIVRE</span>
                     <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>Vends tes livres sur CarryBooks</span>
