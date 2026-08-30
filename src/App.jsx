@@ -13756,6 +13756,8 @@ export default function App() {
   const [auteurPixel, setAuteurPixel] = useState("");
   const [auteurPixelTiktok, setAuteurPixelTiktok] = useState("");
   const [auteurBio, setAuteurBio] = useState("");
+  const [auteurPhoto, setAuteurPhoto] = useState("");
+  const [auteurPhotoUploading, setAuteurPhotoUploading] = useState(false);
   const [auteurEmail, setAuteurEmail] = useState("");
   const [auteurSaving, setAuteurSaving] = useState(false);
   const [auteurMsg, setAuteurMsg] = useState("");
@@ -14021,7 +14023,7 @@ export default function App() {
         const { data } = await supabase.from("auteurs").select("*").eq("telephone_login", lecteur.telephone).order("id", { ascending: false }).limit(1);
         const prof = (data && data.length) ? data[0] : null;
         setAuteurProfil(prof);
-        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || ""); setAuteurBio(prof.bio || ""); }
+        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || ""); setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || ""); }
         else { setAuteurNom(lecteur.prenom || ""); setAuteurPays(lecteur.pays || ""); setAuteurTel(""); setAuteurEmail(""); setAuteurBio(""); }
       } catch (e) {}
       setAuteurChecked(true);
@@ -16468,6 +16470,23 @@ export default function App() {
   // ── ESPACE AUTEUR (Publie ton livre) ──
   async function saveAuteur() {
     if (!lecteur) return;
+  const uploadAuteurPhoto = async (file) => {
+    if (!file) return;
+    setAuteurPhotoUploading(true); setAuteurMsg("");
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const fileName = "auteurs/photo_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7) + "." + ext;
+      const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: file.type || "image/jpeg", upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
+      setAuteurPhoto(data.publicUrl);
+      setAuteurMsg("✅ Photo ajoutée. Clique sur Enregistrer pour la sauvegarder.");
+    } catch (e) {
+      setAuteurMsg("Erreur lors de l'envoi de la photo. Réessaie.");
+    }
+    setAuteurPhotoUploading(false);
+  };
+
     if (!auteurNom.trim() || !auteurTel.trim() || !auteurPays.trim() || !auteurEmail.trim()) {
       setAuteurMsg("Merci de remplir ton nom, ton email, ton téléphone et ton pays."); return;
     }
@@ -16488,6 +16507,7 @@ export default function App() {
         pixel_meta: auteurPixel.trim() || null,
         pixel_tiktok: auteurPixelTiktok.trim() || null,
         bio: auteurBio.trim() || null,
+        photo_url: auteurPhoto || null,
       };
       if (auteurProfil) {
         const { data, error } = await supabase.from("auteurs").update(payload).eq("id", auteurProfil.id).select().maybeSingle();
@@ -16658,7 +16678,7 @@ export default function App() {
       setAuteursListLoading(true);
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
-        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source").order("nom_complet", { ascending: true });
+        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url").order("nom_complet", { ascending: true });
         if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
@@ -16695,18 +16715,33 @@ export default function App() {
           ) : auteursList.length === 0 ? (
             <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Aucun auteur pour le moment.</div>
           ) : (
-            <div style={{ display: "grid", gap: 12 }}>
-              {auteursList.map(a => (
-                <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 52, height: 52, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>{(a.nom_complet || "?").charAt(0).toUpperCase()}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{a.nom_complet}</div>
-                    {a.pays ? <div style={{ fontSize: 12, color: G.textDim, marginBottom: 2 }}>📍 {a.pays}</div> : null}
-                    {a.bio ? <div style={{ fontSize: 12, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{a.bio}</div> : null}
+            <div>
+              {(() => {
+                const groups = {};
+                auteursList.forEach(a => {
+                  const L = (a.nom_complet || "?").charAt(0).toUpperCase();
+                  (groups[L] = groups[L] || []).push(a);
+                });
+                return Object.keys(groups).sort().map(L => (
+                  <div key={L} style={{ marginBottom: 18 }}>
+                    <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, padding: "6px 4px", borderBottom: "1px solid " + G.border, marginBottom: 8 }}>{L}</div>
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {groups[L].map(a => (
+                        <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                          <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                            {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{a.nom_complet}</div>
+                            {a.pays ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.pays}</div> : null}
+                          </div>
+                          <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           )}
         </div>
@@ -16730,7 +16765,9 @@ export default function App() {
         ) : (
           <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
             <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>{(boutiqueAuteur.nom_complet || "?").charAt(0).toUpperCase()}</div>
+              <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>
+                {boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (boutiqueAuteur.nom_complet || "?").charAt(0).toUpperCase()}
+              </div>
               <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{boutiqueAuteur.nom_complet}</div>
               {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
               {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap" }}>{boutiqueAuteur.bio}</div> : null}
@@ -17068,6 +17105,16 @@ export default function App() {
                       <label style={labelSt}>Ton adresse email *</label>
                       <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
                       <div style={{ height: 14 }} />
+                      <label style={labelSt}>Photo de profil (facultatif)</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                        <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
+                          {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
+                        </div>
+                        <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                          {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Choisir une photo")}
+                          <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
+                        </label>
+                      </div>
                       <label style={labelSt}>Présentation (facultatif)</label>
                       <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={3} style={{ ...champ, resize: "vertical" }} />
                       <div style={{ height: 16 }} />
@@ -17169,6 +17216,16 @@ export default function App() {
               <label style={labelSt}>Ton adresse email *</label>
               <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
               <div style={{ height: 14 }} />
+              <label style={labelSt}>Photo de profil (facultatif)</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
+                  {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
+                </div>
+                <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                  {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Choisir une photo")}
+                  <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
+                </label>
+              </div>
               <label style={labelSt}>Petite présentation (facultatif)</label>
               <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
               <div style={{ height: 20 }} />
