@@ -16521,13 +16521,16 @@ export default function App() {
     if (!file) return;
     setAuteurPhotoUploading(true); setAuteurMsg("");
     try {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-      const fileName = "auteurs/photo_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7) + "." + ext;
-      const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: file.type || "image/jpeg", upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from("books-pdf").getPublicUrl(fileName);
-      setAuteurPhoto(data.publicUrl);
-      setAuteurMsg("✅ Photo ajoutée. Clique sur Enregistrer pour la sauvegarder.");
+      const fd = new FormData(); fd.append("image", file);
+      const key = import.meta.env.VITE_IMGBB_KEY;
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) {
+        setAuteurPhoto(data.data.url);
+        setAuteurMsg("✅ Photo ajoutée. Clique sur Enregistrer pour la sauvegarder.");
+      } else {
+        setAuteurMsg("Erreur lors de l'envoi de la photo. Réessaie.");
+      }
     } catch (e) {
       setAuteurMsg("Erreur lors de l'envoi de la photo. Réessaie.");
     }
