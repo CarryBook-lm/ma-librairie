@@ -13795,6 +13795,13 @@ export default function App() {
   const [kycNom, setKycNom] = useState("");
   const [kycPrenom, setKycPrenom] = useState("");
   const [kycNaissance, setKycNaissance] = useState("");
+  const [kycJour, setKycJour] = useState("");
+  const [kycMois, setKycMois] = useState("");
+  const [kycAnnee, setKycAnnee] = useState("");
+  const majNaissance = (j, m, a) => {
+    setKycJour(j); setKycMois(m); setKycAnnee(a);
+    setKycNaissance((j && m && a) ? (a + "-" + m + "-" + j) : "");
+  };
   const [kycLieu, setKycLieu] = useState("");
   const [kycSituation, setKycSituation] = useState("");
   const [kycNationalite, setKycNationalite] = useState("");
@@ -16653,6 +16660,8 @@ export default function App() {
     setKycLieu(p.kyc_lieu_naissance || ""); setKycSituation(p.kyc_situation || ""); setKycNationalite(p.kyc_nationalite || "");
     setKycResidence(p.kyc_pays_residence || p.pays || ""); setKycSexe(p.kyc_sexe || ""); setKycPhone(p.kyc_paiement_phone || p.telephone || "");
     setKycPieceType(p.kyc_piece_type || ""); setKycPieceUrl(p.kyc_piece_url || ""); setKycContratUrl(p.kyc_contrat_url || "");
+    const d = (p.kyc_naissance || "").split("-"); // AAAA-MM-JJ
+    if (d.length === 3) { setKycAnnee(d[0]); setKycMois(d[1]); setKycJour(d[2]); } else { setKycAnnee(""); setKycMois(""); setKycJour(""); }
     setKycMsg(""); setKycOpen(true);
   };
   async function uploadKycDoc(file, setter, label) {
@@ -17166,7 +17175,7 @@ export default function App() {
                       <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Ces informations servent à t'identifier et à te payer. Tout est obligatoire.</div>
                       <div style={{ background: G.goldDim, borderRadius: 8, padding: 12, marginBottom: 16 }}>
                         <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>📄 Étape 1 — Le contrat</div>
-                        <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>Télécharge le contrat, lis-le, écris « Lu et approuvé », signe, puis re-scanne-le et dépose-le plus bas (Étape 4).</div>
+                        <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>Télécharge le contrat, lis-le, écris « Lu et approuvé », puis SIGNE sur ses 3 pages (une signature par page). Re-scanne-le et dépose-le plus bas (Étape 4).</div>
                         <a href="/contrat-auteur-carrybooks.pdf" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "9px 14px", background: G.gold, color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>⬇️ Télécharger le contrat</a>
                       </div>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>👤 Étape 2 — Ton identité (comme sur ta pièce)</div>
@@ -17177,7 +17186,20 @@ export default function App() {
                       <input value={kycPrenom} onChange={e => setKycPrenom(e.target.value)} style={champ} />
                       <div style={{ height: 10 }} />
                       <label style={labelSt}>Date de naissance *</label>
-                      <input type="date" value={kycNaissance} onChange={e => setKycNaissance(e.target.value)} style={champ} />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <select value={kycJour} onChange={e => majNaissance(e.target.value, kycMois, kycAnnee)} style={{ ...champ, flex: 1, marginBottom: 0 }}>
+                          <option value="">Jour</option>
+                          {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0")).map(j => <option key={j} value={j}>{j}</option>)}
+                        </select>
+                        <select value={kycMois} onChange={e => majNaissance(kycJour, e.target.value, kycAnnee)} style={{ ...champ, flex: 1.6, marginBottom: 0 }}>
+                          <option value="">Mois</option>
+                          {["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"].map((nm, i) => <option key={nm} value={String(i + 1).padStart(2, "0")}>{nm}</option>)}
+                        </select>
+                        <select value={kycAnnee} onChange={e => majNaissance(kycJour, kycMois, e.target.value)} style={{ ...champ, flex: 1.2, marginBottom: 0 }}>
+                          <option value="">Année</option>
+                          {Array.from({ length: 82 }, (_, i) => String(2010 - i)).map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
                       <div style={{ height: 10 }} />
                       <label style={labelSt}>Lieu de naissance *</label>
                       <input value={kycLieu} onChange={e => setKycLieu(e.target.value)} style={champ} />
@@ -17196,6 +17218,7 @@ export default function App() {
                       <div style={{ height: 10 }} />
                       <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
                       <input value={kycPhone} onChange={e => setKycPhone(e.target.value)} placeholder="Ex : +237 6XX XX XX XX" style={champ} />
+                      <div style={{ fontSize: 11, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>ℹ️ Si tu vis dans la diaspora ou un pays non éligible, tu dois fournir un numéro Mobile Money d'un pays éligible : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie.</div>
                       <div style={{ height: 16 }} />
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>🪪 Étape 3 — Ta pièce d'identité</div>
                       <label style={labelSt}>Type de pièce *</label>
