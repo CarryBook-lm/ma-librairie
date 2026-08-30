@@ -342,6 +342,7 @@ export default function Admin() {
   const [eaBooks, setEaBooks] = useState([]);
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
+  const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -452,10 +453,32 @@ export default function Admin() {
         setEaAuteurs(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
+        await chargerSoldes();
       } catch (e) {}
       setEaLoading(false);
     })();
   }, [view]);
+  const chargerSoldes = async () => {
+    const { data: va } = await supabase.from("ventes_auteurs").select("auteur_id, part_auteur, reverse").eq("reverse", false);
+    const { data: auts } = await supabase.from("auteurs").select("id, nom_complet, kyc_paiement_phone, telephone");
+    const map = {};
+    (va || []).forEach(v => { map[v.auteur_id] = (map[v.auteur_id] || 0) + (v.part_auteur || 0); });
+    const rows = Object.keys(map).map(id => {
+      const a = (auts || []).find(x => String(x.id) === String(id)) || {};
+      return { auteur_id: Number(id), nom: a.nom_complet || ("Auteur #" + id), phone: a.kyc_paiement_phone || a.telephone || "", solde: map[id] };
+    }).filter(r => r.solde > 0).sort((a, b) => b.solde - a.solde);
+    setEaSoldes(rows);
+  };
+  const reverserAuteur = async (row) => {
+    if (!window.confirm("Confirmer le reversement de " + row.solde.toLocaleString() + " F à " + row.nom + " ? À faire APRÈS avoir envoyé le Mobile Money.")) return;
+    const ref = window.prompt("Référence du paiement Mobile Money (facultatif) :", "") || "";
+    const { data: rev, error: e1 } = await supabase.from("reversements").insert([{ auteur_id: row.auteur_id, montant: row.solde, reference: ref }]).select().single();
+    if (e1) { alert("Erreur (droits ?) : " + e1.message); return; }
+    const { error: e2 } = await supabase.from("ventes_auteurs").update({ reverse: true, reversement_id: rev.id }).eq("auteur_id", row.auteur_id).eq("reverse", false);
+    if (e2) { alert("Reversement créé mais erreur en marquant les ventes : " + e2.message); }
+    await chargerSoldes();
+    alert("✅ Reversement enregistré.");
+  };
   const kycRefresh = async () => {
     const { data } = await supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true });
     setEaKyc(data || []);
@@ -3998,7 +4021,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4065,6 +4088,26 @@ export default function Admin() {
                       </div>
                     ))
                   )
+                )}
+              </div>
+            )}
+
+            {eaTab === "reversements" && (
+              <div>
+                <div style={{ color: "#888", fontSize: 12, marginBottom: 14, lineHeight: 1.6 }}>Solde à reverser par auteur (part auteur non encore payée). Envoie le Mobile Money au numéro indiqué, PUIS clique « Marquer payé » pour solder.</div>
+                {eaSoldes.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun solde à reverser.</div> : (
+                  eaSoldes.map(row => (
+                    <div key={row.auteur_id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <div>
+                          <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold" }}>{row.nom}</div>
+                          <div style={{ color: "#777", fontSize: 12 }}>📱 {row.phone || "Numéro manquant"}</div>
+                        </div>
+                        <div style={{ color: "#4caf50", fontSize: 20, fontWeight: "bold", whiteSpace: "nowrap" }}>{row.solde.toLocaleString()} F</div>
+                      </div>
+                      <button onClick={() => reverserAuteur(row)} style={{ width: "100%", padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Marquer payé ({row.solde.toLocaleString()} F)</button>
+                    </div>
+                  ))
                 )}
               </div>
             )}

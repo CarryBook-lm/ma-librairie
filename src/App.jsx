@@ -17607,6 +17607,17 @@ export default function App() {
                 const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
                 return (
                   <div>
+                    {(() => {
+                      const solde = ventesAuteur.filter(v => !v.reverse).reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const paye = ventesAuteur.filter(v => v.reverse).reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      return (
+                        <div style={{ background: "linear-gradient(135deg, #6a11cb, #8e2de2)", borderRadius: 12, padding: 16, marginBottom: 16, color: "#fff" }}>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 2 }}>💼 Mon portefeuille — à recevoir</div>
+                          <div style={{ fontSize: 30, fontWeight: "bold" }}>{fmt(solde)}</div>
+                          <div style={{ fontSize: 11, opacity: 0.85, marginTop: 6, lineHeight: 1.5 }}>Déjà reversé : {fmt(paye)}<br/>Les reversements se font par Mobile Money au numéro de ton profil.</div>
+                        </div>
+                      );
+                    })()}
                     <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 10 }}>💰 Mes ventes</div>
                     <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                       {periods.map(([id, lab]) => (
