@@ -16236,7 +16236,7 @@ export default function App() {
     }
   }
 
-  async function payWithPawapay(forceCountry) {
+  async function payWithPawapay(forceCountry, deviseChoisie) {
     try {
       const country = forceCountry || pawapayCountry;
       if (!country) { alert("Choisis d'abord ton pays."); return; }
@@ -16264,6 +16264,7 @@ export default function App() {
           country: country,
           referrer_code: referrerCode,
           author_src: authorSrc,
+          devise: deviseChoisie || "",
         }),
       });
       const data = await res.json();
@@ -19725,7 +19726,11 @@ export default function App() {
                   </>)}
                   {lecteur && lecteur.pays !== "Cameroun" && (
                     PAYS_TO_PP[lecteur.pays]
-                      ? <button onClick={() => payWithPawapay(PAYS_TO_PP[lecteur.pays])} disabled={pawapayLoading} style={{ width: "100%", padding: 16, marginBottom: 14, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "📱 Payer avec Mobile Money"}</button>
+                      ? (lecteur.pays === "Congo (RDC)" ? (<>
+                          <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8, fontWeight: "bold", textAlign: "left" }}>Choisis ta devise :</div>
+                          <button onClick={() => payWithPawapay("COD", "CDF")} disabled={pawapayLoading} style={{ width: "100%", padding: 16, marginBottom: 10, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection..." : "📱 Payer en Francs congolais (CDF)"}</button>
+                          <button onClick={() => payWithPawapay("COD", "USD")} disabled={pawapayLoading} style={{ width: "100%", padding: 16, marginBottom: 14, background: "#0a7d3b", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection..." : "💵 Payer en Dollars (USD)"}</button>
+                        </>) : <button onClick={() => payWithPawapay(PAYS_TO_PP[lecteur.pays])} disabled={pawapayLoading} style={{ width: "100%", padding: 16, marginBottom: 14, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "📱 Payer avec Mobile Money"}</button>)
                       : <div style={{ background: "#fff3cd", border: "1px solid #ffc107", borderRadius: 8, padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "#7a5c00", lineHeight: 1.5 }}>Le paiement Mobile Money n'est pas encore disponible dans ton pays ({lecteur.pays}). Écris-nous pour être prévenu(e) dès son ouverture.</div>
                   )}
                   {!lecteur && (<button onClick={() => setShowPawapayCountries(v => !v)} style={{
@@ -19746,7 +19751,13 @@ export default function App() {
                         <option value="TCD">🇹🇩 Tchad</option>
                         <option value="COD">🇨🇩 RD Congo</option>
                       </select>
-                      <button onClick={payWithPawapay} disabled={pawapayLoading || !pawapayCountry} style={{ width: "100%", padding: 14, background: pawapayCountry ? "#6d28d9" : "#bbb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: pawapayCountry ? "pointer" : "not-allowed", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "Payer avec Mobile Money"}</button>
+                      {pawapayCountry === "COD" ? (<>
+                        <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8, fontWeight: "bold" }}>Choisis ta devise :</div>
+                        <button onClick={() => payWithPawapay("COD", "CDF")} disabled={pawapayLoading} style={{ width: "100%", padding: 14, marginBottom: 8, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection..." : "📱 Payer en Francs congolais (CDF)"}</button>
+                        <button onClick={() => payWithPawapay("COD", "USD")} disabled={pawapayLoading} style={{ width: "100%", padding: 14, background: "#0a7d3b", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: "pointer", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection..." : "💵 Payer en Dollars (USD)"}</button>
+                      </>) : (
+                        <button onClick={payWithPawapay} disabled={pawapayLoading || !pawapayCountry} style={{ width: "100%", padding: 14, background: pawapayCountry ? "#6d28d9" : "#bbb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: pawapayCountry ? "pointer" : "not-allowed", opacity: pawapayLoading ? 0.6 : 1 }}>{pawapayLoading ? "Redirection en cours..." : "Payer avec Mobile Money"}</button>
+                      )}
                     </div>
                   )}
                   {PAYDUNYA_ENABLED && (

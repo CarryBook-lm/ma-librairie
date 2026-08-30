@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     body = body || {};
 
     const { amount, book_id, book_title, user_id, phone, country, referrer_code,
-            kind, quiz_type, result_data, author_src } = body;
+            kind, quiz_type, result_data, author_src, devise: devisePref } = body;
     const estCarrycare = kind === "carrycare";
     if (!amount || (!estCarrycare && !book_id)) {
       return res.status(400).json({ error: "amount et book_id requis" });
@@ -77,14 +77,18 @@ export default async function handler(req, res) {
     }
 
     const prixFcfa = Math.round(Number(amount)); // prix affiché (FCFA)
-    let montant = prixFcfa;
     let devise = conf.cur;
+    // RDC : le lecteur peut choisir CDF (défaut) ou USD
+    if (iso === "COD" && String(devisePref || "").toUpperCase() === "USD") devise = "USD";
 
-    // Conversion pour les devises hors zone FCFA (taux fixes modifiables dans l'admin)
-    if (conf.cur !== "XAF" && conf.cur !== "XOF") {
-      const DEFAUTS = { CDF: 4.5, RWF: 2.13, KES: 0.21, MZN: 0.104, UGX: 6.1, SLE: 0.037, ZMW: 0.043 };
-      const cle = conf.cur === "CDF" ? "taux_xaf_cdf" : ("taux_xaf_" + conf.cur.toLowerCase());
-      let taux = DEFAUTS[conf.cur] || 1;
+    let montant;
+    if (devise === "XAF" || devise === "XOF") {
+      montant = String(prixFcfa); // même valeur que le FCFA
+    } else {
+      // Conversion via taux fixe (modifiable dans l'admin)
+      const DEFAUTS = { CDF: 4.5, USD: 0.00165, RWF: 2.13, KES: 0.21, MZN: 0.104, UGX: 6.1, SLE: 0.037, ZMW: 0.043 };
+      const cle = "taux_xaf_" + devise.toLowerCase();
+      let taux = DEFAUTS[devise] || 1;
       try {
         const supa = createClient(
           process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
@@ -94,7 +98,8 @@ export default async function handler(req, res) {
         const { data } = await supa.from("reglages").select("valeur").eq("cle", cle).limit(1);
         if (data && data[0] && data[0].valeur) taux = Number(data[0].valeur) || taux;
       } catch (e) { /* taux par défaut */ }
-      montant = Math.round(prixFcfa * taux);
+      const val = prixFcfa * taux;
+      montant = (devise === "USD") ? val.toFixed(2) : String(Math.round(val)); // USD avec 2 décimales
     }
 
     const depositId = uuidv4();
@@ -142,7 +147,7 @@ export default async function handler(req, res) {
     const payload = {
       depositId: depositId,
       returnUrl: returnUrl,
-      amountDetails: { amount: String(montant), currency: devise },
+      amountDetails: { amount: montant, currency: devise },
       country: iso,
       language: "FR",
       reason: ("Achat " + title).slice(0, 22), // 4-22 caractères
