@@ -13444,6 +13444,7 @@ export default function App() {
   const [auteursList, setAuteursList] = useState([]);
   const [auteursListLoading, setAuteursListLoading] = useState(false);
   const [boutiqueAuteur, setBoutiqueAuteur] = useState(null);
+  const [bioExpanded, setBioExpanded] = useState(false);
   const [boutiqueBooks, setBoutiqueBooks] = useState([]);
   const [boutiqueLoading, setBoutiqueLoading] = useState(false);
   const [boutiqueCode, setBoutiqueCode] = useState(null);
@@ -17084,6 +17085,7 @@ export default function App() {
   const ouvrirBoutiqueAuteur = (code) => {
     if (!code) return;
     setBoutiqueCode(code);
+    setBioExpanded(false);
     setShowMenu(false);
     setPage("auteur_boutique");
     try {
@@ -17152,7 +17154,17 @@ export default function App() {
               </div>
               <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{renderBadgeVerifie(boutiqueAuteur.verifie)}{boutiqueAuteur.nom_complet}</div>
               {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
-              {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap", maxHeight: 150, overflowY: "auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>{boutiqueAuteur.bio}</div> : null}
+              {boutiqueAuteur.bio ? (() => {
+                const bio = boutiqueAuteur.bio;
+                const isLong = bio.length > 220;
+                const shown = (!bioExpanded && isLong) ? bio.slice(0, 220).trim() + "…" : bio;
+                return (
+                  <div style={{ maxWidth: 600, margin: "0 auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>
+                    <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, textAlign: "left", whiteSpace: "pre-wrap" }}>{shown}</div>
+                    {isLong ? <button onClick={() => setBioExpanded(v => !v)} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer", padding: "6px 0 0", marginTop: 2 }}>{bioExpanded ? "Voir moins ▲" : "Voir plus ▼"}</button> : null}
+                  </div>
+                );
+              })() : null}
               {(() => {
                 const reseaux = [
                   { u: boutiqueAuteur.facebook, l: "Facebook", ic: "📘", c: "#1877F2" },
