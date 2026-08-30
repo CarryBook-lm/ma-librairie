@@ -346,6 +346,8 @@ export default function Admin() {
   const [eaTab, setEaTab] = useState("livres");
   const [eaAuteurs, setEaAuteurs] = useState([]);
   const [eaBooks, setEaBooks] = useState([]);
+  const [eaVentesMap, setEaVentesMap] = useState({});
+  const [eaPayeMap, setEaPayeMap] = useState({});
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
@@ -484,14 +486,18 @@ export default function Admin() {
     (async () => {
       setEaLoading(true);
       try {
-        const [{ data: aut }, { data: bks }, { data: kyc }] = await Promise.all([
-          supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
+        const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
+          supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
           supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
+          supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
+          supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
         ]);
         setEaAuteurs(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
+        const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
+        const pmap = {}; (rp || []).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
         await chargerSoldes();
       } catch (e) {}
       setEaLoading(false);
@@ -4111,10 +4117,55 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["vue","📊 Vue d'ensemble"],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
+
+            {eaTab === "vue" && (
+              <div>
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (() => {
+                  const f = n => (n || 0).toLocaleString("fr-FR") + " F";
+                  let totGains = 0, totReste = 0;
+                  const rows = eaAuteurs.map(a => {
+                    const livres = eaBooks.filter(b => b.auteur_id === a.id);
+                    const enLigne = livres.filter(b => b.status === "actif").length;
+                    const v = eaVentesMap[a.id] || { nb: 0, gains: 0 };
+                    const paye = eaPayeMap[a.id] || 0;
+                    const reste = v.gains - paye;
+                    totGains += v.gains; totReste += reste;
+                    return { a, nbLivres: livres.length, enLigne, nbVentes: v.nb, gains: v.gains, reste };
+                  }).sort((x, y) => y.gains - x.gains);
+                  return (<>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                      <div style={{ flex: 1, minWidth: 100, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#c9a84c", fontSize: 19, fontWeight: "bold" }}>{eaAuteurs.length}</div><div style={{ color: "#aaa", fontSize: 11 }}>Auteurs</div></div>
+                      <div style={{ flex: 1, minWidth: 100, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#c9a84c", fontSize: 19, fontWeight: "bold" }}>{f(totGains)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Gains auteurs (total)</div></div>
+                      <div style={{ flex: 1, minWidth: 100, background: "#2a1a1a", border: "1px solid #4a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#ff8a80", fontSize: 19, fontWeight: "bold" }}>{f(totReste)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Reste à reverser</div></div>
+                    </div>
+                    {rows.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun auteur.</div> : rows.map(({ a, nbLivres, enLigne, nbVentes, gains, reste }) => {
+                      const st = a.banni ? { t: "🚫 Banni", c: "#ff8a80" } : a.kyc_status === "valide" ? { t: "✅ Vérifié", c: "#4caf50" } : a.kyc_status === "en_attente" ? { t: "⏳ En attente", c: "#c9a84c" } : a.kyc_status === "refuse" ? { t: "❌ Refusé", c: "#e57373" } : { t: "— Non soumis", c: "#888" };
+                      return (
+                        <div key={a.id} onClick={() => { setEaSelectedAuteur(a); setEaTab("livres"); }} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, marginBottom: 10, cursor: "pointer" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                              <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
+                              {a.abonnement_actif && <span style={{ background: "#2a2340", color: "#b39ddb", fontSize: 10, fontWeight: "bold", borderRadius: 6, padding: "1px 6px", flexShrink: 0 }}>ABO</span>}
+                            </div>
+                            <div style={{ color: st.c, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap", flexShrink: 0 }}>{st.t}</div>
+                          </div>
+                          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12 }}>
+                            <div style={{ color: "#aaa" }}>📚 {enLigne}/{nbLivres} en ligne</div>
+                            <div style={{ color: "#aaa" }}>🛒 {nbVentes} vente{nbVentes > 1 ? "s" : ""}</div>
+                            <div style={{ color: "#a5d6a7" }}>Gains {f(gains)}</div>
+                            <div style={{ color: "#ffb0b0" }}>Reste {f(reste)}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>);
+                })()}
+              </div>
+            )}
 
             {eaTab === "livres" && (
               <div>
