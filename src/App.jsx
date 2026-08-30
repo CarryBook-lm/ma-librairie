@@ -1697,6 +1697,19 @@ const CATEGORIES_FALLBACK = {
   "Podcast": ["Amour", "Argent", "Confiance en soi", "Spiritualité", "Motivation"],
 };
 
+const CONTRAT_ARTICLES = [
+  ["Article 1 - Objet du contrat", "Le présent contrat définit les conditions dans lesquelles l'Auteur publie, diffuse et vend ses œuvres numériques (romans, livres, guides, livres audio et autres contenus) sur la Plateforme CarryBooks, ainsi que les droits et obligations de chaque partie."],
+  ["Article 2 - Déclaration et garantie de l'Auteur", "L'Auteur certifie sur l'honneur être le véritable auteur et/ou le détenteur exclusif de l'ensemble des droits des œuvres qu'il publie sur CarryBooks. Il garantit que ses œuvres sont originales, qu'elles ne violent aucun droit de propriété intellectuelle, aucun droit à l'image ni aucun droit d'un tiers, et qu'il dispose de tous les droits nécessaires pour les commercialiser."],
+  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 70 % du prix de vente lorsque la vente provient de son lien de promotion personnel, et 50 % lorsque la vente est réalisée par CarryBooks. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
+  ["Article 4 - Validation et modération", "Toute œuvre soumise fait l'objet d'une validation préalable par CarryBooks avant sa mise en ligne. CarryBooks peut refuser, retirer ou suspendre toute œuvre non conforme au présent contrat, aux conditions d'utilisation, à la loi ou aux bonnes mœurs, sans indemnité."],
+  ["Article 5 - Propriété intellectuelle et lutte contre le piratage", "L'Auteur conserve la propriété intellectuelle de ses œuvres et concède à CarryBooks le droit non exclusif de les diffuser et de les vendre. Il est formellement interdit de publier, revendre ou diffuser toute œuvre qui ne lui appartient pas, piratée, contrefaite, plagiée ou volée. Toute fraude, piratage, usurpation ou vente d'une œuvre appartenant à autrui entraîne le bannissement immédiat et définitif de l'Auteur, la suspension de tout paiement lié à la fraude, sans préjudice de poursuites judiciaires."],
+  ["Article 6 - Obligations de l'Auteur", "Fournir des informations exactes et une pièce d'identité valide ; ne publier que des contenus licites ; s'abstenir de tout contenu haineux, diffamatoire, violent, ou portant atteinte à autrui ou aux mineurs ; répondre de toute réclamation d'un tiers et garantir CarryBooks contre tout recours."],
+  ["Article 7 - Conditions d'utilisation", "L'Auteur déclare avoir pris connaissance et accepter les Conditions Générales d'Utilisation de CarryBooks, qui font partie intégrante du présent contrat."],
+  ["Article 8 - Durée, résiliation et sanctions", "Le contrat prend effet à la signature pour une durée indéterminée. Chaque partie peut y mettre fin à tout moment. En cas de manquement grave (fraude, piratage, contenu illicite, fausses déclarations), CarryBooks peut résilier le contrat et bannir l'Auteur avec effet immédiat, sans préavis ni indemnité."],
+  ["Article 9 - Protection des données", "Les informations personnelles et la pièce d'identité de l'Auteur sont collectées uniquement aux fins d'identification, de lutte contre la fraude et de paiement. Elles sont conservées de manière confidentielle."],
+  ["Article 10 - Loi applicable et litiges", "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis."],
+];
+
 const G = {
   bg: "#f5f0e8", surface: "#ede7d9", surface2: "#e8e0ce", border: "#d8cdb8",
   gold: "#c9a84c", goldLight: "#e0be7a", goldDim: "rgba(201,168,76,0.15)",
@@ -13810,6 +13823,8 @@ export default function App() {
   const [kycPhone, setKycPhone] = useState("");
   const [kycPieceType, setKycPieceType] = useState("");
   const [kycPieceUrl, setKycPieceUrl] = useState("");
+  const [kycPieceUrl2, setKycPieceUrl2] = useState("");
+  const [kycContratLu, setKycContratLu] = useState(false);
   const [kycContratUrl, setKycContratUrl] = useState("");
   const [kycLuApprouve, setKycLuApprouve] = useState(false);
   const [sigDataUrl, setSigDataUrl] = useState("");
@@ -16669,7 +16684,7 @@ export default function App() {
     setKycNom(p.kyc_nom || ""); setKycPrenom(p.kyc_prenom || ""); setKycNaissance(p.kyc_naissance || "");
     setKycLieu(p.kyc_lieu_naissance || ""); setKycSituation(p.kyc_situation || ""); setKycNationalite(p.kyc_nationalite || "");
     setKycResidence(p.kyc_pays_residence || p.pays || ""); setKycSexe(p.kyc_sexe || ""); setKycPhone(p.kyc_paiement_phone || p.telephone || "");
-    setKycPieceType(p.kyc_piece_type || ""); setKycPieceUrl(p.kyc_piece_url || ""); setKycContratUrl(p.kyc_contrat_url || "");
+    setKycPieceType(p.kyc_piece_type || ""); setKycPieceUrl(p.kyc_piece_url || ""); setKycPieceUrl2(p.kyc_piece_url2 || ""); setKycContratUrl(p.kyc_contrat_url || ""); setKycContratLu(false);
     const d = (p.kyc_naissance || "").split("-"); // AAAA-MM-JJ
     if (d.length === 3) { setKycAnnee(d[0]); setKycMois(d[1]); setKycJour(d[2]); } else { setKycAnnee(""); setKycMois(""); setKycJour(""); }
     setKycMsg(""); setKycOpen(true);
@@ -16707,6 +16722,60 @@ export default function App() {
     return data.publicUrl;
   }
 
+  async function genererContratPdf() {
+    const PDFLib = await loadPdfLib();
+    const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const doc = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const PW = 595.28, PH = 841.89, M = 50, W = PW - 2 * M;
+    const gold = rgb(0.79, 0.66, 0.30), dark = rgb(0.1, 0.07, 0.03), blue = rgb(0.1, 0.25, 0.7);
+    let page = doc.addPage([PW, PH]); let y = PH - M;
+    const newp = () => { page = doc.addPage([PW, PH]); y = PH - M; };
+    const need = (h) => { if (y - h < M + 20) newp(); };
+    const line = (text, f, size, color, lh) => {
+      const words = String(text).split(" "); let ln = "";
+      for (const w of words) {
+        const t = ln ? ln + " " + w : w;
+        if (f.widthOfTextAtSize(t, size) > W && ln) { need(lh); page.drawText(ln, { x: M, y: y - size, size, font: f, color }); y -= lh; ln = w; }
+        else ln = t;
+      }
+      if (ln) { need(lh); page.drawText(ln, { x: M, y: y - size, size, font: f, color }); y -= lh; }
+    };
+    const field = (label, value) => {
+      need(16); page.drawText(label, { x: M, y: y - 11, size: 10, font: bold, color: dark });
+      const lw = bold.widthOfTextAtSize(label, 10);
+      page.drawText(String(value || ""), { x: M + lw + 4, y: y - 11, size: 10, font, color: blue });
+      y -= 16;
+    };
+    page.drawText("CarryBooks", { x: M, y: y - 18, size: 20, font: bold, color: gold }); y -= 26;
+    page.drawText("CONTRAT D'AUTEUR", { x: M, y: y - 13, size: 14, font: bold, color: dark }); y -= 22;
+    line("Je soussigné(e), dont les informations figurent ci-dessous, déclare accepter l'intégralité des clauses du présent contrat :", font, 10, dark, 14);
+    y -= 4;
+    field("Nom et prénom :", (kycPrenom + " " + kycNom));
+    field("Né(e) le :", kycNaissance);
+    field("À :", kycLieu);
+    field("Nationalité :", kycNationalite);
+    field("Pays de résidence :", kycResidence);
+    field("Numéro Mobile Money :", kycPhone);
+    y -= 6;
+    for (const [t, b] of CONTRAT_ARTICLES) { y -= 5; line(t, bold, 10.5, gold, 14); line(b, font, 10, dark, 13.5); }
+    y -= 12;
+    line("Lu et approuvé.", bold, 11, dark, 15);
+    line("Fait le " + new Date().toLocaleDateString("fr-FR") + ".", font, 10, dark, 14);
+    try {
+      const pngBytes = await (await fetch(sigDataUrl)).arrayBuffer();
+      const png = await doc.embedPng(pngBytes);
+      const sw = 220, sh = png.height * (sw / png.width);
+      need(sh + 24);
+      page.drawText("Signature de l'Auteur :", { x: M, y: y - 12, size: 10, font: bold, color: dark }); y -= 18;
+      need(sh);
+      page.drawImage(png, { x: M, y: y - sh, width: sw, height: sh }); y -= sh;
+    } catch (e) {}
+    const bytes = await doc.save();
+    return new Blob([bytes], { type: "application/pdf" });
+  }
+
   async function submitKyc() {
     if (!auteurSession) return;
     if (!kycNom.trim() || !kycPrenom.trim() || !kycNaissance || !kycNationalite.trim() || !kycResidence.trim() || !kycSexe || !kycPhone.trim() || !kycPieceType || !kycPieceUrl) {
@@ -16717,16 +16786,23 @@ export default function App() {
     setKycSaving(true); setKycMsg("");
     try {
       let contratUrl = "";
-      try { contratUrl = await uploadSignature(); } catch (e) { setKycMsg("Erreur à l'envoi de la signature. Réessaie."); setKycSaving(false); return; }
+      try {
+        const blob = await genererContratPdf();
+        const fileName = "kyc/contrat_signe_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + ".pdf";
+        const { error: eUp } = await supabase.storage.from("kyc-docs").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+        if (eUp) throw eUp;
+        const { data: uData } = supabase.storage.from("kyc-docs").getPublicUrl(fileName);
+        contratUrl = uData.publicUrl;
+      } catch (e) { setKycMsg("Erreur à la génération du contrat. Réessaie."); setKycSaving(false); return; }
       const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         action: "submit_kyc", id: auteurSession.id,
         kyc_nom: kycNom.trim(), kyc_prenom: kycPrenom.trim(), kyc_naissance: kycNaissance,
         kyc_lieu_naissance: kycLieu.trim(), kyc_situation: kycSituation, kyc_nationalite: kycNationalite.trim(),
         kyc_pays_residence: kycResidence, kyc_sexe: kycSexe, kyc_paiement_phone: kycPhone.trim(),
-        kyc_piece_type: kycPieceType, kyc_piece_url: kycPieceUrl, kyc_contrat_url: contratUrl,
+        kyc_piece_type: kycPieceType, kyc_piece_url: kycPieceUrl, kyc_piece_url2: kycPieceUrl2, kyc_contrat_url: contratUrl,
       }) });
       const data = await res.json().catch(() => ({}));
-      if (data.auteur) { appliquerSessionAuteur(data.auteur); setKycOpen(false); setKycMsg(""); }
+      if (data.auteur) { appliquerSessionAuteur(data.auteur); setKycOpen(false); setKycMsg(""); alert("✅ Vérification soumise ! Ton contrat signé est téléchargeable dans ton profil (menu → Profil)."); }
       else { setKycMsg("❌ " + (data.error || "Envoi impossible.")); }
     } catch (e) { setKycMsg("❌ " + (e.message || e)); }
     setKycSaving(false);
@@ -17257,25 +17333,35 @@ export default function App() {
                       <label style={labelSt}>Type de pièce *</label>
                       <select value={kycPieceType} onChange={e => setKycPieceType(e.target.value)} style={champ}><option value="">— Choisis —</option><option>CNI</option><option>Passeport</option><option>Récépissé</option><option>Permis de conduire</option></select>
                       <div style={{ height: 10 }} />
-                      <label style={labelSt}>Scan / photo de la pièce *</label>
+                      <label style={labelSt}>Photo 1 — recto de la pièce *</label>
                       {kycPieceUrl ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Pièce ajoutée</span><button onClick={() => setKycPieceUrl("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button></div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Recto ajouté</span><button onClick={() => setKycPieceUrl("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button></div>
                       ) : (
-                        <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "piece" ? "Envoi…" : "📷 Choisir le fichier"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycPieceUrl, "piece")} style={{ display: "none" }} /></label>
+                        <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "piece" ? "Envoi…" : "📷 Choisir le recto"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycPieceUrl, "piece")} style={{ display: "none" }} /></label>
+                      )}
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Photo 2 — verso (facultatif — inutile pour un passeport)</label>
+                      {kycPieceUrl2 ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Verso ajouté</span><button onClick={() => setKycPieceUrl2("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button></div>
+                      ) : (
+                        <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.border, borderRadius: 8, cursor: "pointer", color: G.textDim, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "piece2" ? "Envoi…" : "📷 Choisir le verso (facultatif)"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycPieceUrl2, "piece2")} style={{ display: "none" }} /></label>
                       )}
                       <div style={{ height: 16 }} />
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Lis et signe le contrat</div>
-                      <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 12, maxHeight: 240, overflowY: "auto", fontSize: 12.5, color: G.text, lineHeight: 1.6, marginBottom: 12 }}>
-                        <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 8 }}>CONTRAT D'AUTEUR — CarryBooks</div>
-                        <div>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare :</div>
-                        <div style={{ marginTop: 6 }}>• certifier être le véritable auteur des œuvres que je publie sur CarryBooks et en détenir tous les droits ;</div>
-                        <div>• accepter la rémunération : 70 % du prix quand j'amène le client via mon lien, 50 % quand CarryBooks vend, payée par Mobile Money ;</div>
-                        <div>• ne jamais publier ni vendre une œuvre qui ne m'appartient pas — toute fraude, plagiat ou piratage entraîne mon bannissement immédiat et définitif, sans préjudice de poursuites ;</div>
-                        <div>• accepter les conditions d'utilisation et l'ensemble des clauses du contrat CarryBooks.</div>
-                        <div style={{ marginTop: 8 }}><a href="/contrat-auteur-carrybooks.pdf" target="_blank" rel="noopener noreferrer" style={{ color: G.gold, fontWeight: "bold" }}>📄 Voir le contrat complet (PDF)</a></div>
+                      <div onScroll={(e) => { const el = e.target; if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) setKycContratLu(true); }} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 12, maxHeight: 300, overflowY: "auto", fontSize: 12.5, color: G.text, lineHeight: 1.6, marginBottom: 8 }}>
+                        <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 10, fontSize: 14 }}>CONTRAT D'AUTEUR — CarryBooks</div>
+                        <div style={{ marginBottom: 10 }}>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare accepter l'intégralité des clauses ci-dessous :</div>
+                        {CONTRAT_ARTICLES.map(([t, b], i) => (
+                          <div key={i} style={{ marginBottom: 10 }}>
+                            <div style={{ fontWeight: "bold", color: G.gold, marginBottom: 2 }}>{t}</div>
+                            <div>{b}</div>
+                          </div>
+                        ))}
+                        <div style={{ marginTop: 6, fontStyle: "italic", color: G.textDim }}>— Fin du contrat. Tu peux maintenant cocher « Lu et approuvé ». —</div>
                       </div>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: "pointer", fontSize: 13, color: G.text }}>
-                        <input type="checkbox" checked={kycLuApprouve} onChange={e => setKycLuApprouve(e.target.checked)} style={{ width: 18, height: 18 }} />
+                      {!kycContratLu && <div style={{ fontSize: 11, color: "#c62828", marginBottom: 10, fontWeight: "bold" }}>⬇️ Fais défiler le contrat jusqu'en bas pour pouvoir cocher « Lu et approuvé ».</div>}
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: kycContratLu ? "pointer" : "not-allowed", fontSize: 13, color: G.text, opacity: kycContratLu ? 1 : 0.5 }}>
+                        <input type="checkbox" checked={kycLuApprouve} disabled={!kycContratLu} onChange={e => setKycLuApprouve(e.target.checked)} style={{ width: 18, height: 18 }} />
                         <span><span style={{ color: "#1a3fb0", fontWeight: "bold" }}>Lu et approuvé</span> — j'ai lu et j'approuve ce contrat</span>
                       </label>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>✍️ Signe 3 fois à la main dans cette zone :</div>
@@ -17654,6 +17740,12 @@ export default function App() {
                             <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.gold, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
                           </div>
                         </div>
+                      ) : null}
+                      {auteurProfil.kyc_status ? (
+                        <div style={{ marginTop: 12, fontSize: 12, fontWeight: "bold", color: auteurProfil.kyc_status === "valide" ? G.green : auteurProfil.kyc_status === "refuse" ? "#c62828" : "#7a5c00" }}>Vérification : {auteurProfil.kyc_status === "valide" ? "✅ Validée" : auteurProfil.kyc_status === "refuse" ? "❌ Refusée" : "⏳ En attente de validation"}</div>
+                      ) : null}
+                      {auteurProfil.kyc_contrat_url ? (
+                        <a href={auteurProfil.kyc_contrat_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 10, padding: "10px 16px", background: G.goldDim, color: G.gold, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>📄 Télécharger mon contrat signé</a>
                       ) : null}
                       <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
                       <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
