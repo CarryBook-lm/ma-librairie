@@ -14107,14 +14107,23 @@ export default function App() {
     setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("carrybooks_auteur");
-      if (raw) {
-        const a = JSON.parse(raw);
-        if (a && a.id) { setAuteurSession(a); setAuteurProfil(a); remplirProfilAuteur(a); }
-      }
-    } catch (e) {}
-    setAuteurChecked(true);
+    (async () => {
+      try {
+        const raw = localStorage.getItem("carrybooks_auteur");
+        if (raw) {
+          const a = JSON.parse(raw);
+          if (a && a.id) {
+            setAuteurSession(a); setAuteurProfil(a); remplirProfilAuteur(a);
+            try {
+              const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id }) });
+              const data = await res.json().catch(() => ({}));
+              if (data && data.auteur) { appliquerSessionAuteur(data.auteur); }
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+      setAuteurChecked(true);
+    })();
   }, []);
 
   const appliquerSessionAuteur = (a) => {
@@ -17379,7 +17388,7 @@ export default function App() {
                     </>
                   ) : !pubTypeSelected ? (
                     <>
-                      {(() => { const stk = (auteurProfil || {}).kyc_status; if (stk === "valide") return null; return (
+                      {(() => { const stk = (auteurProfil || {}).kyc_status; if (stk === "valide") return (<div style={{ background: "#e8f5e9", borderRadius: 10, padding: 12, marginBottom: 16, border: "1px solid #a5d6a7" }}><div style={{ fontSize: 13, color: "#2e7d32", fontWeight: "bold" }}>✅ Ton compte est vérifié — tu peux publier !</div></div>); return (
                         <div style={{ background: stk === "en_attente" ? "#fff8e1" : stk === "refuse" ? "#fdecea" : G.goldDim, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                           {stk === "en_attente" ? (
                             <div style={{ fontSize: 13, color: "#7a5c00" }}>⏳ Ta vérification est en cours. Tu pourras publier une fois qu'elle sera validée.</div>
