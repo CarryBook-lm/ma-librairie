@@ -340,7 +340,7 @@ export default function Admin() {
   const [commAbo, setCommAbo] = useState("");
   const [commAboSaving, setCommAboSaving] = useState(false);
   const [commAboMsg, setCommAboMsg] = useState("");
-  const [devTaux, setDevTaux] = useState({ rwf: "", kes: "", mzn: "", ugx: "", sle: "", zmw: "" });
+  const [devTaux, setDevTaux] = useState({ cdf: "", usd: "", rwf: "", kes: "", mzn: "", ugx: "", sle: "", zmw: "" });
   const [devSaving, setDevSaving] = useState(false);
   const [devMsg, setDevMsg] = useState("");
   const [eaTab, setEaTab] = useState("livres");
@@ -433,9 +433,9 @@ export default function Admin() {
         if (data && data.valeur != null) setTauxCdf(String(data.valeur));
         const { data: ca } = await supabase.from("reglages").select("valeur").eq("cle", "commission_abonnement").maybeSingle();
         setCommAbo(ca && ca.valeur != null ? String(ca.valeur) : "250");
-        const cles = ["rwf", "kes", "mzn", "ugx", "sle", "zmw"];
+        const cles = ["cdf", "usd", "rwf", "kes", "mzn", "ugx", "sle", "zmw"];
         const { data: rows } = await supabase.from("reglages").select("cle, valeur").in("cle", cles.map(k => "taux_xaf_" + k));
-        const obj = { rwf: "", kes: "", mzn: "", ugx: "", sle: "", zmw: "" };
+        const obj = { cdf: "", usd: "", rwf: "", kes: "", mzn: "", ugx: "", sle: "", zmw: "" };
         (rows || []).forEach(r => { const k = r.cle.replace("taux_xaf_", ""); if (k in obj) obj[k] = String(r.valeur); });
         setDevTaux(obj);
       } catch (e) {}
@@ -4151,18 +4151,7 @@ export default function Admin() {
               </div>
             )}
 
-            {eaTab === "params" && (
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
-                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → CDF (RD Congo)</h3>
-                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>
-                  Les prix sont fixés en FCFA. Pour un client de RD Congo qui paie en francs congolais (CDF), le montant est multiplié par ce taux. Exemple : à 4.5, un livre à 1000 FCFA sera facturé 4500 CDF.
-                </p>
-                <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>1 FCFA = combien de CDF ?</label>
-                <input type="text" inputMode="decimal" value={tauxCdf} onChange={e => setTauxCdf(e.target.value)} placeholder={tauxCdfLoading ? "Chargement…" : "Ex : 4.5"} disabled={tauxCdfLoading} style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
-                <button onClick={saveTauxCdf} disabled={tauxCdfSaving || tauxCdfLoading} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: (tauxCdfSaving || tauxCdfLoading) ? 0.6 : 1 }}>{tauxCdfSaving ? "Enregistrement…" : "Enregistrer le taux"}</button>
-                {tauxCdfMsg && <div style={{ marginTop: 14, fontSize: 13, color: tauxCdfMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{tauxCdfMsg}</div>}
-              </div>
-            )}
+
             {eaTab === "params" && (
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
                 <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Commission auteur par livre débloqué en abonnement</h3>
@@ -4175,9 +4164,9 @@ export default function Admin() {
             )}
             {eaTab === "params" && (
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
-                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → autres devises</h3>
-                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Pour les lecteurs de ces pays, le prix en FCFA est multiplié par ce taux. Exemple : un livre à 2000 FCFA au Kenya (taux 0.21) = 420 KES. Ajuste selon les taux réels du jour.</p>
-                {[["rwf","Rwanda (RWF)"],["kes","Kenya (KES)"],["mzn","Mozambique (MZN)"],["ugx","Ouganda (UGX)"],["sle","Sierra Leone (SLE)"],["zmw","Zambie (ZMW)"]].map(([k,lab]) => (
+                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → devises étrangères</h3>
+                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Le prix (fixé en FCFA) est multiplié par ce taux pour les lecteurs qui paient dans une autre devise. Exemples : Kenya 0.21 → 2000 FCFA = 420 KES ; USD 0.00165 → 2000 FCFA = 3,30 $. Ajuste selon les taux réels du jour.</p>
+                {[["cdf","RD Congo — Francs (CDF)"],["usd","RD Congo — Dollars (USD)"],["rwf","Rwanda (RWF)"],["kes","Kenya (KES)"],["mzn","Mozambique (MZN)"],["ugx","Ouganda (UGX)"],["sle","Sierra Leone (SLE)"],["zmw","Zambie (ZMW)"]].map(([k,lab]) => (
                   <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                     <label style={{ color: "#aaa", fontSize: 12, width: 150, flexShrink: 0 }}>{lab}</label>
                     <input type="text" inputMode="decimal" value={devTaux[k]} onChange={e => setDevTaux({ ...devTaux, [k]: e.target.value })} placeholder="Taux" style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 14, boxSizing: "border-box", minWidth: 0 }} />
