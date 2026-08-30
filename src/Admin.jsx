@@ -337,6 +337,9 @@ export default function Admin() {
   const [tauxCdfLoading, setTauxCdfLoading] = useState(false);
   const [tauxCdfSaving, setTauxCdfSaving] = useState(false);
   const [tauxCdfMsg, setTauxCdfMsg] = useState("");
+  const [commAbo, setCommAbo] = useState("");
+  const [commAboSaving, setCommAboSaving] = useState(false);
+  const [commAboMsg, setCommAboMsg] = useState("");
   const [eaTab, setEaTab] = useState("livres");
   const [eaAuteurs, setEaAuteurs] = useState([]);
   const [eaBooks, setEaBooks] = useState([]);
@@ -425,6 +428,8 @@ export default function Admin() {
       try {
         const { data } = await supabase.from("reglages").select("valeur").eq("cle", "taux_xaf_cdf").maybeSingle();
         if (data && data.valeur != null) setTauxCdf(String(data.valeur));
+        const { data: ca } = await supabase.from("reglages").select("valeur").eq("cle", "commission_abonnement").maybeSingle();
+        setCommAbo(ca && ca.valeur != null ? String(ca.valeur) : "250");
       } catch (e) {}
       setTauxCdfLoading(false);
     })();
@@ -439,6 +444,17 @@ export default function Admin() {
       setTauxCdfMsg("✅ Taux enregistré : 1 FCFA = " + v + " CDF");
     } catch (e) { setTauxCdfMsg("❌ " + (e.message || e)); }
     setTauxCdfSaving(false);
+  }
+  async function saveCommAbo() {
+    const v = Math.round(Number(String(commAbo).replace(",", ".")));
+    if (!(v >= 0)) { setCommAboMsg("❌ Entre un montant valide (ex : 250)"); return; }
+    setCommAboSaving(true); setCommAboMsg("");
+    try {
+      const { error } = await supabase.from("reglages").upsert({ cle: "commission_abonnement", valeur: String(v), updated_at: new Date().toISOString() }, { onConflict: "cle" });
+      if (error) throw error;
+      setCommAboMsg("✅ Commission enregistrée : " + v + " F par livre débloqué");
+    } catch (e) { setCommAboMsg("❌ " + (e.message || e)); }
+    setCommAboSaving(false);
   }
   useEffect(() => {
     if (view !== "espace_auteur") return;
@@ -4128,6 +4144,16 @@ export default function Admin() {
                 <input type="text" inputMode="decimal" value={tauxCdf} onChange={e => setTauxCdf(e.target.value)} placeholder={tauxCdfLoading ? "Chargement…" : "Ex : 4.5"} disabled={tauxCdfLoading} style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
                 <button onClick={saveTauxCdf} disabled={tauxCdfSaving || tauxCdfLoading} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: (tauxCdfSaving || tauxCdfLoading) ? 0.6 : 1 }}>{tauxCdfSaving ? "Enregistrement…" : "Enregistrer le taux"}</button>
                 {tauxCdfMsg && <div style={{ marginTop: 14, fontSize: 13, color: tauxCdfMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{tauxCdfMsg}</div>}
+              </div>
+            )}
+            {eaTab === "params" && (
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
+                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Commission auteur par livre débloqué en abonnement</h3>
+                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Montant fixe reversé à l'auteur (participant au programme) chaque fois qu'un abonné débloque un de ses romans. Ne concerne que les romans (liseuse).</p>
+                <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>Montant en FCFA</label>
+                <input type="text" inputMode="numeric" value={commAbo} onChange={e => setCommAbo(e.target.value)} placeholder="Ex : 250" style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
+                <button onClick={saveCommAbo} disabled={commAboSaving} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: commAboSaving ? 0.6 : 1 }}>{commAboSaving ? "Enregistrement…" : "Enregistrer la commission"}</button>
+                {commAboMsg && <div style={{ marginTop: 14, fontSize: 13, color: commAboMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{commAboMsg}</div>}
               </div>
             )}
           </div>

@@ -2219,6 +2219,34 @@ export default async function handler(req, res) {
       }
     }
 
+    // ---------- COMMISSION AUTEUR sur DEBLOCAGE par ABONNEMENT ----------
+    if (action === "record_sub_commission") {
+      const { book_id, user_id } = params;
+      if (!book_id) return res.status(400).json({ error: "book_id requis" });
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      const { data: bk } = await supabaseAdmin.from("books").select("auteur_id").eq("id", book_id).limit(1);
+      const auteurId = bk && bk[0] ? bk[0].auteur_id : null;
+      if (!auteurId) return res.status(200).json({ ok: true, skipped: true });
+      // L'auteur doit participer au programme d'abonnement
+      const { data: au } = await supabaseAdmin.from("auteurs").select("abonnement_actif").eq("id", auteurId).limit(1);
+      if (!(au && au[0] && au[0].abonnement_actif)) return res.status(200).json({ ok: true, skipped: "auteur non inscrit abonnement" });
+      // Taux fixe par livre debloque (modifiable dans les reglages), defaut 250 F
+      const { data: reg } = await supabaseAdmin.from("reglages").select("valeur").eq("cle", "commission_abonnement").limit(1);
+      const fixe = (reg && reg[0] && Number(reg[0].valeur) > 0) ? Math.round(Number(reg[0].valeur)) : 250;
+      const ref = "SUB_" + book_id + "_" + (user_id || "u") + "_" + Date.now();
+      const { error } = await supabaseAdmin.from("ventes_auteurs").insert([{
+        auteur_id: auteurId, book_id, reference: ref,
+        montant_total: fixe, taux_auteur: 0, part_auteur: fixe,
+        part_carrybooks: 0, source: "abonnement",
+      }]);
+      if (error) return res.status(200).json({ ok: false, error: error.message });
+      return res.status(200).json({ ok: true });
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);

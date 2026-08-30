@@ -15223,7 +15223,7 @@ export default function App() {
     if (!hasCachedBooks) setLoading(true);
     // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
     // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
-    const lightColumns = "id, title, author, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
+    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
 
     // 🎯 ÉTAPE 1 : Charger les LIVRES (non-articles) en priorité — rapide car peu nombreux
     // Supabase limite à 1000 lignes par défaut. Avec 1000+ articles, les livres seraient tronqués.
@@ -15423,6 +15423,8 @@ export default function App() {
     if (!subscription || subscription.status !== "actif") return false;
     if (book.price === 0 || purchasedBooks.includes(book.id)) return false;
     if (book.exclude_from_subscription === true) return false; // Livre exclu de l'abonnement
+    if (book.pdf_url || book.audio_url) return false; // abonnement = romans (liseuse) uniquement
+    if (book.auteur_id) { const a = auteursAll.find(x => String(x.id) === String(book.auteur_id)); if (!(a && a.abonnement_actif)) return false; }
     return booksLeftThisMonth() > 0;
   }
 
@@ -16139,9 +16141,13 @@ export default function App() {
         amount: 0,
         type: "subscription"
       }]);
+      // 1bis) Commission auteur (taux fixe) au deblocage par abonnement — non bloquant
+      try { fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "record_sub_commission", book_id: book.id, user_id: user.id }) }); } catch (e) {}
       // 2) Incrémenter books_used dans subscriptions
       const newUsed = (subscription.books_used || 0) + 1;
       await supabase.from("subscriptions").update({ books_used: newUsed }).eq("id", subscription.id);
+      // 2bis) Commission auteur au déblocage par abonnement (non bloquant)
+      try { fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "record_sub_commission", book_id: book.id, user_id: user.id }) }); } catch (e) {}
       // 3) Mettre à jour les states
       const newPurchased = [...purchasedBooks, book.id];
       setPurchasedBooks(newPurchased);
@@ -16748,6 +16754,15 @@ export default function App() {
     if (error) throw error;
     const { data } = supabase.storage.from("kyc-docs").getPublicUrl(fileName);
     return data.publicUrl;
+  }
+
+  async function toggleAbonnement(val) {
+    if (!auteurSession) return;
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "update", id: auteurSession.id, abonnement_actif: val }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.auteur) appliquerSessionAuteur(data.auteur);
+    } catch (e) {}
   }
 
   async function requestRetrait() {
@@ -17895,7 +17910,16 @@ export default function App() {
                 </div>
               )}
               {/* PARAMÈTRES : pixels */}
-              {auteurTab === "parametres" && (
+              {auteurTab === "parametres" && (<>
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Programme d'abonnement</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.6 }}>En participant, tes <b>romans</b> deviennent lisibles par les abonnés dans la liseuse. Tu reçois une commission fixe (250 F) à chaque livre débloqué par un abonné. Tes livres PDF et audio, eux, restent toujours payants. Tu peux te retirer à tout moment.</div>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13, color: G.text }}>
+                    <input type="checkbox" checked={!!(auteurProfil && auteurProfil.abonnement_actif)} onChange={e => toggleAbonnement(e.target.checked)} style={{ width: 18, height: 18, marginTop: 1 }} />
+                    <span>Je participe au programme d'abonnement et j'accepte les conditions (mes romans lisibles par les abonnés, commission fixe par déblocage).</span>
+                  </label>
+                  {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
+                </div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>⚙️ Paramètres — Pixels publicitaires</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
@@ -17908,7 +17932,7 @@ export default function App() {
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
-              )}
+              </>)}
               {/* COMMENT PUBLIER */}
               {auteurTab === "aide" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
