@@ -17224,20 +17224,18 @@ export default function App() {
                   ) : (
                     liste.map(b => {
                       const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "📝 Brouillon (non soumis)", c: G.textDim } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
-                      const lien = "https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
                       return (
-                        <div key={b.id} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border }}>
-                          <div onClick={() => setMesLivresDetail(b)} style={{ cursor: "pointer", flexShrink: 0 }}>
+                        <div key={b.id} onClick={() => setMesLivresDetail(b)} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border, cursor: "pointer" }}>
+                          <div style={{ flexShrink: 0 }}>
                             {b.cover ? <img src={b.cover} alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text }}>{b.title}</div>
-                            <div style={{ fontSize: 12, color: st.c, marginTop: 2 }}>{st.t}</div>
-                            {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935", marginTop: 2 }}>{b.motif_refus}</div> : null}
-                            {b.status === "actif" && auteurProfil.code_source ? (
-                              <div style={{ fontSize: 11, color: G.gold, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🔗 {lien.replace("https://", "")}</div>
-                            ) : null}
-                            <div onClick={() => setMesLivresDetail(b)} style={{ fontSize: 11, color: G.textDim, marginTop: 6, cursor: "pointer", fontWeight: "bold" }}>Voir les détails →</div>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}>{b.title}</div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ fontSize: 12, color: st.c, fontWeight: "bold" }}>{st.t}</span>
+                              <span style={{ fontSize: 14, color: G.gold, fontWeight: "bold" }}>{b.price ? b.price + " F" : "Gratuit"}</span>
+                            </div>
+                            {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935", marginTop: 4 }}>{b.motif_refus}</div> : null}
                           </div>
                         </div>
                       );
@@ -17282,6 +17280,40 @@ export default function App() {
                 </div>
                 </div>
               )}
+              {/* VENTES */}
+              {auteurTab === "ventes" && (() => {
+                const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
+                const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
+                const vv = filterVentesByPeriod(ventesAuteur, statsPeriod, statsDate);
+                const grpP = {}; vv.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
+                const totalN = vv.length; const totalG = vv.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
+                return (
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 10 }}>💰 Mes ventes</div>
+                    <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
+                      {periods.map(([id, lab]) => (
+                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
+                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
+                    </div>
+                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Détail par livre</div>
+                      {Object.keys(grpP).length === 0 ? (
+                        <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
+                      ) : Object.keys(grpP).map(k => (
+                        <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + G.border }}>
+                          <div style={{ fontSize: 13, color: G.text }}>{titleOf(Number(k))}<div style={{ fontSize: 11, color: G.textDim }}>{grpP[k].n} vendu(s)</div></div>
+                          <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>{fmt(grpP[k].g)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {/* STATS */}
               {auteurTab === "stats" && (() => {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
@@ -17291,7 +17323,7 @@ export default function App() {
                 const sans = vv.filter(v => v.source !== "auteur");
                 const gains = arr => arr.reduce((s, v) => s + (v.part_auteur || 0), 0);
                 const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
-                const subtabs = [["board", "Tableau de bord"], ["sold", "Livres vendus"], ["charts", "Statistiques"]];
+                const subtabs = [["board", "Tableau de bord"], ["charts", "Statistiques"]];
                 // ventes groupées par livre (période) pour la liste
                 const grpP = {}; vv.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
                 // best-sellers (tout l'historique)
@@ -17406,7 +17438,7 @@ export default function App() {
                       {auteurProfil.bio ? <div style={{ padding: "8px 0", fontSize: 13, color: G.textDim }}>{auteurProfil.bio}</div> : null}
                       {auteurProfil.code_source ? (
                         <div style={{ marginTop: 12, padding: 12, background: G.goldDim, borderRadius: 8 }}>
-                          <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur Facebook, TikTok…)</div>
+                          <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur tes réseaux sociaux)</div>
                           <div style={{ display: "flex", gap: 6 }}>
                             <input readOnly value={"https://carrybooks.com/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: "#fff", minWidth: 0 }} />
                             <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.gold, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
@@ -17586,8 +17618,10 @@ export default function App() {
         {/* BARRE DU BAS */}
         {auteurProfil && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
+            <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
             <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
         )}
@@ -17601,7 +17635,6 @@ export default function App() {
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
-            <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon compte</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("aide"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "aide" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "aide" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>❓</span> Comment publier</button>
             <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support</button>
