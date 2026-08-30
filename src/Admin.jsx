@@ -588,6 +588,19 @@ export default function Admin() {
     await chargerSoldes();
     alert("✅ Retrait validé (payé).");
   };
+  const estCamerounais = (phone) => { const d = String(phone || "").replace(/\s+/g, "").replace(/^\+/, ""); return d.startsWith("237") || /^6\d{8}$/.test(d); };
+  const payerViaCampay = async (row) => {
+    if (!estCamerounais(row.phone)) { alert("Numéro non camerounais : paie manuellement (CamPay ne verse qu'au Cameroun)."); return; }
+    if (!window.confirm("Envoyer AUTOMATIQUEMENT " + row.montant.toLocaleString() + " F à " + row.nom + " via CamPay ?\n(Débité de ton solde CamPay. Vérifie que tu as assez.)")) return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess && sess.session ? sess.session.access_token : "";
+      const res = await fetch("/api/campay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "payer_retrait_campay", retrait_id: row.id, token }) });
+      const d = await res.json().catch(() => ({}));
+      if (d.ok) { await chargerSoldes(); alert("✅ Versement CamPay envoyé à " + row.nom + "."); }
+      else { alert("❌ Échec : " + (d.error || "erreur inconnue")); }
+    } catch (e) { alert("❌ Erreur : " + (e && e.message)); }
+  };
   const refuserRetrait = async (row) => {
     if (!window.confirm("Refuser la demande de retrait de " + row.nom + " ? Les fonds redeviennent disponibles pour l'auteur.")) return;
     const { error } = await supabase.from("retraits").update({ statut: "refuse" }).eq("id", row.id);
@@ -4308,8 +4321,11 @@ export default function Admin() {
                         </div>
                         <div style={{ color: "#4caf50", fontSize: 20, fontWeight: "bold", whiteSpace: "nowrap" }}>{row.montant.toLocaleString()} F</div>
                       </div>
+                      {estCamerounais(row.phone) && (
+                        <button onClick={() => payerViaCampay(row)} style={{ width: "100%", padding: "11px 0", marginBottom: 8, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>💸 Payer via CamPay (automatique)</button>
+                      )}
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => reverserAuteur(row)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Marquer payé</button>
+                        <button onClick={() => reverserAuteur(row)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Marquer payé (manuel)</button>
                         <button onClick={() => refuserRetrait(row)} style={{ flex: 1, padding: "10px 0", background: "#5a1a1a", color: "#e57373", border: "1px solid #6a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>
                       </div>
                     </div>

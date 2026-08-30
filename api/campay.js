@@ -2249,6 +2249,49 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ========== VERSEMENT AUTO d'un retrait auteur (Cameroun uniquement) ==========
+    if (action === "payer_retrait_campay") {
+      const { retrait_id, token } = params;
+      if (!retrait_id) return res.status(400).json({ error: "retrait_id requis" });
+      const supabaseAdmin = createClient(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      // Sécurité : seul l'admin (Landrine) peut déclencher un versement
+      try {
+        const { data: u } = await supabaseAdmin.auth.getUser(token || "");
+        if (!u || !u.user || u.user.id !== "f8b0dcd2-bf6e-443f-b2ea-a03db4e979dc") {
+          return res.status(403).json({ error: "Non autorisé" });
+        }
+      } catch (e) { return res.status(403).json({ error: "Non autorisé" }); }
+      // Charger le retrait
+      const { data: rq } = await supabaseAdmin.from("retraits").select("*").eq("id", retrait_id).limit(1);
+      const r = rq && rq[0];
+      if (!r) return res.status(404).json({ error: "Retrait introuvable" });
+      if (r.statut !== "en_attente") return res.status(400).json({ error: "Ce retrait est déjà traité." });
+      // Numéro camerounais ?
+      const digits = String(r.phone || "").replace(/\s+/g, "").replace(/^\+/, "");
+      const isCM = digits.startsWith("237") || /^6\d{8}$/.test(digits);
+      if (!isCM) return res.status(400).json({ error: "Numéro non camerounais : le versement automatique CamPay n'est possible que pour le Cameroun." });
+      const to = digits.startsWith("237") ? digits : ("237" + digits);
+      // Versement CamPay
+      let wd = {};
+      try {
+        const wr = await fetch("https://www.campay.net/api/withdraw/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Token " + CAMPAY_TOKEN },
+          body: JSON.stringify({ amount: String(r.montant), currency: "XAF", to, description: "Reversement CarryBooks", external_reference: "RETRAIT_" + r.id }),
+        });
+        wd = await wr.json();
+        if (!wr.ok) return res.status(200).json({ ok: false, error: (wd && (wd.detail || wd.message || JSON.stringify(wd))) || "Échec CamPay" });
+      } catch (e) { return res.status(200).json({ ok: false, error: "Erreur d'appel CamPay : " + (e && e.message) }); }
+      if (wd && wd.error) return res.status(200).json({ ok: false, error: wd.error });
+      // Marquer payé
+      await supabaseAdmin.from("retraits").update({ statut: "paye", paid_at: new Date().toISOString(), reference: (wd && wd.reference) || "campay_auto" }).eq("id", r.id);
+      return res.status(200).json({ ok: true, reference: (wd && wd.reference) || null });
+    }
+
     return res.status(400).json({ error: "Action inconnue" });
   } catch (err) {
     console.error("Erreur CamPay:", err);
