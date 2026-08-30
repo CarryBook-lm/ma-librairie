@@ -13462,28 +13462,32 @@ export default function App() {
       return;
     }
 
+    // A-t-on déjà fermé le bandeau ? (mémorisé)
+    let refuse = false;
+    try { refuse = localStorage.getItem("carrybooks_install_refuse") === "1"; } catch (e) {}
+
     // Détecter la plateforme
     const ua = navigator.userAgent.toLowerCase();
     const isIos = /iphone|ipad|ipod/.test(ua);
     const isAndroid = /android/.test(ua);
     setInstallPlatform(isIos ? "ios" : isAndroid ? "android" : "desktop");
 
-    // Afficher le bandeau immédiatement sur iOS (pas d'event prompt)
-    if (isIos) {
-      setShowInstallBanner(false);
-    }
+    // Afficher le bandeau pour TOUT LE MONDE tant qu'il n'a pas installé ni fermé
+    if (!refuse) setShowInstallBanner(true);
 
-    // Écouter l'event d'install (Android, Desktop Chrome/Edge)
+    // Écouter l'event d'install (Android, Desktop Chrome/Edge) : on garde
+    // l'événement pour l'installation directe et on LAISSE le bandeau.
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
-      setShowInstallBanner(false);
+      if (!refuse) setShowInstallBanner(true);
     };
 
-    // Cacher le bandeau dès l'installation
+    // Cacher le bandeau dès l'installation (et ne plus le reproposer)
     const handleAppInstalledBanner = () => {
       setShowInstallBanner(false);
       setInstallPrompt(null);
+      try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -13501,16 +13505,34 @@ export default function App() {
       setShowIosInstructions(true);
       return;
     }
-    if (installPrompt) {
-      installPrompt.prompt();
-      const { outcome } = await installPrompt.userChoice;
+    const p = installPrompt || window.__pwaPrompt;
+    if (p) {
+      p.prompt();
+      const { outcome } = await p.userChoice;
       console.log("[PWA Install] Choix utilisateur:", outcome);
       if (outcome === "accepted") {
         setShowInstallBanner(false);
+        try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
       }
-      setInstallPrompt(null);
+      setInstallPrompt(null); window.__pwaPrompt = null;
+    } else {
+      // Pas d'invite native dispo (souvent navigateur intégré) : instructions
+      setShowIosInstructions(true);
     }
   };
+
+  const fermerBandeauInstall = () => {
+    setShowInstallBanner(false);
+    try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
+  };
+  const bandeauInstallNode = showInstallBanner ? (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, background: "rgba(106,17,203,0.88)", color: "#fff", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.15)", backdropFilter: "blur(2px)" }}>
+      <span style={{ fontSize: 16 }}>📱</span>
+      <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application CarryBooks</span>
+      <button onClick={triggerInstall} style={{ background: "#fff", color: "#6a11cb", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Installer</button>
+      <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
+    </div>
+  ) : null;
 
   // ============================================
   // PWA TRACKER — Compteur d'installations
@@ -18003,7 +18025,8 @@ export default function App() {
     const owned = hasAccess(book);
     const isFav = favoriteBooks.includes(book.id);
     return (
-      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif" }}>
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+        {bandeauInstallNode}
         {/* 🍞 TOAST DE NOTIFICATION sur la page d�tail (sinon il appara�t derri�re) */}
         {toast && (
           <div 
@@ -18992,32 +19015,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 📱 BANDEAU INSTALL PWA - affiché tant que l'app n'est pas installée */}
-      {showInstallBanner && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 201,
-          background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
-          color: "#fff", padding: "10px 16px",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-          fontSize: 14, fontWeight: 600,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          cursor: "pointer"
-        }}
-        onClick={triggerInstall}>
-          <span style={{ fontSize: 18, animation: "pulse 2s ease-in-out infinite" }}>📱</span>
-          <span style={{ flex: "0 1 auto" }}>Clique ici pour installer l'application CarryBooks</span>
-          <button
-            onClick={(e) => { e.stopPropagation(); triggerInstall(); }}
-            style={{
-              background: "#fff", color: "#6a11cb", border: "none",
-              borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold",
-              cursor: "pointer", marginLeft: 6
-            }}>
-            INSTALLER
-          </button>
-          <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }`}</style>
-        </div>
-      )}
+      {bandeauInstallNode}
 
       {/* 🍎 POPUP INSTRUCTIONS iOS */}
       {showIosInstructions && (
