@@ -15964,8 +15964,9 @@ export default function App() {
         setShowSubLimitModal(book);
         return;
       }
-      // Option B : au moment d'acheter, si pas connecté, ouvrir le modal de connexion
-      if (!lecteur && !user) { setPendingBuyBook(book); setShowLecteurModal(true); return; }
+      // Option B : au moment d'acheter, si pas de LECTEUR (pays + numero requis
+      // pour router le paiement), ouvrir le modal d'inscription — meme si connecte Google.
+      if (!lecteur) { setPendingBuyBook(book); setShowLecteurModal(true); return; }
       // Sinon, achat individuel
       setPaymentBook(book);
       setShowPayment(true);
