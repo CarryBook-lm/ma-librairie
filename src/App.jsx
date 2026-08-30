@@ -16657,12 +16657,9 @@ export default function App() {
     (async () => {
       setAuteursListLoading(true);
       try {
-        const { data: livres } = await supabase.from("books").select("auteur_id").eq("status", "actif").not("auteur_id", "is", null);
-        const ids = [...new Set((livres || []).map(l => l.auteur_id).filter(Boolean))];
-        if (ids.length) {
-          const { data: auts } = await supabase.from("auteurs").select("id,nom_complet,bio,pays,code_source").in("id", ids).order("nom_complet", { ascending: true });
-          if (!cancel) setAuteursList(auts || []);
-        } else if (!cancel) { setAuteursList([]); }
+        // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
+        const { data: auts } = await supabase.from("auteurs").select("id,nom_complet,bio,pays,code_source,moderation").neq("moderation", "refuse").order("nom_complet", { ascending: true });
+        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
     })();
