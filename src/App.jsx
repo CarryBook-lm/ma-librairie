@@ -17217,6 +17217,8 @@ export default function App() {
   if (page === "espace_auteur") {
     const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
     const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
+    const eaLarge = (typeof window !== "undefined" && window.innerWidth >= 700);
+    const eaMax = eaLarge ? 900 : 620;
     const PAYS_LISTE = [
       { nom: "Bénin", code: "+229", flag: "🇧🇯" }, { nom: "Burkina Faso", code: "+226", flag: "🇧🇫" }, { nom: "Burundi", code: "+257", flag: "🇧🇮" },
       { nom: "Cameroun", code: "+237", flag: "🇨🇲" }, { nom: "Congo (Brazzaville)", code: "+242", flag: "🇨🇬" }, { nom: "Congo (RDC)", code: "+243", flag: "🇨🇩" },
@@ -17314,7 +17316,7 @@ export default function App() {
           </div>
           {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
         </div>
-        <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
+        <div style={{ padding: eaLarge ? 24 : 16, maxWidth: eaMax, margin: "0 auto" }}>
           {retraitOpen && (
             <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
               <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
