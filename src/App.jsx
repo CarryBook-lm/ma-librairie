@@ -1632,6 +1632,7 @@ const PATH_TO_PAGE = {
 const getPageFromURL = () => {
   const path = window.location.pathname;
   if (path.startsWith("/livre/")) return "detail";
+  if (path.startsWith("/auteur/")) return "auteur_boutique";
   if (path.startsWith("/lecture/")) return "reader";
   if (path.startsWith("/mes-resultats/") && path.length > 16) return "myResultDetail";
 
@@ -13412,6 +13413,13 @@ export default function App() {
   // État pour la popup "Ouvrir dans navigateur" (DÉSACTIVÉE pour ne pas créer de friction depuis Facebook)
   const [showOpenBrowserModal, setShowOpenBrowserModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  // 👤 Module Auteur(es) : liste + boutique personnelle
+  const [auteursList, setAuteursList] = useState([]);
+  const [auteursListLoading, setAuteursListLoading] = useState(false);
+  const [boutiqueAuteur, setBoutiqueAuteur] = useState(null);
+  const [boutiqueBooks, setBoutiqueBooks] = useState([]);
+  const [boutiqueLoading, setBoutiqueLoading] = useState(false);
+  const [boutiqueCode, setBoutiqueCode] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
@@ -14238,6 +14246,19 @@ export default function App() {
         localStorage.setItem("carrybooks_src_code", srcCodeCap.trim());
         localStorage.setItem("carrybooks_src_expires", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
       }
+      // 👤 Boutique auteur : /auteur/<code> — le code sert de lien-boutique ET de parrainage
+      try {
+        const p = window.location.pathname;
+        if (p.startsWith("/auteur/")) {
+          const codeBoutique = decodeURIComponent(p.replace("/auteur/", "").split("/")[0] || "").trim();
+          if (codeBoutique) {
+            setBoutiqueCode(codeBoutique);
+            const cU = codeBoutique.toUpperCase();
+            localStorage.setItem("carrybooks_referrer_code", cU);
+            localStorage.setItem("carrybooks_referrer_expires", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+          }
+        }
+      } catch (e) {}
       if (refCode && refCode.trim()) {
         const code = refCode.trim().toUpperCase();
         const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 jours
@@ -16428,6 +16449,7 @@ export default function App() {
   });
 
   const navItems = [
+    { id: "auteurs", label: "👤 Auteur(es)" },
     { id: "home", label: "Accueil" },
     { id: "catalog", label: "Catalogue" },
     { id: "subscription", label: "Abonnement" },
@@ -16605,6 +16627,137 @@ export default function App() {
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
+  }
+
+  // 👤 Charger la boutique d'un auteur (par code_source)
+  useEffect(() => {
+    if (page !== "auteur_boutique" || !boutiqueCode) return;
+    let cancel = false;
+    (async () => {
+      setBoutiqueLoading(true);
+      try {
+        const { data: aut } = await supabase.from("auteurs").select("*").eq("code_source", boutiqueCode).limit(1);
+        const a = aut && aut[0] ? aut[0] : null;
+        if (cancel) return;
+        setBoutiqueAuteur(a);
+        if (a) {
+          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author").eq("auteur_id", a.id).eq("status", "actif").order("id", { ascending: false });
+          if (!cancel) setBoutiqueBooks(livres || []);
+        } else if (!cancel) { setBoutiqueBooks([]); }
+      } catch (e) { if (!cancel) { setBoutiqueAuteur(null); setBoutiqueBooks([]); } }
+      if (!cancel) setBoutiqueLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [page, boutiqueCode]);
+
+  // 👤 Charger la liste des auteurs (ceux qui ont au moins un livre en ligne)
+  useEffect(() => {
+    if (page !== "auteurs") return;
+    let cancel = false;
+    (async () => {
+      setAuteursListLoading(true);
+      try {
+        const { data: livres } = await supabase.from("books").select("auteur_id").eq("status", "actif").not("auteur_id", "is", null);
+        const ids = [...new Set((livres || []).map(l => l.auteur_id).filter(Boolean))];
+        if (ids.length) {
+          const { data: auts } = await supabase.from("auteurs").select("id,nom_complet,bio,pays,code_source").in("id", ids).order("nom_complet", { ascending: true });
+          if (!cancel) setAuteursList(auts || []);
+        } else if (!cancel) { setAuteursList([]); }
+      } catch (e) { if (!cancel) setAuteursList([]); }
+      if (!cancel) setAuteursListLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [page]);
+
+  // 👤 Ouvrir la boutique d'un auteur (depuis la liste ou la recherche)
+  const ouvrirBoutiqueAuteur = (code) => {
+    if (!code) return;
+    setBoutiqueCode(code);
+    setShowMenu(false);
+    setPage("auteur_boutique");
+    try {
+      localStorage.setItem("carrybooks_referrer_code", String(code).toUpperCase());
+      localStorage.setItem("carrybooks_referrer_expires", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+      window.history.pushState({}, "", "/auteur/" + encodeURIComponent(code));
+      window.scrollTo(0, 0);
+    } catch (e) {}
+  };
+
+  // ================= LISTE DES AUTEUR(ES) =================
+  if (page === "auteurs") {
+    return (
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+        {bandeauInstallNode}
+        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, zIndex: 10 }}>
+          <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer" }}>←</button>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold }}>👤 Nos auteur(es)</div>
+        </div>
+        <div style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
+          {auteursListLoading ? (
+            <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Chargement…</div>
+          ) : auteursList.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Aucun auteur pour le moment.</div>
+          ) : (
+            <div style={{ display: "grid", gap: 12 }}>
+              {auteursList.map(a => (
+                <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>{(a.nom_complet || "?").charAt(0).toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{a.nom_complet}</div>
+                    {a.pays ? <div style={{ fontSize: 12, color: G.textDim, marginBottom: 2 }}>📍 {a.pays}</div> : null}
+                    {a.bio ? <div style={{ fontSize: 12, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{a.bio}</div> : null}
+                  </div>
+                  <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ================= BOUTIQUE D'UN AUTEUR =================
+  if (page === "auteur_boutique") {
+    return (
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+        {bandeauInstallNode}
+        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, zIndex: 10 }}>
+          <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer" }}>←</button>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold }}>Boutique auteur</div>
+        </div>
+        {boutiqueLoading ? (
+          <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Chargement…</div>
+        ) : !boutiqueAuteur ? (
+          <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Auteur introuvable.</div>
+        ) : (
+          <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
+            <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
+              <div style={{ width: 80, height: 80, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>{(boutiqueAuteur.nom_complet || "?").charAt(0).toUpperCase()}</div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{boutiqueAuteur.nom_complet}</div>
+              {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
+              {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap" }}>{boutiqueAuteur.bio}</div> : null}
+              <div style={{ marginTop: 14, fontSize: 13, color: G.gold, fontWeight: "bold" }}>{boutiqueBooks.length} livre{boutiqueBooks.length > 1 ? "s" : ""}</div>
+            </div>
+            {boutiqueBooks.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Aucun livre en ligne pour le moment.</div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
+                {boutiqueBooks.map(book => (
+                  <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
+                    <div style={{ width: "100%", aspectRatio: "2/3", background: G.border, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
+                      {book.cover ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                    <div style={{ fontSize: 12, color: G.gold, fontWeight: "bold" }}>{book.price ? book.price + " FCFA" : "Gratuit"}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   }
 
   if (page === "espace_auteur") {
