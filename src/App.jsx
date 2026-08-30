@@ -17063,8 +17063,8 @@ export default function App() {
     let cancel = false;
     (async () => {
       try {
-        const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url,verifie").order("nom_complet", { ascending: true });
-        if (!cancel) setAuteursAll(data || []);
+        const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
+        if (!cancel) setAuteursAll((data || []).filter(a => !a.banni));
       } catch (e) {}
     })();
     return () => { cancel = true; };
@@ -17078,8 +17078,8 @@ export default function App() {
       setAuteursListLoading(true);
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
-        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url,verifie").order("nom_complet", { ascending: true });
-        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source));
+        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
+        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source && !a.banni));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
     })();
@@ -17151,6 +17151,8 @@ export default function App() {
           <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Chargement…</div>
         ) : !boutiqueAuteur ? (
           <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Auteur introuvable.</div>
+        ) : boutiqueAuteur.banni ? (
+          <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Cette boutique n'est plus disponible.</div>
         ) : (
           <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
             <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
@@ -17469,7 +17471,8 @@ export default function App() {
                     </>
                   ) : !pubTypeSelected ? (
                     <>
-                      {(() => { const stk = (auteurProfil || {}).kyc_status; if (stk === "valide") return (<div style={{ background: "#e8f5e9", borderRadius: 10, padding: 12, marginBottom: 16, border: "1px solid #a5d6a7" }}><div style={{ fontSize: 13, color: "#2e7d32", fontWeight: "bold" }}>✅ Ton compte est vérifié — tu peux publier !</div></div>); return (
+                      {auteurProfil && auteurProfil.banni ? (<div style={{ background: "#fdecea", borderRadius: 10, padding: 14, marginBottom: 16, border: "1px solid #ef9a9a" }}><div style={{ fontSize: 14, color: "#c62828", fontWeight: "bold", marginBottom: 4 }}>🚫 Compte suspendu</div><div style={{ fontSize: 12, color: "#c62828", lineHeight: 1.5 }}>Ton compte a été suspendu et tu ne peux plus publier.{auteurProfil.banni_motif ? " Motif : " + auteurProfil.banni_motif : ""} Contacte CarryBooks si tu penses qu'il s'agit d'une erreur.</div></div>) : null}
+                      {auteurProfil && auteurProfil.banni ? null : (() => { const stk = (auteurProfil || {}).kyc_status; if (stk === "valide") return (<div style={{ background: "#e8f5e9", borderRadius: 10, padding: 12, marginBottom: 16, border: "1px solid #a5d6a7" }}><div style={{ fontSize: 13, color: "#2e7d32", fontWeight: "bold" }}>✅ Ton compte est vérifié — tu peux publier !</div></div>); return (
                         <div style={{ background: stk === "en_attente" ? "#fff8e1" : stk === "refuse" ? "#fdecea" : G.goldDim, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                           {stk === "en_attente" ? (
                             <div style={{ fontSize: 13, color: "#7a5c00" }}>⏳ Ta vérification est en cours. Tu pourras publier une fois qu'elle sera validée.</div>
@@ -17493,7 +17496,7 @@ export default function App() {
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
                         ].map(o => (
-                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
+                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
                             <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
                           </button>

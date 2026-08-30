@@ -485,7 +485,7 @@ export default function Admin() {
       setEaLoading(true);
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }] = await Promise.all([
-          supabase.from("auteurs").select("id, nom_complet, telephone, email").order("nom_complet", { ascending: true }),
+          supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
           supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
         ]);
@@ -497,6 +497,32 @@ export default function Admin() {
       setEaLoading(false);
     })();
   }, [view]);
+  const rechargerEA = async () => {
+    const [{ data: aut }, { data: bks }] = await Promise.all([
+      supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
+      supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
+    ]);
+    setEaAuteurs(aut || []); setEaBooks(bks || []);
+    if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
+  };
+  const bannirAuteur = async (a) => {
+    const motif = window.prompt("Motif du bannissement de " + (a.nom_complet || "cet auteur") + " (ex : piratage, vente d'œuvre volée) :", "");
+    if (motif === null) return;
+    if (!window.confirm("Confirmer le BANNISSEMENT ? Ses livres seront RETIRÉS du site et il ne pourra plus publier.")) return;
+    const { error: e1 } = await supabase.from("auteurs").update({ banni: true, banni_motif: motif || "Violation du contrat.", banni_at: new Date().toISOString() }).eq("id", a.id);
+    if (e1) { alert("Erreur (droits ?) : " + e1.message); return; }
+    await supabase.from("books").update({ status: "banni" }).eq("auteur_id", a.id).eq("status", "actif");
+    await rechargerEA();
+    alert("🚫 Auteur banni et livres retirés du site.");
+  };
+  const reintegrerAuteur = async (a) => {
+    if (!window.confirm("Réintégrer " + (a.nom_complet || "cet auteur") + " ? Ses livres redeviennent visibles.")) return;
+    const { error: e1 } = await supabase.from("auteurs").update({ banni: false, banni_motif: null, banni_at: null }).eq("id", a.id);
+    if (e1) { alert("Erreur : " + e1.message); return; }
+    await supabase.from("books").update({ status: "actif" }).eq("auteur_id", a.id).eq("status", "banni");
+    await rechargerEA();
+    alert("✅ Auteur réintégré, livres de nouveau visibles.");
+  };
   const chargerTodo = async () => {
     try {
       const [{ count: nbLivres }, { count: nbKyc }, { count: nbRetraits }] = await Promise.all([
@@ -4100,6 +4126,15 @@ export default function Admin() {
                       <button onClick={() => setEaSelectedAuteur(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
                       <div style={{ color: "#c9a84c", fontSize: 17, fontWeight: "bold", marginBottom: 2 }}>{a.nom_complet || "Auteur sans nom"}</div>
                       <div style={{ color: "#777", fontSize: 11, marginBottom: 14 }}>{a.telephone || ""}{a.email ? " · " + a.email : ""}</div>
+                      {a.banni ? (
+                        <div style={{ background: "#2a1414", border: "1px solid #5a2a2a", borderRadius: 10, padding: 12, marginBottom: 14 }}>
+                          <div style={{ color: "#ff8a80", fontWeight: "bold", fontSize: 13, marginBottom: 4 }}>🚫 Auteur banni</div>
+                          {a.banni_motif ? <div style={{ color: "#e0b0b0", fontSize: 12, marginBottom: 8 }}>Motif : {a.banni_motif}</div> : null}
+                          <button onClick={() => reintegrerAuteur(a)} style={{ padding: "8px 16px", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Réintégrer l'auteur</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => bannirAuteur(a)} style={{ padding: "8px 16px", background: "#5a1a1a", color: "#ff8a80", border: "1px solid #6a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 14 }}>🚫 Bannir cet auteur</button>
+                      )}
                       {livres.length === 0 ? <div style={{ color: "#666", fontSize: 13, fontStyle: "italic" }}>Aucun livre publié.</div> : livres.map(b => {
                         const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
                         return (
@@ -4122,6 +4157,7 @@ export default function Admin() {
                           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                             <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
                             {enAttente > 0 && <span style={{ background: "#e53935", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 10, padding: "1px 7px", flexShrink: 0 }}>{enAttente}</span>}
+                            {a.banni && <span style={{ background: "#5a1a1a", color: "#ff8a80", fontSize: 10, fontWeight: "bold", borderRadius: 10, padding: "1px 7px", flexShrink: 0, border: "1px solid #6a2a2a" }}>banni</span>}
                           </div>
                           <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>{livres.length} livre{livres.length>1?"s":""} ›</div>
                         </div>

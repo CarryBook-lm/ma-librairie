@@ -17,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
 // Champs "surs" renvoyes au client (JAMAIS password_hash)
-const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_motif_refus, abonnement_actif";
+const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_motif_refus, abonnement_actif, banni, banni_motif";
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
