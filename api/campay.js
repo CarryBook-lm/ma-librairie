@@ -171,6 +171,31 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
 //   - paper (livre papier direct)
 //   - carrycare (quiz beauté)
 // ============================================================
+// Brique 5b (CamPay) : enregistre la commission auteur (70% via lien, 50% sinon)
+async function recordAuthorSaleCampay(supabaseAdmin, opts) {
+  const { bookId, amount, reference, authorSrc } = opts || {};
+  try {
+    if (!bookId || !amount || !reference) return;
+    const { data: bk } = await supabaseAdmin.from("books").select("auteur_id").eq("id", bookId).limit(1);
+    const auteurId = bk && bk[0] ? bk[0].auteur_id : null;
+    if (!auteurId) return;
+    const { data: va } = await supabaseAdmin.from("ventes_auteurs").select("id").eq("reference", reference).limit(1);
+    if (va && va.length > 0) return;
+    const { data: au } = await supabaseAdmin.from("auteurs").select("code_source").eq("id", auteurId).limit(1);
+    const codeSource = au && au[0] ? au[0].code_source : null;
+    const viaLien = authorSrc && codeSource && String(authorSrc).toLowerCase() === String(codeSource).toLowerCase();
+    const taux = viaLien ? 70 : 50;
+    const partAuteur = Math.round(amount * taux / 100);
+    const { error } = await supabaseAdmin.from("ventes_auteurs").insert([{
+      auteur_id: auteurId, book_id: bookId, reference: reference,
+      montant_total: amount, taux_auteur: taux, part_auteur: partAuteur,
+      part_carrybooks: amount - partAuteur, source: viaLien ? "auteur" : "carrybooks",
+    }]);
+    if (error) console.error("[CAMPAY-AUTEUR] insert:", error.message);
+    else console.log("[CAMPAY-AUTEUR] commission:", taux + "% =", partAuteur);
+  } catch (e) { console.error("[CAMPAY-AUTEUR] exception:", e.message); }
+}
+
 async function sendOrderEmail({ type, order, items, extra }) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "carrybooks.com@gmail.com";
@@ -502,7 +527,7 @@ export default async function handler(req, res) {
 
     // ========== ACTION : RECORD_PURCHASE ==========
     if (action === "record_purchase") {
-      const { reference, user_id, book_id, amount, phone, external_reference, referrer_code } = params;
+      const { reference, user_id, book_id, amount, phone, external_reference, referrer_code, author_src } = params;
 
       const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
       const verifyRes = await fetch(verifyUrl, {
@@ -574,6 +599,9 @@ export default async function handler(req, res) {
         });
         console.log("[RECORD_PURCHASE] Referral result:", refResult);
       }
+
+      // Commission auteur (Brique 5b)
+      await recordAuthorSaleCampay(supabaseAdmin, { bookId: book_id, amount, reference: external_reference, authorSrc: author_src });
 
       // 🔥 Marquer le pending comme completed si existait
       try {
@@ -1162,7 +1190,7 @@ export default async function handler(req, res) {
     // Stocké avec le numéro de téléphone comme identifiant
     // Permettra plus tard de récupérer les livres si le client crée un compte
     if (action === "record_guest_purchase") {
-      const { phone, book_id, amount, reference, external_reference, type, referrer_code } = params;
+      const { phone, book_id, amount, reference, external_reference, type, referrer_code, author_src } = params;
 
       if (!phone || !reference) {
         return res.status(400).json({ error: "phone et reference requis" });
@@ -1223,6 +1251,9 @@ export default async function handler(req, res) {
         });
         console.log("[GUEST_PURCHASE] Referral result:", refResult);
       }
+
+      // Commission auteur (Brique 5b)
+      await recordAuthorSaleCampay(supabaseAdmin, { bookId: book_id, amount, reference: external_reference || reference, authorSrc: author_src });
 
       // 📧 ENVOI EMAIL DE NOTIFICATION (non bloquant)
       try {

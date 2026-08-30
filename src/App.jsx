@@ -16352,6 +16352,8 @@ export default function App() {
                 referrerCode = code;
               }
             } catch (e) {}
+            let authorSrc = "";
+            try { authorSrc = localStorage.getItem("carrybooks_src_code") || localStorage.getItem("carrybooks_referrer_code") || ""; } catch (e) {}
 
             // ✅ Paiement confirmé — on enregistre l'achat CÔTÉ SERVEUR (bypass RLS)
             if (user) {
@@ -16366,7 +16368,8 @@ export default function App() {
                   amount: finalPrice,
                   phone: phone,
                   external_reference: externalRef,
-                  referrer_code: referrerCode
+                  referrer_code: referrerCode,
+                  author_src: authorSrc
                 })
               });
               const recordData = await recordRes.json();
@@ -16393,7 +16396,8 @@ export default function App() {
                     phone: lecteur ? lecteur.telephone : phone,
                     external_reference: externalRef,
                     type: "book",
-                    referrer_code: referrerCode
+                    referrer_code: referrerCode,
+                    author_src: authorSrc
                   })
                 });
               } catch (guestErr) {
