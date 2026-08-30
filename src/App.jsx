@@ -13770,6 +13770,7 @@ export default function App() {
   const [auteurProfil, setAuteurProfil] = useState(null);
   // Compte AUTEUR (email + mot de passe), independant du lecteur/telephone
   const [auteurSession, setAuteurSession] = useState(null);
+  const [kycNotif, setKycNotif] = useState("");
   const [auteurAuthMode, setAuteurAuthMode] = useState("login"); // login | signup
   const [auteurAuthEmail, setAuteurAuthEmail] = useState("");
   const [auteurAuthPassword, setAuteurAuthPassword] = useState("");
@@ -14117,7 +14118,11 @@ export default function App() {
             try {
               const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id }) });
               const data = await res.json().catch(() => ({}));
-              if (data && data.auteur) { appliquerSessionAuteur(data.auteur); }
+              if (data && data.auteur) {
+                if (a.kyc_status !== "valide" && data.auteur.kyc_status === "valide") setKycNotif("✅ Ta vérification a été validée ! Tu peux maintenant publier tes livres.");
+                else if (a.kyc_status !== "refuse" && data.auteur.kyc_status === "refuse") setKycNotif("❌ Ta vérification a été refusée. Ouvre l'onglet Publier pour voir le motif et re-soumettre.");
+                appliquerSessionAuteur(data.auteur);
+              }
             } catch (e) {}
           }
         }
@@ -17261,6 +17266,12 @@ export default function App() {
           {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
         </div>
         <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
+          {kycNotif && (
+            <div style={{ background: kycNotif.indexOf("✅") === 0 ? "#e8f5e9" : "#fdecea", border: "1px solid " + (kycNotif.indexOf("✅") === 0 ? "#a5d6a7" : "#ef9a9a"), borderRadius: 10, padding: 14, marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: "bold", color: kycNotif.indexOf("✅") === 0 ? "#2e7d32" : "#c62828" }}>{kycNotif}</div>
+              <button onClick={() => setKycNotif("")} style={{ background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+          )}
 
           {!auteurProfil && (
             <div style={{ textAlign: "center", padding: 30 }}>
