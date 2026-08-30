@@ -13811,6 +13811,16 @@ export default function App() {
   const [kycPieceType, setKycPieceType] = useState("");
   const [kycPieceUrl, setKycPieceUrl] = useState("");
   const [kycContratUrl, setKycContratUrl] = useState("");
+  const [kycLuApprouve, setKycLuApprouve] = useState(false);
+  const [sigDataUrl, setSigDataUrl] = useState("");
+  const sigCanvasRef = useRef(null);
+  const sigDrawingRef = useRef(false);
+  useEffect(() => {
+    if (kycOpen && sigCanvasRef.current) {
+      const ctx = sigCanvasRef.current.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, sigCanvasRef.current.width, sigCanvasRef.current.height);
+    }
+  }, [kycOpen]);
   const [kycUploading, setKycUploading] = useState("");
   const [kycSaving, setKycSaving] = useState(false);
   const [kycMsg, setKycMsg] = useState("");
@@ -16677,19 +16687,43 @@ export default function App() {
     } catch (e) { setKycMsg("Erreur lors de l'envoi du document. Réessaie."); }
     setKycUploading("");
   }
+  const sigPos = (e, canvas) => {
+    const r = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (cx - r.left) * (canvas.width / r.width), y: (cy - r.top) * (canvas.height / r.height) };
+  };
+  const startSig = (e) => { const cv = sigCanvasRef.current; if (!cv) return; sigDrawingRef.current = true; const ctx = cv.getContext("2d"); const p = sigPos(e, cv); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+  const moveSig = (e) => { if (!sigDrawingRef.current) return; if (e.cancelable) e.preventDefault(); const cv = sigCanvasRef.current; const ctx = cv.getContext("2d"); const p = sigPos(e, cv); ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.strokeStyle = "#1a3fb0"; ctx.lineTo(p.x, p.y); ctx.stroke(); };
+  const endSig = () => { if (!sigDrawingRef.current) return; sigDrawingRef.current = false; try { setSigDataUrl(sigCanvasRef.current.toDataURL("image/png")); } catch (e) {} };
+  const clearSig = () => { const cv = sigCanvasRef.current; if (!cv) return; const ctx = cv.getContext("2d"); ctx.clearRect(0, 0, cv.width, cv.height); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height); setSigDataUrl(""); };
+  async function uploadSignature() {
+    if (!sigDataUrl) return "";
+    const blob = await (await fetch(sigDataUrl)).blob();
+    const fileName = "kyc/signature_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + ".png";
+    const { error } = await supabase.storage.from("kyc-docs").upload(fileName, blob, { contentType: "image/png", upsert: true });
+    if (error) throw error;
+    const { data } = supabase.storage.from("kyc-docs").getPublicUrl(fileName);
+    return data.publicUrl;
+  }
+
   async function submitKyc() {
     if (!auteurSession) return;
-    if (!kycNom.trim() || !kycPrenom.trim() || !kycNaissance || !kycNationalite.trim() || !kycResidence.trim() || !kycSexe || !kycPhone.trim() || !kycPieceType || !kycPieceUrl || !kycContratUrl) {
-      setKycMsg("Merci de tout remplir et de joindre ta pièce d'identité + le contrat signé."); return;
+    if (!kycNom.trim() || !kycPrenom.trim() || !kycNaissance || !kycNationalite.trim() || !kycResidence.trim() || !kycSexe || !kycPhone.trim() || !kycPieceType || !kycPieceUrl) {
+      setKycMsg("Merci de tout remplir et de joindre ta pièce d'identité."); return;
     }
+    if (!kycLuApprouve) { setKycMsg("Merci de cocher « Lu et approuvé »."); return; }
+    if (!sigDataUrl) { setKycMsg("Merci de signer (3 fois) dans la zone prévue."); return; }
     setKycSaving(true); setKycMsg("");
     try {
+      let contratUrl = "";
+      try { contratUrl = await uploadSignature(); } catch (e) { setKycMsg("Erreur à l'envoi de la signature. Réessaie."); setKycSaving(false); return; }
       const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         action: "submit_kyc", id: auteurSession.id,
         kyc_nom: kycNom.trim(), kyc_prenom: kycPrenom.trim(), kyc_naissance: kycNaissance,
         kyc_lieu_naissance: kycLieu.trim(), kyc_situation: kycSituation, kyc_nationalite: kycNationalite.trim(),
         kyc_pays_residence: kycResidence, kyc_sexe: kycSexe, kyc_paiement_phone: kycPhone.trim(),
-        kyc_piece_type: kycPieceType, kyc_piece_url: kycPieceUrl, kyc_contrat_url: kycContratUrl,
+        kyc_piece_type: kycPieceType, kyc_piece_url: kycPieceUrl, kyc_contrat_url: contratUrl,
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setKycOpen(false); setKycMsg(""); }
@@ -17174,9 +17208,8 @@ export default function App() {
                       <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔒 Vérification de ton compte auteur</div>
                       <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Ces informations servent à t'identifier et à te payer. Tout est obligatoire.</div>
                       <div style={{ background: G.goldDim, borderRadius: 8, padding: 12, marginBottom: 16 }}>
-                        <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>📄 Étape 1 — Le contrat</div>
-                        <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>Télécharge le contrat, lis-le, écris « Lu et approuvé », puis SIGNE sur ses 3 pages (une signature par page). Re-scanne-le et dépose-le plus bas (Étape 4).</div>
-                        <a href="/contrat-auteur-carrybooks.pdf" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "9px 14px", background: G.gold, color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>⬇️ Télécharger le contrat</a>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>📄 Le contrat</div>
+                        <div style={{ fontSize: 12, color: G.textDim }}>Remplis tes informations, puis <b>lis et signe le contrat directement ici</b> en bas (Étape 4) — pas besoin d'imprimer ni de scanner.</div>
                       </div>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>👤 Étape 2 — Ton identité (comme sur ta pièce)</div>
                       <label style={labelSt}>Nom *</label>
@@ -17231,13 +17264,23 @@ export default function App() {
                         <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "piece" ? "Envoi…" : "📷 Choisir le fichier"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycPieceUrl, "piece")} style={{ display: "none" }} /></label>
                       )}
                       <div style={{ height: 16 }} />
-                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Le contrat signé</div>
-                      <label style={labelSt}>Scan du contrat signé (« Lu et approuvé ») *</label>
-                      {kycContratUrl ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Contrat ajouté</span><button onClick={() => setKycContratUrl("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button></div>
-                      ) : (
-                        <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "contrat" ? "Envoi…" : "📄 Choisir le fichier"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycContratUrl, "contrat")} style={{ display: "none" }} /></label>
-                      )}
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Lis et signe le contrat</div>
+                      <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 12, maxHeight: 240, overflowY: "auto", fontSize: 12.5, color: G.text, lineHeight: 1.6, marginBottom: 12 }}>
+                        <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 8 }}>CONTRAT D'AUTEUR — CarryBooks</div>
+                        <div>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare :</div>
+                        <div style={{ marginTop: 6 }}>• certifier être le véritable auteur des œuvres que je publie sur CarryBooks et en détenir tous les droits ;</div>
+                        <div>• accepter la rémunération : 70 % du prix quand j'amène le client via mon lien, 50 % quand CarryBooks vend, payée par Mobile Money ;</div>
+                        <div>• ne jamais publier ni vendre une œuvre qui ne m'appartient pas — toute fraude, plagiat ou piratage entraîne mon bannissement immédiat et définitif, sans préjudice de poursuites ;</div>
+                        <div>• accepter les conditions d'utilisation et l'ensemble des clauses du contrat CarryBooks.</div>
+                        <div style={{ marginTop: 8 }}><a href="/contrat-auteur-carrybooks.pdf" target="_blank" rel="noopener noreferrer" style={{ color: G.gold, fontWeight: "bold" }}>📄 Voir le contrat complet (PDF)</a></div>
+                      </div>
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: "pointer", fontSize: 13, color: G.text }}>
+                        <input type="checkbox" checked={kycLuApprouve} onChange={e => setKycLuApprouve(e.target.checked)} style={{ width: 18, height: 18 }} />
+                        <span><span style={{ color: "#1a3fb0", fontWeight: "bold" }}>Lu et approuvé</span> — j'ai lu et j'approuve ce contrat</span>
+                      </label>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>✍️ Signe 3 fois à la main dans cette zone :</div>
+                      <canvas ref={sigCanvasRef} width={620} height={220} onMouseDown={startSig} onMouseMove={moveSig} onMouseUp={endSig} onMouseLeave={endSig} onTouchStart={startSig} onTouchMove={moveSig} onTouchEnd={endSig} style={{ width: "100%", height: 200, border: "2px solid " + G.gold, borderRadius: 8, background: "#fff", touchAction: "none", display: "block" }} />
+                      <button onClick={clearSig} style={{ marginTop: 6, background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>Effacer la signature</button>
                       {kycMsg && <div style={{ fontSize: 13, textAlign: "center", marginTop: 12, color: (kycMsg.indexOf("✅") === 0) ? G.green : "#e53935" }}>{kycMsg}</div>}
                       <div style={{ height: 16 }} />
                       <button onClick={submitKyc} disabled={kycSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: kycSaving ? 0.6 : 1 }}>{kycSaving ? "Envoi…" : "Soumettre ma vérification"}</button>
