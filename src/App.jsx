@@ -16929,6 +16929,11 @@ export default function App() {
             {auteurProfil
               ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>☰</button>
               : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
+            {auteurProfil && (
+              <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>
+                {auteurProfil.photo_url ? <img src={auteurProfil.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurProfil.nom_complet || "?").charAt(0).toUpperCase()}
+              </div>
+            )}
             <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
           </div>
           {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
