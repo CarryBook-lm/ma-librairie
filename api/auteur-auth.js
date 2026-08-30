@@ -17,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
 // Champs "surs" renvoyes au client (JAMAIS password_hash)
-const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube";
+const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_contrat_url, kyc_motif_refus";
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -122,6 +122,23 @@ export default async function handler(req, res) {
         if (k in body) patch[k] = (body[k] === "" ? null : body[k]);
       });
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Rien a mettre a jour." });
+      const { data, error } = await supa.from("auteurs").update(patch).eq("id", id).select(SAFE).maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ auteur: data });
+    }
+
+    // ---------- SOUMISSION DE LA VERIFICATION (KYC) ----------
+    if (action === "submit_kyc") {
+      const id = body.id;
+      if (!id) return res.status(400).json({ error: "id requis." });
+      const patch = {
+        kyc_status: "en_attente",
+        kyc_submitted_at: new Date().toISOString(),
+        kyc_motif_refus: null,
+      };
+      ["kyc_nom", "kyc_prenom", "kyc_naissance", "kyc_lieu_naissance", "kyc_situation", "kyc_nationalite", "kyc_pays_residence", "kyc_sexe", "kyc_paiement_phone", "kyc_piece_type", "kyc_piece_url", "kyc_contrat_url"].forEach((k) => {
+        if (k in body) patch[k] = (body[k] === "" ? null : body[k]);
+      });
       const { data, error } = await supa.from("auteurs").update(patch).eq("id", id).select(SAFE).maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ auteur: data });
