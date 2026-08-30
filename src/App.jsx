@@ -13788,13 +13788,13 @@ export default function App() {
   const [pubDraftMode, setPubDraftMode] = useState(true); // true = nouveau/brouillon (auto-save actif)
   const [pubSavingDraft, setPubSavingDraft] = useState(false);
   const [pubDraftMsg, setPubDraftMsg] = useState("");
+  const [auteurTab, setAuteurTab] = useState("publier");
   useEffect(() => {
     if (!pubDraftMode || !pubOpen || auteurTab !== "publier") return;
     if (!pubForm.title.trim()) return;
     const t = setTimeout(() => { pubSaveDraft(true); }, 4000);
     return () => clearTimeout(t);
   }, [pubForm, pubDraftMode, pubOpen, auteurTab]);
-  const [auteurTab, setAuteurTab] = useState("publier");
   const [auteurMenu, setAuteurMenu] = useState(false);
   const [compteEdit, setCompteEdit] = useState(false);
   const [statsSubTab, setStatsSubTab] = useState("board");
