@@ -13859,12 +13859,19 @@ export default function App() {
   const [statsPeriod, setStatsPeriod] = useState("today");
   const [statsDate, setStatsDate] = useState("");
   const [ventesAuteur, setVentesAuteur] = useState([]);
+  const [retraitsAuteur, setRetraitsAuteur] = useState([]);
+  const [retraitOpen, setRetraitOpen] = useState(false);
+  const [retraitMontant, setRetraitMontant] = useState("");
+  const [retraitMsg, setRetraitMsg] = useState("");
+  const [retraitSaving, setRetraitSaving] = useState(false);
   useEffect(() => {
     if (!auteurProfil) { setVentesAuteur([]); return; }
     (async () => {
       try {
         const { data } = await supabase.from("ventes_auteurs").select("*").eq("auteur_id", auteurProfil.id).order("created_at", { ascending: false });
         setVentesAuteur(data || []);
+        const { data: rr } = await supabase.from("retraits").select("*").eq("auteur_id", auteurProfil.id).order("created_at", { ascending: false });
+        setRetraitsAuteur(rr || []);
       } catch (e) {}
     })();
   }, [auteurProfil, auteurTab]);
@@ -16743,6 +16750,23 @@ export default function App() {
     return data.publicUrl;
   }
 
+  async function requestRetrait() {
+    const montant = Math.round(Number(retraitMontant || 0));
+    if (!montant || montant <= 0) { setRetraitMsg("Entre un montant valide."); return; }
+    setRetraitSaving(true); setRetraitMsg("");
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "request_retrait", id: auteurSession.id, montant }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok) {
+        setRetraitOpen(false); setRetraitMsg("");
+        const { data: rr } = await supabase.from("retraits").select("*").eq("auteur_id", auteurSession.id).order("created_at", { ascending: false });
+        setRetraitsAuteur(rr || []);
+        alert("✅ Demande de retrait envoyée. Elle sera traitée par CarryBooks (paiement Mobile Money).");
+      } else { setRetraitMsg("❌ " + (data.error || "Erreur.")); }
+    } catch (e) { setRetraitMsg("❌ " + (e.message || e)); }
+    setRetraitSaving(false);
+  }
+
   async function genererContratPdf() {
     const PDFLib = await loadPdfLib();
     const { PDFDocument, rgb, StandardFonts } = PDFLib;
@@ -17266,6 +17290,20 @@ export default function App() {
           {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
         </div>
         <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
+          {retraitOpen && (
+            <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+              <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
+                <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>💸 Retirer mes fonds</div>
+                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par CarryBooks.</div>
+                <label style={labelSt}>Montant à retirer (FCFA)</label>
+                <input type="number" value={retraitMontant} onChange={e => setRetraitMontant(e.target.value)} placeholder="Ex : 50000" style={champ} />
+                {retraitMsg && <div style={{ fontSize: 13, marginTop: 10, color: retraitMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{retraitMsg}</div>}
+                <div style={{ height: 14 }} />
+                <button onClick={requestRetrait} disabled={retraitSaving} style={{ width: "100%", padding: 13, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: retraitSaving ? 0.6 : 1 }}>{retraitSaving ? "Envoi…" : "Envoyer la demande"}</button>
+                <button onClick={() => setRetraitOpen(false)} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 6 }}>Annuler</button>
+              </div>
+            </div>
+          )}
           {kycNotif && (
             <div style={{ background: kycNotif.indexOf("✅") === 0 ? "#e8f5e9" : "#fdecea", border: "1px solid " + (kycNotif.indexOf("✅") === 0 ? "#a5d6a7" : "#ef9a9a"), borderRadius: 10, padding: 14, marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 10 }}>
               <div style={{ flex: 1, fontSize: 13, fontWeight: "bold", color: kycNotif.indexOf("✅") === 0 ? "#2e7d32" : "#c62828" }}>{kycNotif}</div>
@@ -17608,13 +17646,24 @@ export default function App() {
                 return (
                   <div>
                     {(() => {
-                      const solde = ventesAuteur.filter(v => !v.reverse).reduce((s, v) => s + (v.part_auteur || 0), 0);
-                      const paye = ventesAuteur.filter(v => v.reverse).reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const vendu = ventesAuteur.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const percu = retraitsAuteur.filter(r => r.statut === "paye").reduce((s, r) => s + (r.montant || 0), 0);
+                      const enAttente = retraitsAuteur.filter(r => r.statut === "en_attente").reduce((s, r) => s + (r.montant || 0), 0);
+                      const pasPercu = vendu - percu;
+                      const dispo = vendu - percu - enAttente;
+                      const box = (label, val, fort) => (
+                        <div style={{ flex: 1, background: fort ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.15)", borderRadius: 10, padding: 12, textAlign: "center", minWidth: 0 }}>
+                          <div style={{ fontSize: 17, fontWeight: "bold" }}>{fmt(val)}</div>
+                          <div style={{ fontSize: 10.5, opacity: 0.9, marginTop: 2 }}>{label}</div>
+                        </div>
+                      );
                       return (
-                        <div style={{ background: "linear-gradient(135deg, #6a11cb, #8e2de2)", borderRadius: 12, padding: 16, marginBottom: 16, color: "#fff" }}>
-                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 2 }}>💼 Mon portefeuille — à recevoir</div>
-                          <div style={{ fontSize: 30, fontWeight: "bold" }}>{fmt(solde)}</div>
-                          <div style={{ fontSize: 11, opacity: 0.85, marginTop: 6, lineHeight: 1.5 }}>Déjà reversé : {fmt(paye)}<br/>Les reversements se font par Mobile Money au numéro de ton profil.</div>
+                        <div style={{ background: "linear-gradient(135deg, #6a11cb, #8e2de2)", borderRadius: 12, padding: 14, marginBottom: 16, color: "#fff" }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", marginBottom: 10 }}>💼 Mon portefeuille</div>
+                          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>{box("Total déjà vendu", vendu, false)}{box("Total déjà perçu", percu, false)}</div>
+                          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
+                          {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
+                          <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? "#fff" : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
                         </div>
                       );
                     })()}

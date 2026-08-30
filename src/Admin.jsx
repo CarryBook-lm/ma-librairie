@@ -459,25 +459,27 @@ export default function Admin() {
     })();
   }, [view]);
   const chargerSoldes = async () => {
-    const { data: va } = await supabase.from("ventes_auteurs").select("auteur_id, part_auteur, reverse").eq("reverse", false);
+    const { data: rr } = await supabase.from("retraits").select("*").eq("statut", "en_attente").order("created_at", { ascending: true });
     const { data: auts } = await supabase.from("auteurs").select("id, nom_complet, kyc_paiement_phone, telephone");
-    const map = {};
-    (va || []).forEach(v => { map[v.auteur_id] = (map[v.auteur_id] || 0) + (v.part_auteur || 0); });
-    const rows = Object.keys(map).map(id => {
-      const a = (auts || []).find(x => String(x.id) === String(id)) || {};
-      return { auteur_id: Number(id), nom: a.nom_complet || ("Auteur #" + id), phone: a.kyc_paiement_phone || a.telephone || "", solde: map[id] };
-    }).filter(r => r.solde > 0).sort((a, b) => b.solde - a.solde);
+    const rows = (rr || []).map(r => {
+      const a = (auts || []).find(x => String(x.id) === String(r.auteur_id)) || {};
+      return { id: r.id, auteur_id: r.auteur_id, nom: a.nom_complet || ("Auteur #" + r.auteur_id), phone: r.phone || a.kyc_paiement_phone || a.telephone || "", montant: r.montant, created_at: r.created_at };
+    });
     setEaSoldes(rows);
   };
   const reverserAuteur = async (row) => {
-    if (!window.confirm("Confirmer le reversement de " + row.solde.toLocaleString() + " F à " + row.nom + " ? À faire APRÈS avoir envoyé le Mobile Money.")) return;
+    if (!window.confirm("Confirmer le paiement de " + row.montant.toLocaleString() + " F à " + row.nom + " ? À faire APRÈS avoir envoyé le Mobile Money.")) return;
     const ref = window.prompt("Référence du paiement Mobile Money (facultatif) :", "") || "";
-    const { data: rev, error: e1 } = await supabase.from("reversements").insert([{ auteur_id: row.auteur_id, montant: row.solde, reference: ref }]).select().single();
-    if (e1) { alert("Erreur (droits ?) : " + e1.message); return; }
-    const { error: e2 } = await supabase.from("ventes_auteurs").update({ reverse: true, reversement_id: rev.id }).eq("auteur_id", row.auteur_id).eq("reverse", false);
-    if (e2) { alert("Reversement créé mais erreur en marquant les ventes : " + e2.message); }
+    const { error } = await supabase.from("retraits").update({ statut: "paye", paid_at: new Date().toISOString(), reference: ref }).eq("id", row.id);
+    if (error) { alert("Erreur (droits ?) : " + error.message); return; }
     await chargerSoldes();
-    alert("✅ Reversement enregistré.");
+    alert("✅ Retrait validé (payé).");
+  };
+  const refuserRetrait = async (row) => {
+    if (!window.confirm("Refuser la demande de retrait de " + row.nom + " ? Les fonds redeviennent disponibles pour l'auteur.")) return;
+    const { error } = await supabase.from("retraits").update({ statut: "refuse" }).eq("id", row.id);
+    if (error) { alert("Erreur : " + error.message); return; }
+    await chargerSoldes();
   };
   const kycRefresh = async () => {
     const { data } = await supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true });
@@ -4094,18 +4096,22 @@ export default function Admin() {
 
             {eaTab === "reversements" && (
               <div>
-                <div style={{ color: "#888", fontSize: 12, marginBottom: 14, lineHeight: 1.6 }}>Solde à reverser par auteur (part auteur non encore payée). Envoie le Mobile Money au numéro indiqué, PUIS clique « Marquer payé » pour solder.</div>
-                {eaSoldes.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun solde à reverser.</div> : (
+                <div style={{ color: "#888", fontSize: 12, marginBottom: 14, lineHeight: 1.6 }}>Demandes de retrait des auteurs. Envoie le Mobile Money au numéro indiqué, PUIS clique « Marquer payé » pour valider.</div>
+                {eaSoldes.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune demande de retrait en attente.</div> : (
                   eaSoldes.map(row => (
-                    <div key={row.auteur_id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div key={row.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                         <div>
                           <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold" }}>{row.nom}</div>
                           <div style={{ color: "#777", fontSize: 12 }}>📱 {row.phone || "Numéro manquant"}</div>
+                          <div style={{ color: "#666", fontSize: 11 }}>Demandé le {new Date(row.created_at).toLocaleDateString("fr-FR")}</div>
                         </div>
-                        <div style={{ color: "#4caf50", fontSize: 20, fontWeight: "bold", whiteSpace: "nowrap" }}>{row.solde.toLocaleString()} F</div>
+                        <div style={{ color: "#4caf50", fontSize: 20, fontWeight: "bold", whiteSpace: "nowrap" }}>{row.montant.toLocaleString()} F</div>
                       </div>
-                      <button onClick={() => reverserAuteur(row)} style={{ width: "100%", padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Marquer payé ({row.solde.toLocaleString()} F)</button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => reverserAuteur(row)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Marquer payé</button>
+                        <button onClick={() => refuserRetrait(row)} style={{ flex: 1, padding: "10px 0", background: "#5a1a1a", color: "#e57373", border: "1px solid #6a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>
+                      </div>
                     </div>
                   ))
                 )}
