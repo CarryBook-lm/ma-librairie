@@ -4663,7 +4663,7 @@ const CAP_CONTENT = {
   }
 };
 
-function BeautyFacialQuiz({ lecteur, payerCarrycarePawapay, setPage, setCarryCarePage, bfStep, setBfStep, bfProfile, setBfProfile, bfObjectives, setBfObjectives, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
+function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, setPage, setCarryCarePage, bfStep, setBfStep, bfProfile, setBfProfile, bfObjectives, setBfObjectives, bfTypeAnswers, setBfTypeAnswers, bfProblems, setBfProblems, bfLifestyle, setBfLifestyle, bfResult, setBfResult, beautyQuizPrice, bfPaymentStep, setBfPaymentStep, bfPaymentPhone, setBfPaymentPhone, bfPaymentMethod, setBfPaymentMethod, bfShowGift, setBfShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [bfStep, bfPaymentStep]);
 
@@ -5066,7 +5066,7 @@ function BeautyFacialQuiz({ lecteur, payerCarrycarePawapay, setPage, setCarryCar
                 ✅ PDF téléchargeable
               </div>
             </div>
-            <button onClick={() => { const isoPP = lecteur ? PAYS_TO_PP[lecteur.pays] : null; const international = !!(lecteur && isoPP && lecteur.pays !== "Cameroun"); if (international) { payerCarrycarePawapay("facial", { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult, phone: lecteur.telephone }, beautyQuizPrice); } else { setBfPaymentStep(2); } }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+            <button onClick={() => { if (!exigerConnexion()) return; const isoPP = lecteur ? PAYS_TO_PP[lecteur.pays] : null; const international = !!(lecteur && isoPP && lecteur.pays !== "Cameroun"); if (international) { payerCarrycarePawapay("facial", { profile: bfProfile, objectives: bfObjectives, typeAnswers: bfTypeAnswers, problems: bfProblems, lifestyle: bfLifestyle, result: bfResult, phone: lecteur.telephone }, beautyQuizPrice); } else { setBfPaymentStep(2); } }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Débloquer mon diagnostic — {beautyQuizPrice} FCFA
             </button>
           </div>
@@ -7126,7 +7126,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
 // ═══════════════════════════════════════════════
 // BEAUTÉ CORPORELLE — COMPOSANT QUIZ
 // ═══════════════════════════════════════════════
-function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfile, setBbProfile, bbObjectives, setBbObjectives, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod, bbShowGift, setBbShowGift }) {
+function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, setBbStep, bbProfile, setBbProfile, bbObjectives, setBbObjectives, bbTypeAnswers, setBbTypeAnswers, bbProblems, setBbProblems, bbLifestyle, setBbLifestyle, bbResult, setBbResult, beautyQuizPrice, bbPaymentStep, setBbPaymentStep, bbPaymentPhone, setBbPaymentPhone, bbPaymentMethod, setBbPaymentMethod, bbShowGift, setBbShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [bbStep, bbPaymentStep]);
 
@@ -7564,7 +7564,7 @@ function BeautyBodyQuiz({ setPage, setCarryCarePage, bbStep, setBbStep, bbProfil
               </div>
             </div>
 
-            <button onClick={() => setBbPaymentStep(2)} style={{
+            <button onClick={() => { if (!exigerConnexion()) return; setBbPaymentStep(2); }} style={{
               width: "100%", padding: 16, background: CC.noir, color: "#fff",
               border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer"
             }}>
@@ -8884,7 +8884,7 @@ const LG_DINERS_30 = [
 ];
 
 
-function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, setLgProfile, lgObjective, setLgObjective, lgConditions, setLgConditions, lgHabits, setLgHabits, lgActivity, setLgActivity, lgResult, setLgResult, beautyQuizPrice, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift }) {
+function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, setLgProfile, lgObjective, setLgObjective, lgConditions, setLgConditions, lgHabits, setLgHabits, lgActivity, setLgActivity, lgResult, setLgResult, beautyQuizPrice, lgPaymentStep, setLgPaymentStep, lgPaymentPhone, setLgPaymentPhone, lgPaymentMethod, setLgPaymentMethod, lgShowGift, setLgShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [lgStep, lgPaymentStep]);
 
@@ -9436,7 +9436,7 @@ function LigneQuizV2({ setPage, setCarryCarePage, lgStep, setLgStep, lgProfile, 
                 ✅ PDF téléchargeable
               </div>
             </div>
-            <button onClick={() => setLgPaymentStep(2)} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+            <button onClick={() => { if (!exigerConnexion()) return; setLgPaymentStep(2); }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Débloquer mon plan — {beautyQuizPrice} FCFA
             </button>
           </div>
@@ -11849,7 +11849,7 @@ async function downloadCapDiagnosticPDF(result, opts = {}) {
   }
 }
 
-function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capProfile, setCapProfile, capTexture, setCapTexture, capEtat, setCapEtat, capLongueur, setCapLongueur, capProblems, setCapProblems, capObjectives, setCapObjectives, capRoutine, setCapRoutine, capLifestyle, setCapLifestyle, capBudget, setCapBudget, capResult, setCapResult, beautyQuizPrice, capPaymentStep, setCapPaymentStep, capPaymentPhone, setCapPaymentPhone, capPaymentMethod, setCapPaymentMethod, capShowGift, setCapShowGift }) {
+function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep, setCapStep, capProfile, setCapProfile, capTexture, setCapTexture, capEtat, setCapEtat, capLongueur, setCapLongueur, capProblems, setCapProblems, capObjectives, setCapObjectives, capRoutine, setCapRoutine, capLifestyle, setCapLifestyle, capBudget, setCapBudget, capResult, setCapResult, beautyQuizPrice, capPaymentStep, setCapPaymentStep, capPaymentPhone, setCapPaymentPhone, capPaymentMethod, setCapPaymentMethod, capShowGift, setCapShowGift }) {
 
   useEffect(() => { window.scrollTo(0, 0); }, [capStep, capPaymentStep]);
 
@@ -12357,7 +12357,7 @@ function CapillaireQuizV2({ setPage, setCarryCarePage, capStep, setCapStep, capP
                 ✅ PDF téléchargeable
               </div>
             </div>
-            <button onClick={() => setCapPaymentStep(2)} style={{ width: "100%", padding: 16, background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
+            <button onClick={() => { if (!exigerConnexion()) return; setCapPaymentStep(2); }} style={{ width: "100%", padding: 16, background: CAP.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>
               💎 Débloquer mon diag — {beautyQuizPrice} FCFA
             </button>
           </div>
@@ -14151,6 +14151,8 @@ export default function App() {
     }
     if (pendingEspaceAuteur) { setPendingEspaceAuteur(false); setPage("espace_auteur"); }
   }
+  // Exige une connexion (lecteur ou Google). Renvoie false et ouvre le modal si non connecté.
+  const exigerConnexion = () => { if (!lecteur && !user) { setShowLecteurModal(true); return false; } return true; };
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
@@ -22318,6 +22320,7 @@ export default function App() {
 
         {page === "carrycare" && (
           <div>
+            {showLecteurModal && lecteurModalNode}
             {carryCarePage === "home" && (
               <CarryCareHome
                 setPage={setPage}
@@ -22349,6 +22352,7 @@ export default function App() {
             )}
             {carryCarePage === "facialQuiz" && (
               <BeautyFacialQuiz
+                exigerConnexion={exigerConnexion}
                 lecteur={lecteur}
                 payerCarrycarePawapay={payerCarrycarePawapay}
                 setPage={setPage}
@@ -22369,6 +22373,7 @@ export default function App() {
             )}
             {carryCarePage === "bodyQuiz" && (
               <BeautyBodyQuiz
+                exigerConnexion={exigerConnexion}
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 bbStep={bbStep} setBbStep={setBbStep}
@@ -22387,6 +22392,7 @@ export default function App() {
             )}
             {carryCarePage === "lineQuiz" && (
               <LigneQuizV2
+                exigerConnexion={exigerConnexion}
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 lgStep={lgStep} setLgStep={setLgStep}
@@ -22405,6 +22411,7 @@ export default function App() {
             )}
             {carryCarePage === "hairQuiz" && (
               <CapillaireQuizV2
+                exigerConnexion={exigerConnexion}
                 setPage={setPage}
                 setCarryCarePage={setCarryCarePage}
                 capStep={capStep} setCapStep={setCapStep}
