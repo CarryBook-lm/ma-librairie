@@ -16894,7 +16894,7 @@ export default function App() {
               </div>
               <div style={{ height: 12 }} />
               <label style={labelSt}>Brève description (facultatif)</label>
-              <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
+              <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={6} style={{ ...champ, resize: "vertical", minHeight: 130 }} />
               <div style={{ height: 12 }} />
               <label style={labelSt}>Photo de profil (tu peux sauter pour plus tard)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
@@ -17230,7 +17230,7 @@ export default function App() {
                         </label>
                       </div>
                       <label style={labelSt}>Présentation (facultatif)</label>
-                      <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={3} style={{ ...champ, resize: "vertical" }} />
+                      <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={6} style={{ ...champ, resize: "vertical", minHeight: 130 }} />
                       <div style={{ height: 16 }} />
                       <button onClick={() => { saveAuteur(); setCompteEdit(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                       <button onClick={() => { setCompteEdit(false); setAuteurMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
@@ -17341,7 +17341,7 @@ export default function App() {
                 </label>
               </div>
               <label style={labelSt}>Petite présentation (facultatif)</label>
-              <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
+              <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={6} style={{ ...champ, resize: "vertical", minHeight: 130 }} />
               <div style={{ height: 20 }} />
               <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Créer mon espace auteur"}</button>
             </div>
