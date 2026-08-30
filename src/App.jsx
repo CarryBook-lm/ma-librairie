@@ -17703,7 +17703,15 @@ export default function App() {
                       <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
                       <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
                     </div>
-                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                    <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
+                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
+                    </div>
+                    <div style={{ background: G.gold, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
+                      <div style={{ fontSize: 12, opacity: 0.9 }}>Montant total (cette période)</div>
+                      <div style={{ fontSize: 24, fontWeight: "bold" }}>{fmt(grandTotal)}</div>
+                    </div>
+                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 12 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Détail par livre</div>
                       {Object.keys(grpP).length === 0 ? (
                         <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
@@ -17713,14 +17721,6 @@ export default function App() {
                           <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>{fmt(grpP[k].g)}</div>
                         </div>
                       ))}
-                    </div>
-                    <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
-                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
-                    </div>
-                    <div style={{ background: G.gold, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
-                      <div style={{ fontSize: 12, opacity: 0.9 }}>Montant total (cette période)</div>
-                      <div style={{ fontSize: 24, fontWeight: "bold" }}>{fmt(grandTotal)}</div>
                     </div>
                   </div>
                 );
