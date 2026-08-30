@@ -13755,6 +13755,7 @@ export default function App() {
   const [auteurAuthMode, setAuteurAuthMode] = useState("login"); // login | signup
   const [auteurAuthEmail, setAuteurAuthEmail] = useState("");
   const [auteurAuthPassword, setAuteurAuthPassword] = useState("");
+  const [showAuteurPassword, setShowAuteurPassword] = useState(false);
   const [auteurAuthNom, setAuteurAuthNom] = useState("");
   const [auteurAuthMsg, setAuteurAuthMsg] = useState("");
   const [auteurAuthLoading, setAuteurAuthLoading] = useState(false);
@@ -14060,7 +14061,12 @@ export default function App() {
   const auteurSignup = async () => {
     setAuteurAuthLoading(true); setAuteurAuthMsg("");
     try {
-      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword }) });
+      const telComplet = (function(){
+        const CODES = {"Bénin":"+229","Burkina Faso":"+226","Burundi":"+257","Cameroun":"+237","Congo (Brazzaville)":"+242","Congo (RDC)":"+243","Côte d'Ivoire":"+225","Gabon":"+241","Guinée":"+224","Mali":"+223","Niger":"+227","République centrafricaine":"+236","Rwanda":"+250","Sénégal":"+221","Tchad":"+235","Togo":"+228"};
+        const ind = CODES[auteurPays] || ""; const t = (auteurTel || "").trim();
+        return t ? ((ind ? ind + " " : "") + t) : null;
+      })();
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword, pays: auteurPays || null, telephone: telComplet, bio: auteurBio || null, photo_url: auteurPhoto || null }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurAuthEmail(""); setAuteurAuthPassword(""); setAuteurAuthNom(""); }
       else { setAuteurAuthMsg(data.error || "Creation impossible."); }
@@ -16866,7 +16872,38 @@ export default function App() {
             <input type="email" value={auteurAuthEmail} onChange={e => setAuteurAuthEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
             <div style={{ height: 12 }} />
             <label style={labelSt}>Ton mot de passe</label>
-            <input type="password" value={auteurAuthPassword} onChange={e => setAuteurAuthPassword(e.target.value)} placeholder="6 caractères minimum" style={champ} />
+            <div style={{ position: "relative" }}>
+              <input type={showAuteurPassword ? "text" : "password"} value={auteurAuthPassword} onChange={e => setAuteurAuthPassword(e.target.value)} placeholder="6 caractères minimum" style={{ ...champ, paddingRight: 46 }} />
+              <button type="button" onClick={() => setShowAuteurPassword(v => !v)} aria-label="Afficher ou masquer le mot de passe" style={{ position: "absolute", right: 8, top: 6, background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4, lineHeight: 1 }}>{showAuteurPassword ? "🙈" : "👁️"}</button>
+            </div>
+            {auteurAuthMode === "signup" && (<>
+              <div style={{ height: 12 }} />
+              <label style={labelSt}>Ton pays</label>
+              <select value={auteurPays} onChange={e => setAuteurPays(e.target.value)} style={champ}>
+                <option value="">— Choisis ton pays —</option>
+                {PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}
+              </select>
+              <div style={{ height: 12 }} />
+              <label style={labelSt}>Ton numéro Mobile Money (pour être payé)</label>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ padding: "12px 10px", background: "#f2f2f2", borderRadius: 8, fontSize: 14, color: G.textDim, whiteSpace: "nowrap" }}>{indicatif || "🌍"}</span>
+                <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
+              </div>
+              <div style={{ height: 12 }} />
+              <label style={labelSt}>Brève description (facultatif)</label>
+              <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={3} style={{ ...champ, resize: "vertical" }} />
+              <div style={{ height: 12 }} />
+              <label style={labelSt}>Photo de profil (tu peux sauter pour plus tard)</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                  {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurAuthNom ? auteurAuthNom.charAt(0).toUpperCase() : "?")}
+                </div>
+                <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                  {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Ajouter une photo")}
+                  <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
+                </label>
+              </div>
+            </>)}
             {auteurAuthMsg && <div style={{ color: "#e53935", fontSize: 13, marginTop: 10 }}>{auteurAuthMsg}</div>}
             <button onClick={auteurAuthMode === "signup" ? auteurSignup : auteurLogin} disabled={auteurAuthLoading} style={{ width: "100%", padding: 14, marginTop: 16, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurAuthLoading ? 0.6 : 1 }}>
               {auteurAuthLoading ? "..." : (auteurAuthMode === "signup" ? "Créer mon compte" : "Se connecter")}
