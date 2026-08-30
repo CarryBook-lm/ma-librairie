@@ -13772,6 +13772,11 @@ export default function App() {
   const [auteurBio, setAuteurBio] = useState("");
   const [auteurPhoto, setAuteurPhoto] = useState("");
   const [auteurPhotoUploading, setAuteurPhotoUploading] = useState(false);
+  const [auteurFb, setAuteurFb] = useState("");
+  const [auteurIg, setAuteurIg] = useState("");
+  const [auteurTk, setAuteurTk] = useState("");
+  const [auteurLi, setAuteurLi] = useState("");
+  const [auteurYt, setAuteurYt] = useState("");
   const [auteurEmail, setAuteurEmail] = useState("");
   const [auteurSaving, setAuteurSaving] = useState(false);
   const [auteurMsg, setAuteurMsg] = useState("");
@@ -14048,6 +14053,7 @@ export default function App() {
     setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || "");
     setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || "");
     setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
+    setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
   useEffect(() => {
     try {
@@ -16574,6 +16580,11 @@ export default function App() {
         photo_url: auteurPhoto || null,
         pixel_meta: auteurPixel.trim(),
         pixel_tiktok: auteurPixelTiktok.trim(),
+        facebook: auteurFb.trim() || null,
+        instagram: auteurIg.trim() || null,
+        tiktok: auteurTk.trim() || null,
+        linkedin: auteurLi.trim() || null,
+        youtube: auteurYt.trim() || null,
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
@@ -16901,6 +16912,23 @@ export default function App() {
               <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{boutiqueAuteur.nom_complet}</div>
               {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
               {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap", maxHeight: 150, overflowY: "auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>{boutiqueAuteur.bio}</div> : null}
+              {(() => {
+                const reseaux = [
+                  { u: boutiqueAuteur.facebook, l: "Facebook", ic: "📘", c: "#1877F2" },
+                  { u: boutiqueAuteur.instagram, l: "Instagram", ic: "📷", c: "#E1306C" },
+                  { u: boutiqueAuteur.tiktok, l: "TikTok", ic: "🎵", c: "#111" },
+                  { u: boutiqueAuteur.linkedin, l: "LinkedIn", ic: "💼", c: "#0A66C2" },
+                  { u: boutiqueAuteur.youtube, l: "YouTube", ic: "▶️", c: "#FF0000" },
+                ].filter(r => r.u && r.u.trim());
+                if (reseaux.length === 0) return null;
+                return (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 14 }}>
+                    {reseaux.map(r => (
+                      <a key={r.l} href={r.u.startsWith("http") ? r.u : "https://" + r.u} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", background: "#fff", border: "1px solid " + G.border, borderRadius: 20, color: r.c, fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>{r.ic} {r.l}</a>
+                    ))}
+                  </div>
+                );
+              })()}
               <div style={{ marginTop: 14, fontSize: 13, color: G.gold, fontWeight: "bold" }}>{boutiqueBooks.length} livre{boutiqueBooks.length > 1 ? "s" : ""}</div>
             </div>
             {boutiqueBooks.length === 0 ? (
@@ -17376,7 +17404,16 @@ export default function App() {
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone || "—"}</span></div>
                       {auteurProfil.bio ? <div style={{ padding: "8px 0", fontSize: 13, color: G.textDim }}>{auteurProfil.bio}</div> : null}
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
+                      {auteurProfil.code_source ? (
+                        <div style={{ marginTop: 12, padding: 12, background: G.goldDim, borderRadius: 8 }}>
+                          <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur Facebook, TikTok…)</div>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <input readOnly value={"https://carrybooks.com/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: "#fff", minWidth: 0 }} />
+                            <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.gold, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
+                          </div>
+                        </div>
+                      ) : null}
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
                     </div>
                   ) : (
                     <div>
@@ -17410,6 +17447,22 @@ export default function App() {
                       </div>
                       <label style={labelSt}>Présentation (facultatif)</label>
                       <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={6} style={{ ...champ, resize: "vertical", minHeight: 130 }} />
+                      <div style={{ height: 16 }} />
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, marginBottom: 8 }}>🌐 Tes réseaux sociaux (les lecteurs pourront te suivre)</div>
+                      <label style={labelSt}>Facebook</label>
+                      <input value={auteurFb} onChange={e => setAuteurFb(e.target.value)} placeholder="https://facebook.com/ta-page" style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Instagram</label>
+                      <input value={auteurIg} onChange={e => setAuteurIg(e.target.value)} placeholder="https://instagram.com/ton-compte" style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>TikTok</label>
+                      <input value={auteurTk} onChange={e => setAuteurTk(e.target.value)} placeholder="https://tiktok.com/@ton-compte" style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>LinkedIn</label>
+                      <input value={auteurLi} onChange={e => setAuteurLi(e.target.value)} placeholder="https://linkedin.com/in/ton-profil" style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>YouTube</label>
+                      <input value={auteurYt} onChange={e => setAuteurYt(e.target.value)} placeholder="https://youtube.com/@ta-chaine" style={champ} />
                       <div style={{ height: 16 }} />
                       <button onClick={() => { saveAuteur(); setCompteEdit(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                       <button onClick={() => { setCompteEdit(false); setAuteurMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
