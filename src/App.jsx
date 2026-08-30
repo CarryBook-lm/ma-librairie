@@ -17110,32 +17110,20 @@ export default function App() {
             <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Aucun auteur pour le moment.</div>
           ) : (
             <div>
-              {(() => {
-                const groups = {};
-                auteursList.forEach(a => {
-                  const L = (a.nom_complet || "?").charAt(0).toUpperCase();
-                  (groups[L] = groups[L] || []).push(a);
-                });
-                return Object.keys(groups).sort().map(L => (
-                  <div key={L} style={{ marginBottom: 18 }}>
-                    <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, padding: "6px 4px", borderBottom: "1px solid " + G.border, marginBottom: 8 }}>{L}</div>
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {groups[L].map(a => (
-                        <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-                          <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                            {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
-                            {a.pays ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.pays}</div> : null}
-                          </div>
-                          <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
-                        </div>
-                      ))}
+              <div style={{ display: "grid", gap: 10 }}>
+                {auteursList.map(a => (
+                  <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                      {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
                     </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
+                      {a.pays ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.pays}</div> : null}
+                    </div>
+                    <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
                   </div>
-                ));
-              })()}
+                ))}
+              </div>
             </div>
           )}
         </div>
