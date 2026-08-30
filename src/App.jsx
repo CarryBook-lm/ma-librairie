@@ -16636,7 +16636,7 @@ export default function App() {
     (async () => {
       setBoutiqueLoading(true);
       try {
-        const { data: aut } = await supabase.from("auteurs").select("*").eq("code_source", boutiqueCode).limit(1);
+        const { data: aut } = await supabase.from("auteurs_public").select("*").eq("code_source", boutiqueCode).limit(1);
         const a = aut && aut[0] ? aut[0] : null;
         if (cancel) return;
         setBoutiqueAuteur(a);
@@ -16658,7 +16658,7 @@ export default function App() {
       setAuteursListLoading(true);
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
-        const { data: auts } = await supabase.from("auteurs").select("id,nom_complet,bio,pays,code_source,moderation").neq("moderation", "refuse").order("nom_complet", { ascending: true });
+        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source").order("nom_complet", { ascending: true });
         if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
