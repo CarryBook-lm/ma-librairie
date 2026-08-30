@@ -17348,7 +17348,7 @@ export default function App() {
                       )}
                       <div style={{ height: 16 }} />
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Lis et signe le contrat</div>
-                      <div onScroll={(e) => { const el = e.target; if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) setKycContratLu(true); }} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 12, maxHeight: 300, overflowY: "auto", fontSize: 12.5, color: G.text, lineHeight: 1.6, marginBottom: 8 }}>
+                      <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 14, fontSize: 13, color: G.text, lineHeight: 1.6, marginBottom: 10 }}>
                         <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 10, fontSize: 14 }}>CONTRAT D'AUTEUR — CarryBooks</div>
                         <div style={{ marginBottom: 10 }}>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare accepter l'intégralité des clauses ci-dessous :</div>
                         {CONTRAT_ARTICLES.map(([t, b], i) => (
@@ -17359,9 +17359,8 @@ export default function App() {
                         ))}
                         <div style={{ marginTop: 6, fontStyle: "italic", color: G.textDim }}>— Fin du contrat. Tu peux maintenant cocher « Lu et approuvé ». —</div>
                       </div>
-                      {!kycContratLu && <div style={{ fontSize: 11, color: "#c62828", marginBottom: 10, fontWeight: "bold" }}>⬇️ Fais défiler le contrat jusqu'en bas pour pouvoir cocher « Lu et approuvé ».</div>}
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: kycContratLu ? "pointer" : "not-allowed", fontSize: 13, color: G.text, opacity: kycContratLu ? 1 : 0.5 }}>
-                        <input type="checkbox" checked={kycLuApprouve} disabled={!kycContratLu} onChange={e => setKycLuApprouve(e.target.checked)} style={{ width: 18, height: 18 }} />
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: "pointer", fontSize: 13, color: G.text }}>
+                        <input type="checkbox" checked={kycLuApprouve} onChange={e => setKycLuApprouve(e.target.checked)} style={{ width: 18, height: 18 }} />
                         <span><span style={{ color: "#1a3fb0", fontWeight: "bold" }}>Lu et approuvé</span> — j'ai lu et j'approuve ce contrat</span>
                       </label>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>✍️ Signe 3 fois à la main dans cette zone :</div>
