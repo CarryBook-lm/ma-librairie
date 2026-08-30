@@ -341,6 +341,7 @@ export default function Admin() {
   const [eaAuteurs, setEaAuteurs] = useState([]);
   const [eaBooks, setEaBooks] = useState([]);
   const [eaLoading, setEaLoading] = useState(false);
+  const [eaKyc, setEaKyc] = useState([]);
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -443,16 +444,35 @@ export default function Admin() {
     (async () => {
       setEaLoading(true);
       try {
-        const [{ data: aut }, { data: bks }] = await Promise.all([
+        const [{ data: aut }, { data: bks }, { data: kyc }] = await Promise.all([
           supabase.from("auteurs").select("id, nom_complet, telephone, email").order("nom_complet", { ascending: true }),
           supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
+          supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
         ]);
         setEaAuteurs(aut || []);
         setEaBooks(bks || []);
+        setEaKyc(kyc || []);
       } catch (e) {}
       setEaLoading(false);
     })();
   }, [view]);
+  const kycRefresh = async () => {
+    const { data } = await supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true });
+    setEaKyc(data || []);
+  };
+  const kycValider = async (id) => {
+    if (!window.confirm("Valider cette vérification ? L'auteur pourra publier.")) return;
+    const { error } = await supabase.from("auteurs").update({ kyc_status: "valide", kyc_motif_refus: null }).eq("id", id);
+    if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    await kycRefresh();
+  };
+  const kycRefuser = async (id) => {
+    const motif = window.prompt("Motif du refus (visible par l'auteur) :", "");
+    if (motif === null) return;
+    const { error } = await supabase.from("auteurs").update({ kyc_status: "refuse", kyc_motif_refus: motif || "Documents non conformes." }).eq("id", id);
+    if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    await kycRefresh();
+  };
   const fileInputRef = useRef(null);
 
   // ===== GESTION DES CATÉGORIES (chargées depuis Supabase) =====
@@ -3978,7 +3998,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["livres","📚 Livres publiés"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4013,6 +4033,37 @@ export default function Admin() {
                         </div>
                       );
                     })
+                  )
+                )}
+              </div>
+            )}
+
+            {eaTab === "kyc" && (
+              <div>
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
+                  eaKyc.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune vérification en attente.</div> : (
+                    eaKyc.map(a => (
+                      <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
+                        <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{a.kyc_prenom} {a.kyc_nom}</div>
+                        <div style={{ color: "#777", fontSize: 11, marginBottom: 10 }}>Compte : {a.nom_complet || "?"} · {a.email || ""}</div>
+                        <div style={{ color: "#c8c0b0", fontSize: 12.5, lineHeight: 1.9 }}>
+                          <div>Né(e) le <b>{a.kyc_naissance || "?"}</b> à <b>{a.kyc_lieu_naissance || "?"}</b></div>
+                          <div>Sexe : <b>{a.kyc_sexe || "?"}</b> · Situation : <b>{a.kyc_situation || "?"}</b></div>
+                          <div>Nationalité : <b>{a.kyc_nationalite || "?"}</b> · Réside : <b>{a.kyc_pays_residence || "?"}</b></div>
+                          <div>Mobile Money (paiement) : <b>{a.kyc_paiement_phone || "?"}</b></div>
+                          <div>Pièce : <b>{a.kyc_piece_type || "?"}</b></div>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
+                          {a.kyc_piece_url ? <a href={a.kyc_piece_url} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#c9a84c", fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>🪪 Pièce recto</a> : null}
+                          {a.kyc_piece_url2 ? <a href={a.kyc_piece_url2} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#c9a84c", fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>🪪 Pièce verso</a> : null}
+                          {a.kyc_contrat_url ? <a href={a.kyc_contrat_url} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#c9a84c", fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>📄 Contrat signé</a> : null}
+                        </div>
+                        <div style={{ display: "flex", gap: 10 }}>
+                          <button onClick={() => kycValider(a.id)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Valider</button>
+                          <button onClick={() => kycRefuser(a.id)} style={{ flex: 1, padding: "10px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>
+                        </div>
+                      </div>
+                    ))
                   )
                 )}
               </div>
