@@ -13803,6 +13803,7 @@ export default function App() {
   }, [pubForm, pubDraftMode, pubOpen, auteurTab]);
   const [auteurMenu, setAuteurMenu] = useState(false);
   const [compteEdit, setCompteEdit] = useState(false);
+  const [compteEditSocials, setCompteEditSocials] = useState(false); // édition limitée aux réseaux
   const [statsSubTab, setStatsSubTab] = useState("board");
   const [statsPeriod, setStatsPeriod] = useState("today");
   const [statsDate, setStatsDate] = useState("");
@@ -17296,6 +17297,11 @@ export default function App() {
                         <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                       ))}
                     </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontSize: 12, color: G.textDim, whiteSpace: "nowrap" }}>Ou un jour :</span>
+                      <input type="date" value={statsDate} onChange={e => setStatsDate(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 13, minWidth: 0 }} />
+                      {statsDate && <button onClick={() => setStatsDate("")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>✕</button>}
+                    </div>
                     <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                       <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
                       <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
@@ -17445,11 +17451,12 @@ export default function App() {
                           </div>
                         </div>
                       ) : null}
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
                     </div>
                   ) : (
                     <div>
+                      {!compteEditSocials && (<>
                       <label style={labelSt}>Nom d'auteur *</label>
                       <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} style={champ} />
                       <div style={{ height: 14 }} />
@@ -17481,6 +17488,7 @@ export default function App() {
                       <label style={labelSt}>Présentation (facultatif)</label>
                       <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} rows={6} style={{ ...champ, resize: "vertical", minHeight: 130 }} />
                       <div style={{ height: 16 }} />
+                      </>)}
                       <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, marginBottom: 8 }}>🌐 Tes réseaux sociaux (les lecteurs pourront te suivre)</div>
                       <label style={labelSt}>Facebook</label>
                       <input value={auteurFb} onChange={e => setAuteurFb(e.target.value)} placeholder="https://facebook.com/ta-page" style={champ} />
@@ -17497,8 +17505,8 @@ export default function App() {
                       <label style={labelSt}>YouTube</label>
                       <input value={auteurYt} onChange={e => setAuteurYt(e.target.value)} placeholder="https://youtube.com/@ta-chaine" style={champ} />
                       <div style={{ height: 16 }} />
-                      <button onClick={() => { saveAuteur(); setCompteEdit(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
-                      <button onClick={() => { setCompteEdit(false); setAuteurMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                      <button onClick={() => { saveAuteur(); setCompteEdit(false); setCompteEditSocials(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                      <button onClick={() => { setCompteEdit(false); setCompteEditSocials(false); setAuteurMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                     </div>
                   )}
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
