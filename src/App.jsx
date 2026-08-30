@@ -13867,7 +13867,7 @@ export default function App() {
         setVentesAuteur(data || []);
       } catch (e) {}
     })();
-  }, [auteurProfil]);
+  }, [auteurProfil, auteurTab]);
   // Charge les catégories + les livres de l'auteur
   useEffect(() => {
     if (!auteurProfil) { setMesLivres([]); return; }
