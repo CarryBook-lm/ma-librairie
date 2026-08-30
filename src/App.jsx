@@ -1570,8 +1570,11 @@ const PAYS_TEL = [
   { nom: "Sénégal", code: "+221", flag: "🇸🇳" }, { nom: "Bénin", code: "+229", flag: "🇧🇯" },
   { nom: "Gabon", code: "+241", flag: "🇬🇦" }, { nom: "Congo (Brazzaville)", code: "+242", flag: "🇨🇬" },
   { nom: "Congo (RDC)", code: "+243", flag: "🇨🇩" }, { nom: "Tchad", code: "+235", flag: "🇹🇩" },
+  { nom: "Rwanda", code: "+250", flag: "🇷🇼" }, { nom: "Kenya", code: "+254", flag: "🇰🇪" },
+  { nom: "Mozambique", code: "+258", flag: "🇲🇿" }, { nom: "Ouganda", code: "+256", flag: "🇺🇬" },
+  { nom: "Sierra Leone", code: "+232", flag: "🇸🇱" }, { nom: "Zambie", code: "+260", flag: "🇿🇲" },
 ];
-const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD" };
+const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
 const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
 // Capture globale de l'événement d'installation PWA (Android/Chrome) dès le chargement,

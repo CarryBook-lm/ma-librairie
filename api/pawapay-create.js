@@ -28,6 +28,12 @@ const PAYS = {
   MLI: { cur: "XOF" }, // Mali
   NER: { cur: "XOF" }, // Niger
   COD: { cur: "CDF" }, // RD Congo (conversion via taux)
+  RWA: { cur: "RWF" }, // Rwanda
+  KEN: { cur: "KES" }, // Kenya
+  MOZ: { cur: "MZN" }, // Mozambique
+  UGA: { cur: "UGX" }, // Ouganda
+  SLE: { cur: "SLE" }, // Sierra Leone
+  ZMB: { cur: "ZMW" }, // Zambie
 };
 
 function uuidv4() {
@@ -74,17 +80,19 @@ export default async function handler(req, res) {
     let montant = prixFcfa;
     let devise = conf.cur;
 
-    // Conversion CDF pour la RDC (taux fixe modifiable dans l'admin)
-    if (conf.cur === "CDF") {
-      let taux = 4.5;
+    // Conversion pour les devises hors zone FCFA (taux fixes modifiables dans l'admin)
+    if (conf.cur !== "XAF" && conf.cur !== "XOF") {
+      const DEFAUTS = { CDF: 4.5, RWF: 2.13, KES: 0.21, MZN: 0.104, UGX: 6.1, SLE: 0.037, ZMW: 0.043 };
+      const cle = conf.cur === "CDF" ? "taux_xaf_cdf" : ("taux_xaf_" + conf.cur.toLowerCase());
+      let taux = DEFAUTS[conf.cur] || 1;
       try {
         const supa = createClient(
           process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
           process.env.SUPABASE_SERVICE_ROLE_KEY,
           { auth: { autoRefreshToken: false, persistSession: false } }
         );
-        const { data } = await supa.from("reglages").select("valeur").eq("cle", "taux_xaf_cdf").limit(1);
-        if (data && data[0] && data[0].valeur) taux = Number(data[0].valeur) || 4.5;
+        const { data } = await supa.from("reglages").select("valeur").eq("cle", cle).limit(1);
+        if (data && data[0] && data[0].valeur) taux = Number(data[0].valeur) || taux;
       } catch (e) { /* taux par défaut */ }
       montant = Math.round(prixFcfa * taux);
     }

@@ -340,6 +340,9 @@ export default function Admin() {
   const [commAbo, setCommAbo] = useState("");
   const [commAboSaving, setCommAboSaving] = useState(false);
   const [commAboMsg, setCommAboMsg] = useState("");
+  const [devTaux, setDevTaux] = useState({ rwf: "", kes: "", mzn: "", ugx: "", sle: "", zmw: "" });
+  const [devSaving, setDevSaving] = useState(false);
+  const [devMsg, setDevMsg] = useState("");
   const [eaTab, setEaTab] = useState("livres");
   const [eaAuteurs, setEaAuteurs] = useState([]);
   const [eaBooks, setEaBooks] = useState([]);
@@ -430,6 +433,11 @@ export default function Admin() {
         if (data && data.valeur != null) setTauxCdf(String(data.valeur));
         const { data: ca } = await supabase.from("reglages").select("valeur").eq("cle", "commission_abonnement").maybeSingle();
         setCommAbo(ca && ca.valeur != null ? String(ca.valeur) : "250");
+        const cles = ["rwf", "kes", "mzn", "ugx", "sle", "zmw"];
+        const { data: rows } = await supabase.from("reglages").select("cle, valeur").in("cle", cles.map(k => "taux_xaf_" + k));
+        const obj = { rwf: "", kes: "", mzn: "", ugx: "", sle: "", zmw: "" };
+        (rows || []).forEach(r => { const k = r.cle.replace("taux_xaf_", ""); if (k in obj) obj[k] = String(r.valeur); });
+        setDevTaux(obj);
       } catch (e) {}
       setTauxCdfLoading(false);
     })();
@@ -455,6 +463,15 @@ export default function Admin() {
       setCommAboMsg("✅ Commission enregistrée : " + v + " F par livre débloqué");
     } catch (e) { setCommAboMsg("❌ " + (e.message || e)); }
     setCommAboSaving(false);
+  }
+  async function saveDevises() {
+    setDevSaving(true); setDevMsg("");
+    try {
+      const rows = Object.keys(devTaux).map(k => ({ cle: "taux_xaf_" + k, valeur: String(Number(String(devTaux[k]).replace(",", ".")) || 0), updated_at: new Date().toISOString() })).filter(r => Number(r.valeur) > 0);
+      if (rows.length) { const { error } = await supabase.from("reglages").upsert(rows, { onConflict: "cle" }); if (error) throw error; }
+      setDevMsg("✅ Taux enregistrés.");
+    } catch (e) { setDevMsg("❌ " + (e.message || e)); }
+    setDevSaving(false);
   }
   useEffect(() => {
     if (view !== "espace_auteur") return;
@@ -4154,6 +4171,20 @@ export default function Admin() {
                 <input type="text" inputMode="numeric" value={commAbo} onChange={e => setCommAbo(e.target.value)} placeholder="Ex : 250" style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
                 <button onClick={saveCommAbo} disabled={commAboSaving} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: commAboSaving ? 0.6 : 1 }}>{commAboSaving ? "Enregistrement…" : "Enregistrer la commission"}</button>
                 {commAboMsg && <div style={{ marginTop: 14, fontSize: 13, color: commAboMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{commAboMsg}</div>}
+              </div>
+            )}
+            {eaTab === "params" && (
+              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
+                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → autres devises</h3>
+                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Pour les lecteurs de ces pays, le prix en FCFA est multiplié par ce taux. Exemple : un livre à 2000 FCFA au Kenya (taux 0.21) = 420 KES. Ajuste selon les taux réels du jour.</p>
+                {[["rwf","Rwanda (RWF)"],["kes","Kenya (KES)"],["mzn","Mozambique (MZN)"],["ugx","Ouganda (UGX)"],["sle","Sierra Leone (SLE)"],["zmw","Zambie (ZMW)"]].map(([k,lab]) => (
+                  <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <label style={{ color: "#aaa", fontSize: 12, width: 150, flexShrink: 0 }}>{lab}</label>
+                    <input type="text" inputMode="decimal" value={devTaux[k]} onChange={e => setDevTaux({ ...devTaux, [k]: e.target.value })} placeholder="Taux" style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 14, boxSizing: "border-box", minWidth: 0 }} />
+                  </div>
+                ))}
+                <button onClick={saveDevises} disabled={devSaving} style={{ marginTop: 6, padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: devSaving ? 0.6 : 1 }}>{devSaving ? "Enregistrement…" : "Enregistrer les taux"}</button>
+                {devMsg && <div style={{ marginTop: 14, fontSize: 13, color: devMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{devMsg}</div>}
               </div>
             )}
           </div>
