@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     body = body || {};
 
     const { amount, book_id, book_title, user_id, phone, country, referrer_code,
-            kind, quiz_type, result_data } = body;
+            kind, quiz_type, result_data, author_src } = body;
     const estCarrycare = kind === "carrycare";
     if (!amount || (!estCarrycare && !book_id)) {
       return res.status(400).json({ error: "amount et book_id requis" });
@@ -147,6 +147,7 @@ export default async function handler(req, res) {
         { referrer_code: referrer_code ? String(referrer_code) : "" },
         { phone: phone ? String(phone) : "" },
         { prix_fcfa: String(prixFcfa) },
+        { author_src: author_src ? String(author_src) : "" },
       ],
     };
 

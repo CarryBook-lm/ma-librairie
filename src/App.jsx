@@ -16209,6 +16209,8 @@ export default function App() {
         const exp = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
         if (code && exp > Date.now()) referrerCode = code;
       } catch (e) {}
+      let authorSrc = "";
+      try { authorSrc = localStorage.getItem("carrybooks_src_code") || localStorage.getItem("carrybooks_referrer_code") || ""; } catch (e) {}
       const res = await fetch("/api/pawapay-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -16220,6 +16222,7 @@ export default function App() {
           phone: lecteur ? lecteur.telephone : "",
           country: country,
           referrer_code: referrerCode,
+          author_src: authorSrc,
         }),
       });
       const data = await res.json();

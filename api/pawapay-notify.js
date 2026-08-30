@@ -11,6 +11,61 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+// Email admin de nouvelle vente (via Resend) — memes variables que CamPay
+async function sendSaleEmail(supabaseAdmin, opts) {
+  const { bookId, amount, phone, quiz, kind } = opts || {};
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "carrybooks.com@gmail.com";
+  const EMAIL_FROM = process.env.EMAIL_FROM || "CarryBooks <onboarding@resend.dev>";
+  if (!RESEND_API_KEY) { console.warn("[PAWAPAY-EMAIL] RESEND_API_KEY manquante"); return; }
+  let titre = kind === "carrycare" ? ("Diagnostic " + (quiz || "CarryCare")) : ("Livre #" + bookId);
+  try {
+    if (kind !== "carrycare" && bookId) {
+      const { data } = await supabaseAdmin.from("books").select("title").eq("id", bookId).limit(1);
+      if (data && data[0] && data[0].title) titre = data[0].title;
+    }
+  } catch (e) {}
+  const html = '<div style="font-family:Arial,sans-serif;color:#1a1208">' +
+    '<h2 style="color:#c9a84c">Nouvelle vente (PawaPay)</h2>' +
+    '<p style="font-size:16px"><b>' + titre + '</b></p>' +
+    '<p>Montant : <b>' + amount + ' FCFA</b></p>' +
+    '<p>Telephone : ' + (phone || "-") + '</p>' +
+    '<p>Paiement : PawaPay (Mobile Money international)</p></div>';
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + RESEND_API_KEY, "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ from: EMAIL_FROM, to: ADMIN_EMAIL, subject: "Vente PawaPay - " + titre, html }),
+    });
+    const d = await r.json().catch(() => ({}));
+    console.log("[PAWAPAY-EMAIL] envoye:", d.id || JSON.stringify(d));
+  } catch (e) { console.error("[PAWAPAY-EMAIL] erreur:", e.message); }
+}
+
+// Brique 5b : enregistre la commission auteur (70% via son lien, 50% sinon)
+async function recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorSrc }) {
+  try {
+    if (!bookId || !amount) return;
+    const { data: bk } = await supabaseAdmin.from("books").select("auteur_id").eq("id", bookId).limit(1);
+    const auteurId = bk && bk[0] ? bk[0].auteur_id : null;
+    if (!auteurId) return; // livre sans auteur (classiques) -> pas de commission
+    const { data: va } = await supabaseAdmin.from("ventes_auteurs").select("id").eq("reference", extRef).limit(1);
+    if (va && va.length > 0) return; // deja enregistre (anti-doublon)
+    const { data: au } = await supabaseAdmin.from("auteurs").select("code_source").eq("id", auteurId).limit(1);
+    const codeSource = au && au[0] ? au[0].code_source : null;
+    const viaLien = authorSrc && codeSource && String(authorSrc).toLowerCase() === String(codeSource).toLowerCase();
+    const taux = viaLien ? 70 : 50;
+    const partAuteur = Math.round(amount * taux / 100);
+    const { error } = await supabaseAdmin.from("ventes_auteurs").insert([{
+      auteur_id: auteurId, book_id: bookId, reference: extRef,
+      montant_total: amount, taux_auteur: taux, part_auteur: partAuteur,
+      part_carrybooks: amount - partAuteur, source: viaLien ? "auteur" : "carrybooks",
+    }]);
+    if (error) console.error("[PAWAPAY-AUTEUR] insert ventes_auteurs:", error.message);
+    else console.log("[PAWAPAY-AUTEUR] commission enregistree:", taux + "% =", partAuteur, "FCFA");
+  } catch (e) { console.error("[PAWAPAY-AUTEUR] exception:", e.message); }
+}
+
 export default async function handler(req, res) {
   // Toujours répondre 200 pour éviter les renvois en boucle de PawaPay.
   try {
@@ -73,6 +128,7 @@ export default async function handler(req, res) {
     const userId = meta.user_id && meta.user_id !== "guest" ? meta.user_id : null;
     const extRef = meta.ext_ref || ("PP_" + depositId);
     const referrerCode = meta.referrer_code && meta.referrer_code !== "" ? meta.referrer_code : null;
+    const authorSrc = meta.author_src && meta.author_src !== "" ? meta.author_src : "";
     const phone = meta.phone || "";
     // On enregistre le montant en FCFA (le prix d'origine), pas le montant converti.
     const amount = Math.round(Number(meta.prix_fcfa || dep.amount || 0));
@@ -117,6 +173,7 @@ export default async function handler(req, res) {
       // Nettoyage du pending (non bloquant)
       try { await supabaseAdmin.from("carrycare_pending").delete().eq("external_reference", extRef); } catch (e) {}
       console.log("[PAWAPAY-NOTIFY] Diagnostic CarryCare enregistré");
+      await sendSaleEmail(supabaseAdmin, { kind: "carrycare", amount: (p.amount != null ? p.amount : amount), phone: p.phone || phone, quiz: p.quiz_type || quizType });
       return res.status(200).json({ ok: true, handled: "carrycare" });
     }
     // =================== FIN DIAGNOSTIC CARRYCARE ===================
@@ -147,6 +204,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: false, error: error.message });
       }
       console.log("[PAWAPAY-NOTIFY] Achat enregistré (utilisateur)");
+      await sendSaleEmail(supabaseAdmin, { kind: "book", bookId, amount, phone });
+      await recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorSrc });
       return res.status(200).json({ ok: true, handled: "user" });
     } else {
       // Invité → guest_purchases (idempotent par reference)
@@ -169,6 +228,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: false, error: error.message });
       }
       console.log("[PAWAPAY-NOTIFY] Achat enregistré (invité)");
+      await sendSaleEmail(supabaseAdmin, { kind: "book", bookId, amount, phone });
+      await recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorSrc });
       return res.status(200).json({ ok: true, handled: "guest" });
     }
   } catch (e) {
