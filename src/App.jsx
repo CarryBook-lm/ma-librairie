@@ -13789,6 +13789,23 @@ export default function App() {
   const [mesLivres, setMesLivres] = useState([]);
   const [mesLivresTab, setMesLivresTab] = useState(null); // null=tous, sinon roman/guide/audio/gratuit
   const [mesLivresDetail, setMesLivresDetail] = useState(null); // livre ouvert en detail
+  // Vérification auteur (KYC)
+  const [kycOpen, setKycOpen] = useState(false);
+  const [kycNom, setKycNom] = useState("");
+  const [kycPrenom, setKycPrenom] = useState("");
+  const [kycNaissance, setKycNaissance] = useState("");
+  const [kycLieu, setKycLieu] = useState("");
+  const [kycSituation, setKycSituation] = useState("");
+  const [kycNationalite, setKycNationalite] = useState("");
+  const [kycResidence, setKycResidence] = useState("");
+  const [kycSexe, setKycSexe] = useState("");
+  const [kycPhone, setKycPhone] = useState("");
+  const [kycPieceType, setKycPieceType] = useState("");
+  const [kycPieceUrl, setKycPieceUrl] = useState("");
+  const [kycContratUrl, setKycContratUrl] = useState("");
+  const [kycUploading, setKycUploading] = useState("");
+  const [kycSaving, setKycSaving] = useState(false);
+  const [kycMsg, setKycMsg] = useState("");
   const [pubEditId, setPubEditId] = useState(null);
   const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
   const [pubDraftMode, setPubDraftMode] = useState(true); // true = nouveau/brouillon (auto-save actif)
@@ -16626,6 +16643,48 @@ export default function App() {
       return true;
     });
   }
+  const openKyc = () => {
+    const p = auteurProfil || {};
+    setKycNom(p.kyc_nom || ""); setKycPrenom(p.kyc_prenom || ""); setKycNaissance(p.kyc_naissance || "");
+    setKycLieu(p.kyc_lieu_naissance || ""); setKycSituation(p.kyc_situation || ""); setKycNationalite(p.kyc_nationalite || "");
+    setKycResidence(p.kyc_pays_residence || p.pays || ""); setKycSexe(p.kyc_sexe || ""); setKycPhone(p.kyc_paiement_phone || p.telephone || "");
+    setKycPieceType(p.kyc_piece_type || ""); setKycPieceUrl(p.kyc_piece_url || ""); setKycContratUrl(p.kyc_contrat_url || "");
+    setKycMsg(""); setKycOpen(true);
+  };
+  async function uploadKycDoc(file, setter, label) {
+    if (!file) return;
+    setKycUploading(label); setKycMsg("");
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const fileName = "kyc/" + Date.now() + "_" + Math.random().toString(36).slice(2, 10) + "." + ext;
+      const { error } = await supabase.storage.from("kyc-docs").upload(fileName, file, { contentType: file.type || "application/octet-stream", upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("kyc-docs").getPublicUrl(fileName);
+      setter(data.publicUrl);
+    } catch (e) { setKycMsg("Erreur lors de l'envoi du document. Réessaie."); }
+    setKycUploading("");
+  }
+  async function submitKyc() {
+    if (!auteurSession) return;
+    if (!kycNom.trim() || !kycPrenom.trim() || !kycNaissance || !kycNationalite.trim() || !kycResidence.trim() || !kycSexe || !kycPhone.trim() || !kycPieceType || !kycPieceUrl || !kycContratUrl) {
+      setKycMsg("Merci de tout remplir et de joindre ta pièce d'identité + le contrat signé."); return;
+    }
+    setKycSaving(true); setKycMsg("");
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        action: "submit_kyc", id: auteurSession.id,
+        kyc_nom: kycNom.trim(), kyc_prenom: kycPrenom.trim(), kyc_naissance: kycNaissance,
+        kyc_lieu_naissance: kycLieu.trim(), kyc_situation: kycSituation, kyc_nationalite: kycNationalite.trim(),
+        kyc_pays_residence: kycResidence, kyc_sexe: kycSexe, kyc_paiement_phone: kycPhone.trim(),
+        kyc_piece_type: kycPieceType, kyc_piece_url: kycPieceUrl, kyc_contrat_url: kycContratUrl,
+      }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.auteur) { appliquerSessionAuteur(data.auteur); setKycOpen(false); setKycMsg(""); }
+      else { setKycMsg("❌ " + (data.error || "Envoi impossible.")); }
+    } catch (e) { setKycMsg("❌ " + (e.message || e)); }
+    setKycSaving(false);
+  }
+
   async function supprimerMonLivre(b) {
     if (!auteurProfil) return;
     if (!window.confirm("Supprimer définitivement « " + b.title + " » ? Cette action est irréversible.")) return;
@@ -17096,8 +17155,83 @@ export default function App() {
               {auteurTab === "publier" && (
                 <div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  {!pubTypeSelected ? (
+                  {kycOpen ? (
                     <>
+                      <button onClick={() => { setKycOpen(false); setKycMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Retour</button>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔒 Vérification de ton compte auteur</div>
+                      <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Ces informations servent à t'identifier et à te payer. Tout est obligatoire.</div>
+                      <div style={{ background: G.goldDim, borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                        <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 6 }}>📄 Étape 1 — Le contrat</div>
+                        <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>Télécharge le contrat, lis-le, écris « Lu et approuvé », signe, puis re-scanne-le et dépose-le plus bas (Étape 4).</div>
+                        <a href="/contrat-auteur-carrybooks.pdf" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "9px 14px", background: G.gold, color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>⬇️ Télécharger le contrat</a>
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>👤 Étape 2 — Ton identité (comme sur ta pièce)</div>
+                      <label style={labelSt}>Nom *</label>
+                      <input value={kycNom} onChange={e => setKycNom(e.target.value)} style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Prénom(s) *</label>
+                      <input value={kycPrenom} onChange={e => setKycPrenom(e.target.value)} style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Date de naissance *</label>
+                      <input type="date" value={kycNaissance} onChange={e => setKycNaissance(e.target.value)} style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Lieu de naissance *</label>
+                      <input value={kycLieu} onChange={e => setKycLieu(e.target.value)} style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Sexe *</label>
+                      <select value={kycSexe} onChange={e => setKycSexe(e.target.value)} style={champ}><option value="">— Choisis —</option><option value="Femme">Femme</option><option value="Homme">Homme</option></select>
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Situation matrimoniale</label>
+                      <select value={kycSituation} onChange={e => setKycSituation(e.target.value)} style={champ}><option value="">— Choisis —</option><option>Célibataire</option><option>Marié(e)</option><option>Divorcé(e)</option><option>Veuf(ve)</option></select>
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Nationalité *</label>
+                      <input value={kycNationalite} onChange={e => setKycNationalite(e.target.value)} style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Pays de résidence *</label>
+                      <select value={kycResidence} onChange={e => setKycResidence(e.target.value)} style={champ}><option value="">— Choisis —</option>{PAYS_LISTE.map(p => <option key={p.nom} value={p.nom}>{p.flag} {p.nom}</option>)}</select>
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Numéro Mobile Money (pour être payé) *</label>
+                      <input value={kycPhone} onChange={e => setKycPhone(e.target.value)} placeholder="Ex : +237 6XX XX XX XX" style={champ} />
+                      <div style={{ height: 16 }} />
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>🪪 Étape 3 — Ta pièce d'identité</div>
+                      <label style={labelSt}>Type de pièce *</label>
+                      <select value={kycPieceType} onChange={e => setKycPieceType(e.target.value)} style={champ}><option value="">— Choisis —</option><option>CNI</option><option>Passeport</option><option>Récépissé</option><option>Permis de conduire</option></select>
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Scan / photo de la pièce *</label>
+                      {kycPieceUrl ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Pièce ajoutée</span><button onClick={() => setKycPieceUrl("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button></div>
+                      ) : (
+                        <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "piece" ? "Envoi…" : "📷 Choisir le fichier"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycPieceUrl, "piece")} style={{ display: "none" }} /></label>
+                      )}
+                      <div style={{ height: 16 }} />
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Le contrat signé</div>
+                      <label style={labelSt}>Scan du contrat signé (« Lu et approuvé ») *</label>
+                      {kycContratUrl ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Contrat ajouté</span><button onClick={() => setKycContratUrl("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button></div>
+                      ) : (
+                        <label style={{ display: "block", width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", textAlign: "center" }}>{kycUploading === "contrat" ? "Envoi…" : "📄 Choisir le fichier"}<input type="file" accept="image/*,.pdf" onChange={e => uploadKycDoc(e.target.files[0], setKycContratUrl, "contrat")} style={{ display: "none" }} /></label>
+                      )}
+                      {kycMsg && <div style={{ fontSize: 13, textAlign: "center", marginTop: 12, color: (kycMsg.indexOf("✅") === 0) ? G.green : "#e53935" }}>{kycMsg}</div>}
+                      <div style={{ height: 16 }} />
+                      <button onClick={submitKyc} disabled={kycSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: kycSaving ? 0.6 : 1 }}>{kycSaving ? "Envoi…" : "Soumettre ma vérification"}</button>
+                    </>
+                  ) : !pubTypeSelected ? (
+                    <>
+                      {(() => { const stk = (auteurProfil || {}).kyc_status; if (stk === "valide") return null; return (
+                        <div style={{ background: stk === "en_attente" ? "#fff8e1" : stk === "refuse" ? "#fdecea" : G.goldDim, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                          {stk === "en_attente" ? (
+                            <div style={{ fontSize: 13, color: "#7a5c00" }}>⏳ Ta vérification est en cours. Tu pourras publier une fois qu'elle sera validée.</div>
+                          ) : stk === "refuse" ? (<>
+                            <div style={{ fontSize: 13, color: "#c62828", fontWeight: "bold", marginBottom: 6 }}>❌ Vérification refusée</div>
+                            {auteurProfil.kyc_motif_refus ? <div style={{ fontSize: 12, color: "#c62828", marginBottom: 8 }}>{auteurProfil.kyc_motif_refus}</div> : null}
+                            <button onClick={openKyc} style={{ padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>Corriger et re-soumettre</button>
+                          </>) : (<>
+                            <div style={{ fontSize: 13, color: G.text, fontWeight: "bold", marginBottom: 4 }}>🔒 Vérification requise avant de publier</div>
+                            <div style={{ fontSize: 12, color: G.textDim, marginBottom: 10 }}>Pour publier et être payé(e), soumets d'abord tes informations, ta pièce d'identité et le contrat signé.</div>
+                            <button onClick={openKyc} style={{ padding: "12px 18px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>Soumets tes informations</button>
+                          </>)}
+                        </div>
+                      ); })()}
                       <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
                       <div style={{ display: "grid", gap: 8 }}>
@@ -17107,7 +17241,7 @@ export default function App() {
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
                         ].map(o => (
-                          <button key={o.t} onClick={() => { setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2 }}>
+                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
                             <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
                           </button>
