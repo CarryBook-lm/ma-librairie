@@ -13778,9 +13778,10 @@ export default function App() {
   const [pubSaving, setPubSaving] = useState(false);
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
+  const [mesLivresTab, setMesLivresTab] = useState(null); // null=tous, sinon roman/guide/audio/gratuit
   const [pubEditId, setPubEditId] = useState(null);
   const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
-  const [auteurTab, setAuteurTab] = useState("stats");
+  const [auteurTab, setAuteurTab] = useState("publier");
   const [auteurMenu, setAuteurMenu] = useState(false);
   const [compteEdit, setCompteEdit] = useState(false);
   const [statsSubTab, setStatsSubTab] = useState("board");
@@ -13806,7 +13807,7 @@ export default function App() {
         const obj = {};
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
-        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
         setMesLivres(livres || []);
       } catch (e) {}
     })();
@@ -16698,7 +16699,7 @@ export default function App() {
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
       setPubOpen(false);
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
@@ -16716,7 +16717,7 @@ export default function App() {
         if (cancel) return;
         setBoutiqueAuteur(a);
         if (a) {
-          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author").eq("auteur_id", a.id).eq("status", "actif").order("id", { ascending: false });
+          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").order("id", { ascending: false });
           if (!cancel) setBoutiqueBooks(livres || []);
         } else if (!cancel) { setBoutiqueBooks([]); }
       } catch (e) { if (!cancel) { setBoutiqueAuteur(null); setBoutiqueBooks([]); } }
@@ -16837,23 +16838,32 @@ export default function App() {
               </div>
               <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{boutiqueAuteur.nom_complet}</div>
               {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
-              {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap" }}>{boutiqueAuteur.bio}</div> : null}
+              {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap", maxHeight: 150, overflowY: "auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>{boutiqueAuteur.bio}</div> : null}
               <div style={{ marginTop: 14, fontSize: 13, color: G.gold, fontWeight: "bold" }}>{boutiqueBooks.length} livre{boutiqueBooks.length > 1 ? "s" : ""}</div>
             </div>
             {boutiqueBooks.length === 0 ? (
               <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Aucun livre en ligne pour le moment.</div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
-                {boutiqueBooks.map(book => (
-                  <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
-                    <div style={{ width: "100%", aspectRatio: "2/3", background: G.border, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
-                      {book.cover ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+              (() => {
+                const groups = {};
+                boutiqueBooks.forEach(b => { const cat = b.category || "Autres"; (groups[cat] = groups[cat] || []).push(b); });
+                return Object.keys(groups).sort().map(cat => (
+                  <div key={cat} style={{ marginBottom: 22 }}>
+                    <div style={{ fontSize: 15, fontWeight: "bold", color: G.gold, marginBottom: 10, borderBottom: "1px solid " + G.border, paddingBottom: 6 }}>{cat}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
+                      {groups[cat].map(book => (
+                        <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
+                          <div style={{ width: "100%", aspectRatio: "2/3", background: G.border, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
+                            {book.cover ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                          <div style={{ fontSize: 12, color: G.gold, fontWeight: "bold" }}>{book.price ? book.price + " FCFA" : "Gratuit"}</div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-                    <div style={{ fontSize: 12, color: G.gold, fontWeight: "bold" }}>{book.price ? book.price + " FCFA" : "Gratuit"}</div>
                   </div>
-                ))}
-              </div>
+                ));
+              })()
             )}
           </div>
         )}
@@ -17106,10 +17116,19 @@ export default function App() {
                 <div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
-                  {mesLivres.length === 0 ? (
-                    <div style={{ fontSize: 13, color: G.textDim }}>Tu n'as pas encore publié de livre.</div>
+                  <button onClick={() => setMesLivresTab(null)} style={{ width: "100%", padding: 10, marginBottom: 8, borderRadius: 8, border: "none", background: mesLivresTab === null ? G.gold : G.goldDim, color: mesLivresTab === null ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Afficher tous mes livres</button>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto" }}>
+                    {[{ t: "roman", l: "Romans" }, { t: "guide", l: "Livres PDF" }, { t: "audio", l: "Livres Audios" }, { t: "gratuit", l: "Livres Gratuits" }].map(o => (
+                      <button key={o.t} onClick={() => setMesLivresTab(o.t)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 16, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{o.l}</button>
+                    ))}
+                  </div>
+                  {(() => {
+                    const classer = (b) => b.audio_url ? "audio" : (((b.price || 0) === 0) ? "gratuit" : (b.pdf_url ? "guide" : "roman"));
+                    const liste = mesLivresTab ? mesLivres.filter(b => classer(b) === mesLivresTab) : mesLivres;
+                    return liste.length === 0 ? (
+                    <div style={{ fontSize: 13, color: G.textDim }}>{mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie."}</div>
                   ) : (
-                    mesLivres.map(b => {
+                    liste.map(b => {
                       const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
                       return (
                         <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + G.border }}>
@@ -17135,7 +17154,8 @@ export default function App() {
                         </div>
                       );
                     })
-                  )}
+                    );
+                  })()}
                 </div>
                 </div>
               )}
