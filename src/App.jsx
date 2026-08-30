@@ -1710,6 +1710,13 @@ const CONTRAT_ARTICLES = [
   ["Article 10 - Loi applicable et litiges", "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis."],
 ];
 
+function renderBadgeVerifie(show) {
+  if (!show) return null;
+  return (
+    <span title="Auteur vérifié" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 15, height: 15, borderRadius: "50%", background: "#1d9bf0", color: "#fff", fontSize: 9, fontWeight: "bold", marginRight: 4, verticalAlign: "middle", flexShrink: 0 }}>✓</span>
+  );
+}
+
 const G = {
   bg: "#f5f0e8", surface: "#ede7d9", surface2: "#e8e0ce", border: "#d8cdb8",
   gold: "#c9a84c", goldLight: "#e0be7a", goldDim: "rgba(201,168,76,0.15)",
@@ -17047,7 +17054,7 @@ export default function App() {
     let cancel = false;
     (async () => {
       try {
-        const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url").order("nom_complet", { ascending: true });
+        const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url,verifie").order("nom_complet", { ascending: true });
         if (!cancel) setAuteursAll(data || []);
       } catch (e) {}
     })();
@@ -17062,7 +17069,7 @@ export default function App() {
       setAuteursListLoading(true);
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
-        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url").order("nom_complet", { ascending: true });
+        const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url,verifie").order("nom_complet", { ascending: true });
         if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
@@ -17116,7 +17123,7 @@ export default function App() {
                             {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{a.nom_complet}</div>
+                            <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
                             {a.pays ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.pays}</div> : null}
                           </div>
                           <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
@@ -17152,7 +17159,7 @@ export default function App() {
               <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>
                 {boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (boutiqueAuteur.nom_complet || "?").charAt(0).toUpperCase()}
               </div>
-              <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{boutiqueAuteur.nom_complet}</div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{renderBadgeVerifie(boutiqueAuteur.verifie)}{boutiqueAuteur.nom_complet}</div>
               {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
               {boutiqueAuteur.bio ? <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, maxWidth: 600, margin: "0 auto", textAlign: "left", whiteSpace: "pre-wrap", maxHeight: 150, overflowY: "auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>{boutiqueAuteur.bio}</div> : null}
               {(() => {
@@ -17300,7 +17307,7 @@ export default function App() {
                 {auteurProfil.photo_url ? <img src={auteurProfil.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurProfil.nom_complet || "?").charAt(0).toUpperCase()}
               </div>
             )}
-            <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil && renderBadgeVerifie(auteurProfil.kyc_status === "valide")}{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
           </div>
           {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
         </div>
@@ -18060,7 +18067,7 @@ export default function App() {
           <div onClick={() => setAuteurMenu(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }}>
             <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 270, maxWidth: "80%", background: G.navSurface, boxShadow: "2px 0 12px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: 16, borderBottom: "1px solid " + G.navBorder }}>
-                <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil ? auteurProfil.nom_complet : ""}</div>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil && renderBadgeVerifie(auteurProfil.kyc_status === "valide")}{auteurProfil ? auteurProfil.nom_complet : ""}</div>
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
@@ -20658,7 +20665,7 @@ export default function App() {
                               {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: "bold", color: G.text }}>{a.nom_complet}</div>
+                              <div style={{ fontSize: 14, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
                               {a.pays ? <div style={{ fontSize: 12, color: G.textDim }}>📍 {a.pays}</div> : null}
                             </div>
                             <div style={{ color: G.gold, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>Boutique →</div>
