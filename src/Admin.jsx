@@ -352,6 +352,9 @@ export default function Admin() {
   const [eaHistorique, setEaHistorique] = useState([]); // retraits payés
   const [eaTotaux, setEaTotaux] = useState({ owed: 0, paid: 0, pending: 0 });
   const [eaHistoOuvert, setEaHistoOuvert] = useState(false);
+  const [eaSelectedAuteur, setEaSelectedAuteur] = useState(null); // auteur sélectionné (livres)
+  const [eaSelectedKyc, setEaSelectedKyc] = useState(null); // auteur sélectionné (vérif)
+  const [eaTodo, setEaTodo] = useState({ livres: 0, kyc: 0, retraits: 0 });
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -494,6 +497,18 @@ export default function Admin() {
       setEaLoading(false);
     })();
   }, [view]);
+  const chargerTodo = async () => {
+    try {
+      const [{ count: nbLivres }, { count: nbKyc }, { count: nbRetraits }] = await Promise.all([
+        supabase.from("books").select("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("status", "en_attente"),
+        supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "en_attente"),
+        supabase.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
+      ]);
+      setEaTodo({ livres: nbLivres || 0, kyc: nbKyc || 0, retraits: nbRetraits || 0 });
+    } catch (e) {}
+  };
+  useEffect(() => { chargerTodo(); }, []);
+
   const chargerSoldes = async () => {
     const { data: rr } = await supabase.from("retraits").select("*").order("created_at", { ascending: false });
     const { data: auts } = await supabase.from("auteurs").select("id, nom_complet, kyc_paiement_phone, telephone");
@@ -508,6 +523,7 @@ export default function Admin() {
     const totalPaye = paye.reduce((s, r) => s + (r.montant || 0), 0);
     const totalEnAttente = enAttente.reduce((s, r) => s + (r.montant || 0), 0);
     setEaTotaux({ owed: totalGagne - totalPaye, paid: totalPaye, pending: totalEnAttente });
+    chargerTodo();
   };
   const reverserAuteur = async (row) => {
     if (!window.confirm("Confirmer le paiement de " + row.montant.toLocaleString() + " F à " + row.nom + " ? À faire APRÈS avoir envoyé le Mobile Money.")) return;
@@ -526,6 +542,7 @@ export default function Admin() {
   const kycRefresh = async () => {
     const { data } = await supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true });
     setEaKyc(data || []);
+    chargerTodo();
   };
   const kycValider = async (id) => {
     if (!window.confirm("Valider cette vérification ? L'auteur pourra publier.")) return;
@@ -2082,6 +2099,9 @@ export default function Admin() {
                 borderLeft: "3px solid " + (view === item.id ? "#c9a84c" : "transparent"),
                 borderBottom: "1px solid #2a2a2a" }}>
               <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
+              {item.id === "espace_auteur" && (eaTodo.livres + eaTodo.kyc + eaTodo.retraits) > 0 && (
+                <span style={{ marginLeft: "auto", background: "#e53935", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 8px", minWidth: 18, textAlign: "center" }}>{eaTodo.livres + eaTodo.kyc + eaTodo.retraits}</span>
+              )}
             </div>
           ))}
         </div>
@@ -4072,31 +4092,38 @@ export default function Admin() {
 
             {eaTab === "livres" && (
               <div>
-                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaSelectedAuteur ? (() => {
+                  const a = eaSelectedAuteur;
+                  const livres = eaBooks.filter(b => b.auteur_id === a.id);
+                  return (
+                    <div>
+                      <button onClick={() => setEaSelectedAuteur(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
+                      <div style={{ color: "#c9a84c", fontSize: 17, fontWeight: "bold", marginBottom: 2 }}>{a.nom_complet || "Auteur sans nom"}</div>
+                      <div style={{ color: "#777", fontSize: 11, marginBottom: 14 }}>{a.telephone || ""}{a.email ? " · " + a.email : ""}</div>
+                      {livres.length === 0 ? <div style={{ color: "#666", fontSize: 13, fontStyle: "italic" }}>Aucun livre publié.</div> : livres.map(b => {
+                        const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
+                        return (
+                          <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #262626" }}>
+                            <div style={{ color: "#e8e0d0", fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.title}</div>
+                            <div style={{ color: "#888", fontSize: 12, margin: "0 12px", whiteSpace: "nowrap" }}>{(b.price||0).toLocaleString()} F</div>
+                            <div style={{ color: st.c, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>{st.t}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })() : (
                   eaAuteurs.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun auteur inscrit pour le moment.</div> : (
                     eaAuteurs.map(a => {
                       const livres = eaBooks.filter(b => b.auteur_id === a.id);
+                      const enAttente = livres.filter(b => b.status !== "actif" && b.moderation !== "refuse" && b.status !== "brouillon").length;
                       return (
-                        <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                            <div>
-                              <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold" }}>{a.nom_complet || "Auteur sans nom"}</div>
-                              <div style={{ color: "#777", fontSize: 11 }}>{a.telephone || ""}{a.email ? " · " + a.email : ""}</div>
-                            </div>
-                            <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap" }}>{livres.length} livre{livres.length>1?"s":""}</div>
+                        <div key={a.id} onClick={() => setEaSelectedAuteur(a)} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px", marginBottom: 10, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                            <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
+                            {enAttente > 0 && <span style={{ background: "#e53935", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 10, padding: "1px 7px", flexShrink: 0 }}>{enAttente}</span>}
                           </div>
-                          {livres.length === 0 ? <div style={{ color: "#666", fontSize: 12, fontStyle: "italic" }}>Aucun livre publié.</div> : (
-                            livres.map(b => {
-                              const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
-                              return (
-                                <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #262626" }}>
-                                  <div style={{ color: "#e8e0d0", fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.title}</div>
-                                  <div style={{ color: "#888", fontSize: 12, margin: "0 12px", whiteSpace: "nowrap" }}>{(b.price||0).toLocaleString()} F</div>
-                                  <div style={{ color: st.c, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>{st.t}</div>
-                                </div>
-                              );
-                            })
-                          )}
+                          <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>{livres.length} livre{livres.length>1?"s":""} ›</div>
                         </div>
                       );
                     })
@@ -4107,9 +4134,10 @@ export default function Admin() {
 
             {eaTab === "kyc" && (
               <div>
-                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
-                  eaKyc.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune vérification en attente.</div> : (
-                    eaKyc.map(a => (
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaSelectedKyc ? (
+                  <div>
+                    <button onClick={() => setEaSelectedKyc(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
+                    {[eaSelectedKyc].map(a => (
                       <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
                         <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{a.kyc_prenom} {a.kyc_nom}</div>
                         <div style={{ color: "#777", fontSize: 11, marginBottom: 10 }}>Compte : {a.nom_complet || "?"} · {a.email || ""}</div>
@@ -4129,6 +4157,18 @@ export default function Admin() {
                           <button onClick={() => kycValider(a.id)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Valider</button>
                           <button onClick={() => kycRefuser(a.id)} style={{ flex: 1, padding: "10px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  eaKyc.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune vérification en attente.</div> : (
+                    eaKyc.map(a => (
+                      <div key={a.id} onClick={() => setEaSelectedKyc(a)} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px", marginBottom: 10, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#e53935", flexShrink: 0 }} />
+                          <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.kyc_prenom} {a.kyc_nom}</div>
+                        </div>
+                        <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>À vérifier ›</div>
                       </div>
                     ))
                   )
