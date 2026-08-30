@@ -106,11 +106,21 @@ export default async function handler(req, res) {
     }
 
     // ---------- RECHARGER UN PROFIL ----------
+    // Délai (en jours) avant qu'une commission soit retirable (défaut 7, modifiable dans les réglages)
+    async function lireDelaiRetrait() {
+      try {
+        const { data } = await supa.from("reglages").select("valeur").eq("cle", "delai_retrait_jours").limit(1);
+        if (data && data[0] && data[0].valeur != null) { const n = Number(data[0].valeur); if (n >= 0) return n; }
+      } catch (e) {}
+      return 7;
+    }
+
     if (action === "get") {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
       const { data } = await supa.from("auteurs").select(SAFE).eq("id", id).limit(1);
-      return res.status(200).json({ auteur: (data && data[0]) || null });
+      const delai = await lireDelaiRetrait();
+      return res.status(200).json({ auteur: (data && data[0]) || null, delai_retrait: delai });
     }
 
     // ---------- MISE A JOUR DU PROFIL (pas le mot de passe) ----------
@@ -150,9 +160,10 @@ export default async function handler(req, res) {
       const montant = Math.round(Number(body.montant || 0));
       if (!id) return res.status(400).json({ error: "id requis." });
       if (!montant || montant <= 0) return res.status(400).json({ error: "Montant invalide." });
-      // Seules les commissions de plus de 7 jours sont retirables
-      const seuil7j = new Date(Date.now() - 7 * 86400000).toISOString();
-      const { data: va } = await supa.from("ventes_auteurs").select("part_auteur").eq("auteur_id", id).lte("created_at", seuil7j);
+      // Seules les commissions plus anciennes que le délai sont retirables
+      const delaiJ = await lireDelaiRetrait();
+      const seuil = new Date(Date.now() - delaiJ * 86400000).toISOString();
+      const { data: va } = await supa.from("ventes_auteurs").select("part_auteur").eq("auteur_id", id).lte("created_at", seuil);
       const mature = (va || []).reduce((s, v) => s + (v.part_auteur || 0), 0);
       const { data: rr } = await supa.from("retraits").select("montant, statut").eq("auteur_id", id).in("statut", ["paye", "en_attente"]);
       const dejaPris = (rr || []).reduce((s, r) => s + (r.montant || 0), 0);
