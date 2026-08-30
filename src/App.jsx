@@ -13750,6 +13750,14 @@ export default function App() {
   const [pawapayCountry, setPawapayCountry] = useState("");
   const [showPawapayCountries, setShowPawapayCountries] = useState(false);
   const [auteurProfil, setAuteurProfil] = useState(null);
+  // Compte AUTEUR (email + mot de passe), independant du lecteur/telephone
+  const [auteurSession, setAuteurSession] = useState(null);
+  const [auteurAuthMode, setAuteurAuthMode] = useState("login"); // login | signup
+  const [auteurAuthEmail, setAuteurAuthEmail] = useState("");
+  const [auteurAuthPassword, setAuteurAuthPassword] = useState("");
+  const [auteurAuthNom, setAuteurAuthNom] = useState("");
+  const [auteurAuthMsg, setAuteurAuthMsg] = useState("");
+  const [auteurAuthLoading, setAuteurAuthLoading] = useState(false);
   const [auteurChecked, setAuteurChecked] = useState(false);
   const [auteurNom, setAuteurNom] = useState("");
   const [auteurTel, setAuteurTel] = useState("");
@@ -14016,20 +14024,53 @@ export default function App() {
   const [lecteurPays, setLecteurPays] = useState("");
   const [lecteurTel, setLecteurTel] = useState("");
   const [lecteurSaving, setLecteurSaving] = useState(false);
-  // Charge le profil auteur de la personne connectée (identité = téléphone du lecteur)
+  // Charge la SESSION auteur (compte email/mot de passe) depuis le stockage local.
+  // Independant du lecteur : l'auteur retrouve son compte sur tout appareil.
+  const remplirProfilAuteur = (prof) => {
+    setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || "");
+    setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || "");
+    setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || "");
+    setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
+  };
   useEffect(() => {
-    if (!lecteur) { setAuteurProfil(null); setAuteurChecked(true); return; }
-    (async () => {
-      try {
-        const { data } = await supabase.from("auteurs").select("*").eq("telephone_login", lecteur.telephone).order("id", { ascending: false }).limit(1);
-        const prof = (data && data.length) ? data[0] : null;
-        setAuteurProfil(prof);
-        if (prof) { setAuteurNom(prof.nom_complet || ""); setAuteurTel(prof.telephone || ""); setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || ""); setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || ""); setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || ""); }
-        else { setAuteurNom(lecteur.prenom || ""); setAuteurPays(lecteur.pays || ""); setAuteurTel(""); setAuteurEmail(""); setAuteurBio(""); }
-      } catch (e) {}
-      setAuteurChecked(true);
-    })();
-  }, [lecteur]);
+    try {
+      const raw = localStorage.getItem("carrybooks_auteur");
+      if (raw) {
+        const a = JSON.parse(raw);
+        if (a && a.id) { setAuteurSession(a); setAuteurProfil(a); remplirProfilAuteur(a); }
+      }
+    } catch (e) {}
+    setAuteurChecked(true);
+  }, []);
+
+  const appliquerSessionAuteur = (a) => {
+    setAuteurSession(a); setAuteurProfil(a); remplirProfilAuteur(a);
+    try { localStorage.setItem("carrybooks_auteur", JSON.stringify(a)); } catch (e) {}
+  };
+  const auteurLogin = async () => {
+    setAuteurAuthLoading(true); setAuteurAuthMsg("");
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "login", email: auteurAuthEmail, password: auteurAuthPassword }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurAuthEmail(""); setAuteurAuthPassword(""); }
+      else { setAuteurAuthMsg(data.error || "Connexion impossible."); }
+    } catch (e) { setAuteurAuthMsg("Erreur de connexion. Reessaie."); }
+    setAuteurAuthLoading(false);
+  };
+  const auteurSignup = async () => {
+    setAuteurAuthLoading(true); setAuteurAuthMsg("");
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurAuthEmail(""); setAuteurAuthPassword(""); setAuteurAuthNom(""); }
+      else { setAuteurAuthMsg(data.error || "Creation impossible."); }
+    } catch (e) { setAuteurAuthMsg("Erreur. Reessaie."); }
+    setAuteurAuthLoading(false);
+  };
+  const auteurLogout = () => {
+    try { localStorage.removeItem("carrybooks_auteur"); } catch (e) {}
+    setAuteurSession(null); setAuteurProfil(null); setAuteurMenu(false); setPage("home");
+  };
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   useEffect(() => {
@@ -16469,8 +16510,6 @@ export default function App() {
   ];
 
   // ── ESPACE AUTEUR (Publie ton livre) ──
-  async function saveAuteur() {
-    if (!lecteur) return;
   const uploadAuteurPhoto = async (file) => {
     if (!file) return;
     setAuteurPhotoUploading(true); setAuteurMsg("");
@@ -16488,49 +16527,31 @@ export default function App() {
     setAuteurPhotoUploading(false);
   };
 
-    if (!auteurNom.trim() || !auteurTel.trim() || !auteurPays.trim() || !auteurEmail.trim()) {
-      setAuteurMsg("Merci de remplir ton nom, ton email, ton téléphone et ton pays."); return;
-    }
+  // Enregistre le PROFIL auteur (via le serveur, jamais le mot de passe).
+  async function saveAuteur() {
+    if (!auteurSession) return;
+    if (!auteurNom.trim()) { setAuteurMsg("Merci d'indiquer ton nom d'auteur."); return; }
     setAuteurSaving(true); setAuteurMsg("");
     try {
-      const base = (auteurNom.trim().split(/\s+/)[0] || "auteur").toLowerCase().replace(/[^a-z0-9]/g, "");
-      const genCode = (base || "auteur") + Math.random().toString(36).slice(2, 7);
-      const payload = {
-        telephone_login: lecteur.telephone,
+      const telComplet = (function(){
+        const CODES = {"Bénin":"+229","Burkina Faso":"+226","Burundi":"+257","Cameroun":"+237","Congo (Brazzaville)":"+242","Congo (RDC)":"+243","Côte d'Ivoire":"+225","Gabon":"+241","Guinée":"+224","Mali":"+223","Niger":"+227","République centrafricaine":"+236","Rwanda":"+250","Sénégal":"+221","Tchad":"+235","Togo":"+228"};
+        const ind = CODES[auteurPays] || ""; const t = auteurTel.trim();
+        return t ? ((ind ? ind + " " : "") + t) : null;
+      })();
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        action: "update",
+        id: auteurSession.id,
         nom_complet: auteurNom.trim(),
-        email: auteurEmail.trim() || null,
-        telephone: (function(){
-          const CODES = {"Bénin":"+229","Burkina Faso":"+226","Burundi":"+257","Cameroun":"+237","Congo (Brazzaville)":"+242","Congo (RDC)":"+243","Côte d'Ivoire":"+225","Gabon":"+241","Guinée":"+224","Mali":"+223","Niger":"+227","République centrafricaine":"+236","Rwanda":"+250","Sénégal":"+221","Tchad":"+235","Togo":"+228"};
-          const ind = CODES[auteurPays] || "";
-          return (ind ? ind + " " : "") + auteurTel.trim();
-        })(),
         pays: auteurPays.trim(),
-        pixel_meta: auteurPixel.trim() || null,
-        pixel_tiktok: auteurPixelTiktok.trim() || null,
-        bio: auteurBio.trim() || null,
+        telephone: telComplet,
+        bio: auteurBio.trim(),
         photo_url: auteurPhoto || null,
-      };
-      if (auteurProfil) {
-        const { data, error } = await supabase.from("auteurs").update(payload).eq("id", auteurProfil.id).select().maybeSingle();
-        if (error) throw error;
-        setAuteurProfil(data);
-        setAuteurMsg("✅ Profil mis à jour.");
-      } else {
-        // Anti-doublon : si un profil existe déjà pour cet utilisateur, on le met à jour
-        const { data: existing } = await supabase.from("auteurs").select("*").eq("telephone_login", lecteur.telephone).order("id", { ascending: false }).limit(1);
-        if (existing && existing.length) {
-          const { data, error } = await supabase.from("auteurs").update(payload).eq("id", existing[0].id).select().maybeSingle();
-          if (error) throw error;
-          setAuteurProfil(data);
-          setAuteurMsg("✅ Profil mis à jour.");
-        } else {
-          payload.code_source = genCode;
-          const { data, error } = await supabase.from("auteurs").insert(payload).select().maybeSingle();
-          if (error) throw error;
-          setAuteurProfil(data);
-          setAuteurMsg("✅ Bienvenue ! Ton espace auteur est créé.");
-        }
-      }
+        pixel_meta: auteurPixel.trim(),
+        pixel_tiktok: auteurPixelTiktok.trim(),
+      }) });
+      const data = await res.json().catch(() => ({}));
+      if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
+      else { setAuteurMsg("❌ " + (data.error || "Enregistrement impossible.")); }
     } catch (e) {
       setAuteurMsg("❌ " + (e.message || e));
     }
@@ -16819,6 +16840,45 @@ export default function App() {
       { nom: "Togo", code: "+228", flag: "🇹🇬" }, { nom: "Autre pays", code: "", flag: "🌍" },
     ];
     const indicatif = (PAYS_LISTE.find(p => p.nom === auteurPays) || {}).code || "";
+
+    // Pas de session auteur -> ecran Connexion / Creation de compte (email + mot de passe)
+    if (!auteurSession) {
+      return (
+        <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: 40 }}>
+          {isInAppBrowser() && !fbBannerDismissed && fbBannerNode}
+          <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>
+            <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>Espace auteur</div>
+          </div>
+          <div style={{ padding: 24, maxWidth: 420, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 34, marginBottom: 8 }}>✍️</div>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: G.text }}>{auteurAuthMode === "signup" ? "Crée ton compte auteur" : "Connexion auteur"}</div>
+              <div style={{ fontSize: 13, color: G.textDim, marginTop: 6, lineHeight: 1.5 }}>Ton compte auteur est séparé de ta connexion lecteur. Tu le retrouves sur n'importe quel appareil avec ton email et ton mot de passe.</div>
+            </div>
+            {auteurAuthMode === "signup" && (<>
+              <label style={labelSt}>Ton nom d'auteur</label>
+              <input value={auteurAuthNom} onChange={e => setAuteurAuthNom(e.target.value)} placeholder="ex : Landrine Maff" style={champ} />
+              <div style={{ height: 12 }} />
+            </>)}
+            <label style={labelSt}>Ton email d'auteur</label>
+            <input type="email" value={auteurAuthEmail} onChange={e => setAuteurAuthEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
+            <div style={{ height: 12 }} />
+            <label style={labelSt}>Ton mot de passe</label>
+            <input type="password" value={auteurAuthPassword} onChange={e => setAuteurAuthPassword(e.target.value)} placeholder="6 caractères minimum" style={champ} />
+            {auteurAuthMsg && <div style={{ color: "#e53935", fontSize: 13, marginTop: 10 }}>{auteurAuthMsg}</div>}
+            <button onClick={auteurAuthMode === "signup" ? auteurSignup : auteurLogin} disabled={auteurAuthLoading} style={{ width: "100%", padding: 14, marginTop: 16, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurAuthLoading ? 0.6 : 1 }}>
+              {auteurAuthLoading ? "..." : (auteurAuthMode === "signup" ? "Créer mon compte" : "Se connecter")}
+            </button>
+            <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: G.textDim }}>
+              {auteurAuthMode === "signup"
+                ? <span>Déjà un compte ? <span onClick={() => { setAuteurAuthMode("login"); setAuteurAuthMsg(""); }} style={{ color: G.gold, fontWeight: "bold", cursor: "pointer" }}>Se connecter</span></span>
+                : <span>Pas encore de compte ? <span onClick={() => { setAuteurAuthMode("signup"); setAuteurAuthMsg(""); }} style={{ color: G.gold, fontWeight: "bold", cursor: "pointer" }}>Créer un compte auteur</span></span>}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: auteurProfil ? 74 : 0 }}>
         {showLecteurModal && lecteurModalNode}
@@ -16834,18 +16894,18 @@ export default function App() {
         </div>
         <div style={{ padding: 16, maxWidth: 620, margin: "0 auto" }}>
 
-          {!lecteur && (
+          {!auteurProfil && (
             <div style={{ textAlign: "center", padding: 30 }}>
               <p style={{ color: G.textDim, fontSize: 14, marginBottom: 16 }}>Connecte-toi pour publier tes livres sur CarryBooks.</p>
               <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 24px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>🔑 Se connecter</button>
             </div>
           )}
 
-          {lecteur && !auteurChecked && (
+          {!auteurChecked && (
             <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Chargement…</div>
           )}
 
-          {lecteur && auteurChecked && auteurProfil && (
+          {auteurChecked && auteurProfil && (
             <div>
               {/* TABLEAU DE BORD */}
               {auteurTab === "dashboard" && (
@@ -17115,8 +17175,8 @@ export default function App() {
                         <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
                       </div>
                       <div style={{ height: 14 }} />
-                      <label style={labelSt}>Ton adresse email *</label>
-                      <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
+                      <label style={labelSt}>Ton email de connexion (visible par tes lecteurs)</label>
+                      <input type="email" value={auteurEmail} readOnly style={{ ...champ, background: "#f2f2f2", color: G.textDim }} />
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Photo de profil (facultatif)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
@@ -17274,6 +17334,7 @@ export default function App() {
             <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support</button>
             <button onClick={() => { setAuteurTab("notifs"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "notifs" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "notifs" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔔</span> Activer les notifications</button>
                 <button onClick={() => { setAuteurMenu(false); setPage("home"); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: G.textDim, fontSize: 14, cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏠</span> Retour à la boutique</button>
+                <button onClick={auteurLogout} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: "#e53935", fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🚪</span> Se déconnecter</button>
               </div>
             </div>
           </div>
