@@ -13874,6 +13874,7 @@ export default function App() {
   const [statsPeriod, setStatsPeriod] = useState("today");
   const [statsDate, setStatsDate] = useState("");
   const [ventesAuteur, setVentesAuteur] = useState([]);
+  const [delaiRetrait, setDelaiRetrait] = useState(7);
   const [retraitsAuteur, setRetraitsAuteur] = useState([]);
   const [retraitOpen, setRetraitOpen] = useState(false);
   const [retraitMontant, setRetraitMontant] = useState("");
@@ -14140,6 +14141,7 @@ export default function App() {
             try {
               const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id }) });
               const data = await res.json().catch(() => ({}));
+              if (data && typeof data.delai_retrait === "number") setDelaiRetrait(data.delai_retrait);
               if (data && data.auteur) {
                 if (a.kyc_status !== "valide" && data.auteur.kyc_status === "valide") setKycNotif("✅ Ta vérification a été validée ! Tu peux maintenant publier tes livres.");
                 else if (a.kyc_status !== "refuse" && data.auteur.kyc_status === "refuse") setKycNotif("❌ Ta vérification a été refusée. Ouvre l'onglet Publier pour voir le motif et re-soumettre.");
@@ -17691,7 +17693,7 @@ export default function App() {
                       const percu = retraitsAuteur.filter(r => r.statut === "paye").reduce((s, r) => s + (r.montant || 0), 0);
                       const enAttente = retraitsAuteur.filter(r => r.statut === "en_attente").reduce((s, r) => s + (r.montant || 0), 0);
                       const pasPercu = vendu - percu;
-                      const mature = ventesAuteur.filter(v => new Date(v.created_at).getTime() <= Date.now() - 7 * 86400000).reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const mature = ventesAuteur.filter(v => new Date(v.created_at).getTime() <= Date.now() - delaiRetrait * 86400000).reduce((s, v) => s + (v.part_auteur || 0), 0);
                       const dispo = Math.max(0, mature - percu - enAttente);
                       const box = (label, val, fort) => (
                         <div style={{ flex: 1, background: fort ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.15)", borderRadius: 10, padding: 12, textAlign: "center", minWidth: 0 }}>
@@ -17705,7 +17707,7 @@ export default function App() {
                           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>{box("Total déjà vendu", vendu, false)}{box("Total déjà perçu", percu, false)}</div>
                           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
                           {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
-                          <div style={{ fontSize: 10.5, opacity: 0.85, marginBottom: 8, textAlign: "center" }}>🔒 Les fonds deviennent retirables 7 jours après chaque vente.</div>
+                          <div style={{ fontSize: 10.5, opacity: 0.85, marginBottom: 8, textAlign: "center" }}>🔒 Les fonds deviennent retirables {delaiRetrait} jour{delaiRetrait > 1 ? "s" : ""} après chaque vente.</div>
                           <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? "#fff" : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
                         </div>
                       );
