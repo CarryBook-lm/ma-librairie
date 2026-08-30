@@ -17,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
 // Champs "surs" renvoyes au client (JAMAIS password_hash)
-const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok";
+const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube";
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -118,7 +118,7 @@ export default async function handler(req, res) {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
       const patch = {};
-      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok"].forEach((k) => {
+      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube"].forEach((k) => {
         if (k in body) patch[k] = (body[k] === "" ? null : body[k]);
       });
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Rien a mettre a jour." });
