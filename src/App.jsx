@@ -13783,6 +13783,7 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
   const [mesLivresTab, setMesLivresTab] = useState(null); // null=tous, sinon roman/guide/audio/gratuit
+  const [mesLivresDetail, setMesLivresDetail] = useState(null); // livre ouvert en detail
   const [pubEditId, setPubEditId] = useState(null);
   const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
   const [pubDraftMode, setPubDraftMode] = useState(true); // true = nouveau/brouillon (auto-save actif)
@@ -16613,6 +16614,19 @@ export default function App() {
       return true;
     });
   }
+  async function supprimerMonLivre(b) {
+    if (!auteurProfil) return;
+    if (!window.confirm("Supprimer définitivement « " + b.title + " » ? Cette action est irréversible.")) return;
+    try {
+      const { error } = await supabase.from("books").delete().eq("id", b.id).eq("auteur_id", auteurProfil.id);
+      if (error) throw error;
+      setMesLivresDetail(null);
+      setPubMsg("🗑️ Livre supprimé.");
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      setMesLivres(livres || []);
+    } catch (e) { alert("Erreur lors de la suppression : " + (e.message || e)); }
+  }
+
   function editLivre(b) {
     setPubForm({
       title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
@@ -17182,30 +17196,59 @@ export default function App() {
                   ) : (
                     liste.map(b => {
                       const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "📝 Brouillon (non soumis)", c: G.textDim } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                      const lien = "https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
                       return (
-                        <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + G.border }}>
-                          {b.cover ? <img src={b.cover} alt="" style={{ width: 34, height: 48, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 34, height: 48, background: G.bg, borderRadius: 4 }} />}
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{b.title}</div>
-                            <div style={{ fontSize: 12, color: st.c }}>{st.t}</div>
-                            {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935" }}>{b.motif_refus}</div> : null}
-                            {b.status === "actif" && auteurProfil.code_source ? (
-                              <div style={{ marginTop: 6 }}>
-                                <div style={{ fontSize: 10, color: G.textDim, marginBottom: 2 }}>🔗 Ton lien de pub (70% pour toi) :</div>
-                                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                                  <input readOnly value={"https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 10, padding: "4px 6px", border: "1px solid " + G.border, borderRadius: 4, color: G.textDim, background: G.bg, minWidth: 0 }} />
-                                  <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + auteurProfil.code_source); setPubMsg("✅ Lien copié !"); } catch (e) {} }} style={{ fontSize: 10, padding: "4px 8px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap" }}>Copier</button>
-                                </div>
-                              </div>
-                            ) : null}
+                        <div key={b.id} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border }}>
+                          <div onClick={() => setMesLivresDetail(b)} style={{ cursor: "pointer", flexShrink: 0 }}>
+                            {b.cover ? <img src={b.cover} alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
                           </div>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                            <div style={{ fontSize: 12, color: G.textDim }}>{b.price} F</div>
-                            <button onClick={() => editLivre(b)} style={{ background: "none", border: "1px solid " + G.gold, color: G.gold, borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11 }}>✏️ Modifier</button>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text }}>{b.title}</div>
+                            <div style={{ fontSize: 12, color: st.c, marginTop: 2 }}>{st.t}</div>
+                            {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935", marginTop: 2 }}>{b.motif_refus}</div> : null}
+                            {b.status === "actif" && auteurProfil.code_source ? (
+                              <div style={{ fontSize: 11, color: G.gold, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🔗 {lien.replace("https://", "")}</div>
+                            ) : null}
+                            <div onClick={() => setMesLivresDetail(b)} style={{ fontSize: 11, color: G.textDim, marginTop: 6, cursor: "pointer", fontWeight: "bold" }}>Voir les détails →</div>
                           </div>
                         </div>
                       );
                     })
+                    );
+                  })()}
+                  {mesLivresDetail && (() => {
+                    const b = mesLivresDetail;
+                    const stx = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "📝 Brouillon (non soumis)", c: G.textDim } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                    const lien = "https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
+                    return (
+                      <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                        <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
+                          <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
+                            {b.cover ? <img src={b.cover} alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{b.title}</div>
+                              <div style={{ fontSize: 13, color: stx.c, marginTop: 4 }}>{stx.t}</div>
+                              <div style={{ fontSize: 13, color: G.textDim, marginTop: 4 }}>Prix : {b.price ? b.price + " FCFA" : "Gratuit"}</div>
+                              {b.category ? <div style={{ fontSize: 12, color: G.textDim, marginTop: 2 }}>{b.category}{b.subcategory ? " · " + b.subcategory : ""}</div> : null}
+                            </div>
+                          </div>
+                          {b.summary ? <div style={{ fontSize: 13, color: G.text, lineHeight: 1.5, marginBottom: 12, maxHeight: 120, overflowY: "auto", background: G.bg, borderRadius: 8, padding: 10 }}>{b.summary}</div> : null}
+                          {b.status === "actif" && auteurProfil.code_source ? (
+                            <div style={{ marginBottom: 14 }}>
+                              <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>🔗 Ton lien de pub (70% pour toi) :</div>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <input readOnly value={lien} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.textDim, background: G.bg, minWidth: 0 }} />
+                                <button onClick={() => { try { navigator.clipboard.writeText(lien); setPubMsg("✅ Lien copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 10px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 6, cursor: "pointer" }}>Copier</button>
+                              </div>
+                            </div>
+                          ) : null}
+                          <div style={{ display: "flex", gap: 10 }}>
+                            <button onClick={() => supprimerMonLivre(b)} style={{ flex: 1, padding: 12, background: "#e53935", color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>🗑️ Supprimer</button>
+                            <button onClick={() => { setMesLivresDetail(null); editLivre(b); }} style={{ flex: 1, padding: 12, background: G.green, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>✏️ Modifier</button>
+                          </div>
+                          <button onClick={() => setMesLivresDetail(null)} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Fermer</button>
+                        </div>
+                      </div>
                     );
                   })()}
                 </div>
