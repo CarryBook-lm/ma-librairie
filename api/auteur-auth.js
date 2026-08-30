@@ -150,11 +150,13 @@ export default async function handler(req, res) {
       const montant = Math.round(Number(body.montant || 0));
       if (!id) return res.status(400).json({ error: "id requis." });
       if (!montant || montant <= 0) return res.status(400).json({ error: "Montant invalide." });
-      const { data: va } = await supa.from("ventes_auteurs").select("part_auteur").eq("auteur_id", id);
-      const vendu = (va || []).reduce((s, v) => s + (v.part_auteur || 0), 0);
+      // Seules les commissions de plus de 7 jours sont retirables
+      const seuil7j = new Date(Date.now() - 7 * 86400000).toISOString();
+      const { data: va } = await supa.from("ventes_auteurs").select("part_auteur").eq("auteur_id", id).lte("created_at", seuil7j);
+      const mature = (va || []).reduce((s, v) => s + (v.part_auteur || 0), 0);
       const { data: rr } = await supa.from("retraits").select("montant, statut").eq("auteur_id", id).in("statut", ["paye", "en_attente"]);
       const dejaPris = (rr || []).reduce((s, r) => s + (r.montant || 0), 0);
-      const dispo = vendu - dejaPris;
+      const dispo = mature - dejaPris;
       if (montant > dispo) return res.status(400).json({ error: "Montant supérieur au disponible (" + dispo + " FCFA)." });
       const { data: au } = await supa.from("auteurs").select("kyc_paiement_phone, telephone").eq("id", id).limit(1);
       const phone = (au && au[0]) ? (au[0].kyc_paiement_phone || au[0].telephone || "") : "";

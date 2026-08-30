@@ -17655,8 +17655,12 @@ export default function App() {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
                 const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
                 const vv = filterVentesByPeriod(ventesAuteur, statsPeriod, statsDate);
-                const grpP = {}; vv.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
-                const totalN = vv.length; const totalG = vv.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                const vd = vv.filter(v => v.source !== "abonnement");
+                const va = vv.filter(v => v.source === "abonnement");
+                const grpP = {}; vd.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
+                const totalN = vd.length; const totalG = vd.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                const aboN = va.length; const aboG = va.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                const grandTotal = totalG + aboG;
                 const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
                 return (
                   <div>
@@ -17665,7 +17669,8 @@ export default function App() {
                       const percu = retraitsAuteur.filter(r => r.statut === "paye").reduce((s, r) => s + (r.montant || 0), 0);
                       const enAttente = retraitsAuteur.filter(r => r.statut === "en_attente").reduce((s, r) => s + (r.montant || 0), 0);
                       const pasPercu = vendu - percu;
-                      const dispo = vendu - percu - enAttente;
+                      const mature = ventesAuteur.filter(v => new Date(v.created_at).getTime() <= Date.now() - 7 * 86400000).reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const dispo = Math.max(0, mature - percu - enAttente);
                       const box = (label, val, fort) => (
                         <div style={{ flex: 1, background: fort ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.15)", borderRadius: 10, padding: 12, textAlign: "center", minWidth: 0 }}>
                           <div style={{ fontSize: 17, fontWeight: "bold" }}>{fmt(val)}</div>
@@ -17678,6 +17683,7 @@ export default function App() {
                           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>{box("Total déjà vendu", vendu, false)}{box("Total déjà perçu", percu, false)}</div>
                           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
                           {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
+                          <div style={{ fontSize: 10.5, opacity: 0.85, marginBottom: 8, textAlign: "center" }}>🔒 Les fonds deviennent retirables 7 jours après chaque vente.</div>
                           <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? "#fff" : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
                         </div>
                       );
@@ -17707,6 +17713,14 @@ export default function App() {
                           <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>{fmt(grpP[k].g)}</div>
                         </div>
                       ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
+                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
+                    </div>
+                    <div style={{ background: G.gold, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
+                      <div style={{ fontSize: 12, opacity: 0.9 }}>Montant total (cette période)</div>
+                      <div style={{ fontSize: 24, fontWeight: "bold" }}>{fmt(grandTotal)}</div>
                     </div>
                   </div>
                 );
