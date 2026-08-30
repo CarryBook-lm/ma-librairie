@@ -13420,6 +13420,7 @@ export default function App() {
   const [boutiqueBooks, setBoutiqueBooks] = useState([]);
   const [boutiqueLoading, setBoutiqueLoading] = useState(false);
   const [boutiqueCode, setBoutiqueCode] = useState(null);
+  const [auteursAll, setAuteursAll] = useState([]); // pour la recherche par nom
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
@@ -16670,6 +16671,18 @@ export default function App() {
     return () => { cancel = true; };
   }, [page, boutiqueCode]);
 
+  // 👤 Charger tous les auteurs une fois (pour la recherche par nom)
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url").order("nom_complet", { ascending: true });
+        if (!cancel) setAuteursAll(data || []);
+      } catch (e) {}
+    })();
+    return () => { cancel = true; };
+  }, []);
+
   // 👤 Charger la liste des auteurs (ceux qui ont au moins un livre en ligne)
   useEffect(() => {
     if (page !== "auteurs") return;
@@ -19837,6 +19850,30 @@ export default function App() {
                   {searchQuery ? "Résultats" : selectedCategory !== "Tous" ? selectedCategory : "Catalogue"}
                   {!loading && <span style={{ color: G.textFaint, marginLeft: 8, fontSize: 11, letterSpacing: 0 }}>({filteredBooks.length})</span>}
                 </div>
+                {searchQuery && (() => {
+                  const q = searchQuery.toLowerCase().trim();
+                  const matches = auteursAll.filter(a => (a.nom_complet || "").toLowerCase().includes(q));
+                  if (matches.length === 0) return null;
+                  return (
+                    <div style={{ marginBottom: 20 }}>
+                      <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 8 }}>👤 Auteur(es)</div>
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {matches.map(a => (
+                          <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold", flexShrink: 0 }}>
+                              {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: "bold", color: G.text }}>{a.nom_complet}</div>
+                              {a.pays ? <div style={{ fontSize: 12, color: G.textDim }}>📍 {a.pays}</div> : null}
+                            </div>
+                            <div style={{ color: G.gold, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>Boutique →</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {loading ? (
                   <div style={{ textAlign: "center", padding: "60px 0", color: G.textDim }}>Chargement...</div>
                 ) : filteredBooks.length === 0 ? (
