@@ -1610,6 +1610,8 @@ const PAGE_TO_PATH = {
   confidentialite: "/confidentialite",
   suppressionCompte: "/suppression-compte",
   reclamer: "/mon-livre",
+  espace_auteur: "/espace-auteur",
+  auteurs: "/auteurs",
 };
 
 const PATH_TO_PAGE = {
@@ -1627,6 +1629,8 @@ const PATH_TO_PAGE = {
   "/confidentialite": "confidentialite",
   "/suppression-compte": "suppressionCompte",
   "/mon-livre": "reclamer",
+  "/espace-auteur": "espace_auteur",
+  "/auteurs": "auteurs",
 };
 
 const getPageFromURL = () => {
@@ -13781,6 +13785,15 @@ export default function App() {
   const [mesLivresTab, setMesLivresTab] = useState(null); // null=tous, sinon roman/guide/audio/gratuit
   const [pubEditId, setPubEditId] = useState(null);
   const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
+  const [pubDraftMode, setPubDraftMode] = useState(true); // true = nouveau/brouillon (auto-save actif)
+  const [pubSavingDraft, setPubSavingDraft] = useState(false);
+  const [pubDraftMsg, setPubDraftMsg] = useState("");
+  useEffect(() => {
+    if (!pubDraftMode || !pubOpen || auteurTab !== "publier") return;
+    if (!pubForm.title.trim()) return;
+    const t = setTimeout(() => { pubSaveDraft(true); }, 4000);
+    return () => clearTimeout(t);
+  }, [pubForm, pubDraftMode, pubOpen, auteurTab]);
   const [auteurTab, setAuteurTab] = useState("publier");
   const [auteurMenu, setAuteurMenu] = useState(false);
   const [compteEdit, setCompteEdit] = useState(false);
@@ -16608,6 +16621,7 @@ export default function App() {
       content: b.content || "", type: b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"), pdf_url: b.pdf_url || "", audio_url: b.audio_url || "",
     });
     setPubTypeSelected(b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"));
+    setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
   async function pubMakeExcerpt(pdfUrl, nPages) {
@@ -16654,6 +16668,40 @@ export default function App() {
     setPubUploading(false);
     e.target.value = "";
   }
+  // Enregistre un BROUILLON (auto ou manuel) : ne soumet PAS a validation.
+  async function pubSaveDraft(silent) {
+    if (!auteurProfil) return;
+    const f = pubForm;
+    if (!f.title.trim()) { if (!silent) setPubMsg("Donne au moins un titre pour enregistrer ton brouillon."); return; }
+    if (pubSaving || pubSavingDraft) return;
+    setPubSavingDraft(true);
+    try {
+      const payload = {
+        title: f.title.trim(), author: auteurProfil.nom_complet,
+        price: (f.type === "gratuit") ? 0 : (parseInt(f.price) || 0),
+        cover: f.cover || null, category: f.category || null, subcategory: f.subcategory || null,
+        summary: f.summary ? f.summary.trim() : null,
+        extract_pages: parseInt(f.extract_pages) || 1,
+        content: f.type === "roman" ? f.content : "",
+        pdf_url: (f.type === "guide" || f.type === "gratuit") ? f.pdf_url : "",
+        audio_url: f.type === "audio" ? f.audio_url : "",
+        status: "brouillon", moderation: "brouillon", auteur_id: auteurProfil.id,
+        product_type: "numerique", can_read: true, can_download: (f.type !== "roman"),
+      };
+      if (pubEditId) {
+        await supabase.from("books").update(payload).eq("id", pubEditId);
+      } else {
+        const { data } = await supabase.from("books").insert(payload).select("id").maybeSingle();
+        if (data && data.id) setPubEditId(data.id);
+      }
+      setPubDraftMsg("💾 Brouillon enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
+      if (!silent) setPubMsg("✅ Brouillon enregistré. Tu le retrouveras dans « Mes livres » pour continuer plus tard.");
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      setMesLivres(livres || []);
+    } catch (e) { if (!silent) setPubMsg("❌ " + (e.message || e)); }
+    setPubSavingDraft(false);
+  }
+
   async function pubSaveRoman() {
     const f = pubForm;
     const isGratuit = f.type === "gratuit";
@@ -16698,7 +16746,7 @@ export default function App() {
       }
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
-      setPubOpen(false);
+      setPubOpen(false); setPubTypeSelected(null); setPubDraftMsg(""); setAuteurTab("meslivres");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
@@ -16998,7 +17046,7 @@ export default function App() {
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
-                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
               )}
               {/* PUBLIER */}
@@ -17071,7 +17119,7 @@ export default function App() {
                   {pubForm.type === "roman" ? (
                     <>
                       <label style={labelSt}>Texte du roman *</label>
-                      <textarea value={pubForm.content} onChange={e => setPubForm(f => ({ ...f, content: e.target.value }))} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6 }} />
+                      <textarea value={pubForm.content} onChange={e => setPubForm(f => ({ ...f, content: e.target.value }))} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6 }} />
                     </>
                   ) : pubForm.type === "audio" ? (
                     <>
@@ -17105,7 +17153,11 @@ export default function App() {
                     </>
                   )}
                   <div style={{ height: 18 }} />
-                  <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "Envoyer pour validation"}</button>
+                  {pubDraftMsg && <div style={{ fontSize: 11, color: G.green, textAlign: "center", marginBottom: 8 }}>{pubDraftMsg}</div>}
+                  {pubDraftMode && (
+                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer", marginBottom: 8, opacity: pubSavingDraft ? 0.6 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
+                  )}
+                  <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "📤 Soumettre pour validation"}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   </>)}
                 </div>
@@ -17117,19 +17169,19 @@ export default function App() {
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
                   <button onClick={() => setMesLivresTab(null)} style={{ width: "100%", padding: 10, marginBottom: 8, borderRadius: 8, border: "none", background: mesLivresTab === null ? G.gold : G.goldDim, color: mesLivresTab === null ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Afficher tous mes livres</button>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto" }}>
-                    {[{ t: "roman", l: "Romans" }, { t: "guide", l: "Livres PDF" }, { t: "audio", l: "Livres Audios" }, { t: "gratuit", l: "Livres Gratuits" }].map(o => (
-                      <button key={o.t} onClick={() => setMesLivresTab(o.t)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 16, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{o.l}</button>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                    {[{ t: "roman", l: "Romans" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
+                      <button key={o.t} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{o.l}</button>
                     ))}
                   </div>
                   {(() => {
-                    const classer = (b) => b.audio_url ? "audio" : (((b.price || 0) === 0) ? "gratuit" : (b.pdf_url ? "guide" : "roman"));
+                    const classer = (b) => b.audio_url ? "audio" : ((b.content && b.content.length > 0 && !b.pdf_url) ? "roman" : (((b.price || 0) === 0) ? "gratuit" : "guide"));
                     const liste = mesLivresTab ? mesLivres.filter(b => classer(b) === mesLivresTab) : mesLivres;
                     return liste.length === 0 ? (
                     <div style={{ fontSize: 13, color: G.textDim }}>{mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie."}</div>
                   ) : (
                     liste.map(b => {
-                      const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                      const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "📝 Brouillon (non soumis)", c: G.textDim } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
                       return (
                         <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + G.border }}>
                           {b.cover ? <img src={b.cover} alt="" style={{ width: 34, height: 48, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 34, height: 48, background: G.bg, borderRadius: 4 }} />}
@@ -17439,7 +17491,7 @@ export default function App() {
         {auteurProfil && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
-            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
         )}
