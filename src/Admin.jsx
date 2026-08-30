@@ -349,6 +349,9 @@ export default function Admin() {
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
+  const [eaHistorique, setEaHistorique] = useState([]); // retraits payés
+  const [eaTotaux, setEaTotaux] = useState({ owed: 0, paid: 0, pending: 0 });
+  const [eaHistoOuvert, setEaHistoOuvert] = useState(false);
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -492,13 +495,19 @@ export default function Admin() {
     })();
   }, [view]);
   const chargerSoldes = async () => {
-    const { data: rr } = await supabase.from("retraits").select("*").eq("statut", "en_attente").order("created_at", { ascending: true });
+    const { data: rr } = await supabase.from("retraits").select("*").order("created_at", { ascending: false });
     const { data: auts } = await supabase.from("auteurs").select("id, nom_complet, kyc_paiement_phone, telephone");
-    const rows = (rr || []).map(r => {
-      const a = (auts || []).find(x => String(x.id) === String(r.auteur_id)) || {};
-      return { id: r.id, auteur_id: r.auteur_id, nom: a.nom_complet || ("Auteur #" + r.auteur_id), phone: r.phone || a.kyc_paiement_phone || a.telephone || "", montant: r.montant, created_at: r.created_at };
-    });
-    setEaSoldes(rows);
+    const { data: va } = await supabase.from("ventes_auteurs").select("part_auteur");
+    const nomOf = (id) => { const a = (auts || []).find(x => String(x.id) === String(id)); return a ? (a.nom_complet || ("Auteur #" + id)) : ("Auteur #" + id); };
+    const phoneOf = (id, fb) => { const a = (auts || []).find(x => String(x.id) === String(id)) || {}; return fb || a.kyc_paiement_phone || a.telephone || ""; };
+    const enAttente = (rr || []).filter(r => r.statut === "en_attente").map(r => ({ id: r.id, auteur_id: r.auteur_id, nom: nomOf(r.auteur_id), phone: phoneOf(r.auteur_id, r.phone), montant: r.montant, created_at: r.created_at })).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    setEaSoldes(enAttente);
+    const paye = (rr || []).filter(r => r.statut === "paye").map(r => ({ id: r.id, nom: nomOf(r.auteur_id), phone: phoneOf(r.auteur_id, r.phone), montant: r.montant, reference: r.reference, paid_at: r.paid_at || r.created_at }));
+    setEaHistorique(paye);
+    const totalGagne = (va || []).reduce((s, v) => s + (v.part_auteur || 0), 0);
+    const totalPaye = paye.reduce((s, r) => s + (r.montant || 0), 0);
+    const totalEnAttente = enAttente.reduce((s, r) => s + (r.montant || 0), 0);
+    setEaTotaux({ owed: totalGagne - totalPaye, paid: totalPaye, pending: totalEnAttente });
   };
   const reverserAuteur = async (row) => {
     if (!window.confirm("Confirmer le paiement de " + row.montant.toLocaleString() + " F à " + row.nom + " ? À faire APRÈS avoir envoyé le Mobile Money.")) return;
@@ -4129,6 +4138,13 @@ export default function Admin() {
 
             {eaTab === "reversements" && (
               <div>
+                {(() => { const f = n => (n || 0).toLocaleString("fr-FR") + " F"; return (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 120, background: "#2a1a1a", border: "1px solid #4a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#ff8a80", fontSize: 19, fontWeight: "bold" }}>{f(eaTotaux.owed)}</div><div style={{ color: "#aaa", fontSize: 11 }}>💰 Total à reverser (tu dois)</div></div>
+                    <div style={{ flex: 1, minWidth: 120, background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#a5d6a7", fontSize: 19, fontWeight: "bold" }}>{f(eaTotaux.paid)}</div><div style={{ color: "#aaa", fontSize: 11 }}>✅ Déjà reversé</div></div>
+                    <div style={{ flex: 1, minWidth: 120, background: "#2a271a", border: "1px solid #4a442a", borderRadius: 10, padding: 12 }}><div style={{ color: "#ffd54f", fontSize: 19, fontWeight: "bold" }}>{f(eaTotaux.pending)}</div><div style={{ color: "#aaa", fontSize: 11 }}>⏳ Demandes en attente</div></div>
+                  </div>
+                ); })()}
                 <div style={{ color: "#888", fontSize: 12, marginBottom: 14, lineHeight: 1.6 }}>Demandes de retrait des auteurs. Envoie le Mobile Money au numéro indiqué, PUIS clique « Marquer payé » pour valider.</div>
                 {eaSoldes.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune demande de retrait en attente.</div> : (
                   eaSoldes.map(row => (
@@ -4147,6 +4163,17 @@ export default function Admin() {
                       </div>
                     </div>
                   ))
+                )}
+                <button onClick={() => setEaHistoOuvert(v => !v)} style={{ marginTop: 18, width: "100%", padding: "10px 0", background: "#151515", color: "#c9a84c", border: "1px solid #333", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>{eaHistoOuvert ? "▲ Masquer l'historique des paiements" : "▼ Voir l'historique des paiements (" + eaHistorique.length + ")"}</button>
+                {eaHistoOuvert && (
+                  <div style={{ marginTop: 10 }}>
+                    {eaHistorique.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun paiement effectué pour le moment.</div> : eaHistorique.map(h => (
+                      <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #262626" }}>
+                        <div><div style={{ color: "#e8e0d0", fontSize: 13 }}>{h.nom}</div><div style={{ color: "#666", fontSize: 11 }}>{h.paid_at ? new Date(h.paid_at).toLocaleDateString("fr-FR") : ""}{h.reference ? " · réf " + h.reference : ""}</div></div>
+                        <div style={{ color: "#a5d6a7", fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(h.montant || 0).toLocaleString("fr-FR")} F</div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
