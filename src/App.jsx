@@ -13779,6 +13779,7 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
   const [pubEditId, setPubEditId] = useState(null);
+  const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
   const [auteurTab, setAuteurTab] = useState("stats");
   const [auteurMenu, setAuteurMenu] = useState(false);
   const [compteEdit, setCompteEdit] = useState(false);
@@ -16603,8 +16604,9 @@ export default function App() {
       title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
       price: b.price != null ? String(b.price) : "", cover: b.cover || "", summary: b.summary || "",
       extract_pages: b.extract_pages != null ? String(b.extract_pages) : "",
-      content: b.content || "", type: b.pdf_url ? "guide" : "roman", pdf_url: b.pdf_url || "",
+      content: b.content || "", type: b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"), pdf_url: b.pdf_url || "", audio_url: b.audio_url || "",
     });
+    setPubTypeSelected(b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"));
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
   async function pubMakeExcerpt(pdfUrl, nPages) {
@@ -16986,28 +16988,35 @@ export default function App() {
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
-                  <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
               )}
               {/* PUBLIER */}
               {auteurTab === "publier" && (
                 <div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : "➕ Publier un livre"}</div>
+                  {!pubTypeSelected ? (
+                    <>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {[
+                          { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
+                          { t: "guide", c: "#c9952a", ic: "📥", l: "Publier un Livre PDF", s: "Liseuse PDF et téléchargeable" },
+                          { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
+                          { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
+                        ].map(o => (
+                          <button key={o.t} onClick={() => { setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2 }}>
+                            <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
+                            <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (<>
+                  <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : (pubForm.type === "roman" ? "📖 Publier un Roman" : pubForm.type === "guide" ? "📥 Publier un Livre PDF" : pubForm.type === "audio" ? "🎧 Publier un Livre Audio" : "🎁 Publier un Livre Gratuit")}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton livre sera vérifié avant sa mise en ligne.</div>
-                  <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
-                    {[
-                      { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
-                      { t: "guide", c: "#c9952a", ic: "📥", l: "Publier un Livre PDF", s: "Liseuse PDF et téléchargeable" },
-                      { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
-                      { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
-                    ].map(o => (
-                      <button key={o.t} onClick={() => setPubForm(f => ({ ...f, type: o.t }))} style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "2px solid " + (pubForm.type === o.t ? o.c : "transparent"), background: pubForm.type === o.t ? o.c : o.c + "18", color: pubForm.type === o.t ? "#fff" : o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span style={{ fontSize: 14, fontWeight: "bold" }}>{o.ic} {o.l}</span>
-                        <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
-                      </button>
-                    ))}
-                  </div>
                   <label style={labelSt}>Titre *</label>
                   <input value={pubForm.title} onChange={e => setPubForm(f => ({ ...f, title: e.target.value }))} style={champ} />
                   <div style={{ height: 14 }} />
@@ -17087,7 +17096,8 @@ export default function App() {
                   )}
                   <div style={{ height: 18 }} />
                   <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "Envoyer pour validation"}</button>
-                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  </>)}
                 </div>
                 </div>
               )}
@@ -17409,7 +17419,7 @@ export default function App() {
         {auteurProfil && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
-            <button onClick={() => { setPubEditId(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
         )}
