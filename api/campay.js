@@ -527,7 +527,7 @@ export default async function handler(req, res) {
 
     // ========== ACTION : RECORD_PURCHASE ==========
     if (action === "record_purchase") {
-      const { reference, user_id, book_id, amount, phone, external_reference, referrer_code, author_src } = params;
+      const { reference, user_id, book_id, amount, phone, external_reference, referrer_code, author_src, pays } = params;
 
       const verifyUrl = `https://www.campay.net/api/transaction/${reference}/`;
       const verifyRes = await fetch(verifyUrl, {
@@ -573,6 +573,7 @@ export default async function handler(req, res) {
             phone,
             external_reference,
             type: "sale",
+            pays: pays || null,
             referrer_code: referrer_code || null,
           },
         ])
@@ -1190,7 +1191,7 @@ export default async function handler(req, res) {
     // Stocké avec le numéro de téléphone comme identifiant
     // Permettra plus tard de récupérer les livres si le client crée un compte
     if (action === "record_guest_purchase") {
-      const { phone, book_id, amount, reference, external_reference, type, referrer_code, author_src } = params;
+      const { phone, book_id, amount, reference, external_reference, type, referrer_code, author_src, pays } = params;
 
       if (!phone || !reference) {
         return res.status(400).json({ error: "phone et reference requis" });
@@ -1226,6 +1227,7 @@ export default async function handler(req, res) {
           reference: reference,
           external_reference: external_reference || null,
           type: type || "book",
+          pays: pays || null,
           referrer_code: referrer_code || null,
         }])
         .select()

@@ -351,6 +351,8 @@ export default function Admin() {
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
+  const [vpData, setVpData] = useState([]);
+  const [vpLoading, setVpLoading] = useState(false);
   const [eaHistorique, setEaHistorique] = useState([]); // retraits payés
   const [eaTotaux, setEaTotaux] = useState({ owed: 0, paid: 0, pending: 0 });
   const [eaHistoOuvert, setEaHistoOuvert] = useState(false);
@@ -501,6 +503,27 @@ export default function Admin() {
         await chargerSoldes();
       } catch (e) {}
       setEaLoading(false);
+    })();
+  }, [view]);
+  useEffect(() => {
+    if (view !== "ventes_pays") return;
+    (async () => {
+      setVpLoading(true);
+      try {
+        const [{ data: p }, { data: g }] = await Promise.all([
+          supabase.from("purchases").select("pays, amount"),
+          supabase.from("guest_purchases").select("pays, amount"),
+        ]);
+        const map = {};
+        [...(p || []), ...(g || [])].forEach(r => {
+          const k = r.pays || "??";
+          (map[k] = map[k] || { nb: 0, ca: 0 });
+          map[k].nb++; map[k].ca += Number(r.amount) || 0;
+        });
+        const rows = Object.keys(map).map(k => ({ pays: k, nb: map[k].nb, ca: map[k].ca })).sort((a, b) => b.ca - a.ca);
+        setVpData(rows);
+      } catch (e) {}
+      setVpLoading(false);
     })();
   }, [view]);
   const rechargerEA = async () => {
@@ -2117,6 +2140,7 @@ export default function Admin() {
             { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "stats", label: "Statistiques", icon: "📈" },
+            { id: "ventes_pays", label: "Ventes par pays", icon: "🌍" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
             { id: "security", label: "Sécurité", icon: "🔐" },
           ].map(item => (
@@ -4332,6 +4356,41 @@ export default function Admin() {
             )}
           </div>
         )}
+
+        {view === "ventes_pays" && (() => {
+          const NOMS = { CMR:"🇨🇲 Cameroun", CIV:"🇨🇮 Côte d'Ivoire", SEN:"🇸🇳 Sénégal", BEN:"🇧🇯 Bénin", GAB:"🇬🇦 Gabon", COG:"🇨🇬 Congo-Brazzaville", COD:"🇨🇩 RD Congo", TCD:"🇹🇩 Tchad", RWA:"🇷🇼 Rwanda", KEN:"🇰🇪 Kenya", MOZ:"🇲🇿 Mozambique", UGA:"🇺🇬 Ouganda", SLE:"🇸🇱 Sierra Leone", ZMB:"🇿🇲 Zambie", "??":"❔ Non renseigné (ventes anciennes)" };
+          const f = n => (n || 0).toLocaleString("fr-FR") + " F";
+          const totCA = vpData.reduce((s, r) => s + r.ca, 0);
+          const totNb = vpData.reduce((s, r) => s + r.nb, 0);
+          const maxCA = Math.max(1, ...vpData.map(r => r.ca));
+          return (
+            <div>
+              <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 6 }}>🌍 Ventes par pays</h2>
+              <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>Répartition de tes ventes par pays. Le pays est enregistré depuis aujourd'hui — les ventes plus anciennes apparaissent en « Non renseigné ».</p>
+              {vpLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : vpData.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune vente.</div> : (
+                <div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 120, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#c9a84c", fontSize: 19, fontWeight: "bold" }}>{totNb}</div><div style={{ color: "#aaa", fontSize: 11 }}>Ventes totales</div></div>
+                    <div style={{ flex: 1, minWidth: 120, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#a5d6a7", fontSize: 19, fontWeight: "bold" }}>{f(totCA)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Chiffre d'affaires</div></div>
+                  </div>
+                  {vpData.map(r => {
+                    const pct = Math.round((r.ca / totCA) * 100);
+                    return (
+                      <div key={r.pays} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <div style={{ color: "#e8e0d0", fontSize: 14, fontWeight: "bold" }}>{NOMS[r.pays] || r.pays}</div>
+                          <div style={{ color: "#a5d6a7", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap" }}>{f(r.ca)} <span style={{ color: "#888", fontSize: 11, fontWeight: "normal" }}>({pct}%)</span></div>
+                        </div>
+                        <div style={{ height: 8, background: "#0f0f0f", borderRadius: 4, overflow: "hidden", marginBottom: 4 }}><div style={{ width: Math.round((r.ca / maxCA) * 100) + "%", height: "100%", background: "#c9a84c" }} /></div>
+                        <div style={{ color: "#888", fontSize: 11 }}>{r.nb} vente{r.nb > 1 ? "s" : ""}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* SECURITY - CHANGEMENT MOT DE PASSE */}
         {view === "security" && (

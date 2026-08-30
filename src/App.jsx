@@ -16412,7 +16412,8 @@ export default function App() {
                   phone: phone,
                   external_reference: externalRef,
                   referrer_code: referrerCode,
-                  author_src: authorSrc
+                  author_src: authorSrc,
+                  pays: (lecteur && PAYS_TO_PP[lecteur.pays]) ? PAYS_TO_PP[lecteur.pays] : "CMR"
                 })
               });
               const recordData = await recordRes.json();
@@ -16440,7 +16441,8 @@ export default function App() {
                     external_reference: externalRef,
                     type: "book",
                     referrer_code: referrerCode,
-                    author_src: authorSrc
+                    author_src: authorSrc,
+                    pays: (lecteur && PAYS_TO_PP[lecteur.pays]) ? PAYS_TO_PP[lecteur.pays] : "CMR"
                   })
                 });
               } catch (guestErr) {

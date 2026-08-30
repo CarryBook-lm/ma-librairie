@@ -129,6 +129,7 @@ export default async function handler(req, res) {
     const extRef = meta.ext_ref || ("PP_" + depositId);
     const referrerCode = meta.referrer_code && meta.referrer_code !== "" ? meta.referrer_code : null;
     const authorSrc = meta.author_src && meta.author_src !== "" ? meta.author_src : "";
+    const paysVente = meta.pays && meta.pays !== "" ? meta.pays : null;
     const phone = meta.phone || "";
     // On enregistre le montant en FCFA (le prix d'origine), pas le montant converti.
     const amount = Math.round(Number(meta.prix_fcfa || dep.amount || 0));
@@ -197,6 +198,7 @@ export default async function handler(req, res) {
         phone,
         external_reference: extRef,
         type: "sale",
+        pays: paysVente,
         referrer_code: referrerCode,
       }]);
       if (error) {
@@ -221,6 +223,7 @@ export default async function handler(req, res) {
         reference: extRef,
         external_reference: extRef,
         type: "book",
+        pays: paysVente,
         referrer_code: referrerCode,
       }]);
       if (error) {

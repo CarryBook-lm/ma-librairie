@@ -161,6 +161,7 @@ export default async function handler(req, res) {
         { phone: phone ? String(phone) : "" },
         { prix_fcfa: String(prixFcfa) },
         { author_src: author_src ? String(author_src) : "" },
+        { pays: iso },
       ],
     };
 
