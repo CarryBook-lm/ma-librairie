@@ -22805,7 +22805,6 @@ export default function App() {
                 <br /><br />
                 💡 Pensez aussi à cliquer sur <b style={{ color: "#fff" }}>« Télécharger l'application CarryBooks »</b> (juste à côté de « Ma bibliothèque ») pour profiter pleinement de CarryBooks.
               </div>
-              <button onClick={() => { if (!exigerConnexion()) return; setPage("library"); }} style={{ width: "100%", padding: 12, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>📚 Ouvrir Ma bibliothèque</button>
             </div>
           </div>
         )}
