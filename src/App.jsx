@@ -14223,6 +14223,7 @@ export default function App() {
   }
   // Exige une connexion (lecteur ou Google). Renvoie false et ouvre le modal si non connecté.
   const exigerConnexion = () => { if (!lecteur && !user) { setShowLecteurModal(true); return false; } return true; };
+  useEffect(() => { if (page === "library" && !lecteur && !user) setShowLecteurModal(true); }, [page, lecteur, user]);
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
@@ -20332,7 +20333,7 @@ export default function App() {
                       <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>CarryBooks</span>
                     </button>
                   )}
-                  <button onClick={() => setPage("library")} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "0 8px 8px 0" }}>
+                  <button onClick={() => { if (!exigerConnexion()) return; setPage("library"); }} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "0 8px 8px 0" }}>
                     <span style={{ fontSize: 18 }}>📚</span>
                     <span style={{ lineHeight: 1.15, textAlign: "center", fontSize: 11.5 }}>MA BIBLIOTHÈQUE</span>
                     <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>Mes livres achetés</span>
