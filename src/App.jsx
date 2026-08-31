@@ -20313,7 +20313,7 @@ export default function App() {
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
                 {/* BANDE ROUGE : achats dans Ma bibliothèque */}
-                <div style={{ background: "#d32f2f", color: "#fff", fontSize: 10.5, fontWeight: "bold", textAlign: "center", padding: "5px 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <div style={{ background: "#d32f2f", color: "#fff", fontSize: 9.5, fontWeight: "bold", textAlign: "center", padding: "5px 4px", whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>
                   VOS ACHATS SONT DISPONIBLES DANS « MA BIBLIOTHÈQUE »  ↓
                 </div>
                 {/* 3 RECTANGLES : Publier · Installer · Bibliothèque */}
