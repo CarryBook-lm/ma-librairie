@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       .order("id", { ascending: false });
 
     const base = "https://carrybooks.com";
-    const entetes = ["id", "title", "description", "availability", "condition", "price", "link", "image_link", "brand", "google_product_category", "fb_product_category"];
+    const entetes = ["id", "title", "description", "availability", "condition", "price", "link", "image_link", "brand", "product_type", "google_product_category", "fb_product_category"];
     const lignes = [entetes.join(",")];
 
     (livres || []).forEach((b) => {
@@ -56,6 +56,7 @@ export default async function handler(req, res) {
         csv(lien),
         csv(img),
         csv(marque),
+        csv(b.category || "Autres"),
         csv("Media > Books"),
         csv("Books"),
       ].join(","));
