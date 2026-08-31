@@ -20314,7 +20314,7 @@ export default function App() {
               <>
                 {/* BANDE ROUGE : achats dans Ma bibliothèque */}
                 <div style={{ background: "#d32f2f", color: "#fff", fontSize: 10.5, fontWeight: "bold", textAlign: "center", padding: "5px 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  VOS ACHATS SONT DISPONIBLES DANS « MA BIBLIOTHÈQUE »  ⬇️
+                  VOS ACHATS SONT DISPONIBLES DANS « MA BIBLIOTHÈQUE »  ↓
                 </div>
                 {/* 3 RECTANGLES : Publier · Installer · Bibliothèque */}
                 <div style={{ display: "flex", gap: 0, padding: "10px 10px 0" }}>
