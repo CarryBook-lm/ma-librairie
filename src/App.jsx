@@ -22794,6 +22794,22 @@ export default function App() {
           </div>
         )}
 
+        {page === "home" && (
+          <div style={{ padding: "16px 16px 28px", background: G.bg }}>
+            <div style={{ background: "#161206", borderRadius: 12, padding: 16, border: "1px solid #3d2b0a" }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: G.gold, marginBottom: 10 }}>❓ Achats introuvables ?</div>
+              <div style={{ fontSize: 13, color: "#c8bfae", lineHeight: 1.65, marginBottom: 14 }}>
+                Ouvrez <b style={{ color: "#fff" }}>« Ma bibliothèque »</b> : juste sous l'en-tête, vous verrez le message <b style={{ color: "#fff" }}>« 💡 As-tu perdu tes livres ? »</b>. Cliquez sur <b style={{ color: "#fff" }}>« Récupère-les ici »</b>, puis saisissez le numéro de téléphone utilisé lors de l'achat — vos livres réapparaîtront aussitôt dans votre bibliothèque, <b style={{ color: "#fff" }}>à vie</b>.
+                <br /><br />
+                Désormais, tous vos achats se retrouveront automatiquement dans « Ma bibliothèque ».
+                <br /><br />
+                💡 Pensez aussi à cliquer sur <b style={{ color: "#fff" }}>« Télécharger l'application CarryBooks »</b> (juste à côté de « Ma bibliothèque ») pour profiter pleinement de CarryBooks.
+              </div>
+              <button onClick={() => { if (!exigerConnexion()) return; setPage("library"); }} style={{ width: "100%", padding: 12, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>📚 Ouvrir Ma bibliothèque</button>
+            </div>
+          </div>
+        )}
+
 
         {/* INSTALL GUIDE MODAL */}
         {showInstallModal && (
