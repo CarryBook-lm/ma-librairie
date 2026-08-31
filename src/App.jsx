@@ -20397,28 +20397,6 @@ export default function App() {
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
                 </div>
 
-                {/* Bande slogan PLEINE LARGEUR (sans marge) */}
-                <div style={{
-                  marginTop: 10,
-                  marginBottom: 0,
-                  padding: "9px 6px",
-                  background: "linear-gradient(90deg, #4f9cf9 0%, #b14fdb 50%, #9d4edd 100%)",
-                  textAlign: "center",
-                  width: "100%",
-                  boxSizing: "border-box"
-                }}>
-                  <div style={{ 
-                    fontSize: 10.5, 
-                    color: "#fff", 
-                    fontWeight: 600, 
-                    letterSpacing: 0, 
-                    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-                    fontStyle: "italic",
-                    lineHeight: 1.4
-                  }}>
-                    ✨ 3 autres univers — Colorier, se faire plaisir, se révéler ✨
-                  </div>
-                </div>
 
                 {/* HERO CAROUSEL - num�rique uniquement */}
                 {(() => {
