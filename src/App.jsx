@@ -20312,6 +20312,10 @@ export default function App() {
           <div style={{ paddingBottom: 80 }}>
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
+                {/* BANDE ROUGE : achats dans Ma bibliothèque */}
+                <div style={{ background: "#d32f2f", color: "#fff", fontSize: 10.5, fontWeight: "bold", textAlign: "center", padding: "5px 8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  VOS ACHATS SONT DISPONIBLES DANS « MA BIBLIOTHÈQUE »  ⬇️
+                </div>
                 {/* 3 RECTANGLES : Publier · Installer · Bibliothèque */}
                 <div style={{ display: "flex", gap: 0, padding: "10px 10px 0" }}>
                   <button onClick={() => { if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }} style={{ flex: 1, padding: "10px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "8px 0 0 8px", borderRight: "1px solid rgba(0,0,0,0.12)" }}>
