@@ -39,6 +39,10 @@ function verifyPassword(password, stored) {
   }
 }
 
+// Comptes auteurs liés : le principal regroupe les gains de ses noms de plume (ex : Landrine 8 = Julia 9)
+const COMPTES_LIES = { 8: [9] };
+const idsComptesLies = (id) => [id].concat(COMPTES_LIES[id] || []);
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -163,9 +167,10 @@ export default async function handler(req, res) {
       // Seules les commissions plus anciennes que le délai sont retirables
       const delaiJ = await lireDelaiRetrait();
       const seuil = new Date(Date.now() - delaiJ * 86400000).toISOString();
-      const { data: va } = await supa.from("ventes_auteurs").select("part_auteur").eq("auteur_id", id).lte("created_at", seuil);
+      const idsLies = idsComptesLies(id);
+      const { data: va } = await supa.from("ventes_auteurs").select("part_auteur").in("auteur_id", idsLies).lte("created_at", seuil);
       const mature = (va || []).reduce((s, v) => s + (v.part_auteur || 0), 0);
-      const { data: rr } = await supa.from("retraits").select("montant, statut").eq("auteur_id", id).in("statut", ["paye", "en_attente"]);
+      const { data: rr } = await supa.from("retraits").select("montant, statut").in("auteur_id", idsLies).in("statut", ["paye", "en_attente"]);
       const dejaPris = (rr || []).reduce((s, r) => s + (r.montant || 0), 0);
       const dispo = mature - dejaPris;
       if (montant > dispo) return res.status(400).json({ error: "Montant supérieur au disponible (" + dispo + " FCFA)." });

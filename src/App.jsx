@@ -1574,6 +1574,10 @@ const PAYS_TEL = [
   { nom: "Mozambique", code: "+258", flag: "🇲🇿" }, { nom: "Ouganda", code: "+256", flag: "🇺🇬" },
   { nom: "Sierra Leone", code: "+232", flag: "🇸🇱" }, { nom: "Zambie", code: "+260", flag: "🇿🇲" },
 ];
+// Comptes auteurs liés : un compte principal regroupe les ventes/livres de ses noms de plume.
+// Ex : Landrine (8) voit aussi Julia ShiMen (9).
+const COMPTES_LIES = { 8: [9] };
+const idsComptesLies = (id) => [id].concat(COMPTES_LIES[id] || []);
 const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
 const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
@@ -13884,9 +13888,10 @@ export default function App() {
     if (!auteurProfil) { setVentesAuteur([]); return; }
     (async () => {
       try {
-        const { data } = await supabase.from("ventes_auteurs").select("*").eq("auteur_id", auteurProfil.id).order("created_at", { ascending: false });
+        const idsLies = idsComptesLies(auteurProfil.id);
+        const { data } = await supabase.from("ventes_auteurs").select("*").in("auteur_id", idsLies).order("created_at", { ascending: false });
         setVentesAuteur(data || []);
-        const { data: rr } = await supabase.from("retraits").select("*").eq("auteur_id", auteurProfil.id).order("created_at", { ascending: false });
+        const { data: rr } = await supabase.from("retraits").select("*").in("auteur_id", idsLies).order("created_at", { ascending: false });
         setRetraitsAuteur(rr || []);
       } catch (e) {}
     })();
@@ -13901,7 +13906,7 @@ export default function App() {
         const obj = {};
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
-        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
         setMesLivres(livres || []);
       } catch (e) {}
     })();
