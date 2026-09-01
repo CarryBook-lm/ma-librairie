@@ -17981,7 +17981,8 @@ export default function App() {
               {auteurTab === "aide" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
                   <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur CarryBooks</div>
-                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tout ce que tu dois savoir de A à Z. Un PDF téléchargeable sera bientôt disponible.</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 14 }}>Tout ce que tu dois savoir de A à Z, pas à pas.</div>
+                  <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 2 types de livres</div>
                   <p><b>📖 Roman (texte)</b> : tu colles le texte complet. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
