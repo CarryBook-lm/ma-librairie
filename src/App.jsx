@@ -20321,11 +20321,13 @@ export default function App() {
                 </div>
                 {/* 3 RECTANGLES : Publier · Installer · Bibliothèque */}
                 <div style={{ display: "flex", gap: 0, padding: "10px 10px 0" }}>
-                  <button onClick={() => { if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }} style={{ flex: 1, padding: "10px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "8px 0 0 8px", borderRight: "1px solid rgba(0,0,0,0.12)" }}>
-                    <span style={{ fontSize: 18 }}>📖</span>
-                    <span style={{ lineHeight: 1.15, textAlign: "center", fontSize: 11.5 }}>PUBLIE UN LIVRE</span>
-                    <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>Vends tes livres sur CarryBooks</span>
+                  {(() => { const estAuteurValide = auteurProfil && auteurProfil.kyc_status === "valide"; return (
+                  <button onClick={() => { if (auteurProfil || lecteur || user) { setPage("espace_auteur"); } else { setPendingEspaceAuteur(true); setShowLecteurModal(true); } }} style={{ flex: 1, padding: "10px 6px", background: G.gold, border: "none", color: "#1a1208", fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "8px 0 0 8px", borderRight: "1px solid rgba(0,0,0,0.12)" }}>
+                    <span style={{ fontSize: 18 }}>{estAuteurValide ? "✍️" : "📖"}</span>
+                    <span style={{ lineHeight: 1.15, textAlign: "center", fontSize: 11.5 }}>{estAuteurValide ? "MON ESPACE AUTEUR(E)" : "PUBLIE UN LIVRE"}</span>
+                    <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>{estAuteurValide ? "Gère tes livres et tes ventes" : "Vends tes livres sur CarryBooks"}</span>
                   </button>
+                  ); })()}
                   {!window.matchMedia("(display-mode: standalone)").matches && (
                     <button onClick={() => {
                       const ua = (navigator.userAgent || "").toLowerCase();
