@@ -16990,8 +16990,8 @@ export default function App() {
         const { data } = await supabase.from("books").insert(payload).select("id").maybeSingle();
         if (data && data.id) setPubEditId(data.id);
       }
-      setPubDraftMsg("💾 Brouillon enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
-      if (!silent) setPubMsg("✅ Brouillon enregistré. Tu le retrouveras dans « Mes livres » pour continuer plus tard.");
+      setPubDraftMsg("💾 Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " — en cours d'édition");
+      if (!silent) setPubMsg("✅ Enregistré. Tu le retrouveras dans « Mes livres » → « En cours d'édition » pour continuer plus tard.");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { if (!silent) setPubMsg("❌ " + (e.message || e)); }
@@ -17612,27 +17612,25 @@ export default function App() {
                 <div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
-                  <button onClick={() => setMesLivresTab(null)} style={{ width: "100%", padding: 10, marginBottom: 8, borderRadius: 8, border: "none", background: mesLivresTab === null ? G.gold : G.goldDim, color: mesLivresTab === null ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Afficher tous mes livres</button>
                   <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                    {[{ t: "roman", l: "Romans" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
-                      <button key={o.t} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{o.l}</button>
+                    {[{ t: null, l: "Tous mes livres" }, { t: "edition", l: "En cours d'édition" }, { t: "attente", l: "En attente" }].map(o => (
+                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
                   {(() => {
-                    const classer = (b) => b.audio_url ? "audio" : ((b.content && b.content.length > 0 && !b.pdf_url) ? "roman" : (((b.price || 0) === 0) ? "gratuit" : "guide"));
-                    const liste = mesLivresTab ? mesLivres.filter(b => classer(b) === mesLivresTab) : mesLivres;
+                    const liste = mesLivresTab === "edition" ? mesLivres.filter(b => b.status === "brouillon") : mesLivresTab === "attente" ? mesLivres.filter(b => b.status !== "actif" && b.status !== "brouillon" && b.moderation !== "refuse") : mesLivres.filter(b => b.status === "actif");
                     return liste.length === 0 ? (
                     <div style={{ fontSize: 13, color: G.textDim }}>{mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie."}</div>
                   ) : (
-                    liste.map(b => {
-                      const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "📝 Brouillon (non soumis)", c: G.textDim } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                    liste.map((b, i) => {
+                      const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "✍️ En cours d'édition", c: "#c9952a" } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
                       return (
                         <div key={b.id} onClick={() => setMesLivresDetail(b)} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border, cursor: "pointer" }}>
                           <div style={{ flexShrink: 0 }}>
                             {b.cover ? <img src={b.cover} alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}>{b.title}</div>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}><span style={{ color: G.gold }}>{i + 1}.</span> {b.title}</div>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <span style={{ fontSize: 12, color: st.c, fontWeight: "bold" }}>{st.t}</span>
                               <span style={{ fontSize: 14, color: G.gold, fontWeight: "bold" }}>{b.price ? b.price + " F" : "Gratuit"}</span>
@@ -17646,7 +17644,7 @@ export default function App() {
                   })()}
                   {mesLivresDetail && (() => {
                     const b = mesLivresDetail;
-                    const stx = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "📝 Brouillon (non soumis)", c: G.textDim } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                    const stx = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "✍️ En cours d'édition", c: "#c9952a" } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
                     const lien = "https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
                     return (
                       <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
