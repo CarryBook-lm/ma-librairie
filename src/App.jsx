@@ -13878,6 +13878,7 @@ export default function App() {
   const [statsPeriod, setStatsPeriod] = useState("today");
   const [statsDate, setStatsDate] = useState("");
   const [ventesAuteur, setVentesAuteur] = useState([]);
+  const [pixelGuideTab, setPixelGuideTab] = useState("facebook");
   const [delaiRetrait, setDelaiRetrait] = useState(7);
   const [retraitsAuteur, setRetraitsAuteur] = useState([]);
   const [retraitOpen, setRetraitOpen] = useState(false);
@@ -17970,11 +17971,11 @@ export default function App() {
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
                   <label style={labelSt}>Pixel Facebook (ID)</label>
                   <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Ex : 1234567890123456" style={champ} />
-                  <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6 }}>❓ Comment créer un pixel Facebook ?</a>
+                  <a onClick={() => { setPixelGuideTab("facebook"); setPage("guide_pixel"); }} style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6, cursor: "pointer" }}>❓ Comment créer un pixel Facebook ?</a>
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Pixel TikTok (ID)</label>
                   <input value={auteurPixelTiktok} onChange={e => setAuteurPixelTiktok(e.target.value)} placeholder="Ex : C1A2B3..." style={champ} />
-                  <a href="https://ads.tiktok.com/i18n/events_manager" target="_blank" rel="noreferrer" style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6 }}>❓ Comment créer un pixel TikTok ?</a>
+                  <a onClick={() => { setPixelGuideTab("tiktok"); setPage("guide_pixel"); }} style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6, cursor: "pointer" }}>❓ Comment créer un pixel TikTok ?</a>
                   <div style={{ height: 18 }} />
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
@@ -21374,6 +21375,52 @@ export default function App() {
         )}
 
         {/* BIBLIOTHEQUE */}
+        {page === "guide_pixel" && (
+          <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 60px" }}>
+            <button onClick={() => setPage("espace_auteur")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
+            <h1 style={{ color: G.gold, fontSize: 21, marginBottom: 4 }}>Comment créer un pixel</h1>
+            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Un « pixel » est un petit code qui mesure l’efficacité de tes publicités. Suis les étapes, copie l’identifiant (ID) obtenu, puis colle-le dans tes Paramètres.</p>
+            <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+              <button onClick={() => setPixelGuideTab("facebook")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.gold, background: pixelGuideTab === "facebook" ? G.gold : "transparent", color: pixelGuideTab === "facebook" ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel Facebook</button>
+              <button onClick={() => setPixelGuideTab("tiktok")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.gold, background: pixelGuideTab === "tiktok" ? G.gold : "transparent", color: pixelGuideTab === "tiktok" ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel TikTok</button>
+            </div>
+            {(() => {
+              const P = { color: G.text, fontSize: 14, lineHeight: 1.7, marginBottom: 8 };
+              const NUM = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 11, background: G.gold, color: "#fff", fontSize: 12, fontWeight: "bold", marginRight: 8, flexShrink: 0 };
+              const row = (n, txt) => (<div key={n} style={{ display: "flex", alignItems: "flex-start", marginBottom: 12 }}><span style={NUM}>{n}</span><span style={{ color: G.text, fontSize: 14, lineHeight: 1.6 }}>{txt}</span></div>);
+              const btn = (href, label) => (<a href={href} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 13.5, padding: "11px 18px", borderRadius: 10, textDecoration: "none", marginBottom: 6 }}>{label}</a>);
+              const box = { background: G.goldDim, border: "1px solid " + G.gold + "55", borderRadius: 10, padding: "12px 14px", margin: "14px 0", fontSize: 13, lineHeight: 1.6, color: G.text };
+              if (pixelGuideTab === "facebook") return (<div>
+                <p style={P}>Le pixel Facebook se crée dans le <b>Gestionnaire d’événements Meta</b>. Tu as besoin d’un compte Facebook.</p>
+                {btn("https://business.facebook.com/events_manager2", "Ouvrir le Gestionnaire d’événements Meta")}
+                <div style={{ marginTop: 14 }}>
+                  {row(1, <span>Connecte-toi et ouvre le <b>Gestionnaire d’événements</b> (lien ci-dessus).</span>)}
+                  {row(2, <span>Clique sur <b>« Connecter des données »</b> (ou le bouton <b>« + »</b>), puis choisis <b>« Web »</b>.</span>)}
+                  {row(3, <span>Sélectionne <b>« Pixel Meta »</b> et clique <b>« Connecter »</b>.</span>)}
+                  {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « CarryBooks ») et valide.</span>)}
+                  {row(5, <span>Ton pixel est créé. Repère son <b>identifiant (ID)</b> : une suite de <b>15 à 16 chiffres</b>.</span>)}
+                  {row(6, <span>Copie cet ID, reviens dans <b>Paramètres</b> de ton espace auteur et colle-le dans <b>« Pixel Facebook (ID) »</b>.</span>)}
+                </div>
+                <div style={box}><b>Astuce :</b> l’ID du pixel se trouve en haut de la page du pixel, juste sous son nom. C’est bien une suite de chiffres (pas un lien).</div>
+              </div>);
+              return (<div>
+                <p style={P}>Le pixel TikTok se crée dans le <b>Gestionnaire d’événements TikTok</b> (TikTok Ads Manager). Tu as besoin d’un compte TikTok for Business.</p>
+                {btn("https://ads.tiktok.com/i18n/events_manager", "Ouvrir le Gestionnaire d’événements TikTok")}
+                <div style={{ marginTop: 14 }}>
+                  {row(1, <span>Connecte-toi au <b>Gestionnaire d’événements</b> (lien ci-dessus).</span>)}
+                  {row(2, <span>Clique sur <b>« Connecter une source de données »</b>, puis choisis <b>« Web »</b>.</span>)}
+                  {row(3, <span>Sélectionne <b>« Installation manuelle du code Pixel »</b>.</span>)}
+                  {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « CarryBooks ») et valide.</span>)}
+                  {row(5, <span>Ton pixel est créé. Repère son <b>identifiant (ID)</b> : une suite de <b>lettres et chiffres</b> (ex : C1A2B3…).</span>)}
+                  {row(6, <span>Copie cet ID, reviens dans <b>Paramètres</b> et colle-le dans <b>« Pixel TikTok (ID) »</b>.</span>)}
+                </div>
+                <div style={box}><b>Astuce :</b> l’ID TikTok mélange lettres et chiffres. Copie-le exactement, sans espace avant ni après.</div>
+              </div>);
+            })()}
+            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("parametres"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Paramètres</button>
+          </div>
+        )}
+
         {page === "comment_publier" && (
           <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 60px" }}>
             <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
