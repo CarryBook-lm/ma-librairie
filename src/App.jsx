@@ -20226,6 +20226,10 @@ export default function App() {
               style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "espace_auteur" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "espace_auteur" ? G.gold : "transparent"), background: page === "espace_auteur" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
               📖 Publie ton livre
             </div>
+            <div onClick={() => { setShowMenu(false); setPage("comment_publier"); }}
+              style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "comment_publier" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "comment_publier" ? G.gold : "transparent"), background: page === "comment_publier" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
+              ❓ Comment publier sur CarryBooks
+            </div>
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : lecteur
@@ -21370,6 +21374,67 @@ export default function App() {
         )}
 
         {/* BIBLIOTHEQUE */}
+        {page === "comment_publier" && (
+          <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 60px" }}>
+            <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
+            <h1 style={{ color: G.gold, fontSize: 22, marginBottom: 6 }}>Comment publier sur CarryBooks</h1>
+            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Le guide complet pour t’inscrire et publier tes livres, même sans aucune expérience.</p>
+            <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 24 }}>⬇️ Télécharger le guide en PDF</a>
+
+            {(() => {
+              const H = { color: G.gold, fontSize: 17, fontWeight: "bold", margin: "22px 0 8px" };
+              const H2 = { color: G.text, fontSize: 15, fontWeight: "bold", margin: "16px 0 6px" };
+              const P = { color: G.text, fontSize: 14, lineHeight: 1.65, marginBottom: 10 };
+              const LI = { color: G.text, fontSize: 14, lineHeight: 1.6, marginBottom: 5 };
+              const FL = { color: "#8a6d1f", fontWeight: "bold" };
+              const box = { background: G.goldDim, border: "1px solid " + G.gold + "55", borderRadius: 10, padding: "12px 14px", margin: "12px 0", fontSize: 13.5, lineHeight: 1.6, color: G.text };
+              return (<div>
+                <div style={box}><b>Ton parcours en 4 étapes :</b> 1. Créer ton compte → 2. Compléter ton profil → 3. Faire vérifier ton identité → 4. Publier tes livres et être payé.</div>
+
+                <div style={H}>Étape 1 — Créer ton compte</div>
+                <p style={P}>Va sur carrybooks.com, ouvre l’<b>Espace auteur</b> et crée ton compte (nom, e-mail, mot de passe, téléphone, pays). En bas de l’écran, tu as 5 onglets : <b>Profil</b>, <b>Mes livres</b>, <b>Publier</b>, <b>Ventes</b>, <b>Stats</b>.</p>
+
+                <div style={H}>Étape 2 — Compléter ton profil</div>
+                <p style={P}>Ajoute ta photo, une courte bio et tes réseaux sociaux. Tu obtiens une <b>boutique personnelle</b> avec un <b>lien de promotion</b> : partage-le, chaque vente via ce lien te rapporte <b>70 %</b> au lieu de 50 %.</p>
+
+                <div style={H}>Étape 3 — Faire vérifier ton identité</div>
+                <p style={P}>Obligatoire avant de publier. Remplis le formulaire d’identité (avec ton <b>numéro Mobile Money</b>, c’est là que tu seras payé), ajoute une photo de ta <b>pièce d’identité</b> (recto obligatoire, verso facultatif), puis <b>lis et signe le contrat en ligne</b> avec ton doigt. Une fois validé par CarryBooks, un badge « vérifié » apparaît et l’onglet Publier se débloque.</p>
+
+                <div style={H}>Étape 4 — Publier ton livre</div>
+                <p style={P}>Appuie sur l’onglet <b>Publier</b> (bouton « + » au centre), puis « Publier un livre ». Choisis parmi <b>4 types</b> :</p>
+                <ul style={{ paddingLeft: 18, margin: "0 0 10px" }}>
+                  <li style={LI}><b>Roman (Texte)</b> — tu colles le texte ; se lit dans la liseuse ; seul type éligible à l’abonnement.</li>
+                  <li style={LI}><b>Livre PDF</b> — tu envoies un fichier PDF, lisible et téléchargeable.</li>
+                  <li style={LI}><b>Livre Audio</b> — tu envoies un fichier MP3 à écouter.</li>
+                  <li style={LI}><b>Livre Gratuit</b> — un livre PDF offert pour attirer des lecteurs.</li>
+                </ul>
+
+                <div style={H2}>Type 1 — Roman (Texte)</div>
+                <p style={P}>Remplis dans l’ordre : <span style={FL}>Titre</span>, <span style={FL}>Catégorie</span>, <span style={FL}>Sous-catégorie</span> (elle s’active après la catégorie), <span style={FL}>Prix (FCFA)</span>, <span style={FL}>Couverture</span> (image A4 portrait, ~1240×1754 px, nette), <span style={FL}>Résumé</span> (2-3 phrases), <span style={FL}>Pages gratuites</span> (l’extrait lisible avant achat, ex : 10), puis <span style={FL}>Texte du roman</span> (colle le texte complet — astuce : écris dans Word puis copier-coller). Tu peux « Enregistrer » un brouillon et finir plus tard. Termine par <b>Soumettre pour validation</b>.</p>
+
+                <div style={H2}>Type 2 — Livre PDF</div>
+                <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec le <b>numéro de page en bas au centre</b>. Puis <b>Soumettre pour validation</b>.</p>
+
+                <div style={H2}>Type 3 — Livre Audio</div>
+                <p style={P}>Mêmes premiers champs (sans « pages gratuites »), puis <span style={FL}>Fichier audio (MP3)</span> : un son clair, sans bruit de fond. Puis <b>Soumettre pour validation</b>.</p>
+
+                <div style={H2}>Type 4 — Livre Gratuit</div>
+                <p style={P}>Comme un livre PDF mais <b>sans prix</b> : Titre, Catégorie, Sous-catégorie, Couverture, Résumé, puis <span style={FL}>Fichier du cadeau (PDF)</span>. Puis <b>Soumettre pour validation</b>.</p>
+
+                <div style={box}><b>Après la soumission</b> — dans « Mes livres », ton livre affiche : <b>En attente</b> (en cours de vérification), <b>En ligne</b> (validé, visible et vendable), ou <b>Refusé</b> (un motif s’affiche : corrige et resoumets). Tu peux modifier ou supprimer un livre depuis cet onglet.</div>
+
+                <div style={H}>Ta rémunération et tes retraits</div>
+                <p style={P}>Tu gagnes <b>70 %</b> sur les ventes via ton lien de promotion, <b>50 %</b> sur celles amenées par CarryBooks. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
+
+                <div style={H}>Le programme d’abonnement (facultatif)</div>
+                <p style={P}>Dans les Paramètres, tu peux activer l’abonnement : tes <b>romans</b> deviennent lisibles par les abonnés et tu touches une <b>commission fixe à chaque déblocage</b>. Tes livres PDF et audio restent payants. Tu peux te retirer quand tu veux.</p>
+
+                <div style={{ ...box, textAlign: "center" }}>Une question ? Écris-nous à <b>carrybooks.com@gmail.com</b>. Bienvenue dans la famille CarryBooks !</div>
+              </div>);
+            })()}
+          </div>
+        )}
+
         {page === "library" && (
           <LibraryPage 
             books={books} 
