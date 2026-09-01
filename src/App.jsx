@@ -16637,6 +16637,7 @@ export default function App() {
 
   const navItems = [
     { id: "auteurs", label: "👤 Auteur(es)" },
+    { id: "comment_publier", label: "❓ Comment publier sur CarryBooks" },
     { id: "home", label: "Accueil" },
     { id: "catalog", label: "Catalogue" },
     { id: "subscription", label: "Abonnement" },
@@ -20226,10 +20227,6 @@ export default function App() {
             <div onClick={() => { setShowMenu(false); if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }}
               style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "espace_auteur" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "espace_auteur" ? G.gold : "transparent"), background: page === "espace_auteur" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
               📖 Publie ton livre
-            </div>
-            <div onClick={() => { setShowMenu(false); setPage("comment_publier"); }}
-              style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "comment_publier" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "comment_publier" ? G.gold : "transparent"), background: page === "comment_publier" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
-              ❓ Comment publier sur CarryBooks
             </div>
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
