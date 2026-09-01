@@ -17970,9 +17970,11 @@ export default function App() {
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
                   <label style={labelSt}>Pixel Facebook (ID)</label>
                   <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Ex : 1234567890123456" style={champ} />
+                  <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6 }}>❓ Comment créer un pixel Facebook ?</a>
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Pixel TikTok (ID)</label>
                   <input value={auteurPixelTiktok} onChange={e => setAuteurPixelTiktok(e.target.value)} placeholder="Ex : C1A2B3..." style={champ} />
+                  <a href="https://ads.tiktok.com/i18n/events_manager" target="_blank" rel="noreferrer" style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6 }}>❓ Comment créer un pixel TikTok ?</a>
                   <div style={{ height: 18 }} />
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
