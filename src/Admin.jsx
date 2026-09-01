@@ -592,6 +592,17 @@ export default function Admin() {
     alert("✅ Retrait validé (payé).");
   };
   const estCamerounais = (phone) => { const d = String(phone || "").replace(/\s+/g, "").replace(/^\+/, ""); return d.startsWith("237") || /^6\d{8}$/.test(d); };
+  const payerViaPawapay = async (row) => {
+    if (!window.confirm("Envoyer AUTOMATIQUEMENT " + row.montant.toLocaleString() + " F à " + row.nom + " via PawaPay (Mobile Money) ?\n(Débité de ton solde PawaPay.)")) return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess && sess.session ? sess.session.access_token : "";
+      const res = await fetch("/api/pawapay-payout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ retrait_id: row.id, token }) });
+      const d = await res.json().catch(() => ({}));
+      if (d.ok) { await chargerSoldes(); alert("✅ Versement PawaPay envoyé à " + row.nom + " (" + d.montant + " " + d.devise + " via " + d.provider + ")."); }
+      else { alert("❌ Échec : " + (d.error || "erreur inconnue")); }
+    } catch (e) { alert("❌ Erreur : " + (e && e.message)); }
+  };
   const payerViaCampay = async (row) => {
     if (!estCamerounais(row.phone)) { alert("Numéro non camerounais : paie manuellement (CamPay ne verse qu'au Cameroun)."); return; }
     if (!window.confirm("Envoyer AUTOMATIQUEMENT " + row.montant.toLocaleString() + " F à " + row.nom + " via CamPay ?\n(Débité de ton solde CamPay. Vérifie que tu as assez.)")) return;
@@ -4378,8 +4389,9 @@ export default function Admin() {
                         <div style={{ color: "#4caf50", fontSize: 20, fontWeight: "bold", whiteSpace: "nowrap" }}>{row.montant.toLocaleString()} F</div>
                       </div>
                       {estCamerounais(row.phone) && (
-                        <button onClick={() => payerViaCampay(row)} style={{ width: "100%", padding: "11px 0", marginBottom: 8, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>💸 Payer via CamPay (automatique)</button>
+                        <button onClick={() => payerViaCampay(row)} style={{ width: "100%", padding: "11px 0", marginBottom: 8, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>💸 Payer via CamPay (Cameroun)</button>
                       )}
+                      <button onClick={() => payerViaPawapay(row)} style={{ width: "100%", padding: "11px 0", marginBottom: 8, background: "#0a7d3b", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>🌍 Payer via PawaPay (tous pays)</button>
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={() => reverserAuteur(row)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Marquer payé (manuel)</button>
                         <button onClick={() => refuserRetrait(row)} style={{ flex: 1, padding: "10px 0", background: "#5a1a1a", color: "#e57373", border: "1px solid #6a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>
