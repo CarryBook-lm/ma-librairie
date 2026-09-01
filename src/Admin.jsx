@@ -350,6 +350,7 @@ export default function Admin() {
   const [eaPayeMap, setEaPayeMap] = useState({});
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
+  const [eaAValider, setEaAValider] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
   const [vpData, setVpData] = useState([]);
   const [vpLoading, setVpLoading] = useState(false);
@@ -498,6 +499,8 @@ export default function Admin() {
         setEaAuteurs(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
+        const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
+        setEaAValider(av || []);
         const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
         const pmap = {}; (rp || []).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
         await chargerSoldes();
@@ -624,6 +627,24 @@ export default function Admin() {
     const { error } = await supabase.from("auteurs").update({ kyc_status: "refuse", kyc_motif_refus: motif || "Documents non conformes." }).eq("id", id);
     if (error) { alert("Erreur (droits ?) : " + error.message); return; }
     await kycRefresh();
+  };
+  const reloadAValider = async () => {
+    const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
+    setEaAValider(av || []); chargerTodo();
+  };
+  const validerLivre = async (b) => {
+    if (!window.confirm("Publier « " + b.title + " » ? Il sera visible sur le site.")) return;
+    const { error } = await supabase.from("books").update({ status: "actif", moderation: "valide", motif_refus: null }).eq("id", b.id);
+    if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    await reloadAValider();
+    alert("✅ Livre publié.");
+  };
+  const refuserLivre = async (b) => {
+    const motif = window.prompt("Motif du refus (visible par l'auteur) :", "");
+    if (motif === null) return;
+    const { error } = await supabase.from("books").update({ status: "refuse", moderation: "refuse", motif_refus: motif || "Livre non conforme." }).eq("id", b.id);
+    if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    await reloadAValider();
   };
   const fileInputRef = useRef(null);
 
@@ -4154,7 +4175,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["vue","📊 Vue d'ensemble"],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4201,6 +4222,41 @@ export default function Admin() {
                     })}
                   </>);
                 })()}
+              </div>
+            )}
+
+            {eaTab === "avalider" && (
+              <div>
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaAValider.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun livre en attente de validation.</div> : (
+                  eaAValider.map(b => {
+                    const slug = (b.title || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+                    return (
+                      <div key={b.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+                        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                          <div style={{ width: 60, height: 84, borderRadius: 6, overflow: "hidden", background: "#0f0f0f", flexShrink: 0 }}>
+                            {b.cover ? <img src={b.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
+                            <div style={{ color: "#aaa", fontSize: 12, marginBottom: 2 }}>par {b.author || "—"}</div>
+                            <div style={{ color: "#888", fontSize: 12 }}>{b.category || ""}{b.subcategory ? " · " + b.subcategory : ""}</div>
+                            <div style={{ color: "#a5d6a7", fontSize: 13, fontWeight: "bold", marginTop: 4 }}>{(b.price || 0).toLocaleString()} F</div>
+                          </div>
+                        </div>
+                        {b.summary ? <div style={{ color: "#bbb", fontSize: 12, lineHeight: 1.5, marginBottom: 10, maxHeight: 80, overflow: "auto" }}>{b.summary}</div> : null}
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                          <a href={"https://carrybooks.com/livre/" + slug} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none" }}>👁️ Voir la fiche</a>
+                          {b.pdf_url ? <a href={b.pdf_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none" }}>📄 Lire le PDF</a> : null}
+                          {b.audio_url ? <a href={b.audio_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none" }}>🎧 Écouter l'audio</a> : null}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => validerLivre(b)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Publier</button>
+                          <button onClick={() => refuserLivre(b)} style={{ flex: 1, padding: "10px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             )}
 
