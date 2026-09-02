@@ -20463,19 +20463,19 @@ export default function App() {
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
                 </div>
 
-                {/* CARTES DE CATEGORIES (facon vitrine) */}
-                <div style={{ padding: "18px 10px 0" }}>
-                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10, padding: "0 4px" }}>📚 Explore par catégorie</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                {/* CARTES DE CATEGORIES — rangee horizontale scrollable, format vertical */}
+                <div style={{ padding: "18px 0 0" }}>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10, padding: "0 14px" }}>📚 Explore par catégorie</div>
+                  <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
                     {Object.keys(CATEGORIES).map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
                       const bk = (books || []).find(b => b.status === "actif" && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
                       const cover = bk ? bk.cover : null;
                       return (
-                        <div key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); setPage("catalog"); window.scrollTo(0, 0); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", cursor: "pointer", aspectRatio: "1.5 / 1", background: cover ? "#111" : "linear-gradient(135deg, " + G.gold + ", #8a6d1f)" }}>
-                          {cover ? <img src={cover} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }} /> : null}
-                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.1))" }} />
-                          <div style={{ position: "absolute", bottom: 8, left: 10, right: 10, color: "#fff", fontSize: 13, fontWeight: "bold", textShadow: "0 1px 4px rgba(0,0,0,0.9)", lineHeight: 1.2 }}>{cat}</div>
+                        <div key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); setPage("catalog"); window.scrollTo(0, 0); }} style={{ flex: "0 0 auto", width: "calc((100% - 44px) / 4.5)", position: "relative", borderRadius: 10, overflow: "hidden", cursor: "pointer", aspectRatio: "1 / 1.5", background: cover ? "#111" : "linear-gradient(135deg, " + G.gold + ", #8a6d1f)" }}>
+                          {cover ? <img src={cover} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.62 }} /> : null}
+                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.05))" }} />
+                          <div style={{ position: "absolute", bottom: 5, left: 5, right: 5, color: "#fff", fontSize: 9.5, fontWeight: "bold", textShadow: "0 1px 3px rgba(0,0,0,0.9)", lineHeight: 1.15, textAlign: "center" }}>{cat}</div>
                         </div>
                       );
                     })}
