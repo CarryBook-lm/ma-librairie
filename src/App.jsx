@@ -20715,7 +20715,7 @@ export default function App() {
                   if (digitalBooks.length === 0) return null;
                   return (
                 <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés (Produits Numériques)</div>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {digitalBooks.map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "27vw", maxWidth: 120, cursor: "pointer", textAlign: "center" }}>
