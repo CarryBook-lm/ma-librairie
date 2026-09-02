@@ -332,7 +332,7 @@ export default function Admin() {
   const [onlineCount, setOnlineCount] = useState(0);
   const [recentReads, setRecentReads] = useState(0);
   const [topBooks, setTopBooks] = useState([]);
-  const [view, setView] = useState("dashboard");
+  const [view, setView] = useState(() => { try { const s = new URLSearchParams(window.location.search).get("section"); if (s) return s; } catch (e) {} return "dashboard"; });
   const [tauxCdf, setTauxCdf] = useState("");
   const [tauxCdfLoading, setTauxCdfLoading] = useState(false);
   const [tauxCdfSaving, setTauxCdfSaving] = useState(false);

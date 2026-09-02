@@ -17360,7 +17360,7 @@ export default function App() {
       );
     }
     return (
-      <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: auteurProfil ? 74 : 0 }}>
+      <div style={{ minHeight: "100vh", background: G.bg, paddingBottom: auteurProfil ? (auteurProfil.id === 8 ? 132 : 74) : 0 }}>
         {showLecteurModal && lecteurModalNode}
         {isInAppBrowser() && !fbBannerDismissed && fbBannerNode}
         <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -18143,19 +18143,22 @@ export default function App() {
         </div>
 
         {/* BARRE DU BAS */}
-        {auteurProfil && (
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
-            {auteurProfil.id === 8 ? (
-            <button onClick={() => { window.location.href = "/admin"; }} style={{ flex: 1, background: "none", borderTop: "3px solid transparent", borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: G.gold, fontSize: 10, fontWeight: "bold" }}><span style={{ fontSize: 20 }}>🛡️</span>S. Admin</button>
-            ) : (
+        {auteurProfil && (<>
+          <div style={{ position: "fixed", bottom: (auteurProfil.id === 8 ? 56 : 0), left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
             <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
-            )}
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
             <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
-        )}
+          {auteurProfil.id === 8 && (
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 56, background: "#141414", borderTop: "1px solid #2a2a2a", display: "flex", alignItems: "stretch", zIndex: 21 }}>
+            {[{ s: "dashboard", i: "📊", l: "Accueil" }, { s: "users", i: "👥", l: "Users" }, { s: "espace_auteur", i: "✍️", l: "Auteurs" }, { s: "comptabilite", i: "💰", l: "Compta" }, { s: "", i: "☰", l: "Plus" }].map(t => (
+              <button key={t.l} onClick={() => { window.location.href = "/admin" + (t.s ? "?section=" + t.s : ""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: "#c9a84c", fontSize: 9.5, fontWeight: "bold" }}><span style={{ fontSize: 18 }}>{t.i}</span>{t.l}</button>
+            ))}
+          </div>
+          )}
+        </>)}
 
         {/* MENU HAMBURGER */}
         {auteurMenu && (
