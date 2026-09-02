@@ -187,7 +187,7 @@ export default async function handler(req, res) {
     if (action === "support_lire") {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
-      const { data } = await supa.from("support_messages").select("id, cote, texte, annonce_id, created_at").eq("auteur_id", id).order("created_at", { ascending: true });
+      const { data } = await supa.from("support_messages").select("id, cote, texte, image_url, annonce_id, created_at").eq("auteur_id", id).order("created_at", { ascending: true });
       return res.status(200).json({ ok: true, messages: data || [] });
     }
 
@@ -195,9 +195,10 @@ export default async function handler(req, res) {
     if (action === "support_envoyer") {
       const id = body.id;
       const texte = (body.texte || "").trim();
+      const image_url = (body.image_url || "").trim() || null;
       if (!id) return res.status(400).json({ error: "id requis." });
-      if (!texte) return res.status(400).json({ error: "Message vide." });
-      const { data, error } = await supa.from("support_messages").insert([{ auteur_id: id, cote: "auteur", texte, lu_admin: false, lu_auteur: true }]).select("id, cote, texte, created_at").maybeSingle();
+      if (!texte && !image_url) return res.status(400).json({ error: "Message vide." });
+      const { data, error } = await supa.from("support_messages").insert([{ auteur_id: id, cote: "auteur", texte, image_url, lu_admin: false, lu_auteur: true }]).select("id, cote, texte, image_url, created_at").maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, message: data });
     }

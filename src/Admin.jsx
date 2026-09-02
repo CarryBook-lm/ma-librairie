@@ -349,6 +349,8 @@ export default function Admin() {
   const [supSel, setSupSel] = useState(null);
   const [supInput, setSupInput] = useState("");
   const [supSending, setSupSending] = useState(false);
+  const [supImg, setSupImg] = useState("");
+  const [supImgUp, setSupImgUp] = useState(false);
   const [supSearch, setSupSearch] = useState("");
   const [annonceOpen, setAnnonceOpen] = useState(false);
   const [annonceTxt, setAnnonceTxt] = useState("");
@@ -568,7 +570,7 @@ export default function Admin() {
   };
   const chargerSupportAdmin = async (auteursArg) => {
     const auts = auteursArg || eaAuteurs;
-    const { data: msgs } = await supabase.from("support_messages").select("id, auteur_id, cote, texte, lu_admin, annonce_id, created_at").order("created_at", { ascending: true });
+    const { data: msgs } = await supabase.from("support_messages").select("id, auteur_id, cote, texte, image_url, lu_admin, annonce_id, created_at").order("created_at", { ascending: true });
     const by = {};
     (msgs || []).forEach(m => { (by[m.auteur_id] = by[m.auteur_id] || { msgs: [], nonLus: 0, last: null }); by[m.auteur_id].msgs.push(m); if (m.cote === "auteur" && !m.lu_admin) by[m.auteur_id].nonLus++; by[m.auteur_id].last = m; });
     setSupAll(by);
@@ -581,13 +583,25 @@ export default function Admin() {
     await supabase.from("support_messages").update({ lu_admin: true }).eq("auteur_id", a.id).eq("cote", "auteur").eq("lu_admin", false);
     await chargerSupportAdmin();
   };
+  const uploadSupImg = async (file) => {
+    if (!file) return;
+    setSupImgUp(true);
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) setSupImg(data.data.url);
+      else alert("Erreur envoi image.");
+    } catch (e) { alert("Erreur envoi image."); }
+    setSupImgUp(false);
+  };
   const envoyerSupAdmin = async () => {
     const t = supInput.trim();
-    if (!t || !supSel) return;
+    if ((!t && !supImg) || !supSel) return;
     setSupSending(true);
     try {
-      const { error } = await supabase.from("support_messages").insert([{ auteur_id: supSel.id, cote: "admin", texte: t, lu_admin: true, lu_auteur: false }]);
-      if (error) { alert("Erreur : " + error.message); } else { setSupInput(""); await chargerSupportAdmin(); }
+      const { error } = await supabase.from("support_messages").insert([{ auteur_id: supSel.id, cote: "admin", texte: t, image_url: supImg || null, lu_admin: true, lu_auteur: false }]);
+      if (error) { alert("Erreur : " + error.message); } else { setSupInput(""); setSupImg(""); await chargerSupportAdmin(); }
     } catch (e) { alert("Erreur : " + (e && e.message)); }
     setSupSending(false);
   };
@@ -4430,14 +4444,18 @@ export default function Admin() {
                       {fil.length === 0 ? <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 16 }}>Aucun message. Écris le premier ci-dessous.</div> : fil.map(m => (
                         <div key={m.id} style={{ alignSelf: m.cote === "admin" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "admin" ? "#0e5a52" : "#1e1e1e", color: m.cote === "admin" ? "#fff" : "#e8e0d0", border: m.cote === "admin" ? "none" : "1px solid #333", borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                           {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: "#c9a84c", marginBottom: 3 }}>📢 Annonce</div> : null}
+                          {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                           {m.texte}
                           <div style={{ fontSize: 9, opacity: 0.55, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
                         </div>
                       ))}
                     </div>
+                    {supImg ? (<div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}><img src={supImg} alt="" style={{ maxHeight: 90, borderRadius: 8, border: "1px solid #333" }} /><button onClick={() => setSupImg("")} style={{ position: "absolute", top: -8, right: -8, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : null}
+                    {supImgUp ? <div style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>⏳ Envoi de l'image…</div> : null}
                     <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                      <label style={{ padding: "11px 12px", background: "#242424", border: "1px solid #333", borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
                       <textarea value={supInput} onChange={e => setSupInput(e.target.value)} placeholder="Ta réponse…" rows={2} style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 10, color: "#fff", fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
-                      <button onClick={envoyerSupAdmin} disabled={supSending || !supInput.trim()} style={{ padding: "11px 16px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supSending || !supInput.trim()) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
+                      <button onClick={envoyerSupAdmin} disabled={supSending || (!supInput.trim() && !supImg)} style={{ padding: "11px 16px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supSending || (!supInput.trim() && !supImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
                     </div>
                   </div>);
                 })() : (<div>

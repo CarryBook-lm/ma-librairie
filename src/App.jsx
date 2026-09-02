@@ -13883,6 +13883,8 @@ export default function App() {
   const [supportInput, setSupportInput] = useState("");
   const [supportSending, setSupportSending] = useState(false);
   const [supportNonLus, setSupportNonLus] = useState(0);
+  const [supportImg, setSupportImg] = useState("");
+  const [supportImgUploading, setSupportImgUploading] = useState(false);
   const chargerSupport = async () => {
     if (!auteurProfil) return;
     try {
@@ -13893,14 +13895,26 @@ export default function App() {
       setSupportNonLus(0);
     } catch (e) {}
   };
+  const uploadSupportImage = async (file) => {
+    if (!file) return;
+    setSupportImgUploading(true);
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) setSupportImg(data.data.url);
+      else alert("Erreur lors de l'envoi de l'image. Réessaie.");
+    } catch (e) { alert("Erreur lors de l'envoi de l'image. Réessaie."); }
+    setSupportImgUploading(false);
+  };
   const envoyerSupport = async () => {
     const t = supportInput.trim();
-    if (!t || !auteurProfil) return;
+    if ((!t && !supportImg) || !auteurProfil) return;
     setSupportSending(true);
     try {
-      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_envoyer", id: auteurProfil.id, texte: t }) });
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_envoyer", id: auteurProfil.id, texte: t, image_url: supportImg || "" }) });
       const d = await res.json().catch(() => ({}));
-      if (d.ok) { setSupportInput(""); await chargerSupport(); } else { alert(d.error || "Envoi impossible."); }
+      if (d.ok) { setSupportInput(""); setSupportImg(""); await chargerSupport(); } else { alert(d.error || "Envoi impossible."); }
     } catch (e) {}
     setSupportSending(false);
   };
@@ -17351,7 +17365,7 @@ export default function App() {
         <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {auteurProfil
-              ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>☰</button>
+              ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1, position: "relative" }}>☰{supportNonLus > 0 && <span style={{ position: "absolute", top: -4, right: -6, background: "#e11d48", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 9, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px", border: "2px solid " + G.bg }}>{supportNonLus}</span>}</button>
               : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
             {auteurProfil && (
               <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>
@@ -18051,14 +18065,18 @@ export default function App() {
                     {supportMsgs.length === 0 ? <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 20 }}>Aucun message pour l’instant. Écris-nous ci-dessous 👇</div> : supportMsgs.map(m => (
                       <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : "#fff", color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                         {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce CarryBooks</div> : null}
+                        {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                         {m.texte}
                         <div style={{ fontSize: 9, opacity: 0.6, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
                       </div>
                     ))}
                   </div>
+                  {supportImg ? (<div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}><img src={supportImg} alt="" style={{ maxHeight: 90, borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setSupportImg("")} style={{ position: "absolute", top: -8, right: -8, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : null}
+                  {supportImgUploading ? <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>⏳ Envoi de l'image…</div> : null}
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                    <label style={{ padding: "11px 12px", background: "#f0ece2", border: "1px solid " + G.border, borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupportImage(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
                     <textarea value={supportInput} onChange={e => setSupportInput(e.target.value)} placeholder="Écris ton message…" rows={2} style={{ flex: 1, padding: "10px 12px", border: "1px solid " + G.border, borderRadius: 10, fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
-                    <button onClick={envoyerSupport} disabled={supportSending || !supportInput.trim()} style={{ padding: "11px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supportSending || !supportInput.trim()) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
+                    <button onClick={envoyerSupport} disabled={supportSending || (!supportInput.trim() && !supportImg)} style={{ padding: "11px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supportSending || (!supportInput.trim() && !supportImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
                   </div>
                 </div>
               )}
