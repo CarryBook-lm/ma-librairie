@@ -17664,9 +17664,9 @@ export default function App() {
                       <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous" }, { t: "roman", l: "Texte" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: "0 0 auto", padding: "6px 12px", borderRadius: 16, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : "#fff", color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : "#fff", color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
                     ))}
                   </div>
                   {(() => {
