@@ -18146,6 +18146,8 @@ export default function App() {
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>9. Contenu interdit</div>
                   <p>Sont refusés : le contenu volé ou piraté (dont tu n'es pas l'auteur), le contenu illégal, haineux ou pornographique. Publie uniquement tes propres œuvres.</p>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>10. Publier une annonce (pub)</div>
+                  <p>Dans <b>Publier</b>, choisis <b>« 📢 Publier une annonce »</b> pour mettre un livre en avant. Prépare une <b>bannière au format A4 paysage</b> (large), puis colle le <b>lien de ton livre</b> (tu le copies depuis <b>Mes livres</b> en ouvrant le livre concerné). Après validation, ton annonce apparaît sur l'accueil, entre les Best-sellers et les Nouveautés, avec un bouton « Lire maintenant ».</p>
                 </div>
               )}
               {/* SUPPORT (bientôt) */}
@@ -20695,7 +20697,7 @@ export default function App() {
                       {annoncesActives.map(a => (
                         <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "92%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", position: "relative" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                          <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Lire maintenant</div>
+                          <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>
                         </div>
                       ))}
                     </div>
@@ -21676,6 +21678,8 @@ export default function App() {
                 <div style={H2}>Type 1 — Roman (Texte)</div>
                 <p style={P}>Remplis dans l’ordre : <span style={FL}>Titre</span>, <span style={FL}>Catégorie</span>, <span style={FL}>Sous-catégorie</span> (elle s’active après la catégorie), <span style={FL}>Prix (FCFA)</span>, <span style={FL}>Couverture</span> (image A4 portrait, ~1240×1754 px, nette), <span style={FL}>Résumé</span> (2-3 phrases), <span style={FL}>Pages gratuites</span> (l’extrait lisible avant achat, ex : 10), puis <span style={FL}>Texte du roman</span>. Tu peux <b>écrire ton roman directement ici, sur la plateforme</b> : tape ton texte dans la grande zone, ou colle-le depuis Word. <b>Pas besoin de tout finir d’un coup</b> : appuie sur <b>« Enregistrer (continuer plus tard) »</b> et ton travail est gardé. Tu peux revenir l’écrire sur <b>plusieurs jours, à ta convenance</b> ; ton texte s’enregistre aussi tout seul pendant que tu écris. Tu <b>retrouves à tout moment ton livre en cours d’écriture dans « Mes livres » → onglet « En cours d’édition »</b> : ouvre-le pour continuer là où tu t’étais arrêté(e). (Dans « Mes livres », 3 onglets : <b>Tous mes livres</b> = tes livres publiés, <b>En cours d’édition</b> = tes textes pas encore finis, <b>En attente</b> = soumis mais pas encore validés.) Quand ton roman est terminé, appuie sur <b>Soumettre pour validation</b>.</p>
 
+                <div style={H2}>📢 Publier une annonce (mettre un livre en avant)</div>
+                <p style={P}>Depuis <b>Publier</b>, choisis <b>« Publier une annonce »</b> : ajoute une <b>bannière au format A4 paysage</b> (large) et colle le <b>lien de ton livre</b> (copie-le depuis « Mes livres » en ouvrant le livre). Une fois validée par CarryBooks, ton annonce s’affiche sur l’accueil (entre Best-sellers et Nouveautés) avec un bouton « Lire maintenant ».</p>
                 <div style={H2}>Type 2 — Livre PDF</div>
                 <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> et le <b>numéro de page en bas au centre</b>. Puis <b>Soumettre pour validation</b>.</p>
 
