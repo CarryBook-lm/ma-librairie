@@ -20692,8 +20692,9 @@ export default function App() {
                   <div style={{ marginBottom: 28 }}>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {annoncesActives.map(a => (
-                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "86%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "86%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", position: "relative" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <div style={{ position: "absolute", bottom: 10, left: 10, background: G.gold, color: "#1a1208", fontWeight: "bold", fontSize: 12.5, padding: "7px 14px", borderRadius: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.35)" }}>📖 Lire maintenant</div>
                         </div>
                       ))}
                     </div>
