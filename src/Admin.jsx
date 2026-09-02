@@ -4529,12 +4529,12 @@ export default function Admin() {
 
             {eaTab === "annonces" && (
               <div>
-                <div style={{ fontSize: 12, color: "#888", marginBottom: 12, lineHeight: 1.5 }}>Les annonces des auteurs (bannieres 16:9). Valide-les pour qu'elles apparaissent sur l'accueil, entre Best-sellers et Nouveautes.</div>
+                <div style={{ fontSize: 12, color: "#888", marginBottom: 12, lineHeight: 1.5 }}>Les annonces des auteurs (bannieres A4 paysage). Valide-les pour qu'elles apparaissent sur l'accueil, entre Best-sellers et Nouveautes.</div>
                 {eaAnnonces.length === 0 ? <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 20 }}>Aucune annonce pour l'instant.</div> : eaAnnonces.map(a => {
                   const aut = (eaAuteurs || []).find(x => x.id === a.auteur_id);
                   return (
                     <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid " + (a.statut === "en_attente" ? "#c9a84c66" : "#2a4a2a"), borderRadius: 10, padding: 12, marginBottom: 12 }}>
-                      <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
+                      <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
                       <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>Par <b style={{ color: "#e8e0d0" }}>{aut ? aut.nom_complet : ("Auteur #" + a.auteur_id)}</b></div>
                       <div style={{ fontSize: 11.5, color: "#7fb0e0", marginBottom: 8, wordBreak: "break-all" }}><a href={a.lien} target="_blank" rel="noreferrer" style={{ color: "#7fb0e0" }}>{a.lien}</a></div>
                       <div style={{ fontSize: 11, fontWeight: "bold", marginBottom: 8, color: a.statut === "active" ? "#7fe39a" : "#c9a84c" }}>{a.statut === "active" ? "✅ En ligne (accueil)" : "⏳ En attente de validation"}</div>

@@ -17615,7 +17615,7 @@ export default function App() {
                           { t: "guide", c: "#c9952a", ic: "📥", l: "Publier un Livre PDF", s: "Liseuse PDF et téléchargeable" },
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
-                          { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere 16:9 qui met ton livre en avant sur l'accueil" },
+                          { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere A4 paysage qui met ton livre en avant sur l'accueil" },
                         ].map(o => (
                           <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
@@ -17627,10 +17627,10 @@ export default function App() {
                   ) : pubTypeSelected === "annonce" ? (<>
                   <button onClick={() => { setPubTypeSelected(null); setAnnonceMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📢 Publier une annonce</div>
-                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Cree une banniere au format <b>16:9</b> (paysage, large). Elle apparaitra sur l’accueil apres validation, et menera au lien que tu indiques.</div>
-                  <label style={labelSt}>Banniere (image 16:9) *</label>
-                  {annonceImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={annonceImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 10, border: "1px solid " + G.border }} /><button onClick={() => setAnnonceImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 26, height: 26, fontSize: 14, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
-                    <button onClick={() => document.getElementById("annonceImgInput").click()} disabled={annonceUploading} style={{ width: "100%", aspectRatio: "16 / 9", border: "2px dashed " + G.gold + "66", borderRadius: 10, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", marginBottom: 10 }}>{annonceUploading ? "Envoi…" : "🖼️ Choisir la banniere (16:9)"}</button>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Cree une banniere au format <b>A4 paysage</b> (large, horizontale). Elle apparaitra sur l’accueil apres validation, et menera au lien que tu indiques.</div>
+                  <label style={labelSt}>Banniere (A4 paysage) *</label>
+                  {annonceImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={annonceImg} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 10, border: "1px solid " + G.border }} /><button onClick={() => setAnnonceImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 26, height: 26, fontSize: 14, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
+                    <button onClick={() => document.getElementById("annonceImgInput").click()} disabled={annonceUploading} style={{ width: "100%", aspectRatio: "297 / 210", border: "2px dashed " + G.gold + "66", borderRadius: 10, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", marginBottom: 10 }}>{annonceUploading ? "Envoi…" : "🖼️ Choisir la banniere (A4 paysage)"}</button>
                   )}
                   <input id="annonceImgInput" type="file" accept="image/*" onChange={e => { uploadAnnonceImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
                   <label style={labelSt}>Lien de destination * (vers ton livre)</label>
@@ -20693,7 +20693,7 @@ export default function App() {
                   <div style={{ marginBottom: 28 }}>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {annoncesActives.map(a => (
-                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "92%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", position: "relative" }}>
+                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "92%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", position: "relative" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Lire maintenant</div>
                         </div>
