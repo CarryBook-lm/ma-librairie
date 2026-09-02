@@ -14276,6 +14276,20 @@ export default function App() {
   const exigerConnexion = () => { if (!lecteur && !user) { setShowLecteurModal(true); return false; } return true; };
   useEffect(() => { if (page === "library" && !lecteur && !user) setShowLecteurModal(true); }, [page, lecteur, user]);
   useEffect(() => { if (auteurTab === "support" && auteurProfil) chargerSupport(); }, [auteurTab, auteurProfil]);
+  // Précharge l'admin en arrière-plan (pour Landrine) → ouverture quasi instantanée depuis la 2e rangée
+  useEffect(() => {
+    if (!auteurProfil || auteurProfil.id !== 8) return;
+    const urls = ["/admin", "/admin?section=espace_auteur", "/admin?section=users", "/admin?section=gains", "/admin?section=dashboard"];
+    const els = [];
+    try {
+      const spec = document.createElement("script");
+      spec.type = "speculationrules";
+      spec.textContent = JSON.stringify({ prefetch: [{ source: "list", urls }] });
+      document.head.appendChild(spec); els.push(spec);
+    } catch (e) {}
+    urls.forEach(u => { try { const l = document.createElement("link"); l.rel = "prefetch"; l.href = u; document.head.appendChild(l); els.push(l); } catch (e) {} });
+    return () => { els.forEach(el => { try { el.remove(); } catch (e) {} }); };
+  }, [auteurProfil]);
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
