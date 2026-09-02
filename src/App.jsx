@@ -17393,7 +17393,7 @@ export default function App() {
         <div style={{ position: "sticky", top: 0, zIndex: 20, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {auteurProfil
-              ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1, position: "relative" }}>☰{supportNonLus > 0 && <span style={{ position: "absolute", top: -4, right: -6, background: "#e11d48", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 9, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px", border: "2px solid " + G.bg }}>{supportNonLus}</span>}</button>
+              ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>☰</button>
               : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
             {auteurProfil && (
               <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>
@@ -17402,7 +17402,7 @@ export default function App() {
             )}
             <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil && renderBadgeVerifie(auteurProfil.kyc_status === "valide")}{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
           </div>
-          {auteurProfil && <button onClick={() => { setAuteurTab("notifs"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20 }}>🔔</button>}
+          {auteurProfil && <button onClick={() => { setAuteurTab("support"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20, position: "relative", lineHeight: 1 }}>🔔{supportNonLus > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "#e11d48", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 9, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px", border: "2px solid " + G.bg }}>{supportNonLus}</span>}</button>}
         </div>
         <div style={{ padding: eaLarge ? 24 : 16, maxWidth: eaMax, margin: "0 auto" }}>
           {retraitOpen && (
