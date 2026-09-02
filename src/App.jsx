@@ -18159,7 +18159,7 @@ export default function App() {
           </div>
           {auteurProfil.id === 8 && (
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 56, background: "#141414", borderTop: "1px solid #2a2a2a", display: "flex", alignItems: "stretch", zIndex: 21 }}>
-            {[{ s: "dashboard", i: "📊", l: "Accueil" }, { s: "users", i: "👥", l: "Users" }, { s: "espace_auteur", i: "✍️", l: "Auteurs" }, { s: "comptabilite", i: "💰", l: "Compta" }, { s: "", i: "☰", l: "Plus" }].map(t => (
+            {[{ s: "dashboard", i: "📊", l: "Accueil" }, { s: "users", i: "👥", l: "Users" }, { s: "espace_auteur", i: "✍️", l: "Auteurs" }, { s: "gains", i: "💰", l: "Gains" }, { s: "", i: "☰", l: "Plus" }].map(t => (
               <button key={t.l} onClick={() => { window.location.href = "/admin" + (t.s ? "?section=" + t.s : ""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: "#c9a84c", fontSize: 9.5, fontWeight: "bold" }}><span style={{ fontSize: 18 }}>{t.i}</span>{t.l}</button>
             ))}
           </div>
