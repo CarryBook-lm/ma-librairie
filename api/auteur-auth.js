@@ -91,6 +91,14 @@ export default async function handler(req, res) {
       };
       const { data, error } = await supa.from("auteurs").insert(row).select(SAFE).maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
+      // Message d'accueil automatique : les annonces marquees "permanentes" arrivent dans son Support
+      try {
+        const { data: anns } = await supa.from("support_annonces").select("id, texte").eq("permanente", true).order("created_at", { ascending: true });
+        if (anns && anns.length && data) {
+          const rows = anns.map(a => ({ auteur_id: data.id, cote: "admin", texte: a.texte, annonce_id: a.id, lu_admin: true, lu_auteur: false }));
+          await supa.from("support_messages").insert(rows);
+        }
+      } catch (e) {}
       return res.status(200).json({ auteur: data });
     }
 
