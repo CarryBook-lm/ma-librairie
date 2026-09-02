@@ -15317,7 +15317,7 @@ export default function App() {
     if (!hasCachedBooks) setLoading(true);
     // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
     // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
-    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, vues, created_at";
+    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
 
     // 🎯 ÉTAPE 1 : Charger les LIVRES (non-articles) en priorité — rapide car peu nombreux
     // Supabase limite à 1000 lignes par défaut. Avec 1000+ articles, les livres seraient tronqués.
@@ -15734,15 +15734,6 @@ export default function App() {
     // Afficher immédiatement avec les données légères (UX rapide)
     setSelectedBook(book);
     setPage("detail");
-    // 👁 Compteur de vues : +1 une seule fois par session par livre (leger, en arriere-plan)
-    try {
-      const vus = JSON.parse(sessionStorage.getItem("livresVus") || "[]");
-      if (!vus.includes(book.id)) {
-        vus.push(book.id); sessionStorage.setItem("livresVus", JSON.stringify(vus));
-        supabase.rpc("incrementer_vue", { p_book_id: book.id });
-        setSelectedBook(b => (b && b.id === book.id) ? { ...b, vues: (b.vues || 0) + 1 } : b);
-      }
-    } catch (e) {}
     loadBookRatings(book.id);
     loadBookReviews(book.id);
     setReviewComment("");
@@ -19261,8 +19252,7 @@ export default function App() {
             {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
-          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
-          <p style={{ color: G.textDim, textAlign: "center", fontSize: 12, marginBottom: 16 }}>👁 {(book.vues || 0).toLocaleString("fr-FR")} vue{(book.vues || 0) > 1 ? "s" : ""}</p>
+          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 16 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             {/* Pour un livre papier uniquement, on affiche le prix papier */}
             {isPaperOnlyBook ? (
