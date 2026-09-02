@@ -2218,7 +2218,7 @@ export default function Admin() {
 
       {/* TOP NAV MOBILE */}
       <div style={{ background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", padding: "0 16px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c", letterSpacing: 2 }}>CARRYBOOKS</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}><button onClick={() => { window.location.href = "/espace-auteur"; }} title="Retour à mon espace auteur" style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 18, cursor: "pointer", padding: "3px 10px", lineHeight: 1 }}>←</button><div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c", letterSpacing: 2 }}>CARRYBOOKS</div></div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={() => window.open("/", "_blank")}
             style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
