@@ -17528,7 +17528,7 @@ export default function App() {
                       ); })()}
                       <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
-                      <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "11px 14px", background: G.goldDim, border: "1px solid " + G.gold + "66", borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 17 }}>❓</span> Comment publier ? Lis le guide pas à pas</button>
+                      <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.goldDim, border: "1px solid " + G.gold + "66", borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
                       <div style={{ display: "grid", gap: 8 }}>
                         {[
                           { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
