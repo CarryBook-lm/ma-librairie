@@ -14332,15 +14332,15 @@ export default function App() {
     <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "#faf7f0", color: "#1a1208", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 28, textAlign: "center" }}>
       <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 60, marginBottom: 22 }} />
       <h2 style={{ fontSize: 22, margin: "0 0 12px", color: "#1a1208" }}>Bienvenue sur CarryBooks 📚</h2>
-      <p style={{ fontSize: 15, color: "#5a5040", lineHeight: 1.6, margin: "0 0 26px", maxWidth: 320 }}>Appuie sur <b>« Continuer »</b> pour accéder à la boutique, acheter et lire tes livres.</p>
-      <button onClick={() => setFbBannerDismissed(true)} style={{ background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 12, padding: "16px 40px", fontSize: 17, fontWeight: "bold", cursor: "pointer", boxShadow: "0 6px 18px rgba(201,168,76,0.4)" }}>Continuer</button>
+      <p style={{ fontSize: 15, color: "#5a5040", lineHeight: 1.6, margin: "0 0 26px", maxWidth: 320 }}>Appuie sur le bouton ci-dessous pour ouvrir CarryBooks dans ton navigateur.</p>
       <button onClick={() => {
         const ua = (navigator.userAgent || "").toLowerCase();
         if (/android/.test(ua)) {
           const bare = window.location.href.replace(/^https?:\/\//, "");
           try { window.location.href = "intent://" + bare + "#Intent;scheme=https;end"; } catch (e) { setFbBannerDismissed(true); }
         } else { setShowInstallModal(true); }
-      }} style={{ marginTop: 20, background: "none", border: "1px solid #c9a84c88", borderRadius: 10, padding: "10px 20px", color: "#8a6d1f", fontSize: 13, cursor: "pointer" }}>Ouvrir dans mon navigateur (pour installer ou télécharger)</button>
+      }} style={{ background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 12, padding: "16px 34px", fontSize: 16, fontWeight: "bold", cursor: "pointer", boxShadow: "0 6px 18px rgba(201,168,76,0.4)", maxWidth: 320 }}>Continuer pour lire et télécharger ou publier un livre</button>
+      <button onClick={() => setFbBannerDismissed(true)} style={{ marginTop: 22, background: "none", border: "none", color: "#999", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>Le bouton ne marche pas ? Continuer ici</button>
     </div>
   );
   const [readerScrollMode, setReaderScrollMode] = useState(false);
