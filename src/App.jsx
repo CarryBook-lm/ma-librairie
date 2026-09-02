@@ -2789,7 +2789,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 }
 
 // ─── LIBRARY PAGE COMPONENT ───
-function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, onPurchasesRecovered, onDownload }) {
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, lecteur, onRecoverLecteur, onPurchasesRecovered, onDownload }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
   const myBooks = books.filter(b => purchasedBooks.includes(b.id));
 
@@ -2801,16 +2801,20 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
 
   // 🆕 Fonction de récupération des achats invités
   async function handleRecoverPurchases() {
-    if (!user || !user.id) {
-      setRecoverResult({ error: "Tu dois être connecté pour récupérer tes achats." });
-      return;
-    }
     if (!recoverPhone || recoverPhone.trim().length < 6) {
       setRecoverResult({ error: "Entre un numéro de téléphone valide." });
       return;
     }
     setRecoverLoading(true);
     setRecoverResult(null);
+    if ((!user || !user.id) && onRecoverLecteur) {
+      try {
+        const ids = await onRecoverLecteur(recoverPhone.trim());
+        setRecoverResult((ids && ids.length) ? { recovered: ids, total: ids.length } : { error: "Aucun achat trouvé pour ce numéro. Vérifie que c'est bien le numéro utilisé lors de l'achat." });
+      } catch (e) { setRecoverResult({ error: "Erreur. Réessaie." }); }
+      setRecoverLoading(false);
+      return;
+    }
     try {
       const res = await fetch("/api/campay", {
         method: "POST",
@@ -2899,7 +2903,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
       </div>
 
       {/* 🆕 BOUTON : Récupérer mes achats invités */}
-      {user && (
+      {(user || lecteur) && (
         <div style={{ padding: "12px 16px 0" }}>
           <button onClick={() => { setShowRecoverModal(true); setRecoverResult(null); setRecoverPhone(""); }}
             style={{
@@ -15139,9 +15143,10 @@ export default function App() {
     setLecteurPrenom(""); setLecteurPays(""); setLecteurTel("");
   }
   async function loadLecteurPurchases(phone) {
-    if (!phone) return;
+    if (!phone) return [];
     try {
-      const { data } = await supabase.from("guest_purchases").select("book_id, created_at, amount").eq("phone", phone).order("created_at", { ascending: false });
+      const local = String(phone).replace(/\D/g, "").slice(-9);
+      const { data } = await supabase.from("guest_purchases").select("book_id, created_at, amount").ilike("phone", "%" + local + "%").order("created_at", { ascending: false });
       if (data && data.length) {
         const ids = data.map(p => p.book_id);
         setPurchasedBooks(prev => {
@@ -15153,8 +15158,10 @@ export default function App() {
           const seen = new Set((prev || []).map(x => x.book_id));
           return [...(prev || []), ...data.filter(d => !seen.has(d.book_id))];
         });
+        return ids;
       }
     } catch (e) {}
+    return [];
   }
   async function loadUserPurchases(userId) {
     // 🛡️ ÉTAPE 1 : Récupérer les achats perdus AVANT de charger la liste
@@ -21616,6 +21623,8 @@ export default function App() {
             recoveredPurchases={recoveredPurchases} 
             onDismissRecovered={() => setRecoveredPurchases([])} 
             user={user} 
+            lecteur={lecteur}
+            onRecoverLecteur={loadLecteurPurchases}
             onPurchasesRecovered={(recovered) => { if (user) loadUserPurchases(user.id); }}
             onDownload={async (book) => {
               try {
