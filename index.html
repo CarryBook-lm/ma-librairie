@@ -5,21 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="facebook-domain-verification" content="fanzr6ipm9uccl2oopvw1cueec72qm" />
     <link rel="manifest" href="/manifest.json">
-    <script>
-      window.__pwaPrompt = null;
-      window.addEventListener("beforeinstallprompt", function (e) {
-        e.preventDefault();
-        window.__pwaPrompt = e;
-        try { window.dispatchEvent(new Event("pwa-can-install")); } catch (err) {}
-      });
-      window.addEventListener("appinstalled", function () { window.__pwaPrompt = null; });
-    </script>
-    <meta name="theme-color" content="#f5f0e8">
-    <!-- Preconnexions : démarre les connexions réseau au plus tôt (gain de vitesse) -->
     <link rel="preconnect" href="https://huikxujxsklboejkbnda.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="https://huikxujxsklboejkbnda.supabase.co">
-    <link rel="preconnect" href="https://connect.facebook.net">
     <link rel="preconnect" href="https://i.ibb.co">
+    <link rel="dns-prefetch" href="https://i.ibb.co">
+    <link rel="dns-prefetch" href="https://api.imgbb.com">
+    <meta name="theme-color" content="#f5f0e8">
     <link rel="icon" type="image/jpeg" href="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <link rel="apple-touch-icon" href="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg" />
     <meta name="description" content="CarryBooks — Ta librairie numérique camerounaise. Lis. Apprends. Évolue." />
@@ -140,35 +130,26 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Cacher le splash DES QUE React a affiche l'app (sans attendre les
-      // ressources externes lentes : logo distant, pixel Facebook...).
+      // Cacher le splash DES QUE la boutique s'affiche (React a rendu dans #root),
+      // au lieu d'attendre le chargement de toutes les images (window.load).
       (function () {
-        var done = false;
-        function hideSplash() {
-          if (done) return;
-          done = true;
+        function hide() {
           var splash = document.getElementById("splash-screen");
           if (!splash) return;
           splash.classList.add("fade-out");
-          setTimeout(function () {
-            if (splash.parentNode) splash.parentNode.removeChild(splash);
-          }, 500);
+          setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 500);
         }
-        // 1) Des que le conteneur #root recoit du contenu (React a rendu)
         var root = document.getElementById("root");
-        if (root && "MutationObserver" in window) {
+        if (root && window.MutationObserver) {
           var obs = new MutationObserver(function () {
-            if (root.childNodes && root.childNodes.length > 0) {
-              obs.disconnect();
-              // petit delai pour laisser le 1er paint se faire
-              setTimeout(hideSplash, 120);
-            }
+            if (root.childNodes.length > 0) { obs.disconnect(); hide(); }
           });
-          obs.observe(root, { childList: true, subtree: false });
+          obs.observe(root, { childList: true });
+        } else {
+          window.addEventListener("load", hide);
         }
-        // 2) Replis de securite : au load complet + timeout maxi
-        window.addEventListener("load", function () { setTimeout(hideSplash, 200); });
-        setTimeout(hideSplash, 6000);
+        // Filet de securite : ne jamais laisser le splash bloque plus de 8s
+        setTimeout(hide, 8000);
       })();
     </script>
   </body>
