@@ -16951,7 +16951,7 @@ export default function App() {
         kyc_piece_type: kycPieceType, kyc_piece_url: kycPieceUrl, kyc_piece_url2: kycPieceUrl2, kyc_contrat_url: contratUrl,
       }) });
       const data = await res.json().catch(() => ({}));
-      if (data.auteur) { appliquerSessionAuteur(data.auteur); setKycOpen(false); setKycMsg(""); alert("✅ Vérification soumise ! Ton contrat signé est téléchargeable dans ton profil (menu → Profil)."); }
+      if (data.auteur) { appliquerSessionAuteur(data.auteur); setKycOpen(false); setKycMsg(""); alert("✅ Vérification soumise ! Le traitement peut durer jusqu'à 24h. Ton contrat signé est téléchargeable dans ton profil (menu → Profil)."); }
       else { setKycMsg("❌ " + (data.error || "Envoi impossible.")); }
     } catch (e) { setKycMsg("❌ " + (e.message || e)); }
     setKycSaving(false);
@@ -17103,11 +17103,11 @@ export default function App() {
       if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
         if (error) throw error;
-        setPubMsg("✅ Ton livre a été modifié et renvoyé pour validation.");
+        setPubMsg("✅ Ton livre a été modifié et renvoyé pour validation. Le traitement peut durer jusqu'à 24h.");
       } else {
         const { error } = await supabase.from("books").insert(payload);
         if (error) throw error;
-        setPubMsg("✅ Ton livre a été envoyé ! Il sera visible après validation.");
+        setPubMsg("✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par CarryBooks.");
       }
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
@@ -18097,7 +18097,7 @@ export default function App() {
               {/* SUPPORT (bientôt) */}
               {auteurTab === "support" && (
                 <div>
-                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Une question, un souci de paiement, une suggestion ? Écris-nous : l’équipe CarryBooks te répond directement ici.</div>
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Une question, un souci de paiement, une suggestion ? Écris-nous : l’équipe CarryBooks te répond ici, généralement sous 24h.</div>
                   <div style={{ maxHeight: 380, overflowY: "auto", background: "#faf8f3", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                     {supportMsgs.length === 0 ? <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 20 }}>Aucun message pour l’instant. Écris-nous ci-dessous 👇</div> : supportMsgs.map(m => (
                       <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : "#fff", color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
