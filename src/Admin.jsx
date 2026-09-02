@@ -503,7 +503,7 @@ export default function Admin() {
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
           supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
-          supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
+          supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
@@ -545,7 +545,7 @@ export default function Admin() {
   const rechargerEA = async () => {
     const [{ data: aut }, { data: bks }] = await Promise.all([
       supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
-      supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).order("id", { ascending: false }),
+      supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
     setEaAuteurs(aut || []); setEaBooks(bks || []);
     if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
@@ -1602,7 +1602,7 @@ export default function Admin() {
   }
 
   async function fetchBooks() {
-    const { data } = await supabase.from("books").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("books").select("*").neq("status", "brouillon").order("created_at", { ascending: false });
     if (data) setBooks(data);
   }
 
