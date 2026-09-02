@@ -20784,7 +20784,7 @@ export default function App() {
                                 </div>
                                 <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                                 {book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
-                                <div style={{ fontSize: 13, color: G.gold, fontWeight: "bold", marginTop: 3 }}>{book.price === 0 ? "Gratuit" : getDisplayPrice(book).toLocaleString() + " F"}</div>
+                                <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 3 }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
                               </div>
                             ))}
                           </div>
