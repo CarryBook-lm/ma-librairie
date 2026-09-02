@@ -13824,6 +13824,7 @@ export default function App() {
   const [pubUploading, setPubUploading] = useState(false);
   const [pubSaving, setPubSaving] = useState(false);
   const [pubMsg, setPubMsg] = useState("");
+  const [pubErrors, setPubErrors] = useState({});
   const [mesLivres, setMesLivres] = useState([]);
   const [mesLivresTab, setMesLivresTab] = useState(null); // statut : null=publiés, edition, attente
   const [mesLivresType, setMesLivresType] = useState(null); // type : null=tous, roman/guide/audio/gratuit
@@ -17063,15 +17064,23 @@ export default function App() {
     const isGratuit = f.type === "gratuit";
     const isPdf = (f.type === "guide" || f.type === "gratuit");
     const needsExtract = (f.type === "roman" || f.type === "guide");
-    const baseOk = f.title.trim() && f.category && f.subcategory && f.cover && f.summary.trim()
-      && (isGratuit || String(f.price).trim())
-      && (!needsExtract || String(f.extract_pages).trim());
-    const contentOk = f.type === "roman" ? !!f.content.trim()
-      : f.type === "audio" ? !!f.audio_url
-      : !!f.pdf_url;
-    if (!baseOk || !contentOk) {
-      setPubMsg("Merci de remplir TOUS les champs (tout est obligatoire)."); return;
+    const errs = {};
+    if (!f.title.trim()) errs.title = true;
+    if (!f.category) errs.category = true;
+    if (!f.subcategory) errs.subcategory = true;
+    if (!isGratuit && !String(f.price).trim()) errs.price = true;
+    if (!f.cover) errs.cover = true;
+    if (!f.summary.trim()) errs.summary = true;
+    if (needsExtract && !String(f.extract_pages).trim()) errs.extract_pages = true;
+    if (f.type === "roman" && !f.content.trim()) errs.content = true;
+    if (f.type === "audio" && !f.audio_url) errs.audio = true;
+    if ((f.type === "guide" || f.type === "gratuit") && !f.pdf_url) errs.pdf = true;
+    if (Object.keys(errs).length > 0) {
+      setPubErrors(errs);
+      setPubMsg("⚠️ Tout n'a pas été rempli. Les cases manquantes sont en ROUGE — complète-les puis réessaie.");
+      return;
     }
+    setPubErrors({});
     if (needsExtract && (parseInt(f.extract_pages) || 0) < 1) { setPubMsg("Le nombre de pages gratuites doit être au moins 1."); return; }
     setPubSaving(true); setPubMsg("");
     try {
@@ -17581,23 +17590,23 @@ export default function App() {
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : (pubForm.type === "roman" ? "📖 Publier un Roman" : pubForm.type === "guide" ? "📥 Publier un Livre PDF" : pubForm.type === "audio" ? "🎧 Publier un Livre Audio" : "🎁 Publier un Livre Gratuit")}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton livre sera vérifié avant sa mise en ligne.</div>
                   <label style={labelSt}>Titre *</label>
-                  <input value={pubForm.title} onChange={e => setPubForm(f => ({ ...f, title: e.target.value }))} style={champ} />
+                  <input value={pubForm.title} onChange={e => { setPubForm(f => ({ ...f, title: e.target.value })); setPubErrors(p => ({ ...p, title: false })); }} style={{ ...champ, ...(pubErrors.title ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Catégorie *</label>
-                  <select value={pubForm.category} onChange={e => setPubForm(f => ({ ...f, category: e.target.value, subcategory: "" }))} style={champ}>
+                  <select value={pubForm.category} onChange={e => { setPubForm(f => ({ ...f, category: e.target.value, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
                     <option value="">— Choisis —</option>
                     {Object.keys(pubCats).map(cn => <option key={cn} value={cn}>{cn}</option>)}
                   </select>
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Sous-catégorie *</label>
-                  <select value={pubForm.subcategory} onChange={e => setPubForm(f => ({ ...f, subcategory: e.target.value }))} disabled={!pubForm.category} style={{ ...champ, opacity: pubForm.category ? 1 : 0.6 }}>
+                  <select value={pubForm.subcategory} onChange={e => { setPubForm(f => ({ ...f, subcategory: e.target.value })); setPubErrors(p => ({ ...p, subcategory: false })); }} disabled={!pubForm.category} style={{ ...champ, opacity: pubForm.category ? 1 : 0.6, ...(pubErrors.subcategory ? { border: "2px solid #e53935" } : {}) }}>
                     <option value="">{pubForm.category ? "— Choisis —" : "Choisis d'abord la catégorie"}</option>
                     {(pubCats[pubForm.category] || []).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   <div style={{ height: 14 }} />
                   {pubForm.type !== "gratuit" && (<>
                   <label style={labelSt}>Prix (FCFA) *</label>
-                  <input type="number" value={pubForm.price} onChange={e => setPubForm(f => ({ ...f, price: e.target.value }))} placeholder="Ex : 1000" style={champ} />
+                  <input type="number" value={pubForm.price} onChange={e => { setPubForm(f => ({ ...f, price: e.target.value })); setPubErrors(p => ({ ...p, price: false })); }} placeholder="Ex : 1000" style={{ ...champ, ...(pubErrors.price ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   </>)}
                   <label style={labelSt}>Couverture * (A4 portrait, ex : 1240 × 1754 px)</label>
@@ -17609,22 +17618,22 @@ export default function App() {
                   ) : (
                     <>
                       <input type="file" accept="image/*" id="pubCoverInput" style={{ display: "none" }} onChange={pubUploadCover} />
-                      <button onClick={() => document.getElementById("pubCoverInput").click()} disabled={pubUploading} style={{ width: "100%", padding: 12, border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold" }}>{pubUploading ? "Envoi…" : "🖼️ Choisir la couverture"}</button>
+                      <button onClick={() => document.getElementById("pubCoverInput").click()} disabled={pubUploading} style={{ width: "100%", padding: 12, border: pubErrors.cover ? "2px solid #e53935" : "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: pubErrors.cover ? "#e53935" : G.gold, fontSize: 13, background: G.bg, fontWeight: "bold" }}>{pubUploading ? "Envoi…" : "🖼️ Choisir la couverture"}</button>
                     </>
                   )}
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Résumé *</label>
-                  <textarea value={pubForm.summary} onChange={e => setPubForm(f => ({ ...f, summary: e.target.value }))} rows={3} style={{ ...champ, resize: "vertical" }} />
+                  <textarea value={pubForm.summary} onChange={e => { setPubForm(f => ({ ...f, summary: e.target.value })); setPubErrors(p => ({ ...p, summary: false })); }} rows={3} style={{ ...champ, resize: "vertical", ...(pubErrors.summary ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   {(pubForm.type === "roman" || pubForm.type === "guide") && (<>
                   <label style={labelSt}>Pages gratuites (extrait) *</label>
-                  <input type="number" min="1" value={pubForm.extract_pages} onChange={e => setPubForm(f => ({ ...f, extract_pages: e.target.value }))} placeholder="Ex : 10" style={champ} />
+                  <input type="number" min="1" value={pubForm.extract_pages} onChange={e => { setPubForm(f => ({ ...f, extract_pages: e.target.value })); setPubErrors(p => ({ ...p, extract_pages: false })); }} placeholder="Ex : 10" style={{ ...champ, ...(pubErrors.extract_pages ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   </>)}
                   {pubForm.type === "roman" ? (
                     <>
                       <label style={labelSt}>Texte du roman *</label>
-                      <textarea value={pubForm.content} onChange={e => setPubForm(f => ({ ...f, content: e.target.value }))} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6 }} />
+                      <textarea value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6, ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
                   ) : pubForm.type === "audio" ? (
                     <>
