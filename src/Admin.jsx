@@ -531,11 +531,12 @@ export default function Admin() {
         const { data: brut } = await supabase.from("ventes_auteurs").select("part_carrybooks, part_auteur, montant_total, source, created_at, auteur_id");
         const data = (brut || []).filter(v => v.auteur_id !== 8 && v.auteur_id !== 9);
         const now = Date.now();
-        const acc = { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0 };
+        const acc = { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0, nbAuteur: 0, comAuteur: 0, nbCb: 0, comCb: 0 };
         (data || []).forEach(v => {
           const pc = Number(v.part_carrybooks) || 0;
           acc.total += pc; acc.auteurs += Number(v.part_auteur) || 0; acc.ca += Number(v.montant_total) || 0; acc.nb++;
           if (v.source === "abonnement") acc.abo += pc; else acc.ventes += pc;
+          if (v.source === "auteur") { acc.nbAuteur++; acc.comAuteur += pc; } else if (v.source === "carrybooks") { acc.nbCb++; acc.comCb += pc; }
           const age = now - new Date(v.created_at).getTime();
           if (age <= 86400000) acc.j1 += pc;
           if (age <= 7 * 86400000) acc.j7 += pc;
@@ -649,12 +650,13 @@ export default function Admin() {
   };
   const chargerTodo = async () => {
     try {
-      const [{ count: nbLivres }, { count: nbKyc }, { count: nbRetraits }] = await Promise.all([
+      const [{ count: nbLivres }, { count: nbKyc }, { count: nbRetraits }, { count: nbSupport }] = await Promise.all([
         supabase.from("books").select("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("status", "en_attente"),
         supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "en_attente"),
         supabase.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
+        supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("cote", "auteur").eq("lu_admin", false),
       ]);
-      setEaTodo({ livres: nbLivres || 0, kyc: nbKyc || 0, retraits: nbRetraits || 0 });
+      setEaTodo({ livres: nbLivres || 0, kyc: nbKyc || 0, retraits: nbRetraits || 0, support: nbSupport || 0 });
     } catch (e) {}
   };
   useEffect(() => { chargerTodo(); }, []);
@@ -2293,7 +2295,7 @@ export default function Admin() {
                 borderLeft: "3px solid " + (view === item.id ? "#c9a84c" : "transparent"),
                 borderBottom: "1px solid #2a2a2a" }}>
               <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
-              {item.id === "espace_auteur" && ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0)) > 0 && (
+              {item.id === "espace_auteur" && ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0)) > 0 && (
                 <span style={{ marginLeft: "auto", background: "#e53935", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 8px", minWidth: 18, textAlign: "center" }}>{eaTodo.livres + eaTodo.kyc + eaTodo.retraits}</span>
               )}
             </div>
@@ -4279,7 +4281,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4635,6 +4637,12 @@ export default function Admin() {
               <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>Ta commission CarryBooks sur toutes les ventes des auteurs (le reste après la part auteur).</p>
               {gainsLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
                 <div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: 16 }}>
+                    <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#e8e0d0", fontSize: 19, fontWeight: "bold" }}>{g.nbAuteur}</div><div style={{ color: "#aaa", fontSize: 11 }}>Livres vendus par l'auteur (son lien)</div></div>
+                    <div style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 10, padding: 12, minWidth: 110, textAlign: "right" }}><div style={{ color: "#a5d6a7", fontSize: 19, fontWeight: "bold" }}>{f(g.comAuteur)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Ma commission</div></div>
+                    <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#e8e0d0", fontSize: 19, fontWeight: "bold" }}>{g.nbCb}</div><div style={{ color: "#aaa", fontSize: 11 }}>Livres vendus par CarryBooks</div></div>
+                    <div style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 10, padding: 12, minWidth: 110, textAlign: "right" }}><div style={{ color: "#a5d6a7", fontSize: 19, fontWeight: "bold" }}>{f(g.comCb)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Ma commission</div></div>
+                  </div>
                   <div style={{ background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", borderRadius: 12, padding: 18, marginBottom: 16 }}>
                     <div style={{ color: "#1a1208", fontSize: 13, fontWeight: "bold", opacity: 0.8 }}>Mes gains au total</div>
                     <div style={{ color: "#fff", fontSize: 30, fontWeight: "bold", lineHeight: 1.2 }}>{f(g.total)}</div>
@@ -5490,7 +5498,7 @@ export default function Admin() {
         {[
           { id: "dashboard", label: "Accueil", icon: "📊", badge: 0 },
           { id: "users", label: "Users", icon: "👥", badge: 0 },
-          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0)) },
+          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0)) },
           { id: "gains", label: "Gains", icon: "💰", badge: 0 },
         ].map(t => (
           <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? "#c9a84c" : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
