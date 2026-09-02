@@ -17634,6 +17634,7 @@ export default function App() {
                   )}
                   <input id="annonceImgInput" type="file" accept="image/*" onChange={e => { uploadAnnonceImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
                   <label style={labelSt}>Lien de destination * (vers ton livre)</label>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 8, lineHeight: 1.5, background: G.goldDim, border: "1px solid " + G.gold + "44", borderRadius: 8, padding: "8px 10px" }}>💡 Pour obtenir le lien : va dans <b>Mes livres</b>, ouvre le livre concerne, <b>copie son lien</b>, puis reviens le coller ici.</div>
                   <input value={annonceLien} onChange={e => setAnnonceLien(e.target.value)} placeholder="https://carrybooks.com/livre/..." style={champ} />
                   <div style={{ height: 14 }} />
                   {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce envoyee ! Elle apparaitra sur l’accueil apres validation (jusqu’a 24h).</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
