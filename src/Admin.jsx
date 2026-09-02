@@ -528,7 +528,8 @@ export default function Admin() {
     (async () => {
       setGainsLoading(true);
       try {
-        const { data } = await supabase.from("ventes_auteurs").select("part_carrybooks, part_auteur, montant_total, source, created_at, auteur_id").not("auteur_id", "in", "(8,9)");
+        const { data: brut } = await supabase.from("ventes_auteurs").select("part_carrybooks, part_auteur, montant_total, source, created_at, auteur_id");
+        const data = (brut || []).filter(v => v.auteur_id !== 8 && v.auteur_id !== 9);
         const now = Date.now();
         const acc = { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0 };
         (data || []).forEach(v => {
