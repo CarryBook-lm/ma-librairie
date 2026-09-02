@@ -13826,6 +13826,7 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [pubErrors, setPubErrors] = useState({});
   const [mesLivres, setMesLivres] = useState([]);
+  const [mesLivresLoading, setMesLivresLoading] = useState(true);
   const [mesLivresTab, setMesLivresTab] = useState(null); // statut : null=publiés, edition, attente
   const [mesLivresType, setMesLivresType] = useState(null); // type : null=tous, roman/guide/audio/gratuit
   const [mesLivresDetail, setMesLivresDetail] = useState(null); // livre ouvert en detail
@@ -13944,7 +13945,8 @@ export default function App() {
   }, [auteurProfil, auteurTab]);
   // Charge les catégories + les livres de l'auteur
   useEffect(() => {
-    if (!auteurProfil) { setMesLivres([]); return; }
+    if (!auteurProfil) { setMesLivres([]); setMesLivresLoading(false); return; }
+    setMesLivresLoading(true);
     (async () => {
       try {
         const { data: cats } = await supabase.from("categories").select("*").order("display_order", { ascending: true });
@@ -13954,7 +13956,7 @@ export default function App() {
         setPubCats(obj);
         const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
         setMesLivres(livres || []);
-      } catch (e) {}
+      } catch (e) {} finally { setMesLivresLoading(false); }
     })();
   }, [auteurProfil]);
   // Détection pays (Cameroun -> CamPay, ailleurs -> PayDunya) + retour PayDunya
@@ -17697,7 +17699,7 @@ export default function App() {
                     const parStatut = mesLivresTab === "edition" ? mesLivres.filter(b => b.status === "brouillon") : mesLivresTab === "attente" ? mesLivres.filter(b => b.status !== "actif" && b.status !== "brouillon" && b.moderation !== "refuse") : mesLivres.filter(b => b.status === "actif");
                     const liste = mesLivresType ? parStatut.filter(b => classer(b) === mesLivresType) : parStatut;
                     return liste.length === 0 ? (
-                    <div style={{ fontSize: 13, color: G.textDim }}>{mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie."}</div>
+                    <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>{mesLivresLoading ? "⏳ Chargement en cours…" : (mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie.")}</div>
                   ) : (
                     liste.map((b, i) => {
                       const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "✍️ En cours d'édition", c: "#c9952a" } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
