@@ -5404,6 +5404,23 @@ export default function Admin() {
           </div>
         </div>
       )}
+      {/* BARRE DU BAS — navigation principale (facon espace auteur) */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 58, background: "#141414", borderTop: "1px solid #2a2a2a", display: "flex", alignItems: "stretch", zIndex: 50 }}>
+        {[
+          { id: "dashboard", label: "Accueil", icon: "📊", badge: 0 },
+          { id: "users", label: "Users", icon: "👥", badge: 0 },
+          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: (eaTodo.livres + eaTodo.kyc + eaTodo.retraits) },
+          { id: "comptabilite", label: "Compta", icon: "💰", badge: 0 },
+        ].map(t => (
+          <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? "#c9a84c" : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
+            <span style={{ fontSize: 19 }}>{t.icon}</span>{t.label}
+            {t.badge > 0 && <span style={{ position: "absolute", top: 3, right: "26%", background: "#e53935", color: "#fff", fontSize: 9, fontWeight: "bold", borderRadius: 9, minWidth: 15, textAlign: "center", padding: "0 3px", lineHeight: "15px" }}>{t.badge}</span>}
+          </button>
+        ))}
+        <button onClick={() => setShowMenu(m => !m)} style={{ flex: 1, background: showMenu ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + (showMenu ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: showMenu ? "#c9a84c" : "#999", fontSize: 10, fontWeight: showMenu ? "bold" : "normal" }}>
+          <span style={{ fontSize: 19 }}>{showMenu ? "✕" : "☰"}</span>Plus
+        </button>
+      </div>
     </div>
   );
 }
@@ -5643,23 +5660,6 @@ function PwaStatsView() {
 
       <div style={{ textAlign: "center", color: "#666", fontSize: 11, marginTop: 20 }}>
         🔄 Mise à jour automatique toutes les 30 secondes
-      </div>
-      {/* BARRE DU BAS — navigation principale (facon espace auteur) */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 58, background: "#141414", borderTop: "1px solid #2a2a2a", display: "flex", alignItems: "stretch", zIndex: 50 }}>
-        {[
-          { id: "dashboard", label: "Accueil", icon: "📊", badge: 0 },
-          { id: "users", label: "Users", icon: "👥", badge: 0 },
-          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: (eaTodo.livres + eaTodo.kyc + eaTodo.retraits) },
-          { id: "comptabilite", label: "Compta", icon: "💰", badge: 0 },
-        ].map(t => (
-          <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? "#c9a84c" : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
-            <span style={{ fontSize: 19 }}>{t.icon}</span>{t.label}
-            {t.badge > 0 && <span style={{ position: "absolute", top: 3, right: "26%", background: "#e53935", color: "#fff", fontSize: 9, fontWeight: "bold", borderRadius: 9, minWidth: 15, textAlign: "center", padding: "0 3px", lineHeight: "15px" }}>{t.badge}</span>}
-          </button>
-        ))}
-        <button onClick={() => setShowMenu(m => !m)} style={{ flex: 1, background: showMenu ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + (showMenu ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: showMenu ? "#c9a84c" : "#999", fontSize: 10, fontWeight: showMenu ? "bold" : "normal" }}>
-          <span style={{ fontSize: 19 }}>{showMenu ? "✕" : "☰"}</span>Plus
-        </button>
       </div>
     </div>
   );
