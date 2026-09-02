@@ -363,6 +363,7 @@ export default function Admin() {
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
   const [eaAValider, setEaAValider] = useState([]);
+  const [eaAnnonces, setEaAnnonces] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
   const [gainsData, setGainsData] = useState(null);
   const [gainsLoading, setGainsLoading] = useState(false);
@@ -516,6 +517,8 @@ export default function Admin() {
         setEaKyc(kyc || []);
         const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
         setEaAValider(av || []);
+        const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
+        setEaAnnonces(anns || []);
         const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
         const pmap = {}; (rp || []).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
         await chargerSoldes();
@@ -733,6 +736,13 @@ export default function Admin() {
     if (error) { alert("Erreur (droits ?) : " + error.message); return; }
     await kycRefresh();
   };
+  const reloadAnnonces = async () => {
+    const { data } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
+    setEaAnnonces(data || []); chargerTodo();
+  };
+  const validerAnnonce = async (id) => { await supabase.from("annonces_pub").update({ statut: "active" }).eq("id", id); await reloadAnnonces(); };
+  const refuserAnnonce = async (id) => { const m = window.prompt("Motif du refus (optionnel) :", ""); await supabase.from("annonces_pub").update({ statut: "refusee", motif_refus: m || null }).eq("id", id); await reloadAnnonces(); };
+  const supprimerAnnonce = async (id) => { if (!window.confirm("Supprimer cette annonce ?")) return; await supabase.from("annonces_pub").delete().eq("id", id); await reloadAnnonces(); };
   const reloadAValider = async () => {
     const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
     setEaAValider(av || []); chargerTodo();
@@ -4281,7 +4291,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["annonces","📢 Annonces" + ((() => { const n = eaAnnonces.filter(a => a.statut === "en_attente").length; return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4514,6 +4524,28 @@ export default function Admin() {
                     </div>
                   ))}
                 </div>)}
+              </div>
+            )}
+
+            {eaTab === "annonces" && (
+              <div>
+                <div style={{ fontSize: 12, color: "#888", marginBottom: 12, lineHeight: 1.5 }}>Les annonces des auteurs (bannieres 16:9). Valide-les pour qu'elles apparaissent sur l'accueil, entre Best-sellers et Nouveautes.</div>
+                {eaAnnonces.length === 0 ? <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 20 }}>Aucune annonce pour l'instant.</div> : eaAnnonces.map(a => {
+                  const aut = (eaAuteurs || []).find(x => x.id === a.auteur_id);
+                  return (
+                    <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid " + (a.statut === "en_attente" ? "#c9a84c66" : "#2a4a2a"), borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                      <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
+                      <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>Par <b style={{ color: "#e8e0d0" }}>{aut ? aut.nom_complet : ("Auteur #" + a.auteur_id)}</b></div>
+                      <div style={{ fontSize: 11.5, color: "#7fb0e0", marginBottom: 8, wordBreak: "break-all" }}><a href={a.lien} target="_blank" rel="noreferrer" style={{ color: "#7fb0e0" }}>{a.lien}</a></div>
+                      <div style={{ fontSize: 11, fontWeight: "bold", marginBottom: 8, color: a.statut === "active" ? "#7fe39a" : "#c9a84c" }}>{a.statut === "active" ? "✅ En ligne (accueil)" : "⏳ En attente de validation"}</div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {a.statut === "en_attente" && <button onClick={() => validerAnnonce(a.id)} style={{ flex: 1, padding: "9px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Valider</button>}
+                        {a.statut === "en_attente" && <button onClick={() => refuserAnnonce(a.id)} style={{ flex: 1, padding: "9px 0", background: "#8a2a2a", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>}
+                        <button onClick={() => supprimerAnnonce(a.id)} style={{ flex: a.statut === "active" ? 1 : "0 0 auto", padding: "9px 12px", background: "#333", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>🗑️ {a.statut === "active" ? "Retirer" : ""}</button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 

@@ -13450,6 +13450,8 @@ export default function App() {
   const [recoveredPurchases, setRecoveredPurchases] = useState([]); // 🛡️ Achats récupérés automatiquement
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
+  const [annoncesActives, setAnnoncesActives] = useState([]);
+  useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(data || [])); }, []);
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
@@ -13829,6 +13831,33 @@ export default function App() {
   const [pubSaving, setPubSaving] = useState(false);
   const [pubMsg, setPubMsg] = useState("");
   const [pubErrors, setPubErrors] = useState({});
+  const [annonceImg, setAnnonceImg] = useState("");
+  const [annonceLien, setAnnonceLien] = useState("");
+  const [annonceUploading, setAnnonceUploading] = useState(false);
+  const [annonceSending, setAnnonceSending] = useState(false);
+  const [annonceMsg, setAnnonceMsg] = useState("");
+  const uploadAnnonceImg = async (file) => {
+    if (!file) return;
+    setAnnonceUploading(true); setAnnonceMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) setAnnonceImg(data.data.url);
+      else setAnnonceMsg("Erreur lors de l'envoi de l'image. Reessaie.");
+    } catch (e) { setAnnonceMsg("Erreur lors de l'envoi de l'image. Reessaie."); }
+    setAnnonceUploading(false);
+  };
+  const soumettreAnnonce = async () => {
+    if (!annonceImg) { setAnnonceMsg("Ajoute une banniere 16:9."); return; }
+    if (!annonceLien.trim()) { setAnnonceMsg("Colle le lien vers ton livre."); return; }
+    setAnnonceSending(true); setAnnonceMsg("");
+    try {
+      const { error } = await supabase.from("annonces_pub").insert([{ auteur_id: auteurProfil.id, image_url: annonceImg, lien: annonceLien.trim(), statut: "en_attente" }]);
+      if (error) { setAnnonceMsg("Erreur : " + error.message); } else { setAnnonceImg(""); setAnnonceLien(""); setAnnonceMsg("OK_ENVOYE"); setPubTypeSelected(null); }
+    } catch (e) { setAnnonceMsg("Erreur : " + (e && e.message)); }
+    setAnnonceSending(false);
+  };
   const [mesLivres, setMesLivres] = useState([]);
   const [mesLivresLoading, setMesLivresLoading] = useState(true);
   const [mesLivresTab, setMesLivresTab] = useState(null); // statut : null=publiés, edition, attente
@@ -17586,6 +17615,7 @@ export default function App() {
                           { t: "guide", c: "#c9952a", ic: "📥", l: "Publier un Livre PDF", s: "Liseuse PDF et téléchargeable" },
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
+                          { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere 16:9 qui met ton livre en avant sur l'accueil" },
                         ].map(o => (
                           <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
@@ -17594,7 +17624,21 @@ export default function App() {
                         ))}
                       </div>
                     </>
-                  ) : (<>
+                  ) : pubTypeSelected === "annonce" ? (<>
+                  <button onClick={() => { setPubTypeSelected(null); setAnnonceMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📢 Publier une annonce</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Cree une banniere au format <b>16:9</b> (paysage, large). Elle apparaitra sur l’accueil apres validation, et menera au lien que tu indiques.</div>
+                  <label style={labelSt}>Banniere (image 16:9) *</label>
+                  {annonceImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={annonceImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 10, border: "1px solid " + G.border }} /><button onClick={() => setAnnonceImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 26, height: 26, fontSize: 14, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
+                    <button onClick={() => document.getElementById("annonceImgInput").click()} disabled={annonceUploading} style={{ width: "100%", aspectRatio: "16 / 9", border: "2px dashed " + G.gold + "66", borderRadius: 10, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", marginBottom: 10 }}>{annonceUploading ? "Envoi…" : "🖼️ Choisir la banniere (16:9)"}</button>
+                  )}
+                  <input id="annonceImgInput" type="file" accept="image/*" onChange={e => { uploadAnnonceImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+                  <label style={labelSt}>Lien de destination * (vers ton livre)</label>
+                  <input value={annonceLien} onChange={e => setAnnonceLien(e.target.value)} placeholder="https://carrybooks.com/livre/..." style={champ} />
+                  <div style={{ height: 14 }} />
+                  {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce envoyee ! Elle apparaitra sur l’accueil apres validation (jusqu’a 24h).</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
+                  <button onClick={soumettreAnnonce} disabled={annonceSending} style={{ width: "100%", padding: 14, background: G.gold, color: "#1a1208", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: annonceSending ? 0.6 : 1 }}>{annonceSending ? "Envoi…" : "📤 Soumettre l’annonce"}</button>
+                  </>) : (<>
                   <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : (pubForm.type === "roman" ? "📖 Publier un Roman" : pubForm.type === "guide" ? "📥 Publier un Livre PDF" : pubForm.type === "audio" ? "🎧 Publier un Livre Audio" : "🎁 Publier un Livre Gratuit")}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16 }}>Tous les champs sont obligatoires. Ton livre sera vérifié avant sa mise en ligne.</div>
@@ -20642,6 +20686,19 @@ export default function App() {
                     </div>
                   );
                 })()}
+
+                {/* ANNONCES DES AUTEURS (carrousel 16:9 horizontal) */}
+                {annoncesActives.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                      {annoncesActives.map(a => (
+                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "86%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+                          <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* NOUVEAUTÉS (PRODUITS NUMÉRIQUES) - numérique + mixte */}
                 {(() => {
