@@ -18044,7 +18044,7 @@ export default function App() {
                   <p>Format <b>A4 portrait</b> (plus haut que large). Taille conseillée : <b>1240 × 1754 pixels</b>. Une belle couverture nette donne envie d'acheter.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>3. Le fichier PDF (guides)</div>
-                  <p>Format <b>A5</b>. La <b>police est libre</b> (choisis ce que tu veux) mais le texte doit rester <b>net et lisible</b>. Le <b>numéro de page</b> est obligatoire, placé <b>en bas au centre</b> de chaque page (tu l'ajoutes toi-même avant de téléverser). Pages illimitées.</p>
+                  <p>Format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> (pour un texte net et lisible). Le <b>numéro de page</b> est obligatoire, placé <b>en bas au centre</b> de chaque page (tu l'ajoutes toi-même avant de téléverser). Pages illimitées.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>4. Résumé et extrait gratuit</div>
                   <p>Le <b>résumé</b> donne envie de lire. L'<b>extrait</b> = le nombre de premières pages visibles gratuitement avant l'achat (mets une valeur qui donne envie sans tout dévoiler).</p>
