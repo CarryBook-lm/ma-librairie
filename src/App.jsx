@@ -1599,6 +1599,10 @@ const slugify = (str) => {
     .replace(/-+/g, "-");
 };
 
+// Numéro : enlève les indicatifs répétés en tête (+237 +237 655... -> 655...)
+const numeroLocal = (tel) => (tel || "").replace(/^(\s*\+\d{1,4}\s*)+/, "").trim();
+// Affichage propre : un seul indicatif + numéro local
+const telAffiche = (tel) => { const t = (tel || "").trim(); const m = t.match(/^\+\d{1,4}/); const loc = numeroLocal(t); return m ? (m[0] + " " + loc).trim() : loc; };
 const PAGE_TO_PATH = {
   home: "/",
   library: "/ma-bibliotheque",
@@ -16725,7 +16729,7 @@ export default function App() {
     try {
       const telComplet = (function(){
         const CODES = {"Bénin":"+229","Burkina Faso":"+226","Burundi":"+257","Cameroun":"+237","Congo (Brazzaville)":"+242","Congo (RDC)":"+243","Côte d'Ivoire":"+225","Gabon":"+241","Guinée":"+224","Mali":"+223","Niger":"+227","République centrafricaine":"+236","Rwanda":"+250","Sénégal":"+221","Tchad":"+235","Togo":"+228"};
-        const ind = CODES[auteurPays] || ""; const t = auteurTel.trim();
+        const ind = CODES[auteurPays] || ""; const t = numeroLocal(auteurTel);
         return t ? ((ind ? ind + " " : "") + t) : null;
       })();
       const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
@@ -17925,7 +17929,7 @@ export default function App() {
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Nom</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.nom_complet}</span></div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>E-mail</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.email || "—"}</span></div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
-                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone || "—"}</span></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone ? telAffiche(auteurProfil.telephone) : "—"}</span></div>
                       {auteurProfil.bio ? <div style={{ padding: "8px 0", fontSize: 13, color: G.textDim }}>{auteurProfil.bio}</div> : null}
                       {auteurProfil.code_source ? (
                         <div style={{ marginTop: 12, padding: 12, background: G.goldDim, borderRadius: 8 }}>
@@ -17942,8 +17946,8 @@ export default function App() {
                       {auteurProfil.kyc_contrat_url ? (
                         <a href={auteurProfil.kyc_contrat_url + "?download=contrat-signe-carrybooks.pdf"} rel="noopener noreferrer" style={{ display: "block", marginTop: 10, padding: "10px 16px", background: G.goldDim, color: G.gold, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>📄 Télécharger mon contrat signé</a>
                       ) : null}
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(auteurProfil.telephone || ""); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
                     </div>
                   ) : (
                     <div>
