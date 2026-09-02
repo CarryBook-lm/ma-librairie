@@ -17528,7 +17528,7 @@ export default function App() {
                       ); })()}
                       <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
-                      <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.goldDim, border: "1px solid " + G.gold + "66", borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
+                      <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.gold, border: "none", borderRadius: 10, color: "#1a1208", fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
                       <div style={{ display: "grid", gap: 8 }}>
                         {[
                           { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
@@ -17610,7 +17610,7 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      <label style={labelSt}>{pubForm.type === "gratuit" ? "Fichier du cadeau (PDF) *" : "Fichier PDF du livre * (A5, numéro de page en bas au centre)"}</label>
+                      <label style={labelSt}>{pubForm.type === "gratuit" ? "Fichier du cadeau (PDF) *" : "Fichier PDF du livre * (A5, taille de police 13 à 16, numéro de page en bas au centre)"}</label>
                       {pubForm.pdf_url ? (
                         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                           <div style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ PDF ajouté</div>
@@ -21504,7 +21504,7 @@ export default function App() {
                 <p style={P}>Remplis dans l’ordre : <span style={FL}>Titre</span>, <span style={FL}>Catégorie</span>, <span style={FL}>Sous-catégorie</span> (elle s’active après la catégorie), <span style={FL}>Prix (FCFA)</span>, <span style={FL}>Couverture</span> (image A4 portrait, ~1240×1754 px, nette), <span style={FL}>Résumé</span> (2-3 phrases), <span style={FL}>Pages gratuites</span> (l’extrait lisible avant achat, ex : 10), puis <span style={FL}>Texte du roman</span>. Tu peux <b>écrire ton roman directement ici, sur la plateforme</b> : tape ton texte dans la grande zone, ou colle-le depuis Word. <b>Pas besoin de tout finir d’un coup</b> : appuie sur <b>« Enregistrer (continuer plus tard) »</b> et ton travail est gardé. Tu peux revenir l’écrire sur <b>plusieurs jours, à ta convenance</b> ; ton texte s’enregistre aussi tout seul pendant que tu écris. Tu <b>retrouves à tout moment ton livre en cours d’écriture dans « Mes livres » → onglet « En cours d’édition »</b> : ouvre-le pour continuer là où tu t’étais arrêté(e). (Dans « Mes livres », 3 onglets : <b>Tous mes livres</b> = tes livres publiés, <b>En cours d’édition</b> = tes textes pas encore finis, <b>En attente</b> = soumis mais pas encore validés.) Quand ton roman est terminé, appuie sur <b>Soumettre pour validation</b>.</p>
 
                 <div style={H2}>Type 2 — Livre PDF</div>
-                <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec le <b>numéro de page en bas au centre</b>. Puis <b>Soumettre pour validation</b>.</p>
+                <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> et le <b>numéro de page en bas au centre</b>. Puis <b>Soumettre pour validation</b>.</p>
 
                 <div style={H2}>Type 3 — Livre Audio</div>
                 <p style={P}>Mêmes premiers champs (sans « pages gratuites »), puis <span style={FL}>Fichier audio (MP3)</span> : un son clair, sans bruit de fond. Puis <b>Soumettre pour validation</b>.</p>
