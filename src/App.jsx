@@ -20749,7 +20749,18 @@ export default function App() {
                 {/* NOUVEAUTÉS (ARTICLES PHYSIQUES) - d�plac�e juste avant la cat�gorie 'Livres Papiers' */}
 
                 {/* CARROUSELS PAR CATÉGORIE - UNIQUEMENT LIVRES NUMÉRIQUES */}
-                {Object.keys(CATEGORIES).map(cat => {
+                {(() => {
+                  const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article";
+                  const isRomanCat = k => /^roman/i.test(k) || k === "Saga" || /audio/i.test(k);
+                  const catHasBooks = k => books.some(b => isDigitalReco(b) && (b.category === k || (b.category || "").toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
+                  const firstGuideCat = Object.keys(CATEGORIES).find(k => !isRomanCat(k) && catHasBooks(k));
+                  const owned = new Set([...(purchasedBooks || []), ...(favoriteBooks || [])]);
+                  const likedCats = {}; books.forEach(b => { if (owned.has(b.id) && b.category) likedCats[b.category] = (likedCats[b.category] || 0) + 1; });
+                  const catsAimees = Object.keys(likedCats).sort((a, b) => likedCats[b] - likedCats[a]);
+                  let reco = catsAimees.length ? books.filter(b => isDigitalReco(b) && !owned.has(b.id) && catsAimees.includes(b.category)) : [];
+                  if (reco.length < 4) { const pop = (topPurchasedBooks && topPurchasedBooks.length ? topPurchasedBooks : books.filter(isDigitalReco)).filter(b => !owned.has(b.id) && !reco.find(r => r.id === b.id)); reco = [...reco, ...pop]; }
+                  reco = reco.slice(0, 12);
+                  return Object.keys(CATEGORIES).map(cat => {
                   // Filtrer par cat�gorie ET ne garder QUE les livres num�riques (num/mixte/audio/podcast)
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const catBooks = books.filter(b => 
@@ -20762,6 +20773,23 @@ export default function App() {
                   const physicalNewBooks = [];
                   return (
                     <Fragment key={cat}>
+                      {cat === firstGuideCat && reco.length > 0 && (
+                        <div style={{ marginBottom: 28 }}>
+                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>✨ Pour vous</div>
+                          <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                            {reco.map(book => (
+                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "62vw", maxWidth: 260, cursor: "pointer" }}>
+                                <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
+                                  {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
+                                </div>
+                                <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                                {book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                                <div style={{ fontSize: 13, color: G.gold, fontWeight: "bold", marginTop: 3 }}>{book.price === 0 ? "Gratuit" : getDisplayPrice(book).toLocaleString() + " F"}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {/* Nouveautés Produits Physiques (juste avant Livres Papiers) */}
                       {isLivresPapiers && physicalNewBooks.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
@@ -20833,7 +20861,7 @@ export default function App() {
                     </div>
                     </Fragment>
                   );
-                })}
+                }); })()}
 
                 {/* MES FAVORIS */}
                 {favoriteBooks.length > 0 && (
