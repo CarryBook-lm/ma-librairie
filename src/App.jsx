@@ -18040,9 +18040,11 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 14 }}>Tout ce que tu dois savoir de A à Z, pas à pas.</div>
                   <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
 
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 2 types de livres</div>
-                  <p><b>📖 Roman (texte)</b> : tu colles le texte complet. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 4 types de livres</div>
+                  <p><b>📖 Roman (texte)</b> : tu écris ou colles ton texte directement sur la plateforme. Tu peux l'écrire sur <b>plusieurs jours</b> : appuie sur <b>« Enregistrer (continuer plus tard) »</b>, puis retrouve ton roman dans <b>« Mes livres » → onglet « En cours d'édition »</b> pour reprendre quand tu veux. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
                   <p><b>📥 Livres PDF</b> : tu téléverses un fichier PDF. Il est téléchargeable par le client après achat.</p>
+                  <p><b>🎧 Livre audio</b> : tu téléverses un fichier son (MP3). Le client l'écoute sur le site après achat.</p>
+                  <p><b>🎁 Livre gratuit</b> : un livre PDF que tu OFFRES (sans prix). Idéal pour attirer de nouveaux lecteurs vers tes livres payants.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>2. La couverture</div>
                   <p>Format <b>A4 portrait</b> (plus haut que large). Taille conseillée : <b>1240 × 1754 pixels</b>. Une belle couverture nette donne envie d'acheter.</p>
