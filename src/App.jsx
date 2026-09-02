@@ -3044,7 +3044,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                 return (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
                     <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
-                      {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "12px 8px 8px", textAlign: "center" }}>
                         <span style={{ fontSize: 9, color: G.green, letterSpacing: 1 }}>✓ ACHETÉ</span>
                       </div>
@@ -3115,7 +3115,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                 const date = purchase.created_at ? new Date(purchase.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "—";
                 return (
                   <div key={i} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: "12px 14px", display: "flex", gap: 12, alignItems: "center" }}>
-                    {book.cover && <img src={book.cover} alt={book.title} style={{ width: 44, height: 60, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />}
+                    {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 44, height: 60, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 3 }}>{book.title}</div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
@@ -17303,7 +17303,7 @@ export default function App() {
                       {groups[cat].map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
                           <div style={{ width: "100%", aspectRatio: "2/3", background: G.border, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
-                            {book.cover ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                            {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
                           </div>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
                           <div style={{ fontSize: 12, color: G.gold, fontWeight: "bold" }}>{book.price ? book.price + " FCFA" : "Gratuit"}</div>
@@ -17722,7 +17722,7 @@ export default function App() {
                       return (
                         <div key={b.id} onClick={() => setMesLivresDetail(b)} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border, cursor: "pointer" }}>
                           <div style={{ flexShrink: 0 }}>
-                            {b.cover ? <img src={b.cover} alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
+                            {b.cover ? <img src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}><span style={{ color: G.gold }}>{i + 1}.</span> {b.title}</div>
@@ -17745,7 +17745,7 @@ export default function App() {
                       <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
                         <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
                           <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
-                            {b.cover ? <img src={b.cover} alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
+                            {b.cover ? <img src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{b.title}</div>
                               <div style={{ fontSize: 13, color: stx.c, marginTop: 4 }}>{stx.t}</div>
@@ -19253,7 +19253,7 @@ export default function App() {
         <div style={{ padding: "24px 16px 40px" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             {book.cover
-              ? <img src={book.cover} alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
+              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
               : <div style={{ width: 160, height: 226, background: G.surface2, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12, flexWrap: "wrap" }}>
@@ -20555,7 +20555,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)}
                           style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % heroBooks.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
                           {book.cover
-                            ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
                           {/* Gradient bas seulement (image visible en haut, coll�e � la bande) */}
                           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(245,240,232,0.7) 85%, " + G.bg + " 100%)" }} />
@@ -20634,7 +20634,7 @@ export default function App() {
                             </div>
                             <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
                               {book.cover
-                                ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
@@ -20670,7 +20670,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -20722,7 +20722,7 @@ export default function App() {
                               <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                                 <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                                   {book.cover
-                                    ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                                 </div>
                                 <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -20752,7 +20752,7 @@ export default function App() {
                           <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                             <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
-                                ? <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                               {isOutOfStock(book) && (
@@ -20794,7 +20794,7 @@ export default function App() {
                       {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
-                            {book.cover && <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                            {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                             <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -20847,7 +20847,7 @@ export default function App() {
                       <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                         <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
                           {book.cover
-                            ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
@@ -21124,7 +21124,7 @@ export default function App() {
                     <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                       <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
                         {book.cover
-                          ? <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                          ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                           : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                         {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
                         {isOutOfStock(book) && (
@@ -21672,7 +21672,7 @@ export default function App() {
                 {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => openBook(book)}>
                     <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
-                      {book.cover && <img src={book.cover} alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
                       <div style={{ position: "absolute", top: 8, right: 8, color: G.gold, fontSize: 16 }}>♥</div>
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
