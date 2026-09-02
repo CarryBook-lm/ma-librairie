@@ -20778,7 +20778,7 @@ export default function App() {
                           <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>✨ Pour vous</div>
                           <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                             {reco.map(book => (
-                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "62vw", maxWidth: 260, cursor: "pointer" }}>
+                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "52vw", maxWidth: 220, cursor: "pointer" }}>
                                 <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
                                   {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
                                 </div>
