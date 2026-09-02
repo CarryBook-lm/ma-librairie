@@ -2293,7 +2293,7 @@ export default function Admin() {
                 borderLeft: "3px solid " + (view === item.id ? "#c9a84c" : "transparent"),
                 borderBottom: "1px solid #2a2a2a" }}>
               <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
-              {item.id === "espace_auteur" && (eaTodo.livres + eaTodo.kyc + eaTodo.retraits) > 0 && (
+              {item.id === "espace_auteur" && ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0)) > 0 && (
                 <span style={{ marginLeft: "auto", background: "#e53935", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 8px", minWidth: 18, textAlign: "center" }}>{eaTodo.livres + eaTodo.kyc + eaTodo.retraits}</span>
               )}
             </div>
@@ -5490,7 +5490,7 @@ export default function Admin() {
         {[
           { id: "dashboard", label: "Accueil", icon: "📊", badge: 0 },
           { id: "users", label: "Users", icon: "👥", badge: 0 },
-          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: (eaTodo.livres + eaTodo.kyc + eaTodo.retraits) },
+          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0)) },
           { id: "gains", label: "Gains", icon: "💰", badge: 0 },
         ].map(t => (
           <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? "#c9a84c" : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
