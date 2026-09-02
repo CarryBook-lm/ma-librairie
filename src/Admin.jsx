@@ -364,6 +364,8 @@ export default function Admin() {
   const [eaKyc, setEaKyc] = useState([]);
   const [eaAValider, setEaAValider] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
+  const [gainsData, setGainsData] = useState(null);
+  const [gainsLoading, setGainsLoading] = useState(false);
   const [vpData, setVpData] = useState([]);
   const [vpLoading, setVpLoading] = useState(false);
   const [eaHistorique, setEaHistorique] = useState([]); // retraits payés
@@ -521,6 +523,29 @@ export default function Admin() {
       setEaLoading(false);
     })();
   }, [view]);
+  useEffect(() => {
+    if (view !== "gains") return;
+    (async () => {
+      setGainsLoading(true);
+      try {
+        const { data } = await supabase.from("ventes_auteurs").select("part_carrybooks, part_auteur, montant_total, source, created_at");
+        const now = Date.now();
+        const acc = { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0 };
+        (data || []).forEach(v => {
+          const pc = Number(v.part_carrybooks) || 0;
+          acc.total += pc; acc.auteurs += Number(v.part_auteur) || 0; acc.ca += Number(v.montant_total) || 0; acc.nb++;
+          if (v.source === "abonnement") acc.abo += pc; else acc.ventes += pc;
+          const age = now - new Date(v.created_at).getTime();
+          if (age <= 86400000) acc.j1 += pc;
+          if (age <= 7 * 86400000) acc.j7 += pc;
+          if (age <= 30 * 86400000) acc.j30 += pc;
+        });
+        setGainsData(acc);
+      } catch (e) {}
+      setGainsLoading(false);
+    })();
+  }, [view]);
+
   useEffect(() => {
     if (view !== "ventes_pays") return;
     (async () => {
@@ -2248,8 +2273,9 @@ export default function Admin() {
             { id: "promos", label: "Codes Promo", icon: "🎟️" },
             { id: "referrals", label: "Parrainages", icon: "🎁" },
             { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
-            { id: "comptabilite", label: "Comptabilité", icon: "💰" },
+
             { id: "reviews", label: "Modération avis", icon: "💬" },
+            { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "ventes_pays", label: "Ventes par pays", icon: "🌍" },
             { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
@@ -4598,6 +4624,42 @@ export default function Admin() {
         })()}
 
         {/* SECURITY - CHANGEMENT MOT DE PASSE */}
+        {view === "gains" && (() => {
+          const g = gainsData || { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0 };
+          const f = n => (n || 0).toLocaleString("fr-FR") + " F";
+          const carte = (val, lab, col) => (<div style={{ flex: 1, minWidth: 130, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14 }}><div style={{ color: col || "#c9a84c", fontSize: 20, fontWeight: "bold" }}>{f(val)}</div><div style={{ color: "#aaa", fontSize: 11, marginTop: 2 }}>{lab}</div></div>);
+          return (
+            <div>
+              <h1 style={{ fontSize: 22, color: "#c9a84c", marginBottom: 4 }}>💰 Mes Gains</h1>
+              <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>Ta commission CarryBooks sur toutes les ventes des auteurs (le reste après la part auteur).</p>
+              {gainsLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
+                <div>
+                  <div style={{ background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", borderRadius: 12, padding: 18, marginBottom: 16 }}>
+                    <div style={{ color: "#1a1208", fontSize: 13, fontWeight: "bold", opacity: 0.8 }}>Mes gains au total</div>
+                    <div style={{ color: "#fff", fontSize: 30, fontWeight: "bold", lineHeight: 1.2 }}>{f(g.total)}</div>
+                    <div style={{ color: "#1a1208", fontSize: 11, marginTop: 4 }}>sur {g.nb} vente{g.nb > 1 ? "s" : ""} · CA total {f(g.ca)}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                    {carte(g.j1, "Aujourd'hui")}
+                    {carte(g.j7, "7 derniers jours")}
+                    {carte(g.j30, "30 derniers jours")}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                    {carte(g.ventes, "Sur les ventes directes", "#a5d6a7")}
+                    {carte(g.abo, "Sur les abonnements", "#b39ddb")}
+                  </div>
+                  <div style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, fontSize: 12.5, color: "#aaa", lineHeight: 1.7 }}>
+                    <div style={{ color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>Répartition globale</div>
+                    <div>Chiffre d'affaires auteurs : <b style={{ color: "#fff" }}>{f(g.ca)}</b></div>
+                    <div>Part reversée aux auteurs : <b style={{ color: "#ffb0b0" }}>{f(g.auteurs)}</b></div>
+                    <div>Ma commission CarryBooks : <b style={{ color: "#a5d6a7" }}>{f(g.total)}</b></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {view === "security" && (
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🔐 Sécurité</h2>
@@ -5428,7 +5490,7 @@ export default function Admin() {
           { id: "dashboard", label: "Accueil", icon: "📊", badge: 0 },
           { id: "users", label: "Users", icon: "👥", badge: 0 },
           { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: (eaTodo.livres + eaTodo.kyc + eaTodo.retraits) },
-          { id: "comptabilite", label: "Compta", icon: "💰", badge: 0 },
+          { id: "gains", label: "Gains", icon: "💰", badge: 0 },
         ].map(t => (
           <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? "#c9a84c" : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
             <span style={{ fontSize: 19 }}>{t.icon}</span>{t.label}
