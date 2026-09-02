@@ -124,7 +124,9 @@ export default async function handler(req, res) {
       if (!id) return res.status(400).json({ error: "id requis." });
       const { data } = await supa.from("auteurs").select(SAFE).eq("id", id).limit(1);
       const delai = await lireDelaiRetrait();
-      return res.status(200).json({ auteur: (data && data[0]) || null, delai_retrait: delai });
+      let supportNonLus = 0;
+      try { const { count } = await supa.from("support_messages").select("id", { count: "exact", head: true }).eq("auteur_id", id).eq("cote", "admin").eq("lu_auteur", false); supportNonLus = count || 0; } catch (e) {}
+      return res.status(200).json({ auteur: (data && data[0]) || null, delai_retrait: delai, support_non_lus: supportNonLus });
     }
 
     // ---------- MISE A JOUR DU PROFIL (pas le mot de passe) ----------
@@ -179,6 +181,33 @@ export default async function handler(req, res) {
       const { error } = await supa.from("retraits").insert([{ auteur_id: id, montant, phone, statut: "en_attente" }]);
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, dispo: dispo - montant });
+    }
+
+    // ---------- SUPPORT : lire le fil ----------
+    if (action === "support_lire") {
+      const id = body.id;
+      if (!id) return res.status(400).json({ error: "id requis." });
+      const { data } = await supa.from("support_messages").select("id, cote, texte, annonce_id, created_at").eq("auteur_id", id).order("created_at", { ascending: true });
+      return res.status(200).json({ ok: true, messages: data || [] });
+    }
+
+    // ---------- SUPPORT : envoyer un message a l'equipe ----------
+    if (action === "support_envoyer") {
+      const id = body.id;
+      const texte = (body.texte || "").trim();
+      if (!id) return res.status(400).json({ error: "id requis." });
+      if (!texte) return res.status(400).json({ error: "Message vide." });
+      const { data, error } = await supa.from("support_messages").insert([{ auteur_id: id, cote: "auteur", texte, lu_admin: false, lu_auteur: true }]).select("id, cote, texte, created_at").maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, message: data });
+    }
+
+    // ---------- SUPPORT : marquer les messages de l'equipe comme lus ----------
+    if (action === "support_marquer_lu") {
+      const id = body.id;
+      if (!id) return res.status(400).json({ error: "id requis." });
+      await supa.from("support_messages").update({ lu_auteur: true }).eq("auteur_id", id).eq("cote", "admin").eq("lu_auteur", false);
+      return res.status(200).json({ ok: true });
     }
 
     return res.status(400).json({ error: "Action inconnue." });

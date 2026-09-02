@@ -13879,6 +13879,31 @@ export default function App() {
   const [statsDate, setStatsDate] = useState("");
   const [ventesAuteur, setVentesAuteur] = useState([]);
   const [pixelGuideTab, setPixelGuideTab] = useState("facebook");
+  const [supportMsgs, setSupportMsgs] = useState([]);
+  const [supportInput, setSupportInput] = useState("");
+  const [supportSending, setSupportSending] = useState(false);
+  const [supportNonLus, setSupportNonLus] = useState(0);
+  const chargerSupport = async () => {
+    if (!auteurProfil) return;
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_lire", id: auteurProfil.id }) });
+      const d = await res.json().catch(() => ({}));
+      setSupportMsgs(d.messages || []);
+      fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_marquer_lu", id: auteurProfil.id }) });
+      setSupportNonLus(0);
+    } catch (e) {}
+  };
+  const envoyerSupport = async () => {
+    const t = supportInput.trim();
+    if (!t || !auteurProfil) return;
+    setSupportSending(true);
+    try {
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_envoyer", id: auteurProfil.id, texte: t }) });
+      const d = await res.json().catch(() => ({}));
+      if (d.ok) { setSupportInput(""); await chargerSupport(); } else { alert(d.error || "Envoi impossible."); }
+    } catch (e) {}
+    setSupportSending(false);
+  };
   const [delaiRetrait, setDelaiRetrait] = useState(7);
   const [retraitsAuteur, setRetraitsAuteur] = useState([]);
   const [retraitOpen, setRetraitOpen] = useState(false);
@@ -14148,6 +14173,7 @@ export default function App() {
               const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id }) });
               const data = await res.json().catch(() => ({}));
               if (data && typeof data.delai_retrait === "number") setDelaiRetrait(data.delai_retrait);
+              if (data && typeof data.support_non_lus === "number") setSupportNonLus(data.support_non_lus);
               if (data && data.auteur) {
                 if (a.kyc_status !== "valide" && data.auteur.kyc_status === "valide") setKycNotif("✅ Ta vérification a été validée ! Tu peux maintenant publier tes livres.");
                 else if (a.kyc_status !== "refuse" && data.auteur.kyc_status === "refuse") setKycNotif("❌ Ta vérification a été refusée. Ouvre l'onglet Publier pour voir le motif et re-soumettre.");
@@ -14230,6 +14256,7 @@ export default function App() {
   // Exige une connexion (lecteur ou Google). Renvoie false et ouvre le modal si non connecté.
   const exigerConnexion = () => { if (!lecteur && !user) { setShowLecteurModal(true); return false; } return true; };
   useEffect(() => { if (page === "library" && !lecteur && !user) setShowLecteurModal(true); }, [page, lecteur, user]);
+  useEffect(() => { if (auteurTab === "support" && auteurProfil) chargerSupport(); }, [auteurTab, auteurProfil]);
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
@@ -18017,10 +18044,21 @@ export default function App() {
               )}
               {/* SUPPORT (bientôt) */}
               {auteurTab === "support" && (
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
-                  <div style={{ fontSize: 30, marginBottom: 8 }}>💬</div>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Support</div>
-                  <div style={{ fontSize: 13, color: G.textDim }}>Bientôt : écris-nous depuis ici, nous te répondrons directement dans l'application.</div>
+                <div>
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Une question, un souci de paiement, une suggestion ? Écris-nous : l’équipe CarryBooks te répond directement ici.</div>
+                  <div style={{ maxHeight: 380, overflowY: "auto", background: "#faf8f3", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {supportMsgs.length === 0 ? <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 20 }}>Aucun message pour l’instant. Écris-nous ci-dessous 👇</div> : supportMsgs.map(m => (
+                      <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : "#fff", color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce CarryBooks</div> : null}
+                        {m.texte}
+                        <div style={{ fontSize: 9, opacity: 0.6, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                    <textarea value={supportInput} onChange={e => setSupportInput(e.target.value)} placeholder="Écris ton message…" rows={2} style={{ flex: 1, padding: "10px 12px", border: "1px solid " + G.border, borderRadius: 10, fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+                    <button onClick={envoyerSupport} disabled={supportSending || !supportInput.trim()} style={{ padding: "11px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supportSending || !supportInput.trim()) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
+                  </div>
                 </div>
               )}
               {/* NOTIFICATIONS */}
@@ -18099,7 +18137,7 @@ export default function App() {
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("aide"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "aide" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "aide" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>❓</span> Comment publier</button>
-            <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support</button>
+            <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support{supportNonLus > 0 && <span style={{ marginLeft: "auto", background: "#e11d48", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 7px" }}>{supportNonLus}</span>}</button>
             <button onClick={() => { setAuteurTab("notifs"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "notifs" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "notifs" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔔</span> Activer les notifications</button>
                 <button onClick={() => { setAuteurMenu(false); setPage("home"); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: G.textDim, fontSize: 14, cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏠</span> Retour à la boutique</button>
                 <button onClick={auteurLogout} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: "#e53935", fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🚪</span> Se déconnecter</button>

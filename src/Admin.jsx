@@ -344,6 +344,16 @@ export default function Admin() {
   const [devSaving, setDevSaving] = useState(false);
   const [devMsg, setDevMsg] = useState("");
   const [eaTab, setEaTab] = useState("livres");
+  const [supFils, setSupFils] = useState([]);
+  const [supAll, setSupAll] = useState({});
+  const [supSel, setSupSel] = useState(null);
+  const [supInput, setSupInput] = useState("");
+  const [supSending, setSupSending] = useState(false);
+  const [supSearch, setSupSearch] = useState("");
+  const [annonceOpen, setAnnonceOpen] = useState(false);
+  const [annonceTxt, setAnnonceTxt] = useState("");
+  const [annoncePerm, setAnnoncePerm] = useState(true);
+  const [annonceSending, setAnnonceSending] = useState(false);
   const [eaAuteurs, setEaAuteurs] = useState([]);
   const [eaBooks, setEaBooks] = useState([]);
   const [eaVentesMap, setEaVentesMap] = useState({});
@@ -497,6 +507,7 @@ export default function Admin() {
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
         ]);
         setEaAuteurs(aut || []);
+        chargerSupportAdmin(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
         const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
@@ -554,6 +565,47 @@ export default function Admin() {
     await supabase.from("books").update({ status: "actif" }).eq("auteur_id", a.id).eq("status", "banni");
     await rechargerEA();
     alert("✅ Auteur réintégré, livres de nouveau visibles.");
+  };
+  const chargerSupportAdmin = async (auteursArg) => {
+    const auts = auteursArg || eaAuteurs;
+    const { data: msgs } = await supabase.from("support_messages").select("id, auteur_id, cote, texte, lu_admin, annonce_id, created_at").order("created_at", { ascending: true });
+    const by = {};
+    (msgs || []).forEach(m => { (by[m.auteur_id] = by[m.auteur_id] || { msgs: [], nonLus: 0, last: null }); by[m.auteur_id].msgs.push(m); if (m.cote === "auteur" && !m.lu_admin) by[m.auteur_id].nonLus++; by[m.auteur_id].last = m; });
+    setSupAll(by);
+    const fils = (auts || []).map(a => { const b = by[a.id] || { nonLus: 0, last: null }; return { auteur: a, nonLus: b.nonLus, last: b.last, lastAt: b.last ? new Date(b.last.created_at).getTime() : 0 }; });
+    fils.sort((x, y) => ((y.nonLus > 0 ? 1 : 0) - (x.nonLus > 0 ? 1 : 0)) || (y.lastAt - x.lastAt));
+    setSupFils(fils);
+  };
+  const ouvrirFil = async (a) => {
+    setSupSel(a);
+    await supabase.from("support_messages").update({ lu_admin: true }).eq("auteur_id", a.id).eq("cote", "auteur").eq("lu_admin", false);
+    await chargerSupportAdmin();
+  };
+  const envoyerSupAdmin = async () => {
+    const t = supInput.trim();
+    if (!t || !supSel) return;
+    setSupSending(true);
+    try {
+      const { error } = await supabase.from("support_messages").insert([{ auteur_id: supSel.id, cote: "admin", texte: t, lu_admin: true, lu_auteur: false }]);
+      if (error) { alert("Erreur : " + error.message); } else { setSupInput(""); await chargerSupportAdmin(); }
+    } catch (e) { alert("Erreur : " + (e && e.message)); }
+    setSupSending(false);
+  };
+  const envoyerAnnonce = async () => {
+    const t = annonceTxt.trim();
+    if (!t) return;
+    if (!window.confirm("Envoyer cette annonce à TOUS les auteurs (" + (eaAuteurs || []).length + ") ?")) return;
+    setAnnonceSending(true);
+    try {
+      const { data: ann, error: e1 } = await supabase.from("support_annonces").insert([{ texte: t, permanente: annoncePerm }]).select("id").maybeSingle();
+      if (e1) throw e1;
+      const rows = (eaAuteurs || []).map(a => ({ auteur_id: a.id, cote: "admin", texte: t, annonce_id: ann.id, lu_admin: true, lu_auteur: false }));
+      if (rows.length) { const { error: e2 } = await supabase.from("support_messages").insert(rows); if (e2) throw e2; }
+      setAnnonceTxt(""); setAnnonceOpen(false);
+      await chargerSupportAdmin();
+      alert("✅ Annonce envoyée à " + rows.length + " auteur(s).");
+    } catch (e) { alert("❌ " + (e.message || e)); }
+    setAnnonceSending(false);
   };
   const chargerTodo = async () => {
     try {
@@ -4186,7 +4238,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications"],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements"],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4364,6 +4416,57 @@ export default function Admin() {
                     ))
                   )
                 )}
+              </div>
+            )}
+
+            {eaTab === "support" && (
+              <div>
+                {supSel ? (() => {
+                  const fil = (supAll[supSel.id] && supAll[supSel.id].msgs) || [];
+                  return (<div>
+                    <button onClick={() => setSupSel(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 10 }}>← Retour à la liste</button>
+                    <div style={{ color: "#c9a84c", fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>{supSel.nom_complet || ("Auteur #" + supSel.id)}</div>
+                    <div style={{ maxHeight: 400, overflowY: "auto", background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {fil.length === 0 ? <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 16 }}>Aucun message. Écris le premier ci-dessous.</div> : fil.map(m => (
+                        <div key={m.id} style={{ alignSelf: m.cote === "admin" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "admin" ? "#0e5a52" : "#1e1e1e", color: m.cote === "admin" ? "#fff" : "#e8e0d0", border: m.cote === "admin" ? "none" : "1px solid #333", borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: "#c9a84c", marginBottom: 3 }}>📢 Annonce</div> : null}
+                          {m.texte}
+                          <div style={{ fontSize: 9, opacity: 0.55, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                      <textarea value={supInput} onChange={e => setSupInput(e.target.value)} placeholder="Ta réponse…" rows={2} style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 10, color: "#fff", fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+                      <button onClick={envoyerSupAdmin} disabled={supSending || !supInput.trim()} style={{ padding: "11px 16px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supSending || !supInput.trim()) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
+                    </div>
+                  </div>);
+                })() : (<div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                    <input value={supSearch} onChange={e => setSupSearch(e.target.value)} placeholder="Rechercher un auteur…" style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 13, boxSizing: "border-box" }} />
+                    <button onClick={() => setAnnonceOpen(true)} style={{ padding: "10px 14px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>📢 Annonce à tous</button>
+                  </div>
+                  {annonceOpen && (
+                    <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c55", borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                      <div style={{ color: "#c9a84c", fontWeight: "bold", fontSize: 14, marginBottom: 8 }}>Annonce à tous les auteurs</div>
+                      <textarea value={annonceTxt} onChange={e => setAnnonceTxt(e.target.value)} placeholder="Ton message à tous les auteurs…" rows={3} style={{ width: "100%", padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 14, resize: "vertical", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 8 }} />
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#aaa", fontSize: 12.5, marginBottom: 10, cursor: "pointer" }}><input type="checkbox" checked={annoncePerm} onChange={e => setAnnoncePerm(e.target.checked)} /> Envoyer aussi automatiquement aux nouveaux auteurs</label>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={envoyerAnnonce} disabled={annonceSending || !annonceTxt.trim()} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", opacity: (annonceSending || !annonceTxt.trim()) ? 0.5 : 1 }}>{annonceSending ? "Envoi…" : "Envoyer à tous"}</button>
+                        <button onClick={() => setAnnonceOpen(false)} style={{ flex: 1, padding: "10px 0", background: "#333", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Annuler</button>
+                      </div>
+                    </div>
+                  )}
+                  {supFils.filter(f => !supSearch || (f.auteur.nom_complet || "").toLowerCase().includes(supSearch.toLowerCase())).map(f => (
+                    <div key={f.auteur.id} onClick={() => ouvrirFil(f.auteur)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 10px", borderBottom: "1px solid #262626", cursor: "pointer" }}>
+                      <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, flexShrink: 0 }}>{(f.auteur.nom_complet || "?").charAt(0).toUpperCase()}</div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ color: "#e8e0d0", fontSize: 14, fontWeight: f.nonLus ? "bold" : "normal", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.auteur.nom_complet || ("Auteur #" + f.auteur.id)}</div>
+                        <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.last ? (f.last.cote === "admin" ? "Toi : " : "") + f.last.texte : "Aucun message"}</div>
+                      </div>
+                      {f.nonLus > 0 && <span style={{ background: "#e11d48", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 7px", flexShrink: 0 }}>{f.nonLus}</span>}
+                    </div>
+                  ))}
+                </div>)}
               </div>
             )}
 
