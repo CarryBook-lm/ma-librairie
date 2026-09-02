@@ -13821,7 +13821,8 @@ export default function App() {
   const [pubSaving, setPubSaving] = useState(false);
   const [pubMsg, setPubMsg] = useState("");
   const [mesLivres, setMesLivres] = useState([]);
-  const [mesLivresTab, setMesLivresTab] = useState(null); // null=tous, sinon roman/guide/audio/gratuit
+  const [mesLivresTab, setMesLivresTab] = useState(null); // statut : null=publiés, edition, attente
+  const [mesLivresType, setMesLivresType] = useState(null); // type : null=tous, roman/guide/audio/gratuit
   const [mesLivresDetail, setMesLivresDetail] = useState(null); // livre ouvert en detail
   // Vérification auteur (KYC)
   const [kycOpen, setKycOpen] = useState(false);
@@ -17659,8 +17660,15 @@ export default function App() {
                       <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto" }}>
+                    {[{ t: null, l: "Tous" }, { t: "roman", l: "Texte" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
+                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: "0 0 auto", padding: "6px 12px", borderRadius: 16, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : "#fff", color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{o.l}</button>
+                    ))}
+                  </div>
                   {(() => {
-                    const liste = mesLivresTab === "edition" ? mesLivres.filter(b => b.status === "brouillon") : mesLivresTab === "attente" ? mesLivres.filter(b => b.status !== "actif" && b.status !== "brouillon" && b.moderation !== "refuse") : mesLivres.filter(b => b.status === "actif");
+                    const classer = (b) => b.audio_url ? "audio" : ((b.content && b.content.length > 0 && !b.pdf_url) ? "roman" : (((b.price || 0) === 0) ? "gratuit" : "guide"));
+                    const parStatut = mesLivresTab === "edition" ? mesLivres.filter(b => b.status === "brouillon") : mesLivresTab === "attente" ? mesLivres.filter(b => b.status !== "actif" && b.status !== "brouillon" && b.moderation !== "refuse") : mesLivres.filter(b => b.status === "actif");
+                    const liste = mesLivresType ? parStatut.filter(b => classer(b) === mesLivresType) : parStatut;
                     return liste.length === 0 ? (
                     <div style={{ fontSize: 13, color: G.textDim }}>{mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie."}</div>
                   ) : (
