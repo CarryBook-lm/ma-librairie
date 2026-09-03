@@ -13452,6 +13452,7 @@ export default function App() {
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
   const [tutosAccueil, setTutosAccueil] = useState([]);
+  const [tutosOuverts, setTutosOuverts] = useState({});
   useEffect(() => { supabase.from("tutoriels").select("id, image_url, lien, texte_html").eq("actif", true).order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setTutosAccueil(data || [])); }, []);
   useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(data || [])); }, []);
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
@@ -18047,7 +18048,7 @@ export default function App() {
                           <button key={col} onMouseDown={e => { e.preventDefault(); fmtTuto("foreColor", col); }} title="Couleur" style={{ width: 26, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: col, cursor: "pointer" }} />
                         ))}
                       </div>
-                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning style={{ minHeight: 90, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: "#fff", outline: "none" }} />
+                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } }} style={{ minHeight: 120, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: "#fff", outline: "none", whiteSpace: "pre-wrap" }} />
                       {tutoMsg && <div style={{ fontSize: 13, marginTop: 8, fontWeight: "bold", color: tutoMsg === "OK_ENREGISTRE" ? G.green : "#e11d48" }}>{tutoMsg === "OK_ENREGISTRE" ? "✅ Tuto enregistré !" : tutoMsg}</div>}
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <button onClick={enregistrerTuto} style={{ flex: 1, padding: 12, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{tutoEditId ? "Mettre à jour" : "Enregistrer"}</button>
@@ -20853,14 +20854,17 @@ export default function App() {
                     <Fragment key={cat}>
                       {cat === "Livres Gratuits" && tutosAccueil.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
-                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>🎥 Tutoriels</div>
+                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Atelier des Auteurs ! 📚</div>
                           <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                             {tutosAccueil.map(t => (
                               <div key={t.id} style={{ flexShrink: 0, width: "90%", maxWidth: 380 }}>
                                 <div onClick={() => { if (t.lien) window.location.href = t.lien; }} style={{ width: "100%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: t.lien ? "pointer" : "default", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", marginBottom: 8 }}>
                                   <img src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                                 </div>
-                                {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, padding: "0 2px" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
+                                {t.texte_html ? (<div style={{ padding: "0 2px" }}>
+                                  <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, overflow: "hidden", display: tutosOuverts[t.id] ? "block" : "-webkit-box", WebkitLineClamp: tutosOuverts[t.id] ? "none" : 3, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} />
+                                  <button onClick={() => setTutosOuverts(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", padding: "4px 0 0" }}>{tutosOuverts[t.id] ? "Voir moins ▲" : "Voir plus ▼"}</button>
+                                </div>) : null}
                               </div>
                             ))}
                           </div>
