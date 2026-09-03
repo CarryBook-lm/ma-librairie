@@ -2807,7 +2807,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
     }
     setRecoverLoading(true);
     setRecoverResult(null);
-    if ((!user || !user.id) && onRecoverLecteur) {
+    if (onRecoverLecteur) {
       try {
         const ids = await onRecoverLecteur(recoverPhone.trim());
         setRecoverResult((ids && ids.length) ? { recovered: ids, total: ids.length } : { error: "Aucun achat trouvé pour ce numéro. Vérifie que c'est bien le numéro utilisé lors de l'achat." });
