@@ -18212,7 +18212,7 @@ export default function App() {
                   <p>Format <b>A4 portrait</b> (plus haut que large). Taille conseillée : <b>1240 × 1754 pixels</b>. Une belle couverture nette donne envie d'acheter.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>3. Le fichier PDF (guides)</div>
-                  <p>Format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> (pour un texte net et lisible). Le <b>numéro de page</b> est obligatoire, placé <b>en bas au centre</b> de chaque page (tu l'ajoutes toi-même avant de téléverser). Pages illimitées.</p>
+                  <p>Format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> (pour un texte net et lisible). Le <b>numéro de page</b> est obligatoire, placé <b>en bas au centre</b> de chaque page (tu l'ajoutes toi-même avant de téléverser). Pages illimitées.<br/><b>Téléchargeable ou lecture seule :</b> après avoir choisi ton fichier, tu décides si le client pourra <b>télécharger</b> le PDF (⬇️) ou seulement le <b>lire</b> (🔒 protégé). Tu peux changer ce choix à tout moment en modifiant ton livre.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>4. Résumé et extrait gratuit</div>
                   <p>Le <b>résumé</b> donne envie de lire. L'<b>extrait</b> = le nombre de premières pages visibles gratuitement avant l'achat (mets une valeur qui donne envie sans tout dévoiler).</p>
@@ -21788,7 +21788,7 @@ export default function App() {
                 <div style={H2}>📢 Publier une annonce (mettre un livre en avant)</div>
                 <p style={P}>Depuis <b>Publier</b>, choisis <b>« Publier une annonce »</b> : ajoute une <b>bannière au format A4 paysage</b> (large) et colle le <b>lien de ton livre</b> (copie-le depuis « Mes livres » en ouvrant le livre). Une fois validée par CarryBooks, ton annonce s’affiche sur l’accueil (entre Best-sellers et Nouveautés) avec un bouton « Découvrir ».</p>
                 <div style={H2}>Type 2 — Livre PDF</div>
-                <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> et le <b>numéro de page en bas au centre</b>. Puis <b>Soumettre pour validation</b>.</p>
+                <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> et le <b>numéro de page en bas au centre</b>. Ensuite, choisis si le PDF sera <b>Téléchargeable</b> (le client peut le télécharger) ou en <b>Lecture seule</b> (protégé, non téléchargeable). Puis <b>Soumettre pour validation</b>.</p>
 
                 <div style={H2}>Type 3 — Livre Audio</div>
                 <p style={P}>Mêmes premiers champs (sans « pages gratuites »), puis <span style={FL}>Fichier audio (MP3)</span> : un son clair, sans bruit de fond. Puis <b>Soumettre pour validation</b>.</p>
