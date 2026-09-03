@@ -15194,10 +15194,11 @@ export default function App() {
   async function loadLecteurPurchases(phone) {
     if (!phone) return [];
     try {
-      const local = String(phone).replace(/\D/g, "").slice(-7);
-      const { data } = await supabase.from("guest_purchases").select("book_id, created_at, amount").ilike("phone", "%" + local + "%").order("created_at", { ascending: false });
+      const res = await fetch("/api/recuperer-achats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone }) });
+      const d = await res.json().catch(() => ({}));
+      const data = (d && d.purchases) ? d.purchases : [];
       if (data && data.length) {
-        const ids = data.map(p => p.book_id);
+        const ids = [...new Set(data.map(p => p.book_id).filter(Boolean))];
         setPurchasedBooks(prev => {
           const merged = [...new Set([...(prev || []), ...ids])];
           try { localStorage.setItem("purchasedBooks", JSON.stringify(merged)); } catch (e) {}
