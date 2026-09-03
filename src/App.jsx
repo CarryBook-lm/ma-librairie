@@ -14347,7 +14347,8 @@ export default function App() {
   }, [auteurProfil]);
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", position: "relative" }}>
+        <button onClick={() => { setShowLecteurModal(false); setPendingBuyBook(null); setPendingEspaceAuteur(false); if (page === "library") setPage("home"); }} aria-label="Fermer" style={{ position: "absolute", top: 12, right: 12, background: "#f0ece2", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", color: "#666", fontWeight: "bold", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
           <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 44, marginBottom: 12 }} />
           <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur CarryBooks 📚</h2>
