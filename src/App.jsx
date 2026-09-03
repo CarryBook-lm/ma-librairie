@@ -13451,6 +13451,8 @@ export default function App() {
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
+  const [tutosAccueil, setTutosAccueil] = useState([]);
+  useEffect(() => { supabase.from("tutoriels").select("id, image_url, lien, texte_html").eq("actif", true).order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setTutosAccueil(data || [])); }, []);
   useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(data || [])); }, []);
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
@@ -13836,6 +13838,20 @@ export default function App() {
   const [annonceUploading, setAnnonceUploading] = useState(false);
   const [annonceSending, setAnnonceSending] = useState(false);
   const [annonceMsg, setAnnonceMsg] = useState("");
+  const [tutoBookTab, setTutoBookTab] = useState("auteur");
+  const [tutos, setTutos] = useState([]);
+  const [tutoImg, setTutoImg] = useState("");
+  const [tutoLien, setTutoLien] = useState("");
+  const [tutoUploading, setTutoUploading] = useState(false);
+  const [tutoEditId, setTutoEditId] = useState(null);
+  const [tutoMsg, setTutoMsg] = useState("");
+  const tutoEditorRef = useRef(null);
+  const chargerTutos = async () => { const { data } = await supabase.from("tutoriels").select("*").order("ordre", { ascending: true }).order("created_at", { ascending: false }); setTutos(data || []); };
+  const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd }); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
+  const enregistrerTuto = async () => { const html = tutoEditorRef.current ? tutoEditorRef.current.innerHTML : ""; if (!tutoImg) { setTutoMsg("Ajoute une image (16:9)."); return; } const payload = { image_url: tutoImg, lien: tutoLien.trim() || null, texte_html: html, actif: true }; try { if (tutoEditId) { await supabase.from("tutoriels").update(payload).eq("id", tutoEditId); } else { await supabase.from("tutoriels").insert([payload]); } setTutoImg(""); setTutoLien(""); setTutoEditId(null); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg("OK_ENREGISTRE"); await chargerTutos(); } catch (e) { setTutoMsg("Erreur : " + (e && e.message)); } };
+  const editerTuto = (t) => { setTutoEditId(t.id); setTutoImg(t.image_url); setTutoLien(t.lien || ""); setTutoMsg(""); setTimeout(() => { if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = t.texte_html || ""; }, 50); };
+  const supprimerTuto = async (id) => { if (!window.confirm("Supprimer ce tuto ?")) return; await supabase.from("tutoriels").delete().eq("id", id); await chargerTutos(); };
+  const fmtTuto = (cmd, val) => { try { document.execCommand(cmd, false, val); tutoEditorRef.current && tutoEditorRef.current.focus(); } catch (e) {} };
   const uploadAnnonceImg = async (file) => {
     if (!file) return;
     setAnnonceUploading(true); setAnnonceMsg("");
@@ -14312,6 +14328,7 @@ export default function App() {
   const exigerConnexion = () => { if (!lecteur && !user) { setShowLecteurModal(true); return false; } return true; };
   useEffect(() => { if (page === "library" && !lecteur && !user) setShowLecteurModal(true); }, [page, lecteur, user]);
   useEffect(() => { if (auteurTab === "support" && auteurProfil) chargerSupport(); }, [auteurTab, auteurProfil]);
+  useEffect(() => { if (auteurTab === "tutobook" && auteurProfil) chargerTutos(); }, [auteurTab, auteurProfil]);
   // Précharge l'admin en arrière-plan (pour Landrine) → ouverture quasi instantanée depuis la 2e rangée
   useEffect(() => {
     if (!auteurProfil || auteurProfil.id !== 8) return;
@@ -17998,6 +18015,61 @@ export default function App() {
                 );
               })()}
               {/* MON COMPTE — lecture seule + Modifier */}
+              {auteurTab === "tutobook" && (
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold, marginBottom: 4 }}>🎥 TutoBook</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Gère les tutoriels affichés sur l’accueil (au-dessus des Livres gratuits).</div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                    {[{ t: "auteur", l: "Tuto Auteur" }, { t: "lecteur", l: "Tuto Lecteur" }].map(o => (
+                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.gold : "#fff", color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
+                    ))}
+                  </div>
+                  {tutoBookTab === "lecteur" ? (
+                    <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 24 }}>Tuto Lecteur — bientôt.</div>
+                  ) : (
+                  <div>
+                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>{tutoEditId ? "✏️ Modifier le tuto" : "➕ Nouveau tuto"}</div>
+                      <label style={labelSt}>Image (16:9) *</label>
+                      {tutoImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={tutoImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setTutoImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
+                        <button onClick={() => document.getElementById("tutoImgInput").click()} disabled={tutoUploading} style={{ width: "100%", aspectRatio: "16 / 9", border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", marginBottom: 10 }}>{tutoUploading ? "Envoi…" : "🖼️ Choisir l’image (16:9)"}</button>
+                      )}
+                      <input id="tutoImgInput" type="file" accept="image/*" onChange={e => { uploadTutoImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+                      <label style={labelSt}>Lien (facultatif, vers la vidéo)</label>
+                      <input value={tutoLien} onChange={e => setTutoLien(e.target.value)} placeholder="https://youtube.com/..." style={champ} />
+                      <div style={{ height: 10 }} />
+                      <label style={labelSt}>Texte (sous la carte)</label>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("bold"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("italic"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("underline"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
+                        {["#e11d48", "#2563eb", "#16a34a", "#9333ea", "#ea580c", "#1a1208"].map(col => (
+                          <button key={col} onMouseDown={e => { e.preventDefault(); fmtTuto("foreColor", col); }} title="Couleur" style={{ width: 26, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: col, cursor: "pointer" }} />
+                        ))}
+                      </div>
+                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning style={{ minHeight: 90, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: "#fff", outline: "none" }} />
+                      {tutoMsg && <div style={{ fontSize: 13, marginTop: 8, fontWeight: "bold", color: tutoMsg === "OK_ENREGISTRE" ? G.green : "#e11d48" }}>{tutoMsg === "OK_ENREGISTRE" ? "✅ Tuto enregistré !" : tutoMsg}</div>}
+                      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                        <button onClick={enregistrerTuto} style={{ flex: 1, padding: 12, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{tutoEditId ? "Mettre à jour" : "Enregistrer"}</button>
+                        {tutoEditId && <button onClick={() => { setTutoEditId(null); setTutoImg(""); setTutoLien(""); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg(""); }} style={{ padding: "12px 16px", background: "#eee", color: G.text, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Annuler</button>}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>Tutos publiés ({tutos.length})</div>
+                    {tutos.map(t => (
+                      <div key={t.id} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
+                        <img src={t.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />
+                        {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", marginBottom: 8 }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => editerTuto(t)} style={{ flex: 1, padding: "8px 0", background: G.goldDim, color: G.gold, border: "1px solid " + G.gold + "66", borderRadius: 6, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>✏️ Modifier</button>
+                          <button onClick={() => supprimerTuto(t.id)} style={{ flex: 1, padding: "8px 0", background: "#fde8e8", color: "#c62828", border: "1px solid #f5b5b5", borderRadius: 6, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🗑️ Supprimer</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  )}
+                </div>
+              )}
+
               {auteurTab === "compte" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>👤 Mon compte</div>
@@ -18230,7 +18302,11 @@ export default function App() {
         {/* BARRE DU BAS */}
         {auteurProfil && (<>
           <div style={{ position: "fixed", bottom: (auteurProfil.id === 8 ? 56 : 0), left: 0, right: 0, background: G.navSurface, borderTop: "1px solid " + G.navBorder, display: "flex", alignItems: "center", padding: "8px 12px", zIndex: 20 }}>
+            {auteurProfil.id === 8 ? (
+            <button onClick={() => setAuteurTab("tutobook")} style={{ flex: 1, background: auteurTab === "tutobook" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "tutobook" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "tutobook" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "tutobook" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>🎥</span>TutoBook</button>
+            ) : (
             <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
+            )}
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
             <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
@@ -20775,6 +20851,21 @@ export default function App() {
                   const physicalNewBooks = [];
                   return (
                     <Fragment key={cat}>
+                      {cat === "Livres Gratuits" && tutosAccueil.length > 0 && (
+                        <div style={{ marginBottom: 28 }}>
+                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>🎥 Tutoriels</div>
+                          <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                            {tutosAccueil.map(t => (
+                              <div key={t.id} style={{ flexShrink: 0, width: "90%", maxWidth: 380 }}>
+                                <div onClick={() => { if (t.lien) window.location.href = t.lien; }} style={{ width: "100%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: t.lien ? "pointer" : "default", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", marginBottom: 8 }}>
+                                  <img src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                                </div>
+                                {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, padding: "0 2px" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {cat === firstGuideCat && reco.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
                           <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>✨ Pour vous</div>
