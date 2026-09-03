@@ -13834,6 +13834,7 @@ export default function App() {
   const [pubSaving, setPubSaving] = useState(false);
   const [pubMsg, setPubMsg] = useState("");
   const [pubErrors, setPubErrors] = useState({});
+  const [pubDownloadable, setPubDownloadable] = useState(true);
   const [annonceImg, setAnnonceImg] = useState("");
   const [annonceLien, setAnnonceLien] = useState("");
   const [annonceUploading, setAnnonceUploading] = useState(false);
@@ -17034,6 +17035,7 @@ export default function App() {
       content: b.content || "", type: b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"), pdf_url: b.pdf_url || "", audio_url: b.audio_url || "",
     });
     setPubTypeSelected(b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"));
+    setPubDownloadable(b.can_download !== false);
     setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
@@ -17099,7 +17101,7 @@ export default function App() {
         pdf_url: (f.type === "guide" || f.type === "gratuit") ? f.pdf_url : "",
         audio_url: f.type === "audio" ? f.audio_url : "",
         status: "brouillon", moderation: "brouillon", auteur_id: auteurProfil.id,
-        product_type: "numerique", can_read: true, can_download: (f.type !== "roman"),
+        product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : f.type === "guide" ? pubDownloadable : true,
       };
       if (pubEditId) {
         await supabase.from("books").update(payload).eq("id", pubEditId);
@@ -17154,7 +17156,7 @@ export default function App() {
         excerpt_pdf_url: f.type === "guide" ? excerptUrl : "",
         audio_url: f.type === "audio" ? f.audio_url : "",
         status: "en_attente", moderation: "en_attente", auteur_id: auteurProfil.id,
-        product_type: "numerique", can_read: true, can_download: (isPdf || f.type === "audio"),
+        product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : f.type === "guide" ? pubDownloadable : true,
       };
       if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
@@ -17737,6 +17739,16 @@ export default function App() {
                         </>
                       )}
                     </>
+                  )}
+                  {pubForm.type === "guide" && (
+                    <div style={{ marginTop: 14 }}>
+                      <label style={labelSt}>Le PDF sera-t-il téléchargeable ?</label>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
+                      </div>
+                      <div style={{ fontSize: 11, color: G.textDim, marginTop: 6, lineHeight: 1.4 }}>{pubDownloadable ? "Le client pourra télécharger le PDF après achat." : "Le client pourra seulement lire le PDF (protégé, non téléchargeable)."}</div>
+                    </div>
                   )}
                   <div style={{ height: 18 }} />
                   {pubDraftMsg && <div style={{ fontSize: 11, color: G.green, textAlign: "center", marginBottom: 8 }}>{pubDraftMsg}</div>}
