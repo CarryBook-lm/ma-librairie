@@ -15174,7 +15174,7 @@ export default function App() {
   async function loadLecteurPurchases(phone) {
     if (!phone) return [];
     try {
-      const local = String(phone).replace(/\D/g, "").slice(-9);
+      const local = String(phone).replace(/\D/g, "").slice(-7);
       const { data } = await supabase.from("guest_purchases").select("book_id, created_at, amount").ilike("phone", "%" + local + "%").order("created_at", { ascending: false });
       if (data && data.length) {
         const ids = data.map(p => p.book_id);
