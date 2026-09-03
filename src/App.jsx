@@ -18059,7 +18059,7 @@ export default function App() {
                     {tutos.map(t => (
                       <div key={t.id} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
                         <img src={t.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />
-                        {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", marginBottom: 8 }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
+                        {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", marginBottom: 8, whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => editerTuto(t)} style={{ flex: 1, padding: "8px 0", background: G.goldDim, color: G.gold, border: "1px solid " + G.gold + "66", borderRadius: 6, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>✏️ Modifier</button>
                           <button onClick={() => supprimerTuto(t.id)} style={{ flex: 1, padding: "8px 0", background: "#fde8e8", color: "#c62828", border: "1px solid #f5b5b5", borderRadius: 6, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🗑️ Supprimer</button>
@@ -20862,7 +20862,7 @@ export default function App() {
                                   <img src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                                 </div>
                                 {t.texte_html ? (<div style={{ padding: "0 2px" }}>
-                                  <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, overflow: "hidden", display: tutosOuverts[t.id] ? "block" : "-webkit-box", WebkitLineClamp: tutosOuverts[t.id] ? "none" : 3, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} />
+                                  <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, overflow: "hidden", whiteSpace: "pre-wrap", display: tutosOuverts[t.id] ? "block" : "-webkit-box", WebkitLineClamp: tutosOuverts[t.id] ? "none" : 3, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} />
                                   <button onClick={() => setTutosOuverts(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", padding: "4px 0 0" }}>{tutosOuverts[t.id] ? "Voir moins ▲" : "Voir plus ▼"}</button>
                                 </div>) : null}
                               </div>
