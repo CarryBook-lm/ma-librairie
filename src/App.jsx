@@ -17726,11 +17726,12 @@ export default function App() {
                   {pubForm.type === "roman" ? (
                     <>
                       <label style={labelSt}>Texte du roman *</label>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("underline"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
-                        <span style={{ fontSize: 11, color: G.textDim }}>Sélectionne du texte, puis clique G / I / S.</span>
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6 }}>Sélectionne du texte, puis clique G / I / S dans la barre ci-dessous.</div>
+                      <div style={{ position: "sticky", top: 60, zIndex: 30, display: "flex", gap: 8, alignItems: "center", marginBottom: 6, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: "6px 8px", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ width: 42, height: 38, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ width: 42, height: 38, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("underline"); }} style={{ width: 42, height: 38, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
+                        <span style={{ fontSize: 11, color: G.textDim, marginLeft: 4 }}>Gras · Italique · Souligné</span>
                       </div>
                       <div ref={romanEditorRef} contentEditable suppressContentEditableWarning onInput={syncRoman} onBlur={() => { syncRoman(); if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } syncRoman(); }} data-ph="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, overflowY: "auto", whiteSpace: "pre-wrap", textAlign: "justify", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
