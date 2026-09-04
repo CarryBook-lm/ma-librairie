@@ -17725,7 +17725,7 @@ export default function App() {
                   </>)}
                   {pubForm.type === "roman" ? (
                     <>
-                      <label style={{ ...labelSt, marginTop: -38 }}>Texte du roman *</label>
+                      <label style={labelSt}>Texte du roman *</label>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
                         <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
                         <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
