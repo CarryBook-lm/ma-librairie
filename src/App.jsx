@@ -17725,14 +17725,13 @@ export default function App() {
                   </>)}
                   {pubForm.type === "roman" ? (
                     <>
-                      <label style={labelSt}>Texte du roman *</label>
-                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6 }}>Sélectionne du texte, puis clique G / I / S dans la barre flottante en bas de l’écran.</div>
-                      {/* Barre d’outils FLOTTANTE en bas (jamais cachée par le menu du téléphone qui apparaît en haut) */}
-                      <div style={{ position: "fixed", left: 12, right: 12, bottom: 14, zIndex: 60, display: "flex", gap: 10, alignItems: "center", justifyContent: "center", background: "#1a1208", borderRadius: 14, padding: "8px 10px", boxShadow: "0 6px 20px rgba(0,0,0,0.35)" }}>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ flex: 1, maxWidth: 70, height: 42, border: "none", borderRadius: 10, background: "#fff", cursor: "pointer", fontWeight: "bold", fontSize: 18 }}>G</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ flex: 1, maxWidth: 70, height: 42, border: "none", borderRadius: 10, background: "#fff", cursor: "pointer", fontStyle: "italic", fontSize: 18 }}>I</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("underline"); }} style={{ flex: 1, maxWidth: 70, height: 42, border: "none", borderRadius: 10, background: "#fff", cursor: "pointer", textDecoration: "underline", fontSize: 18 }}>S</button>
+                      <label style={{ ...labelSt, marginTop: -38 }}>Texte du roman *</label>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("underline"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
                       </div>
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page.</div>
                       <div ref={romanEditorRef} contentEditable suppressContentEditableWarning onInput={syncRoman} onBlur={() => { syncRoman(); if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } syncRoman(); }} data-ph="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, overflowY: "auto", whiteSpace: "pre-wrap", textAlign: "justify", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
                   ) : pubForm.type === "audio" ? (
