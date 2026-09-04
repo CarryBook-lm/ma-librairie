@@ -13848,6 +13848,8 @@ export default function App() {
   const [tutoEditId, setTutoEditId] = useState(null);
   const [tutoMsg, setTutoMsg] = useState("");
   const tutoEditorRef = useRef(null);
+  const romanTextRef = useRef(null);
+  const wrapRoman = (tag) => { const ta = romanTextRef.current; if (!ta) return; const start = ta.selectionStart, end = ta.selectionEnd; if (start === end) return; const val = pubForm.content || ""; const sel = val.slice(start, end); const nv = val.slice(0, start) + "<" + tag + ">" + sel + "</" + tag + ">" + val.slice(end); setPubForm(f => ({ ...f, content: nv })); setTimeout(() => { try { ta.focus(); ta.setSelectionRange(start, end + tag.length * 2 + 5); } catch (e) {} }, 0); };
   const chargerTutos = async () => { const { data } = await supabase.from("tutoriels").select("*").order("ordre", { ascending: true }).order("created_at", { ascending: false }); setTutos(data || []); };
   const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd }); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
   const enregistrerTuto = async () => { const html = tutoEditorRef.current ? tutoEditorRef.current.innerHTML : ""; if (!tutoImg) { setTutoMsg("Ajoute une image (16:9)."); return; } const payload = { image_url: tutoImg, lien: tutoLien.trim() || null, texte_html: html, actif: true }; try { if (tutoEditId) { await supabase.from("tutoriels").update(payload).eq("id", tutoEditId); } else { await supabase.from("tutoriels").insert([payload]); } setTutoImg(""); setTutoLien(""); setTutoEditId(null); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg("OK_ENREGISTRE"); await chargerTutos(); } catch (e) { setTutoMsg("Erreur : " + (e && e.message)); } };
@@ -17709,7 +17711,13 @@ export default function App() {
                   {pubForm.type === "roman" ? (
                     <>
                       <label style={labelSt}>Texte du roman *</label>
-                      <textarea value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6, ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                        <button onClick={() => wrapRoman("b")} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
+                        <button onClick={() => wrapRoman("i")} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
+                        <button onClick={() => wrapRoman("u")} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
+                        <span style={{ fontSize: 11, color: G.textDim }}>Sélectionne du texte, puis clique G (gras), I (italique) ou S (souligné).</span>
+                      </div>
+                      <textarea ref={romanTextRef} value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Colle ici le texte complet de ton roman…" style={{ ...champ, resize: "vertical", height: "70vh", minHeight: 400, lineHeight: 1.6, ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
                   ) : pubForm.type === "audio" ? (
                     <>
