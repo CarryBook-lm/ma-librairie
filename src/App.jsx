@@ -16600,6 +16600,8 @@ export default function App() {
             const newP = [...purchasedBooks, paymentBook.id];
             setPurchasedBooks(newP);
             localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+            // 📊 Pixel Facebook : signaler l'ACHAT à Meta (pour l'optimisation des pubs)
+            try { if (window.fbq && paymentBook) window.fbq("track", "Purchase", { value: Number(paymentBook.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(paymentBook.id)], content_name: paymentBook.title || "" }); } catch (e) {}
 
             // PARRAINAGE : Si c'est le 1er achat du filleul, créditer le parrain
             if (user) {
