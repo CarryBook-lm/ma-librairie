@@ -19440,7 +19440,7 @@ export default function App() {
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
           <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
-          <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 10 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteurs</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
+          <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 1 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             {/* Pour un livre papier uniquement, on affiche le prix papier */}
             {isPaperOnlyBook ? (
