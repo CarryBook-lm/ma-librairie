@@ -17697,8 +17697,8 @@ export default function App() {
                   {pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)) && (
                     <div style={{ marginTop: 10, background: "#fff4e5", border: "1px solid #f0b95c", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6, color: "#7a5a1e" }}>
                       <div style={{ fontWeight: "bold", marginBottom: 4 }}>⚠️ Les romans se publient uniquement en format Texte</div>
-                      Pour publier un roman (y compris une Saga), retournez à <b>« Publier un Roman (Texte) »</b>. Si votre roman est dans un fichier PDF ou Word, <b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
-                      Le format <b>PDF</b> est réservé aux <b>autres catégories</b> (guides, cuisine, business, etc.).
+                      Pour publier un roman (y compris une Saga), retournez à{" "}<b>« Publier un Roman (Texte) »</b>. Si votre roman est dans un fichier PDF ou Word,{" "}<b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
+                      Le format{" "}<b>PDF</b>{" "}est réservé aux{" "}<b>autres catégories</b>{" "}(guides, cuisine, business, etc.).
                     </div>
                   )}
                   <div style={{ height: 14 }} />
@@ -17789,9 +17789,9 @@ export default function App() {
                   <div style={{ height: 18 }} />
                   {pubDraftMsg && <div style={{ fontSize: 11, color: G.green, textAlign: "center", marginBottom: 8 }}>{pubDraftMsg}</div>}
                   {pubDraftMode && (
-                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer", marginBottom: 8, opacity: pubSavingDraft ? 0.6 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
+                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
-                  <button onClick={pubSaveRoman} disabled={pubSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: pubSaving ? 0.6 : 1 }}>{pubSaving ? "Envoi…" : "📤 Soumettre pour validation"}</button>
+                  <button onClick={pubSaveRoman} disabled={pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : "📤 Soumettre pour validation")}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   </>)}
                 </div>
