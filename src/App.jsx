@@ -17694,6 +17694,13 @@ export default function App() {
                     <option value="">— Choisis —</option>
                     {Object.keys(pubCats).filter(cn => pubForm.type === "audio" ? /audio/i.test(cn) : (pubForm.type !== "roman" || /^roman/i.test(cn) || /saga/i.test(cn) || /po[eé]sie/i.test(cn))).map(cn => <option key={cn} value={cn}>{cn}</option>)}
                   </select>
+                  {pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)) && (
+                    <div style={{ marginTop: 10, background: "#fff4e5", border: "1px solid #f0b95c", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6, color: "#7a5a1e" }}>
+                      <div style={{ fontWeight: "bold", marginBottom: 4 }}>⚠️ Les romans se publient uniquement en format Texte</div>
+                      Pour publier un roman (y compris une Saga), retournez à <b>« Publier un Roman (Texte) »</b>. Si votre roman est dans un fichier PDF ou Word, <b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
+                      Le format <b>PDF</b> est réservé aux <b>autres catégories</b> (guides, cuisine, business, etc.).
+                    </div>
+                  )}
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Sous-catégorie *</label>
                   <select value={pubForm.subcategory} onChange={e => { setPubForm(f => ({ ...f, subcategory: e.target.value })); setPubErrors(p => ({ ...p, subcategory: false })); }} disabled={!pubForm.category} style={{ ...champ, opacity: pubForm.category ? 1 : 0.6, ...(pubErrors.subcategory ? { border: "2px solid #e53935" } : {}) }}>
