@@ -507,7 +507,7 @@ export default function Admin() {
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
           supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
-          supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
+          supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
@@ -576,7 +576,7 @@ export default function Admin() {
   const rechargerEA = async () => {
     const [{ data: aut }, { data: bks }] = await Promise.all([
       supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
-      supabase.from("books").select("id, title, status, moderation, price, auteur_id").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
+      supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
     setEaAuteurs(aut || []); setEaBooks(bks || []);
     if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
@@ -746,6 +746,11 @@ export default function Admin() {
   const validerAnnonce = async (id) => { await supabase.from("annonces_pub").update({ statut: "active" }).eq("id", id); await reloadAnnonces(); };
   const refuserAnnonce = async (id) => { const m = window.prompt("Motif du refus (optionnel) :", ""); await supabase.from("annonces_pub").update({ statut: "refusee", motif_refus: m || null }).eq("id", id); await reloadAnnonces(); };
   const supprimerAnnonce = async (id) => { if (!window.confirm("Supprimer cette annonce ?")) return; await supabase.from("annonces_pub").delete().eq("id", id); await reloadAnnonces(); };
+  const toggleMasque = async (b) => {
+    const nv = !b.masque;
+    await supabase.from("books").update({ masque: nv }).eq("id", b.id);
+    setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, masque: nv } : x));
+  };
   const reloadAValider = async () => {
     const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
     setEaAValider(av || []); chargerTodo();
@@ -4414,10 +4419,12 @@ export default function Admin() {
                       {livres.length === 0 ? <div style={{ color: "#666", fontSize: 13, fontStyle: "italic" }}>Aucun livre publié.</div> : livres.map(b => {
                         const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
                         return (
-                          <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #262626" }}>
-                            <div style={{ color: "#e8e0d0", fontSize: 13, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.title}</div>
-                            <div style={{ color: "#888", fontSize: 12, margin: "0 12px", whiteSpace: "nowrap" }}>{(b.price||0).toLocaleString()} F</div>
-                            <div style={{ color: st.c, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>{st.t}</div>
+                          <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "10px 0", borderBottom: "1px solid #262626" }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ color: b.masque ? "#888" : "#e8e0d0", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.masque ? "🙈 " : ""}{b.title}</div>
+                              <div style={{ fontSize: 11, color: "#777" }}>{(b.price||0).toLocaleString()} F · <span style={{ color: st.c, fontWeight: "bold" }}>{st.t}</span>{b.masque ? " · masqué" : ""}</div>
+                            </div>
+                            <button onClick={() => toggleMasque(b)} style={{ flexShrink: 0, padding: "7px 12px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : "#c9a84c", border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
                           </div>
                         );
                       })}
