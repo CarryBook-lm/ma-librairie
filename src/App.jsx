@@ -17692,7 +17692,7 @@ export default function App() {
                   <label style={labelSt}>Catégorie *</label>
                   <select value={pubForm.category} onChange={e => { const cat = e.target.value; setPubForm(f => ({ ...f, category: cat, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); setPubDownloadable(!(/^roman/i.test(cat) || cat === "Saga")); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
                     <option value="">— Choisis —</option>
-                    {Object.keys(pubCats).filter(cn => pubForm.type !== "roman" || /^roman/i.test(cn) || cn === "Saga" || /po[eé]sie/i.test(cn)).map(cn => <option key={cn} value={cn}>{cn}</option>)}
+                    {Object.keys(pubCats).filter(cn => pubForm.type === "audio" ? /audio/i.test(cn) : (pubForm.type !== "roman" || /^roman/i.test(cn) || cn === "Saga" || /po[eé]sie/i.test(cn))).map(cn => <option key={cn} value={cn}>{cn}</option>)}
                   </select>
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Sous-catégorie *</label>
@@ -20680,7 +20680,7 @@ export default function App() {
                 {/* CARTES DE CATEGORIES — rangee horizontale scrollable, format vertical */}
                 <div style={{ padding: "18px 0 0" }}>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10, padding: "0 14px" }}>📚 Explore par catégorie</div>
-                  <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
+                  <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
                     {Object.keys(CATEGORIES).map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
                       const bk = (books || []).find(b => b.status === "actif" && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
