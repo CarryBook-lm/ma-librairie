@@ -16603,8 +16603,13 @@ export default function App() {
             const newP = [...purchasedBooks, paymentBook.id];
             setPurchasedBooks(newP);
             localStorage.setItem("purchasedBooks", JSON.stringify(newP));
-            // 📊 Pixel Facebook : signaler l'ACHAT à Meta (pour l'optimisation des pubs)
-            try { if (window.fbq && paymentBook) window.fbq("track", "Purchase", { value: Number(paymentBook.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(paymentBook.id)], content_name: paymentBook.title || "" }); } catch (e) {}
+            // 📊 Meta : pixel navigateur + API Conversions serveur, MEME event_id (déduplication)
+            try {
+              const evId = "pur_" + payData.reference;
+              const getCk = (n) => { const m = document.cookie.match("(^|;)\\s*" + n + "\\s*=\\s*([^;]+)"); return m ? m.pop() : ""; };
+              if (window.fbq && paymentBook) window.fbq("track", "Purchase", { value: Number(paymentBook.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(paymentBook.id)], content_name: paymentBook.title || "" }, { eventID: evId });
+              fetch("/api/track-achat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reference: payData.reference, book_id: paymentBook.id, phone: (lecteur && lecteur.telephone) || "", fbp: getCk("_fbp"), fbc: getCk("_fbc") }) }).catch(() => {});
+            } catch (e) {}
 
             // PARRAINAGE : Si c'est le 1er achat du filleul, créditer le parrain
             if (user) {
