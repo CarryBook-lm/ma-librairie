@@ -15797,6 +15797,8 @@ export default function App() {
     } else {
       setPreviousPage("home");
     }
+    // 📊 Pixel Facebook : signaler la CONSULTATION du livre (pour le reciblage catalogue)
+    try { if (window.fbq && book) window.fbq("track", "ViewContent", { value: Number(book.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(book.id)], content_name: book.title || "" }); } catch (e) {}
     // Afficher immédiatement avec les données légères (UX rapide)
     setSelectedBook(book);
     setPage("detail");
