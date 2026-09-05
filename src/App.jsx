@@ -17692,7 +17692,7 @@ export default function App() {
                   <label style={labelSt}>Catégorie *</label>
                   <select value={pubForm.category} onChange={e => { const cat = e.target.value; setPubForm(f => ({ ...f, category: cat, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); setPubDownloadable(!(/^roman/i.test(cat) || cat === "Saga")); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
                     <option value="">— Choisis —</option>
-                    {Object.keys(pubCats).map(cn => <option key={cn} value={cn}>{cn}</option>)}
+                    {Object.keys(pubCats).filter(cn => pubForm.type !== "roman" || /^roman/i.test(cn) || cn === "Saga" || /po[eé]sie/i.test(cn)).map(cn => <option key={cn} value={cn}>{cn}</option>)}
                   </select>
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Sous-catégorie *</label>
