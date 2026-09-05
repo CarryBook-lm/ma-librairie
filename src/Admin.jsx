@@ -363,6 +363,7 @@ export default function Admin() {
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
   const [eaAValider, setEaAValider] = useState([]);
+  const [eaLireTexte, setEaLireTexte] = useState(null);
   const [eaAnnonces, setEaAnnonces] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
   const [gainsData, setGainsData] = useState(null);
@@ -515,7 +516,7 @@ export default function Admin() {
         chargerSupportAdmin(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
-        const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
+        const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
         setEaAValider(av || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
         setEaAnnonces(anns || []);
@@ -727,6 +728,7 @@ export default function Admin() {
     if (!window.confirm("Valider cette vérification ? L'auteur pourra publier.")) return;
     const { error } = await supabase.from("auteurs").update({ kyc_status: "valide", kyc_motif_refus: null }).eq("id", id);
     if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    setEaSelectedKyc(null);
     await kycRefresh();
   };
   const kycRefuser = async (id) => {
@@ -734,6 +736,7 @@ export default function Admin() {
     if (motif === null) return;
     const { error } = await supabase.from("auteurs").update({ kyc_status: "refuse", kyc_motif_refus: motif || "Documents non conformes." }).eq("id", id);
     if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    setEaSelectedKyc(null);
     await kycRefresh();
   };
   const reloadAnnonces = async () => {
@@ -744,7 +747,7 @@ export default function Admin() {
   const refuserAnnonce = async (id) => { const m = window.prompt("Motif du refus (optionnel) :", ""); await supabase.from("annonces_pub").update({ statut: "refusee", motif_refus: m || null }).eq("id", id); await reloadAnnonces(); };
   const supprimerAnnonce = async (id) => { if (!window.confirm("Supprimer cette annonce ?")) return; await supabase.from("annonces_pub").delete().eq("id", id); await reloadAnnonces(); };
   const reloadAValider = async () => {
-    const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
+    const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
     setEaAValider(av || []); chargerTodo();
   };
   const validerLivre = async (b) => {
@@ -4346,6 +4349,7 @@ export default function Admin() {
                 {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaAValider.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun livre en attente de validation.</div> : (
                   eaAValider.map(b => {
                     const slug = (b.title || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+                    const bType = b.audio_url ? { i: "🎧", l: "Audio", c: "#b39ddb" } : (b.pdf_url ? ((b.price || 0) === 0 ? { i: "🎁", l: "Gratuit", c: "#a5d6a7" } : { i: "📥", l: "PDF", c: "#90caf9" }) : { i: "📖", l: "Texte", c: "#ffcc80" });
                     return (
                       <div key={b.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, marginBottom: 12 }}>
                         <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
@@ -4353,6 +4357,7 @@ export default function Admin() {
                             {b.cover ? <img src={b.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
                           </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ marginBottom: 4 }}><span style={{ fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10, background: "#2a2410", color: bType.c, border: "1px solid " + bType.c + "55" }}>{bType.i} {bType.l}</span></div>
                             <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
                             <div style={{ color: "#aaa", fontSize: 12, marginBottom: 2 }}>par {b.author || "—"}</div>
                             <div style={{ color: "#888", fontSize: 12 }}>{b.category || ""}{b.subcategory ? " · " + b.subcategory : ""}</div>
@@ -4361,8 +4366,8 @@ export default function Admin() {
                         </div>
                         {b.summary ? <div style={{ color: "#bbb", fontSize: 12, lineHeight: 1.5, marginBottom: 10, maxHeight: 80, overflow: "auto" }}>{b.summary}</div> : null}
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                          <a href={"https://carrybooks.com/livre/" + slug} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none" }}>👁️ Voir la fiche</a>
-                          {b.pdf_url ? <a href={b.pdf_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none" }}>📄 Lire le PDF</a> : null}
+                          {(!b.pdf_url && !b.audio_url && b.content) ? <button onClick={() => setEaLireTexte(b)} style={{ background: "#0f0f0f", border: "1px solid #4f9cf9", borderRadius: 8, color: "#4f9cf9", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>📖 Lire le texte</button> : null}
+                          {b.pdf_url ? <a href={b.pdf_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none", alignSelf: "center" }}>📄 Lire le PDF</a> : null}
                           {b.audio_url ? <a href={b.audio_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none" }}>🎧 Écouter l'audio</a> : null}
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
@@ -4372,6 +4377,17 @@ export default function Admin() {
                       </div>
                     );
                   })
+                )}
+                {eaLireTexte && (
+                  <div onClick={() => setEaLireTexte(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
+                    <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, maxWidth: 720, width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                      <div style={{ padding: "12px 16px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                        <b style={{ color: "#1a1208", fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eaLireTexte.title}</b>
+                        <button onClick={() => setEaLireTexte(null)} style={{ background: "#eee", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", flexShrink: 0 }}>✕</button>
+                      </div>
+                      <div style={{ padding: "16px 18px", overflowY: "auto", fontSize: 15, lineHeight: 1.75, color: "#1a1a1a", textAlign: "justify", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: eaLireTexte.content || "(vide)" }} />
+                    </div>
+                  </div>
                 )}
               </div>
             )}
