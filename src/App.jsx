@@ -13835,6 +13835,7 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [pubErrors, setPubErrors] = useState({});
   const [pubDownloadable, setPubDownloadable] = useState(true);
+  const [pubRomanPdfAlert, setPubRomanPdfAlert] = useState(false);
   const [annonceImg, setAnnonceImg] = useState("");
   const [annonceLien, setAnnonceLien] = useState("");
   const [annonceUploading, setAnnonceUploading] = useState(false);
@@ -17690,17 +17691,11 @@ export default function App() {
                   <input value={pubForm.title} onChange={e => { setPubForm(f => ({ ...f, title: e.target.value })); setPubErrors(p => ({ ...p, title: false })); }} style={{ ...champ, ...(pubErrors.title ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Catégorie *</label>
-                  <select value={pubForm.category} onChange={e => { const cat = e.target.value; setPubForm(f => ({ ...f, category: cat, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); setPubDownloadable(!(/^roman/i.test(cat) || /saga/i.test(cat))); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
+                  <select value={pubForm.category} onChange={e => { const cat = e.target.value; setPubForm(f => ({ ...f, category: cat, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); setPubDownloadable(!(/^roman/i.test(cat) || /saga/i.test(cat))); if (pubForm.type === "guide" && (/^roman/i.test(cat) || /saga/i.test(cat))) setPubRomanPdfAlert(true); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
                     <option value="">— Choisis —</option>
                     {Object.keys(pubCats).filter(cn => pubForm.type === "audio" ? /audio/i.test(cn) : (pubForm.type !== "roman" || /^roman/i.test(cn) || /saga/i.test(cn) || /po[eé]sie/i.test(cn))).map(cn => <option key={cn} value={cn}>{cn}</option>)}
                   </select>
-                  {pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)) && (
-                    <div style={{ marginTop: 10, background: "#fff4e5", border: "1px solid #f0b95c", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6, color: "#7a5a1e" }}>
-                      <div style={{ fontWeight: "bold", marginBottom: 4 }}>⚠️ Les romans se publient uniquement en format Texte</div>
-                      Pour publier un roman (y compris une Saga), retournez à{" "}<b>« Publier un Roman (Texte) »</b>. Si votre roman est dans un fichier PDF ou Word,{" "}<b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
-                      Le format{" "}<b>PDF</b>{" "}est réservé aux{" "}<b>autres catégories</b>{" "}(guides, cuisine, business, etc.).
-                    </div>
-                  )}
+                  {/* message roman-en-PDF déplacé dans un modal (voir plus bas) */}
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Sous-catégorie *</label>
                   <select value={pubForm.subcategory} onChange={e => { setPubForm(f => ({ ...f, subcategory: e.target.value })); setPubErrors(p => ({ ...p, subcategory: false })); }} disabled={!pubForm.category} style={{ ...champ, opacity: pubForm.category ? 1 : 0.6, ...(pubErrors.subcategory ? { border: "2px solid #e53935" } : {}) }}>
@@ -17793,6 +17788,20 @@ export default function App() {
                   )}
                   <button onClick={pubSaveRoman} disabled={pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : "📤 Soumettre pour validation")}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  {pubRomanPdfAlert && (
+                    <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+                        <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: "#1a1208", marginBottom: 12 }}>Les romans se publient uniquement en format Texte</div>
+                        <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.7, textAlign: "left", marginBottom: 20 }}>
+                          Pour publier un roman (y compris une Saga), retournez à <b>« Publier un Roman (Texte) »</b>.<br/><br/>
+                          Si votre roman est dans un fichier PDF ou Word, <b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
+                          Le format <b>PDF</b> est réservé aux <b>autres catégories</b> (guides, cuisine, business, etc.).
+                        </div>
+                        <button onClick={() => setPubRomanPdfAlert(false)} style={{ width: "100%", padding: 13, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>J’ai compris</button>
+                      </div>
+                    </div>
+                  )}
                   </>)}
                 </div>
                 </div>
