@@ -15384,7 +15384,7 @@ export default function App() {
     if (!hasCachedBooks) setLoading(true);
     // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
     // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
-    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
+    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, nb_ventes, created_at";
 
     // 🎯 ÉTAPE 1 : Charger les LIVRES (non-articles) en priorité — rapide car peu nombreux
     // Supabase limite à 1000 lignes par défaut. Avec 1000+ articles, les livres seraient tronqués.
@@ -16603,6 +16603,7 @@ export default function App() {
             const newP = [...purchasedBooks, paymentBook.id];
             setPurchasedBooks(newP);
             localStorage.setItem("purchasedBooks", JSON.stringify(newP));
+            try { supabase.rpc("incrementer_vente", { p_book_id: paymentBook.id }); setSelectedBook(b => (b && b.id === paymentBook.id) ? { ...b, nb_ventes: (b.nb_ventes || 0) + 1 } : b); } catch (e) {}
             // 📊 Meta : pixel navigateur + API Conversions serveur, MEME event_id (déduplication)
             try {
               const evId = "pur_" + payData.reference;
@@ -19438,7 +19439,8 @@ export default function App() {
             {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
-          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 16 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
+          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
+          <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 10 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteurs</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             {/* Pour un livre papier uniquement, on affiche le prix papier */}
             {isPaperOnlyBook ? (
