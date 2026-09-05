@@ -171,6 +171,28 @@ async function creditReferrer({ supabaseAdmin, referrerCode, purchaseId, userId,
 //   - paper (livre papier direct)
 //   - carrycare (quiz beauté)
 // ============================================================
+// 📧 Email a l'auteur quand son livre est vendu (motivation)
+async function sendAuthorSaleEmail(supabaseAdmin, { auteurId, bookId, partAuteur }) {
+  try {
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) return;
+    const EMAIL_FROM = process.env.EMAIL_FROM || "CarryBooks <onboarding@resend.dev>";
+    const { data: au } = await supabaseAdmin.from("auteurs").select("email, nom_complet").eq("id", auteurId).limit(1);
+    const email = au && au[0] ? au[0].email : null;
+    if (!email) return;
+    const nom = (au[0].nom_complet || "").split(" ")[0] || "";
+    const { data: bk } = await supabaseAdmin.from("books").select("title").eq("id", bookId).limit(1);
+    const titre = bk && bk[0] ? bk[0].title : "ton livre";
+    const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff8ec;border-radius:12px;"><div style="text-align:center;font-size:34px;">🎉</div><h2 style="color:#1a1208;text-align:center;margin:8px 0;">Bonne nouvelle${nom ? ", " + nom : ""} !</h2><p style="color:#444;font-size:15px;line-height:1.6;text-align:center;">Ton livre <b>${titre}</b> vient d\u2019\u00eatre vendu sur CarryBooks.</p><div style="background:#c9a84c;color:#1a1208;font-weight:bold;font-size:18px;text-align:center;padding:12px;border-radius:10px;margin:16px 0;">+ ${Number(partAuteur||0).toLocaleString("fr-FR")} FCFA</div><p style="color:#666;font-size:13px;text-align:center;">Retrouve tes gains dans ton espace auteur.</p><p style="color:#999;font-size:12px;text-align:center;margin-top:18px;">CarryBooks \u2764\ufe0f</p></div>`;
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + RESEND_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: EMAIL_FROM, to: email, subject: "🎉 Ton livre \"" + titre + "\" a \u00e9t\u00e9 vendu !", html }),
+    });
+    console.log("[AUTEUR-EMAIL] envoye a", email);
+  } catch (e) { console.error("[AUTEUR-EMAIL] exception (non bloquant):", e.message); }
+}
+
 // Brique 5b (CamPay) : enregistre la commission auteur (70% via lien, 50% sinon)
 async function recordAuthorSaleCampay(supabaseAdmin, opts) {
   const { bookId, amount, reference, authorSrc } = opts || {};
@@ -192,7 +214,7 @@ async function recordAuthorSaleCampay(supabaseAdmin, opts) {
       part_carrybooks: amount - partAuteur, source: viaLien ? "auteur" : "carrybooks",
     }]);
     if (error) console.error("[CAMPAY-AUTEUR] insert:", error.message);
-    else console.log("[CAMPAY-AUTEUR] commission:", taux + "% =", partAuteur);
+    else { console.log("[CAMPAY-AUTEUR] commission:", taux + "% =", partAuteur); await sendAuthorSaleEmail(supabaseAdmin, { auteurId, bookId, partAuteur }); }
   } catch (e) { console.error("[CAMPAY-AUTEUR] exception:", e.message); }
 }
 
