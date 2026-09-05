@@ -20563,7 +20563,10 @@ export default function App() {
               </button>
             )}
           </div>
-          <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+          <div style={{ position: "relative" }}>
+          <button onClick={() => { const el = document.getElementById("filterCats"); if (el) el.scrollBy({ left: -200, behavior: "smooth" }); }} style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 16, cursor: "pointer" }}>‹</button>
+          <button onClick={() => { const el = document.getElementById("filterCats"); if (el) el.scrollBy({ left: 200, behavior: "smooth" }); }} style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 16, cursor: "pointer" }}>›</button>
+          <div id="filterCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, padding: "0 34px 4px" }}>
             <button onClick={() => { setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); }}
               style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === "Tous" ? G.gold : G.border), background: selectedCategory === "Tous" ? G.goldDim : "transparent", color: selectedCategory === "Tous" ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
               Tous
@@ -20574,6 +20577,7 @@ export default function App() {
                 {cat}
               </button>
             ))}
+          </div>
           </div>
           {selectedCategory !== "Tous" && CATEGORIES[selectedCategory] && (
             <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginTop: 6 }}>
@@ -20687,7 +20691,10 @@ export default function App() {
                 {/* CARTES DE CATEGORIES — rangee horizontale scrollable, format vertical */}
                 <div style={{ padding: "18px 0 0" }}>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10, padding: "0 14px" }}>📚 Explore par catégorie</div>
-                  <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
+                  <div style={{ position: "relative" }}>
+                  <button onClick={() => { const el = document.getElementById("exploreCats"); if (el) el.scrollBy({ left: -240, behavior: "smooth" }); }} style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+                  <button onClick={() => { const el = document.getElementById("exploreCats"); if (el) el.scrollBy({ left: 240, behavior: "smooth" }); }} style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+                  <div id="exploreCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
                     {Object.keys(CATEGORIES).map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
                       const bk = (books || []).find(b => b.status === "actif" && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
@@ -20700,6 +20707,7 @@ export default function App() {
                         </div>
                       );
                     })}
+                  </div>
                   </div>
                 </div>
 
