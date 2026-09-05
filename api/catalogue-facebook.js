@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=3600"); // rafraichi chaque heure
     res.setHeader("Content-Disposition", "inline; filename=catalogue-carrybooks.csv");
-    return res.status(200).send(lignes.join("\n"));
+    return res.status(200).send("\uFEFF" + lignes.join("\n"));
   } catch (e) {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     return res.status(500).send("Erreur: " + (e && e.message ? e.message : String(e)));
