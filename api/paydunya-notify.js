@@ -9,6 +9,28 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+// 📧 Email a l'auteur quand son livre est vendu
+async function sendAuthorSaleEmail(supabaseAdmin, { bookId, amount }) {
+  try {
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) return;
+    const EMAIL_FROM = process.env.EMAIL_FROM || "CarryBooks <onboarding@resend.dev>";
+    const { data: bk } = await supabaseAdmin.from("books").select("title, auteur_id").eq("id", bookId).limit(1);
+    if (!bk || !bk[0] || !bk[0].auteur_id) return;
+    const titre = bk[0].title || "ton livre";
+    const { data: au } = await supabaseAdmin.from("auteurs").select("email, nom_complet, code_source").eq("id", bk[0].auteur_id).limit(1);
+    if (!au || !au[0] || !au[0].email) return;
+    const nom = (au[0].nom_complet || "").split(" ")[0] || "";
+    const part = Math.round(Number(amount || 0) * 0.5);
+    const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff8ec;border-radius:12px;"><div style="text-align:center;font-size:34px;">🎉</div><h2 style="color:#1a1208;text-align:center;margin:8px 0;">Bingo !!!</h2><p style="color:#444;font-size:15px;line-height:1.6;text-align:center;">Bonne nouvelle${nom ? ", " + nom : ""} !<br/>Ton livre <b>${titre}</b> vient d\u2019\u00eatre vendu sur CarryBooks.</p><div style="background:#c9a84c;color:#1a1208;font-weight:bold;font-size:18px;text-align:center;padding:12px;border-radius:10px;margin:16px 0;">+ ${part.toLocaleString("fr-FR")} FCFA</div><p style="color:#666;font-size:13px;text-align:center;">Retrouve tes gains dans ton espace auteur.</p><p style="color:#999;font-size:12px;text-align:center;margin-top:18px;">CarryBooks \u2764\ufe0f</p></div>`;
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + RESEND_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: EMAIL_FROM, to: au[0].email, subject: "🎉 Ton livre \"" + titre + "\" a \u00e9t\u00e9 vendu !", html }),
+    });
+  } catch (e) { console.error("[PAYDUNYA-AUTEUR-EMAIL]", e.message); }
+}
+
 export default async function handler(req, res) {
   // Toujours répondre 200 pour éviter les renvois en boucle de PayDunya.
   try {
@@ -105,6 +127,7 @@ export default async function handler(req, res) {
         console.error("[PAYDUNYA-NOTIFY] insert purchases:", error);
         return res.status(200).json({ ok: false, error: error.message });
       }
+      await sendAuthorSaleEmail(supabaseAdmin, { bookId, amount });
       console.log("[PAYDUNYA-NOTIFY] Achat enregistré (utilisateur)");
       return res.status(200).json({ ok: true, handled: "user" });
     } else {
@@ -127,6 +150,7 @@ export default async function handler(req, res) {
         console.error("[PAYDUNYA-NOTIFY] insert guest_purchases:", error);
         return res.status(200).json({ ok: false, error: error.message });
       }
+      await sendAuthorSaleEmail(supabaseAdmin, { bookId, amount });
       console.log("[PAYDUNYA-NOTIFY] Achat enregistré (invité)");
       return res.status(200).json({ ok: true, handled: "guest" });
     }
