@@ -20713,7 +20713,7 @@ export default function App() {
                   <div id="exploreCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
                     {Object.keys(CATEGORIES).map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
-                      const bk = (books || []).find(b => b.status === "actif" && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
+                      const bk = (books || []).find(b => b.status === "actif" && !b.masque && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
                       const cover = bk ? bk.cover : null;
                       return (
                         <div key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); setPage("catalog"); window.scrollTo(0, 0); }} style={{ flex: "0 0 auto", width: "calc((100% - 44px) / 4.5)", position: "relative", borderRadius: 10, overflow: "hidden", cursor: "pointer", aspectRatio: "1 / 1.5", background: cover ? "#111" : "linear-gradient(135deg, " + G.gold + ", #8a6d1f)" }}>
@@ -20793,6 +20793,7 @@ export default function App() {
                     .map(p => books.find(b => b.id === p.book_id))
                     .filter(Boolean)
                     .filter(isDigitalBook)
+                    .filter(b => !b.masque)
                     .slice(0, 5);
                   if (sortedBestSellers.length === 0) return null;
                   return (
@@ -20901,7 +20902,7 @@ export default function App() {
 
                 {/* CARROUSELS PAR CATÉGORIE - UNIQUEMENT LIVRES NUMÉRIQUES */}
                 {(() => {
-                  const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article";
+                  const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && !b.masque;
                   const isRomanCat = k => /^roman/i.test(k) || k === "Saga" || /audio/i.test(k);
                   const catHasBooks = k => books.some(b => isDigitalReco(b) && (b.category === k || (b.category || "").toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
                   const firstGuideCat = Object.keys(CATEGORIES).find(k => !isRomanCat(k) && catHasBooks(k));
