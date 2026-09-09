@@ -17387,30 +17387,23 @@ export default function App() {
           ) : (
             <div>
               <div style={{ display: "grid", gap: 10 }}>
-                {auteursList.map(a => (
-                  <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                      {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
+                {(() => {
+                  const reels = auteursList.map(a => ({ key: "a" + a.id, nom: a.nom_complet, photo: a.photo_url, lieu: a.pays, onClick: () => ouvrirBoutiqueAuteur(a.code_source) }));
+                  const fictifs = profilsAuteurs.filter(p => !auteursList.some(a => (a.nom_complet || "").trim().toLowerCase() === (p.nom || "").trim().toLowerCase())).map(p => ({ key: "pf" + p.id, nom: p.nom, photo: p.photo_url, lieu: p.ville, onClick: () => ouvrirBoutiqueProfil(p) }));
+                  const tous = [...reels, ...fictifs].sort((x, y) => (x.nom || "").localeCompare(y.nom || "", "fr", { sensitivity: "base" }));
+                  return tous.map(a => (
+                    <div key={a.key} onClick={a.onClick} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                        {a.photo ? <img src={a.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(true)}{a.nom}</div>
+                        {a.lieu ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.lieu}</div> : null}
+                      </div>
+                      <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
-                      {a.pays ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.pays}</div> : null}
-                    </div>
-                    <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
-                  </div>
-                ))}
-                {profilsAuteurs.filter(p => !auteursList.some(a => (a.nom_complet || "").trim().toLowerCase() === (p.nom || "").trim().toLowerCase())).map(p => (
-                  <div key={"pf" + p.id} onClick={() => ouvrirBoutiqueProfil(p)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                      {p.photo_url ? <img src={p.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (p.nom || "?").charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(p.verifie)}{p.nom}</div>
-                      {p.ville ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {p.ville}</div> : null}
-                    </div>
-                    <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
