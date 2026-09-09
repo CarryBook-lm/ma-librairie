@@ -1588,6 +1588,7 @@ if (typeof window !== "undefined") {
   window.addEventListener("appinstalled", () => { window.__pwaPrompt = null; });
 }
 
+const badgeType = (b) => { if (!b) return ""; if (b.audio_url) return "🎧 Livre Audio"; if (b.pdf_url && b.can_download !== false && !(/^roman/i.test(b.category || "") || /saga/i.test(b.category || ""))) return "⬇️ Téléchargeable"; return "📖 Liseuse"; };
 const slugify = (str) => {
   if (!str) return "";
   return String(str)
@@ -17709,7 +17710,7 @@ export default function App() {
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
                           { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere A4 paysage qui met ton livre en avant sur l'accueil" },
                         ].map(o => (
-                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
+                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
                             <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
                           </button>
@@ -20974,7 +20975,7 @@ export default function App() {
                             {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span><div style={{ fontSize: 9, color: G.textDim, marginTop: 2 }}>{badgeType(book)}</div>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -21113,6 +21114,7 @@ export default function App() {
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
                           </div>
+                          <div style={{ fontSize: 9, color: G.textDim, marginTop: 2, textAlign: "center" }}>{badgeType(book)}</div>
                           </div>
                         ))}
                       </div>
