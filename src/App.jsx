@@ -13835,6 +13835,7 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [pubErrors, setPubErrors] = useState({});
   const [pubDownloadable, setPubDownloadable] = useState(true);
+  const [pubAudioExtrait, setPubAudioExtrait] = useState("");
   const [pubRomanPdfAlert, setPubRomanPdfAlert] = useState(false);
   const [annonceImg, setAnnonceImg] = useState("");
   const [annonceLien, setAnnonceLien] = useState("");
@@ -14424,8 +14425,10 @@ export default function App() {
   const fmtTemps = (s) => { s = Math.floor(s || 0); const m = Math.floor(s / 60); const r = s % 60; return m + ":" + (r < 10 ? "0" : "") + r; };
   useEffect(() => {
     if (page !== "audioplayer" || !reading || !reading.audio_url) return;
+    const urlAudio = excerptMode ? (reading.audio_extrait_url || "") : reading.audio_url;
+    if (!urlAudio) return;
     try { if (audioRef.current) { audioRef.current.pause(); } } catch (e) {}
-    const audio = new Audio(reading.audio_url);
+    const audio = new Audio(urlAudio);
     audioRef.current = audio;
     setAudioCur(0); setAudioDur(0);
     const onMeta = () => setAudioDur(audio.duration || 0);
@@ -14436,7 +14439,7 @@ export default function App() {
     audio.addEventListener("ended", onEnd);
     audio.play().then(() => setAudioPlaying(true)).catch(() => setAudioPlaying(false));
     return () => { try { audio.pause(); } catch (e) {} audio.removeEventListener("loadedmetadata", onMeta); audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
-  }, [page, reading]);
+  }, [page, reading, excerptMode]);
   const audioTogglePlay = () => { const a = audioRef.current; if (!a) return; if (a.paused) { a.play(); setAudioPlaying(true); } else { a.pause(); setAudioPlaying(false); } };
   const audioSeek = (v) => { const a = audioRef.current; if (a) { a.currentTime = v; setAudioCur(v); } };
   const audioSkip = (d) => { const a = audioRef.current; if (a) { a.currentTime = Math.max(0, Math.min((a.duration || 0), (a.currentTime || 0) + d)); } };
@@ -17086,6 +17089,7 @@ export default function App() {
     });
     setPubTypeSelected(b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"));
     setPubDownloadable(b.can_download !== false);
+    setPubAudioExtrait(b.audio_extrait_url || "");
     setTimeout(() => { if (romanEditorRef.current) romanEditorRef.current.innerHTML = (b.content || "").replace(/\n/g, "<br>"); }, 60);
     setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
@@ -17121,6 +17125,19 @@ export default function App() {
     setPubUploading(false);
     e.target.value = "";
   }
+  async function pubUploadAudioExtrait(e) {
+    const file = e.target.files[0]; if (!file) return;
+    setPubUploading(true); setPubMsg("");
+    try {
+      const fileName = Date.now() + "_extrait_" + file.name.replace(/\s/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
+      const { error } = await supabase.storage.from("audio").upload(fileName, file, { contentType: file.type || "audio/mpeg" });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+      setPubAudioExtrait(urlData.publicUrl);
+    } catch (e2) { setPubMsg("❌ Échec de l'envoi de l'extrait : " + (e2.message || e2)); }
+    setPubUploading(false);
+    e.target.value = "";
+  }
   async function pubUploadAudio(e) {
     const file = e.target.files[0]; if (!file) return;
     setPubUploading(true); setPubMsg("");
@@ -17150,9 +17167,9 @@ export default function App() {
         extract_pages: parseInt(f.extract_pages) || 1,
         content: f.type === "roman" ? f.content : "",
         pdf_url: (f.type === "guide" || f.type === "gratuit") ? f.pdf_url : "",
-        audio_url: f.type === "audio" ? f.audio_url : "",
+        audio_url: f.type === "audio" ? f.audio_url : "", audio_extrait_url: f.type === "audio" ? (pubAudioExtrait || null) : null,
         status: "brouillon", moderation: "brouillon", auteur_id: auteurProfil.id,
-        product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : f.type === "guide" ? pubDownloadable : true,
+        product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
       if (pubEditId) {
         await supabase.from("books").update(payload).eq("id", pubEditId);
@@ -17205,9 +17222,9 @@ export default function App() {
         content: f.type === "roman" ? f.content : "",
         pdf_url: isPdf ? f.pdf_url : "",
         excerpt_pdf_url: f.type === "guide" ? excerptUrl : "",
-        audio_url: f.type === "audio" ? f.audio_url : "",
+        audio_url: f.type === "audio" ? f.audio_url : "", audio_extrait_url: f.type === "audio" ? (pubAudioExtrait || null) : null,
         status: "en_attente", moderation: "en_attente", auteur_id: auteurProfil.id,
-        product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : f.type === "guide" ? pubDownloadable : true,
+        product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
       if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
@@ -17781,6 +17798,27 @@ export default function App() {
                           <button onClick={() => document.getElementById("pubAudioInput").click()} disabled={pubUploading} style={{ width: "100%", padding: 12, border: "2px dashed #1d9e7566", borderRadius: 8, cursor: "pointer", color: "#1d9e75", fontSize: 13, background: G.bg, fontWeight: "bold" }}>{pubUploading ? "Envoi…" : "🎧 Choisir le fichier audio"}</button>
                         </>
                       )}
+                      <div style={{ height: 14 }} />
+                      <label style={labelSt}>Extrait audio gratuit * (court, ex. 2-3 min)</label>
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, lineHeight: 1.4 }}>C’est ce que les gens écouteront <b>gratuitement</b> pour avoir envie d’acheter. Ne mets PAS le livre entier ici.</div>
+                      {pubAudioExtrait ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                          <div style={{ fontSize: 13, color: G.green, fontWeight: "bold" }}>✅ Extrait ajouté</div>
+                          <button onClick={() => setPubAudioExtrait("")} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button>
+                        </div>
+                      ) : (
+                        <>
+                          <input type="file" accept="audio/*" id="pubAudioExtraitInput" style={{ display: "none" }} onChange={pubUploadAudioExtrait} />
+                          <button onClick={() => document.getElementById("pubAudioExtraitInput").click()} disabled={pubUploading} style={{ width: "100%", padding: 12, border: "2px dashed #1d9e7566", borderRadius: 8, cursor: "pointer", color: "#1d9e75", fontSize: 13, background: G.bg, fontWeight: "bold" }}>{pubUploading ? "Envoi…" : "🎧 Choisir l’extrait gratuit"}</button>
+                        </>
+                      )}
+                      <div style={{ height: 14 }} />
+                      <label style={labelSt}>Que peut faire l’acheteur ?</label>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
+                      </div>
+                      <div style={{ fontSize: 11, color: G.textDim, marginTop: 6 }}>{pubDownloadable ? "L’acheteur peut écouter ET télécharger le fichier audio." : "L’acheteur peut seulement écouter (audio protégé, non téléchargeable)."}</div>
                     </>
                   ) : (
                     <>
@@ -18451,7 +18489,15 @@ export default function App() {
             <button onClick={audioTogglePlay} style={{ width: 76, height: 76, borderRadius: "50%", background: "#c9a84c", color: "#1a1208", border: "none", fontSize: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(201,168,76,0.5)" }}>{audioPlaying ? "⏸" : "▶"}</button>
             <button onClick={() => audioSkip(15)} style={{ background: "none", border: "none", color: "#fff", fontSize: 26, cursor: "pointer" }}>⏩</button>
           </div>
-          <div style={{ fontSize: 11, color: "#888", marginTop: 24 }}>⏪ ⏩ = reculer / avancer de 15 secondes</div>
+          <div style={{ fontSize: 11, color: "#888", marginTop: 20 }}>⏪ ⏩ = reculer / avancer de 15 secondes</div>
+          {excerptMode ? (
+            <div style={{ marginTop: 22, textAlign: "center", width: "100%" }}>
+              <div style={{ fontSize: 12.5, color: "#c9a84c", marginBottom: 10 }}>🎧 Ceci est un extrait gratuit</div>
+              <button onClick={() => { try { if (audioRef.current) audioRef.current.pause(); } catch (e) {} setAudioPlaying(false); setExcerptMode(false); startReading(reading, false); }} style={{ background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 24, padding: "12px 28px", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>Écouter le livre complet — {(reading.price || 0).toLocaleString("fr-FR")} FCFA</button>
+            </div>
+          ) : (reading.can_download !== false && reading.audio_url ? (
+            <a href={reading.audio_url} download style={{ marginTop: 22, display: "inline-block", background: "rgba(255,255,255,0.12)", color: "#fff", textDecoration: "none", borderRadius: 24, padding: "10px 22px", fontWeight: "bold", fontSize: 14 }}>⬇️ Télécharger l’audio</a>
+          ) : null)}
         </div>
       </div>
     );
@@ -19556,7 +19602,7 @@ export default function App() {
             {!isArticle(book) && (
               <button onClick={() => startReading(book, true)}
                 style={{ flex: 1, padding: "12px 8px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
-                📄 Extrait
+                {book.audio_url ? "🎧 Extrait" : "📄 Extrait"}
               </button>
             )}
             <button onClick={() => toggleFavorite(book.id)}
@@ -19593,7 +19639,7 @@ export default function App() {
             <button
               onClick={() => startReading(book)}
               style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-              {owned || free ? "📖 Lire maintenant" : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ") + book.price?.toLocaleString() + " FCFA"}
+              {owned || free ? (book.audio_url ? "🎧 Écouter maintenant" : "📖 Lire maintenant") : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.audio_url ? "🎧 Écouter — " : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ")) + book.price?.toLocaleString() + " FCFA"}
             </button>
           )}
 
