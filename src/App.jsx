@@ -13845,6 +13845,20 @@ export default function App() {
   const [pubEditeurAuteur, setPubEditeurAuteur] = useState("");
   const [pubEditeurCertifie, setPubEditeurCertifie] = useState(false);
   const [pubAuthorName, setPubAuthorName] = useState("");
+  const [pubAuthorVille, setPubAuthorVille] = useState("");
+  const [pubAuthorPhoto, setPubAuthorPhoto] = useState("");
+  const [pubAuthorPhotoUp, setPubAuthorPhotoUp] = useState(false);
+  const uploadAuthorPhoto = async (file) => {
+    if (!file) return; setPubAuthorPhotoUp(true); setPubMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (d && d.success && d.data && d.data.url) setPubAuthorPhoto(d.data.url);
+      else setPubMsg("Erreur photo. Reessaie.");
+    } catch (e) { setPubMsg("Erreur photo. Reessaie."); }
+    setPubAuthorPhotoUp(false);
+  };
   const [pubRomanPdfAlert, setPubRomanPdfAlert] = useState(false);
   const [annonceImg, setAnnonceImg] = useState("");
   const [annonceLien, setAnnonceLien] = useState("");
@@ -17099,6 +17113,8 @@ export default function App() {
     setPubDownloadable(b.can_download !== false);
     setPubAudioExtrait(b.audio_extrait_url || "");
     setPubAuthorName(b.author || "");
+    setPubAuthorVille(b.author_ville || "");
+    setPubAuthorPhoto(b.author_photo || "");
     setTimeout(() => { if (romanEditorRef.current) romanEditorRef.current.innerHTML = (b.content || "").replace(/\n/g, "<br>"); }, 60);
     setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
@@ -17169,7 +17185,7 @@ export default function App() {
     setPubSavingDraft(true);
     try {
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && pubAuthorName.trim()) ? pubAuthorName.trim() : auteurProfil.nom_complet),
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && pubAuthorName.trim()) ? pubAuthorName.trim() : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorVille.trim() || null) : null, author_photo: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorPhoto || null) : null,
         price: (f.type === "gratuit") ? 0 : (parseInt(f.price) || 0),
         cover: f.cover || null, category: f.category || null, subcategory: f.subcategory || null,
         summary: f.summary ? f.summary.trim() : null,
@@ -17225,7 +17241,7 @@ export default function App() {
         excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
       }
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && pubAuthorName.trim()) ? pubAuthorName.trim() : auteurProfil.nom_complet), price: isGratuit ? 0 : (parseInt(f.price) || 0),
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && pubAuthorName.trim()) ? pubAuthorName.trim() : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorVille.trim() || null) : null, author_photo: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorPhoto || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
         cover: f.cover, category: f.category, subcategory: f.subcategory,
         summary: f.summary.trim(), extract_pages: needsExtract ? (parseInt(f.extract_pages) || 1) : 1,
         content: f.type === "roman" ? f.content : "",
@@ -17769,6 +17785,18 @@ export default function App() {
                   {(auteurProfil && auteurProfil.id === 8 && !pubEditeur) && (<>
                   <label style={labelSt}>Nom de l’auteur (laisse vide = ton nom)</label>
                   <input value={pubAuthorName} onChange={e => setPubAuthorName(e.target.value)} placeholder={auteurProfil.nom_complet || "Nom de l’auteur"} style={champ} />
+                  {pubAuthorName.trim() && (<>
+                    <div style={{ height: 10 }} />
+                    <label style={labelSt}>Ville de l’auteur</label>
+                    <input value={pubAuthorVille} onChange={e => setPubAuthorVille(e.target.value)} placeholder="Ex. Douala" style={champ} />
+                    <div style={{ height: 10 }} />
+                    <label style={labelSt}>Photo de l’auteur</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {pubAuthorPhoto ? <img src={pubAuthorPhoto} alt="" style={{ width: 54, height: 54, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold }} /> : <div style={{ width: 54, height: 54, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>}
+                      <input type="file" accept="image/*" id="pubAuthorPhotoInput" style={{ display: "none" }} onChange={e => { uploadAuthorPhoto(e.target.files[0]); e.target.value = ""; }} />
+                      <button onClick={() => document.getElementById("pubAuthorPhotoInput").click()} disabled={pubAuthorPhotoUp} style={{ padding: "8px 14px", border: "1px solid " + G.gold, borderRadius: 8, background: G.goldDim, color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>{pubAuthorPhotoUp ? "Envoi…" : (pubAuthorPhoto ? "Changer la photo" : "📷 Ajouter une photo")}</button>
+                    </div>
+                  </>)}
                   <div style={{ height: 14 }} />
                   </>)}
                   <label style={labelSt}>Catégorie *</label>
@@ -17879,7 +17907,7 @@ export default function App() {
                     <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
                   <button onClick={pubSaveRoman} disabled={pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : "📤 Soumettre pour validation")}</button>
-                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setPubAuthorVille(""); setPubAuthorPhoto(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {pubRomanPdfAlert && (
                     <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
                       <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
@@ -19562,7 +19590,8 @@ export default function App() {
             {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
-          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span></p>
+          {book.author_photo ? <img src={book.author_photo} alt="" style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold, display: "block", margin: "0 auto 6px" }} /> : null}
+          <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span>{book.author_ville ? <span style={{ color: G.textDim }}> · {book.author_ville}</span> : null}</p>
           <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 1 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             {/* Pour un livre papier uniquement, on affiche le prix papier */}
