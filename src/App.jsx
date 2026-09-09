@@ -13474,6 +13474,7 @@ export default function App() {
   const [boutiqueBooks, setBoutiqueBooks] = useState([]);
   const [boutiqueLoading, setBoutiqueLoading] = useState(false);
   const [boutiqueCode, setBoutiqueCode] = useState(null);
+  const [boutiqueNom, setBoutiqueNom] = useState(null);
   const [auteursAll, setAuteursAll] = useState([]); // pour la recherche par nom
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -13854,7 +13855,7 @@ export default function App() {
   const [addAuteurNom, setAddAuteurNom] = useState("");
   const profilCoche = () => profilsAuteurs.find(a => a.id === selAuteurId) || null;
   const chargerProfilsAuteurs = async () => { const { data } = await supabase.from("auteurs_affichage").select("*").order("nom", { ascending: true }); setProfilsAuteurs(data || []); const land = (data || []).find(a => /landrine/i.test(a.nom)); if (land && selAuteurId === null) setSelAuteurId(land.id); };
-  useEffect(() => { if (auteurProfil && auteurProfil.id === 8) chargerProfilsAuteurs(); }, [auteurProfil]);
+  useEffect(() => { chargerProfilsAuteurs(); }, [auteurProfil]);
   const ajouterProfilAuteur = async () => {
     if (!addAuteurNom.trim()) { alert("Entre le nom de l'auteur."); return; }
     const { data, error } = await supabase.from("auteurs_affichage").insert([{ nom: addAuteurNom.trim(), ville: pubAuthorVille.trim() || null, photo_url: pubAuthorPhoto || null, verifie: true }]).select();
@@ -17284,6 +17285,20 @@ export default function App() {
     setPubSaving(false);
   }
 
+  // 👤 Boutique par NOM (profil d'affichage / fictif)
+  useEffect(() => {
+    if (page !== "auteur_boutique" || !boutiqueNom) return;
+    let cancel = false;
+    (async () => {
+      setBoutiqueLoading(true);
+      try {
+        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").order("id", { ascending: false });
+        if (!cancel) setBoutiqueBooks((livres || []).filter(b => !b.masque));
+      } catch (e) { if (!cancel) setBoutiqueBooks([]); }
+      if (!cancel) setBoutiqueLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [page, boutiqueNom]);
   // 👤 Charger la boutique d'un auteur (par code_source)
   useEffect(() => {
     if (page !== "auteur_boutique" || !boutiqueCode) return;
@@ -17334,8 +17349,15 @@ export default function App() {
   }, [page]);
 
   // 👤 Ouvrir la boutique d'un auteur (depuis la liste ou la recherche)
+  const ouvrirBoutiqueProfil = (prof) => {
+    if (!prof) return;
+    setBoutiqueNom(prof.nom); setBoutiqueCode(null);
+    setBoutiqueAuteur({ nom_complet: prof.nom, photo_url: prof.photo_url, pays: prof.ville, verifie: prof.verifie, bio: "" });
+    setBioExpanded(false); setShowMenu(false); setPage("auteur_boutique");
+  };
   const ouvrirBoutiqueAuteur = (code) => {
     if (!code) return;
+    setBoutiqueNom(null);
     setBoutiqueCode(code);
     setBioExpanded(false);
     setShowMenu(false);
@@ -17360,7 +17382,7 @@ export default function App() {
         <div style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
           {auteursListLoading ? (
             <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Chargement…</div>
-          ) : auteursList.length === 0 ? (
+          ) : (auteursList.length === 0 && profilsAuteurs.length === 0) ? (
             <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Aucun auteur pour le moment.</div>
           ) : (
             <div>
@@ -17373,6 +17395,18 @@ export default function App() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
                       {a.pays ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {a.pays}</div> : null}
+                    </div>
+                    <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
+                  </div>
+                ))}
+                {profilsAuteurs.filter(p => !auteursList.some(a => (a.nom_complet || "").trim().toLowerCase() === (p.nom || "").trim().toLowerCase())).map(p => (
+                  <div key={"pf" + p.id} onClick={() => ouvrirBoutiqueProfil(p)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                    <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                      {p.photo_url ? <img src={p.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (p.nom || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(p.verifie)}{p.nom}</div>
+                      {p.ville ? <div style={{ fontSize: 13, color: G.textDim }}>📍 {p.ville}</div> : null}
                     </div>
                     <div style={{ color: G.gold, fontSize: 13, fontWeight: "bold", whiteSpace: "nowrap" }}>Voir →</div>
                   </div>
@@ -17802,7 +17836,7 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Coche l’auteur dont tu publies le livre.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                     {profilsAuteurs.map(a => (
-                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : "#fff", cursor: "pointer", textAlign: "left" }}>
+                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : "#fff", cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
                         {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
                         <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom}</div><div style={{ fontSize: 10, color: G.textDim }}>{a.ville || ""} {a.verifie ? "✅" : ""}</div></div>
                       </button>
