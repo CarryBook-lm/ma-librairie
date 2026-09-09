@@ -3068,13 +3068,18 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                       ) : null;
                     })()}
                     <button onClick={(e) => { e.stopPropagation(); startReading(book); }} style={{ width: "100%", padding: 8, background: G.goldDim, border: "1px solid rgba(201,168,76,0.3)", borderRadius: 4, color: G.gold, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
-                      {(book.pdf_url ? parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0") > 1 : (prog > 0 || parseInt(localStorage.getItem("scrollProgress_" + book.id) || "0") > 0)) ? "▶ CONTINUER" : "📖 LIRE"}
+                      {book.audio_url ? "🎧 ÉCOUTER" : ((book.pdf_url ? parseInt(localStorage.getItem("pdfProgress_" + book.id) || "0") > 1 : (prog > 0 || parseInt(localStorage.getItem("scrollProgress_" + book.id) || "0") > 0)) ? "▶ CONTINUER" : "📖 LIRE")}
                     </button>
-                    {/* Bouton TÉLÉCHARGER (visible si le livre a un PDF + can_download + onDownload fourni) */}
+                    {/* Bouton TÉLÉCHARGER : PDF téléchargeable OU audio téléchargeable */}
                     {onDownload && book.pdf_url && book.pdf_url !== "pending" && book.can_download && (
                       <button onClick={(e) => { e.stopPropagation(); onDownload(book); }} style={{ width: "100%", padding: 8, background: "transparent", border: "1px solid rgba(201,168,76,0.5)", borderRadius: 4, color: G.gold, fontSize: 10, cursor: "pointer", letterSpacing: 1, marginTop: 4 }}>
                         ⬇ TÉLÉCHARGER
                       </button>
+                    )}
+                    {book.audio_url && book.can_download && (
+                      <a href={book.audio_url} download onClick={(e) => e.stopPropagation()} style={{ display: "block", width: "100%", padding: 8, background: "transparent", border: "1px solid rgba(201,168,76,0.5)", borderRadius: 4, color: G.gold, fontSize: 10, cursor: "pointer", letterSpacing: 1, marginTop: 4, textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}>
+                        🎧 TÉLÉCHARGER
+                      </a>
                     )}
                   </div>
                 );
