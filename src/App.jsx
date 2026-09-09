@@ -1588,7 +1588,6 @@ if (typeof window !== "undefined") {
   window.addEventListener("appinstalled", () => { window.__pwaPrompt = null; });
 }
 
-const badgeType = (b) => { if (!b) return ""; if (b.audio_url) return "🎧 Livre Audio"; if (b.pdf_url && b.can_download !== false && !(/^roman/i.test(b.category || "") || /saga/i.test(b.category || ""))) return "⬇️ Téléchargeable"; return "📖 Liseuse"; };
 const slugify = (str) => {
   if (!str) return "";
   return String(str)
@@ -20971,11 +20970,11 @@ export default function App() {
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
-                            {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                            {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse")}
                             {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span><div style={{ fontSize: 9, color: G.textDim, marginTop: 2 }}>{badgeType(book)}</div>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -21103,7 +21102,7 @@ export default function App() {
                                 <span style={{ color: G.gold }}>{getProductBadge(book)}</span>
                               ) : (
                                 <>
-                                  {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                                  {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse")}
                                   {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                                 </>
                               )}
@@ -21114,7 +21113,6 @@ export default function App() {
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
                           </div>
-                          <div style={{ fontSize: 9, color: G.textDim, marginTop: 2, textAlign: "center" }}>{badgeType(book)}</div>
                           </div>
                         ))}
                       </div>
@@ -21200,7 +21198,7 @@ export default function App() {
                             <span style={{ color: G.gold, fontSize: 9 }}>{getProductBadge(book)}</span>
                           ) : (
                             <>
-                              {book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse"}
+                              {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse")}
                               {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold, fontSize: 9 }}> · 📦 Aussi en papier</span>}
                             </>
                           )}
