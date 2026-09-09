@@ -14419,6 +14419,27 @@ export default function App() {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioRef] = useState(() => ({ current: null }));
   const [audioMode, setAudioMode] = useState(null); // 'mp3' only
+  const [audioCur, setAudioCur] = useState(0);
+  const [audioDur, setAudioDur] = useState(0);
+  const fmtTemps = (s) => { s = Math.floor(s || 0); const m = Math.floor(s / 60); const r = s % 60; return m + ":" + (r < 10 ? "0" : "") + r; };
+  useEffect(() => {
+    if (page !== "audioplayer" || !reading || !reading.audio_url) return;
+    try { if (audioRef.current) { audioRef.current.pause(); } } catch (e) {}
+    const audio = new Audio(reading.audio_url);
+    audioRef.current = audio;
+    setAudioCur(0); setAudioDur(0);
+    const onMeta = () => setAudioDur(audio.duration || 0);
+    const onTime = () => setAudioCur(audio.currentTime || 0);
+    const onEnd = () => setAudioPlaying(false);
+    audio.addEventListener("loadedmetadata", onMeta);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("ended", onEnd);
+    audio.play().then(() => setAudioPlaying(true)).catch(() => setAudioPlaying(false));
+    return () => { try { audio.pause(); } catch (e) {} audio.removeEventListener("loadedmetadata", onMeta); audio.removeEventListener("timeupdate", onTime); audio.removeEventListener("ended", onEnd); };
+  }, [page, reading]);
+  const audioTogglePlay = () => { const a = audioRef.current; if (!a) return; if (a.paused) { a.play(); setAudioPlaying(true); } else { a.pause(); setAudioPlaying(false); } };
+  const audioSeek = (v) => { const a = audioRef.current; if (a) { a.currentTime = v; setAudioCur(v); } };
+  const audioSkip = (d) => { const a = audioRef.current; if (a) { a.currentTime = Math.max(0, Math.min((a.duration || 0), (a.currentTime || 0) + d)); } };
   const [heroIndex, setHeroIndex] = useState(0);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
@@ -16273,7 +16294,7 @@ export default function App() {
     } else {
       setReadingPage(0);
     }
-    setPage("reader");
+    setPage(finalBookToRead.audio_url ? "audioplayer" : "reader");
     setTranslatedContent(null);
     setTranslateLang(null);
     stopAudio();
@@ -18409,6 +18430,33 @@ export default function App() {
   }
 
   // READER
+  // 🎧 LECTEUR AUDIO dédié (livres audio)
+  if (page === "audioplayer" && reading) {
+    const pct = audioDur > 0 ? (audioCur / audioDur) * 100 : 0;
+    return (
+      <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #1a1208 0%, #2a1f10 60%, #0f0f0f 100%)", display: "flex", flexDirection: "column", alignItems: "center", padding: "0 20px", color: "#fff" }}>
+        <div style={{ width: "100%", maxWidth: 460, paddingTop: 18 }}>
+          <button onClick={() => { try { if (audioRef.current) audioRef.current.pause(); } catch (e) {} setAudioPlaying(false); setPage(previousPage || "detail"); }} style={{ background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", borderRadius: 20, padding: "8px 16px", fontSize: 14, cursor: "pointer", fontWeight: "bold" }}>← Retour</button>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", width: "100%", maxWidth: 460, paddingBottom: 40 }}>
+          <div style={{ width: "70%", maxWidth: 280, aspectRatio: "110 / 155", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", marginBottom: 28, background: "#000" }}>
+            {reading.cover ? <img src={reading.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>🎧</div>}
+          </div>
+          <div style={{ fontSize: 20, fontWeight: "bold", textAlign: "center", marginBottom: 4, lineHeight: 1.3 }}>{reading.title}</div>
+          <div style={{ fontSize: 14, color: "#c9a84c", marginBottom: 28 }}>{reading.author || ""}</div>
+          <input type="range" min={0} max={audioDur || 0} step={1} value={audioCur} onChange={e => audioSeek(Number(e.target.value))} style={{ width: "100%", accentColor: "#c9a84c", cursor: "pointer" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", width: "100%", fontSize: 12, color: "#bbb", marginTop: 4, marginBottom: 24 }}><span>{fmtTemps(audioCur)}</span><span>{fmtTemps(audioDur)}</span></div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
+            <button onClick={() => audioSkip(-15)} style={{ background: "none", border: "none", color: "#fff", fontSize: 26, cursor: "pointer" }}>⏪</button>
+            <button onClick={audioTogglePlay} style={{ width: 76, height: 76, borderRadius: "50%", background: "#c9a84c", color: "#1a1208", border: "none", fontSize: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(201,168,76,0.5)" }}>{audioPlaying ? "⏸" : "▶"}</button>
+            <button onClick={() => audioSkip(15)} style={{ background: "none", border: "none", color: "#fff", fontSize: 26, cursor: "pointer" }}>⏩</button>
+          </div>
+          <div style={{ fontSize: 11, color: "#888", marginTop: 24 }}>⏪ ⏩ = reculer / avancer de 15 secondes</div>
+        </div>
+      </div>
+    );
+  }
+
   if (page === "reader" && reading) {
     // Mode PDF : on entre dedans si on a un pdf_url valide OU (en mode extrait) un excerpt_pdf_url
     const hasMainPdf = reading.pdf_url && reading.pdf_url !== "pending";
