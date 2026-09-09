@@ -18342,7 +18342,9 @@ export default function App() {
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 4 types de livres</div>
                   <p><b>📖 Roman (texte)</b> : tu écris ou colles ton texte directement sur la plateforme. Tu peux l'écrire sur <b>plusieurs jours</b> : appuie sur <b>« Enregistrer (continuer plus tard) »</b>, puis retrouve ton roman dans <b>« Mes livres » → onglet « En cours d'édition »</b> pour reprendre quand tu veux. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
                   <p><b>📥 Livres PDF</b> : tu téléverses un fichier PDF. Il est téléchargeable par le client après achat.</p>
-                  <p><b>🎧 Livre audio</b> : tu téléverses un fichier son (MP3). Le client l'écoute sur le site après achat.</p>
+                  <p><b>🎧 Livre audio</b> : tu téléverses un fichier son (MP3). Tu indiques le nombre de <b>minutes gratuites</b> (extrait) que les gens écouteront avant d'acheter, et tu choisis si l'acheteur peut <b>seulement écouter</b> (protégé) ou <b>écouter + télécharger</b>. Le client l'écoute dans un vrai lecteur audio.</p>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>Publier pour un auteur (éditeurs)</div>
+                  <p>Si tu veux vendre le livre d'un <b>autre auteur</b>, choisis <b>« 📚 Publier pour un auteur (Éditeurs) »</b>, entre le <b>nom de l'auteur</b>, coche la case où tu certifies détenir les droits, puis publie normalement. Le livre s'affichera au nom de cet auteur.</p>
                   <p><b>🎁 Livre gratuit</b> : un livre PDF que tu OFFRES (sans prix). Idéal pour attirer de nouveaux lecteurs vers tes livres payants.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>2. La couverture</div>
@@ -21973,7 +21975,9 @@ export default function App() {
                 <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> et le <b>numéro de page en bas au centre</b>. Ensuite, choisis si le PDF sera <b>Téléchargeable</b> (le client peut le télécharger) ou en <b>Lecture seule</b> (protégé, non téléchargeable). Puis <b>Soumettre pour validation</b>.</p>
 
                 <div style={H2}>Type 3 — Livre Audio</div>
-                <p style={P}>Mêmes premiers champs (sans « pages gratuites »), puis <span style={FL}>Fichier audio (MP3)</span> : un son clair, sans bruit de fond. Puis <b>Soumettre pour validation</b>.</p>
+                <p style={P}>Mêmes premiers champs, puis <span style={FL}>Fichier audio (MP3)</span> : un son clair, sans bruit de fond. Indique le nombre de <b>minutes gratuites</b> (extrait, ex. 3) que les gens écouteront avant d'acheter. Choisis ensuite si l'acheteur peut <b>Écouter seul</b> (protégé) ou <b>Écouter + Télécharger</b>. Puis <b>Soumettre pour validation</b>.</p>
+                <div style={H2}>Publier pour un auteur (Éditeurs)</div>
+                <p style={P}>Pour vendre le livre d'un autre auteur : dans <b>Publier</b>, choisis <b>« Publier pour un auteur (Éditeurs) »</b>, entre le <b>nom de l'auteur</b>, coche la case de <b>certification des droits</b>, puis choisis le type et publie. Le livre est affiché au nom de l'auteur indiqué, et la commission est la même.</p>
 
                 <div style={H2}>Type 4 — Livre Gratuit</div>
                 <p style={P}>Comme un livre PDF mais <b>sans prix</b> : Titre, Catégorie, Sous-catégorie, Couverture, Résumé, puis <span style={FL}>Fichier du cadeau (PDF)</span>. Puis <b>Soumettre pour validation</b>.</p>
