@@ -13848,6 +13848,21 @@ export default function App() {
   const [pubAuthorVille, setPubAuthorVille] = useState("");
   const [pubAuthorPhoto, setPubAuthorPhoto] = useState("");
   const [pubAuthorPhotoUp, setPubAuthorPhotoUp] = useState(false);
+  const [profilsAuteurs, setProfilsAuteurs] = useState([]);
+  const [selAuteurId, setSelAuteurId] = useState(null);
+  const [addAuteurOpen, setAddAuteurOpen] = useState(false);
+  const [addAuteurNom, setAddAuteurNom] = useState("");
+  const profilCoche = () => profilsAuteurs.find(a => a.id === selAuteurId) || null;
+  const chargerProfilsAuteurs = async () => { const { data } = await supabase.from("auteurs_affichage").select("*").order("nom", { ascending: true }); setProfilsAuteurs(data || []); const land = (data || []).find(a => /landrine/i.test(a.nom)); if (land && selAuteurId === null) setSelAuteurId(land.id); };
+  useEffect(() => { if (auteurProfil && auteurProfil.id === 8) chargerProfilsAuteurs(); }, [auteurProfil]);
+  const ajouterProfilAuteur = async () => {
+    if (!addAuteurNom.trim()) { alert("Entre le nom de l'auteur."); return; }
+    const { data, error } = await supabase.from("auteurs_affichage").insert([{ nom: addAuteurNom.trim(), ville: pubAuthorVille.trim() || null, photo_url: pubAuthorPhoto || null, verifie: true }]).select();
+    if (error) { alert("Erreur : " + error.message); return; }
+    await chargerProfilsAuteurs();
+    if (data && data[0]) setSelAuteurId(data[0].id);
+    setAddAuteurOpen(false); setAddAuteurNom(""); setPubAuthorVille(""); setPubAuthorPhoto("");
+  };
   const uploadAuthorPhoto = async (file) => {
     if (!file) return; setPubAuthorPhotoUp(true); setPubMsg("");
     try {
@@ -17185,7 +17200,7 @@ export default function App() {
     setPubSavingDraft(true);
     try {
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && pubAuthorName.trim()) ? pubAuthorName.trim() : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorVille.trim() || null) : null, author_photo: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorPhoto || null) : null,
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche()) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().photo_url || null) : null,
         price: (f.type === "gratuit") ? 0 : (parseInt(f.price) || 0),
         cover: f.cover || null, category: f.category || null, subcategory: f.subcategory || null,
         summary: f.summary ? f.summary.trim() : null,
@@ -17241,7 +17256,7 @@ export default function App() {
         excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
       }
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && pubAuthorName.trim()) ? pubAuthorName.trim() : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorVille.trim() || null) : null, author_photo: (auteurProfil.id === 8 && pubAuthorName.trim()) ? (pubAuthorPhoto || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche()) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
         cover: f.cover, category: f.category, subcategory: f.subcategory,
         summary: f.summary.trim(), extract_pages: needsExtract ? (parseInt(f.extract_pages) || 1) : 1,
         content: f.type === "roman" ? f.content : "",
@@ -17783,21 +17798,39 @@ export default function App() {
                   <input value={pubForm.title} onChange={e => { setPubForm(f => ({ ...f, title: e.target.value })); setPubErrors(p => ({ ...p, title: false })); }} style={{ ...champ, ...(pubErrors.title ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   {(auteurProfil && auteurProfil.id === 8 && !pubEditeur) && (<>
-                  <label style={labelSt}>Nom de l’auteur (laisse vide = ton nom)</label>
-                  <input value={pubAuthorName} onChange={e => setPubAuthorName(e.target.value)} placeholder={auteurProfil.nom_complet || "Nom de l’auteur"} style={champ} />
-                  {pubAuthorName.trim() && (<>
-                    <div style={{ height: 10 }} />
-                    <label style={labelSt}>Ville de l’auteur</label>
-                    <input value={pubAuthorVille} onChange={e => setPubAuthorVille(e.target.value)} placeholder="Ex. Douala" style={champ} />
-                    <div style={{ height: 10 }} />
-                    <label style={labelSt}>Photo de l’auteur</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      {pubAuthorPhoto ? <img src={pubAuthorPhoto} alt="" style={{ width: 54, height: 54, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold }} /> : <div style={{ width: 54, height: 54, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>}
-                      <input type="file" accept="image/*" id="pubAuthorPhotoInput" style={{ display: "none" }} onChange={e => { uploadAuthorPhoto(e.target.files[0]); e.target.value = ""; }} />
-                      <button onClick={() => document.getElementById("pubAuthorPhotoInput").click()} disabled={pubAuthorPhotoUp} style={{ padding: "8px 14px", border: "1px solid " + G.gold, borderRadius: 8, background: G.goldDim, color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>{pubAuthorPhotoUp ? "Envoi…" : (pubAuthorPhoto ? "Changer la photo" : "📷 Ajouter une photo")}</button>
+                  <label style={labelSt}>Auteur du livre</label>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Coche l’auteur dont tu publies le livre.</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                    {profilsAuteurs.map(a => (
+                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : "#fff", cursor: "pointer", textAlign: "left" }}>
+                        {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
+                        <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom}</div><div style={{ fontSize: 10, color: G.textDim }}>{a.ville || ""} {a.verifie ? "✅" : ""}</div></div>
+                      </button>
+                    ))}
+                  </div>
+                  {addAuteurOpen ? (
+                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                      <label style={labelSt}>Nom du nouvel auteur</label>
+                      <input value={addAuteurNom} onChange={e => setAddAuteurNom(e.target.value)} placeholder="Ex. Johanna Morisson" style={champ} />
+                      <div style={{ height: 8 }} />
+                      <label style={labelSt}>Ville</label>
+                      <input value={pubAuthorVille} onChange={e => setPubAuthorVille(e.target.value)} placeholder="Ex. Douala" style={champ} />
+                      <div style={{ height: 8 }} />
+                      <label style={labelSt}>Photo</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                        {pubAuthorPhoto ? <img src={pubAuthorPhoto} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold }} /> : <div style={{ width: 48, height: 48, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>👤</div>}
+                        <input type="file" accept="image/*" id="pubAuthorPhotoInput" style={{ display: "none" }} onChange={e => { uploadAuthorPhoto(e.target.files[0]); e.target.value = ""; }} />
+                        <button onClick={() => document.getElementById("pubAuthorPhotoInput").click()} disabled={pubAuthorPhotoUp} style={{ padding: "8px 14px", border: "1px solid " + G.gold, borderRadius: 8, background: G.goldDim, color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>{pubAuthorPhotoUp ? "Envoi…" : "📷 Photo"}</button>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={ajouterProfilAuteur} style={{ flex: 1, padding: 10, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Enregistrer l’auteur</button>
+                        <button onClick={() => { setAddAuteurOpen(false); setAddAuteurNom(""); }} style={{ padding: "10px 14px", background: "#eee", border: "none", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Annuler</button>
+                      </div>
                     </div>
-                  </>)}
-                  <div style={{ height: 14 }} />
+                  ) : (
+                    <button onClick={() => { setAddAuteurOpen(true); setPubAuthorVille(""); setPubAuthorPhoto(""); }} style={{ width: "100%", padding: 10, background: "none", border: "1px dashed " + G.gold, borderRadius: 8, color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", marginBottom: 10 }}>➕ Ajouter un auteur</button>
+                  )}
+                  <div style={{ height: 8 }} />
                   </>)}
                   <label style={labelSt}>Catégorie *</label>
                   <select value={pubForm.category} onChange={e => { const cat = e.target.value; setPubForm(f => ({ ...f, category: cat, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); setPubDownloadable(!(/^roman/i.test(cat) || /saga/i.test(cat))); if (pubForm.type === "guide" && (/^roman/i.test(cat) || /saga/i.test(cat))) setPubRomanPdfAlert(true); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
