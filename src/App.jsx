@@ -13841,6 +13841,9 @@ export default function App() {
   const [pubErrors, setPubErrors] = useState({});
   const [pubDownloadable, setPubDownloadable] = useState(true);
   const [pubAudioExtrait, setPubAudioExtrait] = useState("");
+  const [pubEditeur, setPubEditeur] = useState(false);
+  const [pubEditeurAuteur, setPubEditeurAuteur] = useState("");
+  const [pubEditeurCertifie, setPubEditeurCertifie] = useState(false);
   const [pubRomanPdfAlert, setPubRomanPdfAlert] = useState(false);
   const [annonceImg, setAnnonceImg] = useState("");
   const [annonceLien, setAnnonceLien] = useState("");
@@ -17164,7 +17167,7 @@ export default function App() {
     setPubSavingDraft(true);
     try {
       const payload = {
-        title: f.title.trim(), author: auteurProfil.nom_complet,
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : auteurProfil.nom_complet,
         price: (f.type === "gratuit") ? 0 : (parseInt(f.price) || 0),
         cover: f.cover || null, category: f.category || null, subcategory: f.subcategory || null,
         summary: f.summary ? f.summary.trim() : null,
@@ -17220,7 +17223,7 @@ export default function App() {
         excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
       }
       const payload = {
-        title: f.title.trim(), author: auteurProfil.nom_complet, price: isGratuit ? 0 : (parseInt(f.price) || 0),
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : auteurProfil.nom_complet, price: isGratuit ? 0 : (parseInt(f.price) || 0),
         cover: f.cover, category: f.category, subcategory: f.subcategory,
         summary: f.summary.trim(), extract_pages: needsExtract ? (parseInt(f.extract_pages) || 1) : 1,
         content: f.type === "roman" ? f.content : "",
@@ -17708,15 +17711,38 @@ export default function App() {
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
                           { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere A4 paysage qui met ton livre en avant sur l'accueil" },
+                          { t: "editeur", c: "#3a7bd5", ic: "📚", l: "Publier pour un auteur (Éditeurs)", s: "Vends le livre d'un autre auteur (tu certifies tes droits)" },
                         ].map(o => (
-                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
+                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } if (o.t === "editeur") { setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubTypeSelected("editeur"); setPubMsg(""); return; } setPubEditeur(false); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: o.t === "editeur" ? "2px dashed #3a7bd5" : "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
                             <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
                           </button>
                         ))}
                       </div>
                     </>
-                  ) : pubTypeSelected === "annonce" ? (<>
+                  ) : pubTypeSelected === "editeur" ? (<>
+                  <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Publier pour un auteur</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Espace éditeurs : publie et vends le livre d’un auteur. Le nom de l’auteur sera affiché sur le livre.</div>
+                  <label style={labelSt}>Nom de l’auteur *</label>
+                  <input value={pubEditeurAuteur} onChange={e => setPubEditeurAuteur(e.target.value)} placeholder="Ex. Jean Dupont" style={champ} />
+                  <div style={{ height: 12 }} />
+                  <label onClick={() => setPubEditeurCertifie(v => !v)} style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", background: G.goldDim, border: "1px solid " + G.gold + "44", borderRadius: 8, padding: "10px 12px", marginBottom: 16 }}>
+                    <span style={{ fontSize: 18, flexShrink: 0 }}>{pubEditeurCertifie ? "✅" : "⬜"}</span>
+                    <span style={{ fontSize: 12, color: G.text, lineHeight: 1.5 }}>Je certifie être l’éditeur de ce livre ou détenir les droits de vente. J’assume l’entière responsabilité en cas de litige de droits d’auteur.</span>
+                  </label>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>Type de livre à publier :</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {[
+                      { t: "roman", c: "#6a11cb", ic: "📖", l: "Roman (Texte)" },
+                      { t: "guide", c: "#c9952a", ic: "📥", l: "Livre PDF" },
+                      { t: "audio", c: "#1d9e75", ic: "🎧", l: "Livre Audio" },
+                      { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Livre Gratuit" },
+                    ].map(o => (
+                      <button key={o.t} onClick={() => { if (!pubEditeurAuteur.trim()) { alert("Entre le nom de l’auteur."); return; } if (!pubEditeurCertifie) { alert("Coche la case de certification des droits."); return; } setPubEditeur(true); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", fontWeight: "bold", fontSize: 15 }}>{o.ic} {o.l}</button>
+                    ))}
+                  </div>
+                  </>) : pubTypeSelected === "annonce" ? (<>
                   <button onClick={() => { setPubTypeSelected(null); setAnnonceMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📢 Publier une annonce</div>
                   <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Cree une banniere au format <b>A4 paysage</b> (large, horizontale). Elle apparaitra sur l’accueil apres validation, et menera au lien que tu indiques.</div>
@@ -17846,7 +17872,7 @@ export default function App() {
                     <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
                   <button onClick={pubSaveRoman} disabled={pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : "📤 Soumettre pour validation")}</button>
-                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {pubRomanPdfAlert && (
                     <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
                       <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
