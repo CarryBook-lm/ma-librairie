@@ -17863,7 +17863,7 @@ export default function App() {
                   <label style={labelSt}>Catégorie *</label>
                   <select value={pubForm.category} onChange={e => { const cat = e.target.value; setPubForm(f => ({ ...f, category: cat, subcategory: "" })); setPubErrors(p => ({ ...p, category: false })); setPubDownloadable(!(/^roman/i.test(cat) || /saga/i.test(cat))); if (pubForm.type === "guide" && (/^roman/i.test(cat) || /saga/i.test(cat))) setPubRomanPdfAlert(true); }} style={{ ...champ, ...(pubErrors.category ? { border: "2px solid #e53935" } : {}) }}>
                     <option value="">— Choisis —</option>
-                    {Object.keys(pubCats).filter(cn => pubForm.type === "audio" ? /audio/i.test(cn) : (pubForm.type !== "roman" || /^roman/i.test(cn) || /saga/i.test(cn) || /po[eé]sie/i.test(cn))).map(cn => <option key={cn} value={cn}>{cn}</option>)}
+                    {Object.keys(pubCats).filter(cn => pubForm.type === "audio" ? /audio/i.test(cn) : (pubForm.type !== "roman" || /^roman/i.test(cn) || /saga/i.test(cn) || /po[eé]sie/i.test(cn) || /romance/i.test(cn))).map(cn => <option key={cn} value={cn}>{cn}</option>)}
                   </select>
                   {/* message roman-en-PDF déplacé dans un modal (voir plus bas) */}
                   <div style={{ height: 14 }} />
