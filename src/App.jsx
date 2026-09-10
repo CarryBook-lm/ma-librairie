@@ -17132,7 +17132,7 @@ export default function App() {
     setPubAuthorName(b.author || "");
     setPubAuthorVille(b.author_ville || "");
     setPubAuthorPhoto(b.author_photo || "");
-    setTimeout(() => { if (romanEditorRef.current) romanEditorRef.current.innerHTML = (b.content || "").replace(/\n/g, "<br>"); }, 60);
+    setTimeout(() => { if (romanEditorRef.current) romanEditorRef.current.textContent = ""; if (romanEditorRef.current) romanEditorRef.current.innerHTML = (b.content || ""); }, 60);
     setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
@@ -17909,7 +17909,7 @@ export default function App() {
                         <button onMouseDown={e => { e.preventDefault(); fmtRoman("undo"); }} title="Annuler la dernière action" style={{ height: 36, padding: "0 12px", border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontSize: 13, fontWeight: "bold", color: G.textDim }}>↶ Annuler</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page.</div>
-                      <div ref={romanEditorRef} contentEditable suppressContentEditableWarning onInput={syncRoman} onBlur={() => { syncRoman(); if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } syncRoman(); }} data-ph="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, overflowY: "auto", whiteSpace: "pre-wrap", textAlign: "justify", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
+                      <div ref={romanEditorRef} contentEditable suppressContentEditableWarning onInput={syncRoman} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertText", false, "\n"); syncRoman(); } }} onBlur={() => { syncRoman(); if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } syncRoman(); }} data-ph="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, overflowY: "auto", whiteSpace: "pre-wrap", textAlign: "justify", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
                   ) : pubForm.type === "audio" ? (
                     <>
