@@ -13853,8 +13853,9 @@ export default function App() {
   const [selAuteurId, setSelAuteurId] = useState(null);
   const [addAuteurOpen, setAddAuteurOpen] = useState(false);
   const [addAuteurNom, setAddAuteurNom] = useState("");
-  const profilCoche = () => profilsAuteurs.find(a => a.id === selAuteurId) || null;
-  const chargerProfilsAuteurs = async () => { const { data } = await supabase.from("auteurs_affichage").select("*").order("nom", { ascending: true }); setProfilsAuteurs(data || []); const land = (data || []).find(a => /landrine/i.test(a.nom)); if (land && selAuteurId === null) setSelAuteurId(land.id); };
+  const listeAuteursPub = () => [{ id: 0, nom: (auteurProfil && auteurProfil.nom_complet) || "Landrine Maff", ville: (auteurProfil && auteurProfil.pays) || "Cameroun", photo_url: (auteurProfil && auteurProfil.photo_url) || null, verifie: true }, ...profilsAuteurs.filter(p => !/landrine/i.test(p.nom))];
+  const profilCoche = () => listeAuteursPub().find(a => a.id === selAuteurId) || null;
+  const chargerProfilsAuteurs = async () => { const { data } = await supabase.from("auteurs_affichage").select("*").order("nom", { ascending: true }); setProfilsAuteurs(data || []); if (selAuteurId === null) setSelAuteurId(0); };
   useEffect(() => { chargerProfilsAuteurs(); }, [auteurProfil]);
   const ajouterProfilAuteur = async () => {
     if (!addAuteurNom.trim()) { alert("Entre le nom de l'auteur."); return; }
@@ -17201,7 +17202,7 @@ export default function App() {
     setPubSavingDraft(true);
     try {
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche()) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().photo_url || null) : null,
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null,
         price: (f.type === "gratuit") ? 0 : (parseInt(f.price) || 0),
         cover: f.cover || null, category: f.category || null, subcategory: f.subcategory || null,
         summary: f.summary ? f.summary.trim() : null,
@@ -17257,7 +17258,7 @@ export default function App() {
         excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
       }
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche()) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche()) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
+        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
         cover: f.cover, category: f.category, subcategory: f.subcategory,
         summary: f.summary.trim(), extract_pages: needsExtract ? (parseInt(f.extract_pages) || 1) : 1,
         content: f.type === "roman" ? f.content : "",
@@ -17828,7 +17829,7 @@ export default function App() {
                   <label style={labelSt}>Auteur du livre</label>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Coche l’auteur dont tu publies le livre.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                    {profilsAuteurs.map(a => (
+                    {listeAuteursPub().map(a => (
                       <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : "#fff", cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
                         {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
                         <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom}</div><div style={{ fontSize: 10, color: G.textDim }}>{a.ville || ""} {a.verifie ? "✅" : ""}</div></div>
@@ -17905,6 +17906,7 @@ export default function App() {
                         <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
                         <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
                         <button onMouseDown={e => { e.preventDefault(); fmtRoman("underline"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("undo"); }} title="Annuler la dernière action" style={{ height: 36, padding: "0 12px", border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontSize: 13, fontWeight: "bold", color: G.textDim }}>↶ Annuler</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page.</div>
                       <div ref={romanEditorRef} contentEditable suppressContentEditableWarning onInput={syncRoman} onBlur={() => { syncRoman(); if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } syncRoman(); }} data-ph="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, overflowY: "auto", whiteSpace: "pre-wrap", textAlign: "justify", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
@@ -18056,7 +18058,7 @@ export default function App() {
                           ) : null}
                           <div style={{ display: "flex", gap: 10 }}>
                             <button onClick={() => supprimerMonLivre(b)} style={{ flex: 1, padding: 12, background: "#e53935", color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>🗑️ Supprimer</button>
-                            <button onClick={() => { setMesLivresDetail(null); editLivre(b); }} style={{ flex: 1, padding: 12, background: G.green, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>✏️ Modifier</button>
+                            <button onClick={() => { setMesLivresDetail(null); editLivre(b); }} style={{ flex: 1, padding: 12, background: G.green, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{b.status === "brouillon" ? "▶️ Continuer" : "✏️ Modifier"}</button>
                           </div>
                           <button onClick={() => setMesLivresDetail(null)} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Fermer</button>
                         </div>
