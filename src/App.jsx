@@ -21159,25 +21159,6 @@ export default function App() {
                   const physicalNewBooks = [];
                   return (
                     <Fragment key={cat}>
-                      {cat === "Livres Gratuits" && (
-                        <div style={{ padding: "4px 12px 24px" }}>
-                          <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>CarryBooks, les chiffres en temps réel</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
-                            {[
-                              { ic: "👁️", n: siteStats.visites, l: "Visites" },
-                              { ic: "📚", n: siteStats.lecteurs, l: "Lecteurs" },
-                              { ic: "📖", n: siteStats.livres, l: "Livres" },
-                              { ic: "✍️", n: siteStats.auteurs, l: "Auteurs" },
-                            ].map((s, i) => (
-                              <div key={i} style={{ background: "linear-gradient(135deg, #2a2410, #1a1208)", borderRadius: 12, padding: "12px 6px", textAlign: "center", border: "1px solid " + G.gold + "33" }}>
-                                <div style={{ fontSize: 18 }}>{s.ic}</div>
-                                <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold, marginTop: 2 }}>{(s.n || 0).toLocaleString("fr-FR")}</div>
-                                <div style={{ fontSize: 9.5, color: "#c9b98a", marginTop: 1 }}>{s.l}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                       {cat === "Livres Gratuits" && tutosAccueil.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
                           <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Atelier des Auteurs ! 📚</div>
@@ -21282,6 +21263,25 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                    {cat === "Livres Gratuits" && (
+                      <div style={{ padding: "4px 12px 24px" }}>
+                        <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>CarryBooks, les chiffres en temps réel</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+                          {[
+                            { ic: "👁️", n: siteStats.visites, l: "Visites" },
+                            { ic: "📚", n: siteStats.lecteurs, l: "Lecteurs" },
+                            { ic: "📖", n: siteStats.livres, l: "Livres" },
+                            { ic: "✍️", n: siteStats.auteurs, l: "Auteurs" },
+                          ].map((s, i) => (
+                            <div key={i} style={{ background: "linear-gradient(135deg, #2a2410, #1a1208)", borderRadius: 12, padding: "12px 6px", textAlign: "center", border: "1px solid " + G.gold + "33" }}>
+                              <div style={{ fontSize: 18 }}>{s.ic}</div>
+                              <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold, marginTop: 2 }}>{(s.n || 0).toLocaleString("fr-FR")}</div>
+                              <div style={{ fontSize: 9.5, color: "#c9b98a", marginTop: 1 }}>{s.l}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     </Fragment>
                   );
                 }); })()}
