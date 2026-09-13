@@ -13457,6 +13457,25 @@ export default function App() {
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
   const [tutosAccueil, setTutosAccueil] = useState([]);
+  const [siteStats, setSiteStats] = useState({ visites: 0, lecteurs: 0, livres: 0, auteurs: 0 });
+  useEffect(() => {
+    (async () => {
+      try {
+        let visites = 0;
+        if (!sessionStorage.getItem("visiteComptee")) {
+          sessionStorage.setItem("visiteComptee", "1");
+          const { data } = await supabase.rpc("incr_visite"); visites = Number(data) || 0;
+        } else {
+          const { data } = await supabase.from("site_stats").select("valeur").eq("cle", "visites").limit(1); visites = (data && data[0]) ? Number(data[0].valeur) : 0;
+        }
+        const { count: nbLivres } = await supabase.from("books").select("id", { count: "exact", head: true }).eq("status", "actif");
+        const { count: nbAuteurs } = await supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "valide");
+        const { count: nbGuest } = await supabase.from("guest_purchases").select("id", { count: "exact", head: true });
+        const { count: nbPurch } = await supabase.from("purchases").select("id", { count: "exact", head: true });
+        setSiteStats({ visites, lecteurs: (nbGuest || 0) + (nbPurch || 0), livres: nbLivres || 0, auteurs: nbAuteurs || 0 });
+      } catch (e) {}
+    })();
+  }, []);
   const [tutosOuverts, setTutosOuverts] = useState({});
   useEffect(() => { supabase.from("tutoriels").select("id, image_url, lien, texte_html").eq("actif", true).order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setTutosAccueil(data || [])); }, []);
   useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(data || [])); }, []);
@@ -21140,6 +21159,25 @@ export default function App() {
                   const physicalNewBooks = [];
                   return (
                     <Fragment key={cat}>
+                      {cat === "Livres Gratuits" && (
+                        <div style={{ padding: "4px 12px 24px" }}>
+                          <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>📊 CarryBooks en chiffres</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+                            {[
+                              { ic: "👁️", n: siteStats.visites, l: "Visites" },
+                              { ic: "📚", n: siteStats.lecteurs, l: "Lecteurs" },
+                              { ic: "📖", n: siteStats.livres, l: "Livres" },
+                              { ic: "✍️", n: siteStats.auteurs, l: "Auteurs" },
+                            ].map((s, i) => (
+                              <div key={i} style={{ background: "linear-gradient(135deg, #2a2410, #1a1208)", borderRadius: 12, padding: "12px 6px", textAlign: "center", border: "1px solid " + G.gold + "33" }}>
+                                <div style={{ fontSize: 18 }}>{s.ic}</div>
+                                <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold, marginTop: 2 }}>{(s.n || 0).toLocaleString("fr-FR")}</div>
+                                <div style={{ fontSize: 9.5, color: "#c9b98a", marginTop: 1 }}>{s.l}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {cat === "Livres Gratuits" && tutosAccueil.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
                           <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Atelier des Auteurs ! 📚</div>
