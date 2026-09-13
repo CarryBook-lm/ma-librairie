@@ -17006,6 +17006,7 @@ export default function App() {
   async function requestRetrait() {
     const montant = Math.round(Number(retraitMontant || 0));
     if (!montant || montant <= 0) { setRetraitMsg("Entre un montant valide."); return; }
+    if (montant < 5000) { setRetraitMsg("Le montant minimum de retrait est de 5 000 FCFA."); return; }
     setRetraitSaving(true); setRetraitMsg("");
     try {
       const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "request_retrait", id: auteurSession.id, montant }) });
@@ -17603,7 +17604,7 @@ export default function App() {
             <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
               <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
                 <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>💸 Retirer mes fonds</div>
-                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par CarryBooks.</div>
+                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par CarryBooks. <b>Minimum : 5 000 FCFA.</b></div>
                 <label style={labelSt}>Montant à retirer (FCFA)</label>
                 <input type="number" value={retraitMontant} onChange={e => setRetraitMontant(e.target.value)} placeholder="Ex : 50000" style={champ} />
                 {retraitMsg && <div style={{ fontSize: 13, marginTop: 10, color: retraitMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{retraitMsg}</div>}
