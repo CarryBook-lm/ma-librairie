@@ -16303,6 +16303,7 @@ export default function App() {
 
   async function startReading(book, excerpt = false) {
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
+    if (!excerpt && book && book.id) { try { const lus = JSON.parse(sessionStorage.getItem("livresLus") || "[]"); if (!lus.includes(book.id)) { lus.push(book.id); sessionStorage.setItem("livresLus", JSON.stringify(lus)); supabase.rpc("incrementer_vente", { p_book_id: book.id }); setSelectedBook(b => (b && b.id === book.id) ? { ...b, nb_ventes: (b.nb_ventes || 0) + 1 } : b); } } catch (e) {} }
     if (!excerpt && !hasAccess(bookToRead)) {
       // Si abonné et peut utiliser son abonnement → propose de débloquer via abo
       if (canUseSubscriptionFor(book)) {
