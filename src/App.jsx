@@ -21161,7 +21161,7 @@ export default function App() {
                     <Fragment key={cat}>
                       {cat === "Livres Gratuits" && (
                         <div style={{ padding: "4px 12px 24px" }}>
-                          <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>📊 CarryBooks en chiffres</div>
+                          <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>CarryBooks, les chiffres en temps réel</div>
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
                             {[
                               { ic: "👁️", n: siteStats.visites, l: "Visites" },
