@@ -14588,7 +14588,7 @@ export default function App() {
   const [capShowGift, setCapShowGift] = useState(false);
 
   useEffect(() => {
-    const featuredBooks = books.filter(b => b.featured);
+    const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && !b.masque); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
     if (featuredBooks.length <= 1) return;
     const interval = setInterval(() => {
       setHeroIndex(i => (i + 1) % featuredBooks.length);
@@ -20966,7 +20966,7 @@ export default function App() {
                 {/* HERO CAROUSEL - num�rique uniquement */}
                 {(() => {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
-                  const featuredBooks = books.filter(b => b.featured && isDigitalBook(b));
+                  const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && !b.masque && isDigitalBook(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
                   const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(isDigitalBook).slice(0, 5);
                   if (heroBooks.length === 0) return null;
                   const featuredBook = heroBooks[heroIndex % heroBooks.length];
