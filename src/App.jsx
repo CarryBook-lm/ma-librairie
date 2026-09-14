@@ -21118,7 +21118,7 @@ export default function App() {
                 {/* CARROUSELS PAR CATÉGORIE - UNIQUEMENT LIVRES NUMÉRIQUES */}
                 {(() => {
                   const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && !b.masque;
-                  const isRomanCat = k => /^roman/i.test(k) || k === "Saga" || /audio/i.test(k);
+                  const isRomanCat = k => /^roman/i.test(k) || /saga/i.test(k) || /romance/i.test(k) || /po[eé]sie/i.test(k) || /audio/i.test(k);
                   const catHasBooks = k => books.some(b => isDigitalReco(b) && (b.category === k || (b.category || "").toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
                   const firstGuideCat = Object.keys(CATEGORIES).find(k => !isRomanCat(k) && catHasBooks(k));
                   const owned = new Set([...(purchasedBooks || []), ...(favoriteBooks || [])]);
