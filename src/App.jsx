@@ -13924,7 +13924,7 @@ export default function App() {
     return t;
   };
   const syncRoman = () => { if (romanEditorRef.current) { const v = romanNormalize(romanEditorRef.current.innerHTML); setPubForm(f => ({ ...f, content: v })); setPubErrors(p => ({ ...p, content: false })); } };
-  const fmtRoman = (cmd) => { try { document.execCommand(cmd, false); romanEditorRef.current && romanEditorRef.current.focus(); syncRoman(); } catch (e) {} };
+  const wrapRomanSel = (tag) => { const ta = romanEditorRef.current; if (!ta) return; const s = ta.selectionStart, e = ta.selectionEnd; if (s === e) { ta.focus(); return; } const v = pubForm.content || ""; const sel = v.slice(s, e); const nv = v.slice(0, s) + "<" + tag + ">" + sel + "</" + tag + ">" + v.slice(e); setPubForm(f => ({ ...f, content: nv })); setPubErrors(p => ({ ...p, content: false })); setTimeout(() => { try { ta.focus(); ta.setSelectionRange(s, e + tag.length * 2 + 5); } catch (er) {} }, 0); };
   const chargerTutos = async () => { const { data } = await supabase.from("tutoriels").select("*").order("ordre", { ascending: true }).order("created_at", { ascending: false }); setTutos(data || []); };
   const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd }); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
   const enregistrerTuto = async () => { const html = tutoEditorRef.current ? tutoEditorRef.current.innerHTML : ""; if (!tutoImg) { setTutoMsg("Ajoute une image (16:9)."); return; } const payload = { image_url: tutoImg, lien: tutoLien.trim() || null, texte_html: html, actif: true }; try { if (tutoEditId) { await supabase.from("tutoriels").update(payload).eq("id", tutoEditId); } else { await supabase.from("tutoriels").insert([payload]); } setTutoImg(""); setTutoLien(""); setTutoEditId(null); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg("OK_ENREGISTRE"); await chargerTutos(); } catch (e) { setTutoMsg("Erreur : " + (e && e.message)); } };
@@ -17153,7 +17153,7 @@ export default function App() {
     setPubAuthorName(b.author || "");
     setPubAuthorVille(b.author_ville || "");
     setPubAuthorPhoto(b.author_photo || "");
-    setTimeout(() => { if (romanEditorRef.current) romanEditorRef.current.textContent = ""; if (romanEditorRef.current) romanEditorRef.current.innerHTML = (b.content || ""); }, 60);
+    setPubForm(f => ({ ...f, content: b.content || "" }));
     setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
@@ -17924,13 +17924,13 @@ export default function App() {
                     <>
                       <label style={labelSt}>Texte du roman *</label>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("bold"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("italic"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("underline"); }} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtRoman("undo"); }} title="Annuler la dernière action" style={{ height: 36, padding: "0 12px", border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontSize: 13, fontWeight: "bold", color: G.textDim }}>↶ Annuler</button>
+                        <button onClick={() => wrapRomanSel("b")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
+                        <button onClick={() => wrapRomanSel("i")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
+                        <button onClick={() => wrapRomanSel("u")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
+                        
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page.</div>
-                      <div ref={romanEditorRef} contentEditable suppressContentEditableWarning onInput={syncRoman} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertText", false, "\n"); syncRoman(); } }} onBlur={() => { syncRoman(); if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } syncRoman(); }} data-ph="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, overflowY: "auto", whiteSpace: "pre-wrap", textAlign: "justify", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
+                      <textarea ref={romanEditorRef} value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, resize: "vertical", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
                   ) : pubForm.type === "audio" ? (
                     <>
