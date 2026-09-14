@@ -20978,8 +20978,7 @@ export default function App() {
                           {book.cover
                             ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
-                          {/* Gradient bas seulement (image visible en haut, coll�e � la bande) */}
-                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(245,240,232,0.7) 85%, " + G.bg + " 100%)" }} />
+                          {/* Couverture seule, sans dégradé */}
                         </div>
                       ))}
                       <div style={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
@@ -20988,33 +20987,14 @@ export default function App() {
                           🔗
                         </button>
                       </div>
-                      <div style={{ position: "absolute", bottom: 20, left: 16, right: 16, zIndex: 2 }}>
-                        <div style={{ fontSize: 10, color: G.gold, letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>★ À la une</div>
-                        <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4, lineHeight: 1.2 }}>{featuredBook.title}</div>
-                        <div style={{ fontSize: 13, color: G.textDim, marginBottom: 12 }}>par {featuredBook.author}</div>
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                          <button onClick={e => { e.stopPropagation(); openBook(featuredBook); }}
-                            style={{ padding: "10px 20px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>
-                            Découvrir
-                          </button>
-                          <button onClick={e => { e.stopPropagation(); toggleFavorite(featuredBook.id); }}
-                            style={{ padding: "10px 16px", background: "rgba(255,255,255,0.7)", border: "1px solid " + G.border, borderRadius: 4, color: G.text, fontSize: 14, cursor: "pointer" }}>
-                            {favoriteBooks.includes(featuredBook.id) ? "♥" : "♡"}
-                          </button>
-                          <button onClick={e => { e.stopPropagation(); shareBook(featuredBook); }}
-                            style={{ padding: "10px 16px", background: "rgba(255,255,255,0.7)", border: "1px solid " + G.border, borderRadius: 4, color: G.text, fontSize: 14, cursor: "pointer" }}>
-                            🔗
-                          </button>
+                      {heroBooks.length > 1 && (
+                        <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", gap: 6, justifyContent: "center", zIndex: 2 }}>
+                          {heroBooks.map((_, idx) => (
+                            <div key={idx} onClick={e => { e.stopPropagation(); setHeroIndex(idx); }}
+                              style={{ width: idx === (heroIndex % heroBooks.length) ? 20 : 6, height: 6, borderRadius: 3, background: idx === (heroIndex % heroBooks.length) ? G.gold : "rgba(255,255,255,0.6)", cursor: "pointer", transition: "all 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                          ))}
                         </div>
-                        {heroBooks.length > 1 && (
-                          <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
-                            {heroBooks.map((_, idx) => (
-                              <div key={idx} onClick={e => { e.stopPropagation(); setHeroIndex(idx); }}
-                                style={{ width: idx === (heroIndex % heroBooks.length) ? 20 : 6, height: 6, borderRadius: 3, background: idx === (heroIndex % heroBooks.length) ? G.gold : "rgba(201,168,76,0.4)", cursor: "pointer", transition: "all 0.3s" }} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   );
                 })()}
