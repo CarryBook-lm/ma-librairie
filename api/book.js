@@ -30,7 +30,7 @@ function slugifyAlt(str) {
 }
 
 // Mêmes colonnes légères que fetchBooks() côté app (sans content/images)
-const LIGHT_COLUMNS = "id, title, author, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, created_at";
+const LIGHT_COLUMNS = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, audio_extrait_url, author_ville, author_photo, nb_pages, duree_audio, nb_ventes, masque, created_at";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
