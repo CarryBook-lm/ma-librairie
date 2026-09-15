@@ -13463,7 +13463,7 @@ export default function App() {
     if (!annoncesActives || annoncesActives.length <= 1) return;
     const id = setInterval(() => {
       const c = annoncesRef.current; if (!c) return;
-      const pas = c.clientWidth;
+      const pas = c.clientWidth * 0.88 + 10;
       if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
       else { c.scrollBy({ left: pas, behavior: "smooth" }); }
     }, 3500);
@@ -21071,12 +21071,12 @@ export default function App() {
                 {/* ANNONCES DES AUTEURS (carrousel 16:9 horizontal) */}
                 {annoncesActives.length > 0 && (
                   <div style={{ marginBottom: 28 }}>
-                    <div ref={annoncesRef} style={{ display: "flex", gap: 0, overflowX: "auto", scrollbarWidth: "none", scrollBehavior: "smooth", scrollSnapType: "x mandatory" }}>
+                    <div ref={annoncesRef} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollBehavior: "smooth", scrollSnapType: "x mandatory" }}>
                       {annoncesActives.map(a => (
-                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 100%", width: "100%", aspectRatio: "297 / 210", cursor: "pointer", position: "relative", scrollSnapAlign: "center", boxSizing: "border-box", padding: "0 8px" }}><div style={{ width: "100%", height: "100%", borderRadius: 12, overflow: "hidden", position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 88%", width: "88%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", scrollSnapAlign: "start" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                          <div style={{ position: "absolute", bottom: 8, left: 16, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>
-                        </div></div>
+                          <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>
+                        </div>
                       ))}
                     </div>
                   </div>
