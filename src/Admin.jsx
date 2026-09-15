@@ -507,7 +507,7 @@ export default function Admin() {
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
           supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
-          supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
+          supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
@@ -576,7 +576,7 @@ export default function Admin() {
   const rechargerEA = async () => {
     const [{ data: aut }, { data: bks }] = await Promise.all([
       supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
-      supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
+      supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
     setEaAuteurs(aut || []); setEaBooks(bks || []);
     if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
@@ -746,6 +746,11 @@ export default function Admin() {
   const validerAnnonce = async (id) => { await supabase.from("annonces_pub").update({ statut: "active" }).eq("id", id); await reloadAnnonces(); };
   const refuserAnnonce = async (id) => { const m = window.prompt("Motif du refus (optionnel) :", ""); await supabase.from("annonces_pub").update({ statut: "refusee", motif_refus: m || null }).eq("id", id); await reloadAnnonces(); };
   const supprimerAnnonce = async (id) => { if (!window.confirm("Supprimer cette annonce ?")) return; await supabase.from("annonces_pub").delete().eq("id", id); await reloadAnnonces(); };
+  const toggleCatalogue = async (b) => {
+    const nv = !b.exclu_catalogue;
+    await supabase.from("books").update({ exclu_catalogue: nv }).eq("id", b.id);
+    setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, exclu_catalogue: nv } : x));
+  };
   const desactiverLivre = async (b) => {
     const motif = window.prompt("Motif de la désactivation (l'auteur le recevra) :", "");
     if (motif === null) return;
@@ -4440,6 +4445,7 @@ export default function Admin() {
                             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                               <button onClick={() => toggleMasque(b)} style={{ padding: "7px 10px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : "#c9a84c", border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
                               {b.status === "actif" && <button onClick={() => desactiverLivre(b)} style={{ padding: "7px 10px", background: "#5a2020", color: "#ff8a80", border: "1px solid #7a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>⛔ Désactiver</button>}
+                              <button onClick={() => toggleCatalogue(b)} title="Exclure du catalogue Facebook (les pubs)" style={{ padding: "7px 10px", background: b.exclu_catalogue ? "#1e3a5a" : "#2a2410", color: b.exclu_catalogue ? "#90caf9" : "#c9a84c", border: "1px solid " + (b.exclu_catalogue ? "#2a5a8a" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.exclu_catalogue ? "📘 Remettre au catalogue" : "🚫 Exclure du catalogue"}</button>
                             </div>
                           </div>
                         );

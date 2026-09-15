@@ -31,8 +31,9 @@ export default async function handler(req, res) {
 
     const { data: livres } = await supa
       .from("books")
-      .select("id, title, summary, price, cover, author, category, status")
+      .select("id, title, summary, price, cover, author, category, status, exclu_catalogue")
       .eq("status", "actif")
+      .neq("exclu_catalogue", true)
       .order("id", { ascending: false });
 
     const base = "https://carrybooks.com";
