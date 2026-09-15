@@ -207,6 +207,7 @@ function ComptabiliteView() {
   const semaine = compute(weekStart, tomorrowStart);
   const mois = compute(monthStart, tomorrowStart);
   const annee = compute(yearStart, tomorrowStart);
+  const auj = compute(todayStart, tomorrowStart);
 
   const fmt = (n) => (Math.round(n)).toLocaleString("fr-FR") + " F";
   const GOLD = "#c9a84c";
@@ -243,6 +244,23 @@ function ComptabiliteView() {
       <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>
         Saisis tes charges du jour. Les ventes, quiz et gains des parrains se calculent automatiquement.
       </p>
+
+      {/* MES GAINS (revenus) par période + jour précis */}
+      <div style={{ background: "#12100a", border: "1px solid #3a3320", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <div style={{ fontSize: 15, color: GOLD, fontWeight: "bold", marginBottom: 12 }}>💰 Mes gains</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <label style={{ fontSize: 12, color: "#aaa" }}>Choisir un jour :</label>
+          <input type="date" value={selectedDate} max={todayStr} onChange={e => setSelectedDate(e.target.value)} style={{ padding: 8, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 13 }} />
+          <div style={{ fontSize: 13, color: "#fff" }}>{selectedDate === todayStr ? "Aujourd’hui" : selectedDate} : <b style={{ color: GOLD }}>{fmt(sel.revenus)}</b></div>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          {box("Aujourd’hui", fmt(auj.revenus), "#4CAF50", "📅")}
+          {box("Hier", fmt(hier.revenus), "#fff", "🕓")}
+          {box("Cette semaine", fmt(semaine.revenus), "#fff", "📆")}
+          {box("Ce mois", fmt(mois.revenus), "#fff", "🗓️")}
+          {box("Cette année", fmt(annee.revenus), GOLD, "📈")}
+        </div>
+      </div>
 
       {/* SAISIE DES CHARGES */}
       <div style={{ background: "#151515", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, marginBottom: 20 }}>
