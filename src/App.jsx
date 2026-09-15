@@ -15474,7 +15474,7 @@ export default function App() {
     if (!hasCachedBooks) setLoading(true);
     // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
     // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
-    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, nb_ventes, created_at";
+    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, audio_extrait_url, author_ville, author_photo, nb_pages, duree_audio, nb_ventes, masque, created_at";
 
     // 🎯 ÉTAPE 1 : Charger les LIVRES (non-articles) en priorité — rapide car peu nombreux
     // Supabase limite à 1000 lignes par défaut. Avec 1000+ articles, les livres seraient tronqués.
@@ -17189,16 +17189,15 @@ export default function App() {
     const file = e.target.files[0]; if (!file) return;
     setPubUploading(true); setPubMsg("");
     try {
-      // Compter les pages du PDF — minimum 30 (sauf admin id 8)
-      if (!(auteurProfil && auteurProfil.id === 8)) {
-        try {
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          const { PDFDocument } = PDFLib;
-          const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-          const nbPages = doc.getPageCount();
-          if (nbPages < 30) { setPubMsg("📕 Ton PDF a " + nbPages + " page(s). Il faut au moins 30 pages pour publier. Ajoute du contenu puis réessaie."); setPubUploading(false); e.target.value = ""; return; }
-        } catch (errPdf) { /* si illisible, on laisse passer (vérif à la validation) */ }
-      }
+      // Compter les pages du PDF (minimum 30 sauf admin) + mémoriser pour l'affichage
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const { PDFDocument } = PDFLib;
+        const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+        const nbPages = doc.getPageCount();
+        if (nbPages < 30 && !(auteurProfil && auteurProfil.id === 8)) { setPubMsg("📕 Ton PDF a " + nbPages + " page(s). Il faut au moins 30 pages pour publier. Ajoute du contenu puis réessaie."); setPubUploading(false); e.target.value = ""; return; }
+        setPubForm(f => ({ ...f, nb_pages: nbPages }));
+      } catch (errPdf) { /* si illisible, on laisse passer */ }
       const fileName = Date.now() + "_" + file.name.replace(/\s/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
       const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "application/pdf" });
       if (error) throw error;
@@ -17229,6 +17228,7 @@ export default function App() {
       const { error } = await supabase.storage.from("audio").upload(fileName, file, { contentType: file.type || "audio/mpeg" });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+      try { const dur = await new Promise((res) => { const au = new Audio(); au.preload = "metadata"; au.onloadedmetadata = () => res(Math.round(au.duration || 0)); au.onerror = () => res(0); au.src = urlData.publicUrl; }); if (dur) setPubForm(f => ({ ...f, duree_audio: dur })); } catch (e3) {}
       setPubForm(f => ({ ...f, audio_url: urlData.publicUrl }));
     } catch (e2) { setPubMsg("❌ Échec de l'envoi de l'audio : " + (e2.message || e2)); }
     setPubUploading(false);
@@ -17250,7 +17250,7 @@ export default function App() {
         extract_pages: parseInt(f.extract_pages) || 1,
         content: f.type === "roman" ? f.content : "",
         pdf_url: (f.type === "guide" || f.type === "gratuit") ? f.pdf_url : "",
-        audio_url: f.type === "audio" ? f.audio_url : "",
+        audio_url: f.type === "audio" ? f.audio_url : "", nb_pages: f.type === "roman" ? Math.max(1, Math.round(((f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length) / 250)) : (f.nb_pages || null), duree_audio: f.type === "audio" ? (f.duree_audio || null) : null,
         status: "brouillon", moderation: "brouillon", auteur_id: auteurProfil.id,
         product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
@@ -17310,7 +17310,7 @@ export default function App() {
         content: f.type === "roman" ? f.content : "",
         pdf_url: isPdf ? f.pdf_url : "",
         excerpt_pdf_url: f.type === "guide" ? excerptUrl : "",
-        audio_url: f.type === "audio" ? f.audio_url : "",
+        audio_url: f.type === "audio" ? f.audio_url : "", nb_pages: f.type === "roman" ? Math.max(1, Math.round(((f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length) / 250)) : (f.nb_pages || null), duree_audio: f.type === "audio" ? (f.duree_audio || null) : null,
         status: "en_attente", moderation: "en_attente", auteur_id: auteurProfil.id,
         product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
@@ -19700,7 +19700,7 @@ export default function App() {
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
           {book.author_photo ? <img src={book.author_photo} alt="" style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold, display: "block", margin: "0 auto 6px" }} /> : null}
           <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span>{book.author_ville ? <span style={{ color: G.textDim }}> · {book.author_ville}</span> : null}</p>
-          <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 1 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
+          <div style={{ textAlign: "center", marginBottom: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{(book.nb_ventes || 0) >= 1 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}{book.audio_url ? (book.duree_audio ? <span style={{ display: "inline-block", background: "#eef3fb", color: "#3a5a8a", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🎧 {Math.floor(book.duree_audio / 60)} min</span> : null) : (book.nb_pages ? <span style={{ display: "inline-block", background: "#f5f0e8", color: "#8a6d1f", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>📄 {book.nb_pages} pages</span> : null)}</div>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             {/* Pour un livre papier uniquement, on affiche le prix papier */}
             {isPaperOnlyBook ? (
