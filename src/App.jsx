@@ -14908,14 +14908,9 @@ export default function App() {
       setBookRatings(ratings);
     });
     // Charger les best-sellers (livres les plus achetés)
-    supabase.from("purchases").select("book_id").then(({ data }) => {
+    supabase.from("books").select("id, nb_ventes").eq("status", "actif").gt("nb_ventes", 0).order("nb_ventes", { ascending: false }).limit(30).then(({ data }) => {
       if (!data) return;
-      const counts = {};
-      data.forEach(p => { counts[p.book_id] = (counts[p.book_id] || 0) + 1; });
-      const sorted = Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([book_id, count]) => ({ book_id: parseInt(book_id), count }));
-      setTopPurchasedBooks(sorted);
+      setTopPurchasedBooks(data.map(b => ({ book_id: b.id, count: b.nb_ventes || 0 })));
     });
     const p = localStorage.getItem("purchasedBooks");
     if (p) setPurchasedBooks(JSON.parse(p));
