@@ -15664,6 +15664,8 @@ export default function App() {
   }
 
   function hasAccess(book) {
+    // Accès total pour l'admin (Landrine) : peut tout lire sans payer
+    if ((auteurProfil && auteurProfil.id === 8) || (user && user.email === ADMIN_EMAIL)) return true;
     if (book.price === 0) return true;
     if (purchasedBooks.includes(book.id)) return true;
     return false;
