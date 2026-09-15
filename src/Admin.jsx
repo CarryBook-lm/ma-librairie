@@ -535,7 +535,7 @@ export default function Admin() {
         chargerSupportAdmin(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
-        const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
+        const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
         setEaAValider(av || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
         setEaAnnonces(anns || []);
@@ -789,7 +789,7 @@ export default function Admin() {
     setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, masque: nv } : x));
   };
   const reloadAValider = async () => {
-    const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").or("status.eq.en_attente,moderation.eq.en_attente").order("created_at", { ascending: true });
+    const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
     setEaAValider(av || []); chargerTodo();
   };
   const validerLivre = async (b) => {
