@@ -13948,7 +13948,7 @@ export default function App() {
     if (!annonceLien.trim()) { setAnnonceMsg("Colle le lien vers ton livre."); return; }
     setAnnonceSending(true); setAnnonceMsg("");
     try {
-      const { error } = await supabase.from("annonces_pub").insert([{ auteur_id: auteurProfil.id, image_url: annonceImg, lien: annonceLien.trim(), statut: "en_attente" }]);
+      const { error } = await supabase.from("annonces_pub").insert([{ auteur_id: auteurProfil.id, image_url: annonceImg, lien: annonceLien.trim(), statut: "active" }]);
       if (error) { setAnnonceMsg("Erreur : " + error.message); } else { setAnnonceImg(""); setAnnonceLien(""); setAnnonceMsg("OK_ENVOYE"); setPubTypeSelected(null); }
     } catch (e) { setAnnonceMsg("Erreur : " + (e && e.message)); }
     setAnnonceSending(false);
@@ -17837,7 +17837,7 @@ export default function App() {
                   <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 8, lineHeight: 1.5, background: G.goldDim, border: "1px solid " + G.gold + "44", borderRadius: 8, padding: "8px 10px" }}>💡 Pour obtenir le lien : va dans <b>Mes livres</b>, ouvre le livre concerne, <b>copie son lien</b>, puis reviens le coller ici.</div>
                   <input value={annonceLien} onChange={e => setAnnonceLien(e.target.value)} placeholder="https://carrybooks.com/livre/..." style={champ} />
                   <div style={{ height: 14 }} />
-                  {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce envoyee ! Elle apparaitra sur l’accueil apres validation (jusqu’a 24h).</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
+                  {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce publiee ! Elle est maintenant visible sur l’accueil.</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
                   <button onClick={soumettreAnnonce} disabled={annonceSending} style={{ width: "100%", padding: 14, background: G.gold, color: "#1a1208", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: annonceSending ? 0.6 : 1 }}>{annonceSending ? "Envoi…" : "📤 Soumettre l’annonce"}</button>
                   </>) : (<>
                   <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
