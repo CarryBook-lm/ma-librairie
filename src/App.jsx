@@ -17189,6 +17189,16 @@ export default function App() {
     const file = e.target.files[0]; if (!file) return;
     setPubUploading(true); setPubMsg("");
     try {
+      // Compter les pages du PDF — minimum 30 (sauf admin id 8)
+      if (!(auteurProfil && auteurProfil.id === 8)) {
+        try {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          const { PDFDocument } = PDFLib;
+          const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+          const nbPages = doc.getPageCount();
+          if (nbPages < 30) { setPubMsg("📕 Ton PDF a " + nbPages + " page(s). Il faut au moins 30 pages pour publier. Ajoute du contenu puis réessaie."); setPubUploading(false); e.target.value = ""; return; }
+        } catch (errPdf) { /* si illisible, on laisse passer (vérif à la validation) */ }
+      }
       const fileName = Date.now() + "_" + file.name.replace(/\s/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
       const { error } = await supabase.storage.from("books-pdf").upload(fileName, file, { contentType: "application/pdf" });
       if (error) throw error;
@@ -17281,6 +17291,11 @@ export default function App() {
     }
     setPubErrors({});
     if (needsExtract && (parseInt(f.extract_pages) || 0) < 1) { setPubMsg("Le nombre de pages gratuites doit être au moins 1."); return; }
+    // Minimum 30 pages (~7500 mots à 250 mots/page) pour les romans texte — sauf admin (id 8)
+    if (f.type === "roman" && !(auteurProfil && auteurProfil.id === 8)) {
+      const nbMots = (f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+      if (nbMots < 7500) { setPubMsg("📕 Ton roman est trop court (environ " + Math.max(1, Math.round(nbMots / 250)) + " page(s)). Il faut au moins 30 pages (~7 500 mots) pour publier. Ajoute du contenu puis réessaie."); return; }
+    }
     setPubSaving(true); setPubMsg("");
     try {
       let excerptUrl = "";
