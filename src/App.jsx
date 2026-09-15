@@ -13463,7 +13463,7 @@ export default function App() {
     if (!annoncesActives || annoncesActives.length <= 1) return;
     const id = setInterval(() => {
       const c = annoncesRef.current; if (!c) return;
-      const pas = c.clientWidth * 0.92 + 10;
+      const pas = c.clientWidth;
       if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
       else { c.scrollBy({ left: pas, behavior: "smooth" }); }
     }, 3500);
@@ -21071,9 +21071,9 @@ export default function App() {
                 {/* ANNONCES DES AUTEURS (carrousel 16:9 horizontal) */}
                 {annoncesActives.length > 0 && (
                   <div style={{ marginBottom: 28 }}>
-                    <div ref={annoncesRef} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollBehavior: "smooth" }}>
+                    <div ref={annoncesRef} style={{ display: "flex", gap: 0, overflowX: "auto", scrollbarWidth: "none", scrollBehavior: "smooth", scrollSnapType: "x mandatory" }}>
                       {annoncesActives.map(a => (
-                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "92%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", position: "relative" }}>
+                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 100%", width: "100%", aspectRatio: "297 / 210", overflow: "hidden", cursor: "pointer", position: "relative" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>
                         </div>
