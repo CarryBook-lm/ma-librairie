@@ -13456,6 +13456,17 @@ export default function App() {
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
+  const annoncesRef = useRef(null);
+  useEffect(() => {
+    if (!annoncesActives || annoncesActives.length <= 1) return;
+    const id = setInterval(() => {
+      const c = annoncesRef.current; if (!c) return;
+      const pas = c.clientWidth * 0.92 + 10;
+      if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
+      else { c.scrollBy({ left: pas, behavior: "smooth" }); }
+    }, 3500);
+    return () => clearInterval(id);
+  }, [annoncesActives]);
   const [tutosAccueil, setTutosAccueil] = useState([]);
   const [siteStats, setSiteStats] = useState({ visites: 0, lecteurs: 0, livres: 0, auteurs: 0 });
   useEffect(() => {
@@ -21058,7 +21069,7 @@ export default function App() {
                 {/* ANNONCES DES AUTEURS (carrousel 16:9 horizontal) */}
                 {annoncesActives.length > 0 && (
                   <div style={{ marginBottom: 28 }}>
-                    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                    <div ref={annoncesRef} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollBehavior: "smooth" }}>
                       {annoncesActives.map(a => (
                         <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 auto", width: "92%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", position: "relative" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
