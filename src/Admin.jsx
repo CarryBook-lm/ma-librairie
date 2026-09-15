@@ -4437,12 +4437,12 @@ export default function Admin() {
                       {livres.length === 0 ? <div style={{ color: "#666", fontSize: 13, fontStyle: "italic" }}>Aucun livre publié.</div> : livres.map(b => {
                         const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
                         return (
-                          <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "10px 0", borderBottom: "1px solid #262626" }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ color: b.masque ? "#888" : "#e8e0d0", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.masque ? "🙈 " : ""}{b.title}</div>
+                          <div key={b.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 0", borderBottom: "1px solid #262626" }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ color: b.masque ? "#888" : "#e8e0d0", fontSize: 13.5, fontWeight: "bold", lineHeight: 1.3 }}>{b.masque ? "🙈 " : ""}{b.title}</div>
                               <div style={{ fontSize: 11, color: "#777" }}>{(b.price||0).toLocaleString()} F · <span style={{ color: st.c, fontWeight: "bold" }}>{st.t}</span>{b.masque ? " · masqué" : ""}</div>
                             </div>
-                            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               <button onClick={() => toggleMasque(b)} style={{ padding: "7px 10px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : "#c9a84c", border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
                               {b.status === "actif" && <button onClick={() => desactiverLivre(b)} style={{ padding: "7px 10px", background: "#5a2020", color: "#ff8a80", border: "1px solid #7a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>⛔ Désactiver</button>}
                               <button onClick={() => toggleCatalogue(b)} title="Exclure du catalogue Facebook (les pubs)" style={{ padding: "7px 10px", background: b.exclu_catalogue ? "#1e3a5a" : "#2a2410", color: b.exclu_catalogue ? "#90caf9" : "#c9a84c", border: "1px solid " + (b.exclu_catalogue ? "#2a5a8a" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.exclu_catalogue ? "📘 Remettre au catalogue" : "🚫 Exclure du catalogue"}</button>
