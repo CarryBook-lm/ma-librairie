@@ -746,6 +746,19 @@ export default function Admin() {
   const validerAnnonce = async (id) => { await supabase.from("annonces_pub").update({ statut: "active" }).eq("id", id); await reloadAnnonces(); };
   const refuserAnnonce = async (id) => { const m = window.prompt("Motif du refus (optionnel) :", ""); await supabase.from("annonces_pub").update({ statut: "refusee", motif_refus: m || null }).eq("id", id); await reloadAnnonces(); };
   const supprimerAnnonce = async (id) => { if (!window.confirm("Supprimer cette annonce ?")) return; await supabase.from("annonces_pub").delete().eq("id", id); await reloadAnnonces(); };
+  const desactiverLivre = async (b) => {
+    const motif = window.prompt("Motif de la désactivation (l'auteur le recevra) :", "");
+    if (motif === null) return;
+    if (!motif.trim()) { alert("Entre un motif."); return; }
+    const { error } = await supabase.from("books").update({ status: "refuse", moderation: "refuse", motif_refus: motif.trim() }).eq("id", b.id);
+    if (error) { alert("Erreur : " + error.message); return; }
+    if (b.auteur_id) {
+      const texte = "🔴 Ton livre « " + b.title + " » a été désactivé.\n\nMotif : " + motif.trim() + "\n\nCorrige-le puis resoumets-le pour validation.";
+      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
+    }
+    setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, status: "refuse", moderation: "refuse" } : x));
+    alert("Livre désactivé. L'auteur a été prévenu dans son Support.");
+  };
   const toggleMasque = async (b) => {
     const nv = !b.masque;
     await supabase.from("books").update({ masque: nv }).eq("id", b.id);
@@ -4424,7 +4437,10 @@ export default function Admin() {
                               <div style={{ color: b.masque ? "#888" : "#e8e0d0", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.masque ? "🙈 " : ""}{b.title}</div>
                               <div style={{ fontSize: 11, color: "#777" }}>{(b.price||0).toLocaleString()} F · <span style={{ color: st.c, fontWeight: "bold" }}>{st.t}</span>{b.masque ? " · masqué" : ""}</div>
                             </div>
-                            <button onClick={() => toggleMasque(b)} style={{ flexShrink: 0, padding: "7px 12px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : "#c9a84c", border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
+                            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                              <button onClick={() => toggleMasque(b)} style={{ padding: "7px 10px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : "#c9a84c", border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
+                              {b.status === "actif" && <button onClick={() => desactiverLivre(b)} style={{ padding: "7px 10px", background: "#5a2020", color: "#ff8a80", border: "1px solid #7a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>⛔ Désactiver</button>}
+                            </div>
                           </div>
                         );
                       })}
