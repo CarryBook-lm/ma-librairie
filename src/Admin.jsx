@@ -249,8 +249,8 @@ function ComptabiliteView() {
       <div style={{ background: "#12100a", border: "1px solid #3a3320", borderRadius: 12, padding: 16, marginBottom: 20 }}>
         <div style={{ fontSize: 15, color: GOLD, fontWeight: "bold", marginBottom: 12 }}>💰 Mes gains</div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <label style={{ fontSize: 12, color: "#aaa" }}>Choisir un jour :</label>
-          <input type="date" value={selectedDate} max={todayStr} onChange={e => setSelectedDate(e.target.value)} style={{ padding: 8, borderRadius: 8, border: "1px solid #333", background: "#0d0d0d", color: "#fff", fontSize: 13 }} />
+          <label style={{ fontSize: 13, color: "#fff", fontWeight: "bold" }}>📅 Choisir un jour :</label>
+          <input type="date" value={selectedDate} max={todayStr} onChange={e => setSelectedDate(e.target.value)} style={{ padding: "10px 12px", borderRadius: 8, border: "2px solid " + GOLD, background: "#fff", color: "#111", fontSize: 14, fontWeight: "bold", colorScheme: "light", cursor: "pointer" }} />
           <div style={{ fontSize: 13, color: "#fff" }}>{selectedDate === todayStr ? "Aujourd’hui" : selectedDate} : <b style={{ color: GOLD }}>{fmt(sel.revenus)}</b></div>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
