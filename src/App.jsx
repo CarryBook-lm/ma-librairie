@@ -13456,6 +13456,8 @@ export default function App() {
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
+  const [seedMelange] = useState(() => Math.floor(Math.random() * 1000000));
+  const melangerListe = (arr) => { const a = [...(arr || [])]; let s = seedMelange; for (let i = a.length - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor((s / 233280) * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const annoncesRef = useRef(null);
   useEffect(() => {
     if (!annoncesActives || annoncesActives.length <= 1) return;
@@ -21135,16 +21137,16 @@ export default function App() {
                   const owned = new Set([...(purchasedBooks || []), ...(favoriteBooks || [])]);
                   const likedCats = {}; books.forEach(b => { if (owned.has(b.id) && b.category) likedCats[b.category] = (likedCats[b.category] || 0) + 1; });
                   const catsAimees = Object.keys(likedCats).sort((a, b) => likedCats[b] - likedCats[a]);
-                  let reco = catsAimees.length ? books.filter(b => isDigitalReco(b) && !owned.has(b.id) && catsAimees.includes(b.category)) : [];
+                  let reco = melangerListe(catsAimees.length ? books.filter(b => isDigitalReco(b) && !owned.has(b.id) && catsAimees.includes(b.category)) : []);
                   if (reco.length < 4) { const pop = (topPurchasedBooks && topPurchasedBooks.length ? topPurchasedBooks : books.filter(isDigitalReco)).filter(b => !owned.has(b.id) && !reco.find(r => r.id === b.id)); reco = [...reco, ...pop]; }
                   reco = reco.slice(0, 12);
                   return Object.keys(CATEGORIES).map(cat => {
                   // Filtrer par cat�gorie ET ne garder QUE les livres num�riques (num/mixte/audio/podcast)
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
-                  const catBooks = books.filter(b => 
-                    isDigitalBook(b) && 
+                  const catBooks = melangerListe(books.filter(b => 
+                    isDigitalBook(b) && !b.masque && 
                     (b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")))
-                  );
+                  ));
                   if (catBooks.length === 0) return null;
                   // D�sactiver l'insertion des "Nouveaut�s Produits Physiques" sur la home num�rique
                   const isLivresPapiers = false;
