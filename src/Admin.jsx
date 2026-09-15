@@ -374,6 +374,7 @@ export default function Admin() {
   const [eaTotaux, setEaTotaux] = useState({ owed: 0, paid: 0, pending: 0 });
   const [eaHistoOuvert, setEaHistoOuvert] = useState(false);
   const [eaSelectedAuteur, setEaSelectedAuteur] = useState(null); // auteur sélectionné (livres)
+  const [eaSearch, setEaSearch] = useState("");
   const [eaSelectedKyc, setEaSelectedKyc] = useState(null); // auteur sélectionné (vérif)
   const [eaTodo, setEaTodo] = useState({ livres: 0, kyc: 0, retraits: 0 });
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
@@ -4453,8 +4454,13 @@ export default function Admin() {
                     </div>
                   );
                 })() : (
-                  eaAuteurs.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun auteur inscrit pour le moment.</div> : (
-                    eaAuteurs.map(a => {
+                  <div>
+                  <input value={eaSearch} onChange={e => setEaSearch(e.target.value)} placeholder="🔍 Rechercher un auteur ou un livre…" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#e8e0d0", fontSize: 13, marginBottom: 12 }} />
+                  {(() => {
+                    const q = eaSearch.trim().toLowerCase();
+                    const liste = q ? eaAuteurs.filter(a => (a.nom_complet || "").toLowerCase().includes(q) || eaBooks.some(b => b.auteur_id === a.id && (b.title || "").toLowerCase().includes(q))) : eaAuteurs;
+                    if (liste.length === 0) return <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 16 }}>{q ? "Aucun résultat." : "Aucun auteur inscrit pour le moment."}</div>;
+                    return liste.map(a => {
                       const livres = eaBooks.filter(b => b.auteur_id === a.id);
                       const enAttente = livres.filter(b => b.status !== "actif" && b.moderation !== "refuse" && b.status !== "brouillon").length;
                       return (
@@ -4467,8 +4473,9 @@ export default function Admin() {
                           <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>{livres.length} livre{livres.length>1?"s":""} ›</div>
                         </div>
                       );
-                    })
-                  )
+                    });
+                  })()}
+                  </div>
                 )}
               </div>
             )}
