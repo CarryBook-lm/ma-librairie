@@ -674,7 +674,7 @@ export default function Admin() {
   const chargerTodo = async () => {
     try {
       const [{ count: nbLivres }, { count: nbKyc }, { count: nbRetraits }, { count: nbSupport }] = await Promise.all([
-        supabase.from("books").select("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("status", "en_attente"),
+        supabase.from("books").select("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("moderation", "en_attente"),
         supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "en_attente"),
         supabase.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
         supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("cote", "auteur").eq("lu_admin", false),
