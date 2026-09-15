@@ -774,13 +774,13 @@ export default function Admin() {
     const motif = window.prompt("Motif de la désactivation (l'auteur le recevra) :", "");
     if (motif === null) return;
     if (!motif.trim()) { alert("Entre un motif."); return; }
-    const { error } = await supabase.from("books").update({ status: "refuse", moderation: "refuse", motif_refus: motif.trim() }).eq("id", b.id);
+    const { error } = await supabase.from("books").update({ status: "en_attente", moderation: "refuse", motif_refus: motif.trim() }).eq("id", b.id);
     if (error) { alert("Erreur : " + error.message); return; }
     if (b.auteur_id) {
       const texte = "🔴 Ton livre « " + b.title + " » a été désactivé.\n\nMotif : " + motif.trim() + "\n\nCorrige-le puis resoumets-le pour validation.";
       try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
     }
-    setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, status: "refuse", moderation: "refuse" } : x));
+    setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, status: "en_attente", moderation: "refuse" } : x));
     alert("Livre désactivé. L'auteur a été prévenu dans son Support.");
   };
   const toggleMasque = async (b) => {
