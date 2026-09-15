@@ -17294,7 +17294,7 @@ export default function App() {
     // Minimum 30 pages (~7500 mots à 250 mots/page) pour les romans texte — sauf admin (id 8)
     if (f.type === "roman" && !(auteurProfil && auteurProfil.id === 8)) {
       const nbMots = (f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
-      if (nbMots < 7500) { setPubMsg("📕 Ton roman est trop court (environ " + Math.max(1, Math.round(nbMots / 250)) + " page(s)). Il faut au moins 30 pages (~7 500 mots) pour publier. Ajoute du contenu puis réessaie."); return; }
+      if (nbMots < 4500) { setPubMsg("📕 Ton roman est trop court (environ " + Math.max(1, Math.round(nbMots / 250)) + " page(s)). Il faut au moins 18 pages (~4 500 mots) pour publier. Ajoute du contenu puis réessaie."); return; }
     }
     setPubSaving(true); setPubMsg("");
     try {
