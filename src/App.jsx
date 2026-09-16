@@ -13545,6 +13545,20 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
   const [installPlatform, setInstallPlatform] = useState("other"); // android, ios, desktop, other
+  const [showDailyInstall, setShowDailyInstall] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        if (standalone) return;
+        const today = new Date().toISOString().slice(0, 10);
+        if (localStorage.getItem("carrybooks_install_popup") === today) return;
+        setShowDailyInstall(true);
+      } catch (e) {}
+    }, 4000);
+    return () => clearTimeout(t);
+  }, []);
+  const fermerDailyInstall = () => { setShowDailyInstall(false); try { localStorage.setItem("carrybooks_install_popup", new Date().toISOString().slice(0, 10)); } catch (e) {} };
 
   useEffect(() => {
     // Détecter si déjà installé
@@ -20634,6 +20648,26 @@ export default function App() {
       )}
 
       {bandeauInstallNode}
+
+      {/* 📲 POPUP QUOTIDIEN D'INSTALLATION */}
+      {showDailyInstall && (
+        <div onClick={fermerDailyInstall} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, maxWidth: 360, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+            <div style={{ fontSize: 46, marginBottom: 6 }}>📲</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Installe l’application CarryBooks</div>
+            <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6, marginBottom: 18 }}>Accède à tes livres plus vite, même hors connexion, directement depuis ton écran d’accueil.</div>
+            {installPlatform === "ios" ? (
+              <div style={{ textAlign: "left", background: "#f7f4ee", borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Sur iPhone, en 3 étapes :</div>
+                <div style={{ fontSize: 13, color: "#444", lineHeight: 1.9 }}>1️⃣ Appuie sur le bouton <b>Partager</b> <span style={{ fontSize: 16 }}>⬆️</span> (en bas de Safari)<br/>2️⃣ Choisis <b>« Sur l’écran d’accueil »</b> <span style={{ fontSize: 15 }}>➕</span><br/>3️⃣ Appuie sur <b>Ajouter</b></div>
+              </div>
+            ) : (
+              <button onClick={() => { fermerDailyInstall(); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "linear-gradient(135deg, #6a11cb, #2575fc)", color: "#fff", border: "none", borderRadius: 12, fontWeight: "bold", fontSize: 16, cursor: "pointer", marginBottom: 12, boxShadow: "0 6px 18px rgba(106,17,203,0.4)" }}>📥 Installer maintenant</button>
+            )}
+            <button onClick={fermerDailyInstall} style={{ width: "100%", padding: 11, background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>Plus tard</button>
+          </div>
+        </div>
+      )}
 
       {/* 🍎 POPUP INSTRUCTIONS iOS */}
       {showIosInstructions && (
