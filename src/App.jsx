@@ -16847,7 +16847,7 @@ export default function App() {
 
   function getPages(content) {
     if (!content) return ["Ce livre n'a pas encore de contenu."];
-    const paragraphs = content.split(/\n\n+/).filter(p => p.trim());
+    const paragraphs = content.split(/\n+/).filter(p => p.trim());
     const pages = [];
     let current = "";
     for (const para of paragraphs) {
@@ -18703,8 +18703,8 @@ export default function App() {
     // In scroll mode, show all paragraphs; in page mode show current page only
     // En scroll, on filtre les marqueurs spéciaux (qui ne sont pas du texte affichable)
     const scrollAllParagraphs = readerScrollMode
-      ? pages.filter(p => !p.startsWith("__SPECIAL_")).flatMap(p => p.split(/\n\n+/).filter(x => x.trim()))
-      : (pages[readingPage] && !isSpecialPage ? pages[readingPage].split(/\n\n+/).filter(p => p.trim().length > 0) : []);
+      ? pages.filter(p => !p.startsWith("__SPECIAL_")).flatMap(p => p.split(/\n+/).filter(x => x.trim()))
+      : (pages[readingPage] && !isSpecialPage ? pages[readingPage].split(/\n+/).filter(p => p.trim().length > 0) : []);
 
     // ========== NAVIGATION PAGES (avec animation slide) ==========
     function goToNextPage() {
