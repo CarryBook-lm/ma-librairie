@@ -13937,6 +13937,7 @@ export default function App() {
   const [tutoMsg, setTutoMsg] = useState("");
   const tutoEditorRef = useRef(null);
   const romanEditorRef = useRef(null);
+  const romanHistRef = useRef([]);
   const romanNormalize = (html) => {
     let t = html || "";
     t = t.replace(/<div><br\s*\/?><\/div>/gi, "\n");
@@ -13951,7 +13952,59 @@ export default function App() {
     return t;
   };
   const syncRoman = () => { if (romanEditorRef.current) { const v = romanNormalize(romanEditorRef.current.innerHTML); setPubForm(f => ({ ...f, content: v })); setPubErrors(p => ({ ...p, content: false })); } };
-  const wrapRomanSel = (tag) => { const ta = romanEditorRef.current; if (!ta) return; const s = ta.selectionStart, e = ta.selectionEnd; if (s === e) { ta.focus(); return; } const v = pubForm.content || ""; const sel = v.slice(s, e); const nv = v.slice(0, s) + "<" + tag + ">" + sel + "</" + tag + ">" + v.slice(e); setPubForm(f => ({ ...f, content: nv })); setPubErrors(p => ({ ...p, content: false })); setTimeout(() => { try { ta.focus(); ta.setSelectionRange(s, e + tag.length * 2 + 5); } catch (er) {} }, 0); };
+  // --- Editeur de roman : mise en forme sans faire bouger l'ecran -------------
+  // 20/09 : la barre G/I/S et le collage renvoyaient au debut du texte. On memorise
+  // la position du curseur ET le defilement (zone + page) AVANT la modification,
+  // puis on les remet apres le rendu de React. focus({preventScroll:true}) empeche
+  // le navigateur de sauter tout seul sur la zone de saisie.
+  const pousserHistRoman = (v) => { try { const h = romanHistRef.current; h.push(String(v == null ? "" : v)); if (h.length > 60) h.shift(); } catch (e) {} };
+  const restaurerVueRoman = (ta, selDeb, selFin, scrollZone, scrollPage) => {
+    const remettre = () => {
+      try {
+        if (ta.focus) { try { ta.focus({ preventScroll: true }); } catch (e2) { ta.focus(); } }
+        const max = (ta.value || "").length;
+        ta.setSelectionRange(Math.min(selDeb, max), Math.min(selFin, max));
+        ta.scrollTop = scrollZone;
+        window.scrollTo(0, scrollPage);
+      } catch (e) {}
+    };
+    try { requestAnimationFrame(() => { remettre(); requestAnimationFrame(remettre); }); } catch (e) { setTimeout(remettre, 0); }
+    setTimeout(remettre, 60);
+  };
+  const wrapRomanSel = (tag) => {
+    const ta = romanEditorRef.current; if (!ta) return;
+    const s = ta.selectionStart, e = ta.selectionEnd;
+    if (s === e) { try { ta.focus({ preventScroll: true }); } catch (er) { ta.focus(); } return; }
+    const v = pubForm.content || "";
+    const scZone = ta.scrollTop, scPage = window.scrollY || window.pageYOffset || 0;
+    pousserHistRoman(v);
+    const ouvre = "<" + tag + ">", ferme = "</" + tag + ">";
+    const nv = v.slice(0, s) + ouvre + v.slice(s, e) + ferme + v.slice(e);
+    setPubForm(f => ({ ...f, content: nv }));
+    setPubErrors(p => ({ ...p, content: false }));
+    restaurerVueRoman(ta, s, e + ouvre.length + ferme.length, scZone, scPage);
+  };
+  // Annule la derniere mise en forme ou le dernier collage (Ctrl+Z ne marche plus
+  // une fois que le texte est modifie par le code).
+  const undoRoman = () => {
+    const h = romanHistRef.current;
+    if (!h || !h.length) return;
+    const prec = h.pop();
+    const ta = romanEditorRef.current;
+    const scZone = ta ? ta.scrollTop : 0, scPage = window.scrollY || window.pageYOffset || 0;
+    const pos = ta ? Math.min(ta.selectionStart, prec.length) : 0;
+    setPubForm(f => ({ ...f, content: prec }));
+    setPubErrors(p => ({ ...p, content: false }));
+    if (ta) restaurerVueRoman(ta, pos, pos, scZone, scPage);
+  };
+  // Collage : le curseur et l'ecran restent AU DEBUT du texte colle.
+  const collerRoman = (ev) => {
+    const ta = ev.currentTarget || ev.target; if (!ta) return;
+    const pos = ta.selectionStart;
+    const scZone = ta.scrollTop, scPage = window.scrollY || window.pageYOffset || 0;
+    pousserHistRoman(pubForm.content || "");
+    restaurerVueRoman(ta, pos, pos, scZone, scPage);
+  };
   const chargerTutos = async () => { const { data } = await supabase.from("tutoriels").select("*").order("ordre", { ascending: true }).order("created_at", { ascending: false }); setTutos(data || []); };
   const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd }); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
   const enregistrerTuto = async () => { const html = tutoEditorRef.current ? tutoEditorRef.current.innerHTML : ""; if (!tutoImg) { setTutoMsg("Ajoute une image (16:9)."); return; } const payload = { image_url: tutoImg, lien: tutoLien.trim() || null, texte_html: html, actif: true }; try { if (tutoEditId) { await supabase.from("tutoriels").update(payload).eq("id", tutoEditId); } else { await supabase.from("tutoriels").insert([payload]); } setTutoImg(""); setTutoLien(""); setTutoEditId(null); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg("OK_ENREGISTRE"); await chargerTutos(); } catch (e) { setTutoMsg("Erreur : " + (e && e.message)); } };
@@ -17965,13 +18018,13 @@ export default function App() {
                     <>
                       <label style={labelSt}>Texte du roman *</label>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                        <button onClick={() => wrapRomanSel("b")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
-                        <button onClick={() => wrapRomanSel("i")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
-                        <button onClick={() => wrapRomanSel("u")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
-                        
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("b")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("i")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("u")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={undoRoman} title="Annuler la dernière mise en forme ou le dernier collage" style={{ height: 36, padding: "0 12px", border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontSize: 13, fontWeight: "bold", color: G.textDim }}>↩️ Annuler</button>
                       </div>
-                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page.</div>
-                      <textarea ref={romanEditorRef} value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, resize: "vertical", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page. ↩️ Annuler revient en arrière.</div>
+                      <textarea ref={romanEditorRef} onPaste={collerRoman} value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, resize: "vertical", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
                     </>
                   ) : pubForm.type === "audio" ? (
                     <>
