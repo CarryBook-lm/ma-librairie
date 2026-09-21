@@ -18108,8 +18108,14 @@ export default function App() {
                 <div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
+                  {mesLivres.filter(b => b.moderation === "refuse").length > 0 && (
+                    <div onClick={() => setMesLivresTab("refuse")} style={{ background: "#fdecea", border: "1px solid #e53935", borderRadius: 10, padding: 12, marginBottom: 12, cursor: "pointer" }}>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: "#c62828", marginBottom: 4 }}>❌ {mesLivres.filter(b => b.moderation === "refuse").length} livre(s) refusé(s)</div>
+                      <div style={{ fontSize: 12, color: "#7a2a24", lineHeight: 1.5 }}>Appuie ici pour ouvrir l’onglet Refusés, lire le motif du refus, corriger le livre puis renvoyer le livre à la validation.</div>
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                    {[{ t: null, l: "Tous mes livres" }, { t: "edition", l: "En cours d'édition" }, { t: "attente", l: "En attente" }].map(o => (
+                    {[{ t: null, l: "Tous mes livres" }, { t: "edition", l: "En cours d'édition" }, { t: "attente", l: "En attente" }, { t: "refuse", l: "❌ Refusés" }].map(o => (
                       <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
@@ -18120,7 +18126,7 @@ export default function App() {
                   </div>
                   {(() => {
                     const classer = (b) => b.audio_url ? "audio" : ((b.content && b.content.length > 0 && !b.pdf_url) ? "roman" : (((b.price || 0) === 0) ? "gratuit" : "guide"));
-                    const parStatut = mesLivresTab === "edition" ? mesLivres.filter(b => b.status === "brouillon") : mesLivresTab === "attente" ? mesLivres.filter(b => b.status !== "actif" && b.status !== "brouillon" && b.moderation !== "refuse") : mesLivres.filter(b => b.status === "actif");
+                    const parStatut = mesLivresTab === "edition" ? mesLivres.filter(b => b.status === "brouillon") : mesLivresTab === "attente" ? mesLivres.filter(b => b.status !== "actif" && b.status !== "brouillon" && b.moderation !== "refuse") : mesLivresTab === "refuse" ? mesLivres.filter(b => b.moderation === "refuse") : mesLivres;
                     const liste = mesLivresType ? parStatut.filter(b => classer(b) === mesLivresType) : parStatut;
                     return liste.length === 0 ? (
                     <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>{mesLivresLoading ? "⏳ Chargement en cours…" : (mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie.")}</div>
@@ -18138,7 +18144,7 @@ export default function App() {
                               <span style={{ fontSize: 12, color: st.c, fontWeight: "bold" }}>{st.t}</span>
                               <span style={{ fontSize: 14, color: G.gold, fontWeight: "bold" }}>{b.price ? b.price + " F" : "Gratuit"}</span>
                             </div>
-                            {b.moderation === "refuse" && b.motif_refus ? <div style={{ fontSize: 11, color: "#e53935", marginTop: 4 }}>{b.motif_refus}</div> : null}
+                            {b.moderation === "refuse" ? <div style={{ fontSize: 12, color: "#c62828", marginTop: 6, background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", lineHeight: 1.5 }}><b>Motif du refus :</b> {b.motif_refus || "aucun motif n'a été indiqué — écris à CarryBooks pour connaître le motif."}</div> : null}
                           </div>
                         </div>
                       );
@@ -18161,6 +18167,7 @@ export default function App() {
                               {b.category ? <div style={{ fontSize: 12, color: G.textDim, marginTop: 2 }}>{b.category}{b.subcategory ? " · " + b.subcategory : ""}</div> : null}
                             </div>
                           </div>
+                          {b.moderation === "refuse" ? <div style={{ fontSize: 13, color: "#c62828", lineHeight: 1.6, marginBottom: 12, background: "#fdecea", border: "1px solid #e53935", borderRadius: 8, padding: 12 }}><b>❌ Motif du refus</b><br/>{b.motif_refus || "Aucun motif n'a été indiqué. Écris à CarryBooks pour connaître le motif."}<br/><br/><span style={{ color: "#7a2a24" }}>Corrige ton livre avec le bouton ✏️ Modifier ci-dessous, puis renvoie ton livre à la validation.</span></div> : null}
                           {b.summary ? <div style={{ fontSize: 13, color: G.text, lineHeight: 1.5, marginBottom: 12, maxHeight: 120, overflowY: "auto", background: G.bg, borderRadius: 8, padding: 10 }}>{b.summary}</div> : null}
                           {b.status === "actif" && auteurProfil.code_source ? (
                             <div style={{ marginBottom: 14 }}>
