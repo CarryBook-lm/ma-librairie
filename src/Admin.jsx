@@ -802,9 +802,26 @@ export default function Admin() {
   const refuserLivre = async (b) => {
     const motif = window.prompt("Motif du refus (visible par l'auteur) :", "");
     if (motif === null) return;
-    const { error } = await supabase.from("books").update({ status: "refuse", moderation: "refuse", motif_refus: motif || "Livre non conforme." }).eq("id", b.id);
+    const motifFinal = motif.trim() || "Livre non conforme.";
+    const { error } = await supabase.from("books").update({ status: "refuse", moderation: "refuse", motif_refus: motifFinal }).eq("id", b.id);
     if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    // 21/09 : l'auteur est desormais prevenu DEUX fois (avant, il n'etait prevenu
+    // nulle part et ecrivait pour demander le motif) : dans son Support, comme pour
+    // une desactivation, et par email. Aucun des deux ne doit bloquer le refus.
+    if (b.auteur_id) {
+      const texte = "❌ Ton livre « " + b.title + " » n'a pas été publié.\n\nMotif : " + motifFinal + "\n\nOuvre Mes livres > onglet Refusés, corrige ton livre puis renvoie ton livre à la validation.";
+      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
+    }
+    let info = "";
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess && sess.session ? sess.session.access_token : "";
+      const rep = await fetch("/api/notifier-refus", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ book_id: b.id, token }) });
+      const rj = await rep.json().catch(() => ({}));
+      info = (rj && rj.ok) ? "\n📧 Email envoyé à " + rj.email : "\n⚠️ Email NON envoyé : " + ((rj && rj.error) || "raison inconnue");
+    } catch (e) { info = "\n⚠️ Email NON envoyé : " + (e && e.message); }
     await reloadAValider();
+    alert("Livre refusé. L'auteur a reçu le motif dans son Support." + info);
   };
   const fileInputRef = useRef(null);
 
