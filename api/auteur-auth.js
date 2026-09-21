@@ -245,14 +245,14 @@ export default async function handler(req, res) {
       const image_url = String(body.image_url || "").trim();
       const lien = String(body.lien || "").trim();
       if (!id) return res.status(400).json({ error: "id requis." });
-      if (!image_url) return res.status(400).json({ error: "Ajoute une image pour cette annonce." });
-      if (!lien) return res.status(400).json({ error: "Colle le lien vers ton livre." });
+      if (!image_url) return res.status(400).json({ error: "Image manquante." });
+      if (!lien) return res.status(400).json({ error: "Lien manquant." });
       // UN MEME LIEN NE PEUT PAS SERVIR DEUX FOIS chez le meme auteur, tant que
       // l'annonce qui le porte n'a pas ete supprimee.
       const { data: deja } = await supa.from("annonces_pub").select("id, lien, statut").eq("auteur_id", id);
       const cible = lienNormalise(lien);
       const doublon = (deja || []).find(a => a.statut !== "refusee" && lienNormalise(a.lien) === cible);
-      if (doublon) return res.status(409).json({ error: "Ce lien est déjà utilisé par une de tes annonces. Deux solutions, au choix : change l'image de l'annonce existante dans « Mes annonces », juste en dessous, ou supprime l'annonce existante pour pouvoir créer une nouvelle annonce avec ce lien." });
+      if (doublon) return res.status(409).json({ error: "Tu as deja une annonce qui pointe vers ce lien. Supprime l'annonce existante plus bas avant d'en creer une nouvelle avec le meme lien." });
       const { data, error } = await supa.from("annonces_pub")
         .insert([{ auteur_id: id, image_url, lien, statut: "active" }])
         .select("id, image_url, lien, statut, motif_refus, created_at").maybeSingle();
@@ -265,13 +265,13 @@ export default async function handler(req, res) {
       const annonce_id = body.annonce_id;
       const image_url = String(body.image_url || "").trim();
       if (!id || !annonce_id) return res.status(400).json({ error: "id et annonce_id requis." });
-      if (!image_url) return res.status(400).json({ error: "Ajoute une image pour cette annonce." });
+      if (!image_url) return res.status(400).json({ error: "Image manquante." });
       // .eq("auteur_id", id) : un auteur ne peut toucher QUE ses propres annonces.
       const { data, error } = await supa.from("annonces_pub").update({ image_url })
         .eq("id", annonce_id).eq("auteur_id", id)
         .select("id, image_url, lien, statut, motif_refus, created_at").maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
-      if (!data) return res.status(404).json({ error: "Cette annonce est introuvable. Recharge la page." });
+      if (!data) return res.status(404).json({ error: "Annonce introuvable." });
       return res.status(200).json({ ok: true, annonce: data });
     }
 
