@@ -799,12 +799,35 @@ export default function Admin() {
     await reloadAValider();
     alert("✅ Livre publié.");
   };
-  const refuserLivre = async (b) => {
-    const motif = window.prompt("Motif du refus (visible par l'auteur) :", "");
-    if (motif === null) return;
-    const motifFinal = motif.trim() || "Livre non conforme.";
+  // 21/09 : les motifs de refus les plus frequents sont pre-ecrits. On les choisit
+  // dans une liste au lieu de les retaper a chaque fois. Chaque message dit a
+  // l'auteur QUOI FAIRE pour corriger, pas seulement ce qui ne va pas.
+  const MOTIFS_REFUS = [
+    { g: "Longueur", t: "Trop court", m: "Ton livre est trop court pour être publié sur CarryBooks. Un livre doit faire au moins 30 pages. Complète ton texte, puis renvoie ton livre à la validation." },
+    { g: "Longueur", t: "Contenu trop superficiel", m: "Ton livre a la longueur requise, mais le contenu reste trop survolé : les lecteurs attendent des explications, des exemples et des étapes concrètes. Développe chaque partie, puis renvoie ton livre à la validation." },
+    { g: "Couverture", t: "Couverture au mauvais format", m: "Ta couverture n’est pas au bon format. Il faut une image A4 portrait, vue de face, et non une affiche ou une photo de livre posé. Remplace la couverture, puis renvoie ton livre à la validation." },
+    { g: "Couverture", t: "Couverture de mauvaise qualité", m: "Ta couverture est floue ou pixelisée. Envoie une image nette, en A4 portrait, pour que ton livre inspire confiance aux lecteurs." },
+    { g: "Couverture", t: "La couverture promet autre chose", m: "Ta couverture annonce un contenu que le livre ne contient pas. Modifie la couverture ou complète le livre pour que la couverture et le contenu correspondent, puis renvoie ton livre à la validation." },
+    { g: "Format du fichier", t: "Roman envoyé en PDF", m: "Les romans se publient uniquement en mode Texte, jamais en PDF. Retourne dans Publier, choisis Roman (Texte), colle ton texte, puis soumets ton roman." },
+    { g: "Format du fichier", t: "PDF mal mis en page", m: "Ton PDF doit être en A4, avec une police de taille 15, et le numéro de page en bas au centre. Refais la mise en page, puis renvoie ton livre à la validation." },
+    { g: "Lisibilité du roman", t: "Pas de saut de ligne", m: "Ton roman n’a pas de sauts de ligne entre les paragraphes et les dialogues, la lecture est pénible. Saute une ligne à chaque paragraphe et à chaque réplique, puis renvoie ton roman à la validation." },
+    { g: "Lisibilité du roman", t: "Trop d’interlignes", m: "Laisse un seul saut de ligne entre les répliques, pas deux : la lecture sera plus fluide. Corrige ton texte, puis renvoie ton roman à la validation." },
+    { g: "Droits", t: "Tu n’es pas l’auteur", m: "Ce livre n’est pas de toi. Si tu détiens les droits de vente, publie ce livre avec le bouton « Publier pour un auteur (Éditeurs) » et coche la certification des droits. Sinon, ce livre ne peut pas être publié sur CarryBooks." },
+    { g: "Droits", t: "Contenu protégé", m: "Ce livre reprend une œuvre protégée sans autorisation. CarryBooks ne peut pas publier ce livre." },
+    { g: "Autres", t: "Résumé insuffisant", m: "Ton résumé est trop court pour donner envie d’acheter. Écris quelques phrases qui présentent l’histoire ou le contenu, puis renvoie ton livre à la validation." },
+  ];
+  const [refusLivre, setRefusLivre] = useState(null);   // le livre en cours de refus
+  const [refusChoix, setRefusChoix] = useState(null);   // index du motif choisi
+  const [refusTexte, setRefusTexte] = useState("");     // motif ecrit a la main
+  const [refusEnvoi, setRefusEnvoi] = useState(false);
+  const refuserLivre = (b) => { setRefusLivre(b); setRefusChoix(null); setRefusTexte(""); };
+  const confirmerRefus = async () => {
+    const b = refusLivre; if (!b) return;
+    const motifFinal = (refusChoix === null ? refusTexte : MOTIFS_REFUS[refusChoix].m).trim();
+    if (!motifFinal) { alert("Choisis un motif dans la liste, ou écris un motif."); return; }
+    setRefusEnvoi(true);
     const { error } = await supabase.from("books").update({ status: "refuse", moderation: "refuse", motif_refus: motifFinal }).eq("id", b.id);
-    if (error) { alert("Erreur (droits ?) : " + error.message); return; }
+    if (error) { setRefusEnvoi(false); alert("Erreur (droits ?) : " + error.message); return; }
     // 21/09 : l'auteur est desormais prevenu DEUX fois (avant, il n'etait prevenu
     // nulle part et ecrivait pour demander le motif) : dans son Support, comme pour
     // une desactivation, et par email. Aucun des deux ne doit bloquer le refus.
@@ -821,6 +844,7 @@ export default function Admin() {
       info = (rj && rj.ok) ? "\n📧 Email envoyé à " + rj.email : "\n⚠️ Email NON envoyé : " + ((rj && rj.error) || "raison inconnue");
     } catch (e) { info = "\n⚠️ Email NON envoyé : " + (e && e.message); }
     await reloadAValider();
+    setRefusEnvoi(false); setRefusLivre(null); setRefusChoix(null); setRefusTexte("");
     alert("Livre refusé. L'auteur a reçu le motif dans son Support." + info);
   };
   const fileInputRef = useRef(null);
@@ -4436,6 +4460,34 @@ export default function Admin() {
                       </div>
                     );
                   })
+                )}
+                {refusLivre && (
+                  <div onClick={() => { if (!refusEnvoi) setRefusLivre(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
+                    <div onClick={e => e.stopPropagation()} style={{ background: "#141414", border: "1px solid #c9a84c55", borderRadius: 14, padding: 18, width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto" }}>
+                      <div style={{ color: "#c9a84c", fontSize: 16, fontWeight: "bold", marginBottom: 2 }}>❌ Refuser ce livre</div>
+                      <div style={{ color: "#aaa", fontSize: 12.5, marginBottom: 14 }}>{refusLivre.title}</div>
+                      <div style={{ color: "#888", fontSize: 11.5, marginBottom: 10 }}>Choisis un motif. L’auteur recevra ce motif dans son espace, dans son Support et par email.</div>
+                      {MOTIFS_REFUS.map((mo, i) => {
+                        const choisi = refusChoix === i;
+                        const nouveauGroupe = i === 0 || MOTIFS_REFUS[i - 1].g !== mo.g;
+                        return (
+                          <div key={i}>
+                            {nouveauGroupe ? <div style={{ color: "#6f6f6f", fontSize: 10.5, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, margin: "12px 0 6px" }}>{mo.g}</div> : null}
+                            <div onClick={() => { setRefusChoix(i); setRefusTexte(""); }} style={{ border: "1px solid " + (choisi ? "#c9a84c" : "#2a2a2a"), background: choisi ? "#2a2410" : "#0f0f0f", borderRadius: 10, padding: "10px 12px", marginBottom: 6, cursor: "pointer" }}>
+                              <div style={{ color: choisi ? "#c9a84c" : "#ddd", fontSize: 13, fontWeight: "bold", marginBottom: choisi ? 6 : 0 }}>{choisi ? "◉ " : "○ "}{mo.t}</div>
+                              {choisi ? <div style={{ color: "#bbb", fontSize: 12, lineHeight: 1.5 }}>{mo.m}</div> : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{ color: "#6f6f6f", fontSize: 10.5, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, margin: "12px 0 6px" }}>Autre motif</div>
+                      <textarea value={refusTexte} onChange={e => { setRefusTexte(e.target.value); if (e.target.value) setRefusChoix(null); }} placeholder="Écris un motif si aucun de la liste ne convient…" style={{ width: "100%", minHeight: 70, boxSizing: "border-box", background: "#0f0f0f", border: "1px solid " + (refusChoix === null && refusTexte ? "#c9a84c" : "#2a2a2a"), borderRadius: 10, color: "#ddd", fontSize: 13, padding: 10, lineHeight: 1.5 }} />
+                      <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                        <button onClick={() => setRefusLivre(null)} disabled={refusEnvoi} style={{ flex: 1, padding: "12px 0", background: "#0f0f0f", color: "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, cursor: refusEnvoi ? "not-allowed" : "pointer" }}>Annuler</button>
+                        <button onClick={confirmerRefus} disabled={refusEnvoi} style={{ flex: 1, padding: "12px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: refusEnvoi ? "not-allowed" : "pointer", opacity: refusEnvoi ? 0.6 : 1 }}>{refusEnvoi ? "Envoi…" : "❌ Refuser et prévenir l’auteur"}</button>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 {eaLireTexte && (
                   <div onClick={() => setEaLireTexte(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
