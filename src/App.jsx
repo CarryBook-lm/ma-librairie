@@ -13931,6 +13931,9 @@ export default function App() {
   const [annonceUploading, setAnnonceUploading] = useState(false);
   const [annonceSending, setAnnonceSending] = useState(false);
   const [annonceMsg, setAnnonceMsg] = useState("");
+  const [mesAnnonces, setMesAnnonces] = useState([]);
+  const [mesAnnoncesLoading, setMesAnnoncesLoading] = useState(false);
+  const [annonceBusyId, setAnnonceBusyId] = useState(null);
   const [tutoBookTab, setTutoBookTab] = useState("auteur");
   const [tutos, setTutos] = useState([]);
   const [tutoImg, setTutoImg] = useState("");
@@ -14026,15 +14029,55 @@ export default function App() {
     } catch (e) { setAnnonceMsg("Erreur lors de l'envoi de l'image. Reessaie."); }
     setAnnonceUploading(false);
   };
+  // 21/09 : les annonces passent par le serveur (api/auteur-auth). Il refuse un
+  // lien deja utilise par cet auteur, et c'est lui qui autorise la modification
+  // de l'image et la suppression : la table ne sait pas reconnaitre un auteur.
+  const appelAnnonce = async (payload) => {
+    const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, id: auteurProfil.id }) });
+    return await res.json().catch(() => ({}));
+  };
+  const chargerMesAnnonces = async () => {
+    if (!auteurProfil || !auteurProfil.id) return;
+    setMesAnnoncesLoading(true);
+    try { const d = await appelAnnonce({ action: "annonces_lister" }); setMesAnnonces((d && d.annonces) || []); } catch (e) {}
+    setMesAnnoncesLoading(false);
+  };
   const soumettreAnnonce = async () => {
-    if (!annonceImg) { setAnnonceMsg("Ajoute une banniere 16:9."); return; }
+    if (!annonceImg) { setAnnonceMsg("Ajoute une banniere au format A4 paysage."); return; }
     if (!annonceLien.trim()) { setAnnonceMsg("Colle le lien vers ton livre."); return; }
     setAnnonceSending(true); setAnnonceMsg("");
     try {
-      const { error } = await supabase.from("annonces_pub").insert([{ auteur_id: auteurProfil.id, image_url: annonceImg, lien: annonceLien.trim(), statut: "active" }]);
-      if (error) { setAnnonceMsg("Erreur : " + error.message); } else { setAnnonceImg(""); setAnnonceLien(""); setAnnonceMsg("OK_ENVOYE"); setPubTypeSelected(null); }
+      const d = await appelAnnonce({ action: "annonce_creer", image_url: annonceImg, lien: annonceLien.trim() });
+      if (d && d.ok) { setAnnonceImg(""); setAnnonceLien(""); setAnnonceMsg("OK_ENVOYE"); await chargerMesAnnonces(); }
+      else { setAnnonceMsg((d && d.error) || "Erreur lors de l'envoi de l'annonce."); }
     } catch (e) { setAnnonceMsg("Erreur : " + (e && e.message)); }
     setAnnonceSending(false);
+  };
+  const changerImageAnnonce = async (annonce, file) => {
+    if (!file || !annonce) return;
+    setAnnonceBusyId(annonce.id); setAnnonceMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      const url = data && data.success && data.data ? data.data.url : "";
+      if (!url) { setAnnonceMsg("Erreur lors de l'envoi de l'image. Reessaie."); setAnnonceBusyId(null); return; }
+      const d = await appelAnnonce({ action: "annonce_image", annonce_id: annonce.id, image_url: url });
+      if (d && d.ok) { setMesAnnonces(prev => prev.map(a => a.id === annonce.id ? d.annonce : a)); }
+      else { setAnnonceMsg((d && d.error) || "Impossible de changer l'image."); }
+    } catch (e) { setAnnonceMsg("Erreur : " + (e && e.message)); }
+    setAnnonceBusyId(null);
+  };
+  const supprimerMonAnnonce = async (annonce) => {
+    if (!annonce) return;
+    if (!window.confirm("Supprimer cette annonce ? Elle disparaîtra de l'accueil, et tu pourras à nouveau utiliser ce lien.")) return;
+    setAnnonceBusyId(annonce.id); setAnnonceMsg("");
+    try {
+      const d = await appelAnnonce({ action: "annonce_supprimer", annonce_id: annonce.id });
+      if (d && d.ok) { setMesAnnonces(prev => prev.filter(a => a.id !== annonce.id)); }
+      else { setAnnonceMsg((d && d.error) || "Impossible de supprimer l'annonce."); }
+    } catch (e) { setAnnonceMsg("Erreur : " + (e && e.message)); }
+    setAnnonceBusyId(null);
   };
   const [mesLivres, setMesLivres] = useState([]);
   const [mesLivresLoading, setMesLivresLoading] = useState(true);
@@ -14079,6 +14122,9 @@ export default function App() {
   const [kycMsg, setKycMsg] = useState("");
   const [pubEditId, setPubEditId] = useState(null);
   const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
+  // 21/09 : cet effet DOIT rester APRES la creation de pubTypeSelected. Place plus
+  // haut, il lisait la variable avant son existence -> ecran blanc sur TOUT le site.
+  useEffect(() => { if (pubTypeSelected === "annonce" && auteurProfil && auteurProfil.id) chargerMesAnnonces(); }, [pubTypeSelected, auteurProfil && auteurProfil.id]);
   const [pubDraftMode, setPubDraftMode] = useState(true); // true = nouveau/brouillon (auto-save actif)
   const [pubSavingDraft, setPubSavingDraft] = useState(false);
   const [pubDraftMsg, setPubDraftMsg] = useState("");
@@ -17936,6 +17982,30 @@ export default function App() {
                   <div style={{ height: 14 }} />
                   {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce publiee ! Elle est maintenant visible sur l’accueil.</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
                   <button onClick={soumettreAnnonce} disabled={annonceSending} style={{ width: "100%", padding: 14, background: G.gold, color: "#1a1208", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: annonceSending ? 0.6 : 1 }}>{annonceSending ? "Envoi…" : "📤 Soumettre l’annonce"}</button>
+                  <div style={{ height: 22 }} />
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📢 Mes annonces</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Toutes tes annonces sont listées ici. Tu peux changer l’image d’une annonce ou supprimer une annonce. Un même lien ne peut servir qu’à une seule annonce : pour réutiliser un lien, supprime d’abord l’annonce qui porte ce lien.</div>
+                  {mesAnnoncesLoading ? (
+                    <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>⏳ Chargement en cours…</div>
+                  ) : mesAnnonces.length === 0 ? (
+                    <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>Tu n’as encore aucune annonce.</div>
+                  ) : mesAnnonces.map(a => {
+                    const stA = a.statut === "active" ? { t: "✅ En ligne", c: G.green } : a.statut === "refusee" ? { t: "❌ Refusée", c: "#e11d48" } : { t: "⏳ En attente de validation", c: "#c9a84c" };
+                    const occupe = annonceBusyId === a.id;
+                    return (
+                      <div key={a.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: "#fff" }}>
+                        <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, display: "block", marginBottom: 8 }} />
+                        <div style={{ fontSize: 12, fontWeight: "bold", color: stA.c, marginBottom: 4 }}>{stA.t}</div>
+                        <div style={{ fontSize: 11, color: G.textDim, wordBreak: "break-all", marginBottom: 8 }}>{a.lien}</div>
+                        {a.statut === "refusee" && a.motif_refus ? <div style={{ fontSize: 12, color: "#c62828", background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", marginBottom: 8, lineHeight: 1.5 }}><b>Motif du refus :</b> {a.motif_refus}</div> : null}
+                        <input id={"annonceMaj" + a.id} type="file" accept="image/*" onChange={e => { changerImageAnnonce(a, e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => document.getElementById("annonceMaj" + a.id).click()} disabled={occupe} style={{ flex: 1, padding: 10, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>{occupe ? "Envoi…" : "🖼️ Changer l’image"}</button>
+                          <button onClick={() => supprimerMonAnnonce(a)} disabled={occupe} style={{ flex: 1, padding: 10, background: "#e11d48", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>🗑️ Supprimer</button>
+                        </div>
+                      </div>
+                    );
+                  })}
                   </>) : (<>
                   <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : (pubForm.type === "roman" ? "📖 Publier un Roman" : pubForm.type === "guide" ? "📥 Publier un Livre PDF" : pubForm.type === "audio" ? "🎧 Publier un Livre Audio" : "🎁 Publier un Livre Gratuit")}</div>
