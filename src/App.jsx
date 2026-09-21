@@ -13491,7 +13491,10 @@ export default function App() {
   }, []);
   const [tutosOuverts, setTutosOuverts] = useState({});
   useEffect(() => { supabase.from("tutoriels").select("id, image_url, lien, texte_html").eq("actif", true).order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setTutosAccueil(data || [])); }, []);
-  useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(data || [])); }, []);
+  // 21/09 : les annonces de l'accueil changent de place a chaque ouverture du site.
+  // melangerListe utilise seedMelange, tire une seule fois par chargement de page :
+  // l'ordre reste stable pendant la visite, mais il est different a la visite suivante.
+  useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(melangerListe(data || []))); }, []);
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
