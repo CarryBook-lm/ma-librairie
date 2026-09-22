@@ -13585,15 +13585,19 @@ export default function App() {
     const isAndroid = /android/.test(ua);
     setInstallPlatform(isIos ? "ios" : isAndroid ? "android" : "desktop");
 
-    // Afficher le bandeau pour TOUT LE MONDE tant qu'il n'a pas installé ni fermé
-    if (!refuse) setShowInstallBanner(true);
+    // Afficher le bandeau pour TOUT LE MONDE tant qu'il n'a pas installé ni fermé,
+    // SAUF dans le navigateur integre de Facebook : l'installation y est impossible
+    // (le navigateur de Facebook n'envoie jamais la proposition d'installation).
+    // Un bandeau qui ne peut pas tenir sa promesse vaut moins que rien : il mange
+    // le haut de l'ecran et cache l'en-tete et le bouton Retour. (22/09)
+    if (!refuse && !isInAppBrowser()) setShowInstallBanner(true);
 
     // Écouter l'event d'install (Android, Desktop Chrome/Edge) : on garde
     // l'événement pour l'installation directe et on LAISSE le bandeau.
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
-      if (!refuse) setShowInstallBanner(true);
+      if (!refuse && !isInAppBrowser()) setShowInstallBanner(true);
     };
 
     // Cacher le bandeau dès l'installation (et ne plus le reproposer)
@@ -14591,19 +14595,13 @@ export default function App() {
   // en plusieurs semaines, pour un obstacle pose devant CHAQUE visiteur venu
   // d'une publicite. Il est remplace par une bande fine, que la personne peut
   // ignorer : le livre s'affiche tout de suite.
-  const fbBannerNode = (
-    <div style={{ position: "fixed", top: showInstallBanner ? 38 : 0, left: 0, right: 0, zIndex: 9998, background: "#1a1208", color: "#f5efe2", padding: "8px 10px", display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, lineHeight: 1.35 }}>
-      <span style={{ flex: 1, minWidth: 0 }}>Tu lis dans Facebook. Ouvre CarryBooks dans ton navigateur pour une meilleure lecture.</span>
-      <button onClick={() => {
-        const ua = (navigator.userAgent || "").toLowerCase();
-        if (/android/.test(ua)) {
-          const bare = window.location.href.replace(/^https?:\/\//, "");
-          try { window.location.href = "intent://" + bare + "#Intent;scheme=https;end"; } catch (e) { setFbBannerDismissed(true); }
-        } else { setShowInstallModal(true); }
-      }} style={{ flexShrink: 0, background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: "bold", cursor: "pointer" }}>Ouvrir</button>
-      <button onClick={() => setFbBannerDismissed(true)} aria-label="Fermer" style={{ flexShrink: 0, background: "none", border: "none", color: "#bfb49c", fontSize: 18, lineHeight: 1, cursor: "pointer", padding: "0 2px" }}>✕</button>
-    </div>
-  );
+  // 22/09 — PLUS AUCUN BANDEAU DANS LE NAVIGATEUR DE FACEBOOK.
+  // Etape 1 : l'ecran de blocage plein ecran a ete supprime (il coutait des
+  // visiteurs venus des publicites, pour moins de 10 installations).
+  // Etape 2 : la bande fine qui l'avait remplace cachait l'en-tete et le bouton
+  // Retour, et elle poussait vers une installation de toute facon impossible
+  // depuis Facebook. La page s'affiche donc entiere, sans rien par-dessus.
+  const fbBannerNode = null;
   const [readerScrollMode, setReaderScrollMode] = useState(false);
   const [pageSlideDir, setPageSlideDir] = useState(0); // -1 = retour, 0 = idle, 1 = avance
   const [touchStart, setTouchStart] = useState(null);
