@@ -13551,6 +13551,8 @@ export default function App() {
   // ============================================
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  // Arrivee depuis Facebook avec ?installer=1 : on affiche un grand bouton au centre.
+  const [invitInstall, setInvitInstall] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
   const [installPlatform, setInstallPlatform] = useState("other"); // android, ios, desktop, other
   const [showDailyInstall, setShowDailyInstall] = useState(false);
@@ -13631,13 +13633,21 @@ export default function App() {
       const tenter = () => {
         const p = window.__pwaPrompt;
         if (p) {
-          try { p.prompt(); p.userChoice.then(() => { window.__pwaPrompt = null; setInstallPrompt(null); }).catch(() => {}); } catch (e) {}
+          // Chrome n'ouvre la fenetre d'installation qu'apres une action de la personne
+          // sur la page. Si l'ouverture directe est refusee, le grand bouton prend le
+          // relais : un seul appui, impossible a manquer.
+          try {
+            p.prompt();
+            p.userChoice.then(() => { window.__pwaPrompt = null; setInstallPrompt(null); setInvitInstall(false); }).catch(() => setInvitInstall(true));
+          } catch (e) { setInvitInstall(true); }
           return;
         }
         essais++;
         if (essais < 20) minuteur = setTimeout(tenter, 400); // jusqu'a 8 secondes
         else if (isIos) setShowIosInstructions(true);
       };
+      // le grand bouton s'affiche des l'arrivee : la personne n'attend pas.
+      setInvitInstall(true);
       minuteur = setTimeout(tenter, 400);
     }
 
@@ -13674,7 +13684,18 @@ export default function App() {
     setShowInstallBanner(false);
     try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
   };
-  const bandeauInstallNode = showInstallBanner ? (
+  const fermerInvitInstall = () => { setInvitInstall(false); };
+  const bandeauInstallNode = invitInstall ? (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}>
+        <img src="/icon-192.png" alt="CarryBooks" style={{ width: 84, height: 84, borderRadius: 18, marginBottom: 14 }} />
+        <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginBottom: 6 }}>Installer CarryBooks</div>
+        <div style={{ fontSize: 13, color: "#6a6252", lineHeight: 1.55, marginBottom: 18 }}>Tes livres toujours à portée de main, sans repasser par Facebook.</div>
+        <button onClick={() => { setInvitInstall(false); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📲 Installer CarryBooks</button>
+        <button onClick={fermerInvitInstall} style={{ width: "100%", padding: 11, background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer", marginTop: 6 }}>Plus tard</button>
+      </div>
+    </div>
+  ) : showInstallBanner ? (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, background: "rgba(106,17,203,0.88)", color: "#fff", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.15)", backdropFilter: "blur(2px)" }}>
       <span style={{ fontSize: 16 }}>📱</span>
       <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application CarryBooks</span>
