@@ -14583,19 +14583,25 @@ export default function App() {
       </div>
     </div>
   );
+  // 22/09 — L'ECRAN DE BLOCAGE FACEBOOK EST SUPPRIME.
+  // Avant : une page pleine ecran couvrait le site des qu'on arrivait depuis
+  // l'application Facebook, et il fallait appuyer sur un bouton (puis encore
+  // repondre au message impose par Facebook) avant de voir le livre. Cet ecran
+  // avait ete mis pour faire installer l'application : moins de 10 installations
+  // en plusieurs semaines, pour un obstacle pose devant CHAQUE visiteur venu
+  // d'une publicite. Il est remplace par une bande fine, que la personne peut
+  // ignorer : le livre s'affiche tout de suite.
   const fbBannerNode = (
-    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "#faf7f0", color: "#1a1208", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 28, textAlign: "center" }}>
-      <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 60, marginBottom: 22 }} />
-      <h2 style={{ fontSize: 22, margin: "0 0 12px", color: "#1a1208" }}>Bienvenue sur CarryBooks 📚</h2>
-      <p style={{ fontSize: 15, color: "#5a5040", lineHeight: 1.6, margin: "0 0 26px", maxWidth: 320 }}>Appuie sur le bouton ci-dessous pour ouvrir CarryBooks dans ton navigateur.</p>
+    <div style={{ position: "fixed", top: showInstallBanner ? 38 : 0, left: 0, right: 0, zIndex: 9998, background: "#1a1208", color: "#f5efe2", padding: "8px 10px", display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, lineHeight: 1.35 }}>
+      <span style={{ flex: 1, minWidth: 0 }}>Tu lis dans Facebook. Ouvre CarryBooks dans ton navigateur pour une meilleure lecture.</span>
       <button onClick={() => {
         const ua = (navigator.userAgent || "").toLowerCase();
         if (/android/.test(ua)) {
           const bare = window.location.href.replace(/^https?:\/\//, "");
           try { window.location.href = "intent://" + bare + "#Intent;scheme=https;end"; } catch (e) { setFbBannerDismissed(true); }
         } else { setShowInstallModal(true); }
-      }} style={{ background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 12, padding: "16px 34px", fontSize: 16, fontWeight: "bold", cursor: "pointer", boxShadow: "0 6px 18px rgba(201,168,76,0.4)", maxWidth: 320 }}>Continuer pour lire et télécharger ou publier un livre</button>
-      <button onClick={() => setFbBannerDismissed(true)} style={{ marginTop: 22, background: "none", border: "none", color: "#999", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>Le bouton ne marche pas ? Continuer ici</button>
+      }} style={{ flexShrink: 0, background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: "bold", cursor: "pointer" }}>Ouvrir</button>
+      <button onClick={() => setFbBannerDismissed(true)} aria-label="Fermer" style={{ flexShrink: 0, background: "none", border: "none", color: "#bfb49c", fontSize: 18, lineHeight: 1, cursor: "pointer", padding: "0 2px" }}>✕</button>
     </div>
   );
   const [readerScrollMode, setReaderScrollMode] = useState(false);
