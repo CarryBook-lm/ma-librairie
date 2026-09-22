@@ -13483,9 +13483,14 @@ export default function App() {
         }
         const { count: nbLivres } = await supabase.from("books").select("id", { count: "exact", head: true }).eq("status", "actif");
         const { count: nbAuteurs } = await supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "valide");
-        const { count: nbGuest } = await supabase.from("guest_purchases").select("id", { count: "exact", head: true });
-        const { count: nbPurch } = await supabase.from("purchases").select("id", { count: "exact", head: true });
-        setSiteStats({ visites, lecteurs: (nbGuest || 0) + (nbPurch || 0), livres: nbLivres || 0, auteurs: nbAuteurs || 0 });
+        // 22/09 : le compteur de lecteurs affichait 0 pour TOUT LE MONDE. Les tables
+        // d'achats sont protegees en lecture, donc un comptage direct renvoie 0 depuis
+        // le navigateur. On passe par la fonction compter_lecteurs() (SQL, security
+        // definer) : elle ne renvoie qu'un NOMBRE, jamais les donnees, et compte les
+        // personnes distinctes (un client qui achete 5 livres = 1 lecteur).
+        let nbLecteurs = 0;
+        try { const { data: nl } = await supabase.rpc("compter_lecteurs"); nbLecteurs = Number(nl) || 0; } catch (e) {}
+        setSiteStats({ visites, lecteurs: nbLecteurs, livres: nbLivres || 0, auteurs: nbAuteurs || 0 });
       } catch (e) {}
     })();
   }, []);
