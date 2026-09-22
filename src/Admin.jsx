@@ -386,6 +386,11 @@ export default function Admin() {
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
   const [gainsData, setGainsData] = useState(null);
   const [gainsLoading, setGainsLoading] = useState(false);
+  // 22/09 : les gains s'affichaient UNIQUEMENT en cumul depuis le debut. On garde
+  // desormais les lignes brutes pour pouvoir tout recalculer sur la periode choisie.
+  const [gainsRows, setGainsRows] = useState([]);
+  const [gainsPeriode, setGainsPeriode] = useState("mois"); // jour · hier · semaine · mois · tout
+  const [gainsJour, setGainsJour] = useState("");           // un jour precis (AAAA-MM-JJ)
   const [vpData, setVpData] = useState([]);
   const [vpLoading, setVpLoading] = useState(false);
   const [eaHistorique, setEaHistorique] = useState([]); // retraits payés
@@ -565,6 +570,7 @@ export default function Admin() {
           if (age <= 7 * 86400000) acc.j7 += pc;
           if (age <= 30 * 86400000) acc.j30 += pc;
         });
+        setGainsRows(data || []);
         setGainsData(acc);
       } catch (e) {}
       setGainsLoading(false);
@@ -4799,7 +4805,39 @@ export default function Admin() {
 
         {/* SECURITY - CHANGEMENT MOT DE PASSE */}
         {view === "gains" && (() => {
-          const g = gainsData || { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0 };
+          // --- Bornes de la periode choisie -------------------------------------
+          // Tout est recalcule a partir des lignes brutes : les chiffres affiches
+          // correspondent EXACTEMENT a la periode selectionnee, plus au cumul global.
+          const debutJour = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+          const JOUR = 86400000;
+          let deb = 0, fin = Infinity, libellePeriode = "Depuis le debut";
+          if (gainsJour) {
+            const [an, mo, jo] = gainsJour.split("-").map(Number);
+            deb = new Date(an, (mo || 1) - 1, jo || 1).setHours(0, 0, 0, 0);
+            fin = deb + JOUR;
+            libellePeriode = "Le " + String(jo).padStart(2, "0") + "/" + String(mo).padStart(2, "0") + "/" + an;
+          } else if (gainsPeriode === "jour") {
+            deb = debutJour(new Date()); libellePeriode = "Aujourd'hui";
+          } else if (gainsPeriode === "hier") {
+            deb = debutJour(new Date()) - JOUR; fin = debutJour(new Date()); libellePeriode = "Hier";
+          } else if (gainsPeriode === "semaine") {
+            const d = new Date(); const js = (d.getDay() + 6) % 7; // lundi = 0
+            deb = debutJour(d) - js * JOUR; libellePeriode = "Cette semaine";
+          } else if (gainsPeriode === "mois") {
+            const d = new Date(); deb = new Date(d.getFullYear(), d.getMonth(), 1).getTime(); libellePeriode = "Ce mois";
+          }
+          const g = (() => {
+            const a = { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, nbAuteur: 0, comAuteur: 0, nbCb: 0, comCb: 0 };
+            (gainsRows || []).forEach(v => {
+              const t = new Date(v.created_at).getTime();
+              if (!(t >= deb && t < fin)) return;
+              const pc = Number(v.part_carrybooks) || 0;
+              a.total += pc; a.auteurs += Number(v.part_auteur) || 0; a.ca += Number(v.montant_total) || 0; a.nb++;
+              if (v.source === "abonnement") a.abo += pc; else a.ventes += pc;
+              if (v.source === "auteur") { a.nbAuteur++; a.comAuteur += pc; } else if (v.source === "carrybooks") { a.nbCb++; a.comCb += pc; }
+            });
+            return a;
+          })();
           const f = n => (n || 0).toLocaleString("fr-FR") + " F";
           const carte = (val, lab, col) => (<div style={{ flex: 1, minWidth: 130, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14 }}><div style={{ color: col || "#c9a84c", fontSize: 20, fontWeight: "bold" }}>{f(val)}</div><div style={{ color: "#aaa", fontSize: 11, marginTop: 2 }}>{lab}</div></div>);
           return (
@@ -4815,14 +4853,22 @@ export default function Admin() {
                     <div style={{ background: "#173a24", border: "1px solid #2e7d3288", borderRadius: 10, padding: 14, minWidth: 120, textAlign: "right" }}><div style={{ color: "#7fe39a", fontSize: 22, fontWeight: "bold" }}>{f(g.comCb)}</div><div style={{ color: "#a5d6a7", fontSize: 11.5, fontWeight: "bold" }}>Ma commission</div></div>
                   </div>
                   <div style={{ background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", borderRadius: 12, padding: 18, marginBottom: 16 }}>
-                    <div style={{ color: "#1a1208", fontSize: 13, fontWeight: "bold", opacity: 0.8 }}>Mes gains au total</div>
+                    <div style={{ color: "#1a1208", fontSize: 13, fontWeight: "bold", opacity: 0.8 }}>Mes gains — {libellePeriode}</div>
                     <div style={{ color: "#fff", fontSize: 30, fontWeight: "bold", lineHeight: 1.2 }}>{f(g.total)}</div>
                     <div style={{ color: "#1a1208", fontSize: 11, marginTop: 4 }}>sur {g.nb} vente{g.nb > 1 ? "s" : ""} · CA total {f(g.ca)}</div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                    {carte(g.j1, "Aujourd'hui")}
-                    {carte(g.j7, "7 derniers jours")}
-                    {carte(g.j30, "30 derniers jours")}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                    {[["jour", "Aujourd'hui"], ["hier", "Hier"], ["semaine", "Cette semaine"], ["mois", "Ce mois"], ["tout", "Tout"]].map(([cle, lab]) => {
+                      const actif = !gainsJour && gainsPeriode === cle;
+                      return (
+                        <button key={cle} onClick={() => { setGainsPeriode(cle); setGainsJour(""); }} style={{ padding: "8px 14px", borderRadius: 20, border: "1px solid " + (actif ? "#c9a84c" : "#2a2a2a"), background: actif ? "#2a2410" : "#0f0f0f", color: actif ? "#c9a84c" : "#aaa", fontSize: 12.5, fontWeight: "bold", cursor: "pointer" }}>{lab}</button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                    <span style={{ color: "#888", fontSize: 12 }}>Ou un jour precis :</span>
+                    <input type="date" value={gainsJour} onChange={e => setGainsJour(e.target.value)} style={{ background: "#0f0f0f", border: "1px solid " + (gainsJour ? "#c9a84c" : "#2a2a2a"), borderRadius: 8, color: "#ddd", fontSize: 13, padding: "8px 10px" }} />
+                    {gainsJour ? <button onClick={() => setGainsJour("")} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>Effacer le jour</button> : null}
                   </div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                     {carte(g.ventes, "Sur les ventes directes", "#a5d6a7")}
