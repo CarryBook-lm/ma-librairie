@@ -1644,8 +1644,19 @@ const PATH_TO_PAGE = {
   "/auteurs": "auteurs",
 };
 
+// 22/09 — UNE ADRESSE PAR CATEGORIE : carrybooks.com/categorie/<nom-de-la-categorie>
+// Sert aux publicites : une pub sur les romans d'amour envoie directement sur les
+// romans d'amour, au lieu de l'accueil ou la personne doit chercher.
+const getCategorieFromURL = () => {
+  const path = window.location.pathname;
+  if (!path.startsWith("/categorie/")) return null;
+  const s = path.replace("/categorie/", "").replace(/\/+$/, "");
+  return s ? decodeURIComponent(s) : null;
+};
+
 const getPageFromURL = () => {
   const path = window.location.pathname;
+  if (path.startsWith("/categorie/")) return "catalog";
   if (path.startsWith("/livre/")) return "detail";
   if (path.startsWith("/auteur/")) return "auteur_boutique";
   if (path.startsWith("/lecture/")) return "reader";
@@ -1670,7 +1681,7 @@ const getSlugFromURL = () => {
   return null;
 };
 
-const buildPath = (page, book) => {
+const buildPath = (page, book, categorie) => {
   // 🎯 PRÉSERVER les URLs de diagnostic CarryCare (pour pubs Facebook)
   if (page === "carrycare" && typeof window !== "undefined") {
     const currentPath = window.location.pathname.toLowerCase();
@@ -1685,6 +1696,10 @@ const buildPath = (page, book) => {
     }
   }
 
+  // La page catalogue avec une categorie choisie a sa propre adresse.
+  if (page === "catalog" && categorie && categorie !== "Tous") {
+    return "/categorie/" + slugify(categorie);
+  }
   const base = PAGE_TO_PATH[page] || "/";
   if ((page === "detail" || page === "reader") && book) {
     return `${base}/${slugify(book.title || book.id)}`;
@@ -13520,6 +13535,27 @@ export default function App() {
   const [reading, setReading] = useState(null);
   const [readingPage, setReadingPage] = useState(0);
   const [selectedSubCategory, setSelectedSubCategory] = useState("Tous");
+  // 22/09 — ARRIVEE PAR UNE ADRESSE DE CATEGORIE (/categorie/roman-d-amour).
+  // Les categories arrivent de la base APRES le premier affichage : on attend donc
+  // qu'elles soient chargees pour retrouver le nom exact a partir de l'adresse.
+  // On compare sur la version simplifiee du nom, pour que les accents, les espaces
+  // et les apostrophes ne fassent pas echouer la correspondance.
+  const [categorieUrlFaite, setCategorieUrlFaite] = useState(false);
+  useEffect(() => {
+    if (categorieUrlFaite) return;
+    const demandee = getCategorieFromURL();
+    if (!demandee) return;
+    const noms = Object.keys(CATEGORIES || {});
+    if (!noms.length) return;
+    const cible = slugify(demandee);
+    const trouvee = noms.find(n => slugify(n) === cible);
+    if (trouvee) {
+      setSelectedCategory(trouvee);
+      setSelectedSubCategory("Tous");
+      setPage("catalog");
+      setCategorieUrlFaite(true);
+    }
+  }, [CATEGORIES, categorieUrlFaite]);
   const [readerSize, setReaderSize] = useState(15);
   const [readerFont, setReaderFont] = useState("Georgia, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
@@ -15005,14 +15041,14 @@ export default function App() {
       return; // On garde l'URL actuelle, ne pas écraser
     }
 
-    const newPath = buildPath(page, selectedBook);
+    const newPath = buildPath(page, selectedBook, selectedCategory);
     // 🎯 PRÉSERVER le query string (notamment ?ref= pour parrainage)
     const currentSearch = window.location.search || "";
     const newFullPath = newPath + currentSearch;
     if (window.location.pathname + window.location.search !== newFullPath) {
       window.history.pushState({ page, bookId: selectedBook?.id }, "", newFullPath);
     }
-  }, [page, selectedBook]);
+  }, [page, selectedBook, selectedCategory]);
 
   // Gérer le bouton "Retour" du navigateur
   useEffect(() => {
