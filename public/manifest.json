@@ -3,27 +3,28 @@
   "short_name": "CarryBooks",
   "description": "Lis. Apprends. Évolue.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#c9a84c",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
@@ -33,52 +34,28 @@
       "short_name": "Bibliothèque",
       "description": "Mes livres achetés",
       "url": "/ma-bibliotheque",
-      "icons": [
-        {
-          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
-          "sizes": "192x192",
-          "type": "image/jpeg"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Catalogue",
       "short_name": "Catalogue",
       "description": "Parcourir tous les livres",
       "url": "/catalogue",
-      "icons": [
-        {
-          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
-          "sizes": "192x192",
-          "type": "image/jpeg"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "CarryCare",
       "short_name": "CarryCare",
       "description": "Diagnostic beauté & bien-être",
       "url": "/carrycare",
-      "icons": [
-        {
-          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
-          "sizes": "192x192",
-          "type": "image/jpeg"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Carry Quiz",
       "short_name": "Quiz",
       "description": "Découvre la vérité sur toi",
       "url": "/carry-quiz",
-      "icons": [
-        {
-          "src": "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg",
-          "sizes": "192x192",
-          "type": "image/jpeg"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
