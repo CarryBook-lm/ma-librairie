@@ -20289,6 +20289,33 @@ export default function App() {
           })()}
         </div>
 
+        {/* 22/09 — BARRE D’ACHAT FIXE EN BAS DE LA FICHE LIVRE.
+            Pourquoi : le bouton d’achat est placé APRES le résumé complet, les avis et les
+            boutons Extrait/Favoris/Partager. Sur téléphone, la personne qui arrive d’une
+            publicité ne le voit jamais sans faire défiler longuement : 65 300 fiches
+            consultées pour seulement 1 100 paiements lancés sur 30 jours.
+            La barre reprend EXACTEMENT l’action du bouton principal (startReading), pour
+            qu’il n’y ait jamais deux comportements d’achat différents. Elle ne s’affiche
+            pas pour un livre déjà acheté, un livre gratuit ni un livre papier uniquement. */}
+        {!isPaperOnlyBook && !owned && !free && book.price > 0 && (() => {
+          const aboDispo = subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true;
+          return (
+            <>
+              {/* réserve la hauteur de la barre pour ne rien masquer en bas de page */}
+              <div style={{ height: 88 }} />
+              <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 90, background: G.surface, borderTop: "1px solid " + G.border, boxShadow: "0 -6px 20px rgba(0,0,0,0.35)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  {isOnPromo(book) ? <div style={{ fontSize: 11, color: G.textFaint, textDecoration: "line-through", lineHeight: 1.2 }}>{book.original_price?.toLocaleString()} FCFA</div> : null}
+                  <div style={{ fontSize: 19, fontWeight: "bold", color: G.gold, lineHeight: 1.25, whiteSpace: "nowrap" }}>{book.price?.toLocaleString()} FCFA</div>
+                </div>
+                <button type="button" onClick={() => startReading(book)} style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
+                  {aboDispo ? "✨ Débloquer" : "⚡ Acheter"}
+                </button>
+              </div>
+            </>
+          );
+        })()}
+
         {/* PAYMENT MODAL in detail page */}
         {paydunyaReturn && (
           <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 300, background: "#1c8a3e", color: "#fff", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
