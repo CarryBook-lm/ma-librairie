@@ -13610,7 +13610,34 @@ export default function App() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalledBanner);
 
+    // 22/09 — INSTALLATION EN UN SEUL GESTE DEPUIS FACEBOOK.
+    // Le navigateur integre de Facebook ne sait pas installer une application web
+    // (il n'envoie jamais "beforeinstallprompt"). Le bouton "Installez l'app" y
+    // renvoie donc vers le vrai navigateur, en ajoutant ?installer=1 a l'adresse.
+    // Ici, a l'arrivee dans Chrome, on ouvre la fenetre d'installation TOUT SEUL :
+    // la personne n'a plus rien a rechercher. Chrome n'envoie sa proposition que
+    // quelques instants apres le chargement, d'ou la petite attente.
+    let minuteur = null, essais = 0;
+    let veutInstaller = false;
+    try { veutInstaller = new URLSearchParams(window.location.search).get("installer") === "1"; } catch (e) {}
+    if (veutInstaller && !isInAppBrowser()) {
+      // on nettoie l'adresse tout de suite : un rechargement ne doit pas relancer l'installation
+      try { window.history.replaceState({}, "", window.location.pathname + window.location.hash); } catch (e) {}
+      const tenter = () => {
+        const p = window.__pwaPrompt;
+        if (p) {
+          try { p.prompt(); p.userChoice.then(() => { window.__pwaPrompt = null; setInstallPrompt(null); }).catch(() => {}); } catch (e) {}
+          return;
+        }
+        essais++;
+        if (essais < 20) minuteur = setTimeout(tenter, 400); // jusqu'a 8 secondes
+        else if (isIos) setShowIosInstructions(true);
+      };
+      minuteur = setTimeout(tenter, 400);
+    }
+
     return () => {
+      if (minuteur) clearTimeout(minuteur);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalledBanner);
     };
@@ -21096,7 +21123,11 @@ export default function App() {
                       const ua = (navigator.userAgent || "").toLowerCase();
                       if (isInAppBrowser()) {
                         if (/android/.test(ua)) {
-                          const bare = window.location.href.replace(/^https?:\/\//, "");
+                          // ?installer=1 : a l'arrivee dans le vrai navigateur, la fenetre
+                          // d'installation s'ouvre toute seule (voir l'effet plus haut).
+                          const u = new URL(window.location.href);
+                          u.searchParams.set("installer", "1");
+                          const bare = u.toString().replace(/^https?:\/\//, "");
                           window.location.href = "intent://" + bare + "#Intent;scheme=https;end";
                         } else { setShowInstallModal(true); }
                         return;
