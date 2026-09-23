@@ -389,7 +389,7 @@ export default function Admin() {
   // 22/09 : les gains s'affichaient UNIQUEMENT en cumul depuis le debut. On garde
   // desormais les lignes brutes pour pouvoir tout recalculer sur la periode choisie.
   const [gainsRows, setGainsRows] = useState([]);
-  const [gainsPeriode, setGainsPeriode] = useState("mois"); // jour · hier · semaine · mois · tout
+  const [gainsPeriode, setGainsPeriode] = useState("jour"); // jour · hier · semaine · mois · tout
   const [gainsJour, setGainsJour] = useState("");           // un jour precis (AAAA-MM-JJ)
   const [vpData, setVpData] = useState([]);
   const [vpLoading, setVpLoading] = useState(false);
