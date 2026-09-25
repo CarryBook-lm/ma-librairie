@@ -17348,12 +17348,17 @@ export default function App() {
     setKycSaving(false);
   }
 
+  // 25/09 : la suppression passe par le serveur. Avant, elle partait du navigateur
+  // et la table books, qui n'autorise les auteurs qu'a creer et modifier, n'effacait
+  // RIEN — sans renvoyer d'erreur. Le site affichait « Livre supprime » alors que le
+  // livre restait en place, et les auteurs le signalaient.
   async function supprimerMonLivre(b) {
     if (!auteurProfil) return;
     if (!window.confirm("Supprimer définitivement « " + b.title + " » ? Cette action est irréversible.")) return;
     try {
-      const { error } = await supabase.from("books").delete().eq("id", b.id).eq("auteur_id", auteurProfil.id);
-      if (error) throw error;
+      const rep = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "livre_supprimer", id: auteurProfil.id, book_id: b.id }) });
+      const rj = await rep.json().catch(() => ({}));
+      if (!rj || !rj.ok) { alert((rj && rj.error) || "La suppression n'a pas abouti. Réessaie."); return; }
       setMesLivresDetail(null);
       setPubMsg("🗑️ Livre supprimé.");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });

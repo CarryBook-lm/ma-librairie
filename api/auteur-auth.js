@@ -284,6 +284,46 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ---------- SUPPRESSION D'UN LIVRE PAR SON AUTEUR ----------
+    // 25/09 : les auteurs n'arrivaient pas a supprimer un livre. La suppression
+    // partait du navigateur (delete from books), or la table n'autorise les
+    // auteurs qu'a CREER et MODIFIER : aucune ligne n'etait effacee, et comme
+    // Supabase ne renvoie pas d'erreur dans ce cas, le site affichait quand meme
+    // « Livre supprime ». La suppression passe donc par le serveur, qui verifie
+    // que le livre appartient bien a l'auteur.
+    if (action === "livre_supprimer") {
+      const id = body.id;
+      const book_id = body.book_id;
+      if (!id || !book_id) return res.status(400).json({ error: "id et book_id requis." });
+
+      const { data: bs } = await supa.from("books").select("id, title, status, auteur_id").eq("id", book_id).limit(1);
+      const livre = bs && bs[0];
+      if (!livre) return res.status(404).json({ error: "Ce livre est introuvable. Recharge la page." });
+      if (String(livre.auteur_id) !== String(id)) return res.status(403).json({ error: "Ce livre ne t'appartient pas." });
+
+      // Un livre EN LIGNE n'est jamais efface : des lecteurs peuvent l'avoir achete
+      // et le retrouvent dans leur bibliotheque. On demande a l'auteur de passer
+      // par CarryBooks pour le retirer de la vente.
+      if (livre.status === "actif") {
+        return res.status(409).json({ error: "Ce livre est en ligne et peut avoir ete achete. Ecris a CarryBooks dans le Support pour le retirer de la vente : les lecteurs qui l'ont achete doivent continuer a le lire." });
+      }
+
+      // Meme sans etre en ligne, un livre deja vendu ne doit pas disparaitre.
+      let vendus = 0;
+      try {
+        const { count: c1 } = await supa.from("purchases").select("id", { count: "exact", head: true }).eq("book_id", book_id);
+        const { count: c2 } = await supa.from("guest_purchases").select("id", { count: "exact", head: true }).eq("book_id", book_id);
+        vendus = (c1 || 0) + (c2 || 0);
+      } catch (e) {}
+      if (vendus > 0) {
+        return res.status(409).json({ error: "Ce livre a deja ete achete " + vendus + " fois. Il ne peut pas etre supprime : ecris a CarryBooks dans le Support." });
+      }
+
+      const { error } = await supa.from("books").delete().eq("id", book_id).eq("auteur_id", id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, titre: livre.title });
+    }
+
     return res.status(400).json({ error: "Action inconnue." });
   } catch (e) {
     return res.status(500).json({ error: e.message });
