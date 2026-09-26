@@ -1713,6 +1713,22 @@ const buildPath = (page, book, categorie) => {
 // Biographies, Lyrics, Livre Audio, Livres Gratuits, Podcast) n'ont pas de sens ici.
 // Si aucune ne correspond a la liste du site, on les affiche toutes plutot que
 // de bloquer l'auteur avec un menu vide.
+// Une adresse YouTube se presente de cinq facons differentes. On en sort
+// l'identifiant de la video, seule chose dont on a besoin pour l'afficher.
+function idYoutube(url) {
+  const u = String(url || "").trim();
+  if (!u) return "";
+  const essais = [
+    /(?:youtube\.com|youtube-nocookie\.com)\/watch\?[^#]*\bv=([A-Za-z0-9_-]{6,})/,
+    /youtu\.be\/([A-Za-z0-9_-]{6,})/,
+    /\/embed\/([A-Za-z0-9_-]{6,})/,
+    /\/shorts\/([A-Za-z0-9_-]{6,})/,
+    /\/live\/([A-Za-z0-9_-]{6,})/,
+  ];
+  for (const re of essais) { const m = u.match(re); if (m && m[1]) return m[1]; }
+  if (/^[A-Za-z0-9_-]{8,15}$/.test(u)) return u;
+  return "";
+}
 const CATEGORIES_FORMATION = ["Formation", "Business", "Développement personnel", "Lifestyle", "Jeunesse"];
 const CATEGORIES_FALLBACK = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
@@ -14148,6 +14164,8 @@ export default function App() {
   const [fmLienDansTexte, setFmLienDansTexte] = useState(false);
   const [fmLienTitre, setFmLienTitre] = useState("");
   const [fmLienUrl, setFmLienUrl] = useState("");
+  const [fmYtOuvert, setFmYtOuvert] = useState(false);
+  const [fmYtUrl, setFmYtUrl] = useState("");
   const fmTextRef = useRef(null);
   const [pubAudioExtrait, setPubAudioExtrait] = useState("");
   const [pubEditeur, setPubEditeur] = useState(false);
@@ -16311,12 +16329,13 @@ export default function App() {
   const rendreFormation = (txt, couleur) => {
     const source = String(txt || "");
     const morceaux = [];
-    const re = /\[(IMG916|IMG169):([^\]]+)\]|\[LIEN:([^|\]]*)\|([^\]]+)\]/g;
+    const re = /\[(IMG916|IMG169):([^\]]+)\]|\[YT:([A-Za-z0-9_-]{6,})\]|\[LIEN:([^|\]]*)\|([^\]]+)\]/g;
     let dernier = 0, m, k = 0;
     while ((m = re.exec(source)) !== null) {
       if (m.index > dernier) morceaux.push({ t: "txt", v: source.slice(dernier, m.index) });
       if (m[1]) morceaux.push({ t: "img", ratio: m[1] === "IMG916" ? "9 / 16" : "16 / 9", v: m[2] });
-      else morceaux.push({ t: "lien", titre: (m[3] || "Ouvrir le lien").trim(), v: m[4] });
+      else if (m[3]) morceaux.push({ t: "video", v: m[3] });
+      else morceaux.push({ t: "lien", titre: (m[4] || "Ouvrir le lien").trim(), v: m[5] });
       dernier = m.index + m[0].length;
       k++;
       if (k > 400) break;
@@ -16327,6 +16346,13 @@ export default function App() {
         return (
           <div key={i} style={{ margin: "14px 0" }}>
             <img src={p.v} alt="" loading="lazy" style={{ width: "100%", maxWidth: p.ratio === "9 / 16" ? 300 : "100%", aspectRatio: p.ratio, objectFit: "cover", borderRadius: 10, display: "block", margin: p.ratio === "9 / 16" ? "0 auto" : 0 }} />
+          </div>
+        );
+      }
+      if (p.t === "video") {
+        return (
+          <div key={i} style={{ margin: "14px 0", borderRadius: 10, overflow: "hidden", background: "#000" }}>
+            <iframe title="Vidéo de présentation" src={"https://www.youtube-nocookie.com/embed/" + p.v} allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture" allowFullScreen loading="lazy" style={{ width: "100%", aspectRatio: "16 / 9", border: "none", display: "block" }} />
           </div>
         );
       }
@@ -17912,6 +17938,12 @@ export default function App() {
     else setFmLiens(prev => [...prev, { titre: t, url: u }]);
     setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(false);
   };
+  const fmValiderVideo = () => {
+    const id = idYoutube(fmYtUrl);
+    if (!id) { alert("Cette adresse YouTube n'est pas reconnue. Copie l'adresse complete de la video depuis YouTube."); return; }
+    fmInsererAuCurseur("[YT:" + id + "]");
+    setFmYtUrl(""); setFmYtOuvert(false);
+  };
   async function pubSaveFormation() {
     if (!auteurProfil) return;
     const f = fmForm;
@@ -17927,7 +17959,7 @@ export default function App() {
     if (enVitrineSeule && !pubExclusifCertifie) { setFmMsg("☑️ Coche la case de certification avant de publier dans ta vitrine."); return; }
     setFmSaving(true); setFmMsg("");
     try {
-      const resume = f.contenu.replace(/\[(IMG916|IMG169):[^\]]*\]/g, " ").replace(/\[LIEN:([^|\]]*)\|[^\]]*\]/g, "$1").replace(/\s+/g, " ").trim().slice(0, 300);
+      const resume = f.contenu.replace(/\[(IMG916|IMG169|YT):[^\]]*\]/g, " ").replace(/\[LIEN:([^|\]]*)\|[^\]]*\]/g, "$1").replace(/\s+/g, " ").trim().slice(0, 300);
       const payload = {
         title: f.title.trim(),
         author: auteurProfil.nom_complet,
@@ -19035,13 +19067,15 @@ export default function App() {
                       style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>🖼 Image 16:9</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmLienDansTexte(true); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
                       style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>🔗 Un lien</button>
+                    <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmYtUrl(""); setFmYtOuvert(true); }}
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid #FF0000", background: "#fff", color: "#c4302b", fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>▶️ Vidéo YouTube</button>
                   </div>
                   <input id="fmImg916" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "916"); e.target.value = ""; }} style={{ display: "none" }} />
                   <input id="fmImg169" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "169"); e.target.value = ""; }} style={{ display: "none" }} />
                   <textarea ref={fmTextRef} value={fmForm.contenu} onChange={e => setFmForm(f => ({ ...f, contenu: e.target.value }))}
                     placeholder={"Explique ce que la personne va apprendre, pour qui c'est, combien de temps ça dure, ce qu'elle obtient à la fin…\n\nPlace ton curseur à la fin d'un paragraphe puis appuie sur un bouton ci-dessus pour glisser une image ou un lien à cet endroit."}
                     rows={12} style={{ ...champ, resize: "vertical", minHeight: 240, lineHeight: 1.6 }} />
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 18, lineHeight: 1.5 }}>{fmUploading ? "⏳ Envoi de l'image…" : "Les repères comme [IMG169:…] deviennent tes images sur la page de vente. Ne les modifie pas à la main."}</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 18, lineHeight: 1.5 }}>{fmUploading ? "⏳ Envoi de l'image…" : "Les repères comme [IMG169:…] ou [YT:…] deviennent tes images et ta vidéo sur la page de vente. Ne les modifie pas à la main."}</div>
 
                   <label style={labelSt}>Les liens d'accès (donnés après le paiement) *</label>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Lien de la formation, groupe WhatsApp ou Telegram, ton WhatsApp, une vidéo YouTube… Personne ne les voit avant d'avoir payé.</div>
@@ -19091,6 +19125,26 @@ export default function App() {
                   </button>
                   <button onClick={() => { setPubOpen(false); setPubTypeSelected(null); setFmMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {fmMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", lineHeight: 1.5, color: fmMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{fmMsg}</div>}
+
+                  {fmYtOuvert ? (
+                    <div onClick={() => setFmYtOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
+                        <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>▶️ Vidéo de présentation</div>
+                        <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Colle l'adresse de ta vidéo YouTube. Elle se lira directement dans ta page de vente, sans quitter le site.</div>
+                        <label style={labelSt}>Adresse de la vidéo *</label>
+                        <input value={fmYtUrl} onChange={e => setFmYtUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." style={champ} />
+                        {idYoutube(fmYtUrl) ? (
+                          <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", background: "#000" }}>
+                            <iframe title="apercu" src={"https://www.youtube-nocookie.com/embed/" + idYoutube(fmYtUrl)} allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture" allowFullScreen style={{ width: "100%", aspectRatio: "16 / 9", border: "none", display: "block" }} />
+                          </div>
+                        ) : (fmYtUrl.trim() ? <div style={{ fontSize: 12, color: "#e53935", marginTop: 8 }}>Adresse non reconnue. Copie l'adresse complète depuis YouTube.</div> : null)}
+                        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                          <button onClick={() => setFmYtOuvert(false)} style={{ flex: 1, padding: 12, background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+                          <button onClick={fmValiderVideo} style={{ flex: 1, padding: 12, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Insérer</button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {fmLienOuvert ? (
                     <div onClick={() => setFmLienOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
