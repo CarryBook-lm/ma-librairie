@@ -18053,6 +18053,16 @@ export default function App() {
     const bqTri = [...bqBooks].sort((a, b) => (b.id || 0) - (a.id || 0));
     const bqRecents = bqTri.slice(0, 12);
     const bqRecherche = !!bqQ || boutiqueCat !== "Tous";
+    const carteCouverture = (book) => (
+      <div key={book.id} onClick={() => openBook(book)} title={book.title}
+        style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer" }}>
+        <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 8, overflow: "hidden" }}>
+          {book.cover
+            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+        </div>
+      </div>
+    );
     const carteLivre = (book, largeur) => (
       <div key={book.id} onClick={() => openBook(book)} style={largeur ? { flexShrink: 0, width: largeur, maxWidth: 175, cursor: "pointer" } : { cursor: "pointer" }}>
         <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 6, overflow: "hidden", marginBottom: 6 }}>
@@ -18167,7 +18177,7 @@ export default function App() {
                         <div style={{ fontSize: 11, color: AC, letterSpacing: 1, textTransform: "uppercase" }}>Les + récents</div>
                       </div>
                       <div ref={bqNouvRef} style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4, scrollBehavior: "smooth" }}>
-                        {bqRecents.map(b => carteLivre(b, "40vw"))}
+                        {bqRecents.map(b => carteCouverture(b))}
                       </div>
                     </div>
                   )}
