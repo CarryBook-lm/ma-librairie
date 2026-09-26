@@ -17268,8 +17268,9 @@ export default function App() {
           const x = c.getContext("2d");
           x.fillStyle = couleur || "#c9a84c";
           x.fillRect(0, 0, taille, taille);
-          // 78 % : laisse la marge de securite qu'Android rogne sur les icones rondes.
-          const m = Math.round(taille * 0.78);
+          // 90 % : petite marge. L'affichage dans les ronds reduit ensuite a 72 %,
+          // ce qui fait tenir un logo carre ENTIER dans le cercle, coins compris.
+          const m = Math.round(taille * 0.90);
           const r = Math.min(m / img.width, m / img.height);
           const w = Math.max(1, Math.round(img.width * r));
           const h = Math.max(1, Math.round(img.height * r));
@@ -18061,7 +18062,7 @@ export default function App() {
             )}
             {aff("logo") ? (
               <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
-                {logoEntete ? <img src={logoEntete} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titreEntete.charAt(0).toUpperCase()}
+                {logoEntete ? <img src={logoEntete} alt="" style={{ width: "72%", height: "72%", objectFit: "contain", margin: "auto" }} /> : titreEntete.charAt(0).toUpperCase()}
               </div>
             ) : null}
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -19269,7 +19270,7 @@ export default function App() {
                   <label style={labelSt}>Logo de ma vitrine</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
                     <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                      {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
+                      {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "72%", height: "72%", objectFit: "contain", margin: "auto" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
                     </div>
                     <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
                       {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
@@ -19340,7 +19341,7 @@ export default function App() {
                         <div style={{ background: cEnt, borderBottom: "2px solid " + cAcc, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           {enteteCoche("logo") ? (
                             <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
-                              {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titre.charAt(0).toUpperCase()}
+                              {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "72%", height: "72%", objectFit: "contain", margin: "auto" }} /> : titre.charAt(0).toUpperCase()}
                             </div>
                           ) : null}
                           <div style={{ flex: 1, minWidth: 0 }}>

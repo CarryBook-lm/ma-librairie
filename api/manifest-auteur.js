@@ -74,7 +74,6 @@ export default async function handler(req, res) {
     ? [
         { src: i192, sizes: "192x192", type: "image/png", purpose: "any" },
         { src: i512, sizes: "512x512", type: "image/png", purpose: "any" },
-        { src: i512, sizes: "512x512", type: "image/png", purpose: "maskable" },
       ]
     : [
         { src: ICONE_192, sizes: "192x192", type: "image/png", purpose: "any" },
