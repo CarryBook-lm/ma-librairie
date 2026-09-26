@@ -1737,6 +1737,99 @@ const CONTRAT_ARTICLES = [
   ["Article 10 - Loi applicable et litiges", "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis."],
 ];
 
+// ============================================================
+// PALETTE DE COULEURS MAISON
+// On n'utilise PAS <input type="color"> : sur Android le selecteur natif
+// peint ses trois barres en noir des que la couleur recue est sombre, et
+// l'auteur pousse des curseurs a l'aveugle. (Piege deja rencontre sur MaBoutik.)
+// Regle a ne jamais casser : AUCUNE barre n'est noire.
+//   Couleur   = arc-en-ciel fixe
+//   Intensite = du blanc a la teinte PLEINE (luminosite forcee a 1)
+//   Clarte    = du noir a la couleur (c'est son role)
+// ============================================================
+function couleurOk(c) {
+  return typeof c === "string" && /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(String(c).trim());
+}
+function normaliserCoul(c, defaut) {
+  if (!couleurOk(c)) return defaut;
+  let h = String(c).trim();
+  if (h.length === 4) h = "#" + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  return h.toLowerCase();
+}
+function versHSV(hex) {
+  let h = String(hex || "").trim().replace("#", "");
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) h = "c9a84c";
+  const r = parseInt(h.slice(0, 2), 16) / 255, g = parseInt(h.slice(2, 4), 16) / 255, b = parseInt(h.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  let t = 0;
+  if (d !== 0) {
+    if (max === r) t = ((g - b) / d) % 6;
+    else if (max === g) t = (b - r) / d + 2;
+    else t = (r - g) / d + 4;
+    t = Math.round(t * 60); if (t < 0) t += 360;
+  }
+  const s = max === 0 ? 0 : d / max;
+  // Un gris n'a pas de teinte : on ouvre sur une saturation lisible, sinon les
+  // deux dernieres barres seraient ternes et les curseurs sembleraient sans effet.
+  return { t: t, s: d === 0 ? 0.6 : s, v: max };
+}
+function versHex(t, s, v) {
+  const c = v * s, x = c * (1 - Math.abs(((t / 60) % 2) - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (t < 60) { r = c; g = x; } else if (t < 120) { r = x; g = c; }
+  else if (t < 180) { g = c; b = x; } else if (t < 240) { g = x; b = c; }
+  else if (t < 300) { r = x; b = c; } else { r = c; b = x; }
+  const f = (n) => { const q = Math.round((n + m) * 255); return (q < 16 ? "0" : "") + q.toString(16); };
+  return "#" + f(r) + f(g) + f(b);
+}
+const COULEURS_RAPIDES = ["#c9a84c", "#1e88e5", "#43a047", "#e53935", "#8e24aa", "#00897b", "#f4511e", "#3949ab", "#d81b60", "#1a1208", "#ffffff", "#f5f0e8"];
+
+function Palette({ titre, couleur, perso, onValider, onFermer }) {
+  const depart = normaliserCoul(couleur, "#c9a84c");
+  const d0 = versHSV(depart);
+  const [t, setT] = useState(d0.t);
+  const [s, setS] = useState(Math.round(d0.s * 100));
+  const [v, setV] = useState(Math.round(d0.v * 100));
+  // Tant que l'auteur n'a touche a rien, on renvoie EXACTEMENT la couleur de depart.
+  const [hex, setHex] = useState(depart);
+  const majr = (nt, ns, nv) => { setT(nt); setS(ns); setV(nv); setHex(versHex(nt, ns / 100, nv / 100)); };
+  const arc = "linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)";
+  const barreIntensite = "linear-gradient(to right,#ffffff," + versHex(t, 1, 1) + ")";
+  const barreClarte = "linear-gradient(to right,#000000," + versHex(t, s / 100, 1) + ")";
+  const curseur = (fond) => ({ width: "100%", height: 26, borderRadius: 13, background: fond, appearance: "none", WebkitAppearance: "none", outline: "none", border: "1px solid rgba(0,0,0,0.25)", margin: 0, cursor: "pointer" });
+  const lab = { fontSize: 12, fontWeight: "bold", color: "#ddd", margin: "12px 0 6px", display: "block" };
+  return (
+    <div onClick={onFermer} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <style>{".cb-pal::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #333;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.5)}.cb-pal::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #333;cursor:pointer}"}</style>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#141414", border: "1px solid #444", borderRadius: 16, padding: 18, width: "100%", maxWidth: 420, maxHeight: "90vh", overflowY: "auto", fontFamily: "Georgia, serif" }}>
+        <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 12 }}>{titre || "Choisis ta couleur"}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+          <div style={{ width: 54, height: 54, borderRadius: 12, background: hex, border: "2px solid #555", flexShrink: 0 }} />
+          <div style={{ fontSize: 17, fontWeight: "bold", color: "#fff", letterSpacing: 1 }}>{hex.toUpperCase()}</div>
+        </div>
+        <div style={{ fontSize: 11.5, color: "#999", marginBottom: 10 }}>Couleurs prêtes</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
+          {COULEURS_RAPIDES.concat((perso || []).filter(c => COULEURS_RAPIDES.indexOf(c) === -1)).map(c => (
+            <button key={c} type="button" onClick={() => { const h = versHSV(c); setT(h.t); setS(Math.round(h.s * 100)); setV(Math.round(h.v * 100)); setHex(normaliserCoul(c, "#c9a84c")); }}
+              style={{ width: 32, height: 32, borderRadius: "50%", background: c, border: hex === normaliserCoul(c, "") ? "3px solid #fff" : "2px solid #555", cursor: "pointer", padding: 0 }} />
+          ))}
+        </div>
+        <label style={lab}>Couleur</label>
+        <input className="cb-pal" type="range" min="0" max="359" value={t} onChange={e => majr(Number(e.target.value), s, v)} style={curseur(arc)} />
+        <label style={lab}>Intensité</label>
+        <input className="cb-pal" type="range" min="0" max="100" value={s} onChange={e => majr(t, Number(e.target.value), v)} style={curseur(barreIntensite)} />
+        <label style={lab}>Clarté</label>
+        <input className="cb-pal" type="range" min="0" max="100" value={v} onChange={e => majr(t, s, Number(e.target.value))} style={curseur(barreClarte)} />
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button type="button" onClick={onFermer} style={{ flex: 1, padding: "13px 0", background: "#0f0f0f", color: "#bbb", border: "1px solid #444", borderRadius: 10, fontSize: 14, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+          <button type="button" onClick={() => onValider(hex)} style={{ flex: 1, padding: "13px 0", background: hex, color: versHSV(hex).v > 0.65 ? "#1a1208" : "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>Choisir</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
 // jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
 // Il reste achetable par son lien direct, et reste visible dans Ma bibliotheque une fois achete.
@@ -13980,6 +14073,15 @@ export default function App() {
   const [auteurVitrineNom, setAuteurVitrineNom] = useState("");
   const [auteurVitrineLogo, setAuteurVitrineLogo] = useState("");
   const [auteurVitrineLogo192, setAuteurVitrineLogo192] = useState("");
+  const [auteurCoulEntete, setAuteurCoulEntete] = useState("");
+  const [auteurCoulEnteteTexte, setAuteurCoulEnteteTexte] = useState("");
+  const [auteurCoulFond, setAuteurCoulFond] = useState("");
+  const [auteurCoulPrix, setAuteurCoulPrix] = useState("");
+  const [auteurCoulBouton, setAuteurCoulBouton] = useState("");
+  const [auteurCoulBoutonTexte, setAuteurCoulBoutonTexte] = useState("");
+  const [auteurFormationsLien, setAuteurFormationsLien] = useState("");
+  const [palettePour, setPalettePour] = useState(null);
+  const [coulsPerso, setCoulsPerso] = useState(() => { try { return JSON.parse(localStorage.getItem("carrybooks_couleurs_perso") || "[]"); } catch (e) { return []; } });
   const [auteurVitrineEntete, setAuteurVitrineEntete] = useState("");
   const [auteurLogoUploading, setAuteurLogoUploading] = useState(false);
   const [auteurBio, setAuteurBio] = useState("");
@@ -14554,6 +14656,10 @@ export default function App() {
     setAuteurCouleur(prof.couleur || "");
     setAuteurVitrineNom(prof.vitrine_nom || ""); setAuteurVitrineLogo(prof.vitrine_logo || "");
     setAuteurVitrineLogo192(prof.vitrine_logo_192 || "");
+    setAuteurCoulEntete(prof.coul_entete || ""); setAuteurCoulEnteteTexte(prof.coul_entete_texte || "");
+    setAuteurCoulFond(prof.coul_fond || ""); setAuteurCoulPrix(prof.coul_prix || "");
+    setAuteurCoulBouton(prof.coul_bouton || ""); setAuteurCoulBoutonTexte(prof.coul_bouton_texte || "");
+    setAuteurFormationsLien(prof.vitrine_formations_lien || "");
     setAuteurVitrineEntete(prof.vitrine_entete == null ? "logo,nom_auteur,pays,abonnes" : prof.vitrine_entete);
     setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
@@ -17189,6 +17295,26 @@ export default function App() {
     setAuteurLogoUploading(false);
   };
   // Ce qui est coche dans l'en-tete de la vitrine. Liste separee par des virgules.
+  // Les couleurs creees a la pipette sont memorisees et reproposees dans tous les selecteurs.
+  const retenirCoulPerso = (hex) => {
+    if (!couleurOk(hex)) return;
+    const h = normaliserCoul(hex, "#c9a84c");
+    setCoulsPerso(prev => {
+      const liste = [h].concat((prev || []).filter(c => c !== h)).slice(0, 12);
+      try { localStorage.setItem("carrybooks_couleurs_perso", JSON.stringify(liste)); } catch (e) {}
+      return liste;
+    });
+  };
+  // Les 7 couleurs reglables de la vitrine. La cle sert a ouvrir la bonne palette.
+  const REGLAGES_COUL = [
+    { cle: "principale", lab: "Couleur principale (accents, bouton Suivre)", val: () => auteurCouleur, set: setAuteurCouleur, defaut: "#c9a84c" },
+    { cle: "entete", lab: "Fond de l'en-tête et du pied de page", val: () => auteurCoulEntete, set: setAuteurCoulEntete, defaut: "#ede7d9" },
+    { cle: "entete_txt", lab: "Texte de l'en-tête et du pied de page", val: () => auteurCoulEnteteTexte, set: setAuteurCoulEnteteTexte, defaut: "#1a1208" },
+    { cle: "fond", lab: "Arrière-plan du site", val: () => auteurCoulFond, set: setAuteurCoulFond, defaut: "#f5f0e8" },
+    { cle: "prix", lab: "Prix des livres", val: () => auteurCoulPrix, set: setAuteurCoulPrix, defaut: "#c9a84c" },
+    { cle: "bouton", lab: "Bouton Lire", val: () => auteurCoulBouton, set: setAuteurCoulBouton, defaut: "#c9a84c" },
+    { cle: "bouton_txt", lab: "Texte du bouton Lire", val: () => auteurCoulBoutonTexte, set: setAuteurCoulBoutonTexte, defaut: "#ffffff" },
+  ];
   const enteteCoche = (cle) => String(auteurVitrineEntete || "").split(",").map(s => s.trim()).indexOf(cle) !== -1;
   const basculerEntete = (cle) => {
     const liste = String(auteurVitrineEntete || "").split(",").map(s => s.trim()).filter(Boolean);
@@ -17247,6 +17373,13 @@ export default function App() {
         vitrine_logo: auteurVitrineLogo || null,
         vitrine_logo_192: auteurVitrineLogo192 || null,
         vitrine_entete: auteurVitrineEntete || null,
+        coul_entete: auteurCoulEntete || null,
+        coul_entete_texte: auteurCoulEnteteTexte || null,
+        coul_fond: auteurCoulFond || null,
+        coul_prix: auteurCoulPrix || null,
+        coul_bouton: auteurCoulBouton || null,
+        coul_bouton_texte: auteurCoulBoutonTexte || null,
+        vitrine_formations_lien: auteurFormationsLien.trim() || null,
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
@@ -17840,6 +17973,14 @@ export default function App() {
     };
     const AC = (boutiqueAuteur && boutiqueAuteur.couleur && String(boutiqueAuteur.couleur).trim()) ? String(boutiqueAuteur.couleur).trim() : G.gold;
     const ACdim = teinte(AC, 0.14);
+    // Les 6 couleurs reglees par l'auteur. Chacune retombe sur une valeur sure.
+    const cEnt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_entete, G.navSurface);
+    const cEntTxt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_entete_texte, G.text);
+    const cFond = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_fond, G.bg);
+    const cPrix = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_prix, AC);
+    const cBtn = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_bouton, AC);
+    const cBtnTxt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_bouton_texte, "#ffffff");
+    const lienFormations = (boutiqueAuteur && boutiqueAuteur.vitrine_formations_lien && String(boutiqueAuteur.vitrine_formations_lien).trim()) ? String(boutiqueAuteur.vitrine_formations_lien).trim() : "";
     const nomAuteur = (boutiqueAuteur && boutiqueAuteur.nom_complet) || "Boutique auteur";
     // Ce que l'auteur a coche dans ses parametres. Rien d'enregistre = on affiche tout.
     const entListe = (boutiqueAuteur && boutiqueAuteur.vitrine_entete != null && String(boutiqueAuteur.vitrine_entete).trim() !== "")
@@ -17876,26 +18017,28 @@ export default function App() {
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
         <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 3, height: 33, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-        <div style={{ fontSize: 12, fontWeight: "bold", color: AC }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
+        <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix, marginBottom: 5 }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
+        <button type="button" onClick={(e) => { e.stopPropagation(); openBook(book); }}
+          style={{ width: "100%", padding: "7px 0", borderRadius: 7, border: "none", background: cBtn, color: cBtnTxt, fontSize: 12, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>Lire</button>
       </div>
     );
     return (
-      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+      <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
         {bandeauInstallNode}
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
-        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "2px solid " + AC, zIndex: 10 }}>
+        <div style={{ position: "sticky", top: 0, background: cEnt, borderBottom: "2px solid " + AC, zIndex: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
-            <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+            <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: cEntTxt, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
             {aff("logo") ? (
               <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
                 {logoEntete ? <img src={logoEntete} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titreEntete.charAt(0).toUpperCase()}
               </div>
             ) : null}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: tailleTitre, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
+              <div style={{ fontSize: tailleTitre, fontWeight: "bold", color: cEntTxt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
                 {boutiqueAuteur ? renderBadgeVerifie(boutiqueAuteur.verifie) : null}{titreEntete}
               </div>
-              <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.75, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {sousEntete.join(" · ")}
               </div>
             </div>
@@ -17915,6 +18058,19 @@ export default function App() {
                   style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
                 {boutiqueSearch ? (
                   <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
+                ) : null}
+              </div>
+              {/* ===== DEUX BOUTONS SOUS LA RECHERCHE ===== */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <button type="button" onClick={() => { setPage("library"); try { window.scrollTo(0, 0); } catch (e) {} }}
+                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + AC, background: "transparent", color: AC, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
+                  📚 Ma bibliothèque
+                </button>
+                {lienFormations ? (
+                  <a href={lienFormations.startsWith("http") ? lienFormations : "https://" + lienFormations} target="_blank" rel="noopener noreferrer"
+                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + AC, background: AC, color: "#fff", fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
+                    🎬 Formations vidéo
+                  </a>
                 ) : null}
               </div>
               {bqCats.length > 1 && (
@@ -17966,18 +18122,6 @@ export default function App() {
             )}
 
             <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px" }}>
-              {/* ===== INSTALLER CETTE BOUTIQUE ===== */}
-              {(() => {
-                let deja = false;
-                try { deja = window.matchMedia("(display-mode: standalone)").matches; } catch (e) {}
-                if (deja) return null;
-                return (
-                  <button onClick={triggerInstall}
-                    style={{ width: "100%", marginTop: 14, padding: "13px 14px", borderRadius: 12, border: "none", background: AC, color: "#fff", fontSize: 14, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>
-                    📲 Installer {titreEntete} sur mon téléphone
-                  </button>
-                );
-              })()}
               {/* ===== RESULTATS DE RECHERCHE / FILTRE ===== */}
               {bqRecherche ? (
                 <div style={{ paddingTop: 16 }}>
@@ -18026,61 +18170,79 @@ export default function App() {
                     })()
                   )}
 
-                  {/* ===== A PROPOS DE L'AUTEUR ===== */}
-                  <div style={{ background: "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + AC, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
-                    <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>
-                      {boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : nomAuteur.charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ fontSize: 21, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{renderBadgeVerifie(boutiqueAuteur.verifie)}{boutiqueAuteur.nom_complet}</div>
-                    {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
-                    {boutiqueAuteur.bio ? (() => {
-                      const bio = boutiqueAuteur.bio;
-                      const isLong = bio.length > 220;
-                      const shown = (!bioExpanded && isLong) ? bio.slice(0, 220).trim() + "…" : bio;
-                      return (
-                        <div style={{ maxWidth: 600, margin: "0 auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>
-                          <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, textAlign: "left", whiteSpace: "pre-wrap" }}>{shown}</div>
-                          {isLong ? <button onClick={() => setBioExpanded(v => !v)} style={{ background: "none", border: "none", color: AC, fontWeight: "bold", fontSize: 13, cursor: "pointer", padding: "6px 0 0", marginTop: 2, fontFamily: "Georgia, serif" }}>{bioExpanded ? "Voir moins ▲" : "Voir plus ▼"}</button> : null}
-                        </div>
-                      );
-                    })() : null}
-                    {(() => {
-                      const reseaux = [
-                        { u: boutiqueAuteur.facebook, l: "Facebook", ic: "📘", c: "#1877F2" },
-                        { u: boutiqueAuteur.instagram, l: "Instagram", ic: "📷", c: "#E1306C" },
-                        { u: boutiqueAuteur.tiktok, l: "TikTok", ic: "🎵", c: "#111" },
-                        { u: boutiqueAuteur.linkedin, l: "LinkedIn", ic: "💼", c: "#0A66C2" },
-                        { u: boutiqueAuteur.youtube, l: "YouTube", ic: "▶️", c: "#FF0000" },
-                      ].filter(r => r.u && r.u.trim());
-                      if (reseaux.length === 0) return null;
-                      return (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 14 }}>
-                          {reseaux.map(r => (
-                            <a key={r.l} href={r.u.startsWith("http") ? r.u : "https://" + r.u} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", background: "#fff", border: "1px solid " + G.border, borderRadius: 20, color: r.c, fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>{r.ic} {r.l}</a>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                    <div style={{ marginTop: 14, fontSize: 13, color: AC, fontWeight: "bold" }}>{bqBooks.length} livre{bqBooks.length > 1 ? "s" : ""} en ligne{boutiqueAbonnes > 0 ? " · " + boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : "") : ""}</div>
-                    {boutiqueAuteur.id ? (
-                      <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
-                        style={{ marginTop: 12, padding: "11px 26px", borderRadius: 24, border: "1.5px solid " + AC, background: boutiqueEstAbonne ? "transparent" : AC, color: boutiqueEstAbonne ? AC : "#fff", fontSize: 13.5, fontWeight: "bold", cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: boutiqueSuivreBusy ? 0.6 : 1 }}>
-                        {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "+ Suivre cet auteur"}
-                      </button>
-                    ) : null}
-                  </div>
                 </>
               )}
 
-              {/* ===== PIED DE PAGE ===== */}
-              <div style={{ textAlign: "center", padding: "22px 10px 10px", borderTop: "1px solid " + G.border, marginTop: 10 }}>
-                <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 8 }}>Propulsé par</div>
-                <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); window.scrollTo(0, 0); } catch (e) {} }}
-                  style={{ background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, padding: 0 }}>
-                  <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 26, width: "auto" }} />
-                  <span style={{ fontSize: 14, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>CarryBooks</span>
-                </button>
-                <div style={{ fontSize: 10.5, color: G.textFaint, marginTop: 8 }}>Paiement sécurisé · Livraison immédiate</div>
+            </div>
+
+            {/* ===== PIED DE PAGE DE L'AUTEUR ===== */}
+            <div style={{ background: cEnt, color: cEntTxt, borderTop: "2px solid " + AC, marginTop: 24, padding: "22px 16px 18px" }}>
+              <div style={{ maxWidth: 900, margin: "0 auto" }}>
+
+                {boutiqueAuteur.bio && String(boutiqueAuteur.bio).trim() ? (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 15, fontWeight: "bold", color: cEntTxt, marginBottom: 8 }}>Qui suis-je ?</div>
+                    {(() => {
+                      const bio = String(boutiqueAuteur.bio);
+                      const isLong = bio.length > 260;
+                      const shown = (!bioExpanded && isLong) ? bio.slice(0, 260).trim() + "…" : bio;
+                      return (
+                        <>
+                          <div style={{ fontSize: 13.5, color: cEntTxt, opacity: 0.9, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{shown}</div>
+                          {isLong ? <button onClick={() => setBioExpanded(v => !v)} style={{ background: "none", border: "none", color: AC, fontWeight: "bold", fontSize: 13, cursor: "pointer", padding: "8px 0 0", fontFamily: "Georgia, serif" }}>{bioExpanded ? "Voir moins ▲" : "Voir plus ▼"}</button> : null}
+                        </>
+                      );
+                    })()}
+                  </div>
+                ) : null}
+
+                {(() => {
+                  const reseaux = [
+                    { u: boutiqueAuteur.facebook, l: "Facebook", ic: "📘" },
+                    { u: boutiqueAuteur.instagram, l: "Instagram", ic: "📷" },
+                    { u: boutiqueAuteur.tiktok, l: "TikTok", ic: "🎵" },
+                    { u: boutiqueAuteur.linkedin, l: "LinkedIn", ic: "💼" },
+                    { u: boutiqueAuteur.youtube, l: "YouTube", ic: "▶️" },
+                  ].filter(r => r.u && String(r.u).trim());
+                  if (reseaux.length === 0) return null;
+                  return (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+                      {reseaux.map(r => (
+                        <a key={r.l} href={String(r.u).startsWith("http") ? r.u : "https://" + r.u} target="_blank" rel="noopener noreferrer" title={r.l}
+                          style={{ width: 42, height: 42, borderRadius: "50%", border: "1.5px solid " + AC, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 18, textDecoration: "none" }}>{r.ic}</a>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
+                  {boutiqueAuteur.id ? (
+                    <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
+                      style={{ padding: "11px 20px", borderRadius: 24, border: "1.5px solid " + AC, background: boutiqueEstAbonne ? "transparent" : AC, color: boutiqueEstAbonne ? AC : "#fff", fontSize: 13, fontWeight: "bold", cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
+                      {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "+ Suivre cet auteur"}
+                    </button>
+                  ) : null}
+                  {(() => {
+                    let deja = false;
+                    try { deja = window.matchMedia("(display-mode: standalone)").matches; } catch (e) {}
+                    if (deja) return null;
+                    return (
+                      <button onClick={triggerInstall}
+                        style={{ padding: "11px 20px", borderRadius: 24, border: "1.5px solid " + AC, background: "transparent", color: cEntTxt, fontSize: 13, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                        📲 Comment télécharger l'application
+                      </button>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ borderTop: "1px solid " + AC, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé · Livraison immédiate</div>
+                  <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); window.scrollTo(0, 0); } catch (e) {} }}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11.5, color: cEntTxt, opacity: 0.8, fontFamily: "Georgia, serif" }}>
+                    Propulsé par <b>CarryBooks</b>
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -19099,42 +19261,77 @@ export default function App() {
                     ))}
                   </div>
 
-                  <label style={labelSt}>Couleur de ma vitrine</label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
-                    {["#c9a84c", "#1e88e5", "#43a047", "#e53935", "#8e24aa", "#00897b", "#f4511e", "#3949ab", "#d81b60", "#1a1208"].map(c => (
-                      <button key={c} type="button" onClick={() => setAuteurCouleur(c)}
-                        style={{ width: 36, height: 36, borderRadius: "50%", background: c, cursor: "pointer", border: (auteurCouleur || "").toLowerCase() === c ? "3px solid " + G.text : "2px solid " + G.border, padding: 0 }} />
-                    ))}
+                  <label style={labelSt}>Lien de mes formations vidéo (facultatif)</label>
+                  <input value={auteurFormationsLien} onChange={e => setAuteurFormationsLien(e.target.value)} placeholder="https://youtube.com/@ma-chaine" style={champ} />
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 16, lineHeight: 1.5 }}>Un bouton « Formations vidéo » apparaîtra sur ta vitrine et ouvrira ce lien. Laisse vide pour ne pas afficher le bouton.</div>
+
+                  <label style={labelSt}>Les couleurs de ma vitrine</label>
+                  <div style={{ marginBottom: 16 }}>
+                    {REGLAGES_COUL.map(r => {
+                      const actuelle = normaliserCoul(r.val(), r.defaut);
+                      return (
+                        <div key={r.cle} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + G.border }}>
+                          <button type="button" onClick={() => setPalettePour(r.cle)} style={{ width: 34, height: 34, borderRadius: 8, background: actuelle, border: "2px solid " + G.border, flexShrink: 0, cursor: "pointer", padding: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: G.text, lineHeight: 1.35 }}>{r.lab}</div>
+                          <button type="button" onClick={() => setPalettePour(r.cle)} style={{ padding: "7px 12px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>Changer</button>
+                          {r.val() ? <button type="button" onClick={() => r.set("")} title="Revenir à la couleur d'origine" style={{ background: "none", border: "none", color: G.textFaint, fontSize: 17, cursor: "pointer", padding: "0 2px" }}>↺</button> : null}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, color: G.textDim, fontWeight: "bold" }}>Ou choisis la tienne :</label>
-                    <input type="color" value={auteurCouleur || "#c9a84c"} onChange={e => setAuteurCouleur(e.target.value)} style={{ width: 52, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#fff", cursor: "pointer", padding: 2 }} />
-                    <button type="button" onClick={() => setAuteurCouleur("")} style={{ padding: "8px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Couleur par défaut</button>
-                  </div>
+                  {palettePour ? (() => {
+                    const r = REGLAGES_COUL.filter(x => x.cle === palettePour)[0];
+                    if (!r) return null;
+                    return (
+                      <Palette titre={r.lab} couleur={normaliserCoul(r.val(), r.defaut)} perso={coulsPerso}
+                        onFermer={() => setPalettePour(null)}
+                        onValider={(hex) => { r.set(hex); retenirCoulPerso(hex); setPalettePour(null); }} />
+                    );
+                  })() : null}
+
                   {(() => {
                     const nomV = auteurVitrineNom.trim();
                     const nomA = auteurNom || "Ton nom";
                     const titre = nomV || nomA;
                     const tTitre = titre.length > 34 ? 11 : titre.length > 28 ? 12 : titre.length > 22 ? 13 : 13.5;
+                    const cAcc = normaliserCoul(auteurCouleur, "#c9a84c");
+                    const cEnt = normaliserCoul(auteurCoulEntete, "#ede7d9");
+                    const cEntTxt = normaliserCoul(auteurCoulEnteteTexte, "#1a1208");
+                    const cFond = normaliserCoul(auteurCoulFond, "#f5f0e8");
+                    const cPrix = normaliserCoul(auteurCoulPrix, cAcc);
+                    const cBtn = normaliserCoul(auteurCoulBouton, cAcc);
+                    const cBtnTxt = normaliserCoul(auteurCoulBoutonTexte, "#ffffff");
                     const bouts = [];
                     if (nomV && enteteCoche("nom_auteur")) bouts.push("par " + nomA);
                     else bouts.push("Librairie officielle");
                     if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
                     if (enteteCoche("abonnes")) bouts.push("128 abonnés");
                     return (
-                      <div style={{ border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.gold), borderRadius: 10, padding: 12, background: G.bg, marginBottom: 14 }}>
-                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Aperçu de l'en-tête</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ border: "1px solid " + G.border, borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
+                        <div style={{ fontSize: 11, color: G.textDim, padding: "8px 10px", background: G.bg }}>Aperçu de ta vitrine</div>
+                        <div style={{ background: cEnt, borderBottom: "2px solid " + cAcc, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           {enteteCoche("logo") ? (
-                            <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
+                            <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
                               {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titre.charAt(0).toUpperCase()}
                             </div>
                           ) : null}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: tTitre, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{titre}</div>
-                            <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bouts.join(" · ")}</div>
+                            <div style={{ fontSize: tTitre, fontWeight: "bold", color: cEntTxt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{titre}</div>
+                            <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.75, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bouts.join(" · ")}</div>
                           </div>
-                          <div style={{ padding: "7px 13px", borderRadius: 20, background: auteurCouleur || G.gold, color: "#fff", fontSize: 12, fontWeight: "bold", flexShrink: 0 }}>+ Suivre</div>
+                          <div style={{ padding: "7px 13px", borderRadius: 20, background: cAcc, color: "#fff", fontSize: 12, fontWeight: "bold", flexShrink: 0 }}>+ Suivre</div>
+                        </div>
+                        <div style={{ background: cFond, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ width: 42, height: 58, borderRadius: 5, background: G.border, flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#1a1208", marginBottom: 3 }}>Mon livre</div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>2 000 FCFA</div>
+                          </div>
+                          <div style={{ padding: "8px 16px", borderRadius: 8, background: cBtn, color: cBtnTxt, fontSize: 12.5, fontWeight: "bold", flexShrink: 0 }}>Lire</div>
+                        </div>
+                        <div style={{ background: cEnt, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ fontSize: 11, fontWeight: "bold", color: cEntTxt }}>Qui suis-je ?</div>
+                          <div style={{ fontSize: 9.5, color: cEntTxt, opacity: 0.7 }}>Propulsé par CarryBooks</div>
                         </div>
                       </div>
                     );
