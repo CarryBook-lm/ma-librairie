@@ -381,6 +381,8 @@ export default function Admin() {
   const [eaLoading, setEaLoading] = useState(false);
   const [eaKyc, setEaKyc] = useState([]);
   const [eaAValider, setEaAValider] = useState([]);
+  const [eaVitrine, setEaVitrine] = useState([]);
+  const [eaVitrineBusy, setEaVitrineBusy] = useState(null);
   const [eaLireTexte, setEaLireTexte] = useState(null);
   const [eaAnnonces, setEaAnnonces] = useState([]);
   const [eaSoldes, setEaSoldes] = useState([]); // [{auteur_id, nom, phone, solde}]
@@ -530,7 +532,7 @@ export default function Admin() {
       setEaLoading(true);
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
-          supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
+          supabase.from("auteurs").select("id, nom_complet, telephone, email, code_source, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
           supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
@@ -542,6 +544,8 @@ export default function Admin() {
         setEaKyc(kyc || []);
         const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
         setEaAValider(av || []);
+        const { data: vitr } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
+        setEaVitrine(vitr || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
         setEaAnnonces(anns || []);
         const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
@@ -793,6 +797,33 @@ export default function Admin() {
     const nv = !b.masque;
     await supabase.from("books").update({ masque: nv }).eq("id", b.id);
     setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, masque: nv } : x));
+  };
+  // 26/09 : livres mis en ligne SANS validation (vendus seulement dans la vitrine de leur auteur).
+  const reloadVitrine = async () => {
+    const { data: vitr } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
+    setEaVitrine(vitr || []);
+  };
+  const retirerLivreVitrine = async (b) => {
+    const motif = window.prompt("Motif du retrait (l'auteur le recevra) :", "");
+    if (motif === null) return;
+    if (!motif.trim()) { alert("Entre un motif."); return; }
+    setEaVitrineBusy(b.id);
+    const { error } = await supabase.from("books").update({ status: "en_attente", moderation: "refuse", motif_refus: motif.trim() }).eq("id", b.id);
+    if (error) { setEaVitrineBusy(null); alert("Erreur : " + error.message); return; }
+    if (b.auteur_id) {
+      const texte = "🔴 Ton livre « " + b.title + " » a été retiré de la vente.\n\nMotif : " + motif.trim() + "\n\nCorrige-le puis resoumets-le.";
+      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
+    }
+    await reloadVitrine(); setEaVitrineBusy(null);
+    alert("Livre retiré. L'auteur a été prévenu dans son Support.");
+  };
+  const passerSurCarryBooks = async (b) => {
+    if (!window.confirm("Mettre « " + b.title + " » aussi sur CarryBooks ? Il repasse en validation, et sa commission redevient 70 % / 50 %.")) return;
+    setEaVitrineBusy(b.id);
+    const { error } = await supabase.from("books").update({ exclusif_vitrine: false, status: "en_attente", moderation: "en_attente", motif_refus: null }).eq("id", b.id);
+    if (error) { setEaVitrineBusy(null); alert("Erreur : " + error.message); return; }
+    await reloadVitrine(); await reloadAValider(); setEaVitrineBusy(null);
+    alert("✅ Le livre est dans « Livres à valider ». Publie-le pour qu'il apparaisse sur CarryBooks.");
   };
   const reloadAValider = async () => {
     const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
@@ -4383,7 +4414,7 @@ export default function Admin() {
           <div>
             <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["annonces","📢 Annonces" + ((() => { const n = eaAnnonces.filter(a => a.statut === "en_attente").length; return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
+              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["vitrine","🏪 Publiés sans validation" + (eaVitrine.length ? " (" + eaVitrine.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["annonces","📢 Annonces" + ((() => { const n = eaAnnonces.filter(a => a.statut === "en_attente").length; return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
                 <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
@@ -4494,6 +4525,62 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
+                )}
+                {eaLireTexte && (
+                  <div onClick={() => setEaLireTexte(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
+                    <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, maxWidth: 720, width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                      <div style={{ padding: "12px 16px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                        <b style={{ color: "#1a1208", fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{eaLireTexte.title}</b>
+                        <button onClick={() => setEaLireTexte(null)} style={{ background: "#eee", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", flexShrink: 0 }}>✕</button>
+                      </div>
+                      <div style={{ padding: "16px 18px", overflowY: "auto", fontSize: 15, lineHeight: 1.75, color: "#1a1a1a", textAlign: "justify", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: eaLireTexte.content || "(vide)" }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {eaTab === "vitrine" && (
+              <div>
+                <div style={{ background: "#2a2410", border: "1px solid #c9a84c55", borderRadius: 10, padding: 12, marginBottom: 14, color: "#d8c89a", fontSize: 12.5, lineHeight: 1.6 }}>
+                  Ces livres ont été mis en ligne <b>sans validation</b> par des auteurs vérifiés. Ils n'apparaissent <b>pas</b> sur carrybooks.com — uniquement sur la vitrine de leur auteur, qui touche 85 %. Vérifie-les de temps en temps : tu peux les retirer en un clic.
+                </div>
+                {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaVitrine.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun livre publié sans validation pour le moment.</div> : (
+                  eaVitrine.map(b => {
+                    const bType = b.audio_url ? { i: "🎧", l: "Audio", c: "#b39ddb" } : (b.pdf_url ? ((b.price || 0) === 0 ? { i: "🎁", l: "Gratuit", c: "#a5d6a7" } : { i: "📥", l: "PDF", c: "#90caf9" }) : { i: "📖", l: "Texte", c: "#ffcc80" });
+                    const aut = eaAuteurs.find(a => String(a.id) === String(b.auteur_id));
+                    return (
+                      <div key={b.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+                        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                          <div style={{ width: 60, height: 84, borderRadius: 6, overflow: "hidden", background: "#0f0f0f", flexShrink: 0 }}>
+                            {b.cover ? <img src={b.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ marginBottom: 4, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              <span style={{ fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10, background: "#2a2410", color: bType.c, border: "1px solid " + bType.c + "55" }}>{bType.i} {bType.l}</span>
+                              <span style={{ fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10, background: "#14301a", color: "#a5d6a7", border: "1px solid #a5d6a755" }}>🏪 Vitrine seule · 85 %</span>
+                            </div>
+                            <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
+                            <div style={{ color: "#aaa", fontSize: 12, marginBottom: 2 }}>par {b.author || "—"}{aut && aut.email ? " · " + aut.email : ""}</div>
+                            <div style={{ color: "#888", fontSize: 12 }}>{b.category || ""}{b.subcategory ? " · " + b.subcategory : ""}</div>
+                            <div style={{ color: "#a5d6a7", fontSize: 13, fontWeight: "bold", marginTop: 4 }}>{(b.price || 0).toLocaleString()} F</div>
+                            <div style={{ color: "#777", fontSize: 11, marginTop: 4 }}>Mis en ligne le {b.created_at ? new Date(b.created_at).toLocaleDateString("fr-FR") : "—"}</div>
+                          </div>
+                        </div>
+                        {b.summary ? <div style={{ color: "#bbb", fontSize: 12, lineHeight: 1.5, marginBottom: 10, maxHeight: 80, overflow: "auto" }}>{b.summary}</div> : null}
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                          {(!b.pdf_url && !b.audio_url && b.content) ? <button onClick={() => setEaLireTexte(b)} style={{ background: "#0f0f0f", border: "1px solid #4f9cf9", borderRadius: 8, color: "#4f9cf9", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>📖 Lire le texte</button> : null}
+                          {b.pdf_url ? <a href={b.pdf_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none", alignSelf: "center" }}>📄 Lire le PDF</a> : null}
+                          {b.audio_url ? <a href={b.audio_url} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none", alignSelf: "center" }}>🎧 Écouter l'audio</a> : null}
+                          {aut && aut.code_source ? <a href={"/auteur/" + aut.code_source} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none", alignSelf: "center" }}>🏪 Voir la vitrine</a> : null}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => passerSurCarryBooks(b)} disabled={eaVitrineBusy === b.id} style={{ flex: 1, padding: "10px 0", background: "#0f0f0f", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: eaVitrineBusy === b.id ? "wait" : "pointer" }}>🌍 Mettre aussi sur CarryBooks</button>
+                          <button onClick={() => retirerLivreVitrine(b)} disabled={eaVitrineBusy === b.id} style={{ flex: 1, padding: "10px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: eaVitrineBusy === b.id ? "wait" : "pointer" }}>🚫 Retirer de la vente</button>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
                 {eaLireTexte && (
                   <div onClick={() => setEaLireTexte(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
