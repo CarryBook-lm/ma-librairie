@@ -15189,6 +15189,16 @@ export default function App() {
       return; // On garde l'URL actuelle, ne pas écraser
     }
 
+    // MODE VITRINE : l'adresse reste sur /auteur/CODE meme sur la fiche d'un
+    // livre. Sinon /livre/le-titre est servi par api/preview, qui renvoie les humains
+    // vers l'accueil CarryBooks : un simple rafraichissement faisait sortir le lecteur.
+    // On empile quand meme une entree par page, pour que le retour du navigateur
+    // ramene a la vitrine au lieu de quitter le site du premier coup.
+    if (vitrineCode) {
+      const cheminVitrine = "/auteur/" + encodeURIComponent(vitrineCode) + (window.location.search || "");
+      try { window.history.pushState({ page: page }, "", cheminVitrine); } catch (e) {}
+      return;
+    }
     const newPath = buildPath(page, selectedBook, selectedCategory);
     // 🎯 PRÉSERVER le query string (notamment ?ref= pour parrainage)
     const currentSearch = window.location.search || "";
@@ -15196,11 +15206,19 @@ export default function App() {
     if (window.location.pathname + window.location.search !== newFullPath) {
       window.history.pushState({ page, bookId: selectedBook?.id }, "", newFullPath);
     }
-  }, [page, selectedBook, selectedCategory]);
+  }, [page, selectedBook, selectedCategory, vitrineCode]);
 
   // Gérer le bouton "Retour" du navigateur
   useEffect(() => {
     const handlePopState = () => {
+      // MODE VITRINE : le retour du navigateur ramene toujours a la vitrine.
+      if (vitrineCode) {
+        setBoutiqueNom(null);
+        setBoutiqueCode(vitrineCode);
+        setPage("auteur_boutique");
+        try { window.history.replaceState({}, "", "/auteur/" + encodeURIComponent(vitrineCode)); } catch (e) {}
+        return;
+      }
       const urlPage = getPageFromURL();
       const slug = getSlugFromURL();
 
@@ -15214,7 +15232,7 @@ export default function App() {
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [books]);
+  }, [books, vitrineCode]);
 
   // Fonction pour recharger les prix depuis Supabase (réutilisable)
   const fetchPrices = async () => {
