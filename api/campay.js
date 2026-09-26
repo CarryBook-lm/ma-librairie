@@ -193,25 +193,29 @@ async function sendAuthorSaleEmail(supabaseAdmin, { auteurId, bookId, partAuteur
   } catch (e) { console.error("[AUTEUR-EMAIL] exception (non bloquant):", e.message); }
 }
 
-// Brique 5b (CamPay) : enregistre la commission auteur (70% via lien, 50% sinon)
+// Brique 5b (CamPay) : enregistre la commission auteur.
+//   85% : livre vendu UNIQUEMENT dans la vitrine de l'auteur (exclusif_vitrine)
+//   70% : vente amenee par le lien de promotion de l'auteur
+//   50% : vente amenee par CarryBooks
 async function recordAuthorSaleCampay(supabaseAdmin, opts) {
   const { bookId, amount, reference, authorSrc } = opts || {};
   try {
     if (!bookId || !amount || !reference) return;
-    const { data: bk } = await supabaseAdmin.from("books").select("auteur_id").eq("id", bookId).limit(1);
+    const { data: bk } = await supabaseAdmin.from("books").select("auteur_id, exclusif_vitrine").eq("id", bookId).limit(1);
     const auteurId = bk && bk[0] ? bk[0].auteur_id : null;
     if (!auteurId) return;
+    const exclusifVitrine = !!(bk && bk[0] && bk[0].exclusif_vitrine);
     const { data: va } = await supabaseAdmin.from("ventes_auteurs").select("id").eq("reference", reference).limit(1);
     if (va && va.length > 0) return;
     const { data: au } = await supabaseAdmin.from("auteurs").select("code_source").eq("id", auteurId).limit(1);
     const codeSource = au && au[0] ? au[0].code_source : null;
     const viaLien = authorSrc && codeSource && String(authorSrc).toLowerCase() === String(codeSource).toLowerCase();
-    const taux = viaLien ? 70 : 50;
+    const taux = exclusifVitrine ? 85 : (viaLien ? 70 : 50);
     const partAuteur = Math.round(amount * taux / 100);
     const { error } = await supabaseAdmin.from("ventes_auteurs").insert([{
       auteur_id: auteurId, book_id: bookId, reference: reference,
       montant_total: amount, taux_auteur: taux, part_auteur: partAuteur,
-      part_carrybooks: amount - partAuteur, source: viaLien ? "auteur" : "carrybooks",
+      part_carrybooks: amount - partAuteur, source: exclusifVitrine ? "vitrine" : (viaLien ? "auteur" : "carrybooks"),
     }]);
     if (error) console.error("[CAMPAY-AUTEUR] insert:", error.message);
     else { console.log("[CAMPAY-AUTEUR] commission:", taux + "% =", partAuteur); await sendAuthorSaleEmail(supabaseAdmin, { auteurId, bookId, partAuteur }); }

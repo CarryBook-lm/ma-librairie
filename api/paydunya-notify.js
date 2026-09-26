@@ -10,7 +10,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 // 📧 Email a l'auteur quand son livre est vendu
-async function sendAuthorSaleEmail(supabaseAdmin, { bookId, amount }) {
+async function sendAuthorSaleEmail(supabaseAdmin, { bookId, partAuteur }) {
   try {
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     if (!RESEND_API_KEY) return;
@@ -21,7 +21,7 @@ async function sendAuthorSaleEmail(supabaseAdmin, { bookId, amount }) {
     const { data: au } = await supabaseAdmin.from("auteurs").select("email, nom_complet, code_source").eq("id", bk[0].auteur_id).limit(1);
     if (!au || !au[0] || !au[0].email) return;
     const nom = (au[0].nom_complet || "").split(" ")[0] || "";
-    const part = Math.round(Number(amount || 0) * 0.5);
+    const part = Math.round(Number(partAuteur || 0));
     const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff8ec;border-radius:12px;"><div style="text-align:center;font-size:34px;">🎉</div><h2 style="color:#1a1208;text-align:center;margin:8px 0;">Bingo !!!</h2><p style="color:#444;font-size:15px;line-height:1.6;text-align:center;">Bonne nouvelle${nom ? ", " + nom : ""} !<br/>Ton livre <b>${titre}</b> vient d\u2019\u00eatre vendu sur CarryBooks.</p><div style="background:#c9a84c;color:#1a1208;font-weight:bold;font-size:18px;text-align:center;padding:12px;border-radius:10px;margin:16px 0;">+ ${part.toLocaleString("fr-FR")} FCFA</div><p style="color:#666;font-size:13px;text-align:center;">Retrouve tes gains dans ton espace auteur.</p><p style="color:#999;font-size:12px;text-align:center;margin-top:18px;">CarryBooks \u2764\ufe0f</p></div>`;
     await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -29,6 +29,37 @@ async function sendAuthorSaleEmail(supabaseAdmin, { bookId, amount }) {
       body: JSON.stringify({ from: EMAIL_FROM, to: au[0].email, subject: "🎉 Ton livre \"" + titre + "\" a \u00e9t\u00e9 vendu !", html }),
     });
   } catch (e) { console.error("[PAYDUNYA-AUTEUR-EMAIL]", e.message); }
+}
+
+// Brique 5b (PayDunya) : enregistre la commission auteur dans ventes_auteurs.
+//   85% : livre vendu UNIQUEMENT dans la vitrine de l'auteur (exclusif_vitrine)
+//   70% : vente amenee par le lien de promotion de l'auteur
+//   50% : vente amenee par CarryBooks
+async function recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorSrc }) {
+  try {
+    if (!bookId || !amount || !extRef) return;
+    const { data: bk } = await supabaseAdmin.from("books").select("auteur_id, exclusif_vitrine").eq("id", bookId).limit(1);
+    const auteurId = bk && bk[0] ? bk[0].auteur_id : null;
+    if (!auteurId) return; // livre sans auteur (classiques) -> pas de commission
+    const exclusifVitrine = !!(bk && bk[0] && bk[0].exclusif_vitrine);
+    const { data: va } = await supabaseAdmin.from("ventes_auteurs").select("id").eq("reference", extRef).limit(1);
+    if (va && va.length > 0) return; // deja enregistre (anti-doublon)
+    const { data: au } = await supabaseAdmin.from("auteurs").select("code_source").eq("id", auteurId).limit(1);
+    const codeSource = au && au[0] ? au[0].code_source : null;
+    const viaLien = authorSrc && codeSource && String(authorSrc).toLowerCase() === String(codeSource).toLowerCase();
+    const taux = exclusifVitrine ? 85 : (viaLien ? 70 : 50);
+    const partAuteur = Math.round(amount * taux / 100);
+    const { error } = await supabaseAdmin.from("ventes_auteurs").insert([{
+      auteur_id: auteurId, book_id: bookId, reference: extRef,
+      montant_total: amount, taux_auteur: taux, part_auteur: partAuteur,
+      part_carrybooks: amount - partAuteur, source: exclusifVitrine ? "vitrine" : (viaLien ? "auteur" : "carrybooks"),
+    }]);
+    if (error) console.error("[PAYDUNYA-AUTEUR] insert ventes_auteurs:", error.message);
+    else {
+      console.log("[PAYDUNYA-AUTEUR] commission enregistree:", taux + "% =", partAuteur, "FCFA");
+      await sendAuthorSaleEmail(supabaseAdmin, { bookId, partAuteur });
+    }
+  } catch (e) { console.error("[PAYDUNYA-AUTEUR] exception:", e.message); }
 }
 
 export default async function handler(req, res) {
@@ -93,6 +124,7 @@ export default async function handler(req, res) {
     const userId = cd.user_id && cd.user_id !== "" ? cd.user_id : null;
     const extRef = cd.external_reference;
     const referrerCode = cd.referrer_code && cd.referrer_code !== "" ? cd.referrer_code : null;
+    const authorSrc = cd.author_src && cd.author_src !== "" ? cd.author_src : "";
     const phone = cd.phone || (conf.customer && conf.customer.phone) || "";
     const amount = Math.round(Number((conf.invoice && conf.invoice.total_amount) || cd.amount || 0));
 
@@ -127,7 +159,7 @@ export default async function handler(req, res) {
         console.error("[PAYDUNYA-NOTIFY] insert purchases:", error);
         return res.status(200).json({ ok: false, error: error.message });
       }
-      await sendAuthorSaleEmail(supabaseAdmin, { bookId, amount });
+      await recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorSrc });
       console.log("[PAYDUNYA-NOTIFY] Achat enregistré (utilisateur)");
       return res.status(200).json({ ok: true, handled: "user" });
     } else {
@@ -150,7 +182,7 @@ export default async function handler(req, res) {
         console.error("[PAYDUNYA-NOTIFY] insert guest_purchases:", error);
         return res.status(200).json({ ok: false, error: error.message });
       }
-      await sendAuthorSaleEmail(supabaseAdmin, { bookId, amount });
+      await recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorSrc });
       console.log("[PAYDUNYA-NOTIFY] Achat enregistré (invité)");
       return res.status(200).json({ ok: true, handled: "guest" });
     }
