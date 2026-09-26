@@ -13652,6 +13652,7 @@ export default function App() {
   const [boutiqueAbonnes, setBoutiqueAbonnes] = useState(0);
   const [boutiqueEstAbonne, setBoutiqueEstAbonne] = useState(false);
   const [boutiqueSuivreBusy, setBoutiqueSuivreBusy] = useState(false);
+  const [bqMenuCats, setBqMenuCats] = useState(false);
   const [auteursAll, setAuteursAll] = useState([]); // pour la recherche par nom
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -18015,6 +18016,8 @@ export default function App() {
     };
     const AC = (boutiqueAuteur && boutiqueAuteur.couleur && String(boutiqueAuteur.couleur).trim()) ? String(boutiqueAuteur.couleur).trim() : G.gold;
     const ACdim = teinte(AC, 0.14);
+    // Version claire de la couleur de l'auteur : sert aux contours, plus doux que le noir.
+    const ACclair = teinte(AC, 0.40);
     // Les 6 couleurs reglees par l'auteur. Chacune retombe sur une valeur sure.
     const cEnt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_entete, G.navSurface);
     const cEntTxt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_entete_texte, G.text);
@@ -18066,7 +18069,8 @@ export default function App() {
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
         <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-        {book.author ? <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 2, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div> : null}
+        {book.author ? <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div> : null}
+        {book.category ? <div style={{ fontSize: 9.5, color: AC, marginBottom: 3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.category}</div> : null}
         <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
       </div>
     );
@@ -18092,20 +18096,30 @@ export default function App() {
                 {sousEntete.join(" · ")}
               </div>
             </div>
-            {boutiqueAuteur && boutiqueAuteur.id ? (
-              <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
-                style={{ flexShrink: 0, padding: "8px 14px", borderRadius: 20, border: "1.5px solid " + AC, background: boutiqueEstAbonne ? "transparent" : AC, color: boutiqueEstAbonne ? AC : "#fff", fontSize: 12.5, fontWeight: "bold", cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: boutiqueSuivreBusy ? 0.6 : 1, whiteSpace: "nowrap" }}>
-                {boutiqueEstAbonne ? "✓ Abonné(e)" : "+ Suivre"}
+            {bqCats.length > 0 ? (
+              <button onClick={() => setBqMenuCats(v => !v)} title="Les catégories"
+                style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 10, border: "1.5px solid " + ACclair, background: bqMenuCats ? ACdim : "transparent", color: cEntTxt, fontSize: 19, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                ☰
               </button>
             ) : null}
           </div>
+          {bqMenuCats && bqCats.length > 0 ? (
+            <div style={{ background: cEnt, borderBottom: "2px solid " + AC, padding: "6px 12px 12px" }}>
+              {["Tous"].concat(bqCats).map(c => (
+                <button key={c} onClick={() => { setBoutiqueCat(c); setBqMenuCats(false); try { window.scrollTo(0, 0); } catch (e) {} }}
+                  style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 10px", background: boutiqueCat === c ? ACdim : "transparent", border: "none", borderBottom: "1px solid " + ACclair, color: boutiqueCat === c ? AC : cEntTxt, fontSize: 13.5, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {bqBooks.length > 0 && (
             <div style={{ padding: "10px 12px 9px", background: cFond }}>
               <div style={{ position: "relative", marginBottom: 8 }}>
                 <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
                   placeholder={nomVitrine ? ("Rechercher dans " + nomVitrine + "…") : ("Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "…")}
-                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1.5px solid #000", borderRadius: 8, color: "#000", fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1.5px solid " + ACclair, borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
                 {boutiqueSearch ? (
                   <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
                 ) : null}
@@ -18113,12 +18127,12 @@ export default function App() {
               {/* ===== DEUX BOUTONS SOUS LA RECHERCHE ===== */}
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <button type="button" onClick={() => { setPage("library"); try { window.scrollTo(0, 0); } catch (e) {} }}
-                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #000", background: "transparent", color: "#000", fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
+                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + ACclair, background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
                   📚 Ma bibliothèque
                 </button>
                 {lienFormations ? (
                   <a href={lienFormations.startsWith("http") ? lienFormations : "https://" + lienFormations} target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #000", background: "transparent", color: "#000", fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
+                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + ACclair, background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
                     🎬 Formations vidéo
                   </a>
                 ) : null}
@@ -18127,7 +18141,7 @@ export default function App() {
                 <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
                   {["Tous"].concat(bqCats).map(c => (
                     <button key={c} onClick={() => setBoutiqueCat(c)}
-                      style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: (boutiqueCat === c ? "2px" : "1px") + " solid #000", background: boutiqueCat === c ? ACdim : "transparent", color: "#000", fontSize: 12, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
+                      style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: (boutiqueCat === c ? "2px solid " + AC : "1px solid " + ACclair), background: boutiqueCat === c ? ACdim : "transparent", color: boutiqueCat === c ? AC : G.text, fontSize: 12, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
                       {c}
                     </button>
                   ))}
@@ -18176,22 +18190,19 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* ===== PAR CATEGORIE ===== */}
+                  {/* ===== TOUS LES LIVRES, EN ORDRE ALEATOIRE =====
+                      Plus de classement par categorie : l'ordre change a chaque ouverture
+                      du site (melangerListe utilise une graine tiree au chargement), donc
+                      un lecteur qui revient ne retrouve pas les memes livres en tete. */}
                   {bqBooks.length === 0 ? (
                     <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Aucun livre en ligne pour le moment.</div>
                   ) : (
-                    (() => {
-                      const groups = {};
-                      bqBooks.forEach(b => { const cat = b.category || "Autres"; (groups[cat] = groups[cat] || []).push(b); });
-                      return Object.keys(groups).sort().map(cat => (
-                        <div key={cat} style={{ marginBottom: 24 }}>
-                          <div style={{ fontSize: 15, fontWeight: "bold", color: AC, marginBottom: 10, borderBottom: "1px solid " + G.border, paddingBottom: 6 }}>{cat}</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
-                            {groups[cat].map(b => carteLivre(b, null))}
-                          </div>
-                        </div>
-                      ));
-                    })()
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Tous les livres</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
+                        {melangerListe(bqBooks).map(b => carteLivre(b, null))}
+                      </div>
+                    </div>
                   )}
 
                 </>
