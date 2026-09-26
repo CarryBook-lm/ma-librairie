@@ -17271,10 +17271,9 @@ export default function App() {
           const x = c.getContext("2d");
           x.fillStyle = couleur || "#c9a84c";
           x.fillRect(0, 0, taille, taille);
-          // 90 % : petite marge. L'affichage dans les ronds reduit ensuite a 72 %,
-          // ce qui fait tenir un logo carre ENTIER dans le cercle, coins compris.
-          const m = Math.round(taille * 0.90);
-          const r = Math.min(m / img.width, m / img.height);
+          // Recadrage PLEIN BORD : le logo remplit tout le carre, sans marge.
+          // Le cadre rond de la vitrine le decoupe ensuite en cercle.
+          const r = Math.max(taille / img.width, taille / img.height);
           const w = Math.max(1, Math.round(img.width * r));
           const h = Math.max(1, Math.round(img.height * r));
           x.drawImage(img, Math.round((taille - w) / 2), Math.round((taille - h) / 2), w, h);
@@ -18080,13 +18079,13 @@ export default function App() {
       <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
         {bandeauInstallNode}
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
-        <div style={{ position: "sticky", top: 0, background: cEnt, borderBottom: "2px solid " + AC, zIndex: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
+        <div style={{ position: "sticky", top: 0, background: cFond, zIndex: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: cEnt, borderBottom: "2px solid " + AC }}>
             {vitrineCode ? null : (
               <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: cEntTxt, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
             )}
             {aff("logo") ? (
-              <div style={{ width: 40, height: 40, borderRadius: 9, overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
                 {logoEntete ? <img src={logoEntete} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : titreEntete.charAt(0).toUpperCase()}
               </div>
             ) : null}
@@ -18106,7 +18105,7 @@ export default function App() {
             ) : null}
           </div>
           {bqBooks.length > 0 && (
-            <div style={{ padding: "0 12px 9px" }}>
+            <div style={{ padding: "10px 12px 9px", background: cFond }}>
               <div style={{ position: "relative", marginBottom: 8 }}>
                 <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
@@ -19272,7 +19271,7 @@ export default function App() {
 
                   <label style={labelSt}>Logo de ma vitrine</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                       {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
                     </div>
                     <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
@@ -19342,7 +19341,7 @@ export default function App() {
                         <div style={{ fontSize: 11, color: G.textDim, padding: "8px 10px", background: G.bg }}>Aperçu de ta vitrine</div>
                         <div style={{ background: cEnt, borderBottom: "2px solid " + cAcc, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           {enteteCoche("logo") ? (
-                            <div style={{ width: 36, height: 36, borderRadius: 8, overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
                               {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : titre.charAt(0).toUpperCase()}
                             </div>
                           ) : null}
