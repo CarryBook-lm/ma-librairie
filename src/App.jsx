@@ -13588,6 +13588,9 @@ export default function App() {
   const [seedMelange] = useState(() => Math.floor(Math.random() * 1000000));
   const melangerListe = (arr) => { const a = [...(arr || [])]; let s = seedMelange; for (let i = a.length - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor((s / 233280) * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const annoncesRef = useRef(null);
+  // Defilement automatique des Nouveautes sur la vitrine d'un auteur.
+  // NB : boutiqueBooks et page sont declares plus haut dans le composant.
+  const bqNouvRef = useRef(null);
   useEffect(() => {
     if (!annoncesActives || annoncesActives.length <= 1) return;
     const id = setInterval(() => {
@@ -17878,6 +17881,19 @@ export default function App() {
     try { window.history.replaceState({}, "", "/auteur/" + encodeURIComponent(vitrineCode)); window.scrollTo(0, 0); } catch (e) {}
   }, [page, vitrineCode]);
 
+  // Les Nouveautes de la vitrine defilent toutes seules.
+  useEffect(() => {
+    if (page !== "auteur_boutique") return;
+    if (!boutiqueBooks || boutiqueBooks.length < 4) return;
+    const id = setInterval(() => {
+      const c = bqNouvRef.current; if (!c) return;
+      const pas = Math.max(120, c.clientWidth * 0.42);
+      if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
+      else { c.scrollBy({ left: pas, behavior: "smooth" }); }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [page, boutiqueBooks]);
+
   const basculerSuivreBoutique = async () => {
     const aid = boutiqueAuteur && boutiqueAuteur.id;
     if (!aid) return;
@@ -18036,7 +18052,6 @@ export default function App() {
     );
     const bqTri = [...bqBooks].sort((a, b) => (b.id || 0) - (a.id || 0));
     const bqRecents = bqTri.slice(0, 12);
-    const bqHero = bqTri.slice(0, 8);
     const bqRecherche = !!bqQ || boutiqueCat !== "Tous";
     const carteLivre = (book, largeur) => (
       <div key={book.id} onClick={() => openBook(book)} style={largeur ? { flexShrink: 0, width: largeur, maxWidth: 175, cursor: "pointer" } : { cursor: "pointer" }}>
@@ -18126,36 +18141,10 @@ export default function App() {
           <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Cette boutique n'est plus disponible.</div>
         ) : (
           <div style={{ paddingBottom: 30 }}>
-            {/* ===== CARROUSEL ===== */}
-            {!bqRecherche && bqHero.length > 0 && (
-              <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", marginBottom: 20 }}>
-                {bqHero.map((book, idx) => (
-                  <div key={book.id} onClick={() => openBook(book)}
-                    style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % bqHero.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
-                    {book.cover
-                      ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
-                  </div>
-                ))}
-                <div style={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
-                  <button onClick={e => { e.stopPropagation(); shareBook(bqHero[heroIndex % bqHero.length]); }}
-                    style={{ background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>🔗</button>
-                </div>
-                {bqHero.length > 1 && (
-                  <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", gap: 6, justifyContent: "center", zIndex: 2 }}>
-                    {bqHero.map((_, idx) => (
-                      <div key={idx} onClick={e => { e.stopPropagation(); setHeroIndex(idx); }}
-                        style={{ width: idx === (heroIndex % bqHero.length) ? 20 : 6, height: 6, borderRadius: 3, background: idx === (heroIndex % bqHero.length) ? AC : "rgba(255,255,255,0.6)", cursor: "pointer", transition: "all 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px" }}>
+            <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 16px 0" }}>
               {/* ===== RESULTATS DE RECHERCHE / FILTRE ===== */}
               {bqRecherche ? (
-                <div style={{ paddingTop: 16 }}>
+                <div>
                   <div style={{ fontSize: 13, color: G.textDim, marginBottom: 12 }}>
                     {bqFiltres.length} livre{bqFiltres.length > 1 ? "s" : ""} trouvé{bqFiltres.length > 1 ? "s" : ""}
                     <button onClick={() => { setBoutiqueSearch(""); setBoutiqueCat("Tous"); }} style={{ background: "none", border: "none", color: AC, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", marginLeft: 8, fontFamily: "Georgia, serif" }}>Réinitialiser</button>
@@ -18171,13 +18160,13 @@ export default function App() {
               ) : (
                 <>
                   {/* ===== NOUVEAUTES ===== */}
-                  {bqRecents.length > 0 && (
+                  {bqBooks.length >= 4 && (
                     <div style={{ marginBottom: 26 }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>✨ Nouveautés</div>
                         <div style={{ fontSize: 11, color: AC, letterSpacing: 1, textTransform: "uppercase" }}>Les + récents</div>
                       </div>
-                      <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4 }}>
+                      <div ref={bqNouvRef} style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4, scrollBehavior: "smooth" }}>
                         {bqRecents.map(b => carteLivre(b, "40vw"))}
                       </div>
                     </div>
