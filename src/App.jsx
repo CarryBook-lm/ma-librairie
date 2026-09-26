@@ -14552,7 +14552,7 @@ export default function App() {
     setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
     setAuteurCouleur(prof.couleur || "");
     setAuteurVitrineNom(prof.vitrine_nom || ""); setAuteurVitrineLogo(prof.vitrine_logo || "");
-    setAuteurVitrineEntete(prof.vitrine_entete == null ? "logo,nom_vitrine,nom_auteur,pays,abonnes" : prof.vitrine_entete);
+    setAuteurVitrineEntete(prof.vitrine_entete == null ? "logo,nom_auteur,pays,abonnes" : prof.vitrine_entete);
     setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
   useEffect(() => {
@@ -17798,10 +17798,13 @@ export default function App() {
       : ["logo", "nom_vitrine", "nom_auteur", "pays", "abonnes"];
     const aff = (c) => entListe.indexOf(c) !== -1;
     const nomVitrine = (boutiqueAuteur && boutiqueAuteur.vitrine_nom && String(boutiqueAuteur.vitrine_nom).trim()) ? String(boutiqueAuteur.vitrine_nom).trim() : "";
-    const titreEntete = (aff("nom_vitrine") && nomVitrine) ? nomVitrine : (aff("nom_auteur") ? nomAuteur : (nomVitrine || nomAuteur));
+    // Le nom de vitrine, des qu'il existe, devient le titre de l'en-tete.
+    const titreEntete = nomVitrine || nomAuteur;
+    // Une seule ligne, quelle que soit la longueur : la taille du texte s'adapte.
+    const tailleTitre = titreEntete.length > 34 ? 11.5 : titreEntete.length > 28 ? 12.5 : titreEntete.length > 22 ? 13.5 : 15;
     const logoEntete = (boutiqueAuteur && (boutiqueAuteur.vitrine_logo || boutiqueAuteur.photo_url)) || "";
     const sousEntete = [];
-    if (aff("nom_vitrine") && nomVitrine && aff("nom_auteur")) sousEntete.push("par " + nomAuteur);
+    if (nomVitrine && aff("nom_auteur")) sousEntete.push("par " + nomAuteur);
     else sousEntete.push("Librairie officielle");
     if (aff("pays") && boutiqueAuteur && boutiqueAuteur.pays) sousEntete.push(boutiqueAuteur.pays);
     if (aff("abonnes") && boutiqueAbonnes > 0) sousEntete.push(boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : ""));
@@ -17840,7 +17843,7 @@ export default function App() {
               </div>
             ) : null}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: tailleTitre, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
                 {boutiqueAuteur ? renderBadgeVerifie(boutiqueAuteur.verifie) : null}{titreEntete}
               </div>
               <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -19017,7 +19020,7 @@ export default function App() {
 
                   <label style={labelSt}>Nom de ma vitrine</label>
                   <input value={auteurVitrineNom} onChange={e => setAuteurVitrineNom(e.target.value)} placeholder="Ex : Les Éditions du Baobab" maxLength={40} style={champ} />
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 14 }}>Laisse vide pour garder ton nom d'auteur.</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 14 }}>Dès que tu mets un nom ici, c'est lui qui s'affiche en haut de ta vitrine. Laisse vide pour garder ton nom d'auteur.</div>
 
                   <label style={labelSt}>Logo de ma vitrine</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
@@ -19034,7 +19037,7 @@ export default function App() {
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
-                    {[["logo", "Le logo (ou ma photo)"], ["nom_vitrine", "Le nom de ma vitrine"], ["nom_auteur", "Mon nom d'auteur"], ["pays", "Mon pays"], ["abonnes", "Mon nombre d'abonnés"]].map(([cle, lab]) => (
+                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur"], ["pays", "Mon pays"], ["abonnes", "Mon nombre d'abonnés"]].map(([cle, lab]) => (
                       <label key={cle} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: G.text, padding: "7px 0" }}>
                         <input type="checkbox" checked={enteteCoche(cle)} onChange={() => basculerEntete(cle)} style={{ width: 17, height: 17 }} />
                         <span>{lab}</span>
@@ -19057,9 +19060,10 @@ export default function App() {
                   {(() => {
                     const nomV = auteurVitrineNom.trim();
                     const nomA = auteurNom || "Ton nom";
-                    const titre = (enteteCoche("nom_vitrine") && nomV) ? nomV : (enteteCoche("nom_auteur") ? nomA : (nomV || nomA));
+                    const titre = nomV || nomA;
+                    const tTitre = titre.length > 34 ? 11 : titre.length > 28 ? 12 : titre.length > 22 ? 13 : 13.5;
                     const bouts = [];
-                    if (enteteCoche("nom_vitrine") && nomV && enteteCoche("nom_auteur")) bouts.push("par " + nomA);
+                    if (nomV && enteteCoche("nom_auteur")) bouts.push("par " + nomA);
                     else bouts.push("Librairie officielle");
                     if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
                     if (enteteCoche("abonnes")) bouts.push("128 abonnés");
@@ -19073,7 +19077,7 @@ export default function App() {
                             </div>
                           ) : null}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{titre}</div>
+                            <div style={{ fontSize: tTitre, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{titre}</div>
                             <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bouts.join(" · ")}</div>
                           </div>
                           <div style={{ padding: "7px 13px", borderRadius: 20, background: auteurCouleur || G.gold, color: "#fff", fontSize: 12, fontWeight: "bold", flexShrink: 0 }}>+ Suivre</div>
