@@ -14123,6 +14123,21 @@ export default function App() {
   const [pubDownloadable, setPubDownloadable] = useState(true);
   const [pubExclusif, setPubExclusif] = useState(false);
   const [pubExclusifCertifie, setPubExclusifCertifie] = useState(false);
+  // ===== PUBLIER UNE FORMATION =====
+  // La presentation est un texte simple ou l'auteur insere des reperes a l'endroit
+  // du curseur : [IMG916:url] , [IMG169:url] , [LIEN:Titre|url]. L'affichage les
+  // remplace par les images et les liens. Pas d'editeur riche : ca reste fiable
+  // sur telephone, et le texte enregistre reste lisible tel quel.
+  const [fmForm, setFmForm] = useState({ title: "", category: "", subcategory: "", price: "", cover: "", contenu: "" });
+  const [fmLiens, setFmLiens] = useState([]);
+  const [fmUploading, setFmUploading] = useState(false);
+  const [fmSaving, setFmSaving] = useState(false);
+  const [fmMsg, setFmMsg] = useState("");
+  const [fmLienOuvert, setFmLienOuvert] = useState(false);
+  const [fmLienDansTexte, setFmLienDansTexte] = useState(false);
+  const [fmLienTitre, setFmLienTitre] = useState("");
+  const [fmLienUrl, setFmLienUrl] = useState("");
+  const fmTextRef = useRef(null);
   const [pubAudioExtrait, setPubAudioExtrait] = useState("");
   const [pubEditeur, setPubEditeur] = useState(false);
   const [pubEditeurAuteur, setPubEditeurAuteur] = useState("");
@@ -17750,6 +17765,113 @@ export default function App() {
     setPubSavingDraft(false);
   }
 
+  // ===== PUBLIER UNE FORMATION : fonctions =====
+  const fmInsererAuCurseur = (texte) => {
+    const ta = fmTextRef.current;
+    if (!ta) { setFmForm(f => ({ ...f, contenu: (f.contenu || "") + "\n" + texte + "\n" })); return; }
+    const scrollZone = ta.scrollTop;
+    const scrollPage = window.scrollY;
+    const deb = ta.selectionStart == null ? (ta.value || "").length : ta.selectionStart;
+    const fin = ta.selectionEnd == null ? deb : ta.selectionEnd;
+    const avant = (ta.value || "").slice(0, deb);
+    const apres = (ta.value || "").slice(fin);
+    const bloc = (avant && !avant.endsWith("\n") ? "\n" : "") + texte + "\n";
+    const nouveau = avant + bloc + apres;
+    setFmForm(f => ({ ...f, contenu: nouveau }));
+    const pos = (avant + bloc).length;
+    setTimeout(() => {
+      try { ta.focus(); ta.setSelectionRange(pos, pos); ta.scrollTop = scrollZone; window.scrollTo(0, scrollPage); } catch (e) {}
+    }, 0);
+  };
+  const fmEnvoyerImage = async (file, ratio) => {
+    if (!file) return;
+    setFmUploading(true); setFmMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const key = import.meta.env.VITE_IMGBB_KEY;
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) {
+        fmInsererAuCurseur((ratio === "916" ? "[IMG916:" : "[IMG169:") + data.data.url + "]");
+      } else { setFmMsg("❌ L'image n'a pas pu être envoyée. Réessaie."); }
+    } catch (e) { setFmMsg("❌ L'image n'a pas pu être envoyée. Réessaie."); }
+    setFmUploading(false);
+  };
+  const fmEnvoyerCouverture = async (file) => {
+    if (!file) return;
+    setFmUploading(true); setFmMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const key = import.meta.env.VITE_IMGBB_KEY;
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) setFmForm(f => ({ ...f, cover: data.data.url }));
+      else setFmMsg("❌ La couverture n'a pas pu être envoyée. Réessaie.");
+    } catch (e) { setFmMsg("❌ La couverture n'a pas pu être envoyée. Réessaie."); }
+    setFmUploading(false);
+  };
+  const fmValiderLien = () => {
+    const t = fmLienTitre.trim();
+    let u = fmLienUrl.trim();
+    if (!t) { alert("Donne un titre au lien."); return; }
+    if (!u) { alert("Colle l'adresse du lien."); return; }
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    if (fmLienDansTexte) fmInsererAuCurseur("[LIEN:" + t.replace(/[|\]]/g, " ") + "|" + u + "]");
+    else setFmLiens(prev => [...prev, { titre: t, url: u }]);
+    setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(false);
+  };
+  async function pubSaveFormation() {
+    if (!auteurProfil) return;
+    const f = fmForm;
+    if (!f.title.trim()) { setFmMsg("⚠️ Donne un titre à ta formation."); return; }
+    if (!f.category) { setFmMsg("⚠️ Choisis une catégorie."); return; }
+    if (!f.cover) { setFmMsg("⚠️ Ajoute la couverture (A4 paysage)."); return; }
+    if (!String(f.price).trim() || (parseInt(f.price) || 0) <= 0) { setFmMsg("⚠️ Indique le prix de ta formation."); return; }
+    if (!f.contenu.trim()) { setFmMsg("⚠️ Présente ta formation dans la zone de texte."); return; }
+    if (fmLiens.length === 0) { setFmMsg("⚠️ Ajoute au moins un lien d'accès : c'est ce que reçoit l'acheteur après son paiement."); return; }
+    const kycValide = !!(auteurProfil && auteurProfil.kyc_status === "valide");
+    const enVitrineSeule = !!pubExclusif && kycValide;
+    if (pubExclusif && !kycValide) { setFmMsg("🔒 La vente en vitrine seule est réservée aux auteurs vérifiés."); return; }
+    if (enVitrineSeule && !pubExclusifCertifie) { setFmMsg("☑️ Coche la case de certification avant de publier dans ta vitrine."); return; }
+    setFmSaving(true); setFmMsg("");
+    try {
+      const resume = f.contenu.replace(/\[(IMG916|IMG169):[^\]]*\]/g, " ").replace(/\[LIEN:([^|\]]*)\|[^\]]*\]/g, "$1").replace(/\s+/g, " ").trim().slice(0, 300);
+      const payload = {
+        title: f.title.trim(),
+        author: auteurProfil.nom_complet,
+        price: parseInt(f.price) || 0,
+        cover: f.cover,
+        category: f.category,
+        subcategory: f.subcategory || null,
+        summary: resume,
+        content: "", pdf_url: "", audio_url: "",
+        extract_pages: 1,
+        formation_contenu: f.contenu,
+        formation_liens: fmLiens,
+        status: enVitrineSeule ? "actif" : "en_attente",
+        moderation: enVitrineSeule ? "valide" : "en_attente",
+        auteur_id: auteurProfil.id,
+        product_type: "formation",
+        can_read: true, can_download: false,
+        exclusif_vitrine: enVitrineSeule,
+      };
+      if (pubEditId) {
+        const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("books").insert(payload);
+        if (error) throw error;
+      }
+      setFmMsg(enVitrineSeule
+        ? "✅ Ta formation est EN LIGNE dans ta vitrine. Partage ton lien : tu touches 85 % sur chaque vente."
+        : "✅ Ta formation a été envoyée ! Le traitement peut durer jusqu'à 24h.");
+      setFmForm({ title: "", category: "", subcategory: "", price: "", cover: "", contenu: "" });
+      setFmLiens([]); setPubEditId(null);
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      setMesLivres(livres || []);
+    } catch (e) { setFmMsg("❌ " + (e.message || e)); }
+    setFmSaving(false);
+  }
   async function pubSaveRoman() {
     const f = pubForm;
     const isGratuit = f.type === "gratuit";
@@ -18047,7 +18169,6 @@ export default function App() {
     const cEntTxt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_entete_texte, G.text);
     const cFond = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_fond, G.bg);
     const cPrix = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_prix, AC);
-    const lienFormations = (boutiqueAuteur && boutiqueAuteur.vitrine_formations_lien && String(boutiqueAuteur.vitrine_formations_lien).trim()) ? String(boutiqueAuteur.vitrine_formations_lien).trim() : "";
     const nomAuteur = (boutiqueAuteur && boutiqueAuteur.nom_complet) || "Boutique auteur";
     // Ce que l'auteur a coche dans ses parametres. Rien d'enregistre = on affiche tout.
     const entListe = (boutiqueAuteur && boutiqueAuteur.vitrine_entete != null && String(boutiqueAuteur.vitrine_entete).trim() !== "")
@@ -18155,12 +18276,6 @@ export default function App() {
                   style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #bdbdbd", background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
                   📚 Ma bibliothèque
                 </button>
-                {lienFormations ? (
-                  <a href={lienFormations.startsWith("http") ? lienFormations : "https://" + lienFormations} target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #bdbdbd", background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
-                    🎬 Formations vidéo
-                  </a>
-                ) : null}
               </div>
               {bqCats.length > 1 && (
                 <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
@@ -18586,6 +18701,7 @@ export default function App() {
                         {[
                           { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
                           { t: "guide", c: "#c9952a", ic: "📥", l: "Publier un Livre PDF", s: "Liseuse PDF et téléchargeable" },
+                          { t: "formation", c: "#7b3fa0", ic: "🎓", l: "Publier une Formation", s: "Vends une formation hébergée sur YouTube, Drive, WhatsApp…" },
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
                           { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Publier un Livre Gratuit", s: "Faites un cadeau à vos lecteurs" },
                           { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere A4 paysage qui met ton livre en avant sur l'accueil" },
@@ -18659,6 +18775,133 @@ export default function App() {
                       </div>
                     );
                   })}
+                  </>) : pubTypeSelected === "formation" ? (<>
+                  <button onClick={() => { setPubTypeSelected(null); setFmMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🎓 Publier une Formation</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ta formation est hébergée où tu veux (YouTube, Google Drive, WhatsApp, Telegram…). Ici tu la présentes et tu la vends. L'acheteur reçoit tes liens d'accès dès que le paiement est validé.</div>
+
+                  <label style={labelSt}>Couverture de la formation (A4 paysage) *</label>
+                  {fmForm.cover ? (
+                    <div style={{ position: "relative", marginBottom: 10 }}>
+                      <img src={fmForm.cover} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 10, display: "block" }} />
+                      <button onClick={() => setFmForm(f => ({ ...f, cover: "" }))} style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 15, cursor: "pointer" }}>✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => document.getElementById("fmCoverInput").click()} disabled={fmUploading}
+                      style={{ width: "100%", aspectRatio: "297 / 210", border: "2px dashed " + G.border, borderRadius: 10, background: G.bg, color: G.textDim, fontSize: 13, cursor: "pointer", marginBottom: 10, fontFamily: "Georgia, serif" }}>
+                      {fmUploading ? "Envoi…" : "📷 Choisir la couverture (large, horizontale)"}
+                    </button>
+                  )}
+                  <input id="fmCoverInput" type="file" accept="image/*" onChange={e => { fmEnvoyerCouverture(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Format paysage conseillé : 1754 × 1240 pixels. C'est cette image qui s'affiche sur le site.</div>
+
+                  <label style={labelSt}>Titre de la formation *</label>
+                  <input value={fmForm.title} onChange={e => setFmForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex : Vendre sur WhatsApp en 7 jours" style={champ} />
+                  <div style={{ height: 12 }} />
+
+                  <label style={labelSt}>Catégorie *</label>
+                  <select value={fmForm.category} onChange={e => setFmForm(f => ({ ...f, category: e.target.value, subcategory: "" }))} style={champ}>
+                    <option value="">— Choisis une catégorie —</option>
+                    {Object.keys(CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <div style={{ height: 12 }} />
+                  {fmForm.category && CATEGORIES[fmForm.category] && CATEGORIES[fmForm.category].length > 0 ? (
+                    <>
+                      <label style={labelSt}>Sous-catégorie</label>
+                      <select value={fmForm.subcategory} onChange={e => setFmForm(f => ({ ...f, subcategory: e.target.value }))} style={champ}>
+                        <option value="">— Aucune —</option>
+                        {CATEGORIES[fmForm.category].map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <div style={{ height: 12 }} />
+                    </>
+                  ) : null}
+
+                  <label style={labelSt}>Prix en FCFA *</label>
+                  <input value={fmForm.price} onChange={e => setFmForm(f => ({ ...f, price: e.target.value.replace(/\D/g, "") }))} inputMode="numeric" placeholder="Ex : 15000" style={champ} />
+                  <div style={{ height: 16 }} />
+
+                  <label style={labelSt}>Présentation de la formation *</label>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+                    <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => document.getElementById("fmImg916").click()} disabled={fmUploading}
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>🖼 Image 9:16</button>
+                    <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => document.getElementById("fmImg169").click()} disabled={fmUploading}
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>🖼 Image 16:9</button>
+                    <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmLienDansTexte(true); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>🔗 Un lien</button>
+                  </div>
+                  <input id="fmImg916" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "916"); e.target.value = ""; }} style={{ display: "none" }} />
+                  <input id="fmImg169" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "169"); e.target.value = ""; }} style={{ display: "none" }} />
+                  <textarea ref={fmTextRef} value={fmForm.contenu} onChange={e => setFmForm(f => ({ ...f, contenu: e.target.value }))}
+                    placeholder={"Explique ce que la personne va apprendre, pour qui c'est, combien de temps ça dure, ce qu'elle obtient à la fin…\n\nPlace ton curseur à la fin d'un paragraphe puis appuie sur un bouton ci-dessus pour glisser une image ou un lien à cet endroit."}
+                    rows={12} style={{ ...champ, resize: "vertical", minHeight: 240, lineHeight: 1.6 }} />
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 18, lineHeight: 1.5 }}>{fmUploading ? "⏳ Envoi de l'image…" : "Les repères comme [IMG169:…] deviennent tes images sur la page de vente. Ne les modifie pas à la main."}</div>
+
+                  <label style={labelSt}>Les liens d'accès (donnés après le paiement) *</label>
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Lien de la formation, groupe WhatsApp ou Telegram, ton WhatsApp, une vidéo YouTube… Personne ne les voit avant d'avoir payé.</div>
+                  {fmLiens.length > 0 ? (
+                    <div style={{ marginBottom: 10 }}>
+                      {fmLiens.map((l, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", border: "1px solid " + G.border, borderRadius: 8, background: "#fff", marginBottom: 6 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{l.titre}</div>
+                            <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.url}</div>
+                          </div>
+                          <button type="button" onClick={() => setFmLiens(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#e53935", fontSize: 17, cursor: "pointer", padding: "0 2px" }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <button type="button" onClick={() => { setFmLienDansTexte(false); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
+                    style={{ width: "100%", padding: 12, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>➕ Insérer un lien</button>
+                  <div style={{ height: 18 }} />
+
+                  {(() => {
+                    const kycOk = !!(auteurProfil && auteurProfil.kyc_status === "valide");
+                    return (
+                      <div style={{ background: G.bg, border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📍 Où vendre cette formation ?</div>
+                        <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12.5, color: G.text, lineHeight: 1.5, marginBottom: 8 }}>
+                          <input type="radio" checked={!pubExclusif} onChange={() => setPubExclusif(false)} style={{ width: 17, height: 17, marginTop: 1 }} />
+                          <span><b>🌍 Ma vitrine + CarryBooks</b> — visible par tous. Validation sous 24 h. <b>70 % / 50 %</b></span>
+                        </label>
+                        <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: kycOk ? "pointer" : "not-allowed", fontSize: 12.5, color: G.text, lineHeight: 1.5, opacity: kycOk ? 1 : 0.55 }}>
+                          <input type="radio" checked={pubExclusif} disabled={!kycOk} onChange={() => setPubExclusif(true)} style={{ width: 17, height: 17, marginTop: 1 }} />
+                          <span><b>🏪 Ma vitrine uniquement</b> — en ligne tout de suite, sans validation. <b>85 %</b></span>
+                        </label>
+                        {pubExclusif && kycOk ? (
+                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10, marginTop: 10 }}>
+                            <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
+                            <span>Je certifie être l'auteur de cette formation ou détenir les droits de la vendre. Publiée sans validation, elle est retirée immédiatement en cas de réclamation.</span>
+                          </label>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
+
+                  <button onClick={pubSaveFormation} disabled={fmSaving || fmUploading}
+                    style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (fmSaving || fmUploading) ? "not-allowed" : "pointer", opacity: (fmSaving || fmUploading) ? 0.6 : 1, fontFamily: "Georgia, serif" }}>
+                    {fmSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation")}
+                  </button>
+                  <button onClick={() => { setPubOpen(false); setPubTypeSelected(null); setFmMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
+                  {fmMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", lineHeight: 1.5, color: fmMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{fmMsg}</div>}
+
+                  {fmLienOuvert ? (
+                    <div onClick={() => setFmLienOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
+                        <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔗 {fmLienDansTexte ? "Un lien dans la présentation" : "Un lien d'accès"}</div>
+                        <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>{fmLienDansTexte ? "Ce lien apparaîtra dans le texte de ta page de vente, visible par tout le monde." : "Ce lien n'est donné qu'à l'acheteur, après son paiement."}</div>
+                        <label style={labelSt}>Titre du lien *</label>
+                        <input value={fmLienTitre} onChange={e => setFmLienTitre(e.target.value)} placeholder="Ex : Lien de la formation" style={champ} />
+                        <div style={{ height: 12 }} />
+                        <label style={labelSt}>Adresse du lien *</label>
+                        <input value={fmLienUrl} onChange={e => setFmLienUrl(e.target.value)} placeholder="https://..." style={champ} />
+                        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                          <button onClick={() => setFmLienOuvert(false)} style={{ flex: 1, padding: 12, background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+                          <button onClick={fmValiderLien} style={{ flex: 1, padding: 12, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Ajouter</button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                   </>) : (<>
                   <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{pubEditId ? "✏️ Modifier le livre" : (pubForm.type === "roman" ? "📖 Publier un Roman" : pubForm.type === "guide" ? "📥 Publier un Livre PDF" : pubForm.type === "audio" ? "🎧 Publier un Livre Audio" : "🎁 Publier un Livre Gratuit")}</div>
@@ -19320,10 +19563,6 @@ export default function App() {
                       </label>
                     ))}
                   </div>
-
-                  <label style={labelSt}>Lien de mes formations vidéo (facultatif)</label>
-                  <input value={auteurFormationsLien} onChange={e => setAuteurFormationsLien(e.target.value)} placeholder="https://youtube.com/@ma-chaine" style={champ} />
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 16, lineHeight: 1.5 }}>Un bouton « Formations vidéo » apparaîtra sur ta vitrine et ouvrira ce lien. Laisse vide pour ne pas afficher le bouton.</div>
 
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                 </div>
