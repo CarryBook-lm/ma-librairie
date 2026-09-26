@@ -19288,13 +19288,11 @@ export default function App() {
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
               )}
-              {/* MA VITRINE : nom, logo, en-tete, couleur — place ici car les auteurs
-                  cherchent naturellement dans Mon compte, a cote de leur photo. */}
-              {auteurTab === "compte" && (
-                <div style={{ marginTop: 16 }}>
+              {/* MA VITRINE : deux cartes — identite (nom, logo, en-tete) et apparence (couleurs). */}
+              {auteurTab === "vitrine" && (<>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🏪 Ma vitrine</div>
-                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Ta page auteur est ta boutique. Donne-lui un nom, un logo et une couleur, et choisis ce qui apparaît tout en haut.</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🏪 Nom de la vitrine et logo</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Ta page auteur est ta boutique. Donne-lui un nom, un logo, et choisis ce qui apparaît tout en haut.</div>
 
                   <label style={labelSt}>Nom de ma vitrine</label>
                   <input value={auteurVitrineNom} onChange={e => setAuteurVitrineNom(e.target.value)} placeholder="Ex : Les Éditions du Baobab" maxLength={40} style={champ} />
@@ -19327,6 +19325,12 @@ export default function App() {
                   <input value={auteurFormationsLien} onChange={e => setAuteurFormationsLien(e.target.value)} placeholder="https://youtube.com/@ma-chaine" style={champ} />
                   <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 16, lineHeight: 1.5 }}>Un bouton « Formations vidéo » apparaîtra sur ta vitrine et ouvrira ce lien. Laisse vide pour ne pas afficher le bouton.</div>
 
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                </div>
+
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🎨 Apparence</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Les couleurs de ta page auteur. L'aperçu en bas se met à jour à chaque choix.</div>
                   <label style={labelSt}>Les couleurs de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
                     {REGLAGES_COUL.map(r => {
@@ -19400,21 +19404,11 @@ export default function App() {
                     <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
                   ) : null}
                 </div>
-                </div>
-              )}
-              {/* PARAMÈTRES : pixels */}
-              {auteurTab === "parametres" && (<>
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Programme d'abonnement</div>
-                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.6 }}>En participant, tes <b>romans</b> deviennent lisibles par les abonnés dans la liseuse. Tu reçois une commission fixe (250 F) à chaque livre débloqué par un abonné. Tes livres PDF et audio, eux, restent toujours payants. Tu peux te retirer à tout moment.</div>
-                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13, color: G.text }}>
-                    <input type="checkbox" checked={!!(auteurProfil && auteurProfil.abonnement_actif)} onChange={e => toggleAbonnement(e.target.checked)} style={{ width: 18, height: 18, marginTop: 1 }} />
-                    <span>Je participe au programme d'abonnement et j'accepte les conditions (mes romans lisibles par les abonnés, commission fixe par déblocage).</span>
-                  </label>
-                  {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
-                </div>
+              </>)}
+              {/* INTÉGRATIONS : pixels Facebook et TikTok */}
+              {auteurTab === "integration" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>⚙️ Paramètres — Pixels publicitaires</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔌 Pixels publicitaires</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
                   <label style={labelSt}>Pixel Facebook (ID)</label>
                   <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Ex : 1234567890123456" style={champ} />
@@ -19426,6 +19420,18 @@ export default function App() {
                   <div style={{ height: 18 }} />
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
+                </div>
+              )}
+              {/* PARAMÈTRES : programme d'abonnement */}
+              {auteurTab === "parametres" && (<>
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Programme d'abonnement</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.6 }}>En participant, tes <b>romans</b> deviennent lisibles par les abonnés dans la liseuse. Tu reçois une commission fixe (250 F) à chaque livre débloqué par un abonné. Tes livres PDF et audio, eux, restent toujours payants. Tu peux te retirer à tout moment.</div>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13, color: G.text }}>
+                    <input type="checkbox" checked={!!(auteurProfil && auteurProfil.abonnement_actif)} onChange={e => toggleAbonnement(e.target.checked)} style={{ width: 18, height: 18, marginTop: 1 }} />
+                    <span>Je participe au programme d'abonnement et j'accepte les conditions (mes romans lisibles par les abonnés, commission fixe par déblocage).</span>
+                  </label>
+                  {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
                 </div>
               </>)}
               {/* COMMENT PUBLIER */}
@@ -19462,7 +19468,7 @@ export default function App() {
                   <p>Sur chaque vente : tu touches <b>70 %</b> si le client vient par <b>ton lien de pub</b> (que tu trouves dans « Mes livres »), et <b>50 %</b> si c'est CarryBooks qui vend. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p><p>Au moment de publier, tu choisis « <b>Où vendre ce livre ?</b> ». Si tu choisis <b>Ma vitrine uniquement</b>, le livre n'apparaît pas sur carrybooks.com : il est en ligne tout de suite, sans validation, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs, CarryBooks ne le mettra jamais en avant. Cette option demande d'être un auteur <b>vérifié</b>.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>8. Publicité (pixels)</div>
-                  <p>Dans <b>Paramètres</b>, ajoute ton pixel <b>Facebook</b> et/ou <b>TikTok</b> pour suivre l'efficacité de tes publicités.</p>
+                  <p>Dans <b>Intégrations</b>, ajoute ton pixel <b>Facebook</b> et/ou <b>TikTok</b> pour suivre l'efficacité de tes publicités.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>9. Contenu interdit</div>
                   <p>Sont refusés : le contenu volé ou piraté (dont tu n'es pas l'auteur), le contenu illégal, haineux ou pornographique. Publie uniquement tes propres œuvres.</p>
@@ -19578,6 +19584,8 @@ export default function App() {
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
+            <button onClick={() => { setAuteurTab("vitrine"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "vitrine" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "vitrine" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🏪</span> Ma vitrine</button>
+            <button onClick={() => { setAuteurTab("integration"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "integration" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "integration" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔌</span> Intégrations</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon profil</button>
             <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support{supportNonLus > 0 && <span style={{ marginLeft: "auto", background: "#e11d48", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 7px" }}>{supportNonLus}</span>}</button>
@@ -23036,7 +23044,7 @@ export default function App() {
           <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 60px" }}>
             <button onClick={() => setPage("espace_auteur")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
             <h1 style={{ color: G.gold, fontSize: 21, marginBottom: 4 }}>Comment créer un pixel</h1>
-            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Un « pixel » est un petit code qui mesure l’efficacité de tes publicités. Suis les étapes, copie l’identifiant (ID) obtenu, puis colle-le dans tes Paramètres.</p>
+            <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Un « pixel » est un petit code qui mesure l’efficacité de tes publicités. Suis les étapes, copie l’identifiant (ID) obtenu, puis colle-le dans tes Intégrations.</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
               <button onClick={() => setPixelGuideTab("facebook")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.gold, background: pixelGuideTab === "facebook" ? G.gold : "transparent", color: pixelGuideTab === "facebook" ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel Facebook</button>
               <button onClick={() => setPixelGuideTab("tiktok")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.gold, background: pixelGuideTab === "tiktok" ? G.gold : "transparent", color: pixelGuideTab === "tiktok" ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel TikTok</button>
@@ -23056,7 +23064,7 @@ export default function App() {
                   {row(3, <span>Sélectionne <b>« Pixel Meta »</b> et clique <b>« Connecter »</b>.</span>)}
                   {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « CarryBooks ») et valide.</span>)}
                   {row(5, <span>Ton pixel est créé. Repère son <b>identifiant (ID)</b> : une suite de <b>15 à 16 chiffres</b>.</span>)}
-                  {row(6, <span>Copie cet ID, reviens dans <b>Paramètres</b> de ton espace auteur et colle-le dans <b>« Pixel Facebook (ID) »</b>.</span>)}
+                  {row(6, <span>Copie cet ID, reviens dans <b>Intégrations</b> de ton espace auteur et colle-le dans <b>« Pixel Facebook (ID) »</b>.</span>)}
                 </div>
                 <div style={box}><b>Astuce :</b> l’ID du pixel se trouve en haut de la page du pixel, juste sous son nom. C’est bien une suite de chiffres (pas un lien).</div>
               </div>);
@@ -23069,12 +23077,12 @@ export default function App() {
                   {row(3, <span>Sélectionne <b>« Installation manuelle du code Pixel »</b>.</span>)}
                   {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « CarryBooks ») et valide.</span>)}
                   {row(5, <span>Ton pixel est créé. Repère son <b>identifiant (ID)</b> : une suite de <b>lettres et chiffres</b> (ex : C1A2B3…).</span>)}
-                  {row(6, <span>Copie cet ID, reviens dans <b>Paramètres</b> et colle-le dans <b>« Pixel TikTok (ID) »</b>.</span>)}
+                  {row(6, <span>Copie cet ID, reviens dans <b>Intégrations</b> et colle-le dans <b>« Pixel TikTok (ID) »</b>.</span>)}
                 </div>
                 <div style={box}><b>Astuce :</b> l’ID TikTok mélange lettres et chiffres. Copie-le exactement, sans espace avant ni après.</div>
               </div>);
             })()}
-            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("parametres"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Paramètres</button>
+            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("integration"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Intégrations</button>
           </div>
         )}
 
