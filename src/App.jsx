@@ -14465,7 +14465,7 @@ export default function App() {
         const obj = {};
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
-        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
         setMesLivres(livres || []);
       } catch (e) {} finally { setMesLivresLoading(false); }
     })();
@@ -17704,12 +17704,35 @@ export default function App() {
       if (!rj || !rj.ok) { alert((rj && rj.error) || "La suppression n'a pas abouti. Réessaie."); return; }
       setMesLivresDetail(null);
       setPubMsg("🗑️ Livre supprimé.");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { alert("Erreur lors de la suppression : " + (e.message || e)); }
   }
 
   function editLivre(b) {
+    // Une formation a son propre formulaire : on le remplit et on s'arrete la.
+    if (b && b.product_type === "formation") {
+      setFmForm({
+        title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
+        price: b.price != null ? String(b.price) : "", cover: b.cover || "", contenu: b.formation_contenu || "",
+      });
+      setFmLiens([]); setFmMsg("⏳ Chargement de tes liens d'accès…");
+      setPubExclusif(!!b.exclusif_vitrine); setPubExclusifCertifie(!!b.exclusif_vitrine);
+      setPubTypeSelected("formation"); setPubEditId(b.id); setPubOpen(true); setAuteurTab("publier");
+      // Les liens ne sont pas dans la table publique : on les demande au serveur.
+      (async () => {
+        try {
+          const r = await fetch("/api/formation-acces", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "lire_auteur", auteur_id: auteurProfil && auteurProfil.id, book_id: b.id }),
+          });
+          const j = await r.json().catch(() => ({}));
+          if (j.ok) { setFmLiens(Array.isArray(j.liens) ? j.liens : []); setFmMsg(""); }
+          else setFmMsg("⚠️ Tes liens d'accès n'ont pas pu être chargés. Ressaisis-les avant d'enregistrer, sinon ils seront effacés.");
+        } catch (e) { setFmMsg("⚠️ Tes liens d'accès n'ont pas pu être chargés. Ressaisis-les avant d'enregistrer, sinon ils seront effacés."); }
+      })();
+      return;
+    }
     setPubForm({
       title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
       price: b.price != null ? String(b.price) : "", cover: b.cover || "", summary: b.summary || "",
@@ -17823,7 +17846,7 @@ export default function App() {
       }
       setPubDraftMsg("💾 Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " — en cours d'édition");
       if (!silent) setPubMsg("✅ Enregistré. Tu le retrouveras dans « Mes livres » → « En cours d'édition » pour continuer plus tard.");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { if (!silent) setPubMsg("❌ " + (e.message || e)); }
     setPubSavingDraft(false);
@@ -17942,7 +17965,7 @@ export default function App() {
         : "✅ Ta formation a été envoyée ! Le traitement peut durer jusqu'à 24h.");
       setFmForm({ title: "", category: "", subcategory: "", price: "", cover: "", contenu: "" });
       setFmLiens([]); setPubEditId(null);
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setFmMsg("❌ " + (e.message || e)); }
     setFmSaving(false);
@@ -18011,7 +18034,7 @@ export default function App() {
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
       setPubOpen(false); setPubTypeSelected(null); setPubDraftMsg(""); setAuteurTab("meslivres");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
