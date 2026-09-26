@@ -17891,6 +17891,12 @@ export default function App() {
   useEffect(() => {
     if (!vitrineCode) return;
     if (page !== "home" && page !== "catalog" && page !== "auteurs") return;
+    // Exception : une pub ou un lien de livre partage (?book=, ?src=, ?ref=) doit
+    // aboutir sur SON livre, meme dans un onglet deja verrouille sur une vitrine.
+    try {
+      const q = window.location.search || "";
+      if (/[?&](book|src|ref)=/.test(q)) return;
+    } catch (e) {}
     setBoutiqueNom(null);
     setBoutiqueCode(vitrineCode);
     setPage("auteur_boutique");
