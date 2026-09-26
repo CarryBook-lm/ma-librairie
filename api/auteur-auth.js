@@ -17,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
 // Champs "surs" renvoyes au client (JAMAIS password_hash)
-const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_motif_refus, abonnement_actif, banni, banni_motif";
+const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_motif_refus, abonnement_actif, couleur, banni, banni_motif";
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -142,7 +142,7 @@ export default async function handler(req, res) {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
       const patch = {};
-      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube", "abonnement_actif"].forEach((k) => {
+      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube", "couleur", "abonnement_actif"].forEach((k) => {
         if (k in body) patch[k] = (body[k] === "" ? null : body[k]);
       });
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Rien a mettre a jour." });
@@ -305,7 +305,7 @@ export default async function handler(req, res) {
       // et le retrouvent dans leur bibliotheque. On demande a l'auteur de passer
       // par CarryBooks pour le retirer de la vente.
       if (livre.status === "actif") {
-        return res.status(409).json({ error: "Ce livre est en ligne et peut avoir ete achete. Ecris a CarryBooks dans le Support pour le retirer de la vente : les lecteurs qui l'ont achete doivent continuer a le lire." });
+        return res.status(409).json({ error: "Ce livre est en ligne et peut avoir été acheté. Écris à CarryBooks dans le Support pour le retirer de la vente : les lecteurs qui l'ont acheté doivent continuer à le lire." });
       }
 
       // Meme sans etre en ligne, un livre deja vendu ne doit pas disparaitre.
@@ -316,7 +316,7 @@ export default async function handler(req, res) {
         vendus = (c1 || 0) + (c2 || 0);
       } catch (e) {}
       if (vendus > 0) {
-        return res.status(409).json({ error: "Ce livre a deja ete achete " + vendus + " fois. Il ne peut pas etre supprime : ecris a CarryBooks dans le Support." });
+        return res.status(409).json({ error: "Ce livre a déjà été acheté " + vendus + " fois. Il ne peut pas être supprimé : écris à CarryBooks dans le Support." });
       }
 
       const { error } = await supa.from("books").delete().eq("id", book_id).eq("auteur_id", id);

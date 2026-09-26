@@ -13530,6 +13530,11 @@ export default function App() {
   const [boutiqueLoading, setBoutiqueLoading] = useState(false);
   const [boutiqueCode, setBoutiqueCode] = useState(null);
   const [boutiqueNom, setBoutiqueNom] = useState(null);
+  const [boutiqueSearch, setBoutiqueSearch] = useState("");
+  const [boutiqueCat, setBoutiqueCat] = useState("Tous");
+  const [boutiqueAbonnes, setBoutiqueAbonnes] = useState(0);
+  const [boutiqueEstAbonne, setBoutiqueEstAbonne] = useState(false);
+  const [boutiqueSuivreBusy, setBoutiqueSuivreBusy] = useState(false);
   const [auteursAll, setAuteursAll] = useState([]); // pour la recherche par nom
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -13964,6 +13969,7 @@ export default function App() {
   const [auteurPays, setAuteurPays] = useState("");
   const [auteurPixel, setAuteurPixel] = useState("");
   const [auteurPixelTiktok, setAuteurPixelTiktok] = useState("");
+  const [auteurCouleur, setAuteurCouleur] = useState("");
   const [auteurBio, setAuteurBio] = useState("");
   const [auteurPhoto, setAuteurPhoto] = useState("");
   const [auteurPhotoUploading, setAuteurPhotoUploading] = useState(false);
@@ -14531,6 +14537,7 @@ export default function App() {
     setAuteurPays(prof.pays || ""); setAuteurEmail(prof.email || "");
     setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || "");
     setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
+    setAuteurCouleur(prof.couleur || "");
     setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
   useEffect(() => {
@@ -17152,6 +17159,7 @@ export default function App() {
         tiktok: auteurTk.trim() || null,
         linkedin: auteurLi.trim() || null,
         youtube: auteurYt.trim() || null,
+        couleur: auteurCouleur || null,
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
@@ -17583,6 +17591,45 @@ export default function App() {
     return () => { cancel = true; };
   }, [page, boutiqueCode]);
 
+  // 👤 Abonnes de la boutique (bouton Suivre)
+  // NB : toutes les variables ci-dessous (boutiqueAuteur, lecteur) sont declarees plus haut.
+  useEffect(() => {
+    const aid = boutiqueAuteur && boutiqueAuteur.id;
+    if (page !== "auteur_boutique" || !aid) { setBoutiqueAbonnes(0); setBoutiqueEstAbonne(false); return; }
+    let cancel = false;
+    (async () => {
+      try {
+        const { count } = await supabase.from("abonnes_auteur").select("id", { count: "exact", head: true }).eq("auteur_id", aid);
+        if (!cancel) setBoutiqueAbonnes(count || 0);
+      } catch (e) {}
+      const tel = lecteur && lecteur.telephone ? lecteur.telephone : null;
+      if (!tel) { if (!cancel) setBoutiqueEstAbonne(false); return; }
+      try {
+        const { data } = await supabase.from("abonnes_auteur").select("id").eq("auteur_id", aid).eq("phone", tel).limit(1);
+        if (!cancel) setBoutiqueEstAbonne(!!(data && data.length));
+      } catch (e) {}
+    })();
+    return () => { cancel = true; };
+  }, [page, boutiqueAuteur, lecteur]);
+
+  const basculerSuivreBoutique = async () => {
+    const aid = boutiqueAuteur && boutiqueAuteur.id;
+    if (!aid) return;
+    const tel = lecteur && lecteur.telephone ? lecteur.telephone : null;
+    if (!tel) { setShowLecteurModal(true); return; }
+    setBoutiqueSuivreBusy(true);
+    try {
+      if (boutiqueEstAbonne) {
+        await supabase.from("abonnes_auteur").delete().eq("auteur_id", aid).eq("phone", tel);
+        setBoutiqueEstAbonne(false); setBoutiqueAbonnes(n => Math.max(0, n - 1));
+      } else {
+        await supabase.from("abonnes_auteur").insert({ auteur_id: aid, phone: tel });
+        setBoutiqueEstAbonne(true); setBoutiqueAbonnes(n => n + 1);
+      }
+    } catch (e) {}
+    setBoutiqueSuivreBusy(false);
+  };
+
   // 👤 Charger tous les auteurs une fois (pour la recherche par nom)
   useEffect(() => {
     let cancel = false;
@@ -17616,13 +17663,14 @@ export default function App() {
     if (!prof) return;
     setBoutiqueNom(prof.nom); setBoutiqueCode(null);
     setBoutiqueAuteur({ nom_complet: prof.nom, photo_url: prof.photo_url, pays: prof.ville, verifie: prof.verifie, bio: "" });
-    setBioExpanded(false); setShowMenu(false); setPage("auteur_boutique");
+    setBioExpanded(false); setBoutiqueSearch(""); setBoutiqueCat("Tous"); setShowMenu(false); setPage("auteur_boutique");
   };
   const ouvrirBoutiqueAuteur = (code) => {
     if (!code) return;
     setBoutiqueNom(null);
     setBoutiqueCode(code);
     setBioExpanded(false);
+    setBoutiqueSearch(""); setBoutiqueCat("Tous");
     setShowMenu(false);
     setPage("auteur_boutique");
     try {
@@ -17677,13 +17725,90 @@ export default function App() {
 
   // ================= BOUTIQUE D'UN AUTEUR =================
   if (page === "auteur_boutique") {
+    const teinte = (c, a) => {
+      try {
+        let h = String(c).trim().replace("#", "");
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        const n = parseInt(h, 16);
+        if (isNaN(n)) return "rgba(201,168,76," + a + ")";
+        return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+      } catch (e) { return "rgba(201,168,76," + a + ")"; }
+    };
+    const AC = (boutiqueAuteur && boutiqueAuteur.couleur && String(boutiqueAuteur.couleur).trim()) ? String(boutiqueAuteur.couleur).trim() : G.gold;
+    const ACdim = teinte(AC, 0.14);
+    const nomAuteur = (boutiqueAuteur && boutiqueAuteur.nom_complet) || "Boutique auteur";
+    const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
+    const bqCats = Array.from(new Set(bqBooks.map(b => b.category || "Autres"))).sort();
+    const bqQ = boutiqueSearch.trim().toLowerCase();
+    const bqFiltres = bqBooks.filter(b =>
+      (boutiqueCat === "Tous" || (b.category || "Autres") === boutiqueCat) &&
+      (!bqQ || (b.title || "").toLowerCase().includes(bqQ) || (b.summary || "").toLowerCase().includes(bqQ) || (b.category || "").toLowerCase().includes(bqQ) || (b.subcategory || "").toLowerCase().includes(bqQ))
+    );
+    const bqTri = [...bqBooks].sort((a, b) => (b.id || 0) - (a.id || 0));
+    const bqRecents = bqTri.slice(0, 12);
+    const bqHero = bqTri.slice(0, 8);
+    const bqRecherche = !!bqQ || boutiqueCat !== "Tous";
+    const carteLivre = (book, largeur) => (
+      <div key={book.id} onClick={() => openBook(book)} style={largeur ? { flexShrink: 0, width: largeur, maxWidth: 175, cursor: "pointer" } : { cursor: "pointer" }}>
+        <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 6, overflow: "hidden", marginBottom: 6 }}>
+          {book.cover
+            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+        </div>
+        <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 3, height: 33, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+        <div style={{ fontSize: 12, fontWeight: "bold", color: AC }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
+      </div>
+    );
     return (
       <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
         {bandeauInstallNode}
-        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, zIndex: 10 }}>
-          <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer" }}>←</button>
-          <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold }}>Boutique auteur</div>
+        {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
+        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "2px solid " + AC, zIndex: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
+            <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+            <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
+              {boutiqueAuteur && boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : nomAuteur.charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {boutiqueAuteur ? renderBadgeVerifie(boutiqueAuteur.verifie) : null}{nomAuteur}
+              </div>
+              <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                Librairie officielle{boutiqueAuteur && boutiqueAuteur.pays ? " · " + boutiqueAuteur.pays : ""}{boutiqueAbonnes > 0 ? " · " + boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : "") : ""}
+              </div>
+            </div>
+            {boutiqueAuteur && boutiqueAuteur.id ? (
+              <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
+                style={{ flexShrink: 0, padding: "8px 14px", borderRadius: 20, border: "1.5px solid " + AC, background: boutiqueEstAbonne ? "transparent" : AC, color: boutiqueEstAbonne ? AC : "#fff", fontSize: 12.5, fontWeight: "bold", cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: boutiqueSuivreBusy ? 0.6 : 1, whiteSpace: "nowrap" }}>
+                {boutiqueEstAbonne ? "✓ Abonné(e)" : "+ Suivre"}
+              </button>
+            ) : null}
+          </div>
+          {bqBooks.length > 0 && (
+            <div style={{ padding: "0 12px 9px" }}>
+              <div style={{ position: "relative", marginBottom: 8 }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
+                <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
+                  placeholder={"Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "..."}
+                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+                {boutiqueSearch ? (
+                  <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
+                ) : null}
+              </div>
+              {bqCats.length > 1 && (
+                <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+                  {["Tous"].concat(bqCats).map(c => (
+                    <button key={c} onClick={() => setBoutiqueCat(c)}
+                      style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (boutiqueCat === c ? AC : G.border), background: boutiqueCat === c ? ACdim : "transparent", color: boutiqueCat === c ? AC : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
         {boutiqueLoading ? (
           <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Chargement…</div>
         ) : !boutiqueAuteur ? (
@@ -17691,67 +17816,139 @@ export default function App() {
         ) : boutiqueAuteur.banni ? (
           <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>Cette boutique n'est plus disponible.</div>
         ) : (
-          <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
-            <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
-              <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>
-                {boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (boutiqueAuteur.nom_complet || "?").charAt(0).toUpperCase()}
-              </div>
-              <div style={{ fontSize: 22, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{renderBadgeVerifie(boutiqueAuteur.verifie)}{boutiqueAuteur.nom_complet}</div>
-              {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
-              {boutiqueAuteur.bio ? (() => {
-                const bio = boutiqueAuteur.bio;
-                const isLong = bio.length > 220;
-                const shown = (!bioExpanded && isLong) ? bio.slice(0, 220).trim() + "…" : bio;
-                return (
-                  <div style={{ maxWidth: 600, margin: "0 auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>
-                    <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, textAlign: "left", whiteSpace: "pre-wrap" }}>{shown}</div>
-                    {isLong ? <button onClick={() => setBioExpanded(v => !v)} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer", padding: "6px 0 0", marginTop: 2 }}>{bioExpanded ? "Voir moins ▲" : "Voir plus ▼"}</button> : null}
+          <div style={{ paddingBottom: 30 }}>
+            {/* ===== CARROUSEL ===== */}
+            {!bqRecherche && bqHero.length > 0 && (
+              <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", marginBottom: 20 }}>
+                {bqHero.map((book, idx) => (
+                  <div key={book.id} onClick={() => openBook(book)}
+                    style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % bqHero.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
+                    {book.cover
+                      ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
                   </div>
-                );
-              })() : null}
-              {(() => {
-                const reseaux = [
-                  { u: boutiqueAuteur.facebook, l: "Facebook", ic: "📘", c: "#1877F2" },
-                  { u: boutiqueAuteur.instagram, l: "Instagram", ic: "📷", c: "#E1306C" },
-                  { u: boutiqueAuteur.tiktok, l: "TikTok", ic: "🎵", c: "#111" },
-                  { u: boutiqueAuteur.linkedin, l: "LinkedIn", ic: "💼", c: "#0A66C2" },
-                  { u: boutiqueAuteur.youtube, l: "YouTube", ic: "▶️", c: "#FF0000" },
-                ].filter(r => r.u && r.u.trim());
-                if (reseaux.length === 0) return null;
-                return (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 14 }}>
-                    {reseaux.map(r => (
-                      <a key={r.l} href={r.u.startsWith("http") ? r.u : "https://" + r.u} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", background: "#fff", border: "1px solid " + G.border, borderRadius: 20, color: r.c, fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>{r.ic} {r.l}</a>
+                ))}
+                <div style={{ position: "absolute", top: 12, right: 12, zIndex: 3 }}>
+                  <button onClick={e => { e.stopPropagation(); shareBook(bqHero[heroIndex % bqHero.length]); }}
+                    style={{ background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>🔗</button>
+                </div>
+                {bqHero.length > 1 && (
+                  <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", gap: 6, justifyContent: "center", zIndex: 2 }}>
+                    {bqHero.map((_, idx) => (
+                      <div key={idx} onClick={e => { e.stopPropagation(); setHeroIndex(idx); }}
+                        style={{ width: idx === (heroIndex % bqHero.length) ? 20 : 6, height: 6, borderRadius: 3, background: idx === (heroIndex % bqHero.length) ? AC : "rgba(255,255,255,0.6)", cursor: "pointer", transition: "all 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
                     ))}
                   </div>
-                );
-              })()}
-              <div style={{ marginTop: 14, fontSize: 13, color: G.gold, fontWeight: "bold" }}>{boutiqueBooks.length} livre{boutiqueBooks.length > 1 ? "s" : ""}</div>
-            </div>
-            {boutiqueBooks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Aucun livre en ligne pour le moment.</div>
-            ) : (
-              (() => {
-                const groups = {};
-                boutiqueBooks.forEach(b => { const cat = b.category || "Autres"; (groups[cat] = groups[cat] || []).push(b); });
-                return Object.keys(groups).sort().map(cat => (
-                  <div key={cat} style={{ marginBottom: 22 }}>
-                    <div style={{ fontSize: 15, fontWeight: "bold", color: G.gold, marginBottom: 10, borderBottom: "1px solid " + G.border, paddingBottom: 6 }}>{cat}</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
-                      {groups[cat].map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer" }}>
-                          <div style={{ width: "100%", aspectRatio: "2/3", background: G.border, borderRadius: 8, overflow: "hidden", marginBottom: 6 }}>
-                            {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
-                          <div style={{ fontSize: 12, color: G.gold, fontWeight: "bold" }}>{book.price ? book.price + " FCFA" : "Gratuit"}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ));
-              })()
+                )}
+              </div>
             )}
+
+            <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px" }}>
+              {/* ===== RESULTATS DE RECHERCHE / FILTRE ===== */}
+              {bqRecherche ? (
+                <div style={{ paddingTop: 16 }}>
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 12 }}>
+                    {bqFiltres.length} livre{bqFiltres.length > 1 ? "s" : ""} trouvé{bqFiltres.length > 1 ? "s" : ""}
+                    <button onClick={() => { setBoutiqueSearch(""); setBoutiqueCat("Tous"); }} style={{ background: "none", border: "none", color: AC, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", marginLeft: 8, fontFamily: "Georgia, serif" }}>Réinitialiser</button>
+                  </div>
+                  {bqFiltres.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Aucun livre ne correspond.</div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
+                      {bqFiltres.map(b => carteLivre(b, null))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* ===== NOUVEAUTES ===== */}
+                  {bqRecents.length > 0 && (
+                    <div style={{ marginBottom: 26 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>✨ Nouveautés</div>
+                        <div style={{ fontSize: 11, color: AC, letterSpacing: 1, textTransform: "uppercase" }}>Les + récents</div>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4 }}>
+                        {bqRecents.map(b => carteLivre(b, "40vw"))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== PAR CATEGORIE ===== */}
+                  {bqBooks.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: 30, color: G.textDim }}>Aucun livre en ligne pour le moment.</div>
+                  ) : (
+                    (() => {
+                      const groups = {};
+                      bqBooks.forEach(b => { const cat = b.category || "Autres"; (groups[cat] = groups[cat] || []).push(b); });
+                      return Object.keys(groups).sort().map(cat => (
+                        <div key={cat} style={{ marginBottom: 24 }}>
+                          <div style={{ fontSize: 15, fontWeight: "bold", color: AC, marginBottom: 10, borderBottom: "1px solid " + G.border, paddingBottom: 6 }}>{cat}</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 14 }}>
+                            {groups[cat].map(b => carteLivre(b, null))}
+                          </div>
+                        </div>
+                      ));
+                    })()
+                  )}
+
+                  {/* ===== A PROPOS DE L'AUTEUR ===== */}
+                  <div style={{ background: "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + AC, borderRadius: 14, padding: 20, marginBottom: 20, textAlign: "center" }}>
+                    <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: "bold", margin: "0 auto 12px" }}>
+                      {boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : nomAuteur.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: 21, fontWeight: "bold", color: G.text, marginBottom: 4 }}>{renderBadgeVerifie(boutiqueAuteur.verifie)}{boutiqueAuteur.nom_complet}</div>
+                    {boutiqueAuteur.pays ? <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10 }}>📍 {boutiqueAuteur.pays}</div> : null}
+                    {boutiqueAuteur.bio ? (() => {
+                      const bio = boutiqueAuteur.bio;
+                      const isLong = bio.length > 220;
+                      const shown = (!bioExpanded && isLong) ? bio.slice(0, 220).trim() + "…" : bio;
+                      return (
+                        <div style={{ maxWidth: 600, margin: "0 auto", padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, background: G.bg }}>
+                          <div style={{ fontSize: 14, color: G.text, lineHeight: 1.6, textAlign: "left", whiteSpace: "pre-wrap" }}>{shown}</div>
+                          {isLong ? <button onClick={() => setBioExpanded(v => !v)} style={{ background: "none", border: "none", color: AC, fontWeight: "bold", fontSize: 13, cursor: "pointer", padding: "6px 0 0", marginTop: 2, fontFamily: "Georgia, serif" }}>{bioExpanded ? "Voir moins ▲" : "Voir plus ▼"}</button> : null}
+                        </div>
+                      );
+                    })() : null}
+                    {(() => {
+                      const reseaux = [
+                        { u: boutiqueAuteur.facebook, l: "Facebook", ic: "📘", c: "#1877F2" },
+                        { u: boutiqueAuteur.instagram, l: "Instagram", ic: "📷", c: "#E1306C" },
+                        { u: boutiqueAuteur.tiktok, l: "TikTok", ic: "🎵", c: "#111" },
+                        { u: boutiqueAuteur.linkedin, l: "LinkedIn", ic: "💼", c: "#0A66C2" },
+                        { u: boutiqueAuteur.youtube, l: "YouTube", ic: "▶️", c: "#FF0000" },
+                      ].filter(r => r.u && r.u.trim());
+                      if (reseaux.length === 0) return null;
+                      return (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 14 }}>
+                          {reseaux.map(r => (
+                            <a key={r.l} href={r.u.startsWith("http") ? r.u : "https://" + r.u} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", background: "#fff", border: "1px solid " + G.border, borderRadius: 20, color: r.c, fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>{r.ic} {r.l}</a>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    <div style={{ marginTop: 14, fontSize: 13, color: AC, fontWeight: "bold" }}>{bqBooks.length} livre{bqBooks.length > 1 ? "s" : ""} en ligne{boutiqueAbonnes > 0 ? " · " + boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : "") : ""}</div>
+                    {boutiqueAuteur.id ? (
+                      <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
+                        style={{ marginTop: 12, padding: "11px 26px", borderRadius: 24, border: "1.5px solid " + AC, background: boutiqueEstAbonne ? "transparent" : AC, color: boutiqueEstAbonne ? AC : "#fff", fontSize: 13.5, fontWeight: "bold", cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontFamily: "Georgia, serif", opacity: boutiqueSuivreBusy ? 0.6 : 1 }}>
+                        {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "+ Suivre cet auteur"}
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              )}
+
+              {/* ===== PIED DE PAGE ===== */}
+              <div style={{ textAlign: "center", padding: "22px 10px 10px", borderTop: "1px solid " + G.border, marginTop: 10 }}>
+                <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 8 }}>Propulsé par</div>
+                <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); window.scrollTo(0, 0); } catch (e) {} }}
+                  style={{ background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, padding: 0 }}>
+                  <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 26, width: "auto" }} />
+                  <span style={{ fontSize: 14, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>CarryBooks</span>
+                </button>
+                <div style={{ fontSize: 10.5, color: G.textFaint, marginTop: 8 }}>Paiement sécurisé · Livraison immédiate</div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -18699,6 +18896,36 @@ export default function App() {
                     <span>Je participe au programme d'abonnement et j'accepte les conditions (mes romans lisibles par les abonnés, commission fixe par déblocage).</span>
                   </label>
                   {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
+                </div>
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🎨 Couleur de ma vitrine</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Choisis la couleur de ta page auteur : elle habille ton en-tête, tes boutons et tes prix. Tes lecteurs la verront sur ton lien vitrine.</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+                    {["#c9a84c", "#1e88e5", "#43a047", "#e53935", "#8e24aa", "#00897b", "#f4511e", "#3949ab", "#d81b60", "#1a1208"].map(c => (
+                      <button key={c} type="button" onClick={() => setAuteurCouleur(c)}
+                        style={{ width: 36, height: 36, borderRadius: "50%", background: c, cursor: "pointer", border: (auteurCouleur || "").toLowerCase() === c ? "3px solid " + G.text : "2px solid " + G.border, padding: 0 }} />
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, color: G.textDim, fontWeight: "bold" }}>Ou choisis la tienne :</label>
+                    <input type="color" value={auteurCouleur || "#c9a84c"} onChange={e => setAuteurCouleur(e.target.value)} style={{ width: 52, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#fff", cursor: "pointer", padding: 2 }} />
+                    <button type="button" onClick={() => setAuteurCouleur("")} style={{ padding: "8px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Couleur par défaut</button>
+                  </div>
+                  <div style={{ border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.gold), borderRadius: 10, padding: 12, background: G.bg, marginBottom: 14 }}>
+                    <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Aperçu</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold" }}>{(auteurNom || "A").charAt(0).toUpperCase()}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{auteurNom || "Ton nom"}</div>
+                        <div style={{ fontSize: 10.5, color: G.textDim }}>Librairie officielle</div>
+                      </div>
+                      <div style={{ padding: "7px 13px", borderRadius: 20, background: auteurCouleur || G.gold, color: "#fff", fontSize: 12, fontWeight: "bold" }}>+ Suivre</div>
+                    </div>
+                  </div>
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer ma couleur"}</button>
+                  {auteurProfil && auteurProfil.code_source ? (
+                    <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
+                  ) : null}
                 </div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>⚙️ Paramètres — Pixels publicitaires</div>
