@@ -18065,7 +18065,7 @@ export default function App() {
             ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
-        <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, height: 33, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+        <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
         {book.author ? <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 2, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div> : null}
         <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
       </div>
@@ -18105,7 +18105,7 @@ export default function App() {
                 <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
                   placeholder={nomVitrine ? ("Rechercher dans " + nomVitrine + "…") : ("Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "…")}
-                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1.5px solid #000", borderRadius: 8, color: "#000", fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
                 {boutiqueSearch ? (
                   <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
                 ) : null}
@@ -18113,12 +18113,12 @@ export default function App() {
               {/* ===== DEUX BOUTONS SOUS LA RECHERCHE ===== */}
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <button type="button" onClick={() => { setPage("library"); try { window.scrollTo(0, 0); } catch (e) {} }}
-                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + AC, background: "transparent", color: AC, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
+                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #000", background: "transparent", color: "#000", fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
                   📚 Ma bibliothèque
                 </button>
                 {lienFormations ? (
                   <a href={lienFormations.startsWith("http") ? lienFormations : "https://" + lienFormations} target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + AC, background: AC, color: "#fff", fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
+                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #000", background: "transparent", color: "#000", fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
                     🎬 Formations vidéo
                   </a>
                 ) : null}
@@ -18127,7 +18127,7 @@ export default function App() {
                 <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
                   {["Tous"].concat(bqCats).map(c => (
                     <button key={c} onClick={() => setBoutiqueCat(c)}
-                      style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (boutiqueCat === c ? AC : G.border), background: boutiqueCat === c ? ACdim : "transparent", color: boutiqueCat === c ? AC : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
+                      style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: (boutiqueCat === c ? "2px" : "1px") + " solid #000", background: boutiqueCat === c ? ACdim : "transparent", color: "#000", fontSize: 12, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "Georgia, serif" }}>
                       {c}
                     </button>
                   ))}
