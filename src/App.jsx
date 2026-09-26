@@ -17847,7 +17847,6 @@ export default function App() {
         content: "", pdf_url: "", audio_url: "",
         extract_pages: 1,
         formation_contenu: f.contenu,
-        formation_liens: fmLiens,
         status: enVitrineSeule ? "actif" : "en_attente",
         moderation: enVitrineSeule ? "valide" : "en_attente",
         auteur_id: auteurProfil.id,
@@ -17855,12 +17854,24 @@ export default function App() {
         can_read: true, can_download: false,
         exclusif_vitrine: enVitrineSeule,
       };
+      let idFormation = pubEditId;
       if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("books").insert(payload);
+        const { data: cree, error } = await supabase.from("books").insert(payload).select("id").maybeSingle();
         if (error) throw error;
+        idFormation = cree && cree.id;
+      }
+      // Les liens d'acces sont le produit payant : ils ne vivent pas dans books,
+      // qui est lisible publiquement. Seul le serveur peut les ecrire et les rendre.
+      if (idFormation) {
+        const rl = await fetch("/api/formation-acces", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "enregistrer", auteur_id: auteurProfil.id, book_id: idFormation, liens: fmLiens }),
+        });
+        const rj = await rl.json().catch(() => ({}));
+        if (!rj.ok) { setFmMsg("⚠️ La formation est enregistrée, mais les liens d'accès n'ont pas pu être sauvegardés : " + (rj.error || "réessaie") + ". Modifie ta formation et enregistre à nouveau."); setFmSaving(false); return; }
       }
       setFmMsg(enVitrineSeule
         ? "✅ Ta formation est EN LIGNE dans ta vitrine. Partage ton lien : tu touches 85 % sur chaque vente."
