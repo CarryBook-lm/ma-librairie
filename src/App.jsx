@@ -19064,17 +19064,10 @@ export default function App() {
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
               )}
-              {/* PARAMÈTRES : pixels */}
-              {auteurTab === "parametres" && (<>
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Programme d'abonnement</div>
-                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.6 }}>En participant, tes <b>romans</b> deviennent lisibles par les abonnés dans la liseuse. Tu reçois une commission fixe (250 F) à chaque livre débloqué par un abonné. Tes livres PDF et audio, eux, restent toujours payants. Tu peux te retirer à tout moment.</div>
-                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13, color: G.text }}>
-                    <input type="checkbox" checked={!!(auteurProfil && auteurProfil.abonnement_actif)} onChange={e => toggleAbonnement(e.target.checked)} style={{ width: 18, height: 18, marginTop: 1 }} />
-                    <span>Je participe au programme d'abonnement et j'accepte les conditions (mes romans lisibles par les abonnés, commission fixe par déblocage).</span>
-                  </label>
-                  {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
-                </div>
+              {/* MA VITRINE : nom, logo, en-tete, couleur — place ici car les auteurs
+                  cherchent naturellement dans Mon compte, a cote de leur photo. */}
+              {auteurTab === "compte" && (
+                <div style={{ marginTop: 16 }}>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🏪 Ma vitrine</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Ta page auteur est ta boutique. Donne-lui un nom, un logo et une couleur, et choisis ce qui apparaît tout en haut.</div>
@@ -19150,6 +19143,19 @@ export default function App() {
                   {auteurProfil && auteurProfil.code_source ? (
                     <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
                   ) : null}
+                </div>
+                </div>
+              )}
+              {/* PARAMÈTRES : pixels */}
+              {auteurTab === "parametres" && (<>
+                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Programme d'abonnement</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.6 }}>En participant, tes <b>romans</b> deviennent lisibles par les abonnés dans la liseuse. Tu reçois une commission fixe (250 F) à chaque livre débloqué par un abonné. Tes livres PDF et audio, eux, restent toujours payants. Tu peux te retirer à tout moment.</div>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13, color: G.text }}>
+                    <input type="checkbox" checked={!!(auteurProfil && auteurProfil.abonnement_actif)} onChange={e => toggleAbonnement(e.target.checked)} style={{ width: 18, height: 18, marginTop: 1 }} />
+                    <span>Je participe au programme d'abonnement et j'accepte les conditions (mes romans lisibles par les abonnés, commission fixe par déblocage).</span>
+                  </label>
+                  {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
                 </div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>⚙️ Paramètres — Pixels publicitaires</div>
