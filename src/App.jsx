@@ -1726,7 +1726,7 @@ const CATEGORIES_FALLBACK = {
 const CONTRAT_ARTICLES = [
   ["Article 1 - Objet du contrat", "Le présent contrat définit les conditions dans lesquelles l'Auteur publie, diffuse et vend ses œuvres numériques (romans, livres, guides, livres audio et autres contenus) sur la Plateforme CarryBooks, ainsi que les droits et obligations de chaque partie."],
   ["Article 2 - Déclaration et garantie de l'Auteur", "L'Auteur certifie sur l'honneur être le véritable auteur et/ou le détenteur exclusif de l'ensemble des droits des œuvres qu'il publie sur CarryBooks. Il garantit que ses œuvres sont originales, qu'elles ne violent aucun droit de propriété intellectuelle, aucun droit à l'image ni aucun droit d'un tiers, et qu'il dispose de tous les droits nécessaires pour les commercialiser."],
-  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 70 % du prix de vente lorsque la vente provient de son lien de promotion personnel, et 50 % lorsque la vente est réalisée par CarryBooks. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
+  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 70 % du prix de vente lorsque la vente provient de son lien de promotion personnel, et 50 % lorsque la vente est réalisée par CarryBooks. Pour un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle (livre non référencé sur carrybooks.com, mis en ligne sans validation préalable et dont l'Auteur garantit détenir les droits), l'Auteur perçoit 85 % du prix de vente. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
   ["Article 3 bis - Programme d'abonnement (facultatif)", "CarryBooks propose un programme d'abonnement permettant aux lecteurs abonnés de lire les ROMANS (lus dans la liseuse) des auteurs participants. La participation est FACULTATIVE (activable dans l'espace auteur). L'auteur participant perçoit une commission fixe (montant défini par CarryBooks) à chaque déblocage d'un de ses romans par un abonné, une seule fois par livre (les relectures ne génèrent aucune commission). Les livres PDF et audio ne sont PAS concernés et restent payants. L'auteur peut se retirer à tout moment."],
   ["Article 4 - Validation et modération", "Toute œuvre soumise fait l'objet d'une validation préalable par CarryBooks avant sa mise en ligne. CarryBooks peut refuser, retirer ou suspendre toute œuvre non conforme au présent contrat, aux conditions d'utilisation, à la loi ou aux bonnes mœurs, sans indemnité."],
   ["Article 5 - Propriété intellectuelle et lutte contre le piratage", "L'Auteur conserve la propriété intellectuelle de ses œuvres et concède à CarryBooks le droit non exclusif de les diffuser et de les vendre. Il est formellement interdit de publier, revendre ou diffuser toute œuvre qui ne lui appartient pas, piratée, contrefaite, plagiée ou volée. Toute fraude, piratage, usurpation ou vente d'une œuvre appartenant à autrui entraîne le bannissement immédiat et définitif de l'Auteur, la suspension de tout paiement lié à la fraude, sans préjudice de poursuites judiciaires."],
@@ -1736,6 +1736,13 @@ const CONTRAT_ARTICLES = [
   ["Article 9 - Protection des données", "Les informations personnelles et la pièce d'identité de l'Auteur sont collectées uniquement aux fins d'identification, de lutte contre la fraude et de paiement. Elles sont conservées de manière confidentielle."],
   ["Article 10 - Loi applicable et litiges", "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis."],
 ];
+
+// Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
+// jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
+// Il reste achetable par son lien direct, et reste visible dans Ma bibliotheque une fois achete.
+function surCarryBooks(b) {
+  return !!b && !b.masque && !b.exclusif_vitrine;
+}
 
 function renderBadgeVerifie(show) {
   if (!show) return null;
@@ -13989,6 +13996,8 @@ export default function App() {
   const [pubMsg, setPubMsg] = useState("");
   const [pubErrors, setPubErrors] = useState({});
   const [pubDownloadable, setPubDownloadable] = useState(true);
+  const [pubExclusif, setPubExclusif] = useState(false);
+  const [pubExclusifCertifie, setPubExclusifCertifie] = useState(false);
   const [pubAudioExtrait, setPubAudioExtrait] = useState("");
   const [pubEditeur, setPubEditeur] = useState(false);
   const [pubEditeurAuteur, setPubEditeurAuteur] = useState("");
@@ -14310,7 +14319,7 @@ export default function App() {
         const obj = {};
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
-        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
         setMesLivres(livres || []);
       } catch (e) {} finally { setMesLivresLoading(false); }
     })();
@@ -14817,7 +14826,7 @@ export default function App() {
   const [capShowGift, setCapShowGift] = useState(false);
 
   useEffect(() => {
-    const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && !b.masque); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
+    const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && surCarryBooks(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
     if (featuredBooks.length <= 1) return;
     const interval = setInterval(() => {
       setHeroIndex(i => (i + 1) % featuredBooks.length);
@@ -15690,7 +15699,7 @@ export default function App() {
     if (!hasCachedBooks) setLoading(true);
     // ⚡ OPTIMISATION : on EXCLUT 'content' (texte intégral des livres) et 'images' (array JSONB)
     // Ces 2 colonnes sont chargées à la demande via openBook(). Économie : ~10MB sur 1000+ produits.
-    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, audio_extrait_url, author_ville, author_photo, nb_pages, duree_audio, nb_ventes, masque, created_at";
+    const lightColumns = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, audio_extrait_url, author_ville, author_photo, nb_pages, duree_audio, nb_ventes, masque, exclusif_vitrine, created_at";
 
     // 🎯 ÉTAPE 1 : Charger les LIVRES (non-articles) en priorité — rapide car peu nombreux
     // Supabase limite à 1000 lignes par défaut. Avec 1000+ articles, les livres seraient tronqués.
@@ -17081,6 +17090,8 @@ export default function App() {
   }
 
   const filteredBooks = books.filter(b => {
+    // Masques par CarryBooks ou reserves a la vitrine de leur auteur : jamais ici.
+    if (!surCarryBooks(b)) return false;
     // Hors ligne : cacher les livres PDF (ils ne fonctionnent pas hors connexion)
     if (!isOnline && b.pdf_url) return false;
     const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -17369,7 +17380,7 @@ export default function App() {
       if (!rj || !rj.ok) { alert((rj && rj.error) || "La suppression n'a pas abouti. Réessaie."); return; }
       setMesLivresDetail(null);
       setPubMsg("🗑️ Livre supprimé.");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { alert("Erreur lors de la suppression : " + (e.message || e)); }
   }
@@ -17389,6 +17400,7 @@ export default function App() {
     setPubAuthorPhoto(b.author_photo || "");
     setPubForm(f => ({ ...f, content: b.content || "" }));
     setPubDraftMode(b.status === "brouillon"); setPubDraftMsg("");
+    setPubExclusif(!!b.exclusif_vitrine); setPubExclusifCertifie(!!b.exclusif_vitrine);
     setPubEditId(b.id); setPubOpen(true); setPubMsg(""); setAuteurTab("publier");
   }
   async function pubMakeExcerpt(pdfUrl, nPages) {
@@ -17476,6 +17488,7 @@ export default function App() {
         pdf_url: (f.type === "guide" || f.type === "gratuit") ? f.pdf_url : "",
         audio_url: f.type === "audio" ? f.audio_url : "", nb_pages: f.type === "roman" ? Math.max(1, Math.round(((f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length) / 250)) : (f.nb_pages || null), duree_audio: f.type === "audio" ? (f.duree_audio || null) : null,
         status: "brouillon", moderation: "brouillon", auteur_id: auteurProfil.id,
+        exclusif_vitrine: !!pubExclusif,
         product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
       if (pubEditId) {
@@ -17486,7 +17499,7 @@ export default function App() {
       }
       setPubDraftMsg("💾 Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " — en cours d'édition");
       if (!silent) setPubMsg("✅ Enregistré. Tu le retrouveras dans « Mes livres » → « En cours d'édition » pour continuer plus tard.");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { if (!silent) setPubMsg("❌ " + (e.message || e)); }
     setPubSavingDraft(false);
@@ -17514,6 +17527,11 @@ export default function App() {
       return;
     }
     setPubErrors({});
+    // Vitrine seule : reservee aux auteurs verifies, et certification des droits obligatoire
+    const kycValide = !!(auteurProfil && auteurProfil.kyc_status === "valide");
+    const enVitrineSeule = !!pubExclusif && kycValide;
+    if (pubExclusif && !kycValide) { setPubMsg("🔒 La vente en vitrine seule est réservée aux auteurs vérifiés. Termine ta vérification d'identité dans « Mon compte », ou choisis « Ma vitrine + CarryBooks »."); return; }
+    if (enVitrineSeule && !pubExclusifCertifie) { setPubMsg("☑️ Coche la case de certification des droits avant de publier dans ta vitrine."); return; }
     if (needsExtract && (parseInt(f.extract_pages) || 0) < 1) { setPubMsg("Le nombre de pages gratuites doit être au moins 1."); return; }
     // Minimum 30 pages (~7500 mots à 250 mots/page) pour les romans texte — sauf admin (id 8)
     if (f.type === "roman" && !(auteurProfil && auteurProfil.id === 8)) {
@@ -17535,22 +17553,23 @@ export default function App() {
         pdf_url: isPdf ? f.pdf_url : "",
         excerpt_pdf_url: f.type === "guide" ? excerptUrl : "",
         audio_url: f.type === "audio" ? f.audio_url : "", nb_pages: f.type === "roman" ? Math.max(1, Math.round(((f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length) / 250)) : (f.nb_pages || null), duree_audio: f.type === "audio" ? (f.duree_audio || null) : null,
-        status: "en_attente", moderation: "en_attente", auteur_id: auteurProfil.id,
+        status: enVitrineSeule ? "actif" : "en_attente", moderation: enVitrineSeule ? "valide" : "en_attente", auteur_id: auteurProfil.id,
+        exclusif_vitrine: enVitrineSeule,
         product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
       if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
         if (error) throw error;
-        setPubMsg("✅ Ton livre a été modifié et renvoyé pour validation. Le traitement peut durer jusqu'à 24h.");
+        setPubMsg(enVitrineSeule ? "✅ Ton livre est EN LIGNE dans ta vitrine. Partage ton lien pour le vendre : tu touches 85 % sur chaque vente." : "✅ Ton livre a été modifié et renvoyé pour validation. Le traitement peut durer jusqu'à 24h.");
       } else {
         const { error } = await supabase.from("books").insert(payload);
         if (error) throw error;
-        setPubMsg("✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par CarryBooks.");
+        setPubMsg(enVitrineSeule ? "✅ Ton livre est EN LIGNE dans ta vitrine. Partage ton lien pour le vendre : tu touches 85 % sur chaque vente." : "✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par CarryBooks.");
       }
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
       setPubOpen(false); setPubTypeSelected(null); setPubDraftMsg(""); setAuteurTab("meslivres");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
@@ -18104,7 +18123,7 @@ export default function App() {
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
-                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(false); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
               )}
               {/* PUBLIER */}
@@ -18446,12 +18465,54 @@ export default function App() {
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6, lineHeight: 1.4 }}>{pubDownloadable ? "Le client pourra télécharger le PDF après achat." : "Le client pourra seulement lire le PDF (protégé, non téléchargeable)."}</div>
                     </div>
                   )}
+                  {/* ===== OU VENDRE CE LIVRE ? ===== */}
+                  {(() => {
+                    const kycOk = !!(auteurProfil && auteurProfil.kyc_status === "valide");
+                    const carte = (actif, onClick, dispo, titre, lignes, badge) => (
+                      <button type="button" onClick={dispo ? onClick : undefined} disabled={!dispo}
+                        style={{ width: "100%", textAlign: "left", padding: 12, marginBottom: 10, borderRadius: 10, border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.goldDim : "#fff", cursor: dispo ? "pointer" : "not-allowed", opacity: dispo ? 1 : 0.55, fontFamily: "Georgia, serif" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.gold : "#fff", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
+                          <span style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}</span>
+                          <span style={{ marginLeft: "auto", background: G.gold, color: "#fff", fontSize: 11, fontWeight: "bold", padding: "3px 9px", borderRadius: 12, whiteSpace: "nowrap" }}>{badge}</span>
+                        </div>
+                        {lignes.map((l, i) => (
+                          <div key={i} style={{ fontSize: 11.5, color: G.textDim, lineHeight: 1.5, paddingLeft: 26 }}>{l}</div>
+                        ))}
+                      </button>
+                    );
+                    return (
+                      <div style={{ background: G.bg, border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, marginBottom: 3 }}>📍 Où vendre ce livre ?</div>
+                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12, lineHeight: 1.5 }}>Tu pourras changer ce choix plus tard en modifiant ton livre.</div>
+                        {carte(!pubExclusif, () => setPubExclusif(false), true, "🌍 Ma vitrine + CarryBooks", [
+                          "Visible par tous les lecteurs : accueil, catalogue, recherche.",
+                          "Validation par CarryBooks sous 24 h avant la mise en ligne.",
+                        ], "70 % / 50 %")}
+                        {carte(pubExclusif, () => setPubExclusif(true), kycOk, "🏪 Ma vitrine uniquement", [
+                          "Visible seulement sur ta page auteur. En ligne immédiatement, sans validation.",
+                          "À toi d'amener tes lecteurs : CarryBooks ne le mettra jamais en avant.",
+                        ], "85 %")}
+                        {!kycOk ? (
+                          <div style={{ fontSize: 11.5, color: "#b26a00", background: "#fff6e0", border: "1px solid #f0d9a0", borderRadius: 8, padding: 10, lineHeight: 1.5 }}>
+                            🔒 La vente en vitrine seule est réservée aux auteurs <b>vérifiés</b>. Termine ta vérification d'identité dans l'onglet <b>Mon compte</b> pour y avoir droit.
+                          </div>
+                        ) : null}
+                        {pubExclusif && kycOk ? (
+                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10 }}>
+                            <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
+                            <span>Je certifie être l'auteur de ce livre ou détenir les droits de le vendre. Comme il est publié sans validation, en cas de réclamation CarryBooks le retire immédiatement et mon compte peut être suspendu.</span>
+                          </label>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
                   <div style={{ height: 18 }} />
                   {pubDraftMsg && <div style={{ fontSize: 11, color: G.green, textAlign: "center", marginBottom: 8 }}>{pubDraftMsg}</div>}
                   {pubDraftMode && (
                     <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
-                  <button onClick={pubSaveRoman} disabled={pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : "📤 Soumettre pour validation")}</button>
+                  <button onClick={pubSaveRoman} disabled={pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation"))}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setPubAuthorVille(""); setPubAuthorPhoto(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {pubRomanPdfAlert && (
                     <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -18500,7 +18561,7 @@ export default function App() {
                     <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>{mesLivresLoading ? "⏳ Chargement en cours…" : (mesLivres.length === 0 ? "Tu n'as pas encore publié de livre." : "Aucun livre dans cette catégorie.")}</div>
                   ) : (
                     liste.map((b, i) => {
-                      const st = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "✍️ En cours d'édition", c: "#c9952a" } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
+                      const st = (b.status === "actif" && b.exclusif_vitrine) ? { t: "🏪 En ligne — ma vitrine seule (85 %)", c: G.green } : b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "✍️ En cours d'édition", c: "#c9952a" } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
                       return (
                         <div key={b.id} onClick={() => setMesLivresDetail(b)} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border, cursor: "pointer" }}>
                           <div style={{ flexShrink: 0 }}>
@@ -18638,8 +18699,9 @@ export default function App() {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
                 const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
                 const vv = filterVentesByPeriod(ventesAuteur, statsPeriod, statsDate);
+                const vitr = vv.filter(v => v.source === "vitrine");
                 const avec = vv.filter(v => v.source === "auteur");
-                const sans = vv.filter(v => v.source !== "auteur");
+                const sans = vv.filter(v => v.source !== "auteur" && v.source !== "vitrine");
                 const gains = arr => arr.reduce((s, v) => s + (v.part_auteur || 0), 0);
                 const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
                 const subtabs = [["board", "Tableau de bord"], ["charts", "Statistiques"]];
@@ -18675,9 +18737,10 @@ export default function App() {
                           ))}
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
-                        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
                           {compteur("Ventes CarryBooks (50%)", sans.length, gains(sans), G.text)}
                           {compteur("Ventes via mon lien (70%)", avec.length, gains(avec), G.gold)}
+                          {vitr.length > 0 ? compteur("Ventes en vitrine (85%)", vitr.length, gains(vitr), G.green) : null}
                         </div>
                         <div style={{ background: G.gold + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
                           <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>TOTAL — {vv.length} livre(s) vendu(s)</div>
@@ -18973,7 +19036,7 @@ export default function App() {
                   <p>Après l'envoi, ton livre passe en <b>« en attente »</b>. L'équipe CarryBooks le vérifie, puis l'approuve. Une fois approuvé, il apparaît dans la boutique et devient achetable. Tu peux <b>modifier</b> un livre à tout moment (il repasse alors en validation).</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>7. Tes gains (commissions)</div>
-                  <p>Sur chaque vente : tu touches <b>70 %</b> si le client vient par <b>ton lien de pub</b> (que tu trouves dans « Mes livres »), et <b>50 %</b> si c'est CarryBooks qui vend. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p>
+                  <p>Sur chaque vente : tu touches <b>70 %</b> si le client vient par <b>ton lien de pub</b> (que tu trouves dans « Mes livres »), et <b>50 %</b> si c'est CarryBooks qui vend. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p><p>Au moment de publier, tu choisis « <b>Où vendre ce livre ?</b> ». Si tu choisis <b>Ma vitrine uniquement</b>, le livre n'apparaît pas sur carrybooks.com : il est en ligne tout de suite, sans validation, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs, CarryBooks ne le mettra jamais en avant. Cette option demande d'être un auteur <b>vérifié</b>.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>8. Publicité (pixels)</div>
                   <p>Dans <b>Paramètres</b>, ajoute ton pixel <b>Facebook</b> et/ou <b>TikTok</b> pour suivre l'efficacité de tes publicités.</p>
@@ -19070,7 +19133,7 @@ export default function App() {
             <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
             )}
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
-            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(false); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
@@ -21499,7 +21562,7 @@ export default function App() {
                   <div id="exploreCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
                     {Object.keys(CATEGORIES).map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
-                      const bk = (books || []).find(b => b.status === "actif" && !b.masque && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
+                      const bk = (books || []).find(b => b.status === "actif" && surCarryBooks(b) && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
                       const cover = bk ? bk.cover : null;
                       return (
                         <div key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); setPage("catalog"); window.scrollTo(0, 0); }} style={{ flex: "0 0 auto", width: "calc((100% - 44px) / 4.5)", position: "relative", borderRadius: 10, overflow: "hidden", cursor: "pointer", aspectRatio: "1 / 1.5", background: cover ? "#111" : "linear-gradient(135deg, " + G.gold + ", #8a6d1f)" }}>
@@ -21517,7 +21580,7 @@ export default function App() {
                 {/* HERO CAROUSEL - num�rique uniquement */}
                 {(() => {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
-                  const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && !b.masque && isDigitalBook(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
+                  const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && surCarryBooks(b) && isDigitalBook(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
                   const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(isDigitalBook).slice(0, 5);
                   if (heroBooks.length === 0) return null;
                   const featuredBook = heroBooks[heroIndex % heroBooks.length];
@@ -21559,7 +21622,7 @@ export default function App() {
                     .map(p => books.find(b => b.id === p.book_id))
                     .filter(Boolean)
                     .filter(isDigitalBook)
-                    .filter(b => !b.masque)
+                    .filter(surCarryBooks)
                     .slice(0, 5);
                   if (sortedBestSellers.length === 0) return null;
                   return (
@@ -21668,7 +21731,7 @@ export default function App() {
 
                 {/* CARROUSELS PAR CATÉGORIE - UNIQUEMENT LIVRES NUMÉRIQUES */}
                 {(() => {
-                  const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && !b.masque;
+                  const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && surCarryBooks(b);
                   const isRomanCat = k => /^roman/i.test(k) || /saga/i.test(k) || /romance/i.test(k) || /po[eé]sie/i.test(k) || /audio/i.test(k);
                   const catHasBooks = k => books.some(b => isDigitalReco(b) && (b.category === k || (b.category || "").toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
                   const firstGuideCat = Object.keys(CATEGORIES).find(k => !isRomanCat(k) && catHasBooks(k));
@@ -21682,7 +21745,7 @@ export default function App() {
                   // Filtrer par cat�gorie ET ne garder QUE les livres num�riques (num/mixte/audio/podcast)
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const catBooks = melangerListe(books.filter(b => 
-                    isDigitalBook(b) && !b.masque && 
+                    isDigitalBook(b) && surCarryBooks(b) && 
                     (b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")))
                   ));
                   if (catBooks.length === 0) return null;
@@ -22614,7 +22677,7 @@ export default function App() {
                 <div style={{ ...({ background: G.goldDim, border: "1px solid " + G.gold + "55", borderRadius: 10, padding: "12px 14px", margin: "10px 0" }), color: G.text, fontSize: 13.5, lineHeight: 1.6 }}>💡 <b>Bon à savoir :</b> une fois ton compte <b>validé</b>, le bouton <b>« Publie un livre »</b> de l’accueil devient <b>« Mon espace Auteur(e) »</b>. C’est normal : c’est ton raccourci pour revenir gérer tes livres et tes ventes.</div>
 
                 <div style={H}>Étape 2 — Compléter ton profil</div>
-                <p style={P}>Ajoute ta photo, une courte bio et tes réseaux sociaux. Tu obtiens une <b>boutique personnelle</b> avec un <b>lien de promotion</b> : partage-le, chaque vente via ce lien te rapporte <b>70 %</b> au lieu de 50 %.</p>
+                <p style={P}>Ajoute ta photo, une courte bio et tes réseaux sociaux. Tu obtiens une <b>boutique personnelle</b> avec un <b>lien de promotion</b> : partage-le, chaque vente via ce lien te rapporte <b>70 %</b> au lieu de 50 %. Et si tu choisis de vendre un livre <b>uniquement dans ta vitrine</b>, tu touches <b>85 %</b>.</p>
 
                 <div style={H}>Étape 3 — Faire vérifier ton identité</div>
                 <p style={P}>Obligatoire avant de publier. Remplis le formulaire d’identité (avec ton <b>numéro Mobile Money</b>, c’est là que tu seras payé), ajoute une photo de ta <b>pièce d’identité</b> (recto obligatoire, verso facultatif), puis <b>lis et signe le contrat en ligne</b> avec ton doigt. Une fois validé par CarryBooks, un badge « vérifié » apparaît et l’onglet Publier se débloque.</p>
@@ -22647,7 +22710,7 @@ export default function App() {
                 <div style={box}><b>Après la soumission</b> — dans « Mes livres », ton livre affiche : <b>En attente</b> (en cours de vérification), <b>En ligne</b> (validé, visible et vendable), ou <b>Refusé</b> (un motif s’affiche : corrige et resoumets). Tu peux modifier ou supprimer un livre depuis cet onglet.</div>
 
                 <div style={H}>Ta rémunération et tes retraits</div>
-                <p style={P}>Tu gagnes <b>70 %</b> sur les ventes via ton lien de promotion, <b>50 %</b> sur celles amenées par CarryBooks. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
+                <p style={P}>Tu gagnes <b>70 %</b> sur les ventes via ton lien de promotion, <b>50 %</b> sur celles amenées par CarryBooks, et <b>85 %</b> sur un livre que tu vends uniquement dans ta vitrine. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
 
                 <div style={H}>Le programme d’abonnement (facultatif)</div>
                 <p style={P}>Dans les Paramètres, tu peux activer l’abonnement : tes <b>romans</b> deviennent lisibles par les abonnés et tu touches une <b>commission fixe à chaque déblocage</b>. Tes livres PDF et audio restent payants. Tu peux te retirer quand tu veux.</p>
