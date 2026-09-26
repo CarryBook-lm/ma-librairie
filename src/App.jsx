@@ -17997,7 +17997,7 @@ export default function App() {
     if (nomVitrine && aff("nom_auteur")) sousEntete.push("par " + nomAuteur);
     else sousEntete.push("Librairie officielle");
     if (aff("pays") && boutiqueAuteur && boutiqueAuteur.pays) sousEntete.push(boutiqueAuteur.pays);
-    if (aff("abonnes") && boutiqueAbonnes > 0) sousEntete.push(boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : ""));
+    if (aff("abonnes") && boutiqueAbonnes > 0) sousEntete.push("Followers " + boutiqueAbonnes);
     const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
     const bqCats = Array.from(new Set(bqBooks.map(b => b.category || "Autres"))).sort();
     const bqQ = boutiqueSearch.trim().toLowerCase();
@@ -18179,22 +18179,7 @@ export default function App() {
             <div style={{ background: cEnt, color: cEntTxt, borderTop: "2px solid " + AC, marginTop: 24, padding: "22px 16px 18px" }}>
               <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
-                {boutiqueAuteur.bio && String(boutiqueAuteur.bio).trim() ? (
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 15, fontWeight: "bold", color: cEntTxt, marginBottom: 8 }}>Qui suis-je ?</div>
-                    {(() => {
-                      const bio = String(boutiqueAuteur.bio);
-                      const isLong = bio.length > 260;
-                      const shown = (!bioExpanded && isLong) ? bio.slice(0, 260).trim() + "…" : bio;
-                      return (
-                        <>
-                          <div style={{ fontSize: 13.5, color: cEntTxt, opacity: 0.9, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{shown}</div>
-                          {isLong ? <button onClick={() => setBioExpanded(v => !v)} style={{ background: "none", border: "none", color: AC, fontWeight: "bold", fontSize: 13, cursor: "pointer", padding: "8px 0 0", fontFamily: "Georgia, serif" }}>{bioExpanded ? "Voir moins ▲" : "Voir plus ▼"}</button> : null}
-                        </>
-                      );
-                    })()}
-                  </div>
-                ) : null}
+                <div style={{ fontSize: 17, fontWeight: "bold", color: cEntTxt, textAlign: "center", marginBottom: 12, lineHeight: 1.3 }}>{titreEntete}</div>
 
                 {(() => {
                   const reseaux = [
@@ -18206,7 +18191,7 @@ export default function App() {
                   ].filter(r => r.u && String(r.u).trim());
                   if (reseaux.length === 0) return null;
                   return (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 14 }}>
                       {reseaux.map(r => (
                         <a key={r.l} href={String(r.u).startsWith("http") ? r.u : "https://" + r.u} target="_blank" rel="noopener noreferrer" title={r.l}
                           style={{ width: 42, height: 42, borderRadius: "50%", border: "1.5px solid " + AC, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 18, textDecoration: "none" }}>{r.ic}</a>
@@ -18215,30 +18200,46 @@ export default function App() {
                   );
                 })()}
 
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
-                  {boutiqueAuteur.id ? (
-                    <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
-                      style={{ padding: "11px 20px", borderRadius: 24, border: "1.5px solid " + AC, background: boutiqueEstAbonne ? "transparent" : AC, color: boutiqueEstAbonne ? AC : "#fff", fontSize: 13, fontWeight: "bold", cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
-                      {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "+ Suivre cet auteur"}
-                    </button>
-                  ) : null}
-                  {(() => {
-                    let deja = false;
-                    try { deja = window.matchMedia("(display-mode: standalone)").matches; } catch (e) {}
-                    if (deja) return null;
-                    return (
+                {/* La presentation s'ouvre ici, sous le nom, quand on appuie sur "Qui suis-je ?" */}
+                {bioExpanded && boutiqueAuteur.bio && String(boutiqueAuteur.bio).trim() ? (
+                  <div style={{ fontSize: 13.5, color: cEntTxt, opacity: 0.9, lineHeight: 1.65, whiteSpace: "pre-wrap", marginBottom: 16, padding: "12px 14px", border: "1px solid " + AC, borderRadius: 10 }}>
+                    {String(boutiqueAuteur.bio)}
+                  </div>
+                ) : null}
+
+                {(() => {
+                  let deja = false;
+                  try { deja = window.matchMedia("(display-mode: standalone)").matches; } catch (e) {}
+                  if (deja) return null;
+                  return (
+                    <div style={{ textAlign: "center", marginBottom: 16 }}>
                       <button onClick={triggerInstall}
                         style={{ padding: "11px 20px", borderRadius: 24, border: "1.5px solid " + AC, background: "transparent", color: cEntTxt, fontSize: 13, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>
                         📲 Comment télécharger l'application
                       </button>
-                    );
-                  })()}
+                    </div>
+                  );
+                })()}
+
+                <div style={{ borderTop: "1px solid " + AC, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  {boutiqueAuteur.bio && String(boutiqueAuteur.bio).trim() ? (
+                    <button onClick={() => setBioExpanded(v => !v)}
+                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 13.5, fontWeight: "bold", color: cEntTxt, textDecoration: "underline", fontFamily: "Georgia, serif" }}>
+                      Qui suis-je ? {bioExpanded ? "▲" : "▼"}
+                    </button>
+                  ) : <span />}
+                  {boutiqueAuteur.id ? (
+                    <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
+                      style={{ background: "none", border: "none", padding: 0, cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontSize: 13.5, fontWeight: "bold", color: cEntTxt, textDecoration: "underline", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
+                      {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "Suivre cet auteur"}
+                    </button>
+                  ) : <span />}
                 </div>
 
-                <div style={{ borderTop: "1px solid " + AC, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé · Livraison immédiate</div>
+                <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé</div>
                   <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); window.scrollTo(0, 0); } catch (e) {} }}
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11.5, color: cEntTxt, opacity: 0.8, fontFamily: "Georgia, serif" }}>
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11.5, color: cEntTxt, opacity: 0.8, fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
                     Propulsé par <b>CarryBooks</b>
                   </button>
                 </div>
@@ -19253,7 +19254,7 @@ export default function App() {
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
-                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur"], ["pays", "Mon pays"], ["abonnes", "Mon nombre d'abonnés"]].map(([cle, lab]) => (
+                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur"], ["pays", "Mon pays"], ["abonnes", "Mes followers (le nombre)"]].map(([cle, lab]) => (
                       <label key={cle} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: G.text, padding: "7px 0" }}>
                         <input type="checkbox" checked={enteteCoche(cle)} onChange={() => basculerEntete(cle)} style={{ width: 17, height: 17 }} />
                         <span>{lab}</span>
@@ -19305,7 +19306,7 @@ export default function App() {
                     if (nomV && enteteCoche("nom_auteur")) bouts.push("par " + nomA);
                     else bouts.push("Librairie officielle");
                     if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
-                    if (enteteCoche("abonnes")) bouts.push("128 abonnés");
+                    if (enteteCoche("abonnes")) bouts.push("Followers 128");
                     return (
                       <div style={{ border: "1px solid " + G.border, borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
                         <div style={{ fontSize: 11, color: G.textDim, padding: "8px 10px", background: G.bg }}>Aperçu de ta vitrine</div>
