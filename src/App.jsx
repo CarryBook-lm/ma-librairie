@@ -17331,8 +17331,6 @@ export default function App() {
     { cle: "entete_txt", lab: "Texte de l'en-tête et du pied de page", val: () => auteurCoulEnteteTexte, set: setAuteurCoulEnteteTexte, defaut: "#1a1208" },
     { cle: "fond", lab: "Arrière-plan du site", val: () => auteurCoulFond, set: setAuteurCoulFond, defaut: "#f5f0e8" },
     { cle: "prix", lab: "Prix des livres", val: () => auteurCoulPrix, set: setAuteurCoulPrix, defaut: "#c9a84c" },
-    { cle: "bouton", lab: "Bouton Lire", val: () => auteurCoulBouton, set: setAuteurCoulBouton, defaut: "#c9a84c" },
-    { cle: "bouton_txt", lab: "Texte du bouton Lire", val: () => auteurCoulBoutonTexte, set: setAuteurCoulBoutonTexte, defaut: "#ffffff" },
   ];
   const enteteCoche = (cle) => String(auteurVitrineEntete || "").split(",").map(s => s.trim()).indexOf(cle) !== -1;
   const basculerEntete = (cle) => {
@@ -18022,8 +18020,6 @@ export default function App() {
     const cEntTxt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_entete_texte, G.text);
     const cFond = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_fond, G.bg);
     const cPrix = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_prix, AC);
-    const cBtn = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_bouton, AC);
-    const cBtnTxt = normaliserCoul(boutiqueAuteur && boutiqueAuteur.coul_bouton_texte, "#ffffff");
     const lienFormations = (boutiqueAuteur && boutiqueAuteur.vitrine_formations_lien && String(boutiqueAuteur.vitrine_formations_lien).trim()) ? String(boutiqueAuteur.vitrine_formations_lien).trim() : "";
     const nomAuteur = (boutiqueAuteur && boutiqueAuteur.nom_complet) || "Boutique auteur";
     // Ce que l'auteur a coche dans ses parametres. Rien d'enregistre = on affiche tout.
@@ -18069,10 +18065,9 @@ export default function App() {
             ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
-        <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 3, height: 33, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-        <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix, marginBottom: 5 }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
-        <button type="button" onClick={(e) => { e.stopPropagation(); openBook(book); }}
-          style={{ width: "100%", padding: "7px 0", borderRadius: 7, border: "none", background: cBtn, color: cBtnTxt, fontSize: 12, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>Lire</button>
+        <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, height: 33, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+        {book.author ? <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 2, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div> : null}
+        <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
       </div>
     );
     return (
@@ -19330,8 +19325,6 @@ export default function App() {
                     const cEntTxt = normaliserCoul(auteurCoulEnteteTexte, "#1a1208");
                     const cFond = normaliserCoul(auteurCoulFond, "#f5f0e8");
                     const cPrix = normaliserCoul(auteurCoulPrix, cAcc);
-                    const cBtn = normaliserCoul(auteurCoulBouton, cAcc);
-                    const cBtnTxt = normaliserCoul(auteurCoulBoutonTexte, "#ffffff");
                     const bouts = [];
                     bouts.push("Librairie officielle");
                     if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
@@ -19354,10 +19347,10 @@ export default function App() {
                         <div style={{ background: cFond, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
                           <div style={{ width: 42, height: 58, borderRadius: 5, background: G.border, flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#1a1208", marginBottom: 3 }}>Mon livre</div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#1a1208", marginBottom: 2 }}>Mon livre</div>
+                            <div style={{ fontSize: 10, color: "#b0a090", marginBottom: 2 }}>{nomA}</div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>2 000 FCFA</div>
                           </div>
-                          <div style={{ padding: "8px 16px", borderRadius: 8, background: cBtn, color: cBtnTxt, fontSize: 12.5, fontWeight: "bold", flexShrink: 0 }}>Lire</div>
                         </div>
                         <div style={{ background: cEnt, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div style={{ fontSize: 11, fontWeight: "bold", color: cEntTxt }}>{enteteCoche("nom_auteur") ? nomA : "Qui suis-je ?"}</div>
