@@ -13977,6 +13977,10 @@ export default function App() {
   const [auteurPixel, setAuteurPixel] = useState("");
   const [auteurPixelTiktok, setAuteurPixelTiktok] = useState("");
   const [auteurCouleur, setAuteurCouleur] = useState("");
+  const [auteurVitrineNom, setAuteurVitrineNom] = useState("");
+  const [auteurVitrineLogo, setAuteurVitrineLogo] = useState("");
+  const [auteurVitrineEntete, setAuteurVitrineEntete] = useState("");
+  const [auteurLogoUploading, setAuteurLogoUploading] = useState(false);
   const [auteurBio, setAuteurBio] = useState("");
   const [auteurPhoto, setAuteurPhoto] = useState("");
   const [auteurPhotoUploading, setAuteurPhotoUploading] = useState(false);
@@ -14547,6 +14551,8 @@ export default function App() {
     setAuteurPixel(prof.pixel_meta || ""); setAuteurPixelTiktok(prof.pixel_tiktok || "");
     setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
     setAuteurCouleur(prof.couleur || "");
+    setAuteurVitrineNom(prof.vitrine_nom || ""); setAuteurVitrineLogo(prof.vitrine_logo || "");
+    setAuteurVitrineEntete(prof.vitrine_entete == null ? "logo,nom_vitrine,nom_auteur,pays,abonnes" : prof.vitrine_entete);
     setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
   useEffect(() => {
@@ -17124,6 +17130,33 @@ export default function App() {
   ];
 
   // ── ESPACE AUTEUR (Publie ton livre) ──
+  const uploadVitrineLogo = async (file) => {
+    if (!file) return;
+    setAuteurLogoUploading(true); setAuteurMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const key = import.meta.env.VITE_IMGBB_KEY;
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && data.data && data.data.url) {
+        setAuteurVitrineLogo(data.data.url);
+        setAuteurMsg("✅ Logo ajouté. Clique sur Enregistrer pour le sauvegarder.");
+      } else {
+        setAuteurMsg("Erreur lors de l'envoi du logo. Réessaie.");
+      }
+    } catch (e) {
+      setAuteurMsg("Erreur lors de l'envoi du logo. Réessaie.");
+    }
+    setAuteurLogoUploading(false);
+  };
+  // Ce qui est coche dans l'en-tete de la vitrine. Liste separee par des virgules.
+  const enteteCoche = (cle) => String(auteurVitrineEntete || "").split(",").map(s => s.trim()).indexOf(cle) !== -1;
+  const basculerEntete = (cle) => {
+    const liste = String(auteurVitrineEntete || "").split(",").map(s => s.trim()).filter(Boolean);
+    const i = liste.indexOf(cle);
+    if (i === -1) liste.push(cle); else liste.splice(i, 1);
+    setAuteurVitrineEntete(liste.join(","));
+  };
   const uploadAuteurPhoto = async (file) => {
     if (!file) return;
     setAuteurPhotoUploading(true); setAuteurMsg("");
@@ -17171,6 +17204,9 @@ export default function App() {
         linkedin: auteurLi.trim() || null,
         youtube: auteurYt.trim() || null,
         couleur: auteurCouleur || null,
+        vitrine_nom: auteurVitrineNom.trim() || null,
+        vitrine_logo: auteurVitrineLogo || null,
+        vitrine_entete: auteurVitrineEntete || null,
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
@@ -17756,6 +17792,19 @@ export default function App() {
     const AC = (boutiqueAuteur && boutiqueAuteur.couleur && String(boutiqueAuteur.couleur).trim()) ? String(boutiqueAuteur.couleur).trim() : G.gold;
     const ACdim = teinte(AC, 0.14);
     const nomAuteur = (boutiqueAuteur && boutiqueAuteur.nom_complet) || "Boutique auteur";
+    // Ce que l'auteur a coche dans ses parametres. Rien d'enregistre = on affiche tout.
+    const entListe = (boutiqueAuteur && boutiqueAuteur.vitrine_entete != null && String(boutiqueAuteur.vitrine_entete).trim() !== "")
+      ? String(boutiqueAuteur.vitrine_entete).split(",").map(s => s.trim()).filter(Boolean)
+      : ["logo", "nom_vitrine", "nom_auteur", "pays", "abonnes"];
+    const aff = (c) => entListe.indexOf(c) !== -1;
+    const nomVitrine = (boutiqueAuteur && boutiqueAuteur.vitrine_nom && String(boutiqueAuteur.vitrine_nom).trim()) ? String(boutiqueAuteur.vitrine_nom).trim() : "";
+    const titreEntete = (aff("nom_vitrine") && nomVitrine) ? nomVitrine : (aff("nom_auteur") ? nomAuteur : (nomVitrine || nomAuteur));
+    const logoEntete = (boutiqueAuteur && (boutiqueAuteur.vitrine_logo || boutiqueAuteur.photo_url)) || "";
+    const sousEntete = [];
+    if (aff("nom_vitrine") && nomVitrine && aff("nom_auteur")) sousEntete.push("par " + nomAuteur);
+    else sousEntete.push("Librairie officielle");
+    if (aff("pays") && boutiqueAuteur && boutiqueAuteur.pays) sousEntete.push(boutiqueAuteur.pays);
+    if (aff("abonnes") && boutiqueAbonnes > 0) sousEntete.push(boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : ""));
     const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
     const bqCats = Array.from(new Set(bqBooks.map(b => b.category || "Autres"))).sort();
     const bqQ = boutiqueSearch.trim().toLowerCase();
@@ -17785,15 +17834,17 @@ export default function App() {
         <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "2px solid " + AC, zIndex: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
             <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
-              {boutiqueAuteur && boutiqueAuteur.photo_url ? <img src={boutiqueAuteur.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : nomAuteur.charAt(0).toUpperCase()}
-            </div>
+            {aff("logo") ? (
+              <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
+                {logoEntete ? <img src={logoEntete} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titreEntete.charAt(0).toUpperCase()}
+              </div>
+            ) : null}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {boutiqueAuteur ? renderBadgeVerifie(boutiqueAuteur.verifie) : null}{nomAuteur}
+                {boutiqueAuteur ? renderBadgeVerifie(boutiqueAuteur.verifie) : null}{titreEntete}
               </div>
               <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                Librairie officielle{boutiqueAuteur && boutiqueAuteur.pays ? " · " + boutiqueAuteur.pays : ""}{boutiqueAbonnes > 0 ? " · " + boutiqueAbonnes + " abonné" + (boutiqueAbonnes > 1 ? "s" : "") : ""}
+                {sousEntete.join(" · ")}
               </div>
             </div>
             {boutiqueAuteur && boutiqueAuteur.id ? (
@@ -17808,7 +17859,7 @@ export default function App() {
               <div style={{ position: "relative", marginBottom: 8 }}>
                 <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
-                  placeholder={"Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "..."}
+                  placeholder={nomVitrine ? ("Rechercher dans " + nomVitrine + "…") : ("Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "…")}
                   style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
                 {boutiqueSearch ? (
                   <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
@@ -18961,8 +19012,37 @@ export default function App() {
                   {auteurProfil && auteurProfil.abonnement_actif ? <div style={{ fontSize: 12, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tes romans sont disponibles en abonnement.</div> : <div style={{ fontSize: 12, color: G.textDim, marginTop: 8 }}>Tes romans ne sont PAS en abonnement (les abonnés doivent les payer).</div>}
                 </div>
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
-                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🎨 Couleur de ma vitrine</div>
-                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Choisis la couleur de ta page auteur : elle habille ton en-tête, tes boutons et tes prix. Tes lecteurs la verront sur ton lien vitrine.</div>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🏪 Ma vitrine</div>
+                  <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Ta page auteur est ta boutique. Donne-lui un nom, un logo et une couleur, et choisis ce qui apparaît tout en haut.</div>
+
+                  <label style={labelSt}>Nom de ma vitrine</label>
+                  <input value={auteurVitrineNom} onChange={e => setAuteurVitrineNom(e.target.value)} placeholder="Ex : Les Éditions du Baobab" maxLength={40} style={champ} />
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 14 }}>Laisse vide pour garder ton nom d'auteur.</div>
+
+                  <label style={labelSt}>Logo de ma vitrine</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                      {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
+                    </div>
+                    <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
+                      {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
+                      <input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; e.target.value = ""; uploadVitrineLogo(f); }} style={{ display: "none" }} />
+                    </label>
+                    {auteurVitrineLogo ? <button type="button" onClick={() => setAuteurVitrineLogo("")} style={{ padding: "10px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Retirer le logo</button> : null}
+                  </div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>Image carrée, au moins 200 × 200 pixels. Sans logo, c'est ta photo de profil qui s'affiche.</div>
+
+                  <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
+                  <div style={{ marginBottom: 16 }}>
+                    {[["logo", "Le logo (ou ma photo)"], ["nom_vitrine", "Le nom de ma vitrine"], ["nom_auteur", "Mon nom d'auteur"], ["pays", "Mon pays"], ["abonnes", "Mon nombre d'abonnés"]].map(([cle, lab]) => (
+                      <label key={cle} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: G.text, padding: "7px 0" }}>
+                        <input type="checkbox" checked={enteteCoche(cle)} onChange={() => basculerEntete(cle)} style={{ width: 17, height: 17 }} />
+                        <span>{lab}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <label style={labelSt}>Couleur de ma vitrine</label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
                     {["#c9a84c", "#1e88e5", "#43a047", "#e53935", "#8e24aa", "#00897b", "#f4511e", "#3949ab", "#d81b60", "#1a1208"].map(c => (
                       <button key={c} type="button" onClick={() => setAuteurCouleur(c)}
@@ -18974,18 +19054,34 @@ export default function App() {
                     <input type="color" value={auteurCouleur || "#c9a84c"} onChange={e => setAuteurCouleur(e.target.value)} style={{ width: 52, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#fff", cursor: "pointer", padding: 2 }} />
                     <button type="button" onClick={() => setAuteurCouleur("")} style={{ padding: "8px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Couleur par défaut</button>
                   </div>
-                  <div style={{ border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.gold), borderRadius: 10, padding: 12, background: G.bg, marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Aperçu</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold" }}>{(auteurNom || "A").charAt(0).toUpperCase()}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{auteurNom || "Ton nom"}</div>
-                        <div style={{ fontSize: 10.5, color: G.textDim }}>Librairie officielle</div>
+                  {(() => {
+                    const nomV = auteurVitrineNom.trim();
+                    const nomA = auteurNom || "Ton nom";
+                    const titre = (enteteCoche("nom_vitrine") && nomV) ? nomV : (enteteCoche("nom_auteur") ? nomA : (nomV || nomA));
+                    const bouts = [];
+                    if (enteteCoche("nom_vitrine") && nomV && enteteCoche("nom_auteur")) bouts.push("par " + nomA);
+                    else bouts.push("Librairie officielle");
+                    if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
+                    if (enteteCoche("abonnes")) bouts.push("128 abonnés");
+                    return (
+                      <div style={{ border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.gold), borderRadius: 10, padding: 12, background: G.bg, marginBottom: 14 }}>
+                        <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Aperçu de l'en-tête</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          {enteteCoche("logo") ? (
+                            <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
+                              {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titre.charAt(0).toUpperCase()}
+                            </div>
+                          ) : null}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{titre}</div>
+                            <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bouts.join(" · ")}</div>
+                          </div>
+                          <div style={{ padding: "7px 13px", borderRadius: 20, background: auteurCouleur || G.gold, color: "#fff", fontSize: 12, fontWeight: "bold", flexShrink: 0 }}>+ Suivre</div>
+                        </div>
                       </div>
-                      <div style={{ padding: "7px 13px", borderRadius: 20, background: auteurCouleur || G.gold, color: "#fff", fontSize: 12, fontWeight: "bold" }}>+ Suivre</div>
-                    </div>
-                  </div>
-                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer ma couleur"}</button>
+                    );
+                  })()}
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer ma vitrine"}</button>
                   {auteurProfil && auteurProfil.code_source ? (
                     <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
                   ) : null}
