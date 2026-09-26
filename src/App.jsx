@@ -1709,6 +1709,11 @@ const buildPath = (page, book, categorie) => {
 
 // CATEGORIES_FALLBACK : valeurs par défaut si Supabase n'a pas encore répondu
 // Les vraies catégories sont chargées dynamiquement depuis Supabase (voir useEffect dans App)
+// Les categories proposees quand on publie une FORMATION. Les autres (Romans,
+// Biographies, Lyrics, Livre Audio, Livres Gratuits, Podcast) n'ont pas de sens ici.
+// Si aucune ne correspond a la liste du site, on les affiche toutes plutot que
+// de bloquer l'auteur avec un menu vide.
+const CATEGORIES_FORMATION = ["Formation", "Business", "Développement personnel", "Lifestyle", "Jeunesse"];
 const CATEGORIES_FALLBACK = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
   "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education", "Guide Pratique"],
@@ -19000,7 +19005,11 @@ export default function App() {
                   <label style={labelSt}>Catégorie *</label>
                   <select value={fmForm.category} onChange={e => setFmForm(f => ({ ...f, category: e.target.value, subcategory: "" }))} style={champ}>
                     <option value="">— Choisis une catégorie —</option>
-                    {Object.keys(CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                    {(() => {
+                      const dispo = Object.keys(CATEGORIES).filter(c => CATEGORIES_FORMATION.indexOf(c) !== -1);
+                      const liste = dispo.length > 0 ? dispo : Object.keys(CATEGORIES);
+                      return liste.map(c => <option key={c} value={c}>{c}</option>);
+                    })()}
                   </select>
                   <div style={{ height: 12 }} />
                   {fmForm.category && CATEGORIES[fmForm.category] && CATEGORIES[fmForm.category].length > 0 ? (
