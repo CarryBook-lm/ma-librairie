@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       // ⚠️ Pas de updated_at (colonne inexistante dans la table books)
       const { data: books, error } = await supabase
         .from("books")
-        .select("title, product_type, created_at")
+        .select("title, product_type, created_at, masque, exclusif_vitrine")
         .eq("status", "actif")
         .limit(5000);
 
@@ -58,6 +58,8 @@ export default async function handler(req, res) {
       } else {
         debugMsg = "OK_" + books.length + "_LIVRES_TROUVES";
         for (const b of books) {
+          // Pas dans Google : livres masques, et livres reserves a la vitrine de leur auteur.
+          if (b.masque || b.exclusif_vitrine) continue;
           const slug = slugify(b.title);
           if (!slug) continue;
           const urlPath = b.product_type === "article" ? "article" : "livre";

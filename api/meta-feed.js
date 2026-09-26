@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
     const { data: books, error } = await supabase
       .from("books")
-      .select("id, title, author, category, price, paper_price, cover, product_type, stock, status");
+      .select("id, title, author, category, price, paper_price, cover, product_type, stock, status, masque, exclusif_vitrine");
 
     if (error) {
       res.status(500).send("Erreur Supabase : " + error.message);
@@ -94,6 +94,9 @@ export default async function handler(req, res) {
     if (type !== "carrycare") {
       for (const b of books || []) {
         if (b.status === "inactif") continue;
+        // Jamais dans les catalogues publicitaires : livres masques, et livres
+        // reserves a la vitrine de leur auteur (CarryBooks ne touche que 15 % dessus).
+        if (b.masque || b.exclusif_vitrine) continue;
 
         const pt = String(b.product_type || "").toLowerCase();
         const isPapier = (pt === "papier");

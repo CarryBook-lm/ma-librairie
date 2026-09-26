@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
     const { data: livres } = await supa
       .from("books")
-      .select("id, title, summary, price, cover, author, category, status, exclu_catalogue")
+      .select("id, title, summary, price, cover, author, category, status, exclu_catalogue, masque, exclusif_vitrine")
       .eq("status", "actif")
       .neq("exclu_catalogue", true)
       .order("id", { ascending: false });
@@ -42,6 +42,9 @@ export default async function handler(req, res) {
 
     (livres || []).forEach((b) => {
       if (!b.title || !b.cover) return; // il faut au moins un titre et une image
+      // Jamais dans les pubs CarryBooks : livres masques, et livres reserves
+      // a la vitrine de leur auteur (CarryBooks ne touche que 15 % dessus).
+      if (b.masque || b.exclusif_vitrine) return;
       const desc = (b.summary && b.summary.trim()) ? b.summary : b.title;
       const img = String(b.cover).startsWith("http") ? b.cover : (base + "/" + String(b.cover).replace(/^\//, ""));
       const lien = base + "/livre/" + slugify(b.title);
