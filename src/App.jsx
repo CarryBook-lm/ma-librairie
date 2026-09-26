@@ -2904,7 +2904,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 }
 
 // ─── LIBRARY PAGE COMPONENT ───
-function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, lecteur, onRecoverLecteur, onPurchasesRecovered, onDownload }) {
+function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, lecteur, onRecoverLecteur, onPurchasesRecovered, onDownload, retour }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
   const myBooks = books.filter(b => purchasedBooks.includes(b.id));
 
@@ -3002,7 +3002,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
       {/* Header */}
       <div style={{ padding: "12px 16px 0", background: G.surface, borderBottom: "1px solid " + G.border }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-          <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 14, padding: 0, marginRight: 12 }}>← Retour</button>
+          <button onClick={() => { if (retour) retour(); else setPage("home"); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 14, padding: 0, marginRight: 12 }}>← Retour</button>
           <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase" }}>Ma bibliothèque</div>
         </div>
         {/* Tabs */}
@@ -13556,6 +13556,20 @@ export default function App() {
     // Par défaut : accueil
     return urlPage || "home";
   });
+
+  // 🔒 MODE VITRINE : quand quelqu'un arrive PAR le lien /auteur/CODE, il reste
+  // dans la boutique de cet auteur et ne retombe jamais sur CarryBooks. Le verrou est
+  // pose a l'ouverture de l'onglet seulement, jamais quand on clique un auteur depuis
+  // le site. sessionStorage = par onglet : un nouvel onglet sur carrybooks.com est libre.
+  const [vitrineCode] = useState(() => {
+    try {
+      const stocke = sessionStorage.getItem("carrybooks_vitrine_verrou");
+      if (stocke) return stocke;
+      const m = String(window.location.pathname || "").match(/^\/auteur\/([^/?#]+)/);
+      if (m && m[1]) { const c = decodeURIComponent(m[1]); sessionStorage.setItem("carrybooks_vitrine_verrou", c); return c; }
+    } catch (e) {}
+    return "";
+  });
   // 🔙 M�morise l'univers d'origine pour le bouton retour intelligent
   const [previousPage, setPreviousPage] = useState("home");
   const [books, setBooks] = useState(() => {
@@ -16226,7 +16240,9 @@ export default function App() {
 
   function openBook(book) {
     // 🔙 M�moriser l'univers d'origine pour le bouton retour intelligent
-    if (page === "carrycolor") {
+    if (page === "auteur_boutique") {
+      setPreviousPage("auteur_boutique");
+    } else if (page === "carrycolor") {
       setPreviousPage(page);
     } else {
       setPreviousPage("home");
@@ -17849,6 +17865,18 @@ export default function App() {
     return () => { cancel = true; };
   }, [page, boutiqueAuteur, lecteur]);
 
+  // 🔒 Garde-fou du mode vitrine : si le visiteur est arrive par le lien d'un
+  // auteur, il ne doit jamais se retrouver sur l'accueil, le catalogue ou la liste
+  // des auteurs. NB : page et vitrineCode sont declares tout en haut du composant.
+  useEffect(() => {
+    if (!vitrineCode) return;
+    if (page !== "home" && page !== "catalog" && page !== "auteurs") return;
+    setBoutiqueNom(null);
+    setBoutiqueCode(vitrineCode);
+    setPage("auteur_boutique");
+    try { window.history.replaceState({}, "", "/auteur/" + encodeURIComponent(vitrineCode)); window.scrollTo(0, 0); } catch (e) {}
+  }, [page, vitrineCode]);
+
   const basculerSuivreBoutique = async () => {
     const aid = boutiqueAuteur && boutiqueAuteur.id;
     if (!aid) return;
@@ -18028,7 +18056,9 @@ export default function App() {
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
         <div style={{ position: "sticky", top: 0, background: cEnt, borderBottom: "2px solid " + AC, zIndex: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px" }}>
-            <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: cEntTxt, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+            {vitrineCode ? null : (
+              <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: cEntTxt, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+            )}
             {aff("logo") ? (
               <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
                 {logoEntete ? <img src={logoEntete} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : titreEntete.charAt(0).toUpperCase()}
@@ -18238,10 +18268,7 @@ export default function App() {
 
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                   <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé</div>
-                  <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); window.scrollTo(0, 0); } catch (e) {} }}
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11.5, color: cEntTxt, opacity: 0.8, fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
-                    Propulsé par <b>CarryBooks</b>
-                  </button>
+                  <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>CarryBooks</b></div>
                 </div>
 
               </div>
@@ -20562,8 +20589,8 @@ export default function App() {
           </div>
         )}
         <div style={{ background: G.surface, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #262626", position: "sticky", top: 0, zIndex: 10 }}>
-          <button onClick={() => setPage(previousPage || "home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>
-            ← Retour {previousPage === "carrycolor" ? "à CarryColor" : ""}
+          <button onClick={() => { const pv = previousPage || "home"; setPage(pv); if (pv === "auteur_boutique") { try { window.history.pushState({}, "", "/auteur/" + encodeURIComponent(boutiqueCode || vitrineCode)); window.scrollTo(0, 0); } catch (e) {} } }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13 }}>
+            ← Retour {previousPage === "carrycolor" ? "à CarryColor" : (previousPage === "auteur_boutique" ? "à la boutique" : "")}
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {!user && !lecteur && (
@@ -23093,6 +23120,7 @@ export default function App() {
             purchaseHistory={purchaseHistory} 
             startReading={startReading} 
             setPage={setPage} 
+            retour={vitrineCode ? () => { setBoutiqueNom(null); setBoutiqueCode(vitrineCode); setPage("auteur_boutique"); try { window.history.pushState({}, "", "/auteur/" + encodeURIComponent(vitrineCode)); window.scrollTo(0, 0); } catch (e) {} } : null}
             G={G} 
             recoveredPurchases={recoveredPurchases} 
             onDismissRecovered={() => setRecoveredPurchases([])} 
