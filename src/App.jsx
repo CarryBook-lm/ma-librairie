@@ -13979,6 +13979,7 @@ export default function App() {
   const [auteurCouleur, setAuteurCouleur] = useState("");
   const [auteurVitrineNom, setAuteurVitrineNom] = useState("");
   const [auteurVitrineLogo, setAuteurVitrineLogo] = useState("");
+  const [auteurVitrineLogo192, setAuteurVitrineLogo192] = useState("");
   const [auteurVitrineEntete, setAuteurVitrineEntete] = useState("");
   const [auteurLogoUploading, setAuteurLogoUploading] = useState(false);
   const [auteurBio, setAuteurBio] = useState("");
@@ -14552,6 +14553,7 @@ export default function App() {
     setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
     setAuteurCouleur(prof.couleur || "");
     setAuteurVitrineNom(prof.vitrine_nom || ""); setAuteurVitrineLogo(prof.vitrine_logo || "");
+    setAuteurVitrineLogo192(prof.vitrine_logo_192 || "");
     setAuteurVitrineEntete(prof.vitrine_entete == null ? "logo,nom_auteur,pays,abonnes" : prof.vitrine_entete);
     setAuteurFb(prof.facebook || ""); setAuteurIg(prof.instagram || ""); setAuteurTk(prof.tiktok || ""); setAuteurLi(prof.linkedin || ""); setAuteurYt(prof.youtube || "");
   };
@@ -17130,16 +17132,53 @@ export default function App() {
   ];
 
   // ── ESPACE AUTEUR (Publie ton livre) ──
+  // Le manifeste PWA exige des icones EXACTEMENT 512x512 et 192x192 : Chrome refuse
+  // d'installer si la taille annoncee ne correspond pas a l'image. On recadre donc le
+  // logo dans le navigateur, sur un fond a la couleur de la vitrine, avant de l'envoyer.
+  const fabriquerIcone = (file, taille, couleur) => new Promise((resolve) => {
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          c.width = taille; c.height = taille;
+          const x = c.getContext("2d");
+          x.fillStyle = couleur || "#c9a84c";
+          x.fillRect(0, 0, taille, taille);
+          // 78 % : laisse la marge de securite qu'Android rogne sur les icones rondes.
+          const m = Math.round(taille * 0.78);
+          const r = Math.min(m / img.width, m / img.height);
+          const w = Math.max(1, Math.round(img.width * r));
+          const h = Math.max(1, Math.round(img.height * r));
+          x.drawImage(img, Math.round((taille - w) / 2), Math.round((taille - h) / 2), w, h);
+          URL.revokeObjectURL(url);
+          c.toBlob((b) => resolve(b), "image/png");
+        } catch (e) { resolve(null); }
+      };
+      img.onerror = () => { try { URL.revokeObjectURL(url); } catch (e2) {} resolve(null); };
+      img.src = url;
+    } catch (e) { resolve(null); }
+  });
+  const envoyerImgbb = async (blob, nom) => {
+    const fd = new FormData(); fd.append("image", blob, nom);
+    const key = import.meta.env.VITE_IMGBB_KEY;
+    const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+    const data = await res.json().catch(() => ({}));
+    return (data && data.success && data.data && data.data.url) ? data.data.url : null;
+  };
   const uploadVitrineLogo = async (file) => {
     if (!file) return;
     setAuteurLogoUploading(true); setAuteurMsg("");
     try {
-      const fd = new FormData(); fd.append("image", file);
-      const key = import.meta.env.VITE_IMGBB_KEY;
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
-      const data = await res.json().catch(() => ({}));
-      if (data && data.success && data.data && data.data.url) {
-        setAuteurVitrineLogo(data.data.url);
+      const couleur = auteurCouleur || "#c9a84c";
+      const b512 = await fabriquerIcone(file, 512, couleur);
+      const b192 = await fabriquerIcone(file, 192, couleur);
+      if (!b512 || !b192) { setAuteurMsg("Cette image n'a pas pu etre lue. Essaie une autre photo."); setAuteurLogoUploading(false); return; }
+      const u512 = await envoyerImgbb(b512, "logo-512.png");
+      const u192 = await envoyerImgbb(b192, "logo-192.png");
+      if (u512 && u192) {
+        setAuteurVitrineLogo(u512); setAuteurVitrineLogo192(u192);
         setAuteurMsg("✅ Logo ajouté. Clique sur Enregistrer pour le sauvegarder.");
       } else {
         setAuteurMsg("Erreur lors de l'envoi du logo. Réessaie.");
@@ -17206,6 +17245,7 @@ export default function App() {
         couleur: auteurCouleur || null,
         vitrine_nom: auteurVitrineNom.trim() || null,
         vitrine_logo: auteurVitrineLogo || null,
+        vitrine_logo_192: auteurVitrineLogo192 || null,
         vitrine_entete: auteurVitrineEntete || null,
       }) });
       const data = await res.json().catch(() => ({}));
@@ -17636,6 +17676,15 @@ export default function App() {
         const a = aut && aut[0] ? aut[0] : null;
         if (cancel) return;
         setBoutiqueAuteur(a);
+        // Le manifeste est deja injecte par api/vitrine.js quand on arrive
+        // directement sur le lien. Ici on couvre le cas ou on arrive depuis
+        // une autre page du site, sans rechargement.
+        try {
+          const lm = document.querySelector('link[rel="manifest"]');
+          if (lm) lm.setAttribute("href", "/api/manifest-auteur?code=" + encodeURIComponent(boutiqueCode));
+          const tc = document.querySelector('meta[name="theme-color"]');
+          if (tc && a && a.couleur) tc.setAttribute("content", a.couleur);
+        } catch (e2) {}
         if (a) {
           const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").order("id", { ascending: false });
           if (!cancel) setBoutiqueBooks(livres || []);
@@ -17917,6 +17966,18 @@ export default function App() {
             )}
 
             <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px" }}>
+              {/* ===== INSTALLER CETTE BOUTIQUE ===== */}
+              {(() => {
+                let deja = false;
+                try { deja = window.matchMedia("(display-mode: standalone)").matches; } catch (e) {}
+                if (deja) return null;
+                return (
+                  <button onClick={triggerInstall}
+                    style={{ width: "100%", marginTop: 14, padding: "13px 14px", borderRadius: 12, border: "none", background: AC, color: "#fff", fontSize: 14, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>
+                    📲 Installer {titreEntete} sur mon téléphone
+                  </button>
+                );
+              })()}
               {/* ===== RESULTATS DE RECHERCHE / FILTRE ===== */}
               {bqRecherche ? (
                 <div style={{ paddingTop: 16 }}>
@@ -19031,9 +19092,9 @@ export default function App() {
                       {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
                       <input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; e.target.value = ""; uploadVitrineLogo(f); }} style={{ display: "none" }} />
                     </label>
-                    {auteurVitrineLogo ? <button type="button" onClick={() => setAuteurVitrineLogo("")} style={{ padding: "10px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Retirer le logo</button> : null}
+                    {auteurVitrineLogo ? <button type="button" onClick={() => { setAuteurVitrineLogo(""); setAuteurVitrineLogo192(""); }} style={{ padding: "10px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Retirer le logo</button> : null}
                   </div>
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>Image carrée, au moins 200 × 200 pixels. Sans logo, c'est ta photo de profil qui s'affiche.</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>Image carrée, au moins 200 × 200 pixels. Sans logo, c'est ta photo de profil qui s'affiche sur ta vitrine, et l'icône CarryBooks qui sert d'icône à ton application.</div>
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
