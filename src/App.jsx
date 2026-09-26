@@ -13653,6 +13653,12 @@ export default function App() {
   const [boutiqueEstAbonne, setBoutiqueEstAbonne] = useState(false);
   const [boutiqueSuivreBusy, setBoutiqueSuivreBusy] = useState(false);
   const [bqMenuCats, setBqMenuCats] = useState(false);
+  // ===== PAGE D'UNE FORMATION =====
+  const [fvBook, setFvBook] = useState(null);
+  const [fvContenu, setFvContenu] = useState("");
+  const [fvLiens, setFvLiens] = useState([]);
+  const [fvPaye, setFvPaye] = useState(false);
+  const [fvLoading, setFvLoading] = useState(false);
   const [auteursAll, setAuteursAll] = useState([]); // pour la recherche par nom
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [reading, setReading] = useState(null);
@@ -16275,7 +16281,65 @@ export default function App() {
     }
   }
 
+  // ===== FORMATION : ouverture et rendu =====
+  const ouvrirFormation = (book) => {
+    if (!book) return;
+    setFvBook(book); setFvContenu(""); setFvLiens([]); setFvPaye(false);
+    setPreviousPage(page === "auteur_boutique" ? "auteur_boutique" : "home");
+    setShowMenu(false);
+    setPage("formation");
+    try { window.scrollTo(0, 0); } catch (e) {}
+  };
+  const acheterFormation = (book) => {
+    if (!book) return;
+    if (!lecteur) { setPendingBuyBook(book); setShowLecteurModal(true); return; }
+    setPaymentBook(book);
+    setShowPayment(true);
+    setPaymentStep(1);
+    setPaymentMethod(null);
+    setPhoneNumber("");
+    try { trackPixelEvent("AddToCart", { content_ids: [String(book.id)], content_name: book.title || "", value: Number(book.price) || 0, currency: "XAF" }); } catch (e) {}
+  };
+  // La presentation est un texte ou l'auteur a insere des reperes :
+  //   [IMG916:url]  [IMG169:url]  [LIEN:Titre|url]
+  // On les transforme en images et en liens, le reste reste du texte.
+  const rendreFormation = (txt, couleur) => {
+    const source = String(txt || "");
+    const morceaux = [];
+    const re = /\[(IMG916|IMG169):([^\]]+)\]|\[LIEN:([^|\]]*)\|([^\]]+)\]/g;
+    let dernier = 0, m, k = 0;
+    while ((m = re.exec(source)) !== null) {
+      if (m.index > dernier) morceaux.push({ t: "txt", v: source.slice(dernier, m.index) });
+      if (m[1]) morceaux.push({ t: "img", ratio: m[1] === "IMG916" ? "9 / 16" : "16 / 9", v: m[2] });
+      else morceaux.push({ t: "lien", titre: (m[3] || "Ouvrir le lien").trim(), v: m[4] });
+      dernier = m.index + m[0].length;
+      k++;
+      if (k > 400) break;
+    }
+    if (dernier < source.length) morceaux.push({ t: "txt", v: source.slice(dernier) });
+    return morceaux.map((p, i) => {
+      if (p.t === "img") {
+        return (
+          <div key={i} style={{ margin: "14px 0" }}>
+            <img src={p.v} alt="" loading="lazy" style={{ width: "100%", maxWidth: p.ratio === "9 / 16" ? 300 : "100%", aspectRatio: p.ratio, objectFit: "cover", borderRadius: 10, display: "block", margin: p.ratio === "9 / 16" ? "0 auto" : 0 }} />
+          </div>
+        );
+      }
+      if (p.t === "lien") {
+        return (
+          <div key={i} style={{ margin: "12px 0" }}>
+            <a href={p.v} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "10px 16px", borderRadius: 8, border: "1.5px solid " + couleur, color: couleur, fontSize: 13.5, fontWeight: "bold", textDecoration: "none" }}>🔗 {p.titre}</a>
+          </div>
+        );
+      }
+      const txtNet = p.v.replace(/^\n+|\n+$/g, "");
+      if (!txtNet.trim()) return null;
+      return <div key={i} style={{ whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15, color: "#1a1208" }}>{txtNet}</div>;
+    });
+  };
   function openBook(book) {
+    // Une formation a sa propre page de vente (couverture A4 paysage, presentation, achat).
+    if (book && book.product_type === "formation") { ouvrirFormation(book); return; }
     // 🔙 M�moriser l'univers d'origine pour le bouton retour intelligent
     if (page === "auteur_boutique") {
       setPreviousPage("auteur_boutique");
@@ -18018,6 +18082,30 @@ export default function App() {
     return () => { cancel = true; };
   }, [page, boutiqueAuteur, lecteur]);
 
+  // Charger la presentation d'une formation, et ses liens d'acces si elle est payee.
+  // NB : page, fvBook, lecteur, user et purchasedBooks sont declares plus haut.
+  useEffect(() => {
+    if (page !== "formation" || !fvBook || !fvBook.id) return;
+    let cancel = false;
+    (async () => {
+      setFvLoading(true);
+      try {
+        const { data } = await supabase.from("books").select("formation_contenu").eq("id", fvBook.id).maybeSingle();
+        if (!cancel) setFvContenu((data && data.formation_contenu) || "");
+      } catch (e) {}
+      try {
+        const r = await fetch("/api/formation-acces", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "lire", book_id: fvBook.id, phone: lecteur ? lecteur.telephone : "", user_id: user ? user.id : "" }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!cancel) { setFvPaye(!!j.paye); setFvLiens(Array.isArray(j.liens) ? j.liens : []); }
+      } catch (e) {}
+      if (!cancel) setFvLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [page, fvBook, lecteur, user, purchasedBooks]);
+
   // 🔒 Garde-fou du mode vitrine : si le visiteur est arrive par le lien d'un
   // auteur, il ne doit jamais se retrouver sur l'accueil, le catalogue ou la liste
   // des auteurs. NB : page et vitrineCode sont declares tout en haut du composant.
@@ -18161,6 +18249,75 @@ export default function App() {
   }
 
   // ================= BOUTIQUE D'UN AUTEUR =================
+  // ================= PAGE D'UNE FORMATION =================
+  if (page === "formation") {
+    const b = fvBook || {};
+    const aut = boutiqueAuteur && String(boutiqueAuteur.id) === String(b.auteur_id) ? boutiqueAuteur : null;
+    const FC = normaliserCoul(aut && aut.couleur, G.gold);
+    const fond = normaliserCoul(aut && aut.coul_fond, G.bg);
+    const retourVitrine = previousPage === "auteur_boutique";
+    return (
+      <div style={{ minHeight: "100vh", background: fond, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+        {bandeauInstallNode}
+        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, zIndex: 10 }}>
+          <button onClick={() => {
+            if (retourVitrine) { setPage("auteur_boutique"); try { window.scrollTo(0, 0); } catch (e) {} }
+            else { setPage("home"); try { window.scrollTo(0, 0); } catch (e) {} }
+          }} style={{ background: "none", border: "none", color: G.text, fontSize: 20, cursor: "pointer", padding: 0 }}>←</button>
+          <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🎓 {b.title || "Formation"}</div>
+        </div>
+
+        <div style={{ maxWidth: 780, margin: "0 auto", padding: "16px 16px 40px" }}>
+          {b.cover ? (
+            <img src={b.cover} alt={b.title} style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 12, display: "block", marginBottom: 16 }} />
+          ) : null}
+
+          <div style={{ fontSize: 21, fontWeight: "bold", color: "#1a1208", lineHeight: 1.3, marginBottom: 4 }}>{b.title}</div>
+          <div style={{ fontSize: 13, color: G.textDim, marginBottom: 2 }}>{b.author}</div>
+          {b.category ? <div style={{ fontSize: 11.5, color: "#000", marginBottom: 10 }}>{b.category}{b.subcategory ? " · " + b.subcategory : ""}</div> : null}
+
+          {/* ===== ACCES : uniquement apres paiement ===== */}
+          {fvPaye ? (
+            <div style={{ background: "#fff", border: "2px solid " + G.green, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: G.green, marginBottom: 4 }}>✅ Tu as accès à cette formation</div>
+              <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Retrouve ces liens à tout moment dans <b>Ma bibliothèque</b>.</div>
+              {fvLiens.length === 0 ? (
+                <div style={{ fontSize: 13, color: G.textDim, lineHeight: 1.6 }}>Le formateur n'a pas encore déposé ses liens d'accès. Écris-lui, ou reviens dans quelques heures.</div>
+              ) : fvLiens.map((l, i) => (
+                <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "block", padding: "13px 14px", marginBottom: 8, borderRadius: 10, background: G.green, color: "#fff", fontSize: 14, fontWeight: "bold", textDecoration: "none" }}>
+                  🔗 {l.titre}
+                </a>
+              ))}
+            </div>
+          ) : null}
+
+          {/* ===== PRESENTATION ===== */}
+          {fvLoading && !fvContenu ? (
+            <div style={{ padding: 24, textAlign: "center", color: G.textDim }}>Chargement…</div>
+          ) : (
+            <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+              {rendreFormation(fvContenu, FC)}
+            </div>
+          )}
+
+          {/* ===== ACHETER ===== */}
+          {!fvPaye ? (
+            <div style={{ background: "#fff", border: "2px solid " + FC, borderRadius: 12, padding: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: G.textDim, marginBottom: 4 }}>Accès complet à la formation</div>
+              <div style={{ fontSize: 26, fontWeight: "bold", color: FC, marginBottom: 12 }}>{b.price ? Number(b.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
+              <button onClick={() => acheterFormation(b)}
+                style={{ width: "100%", padding: 15, background: FC, color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                🛒 Acheter cette formation
+              </button>
+              <div style={{ fontSize: 11, color: G.textDim, marginTop: 10, lineHeight: 1.5 }}>Paiement Mobile Money. Tes liens d'accès s'affichent dès que le paiement est confirmé.</div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   if (page === "auteur_boutique") {
     const teinte = (c, a) => {
       try {
@@ -18209,17 +18366,23 @@ export default function App() {
     const bqRecherche = !!bqQ || boutiqueCat !== "Tous";
     const carteCouverture = (book) => (
       <div key={book.id} onClick={() => openBook(book)} title={book.title}
-        style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer" }}>
-        <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 8, overflow: "hidden" }}>
+        style={{ flexShrink: 0, width: book.product_type === "formation" ? "82vw" : "40vw", maxWidth: book.product_type === "formation" ? 340 : 175, cursor: "pointer" }}>
+        <div style={{ width: "100%", aspectRatio: book.product_type === "formation" ? "297 / 210" : "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 8, overflow: "hidden" }}>
           {book.cover
             ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
       </div>
     );
-    const carteLivre = (book, largeur) => (
-      <div key={book.id} onClick={() => openBook(book)} style={largeur ? { flexShrink: 0, width: largeur, maxWidth: 175, cursor: "pointer" } : { cursor: "pointer" }}>
-        <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 6, overflow: "hidden", marginBottom: 6 }}>
+    const carteLivre = (book, largeur) => {
+      // Une formation se presente en A4 paysage et occupe deux colonnes de la grille.
+      const estFormation = book.product_type === "formation";
+      const base = largeur ? { flexShrink: 0, width: estFormation ? "82vw" : largeur, maxWidth: estFormation ? 340 : 175, cursor: "pointer" } : { cursor: "pointer" };
+      if (estFormation && !largeur) base.gridColumn = "span 2";
+      return (
+      <div key={book.id} onClick={() => openBook(book)} style={base}>
+        {estFormation ? <div style={{ fontSize: 10, fontWeight: "bold", color: "#fff", background: "#7b3fa0", display: "inline-block", padding: "2px 8px", borderRadius: 10, marginBottom: 5 }}>🎓 FORMATION</div> : null}
+        <div style={{ width: "100%", aspectRatio: estFormation ? "297 / 210" : "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: estFormation ? 10 : 6, overflow: "hidden", marginBottom: 6 }}>
           {book.cover
             ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
@@ -18229,7 +18392,8 @@ export default function App() {
         {book.category ? <div style={{ fontSize: 9.5, color: "#000", marginBottom: 3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.category}</div> : null}
         <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
       </div>
-    );
+      );
+    };
     return (
       <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
         {bandeauInstallNode}
