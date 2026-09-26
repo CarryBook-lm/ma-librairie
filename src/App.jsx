@@ -18039,8 +18039,8 @@ export default function App() {
     const tailleTitre = titreEntete.length > 34 ? 11.5 : titreEntete.length > 28 ? 12.5 : titreEntete.length > 22 ? 13.5 : 15;
     const logoEntete = (boutiqueAuteur && (boutiqueAuteur.vitrine_logo || boutiqueAuteur.photo_url)) || "";
     const sousEntete = [];
-    if (nomVitrine && aff("nom_auteur")) sousEntete.push("par " + nomAuteur);
-    else sousEntete.push("Librairie officielle");
+    // Le nom de l'auteur ne figure plus dans l'en-tete : il est en pied de page.
+    sousEntete.push("Librairie officielle");
     if (aff("pays") && boutiqueAuteur && boutiqueAuteur.pays) sousEntete.push(boutiqueAuteur.pays);
     if (aff("abonnes") && boutiqueAbonnes > 0) sousEntete.push("Followers " + boutiqueAbonnes);
     const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
@@ -18086,8 +18086,8 @@ export default function App() {
               <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: cEntTxt, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
             )}
             {aff("logo") ? (
-              <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
-                {logoEntete ? <img src={logoEntete} alt="" style={{ width: "72%", height: "72%", objectFit: "contain", margin: "auto" }} /> : titreEntete.charAt(0).toUpperCase()}
+              <div style={{ width: 40, height: 40, borderRadius: 9, overflow: "hidden", flexShrink: 0, background: AC, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: "bold" }}>
+                {logoEntete ? <img src={logoEntete} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : titreEntete.charAt(0).toUpperCase()}
               </div>
             ) : null}
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -18209,7 +18209,11 @@ export default function App() {
             <div style={{ background: cEnt, color: cEntTxt, borderTop: "2px solid " + AC, marginTop: 24, padding: "22px 16px 18px" }}>
               <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
-                <div style={{ fontSize: 17, fontWeight: "bold", color: cEntTxt, textAlign: "center", marginBottom: 12, lineHeight: 1.3 }}>{titreEntete}</div>
+                {aff("nom_auteur") ? (
+                  <div style={{ fontSize: 17, fontWeight: "bold", color: cEntTxt, textAlign: "center", marginBottom: 12, lineHeight: 1.3 }}>
+                    {renderBadgeVerifie(boutiqueAuteur.verifie)}{nomAuteur}
+                  </div>
+                ) : null}
 
                 {(() => {
                   const reseaux = [
@@ -19268,8 +19272,8 @@ export default function App() {
 
                   <label style={labelSt}>Logo de ma vitrine</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                      {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "72%", height: "72%", objectFit: "contain", margin: "auto" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
+                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                      {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
                     </div>
                     <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
                       {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
@@ -19281,7 +19285,7 @@ export default function App() {
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
-                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur"], ["pays", "Mon pays"], ["abonnes", "Mes followers (le nombre)"]].map(([cle, lab]) => (
+                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur (en pied de page)"], ["pays", "Mon pays"], ["abonnes", "Mes followers (le nombre)"]].map(([cle, lab]) => (
                       <label key={cle} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: G.text, padding: "7px 0" }}>
                         <input type="checkbox" checked={enteteCoche(cle)} onChange={() => basculerEntete(cle)} style={{ width: 17, height: 17 }} />
                         <span>{lab}</span>
@@ -19330,8 +19334,7 @@ export default function App() {
                     const cBtn = normaliserCoul(auteurCoulBouton, cAcc);
                     const cBtnTxt = normaliserCoul(auteurCoulBoutonTexte, "#ffffff");
                     const bouts = [];
-                    if (nomV && enteteCoche("nom_auteur")) bouts.push("par " + nomA);
-                    else bouts.push("Librairie officielle");
+                    bouts.push("Librairie officielle");
                     if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
                     if (enteteCoche("abonnes")) bouts.push("Followers 128");
                     return (
@@ -19339,8 +19342,8 @@ export default function App() {
                         <div style={{ fontSize: 11, color: G.textDim, padding: "8px 10px", background: G.bg }}>Aperçu de ta vitrine</div>
                         <div style={{ background: cEnt, borderBottom: "2px solid " + cAcc, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           {enteteCoche("logo") ? (
-                            <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
-                              {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "72%", height: "72%", objectFit: "contain", margin: "auto" }} /> : titre.charAt(0).toUpperCase()}
+                            <div style={{ width: 36, height: 36, borderRadius: 8, overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
+                              {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : titre.charAt(0).toUpperCase()}
                             </div>
                           ) : null}
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -19358,7 +19361,7 @@ export default function App() {
                           <div style={{ padding: "8px 16px", borderRadius: 8, background: cBtn, color: cBtnTxt, fontSize: 12.5, fontWeight: "bold", flexShrink: 0 }}>Lire</div>
                         </div>
                         <div style={{ background: cEnt, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ fontSize: 11, fontWeight: "bold", color: cEntTxt }}>Qui suis-je ?</div>
+                          <div style={{ fontSize: 11, fontWeight: "bold", color: cEntTxt }}>{enteteCoche("nom_auteur") ? nomA : "Qui suis-je ?"}</div>
                           <div style={{ fontSize: 9.5, color: cEntTxt, opacity: 0.7 }}>Propulsé par CarryBooks</div>
                         </div>
                       </div>
