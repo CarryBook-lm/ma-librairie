@@ -18070,7 +18070,7 @@ export default function App() {
         </div>
         <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
         {book.author ? <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div> : null}
-        {book.category ? <div style={{ fontSize: 9.5, color: AC, marginBottom: 3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.category}</div> : null}
+        {book.category ? <div style={{ fontSize: 9.5, color: "#000", marginBottom: 3, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.category}</div> : null}
         <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>{book.price ? Number(book.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
       </div>
     );
@@ -18079,7 +18079,7 @@ export default function App() {
         {bandeauInstallNode}
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
         <div style={{ position: "sticky", top: 0, background: cFond, zIndex: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: cEnt, borderBottom: "2px solid " + AC }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: cEnt, borderBottom: "2px solid " + AC }}>
             {vitrineCode ? null : (
               <button onClick={() => { setPage("auteurs"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: cEntTxt, fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
             )}
@@ -18102,24 +18102,25 @@ export default function App() {
                 ☰
               </button>
             ) : null}
+            {/* Le menu tombe sous le hamburger, sur la moitie de l'ecran seulement. */}
+            {bqMenuCats && bqCats.length > 0 ? (
+              <div style={{ position: "absolute", top: "100%", right: 10, marginTop: 6, width: "50%", minWidth: 190, maxWidth: 300, background: "#fff", border: "1px solid #ccc", borderRadius: 10, boxShadow: "0 8px 22px rgba(0,0,0,0.22)", overflow: "hidden", zIndex: 30, maxHeight: "60vh", overflowY: "auto" }}>
+                {["Tous"].concat(bqCats).map((c, idx) => (
+                  <button key={c} onClick={() => { setBoutiqueCat(c); setBqMenuCats(false); try { window.scrollTo(0, 0); } catch (e) {} }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 12px", background: boutiqueCat === c ? "#f0f0f0" : "#fff", border: "none", borderTop: idx === 0 ? "none" : "1px solid #eee", color: "#000", fontSize: 13.5, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
-          {bqMenuCats && bqCats.length > 0 ? (
-            <div style={{ background: cEnt, borderBottom: "2px solid " + AC, padding: "6px 12px 12px" }}>
-              {["Tous"].concat(bqCats).map(c => (
-                <button key={c} onClick={() => { setBoutiqueCat(c); setBqMenuCats(false); try { window.scrollTo(0, 0); } catch (e) {} }}
-                  style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 10px", background: boutiqueCat === c ? ACdim : "transparent", border: "none", borderBottom: "1px solid " + ACclair, color: boutiqueCat === c ? AC : cEntTxt, fontSize: 13.5, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                  {c}
-                </button>
-              ))}
-            </div>
-          ) : null}
           {bqBooks.length > 0 && (
             <div style={{ padding: "10px 12px 9px", background: cFond }}>
               <div style={{ position: "relative", marginBottom: 8 }}>
                 <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
                   placeholder={nomVitrine ? ("Rechercher dans " + nomVitrine + "…") : ("Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "…")}
-                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1.5px solid " + ACclair, borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1.5px solid #bdbdbd", borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
                 {boutiqueSearch ? (
                   <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
                 ) : null}
@@ -18127,12 +18128,12 @@ export default function App() {
               {/* ===== DEUX BOUTONS SOUS LA RECHERCHE ===== */}
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <button type="button" onClick={() => { setPage("library"); try { window.scrollTo(0, 0); } catch (e) {} }}
-                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + ACclair, background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
+                  style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #bdbdbd", background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
                   📚 Ma bibliothèque
                 </button>
                 {lienFormations ? (
                   <a href={lienFormations.startsWith("http") ? lienFormations : "https://" + lienFormations} target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid " + ACclair, background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
+                    style={{ flex: 1, padding: "9px 6px", borderRadius: 8, border: "1.5px solid #bdbdbd", background: "transparent", color: G.text, fontSize: 12.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap", textAlign: "center", textDecoration: "none" }}>
                     🎬 Formations vidéo
                   </a>
                 ) : null}
