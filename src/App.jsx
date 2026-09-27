@@ -20002,6 +20002,29 @@ export default function App() {
                   <p>Sont refusés : le contenu volé ou piraté (dont tu n'es pas l'auteur), le contenu illégal, haineux ou pornographique. Publie uniquement tes propres œuvres.</p>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>10. Publier une annonce (pub)</div>
                   <p>Dans <b>Publier</b>, choisis <b>« 📢 Publier une annonce »</b> pour mettre un livre en avant. Prépare une <b>bannière au format A4 paysage</b> (large), puis colle le <b>lien de ton livre</b> (tu le copies depuis <b>Mes livres</b> en ouvrant le livre concerné). Après validation, ton annonce apparaît sur l'accueil, entre les Best-sellers et les Nouveautés, avec un bouton « Découvrir ».</p>
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 14 }}>11. Ta vitrine : ta boutique à toi</div>
+                  <p>Tu as une <b>vitrine personnelle</b> à l'adresse <b>carrybooks.com/auteur/TON-CODE</b>. C'est une page qui n'affiche <b>que tes livres</b>, à ton nom, à tes couleurs. Retrouve le lien dans <b>☰ → 🏪 Ma vitrine</b>, avec un bouton <b>Partager</b> pour l'envoyer en un geste sur WhatsApp, Facebook ou TikTok.</p>
+                  <p><b>Tu l'habilles toi-même</b> dans <b>☰ → 🏪 Ma vitrine</b> : un <b>nom de boutique</b> (par exemple « Les Éditions du Baobab »), un <b>logo</b>, et <b>5 couleurs</b> — le fond de l'en-tête et du pied de page, le texte, l'arrière-plan et le prix. Tu choisis aussi ce qui s'affiche tout en haut : ton logo, ton nom, ton pays, ton nombre de followers.</p>
+                  <p><b>Un lecteur qui arrive par ton lien reste chez toi.</b> Il ne repart pas sur CarryBooks : il navigue dans ta vitrine, cherche dans tes livres, et achète chez toi.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>12. Ta vitrine s'installe comme une application</div>
+                  <p>Quand un lecteur ouvre ton lien dans <b>Chrome</b>, il peut <b>installer ta vitrine sur son téléphone</b>. Elle s'ajoute à son écran d'accueil comme une vraie application, <b>avec ton nom et ton logo</b>, et s'ouvre directement sur ta boutique. Mets un logo dans <b>🏪 Ma vitrine</b> : sans lui, c'est l'icône CarryBooks qui s'affiche.</p>
+                  <p>Un bouton <b>« Comment télécharger l'application »</b> est déjà en bas de ta vitrine, tu n'as rien à faire.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>13. Vends en vitrine seule et touche 85 %</div>
+                  <p>Au moment de publier, tu choisis <b>« Où vendre ce livre ? »</b> :</p>
+                  <p><b>🌍 Ma vitrine + CarryBooks</b> — ton livre est visible par tous les lecteurs du site. Validation sous 24 h. Tu touches <b>70 %</b> via ton lien, <b>50 %</b> si c'est CarryBooks qui amène la vente.</p>
+                  <p><b>🏪 Ma vitrine uniquement</b> — ton livre n'apparaît <b>que</b> sur ta vitrine. Il est <b>en ligne tout de suite, sans validation</b>, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs : CarryBooks ne le mettra jamais en avant. Réservé aux auteurs <b>vérifiés</b>.</p>
+                  <p>Tu peux changer ce choix à tout moment en modifiant ton livre. Attention : passer de « vitrine seule » à « + CarryBooks » renvoie le livre en validation.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>14. Fais ta publicité avec tes propres pixels</div>
+                  <p>Dans <b>☰ → 🔌 Intégrations</b>, colle ton <b>pixel Facebook</b> et ton <b>pixel TikTok</b>. Ils se déclenchent sur les pages de <b>TES</b> livres et sur ta vitrine, jamais sur ceux des autres.</p>
+                  <p>Tu peux donc lancer tes propres publicités, voir exactement combien de personnes ont vu ton livre et combien ont acheté, et faire du reciblage. Les deux guides pas à pas sont dans <b>Intégrations</b>, avec un lien sous chaque champ.</p>
+                  <p><b>Le calcul à retenir :</b> en vitrine seule, sur un livre à 2 000 F, tu gardes <b>1 700 F</b> par vente. C'est cette marge qui finance ta publicité.</p>
+
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>15. Vendre une formation vidéo</div>
+                  <p>Dans <b>Publier</b>, choisis <b>« 🎓 Publier une Formation »</b>. Ta formation reste hébergée où tu veux — YouTube, Google Drive, WhatsApp, Telegram. Ici tu la <b>présentes</b> et tu la <b>vends</b>.</p>
+                  <p>Tu mets une <b>couverture A4 paysage</b>, tu écris ta présentation en y glissant des <b>images</b> et une <b>vidéo YouTube</b>, puis tu enregistres tes <b>liens d'accès</b> : lien de la formation, groupe WhatsApp, ton numéro. <b>Ces liens ne sont donnés qu'après le paiement</b> — personne ne peut y accéder sans avoir payé.</p>
                 </div>
               )}
               {/* SUPPORT (bientôt) */}
