@@ -1729,13 +1729,16 @@ function idYoutube(url) {
   if (/^[A-Za-z0-9_-]{8,15}$/.test(u)) return u;
   return "";
 }
-const CATEGORIES_FORMATION = ["Formation", "Business", "Développement personnel", "Lifestyle", "Jeunesse"];
+// Une formation a UNE seule categorie et ses propres sous-categories. La liste est
+// ecrite ici et pas lue en base : le formulaire ne depend donc de rien d'autre.
+const CAT_FORMATION = "Formation Vidéo";
+const SOUS_CATS_FORMATION = ["IA", "Application", "Site Web", "Réseaux Sociaux", "Logiciel", "Gagner de l'argent", "BRVM", "Crypto", "Trading", "Vente"];
 const CATEGORIES_FALLBACK = {
   "Romans": ["Romance", "Drame", "Suspense", "Thriller", "Poesie", "Serie"],
   "Jeunesse": ["Amour et relation", "Contes", "Humour", "Histoires d'amour", "Education", "Guide Pratique"],
   "Lifestyle": ["Amour et relation", "Santé & bien-être", "Beauté & Astuces", "Guide Pratique"],
   "Développement personnel": ["Confiance en soi", "Motivation", "Finance personnelle", "Spiritualité", "Relations", "Productivité"],
-  "Formation": [],
+  "Formation Vidéo": ["IA", "Application", "Site Web", "Réseaux Sociaux", "Logiciel", "Gagner de l'argent", "BRVM", "Crypto", "Trading", "Vente"],
   "Business": ["Marketing & ventes", "Management & leadership", "E-commerce & stratégie digitale"],
   "Biographies": ["Essais & chroniques", "Histoire & politique", "Sciences & nature"],
   "Lyrics": ["Focus", "À la une"],
@@ -17948,7 +17951,7 @@ export default function App() {
     if (!auteurProfil) return;
     const f = fmForm;
     if (!f.title.trim()) { setFmMsg("⚠️ Donne un titre à ta formation."); return; }
-    if (!f.category) { setFmMsg("⚠️ Choisis une catégorie."); return; }
+    if (!f.subcategory) { setFmMsg("⚠️ Choisis une sous-catégorie."); return; }
     if (!f.cover) { setFmMsg("⚠️ Ajoute la couverture (A4 paysage)."); return; }
     if (!String(f.price).trim() || (parseInt(f.price) || 0) <= 0) { setFmMsg("⚠️ Indique le prix de ta formation."); return; }
     if (!f.contenu.trim()) { setFmMsg("⚠️ Présente ta formation dans la zone de texte."); return; }
@@ -17965,7 +17968,7 @@ export default function App() {
         author: auteurProfil.nom_complet,
         price: parseInt(f.price) || 0,
         cover: f.cover,
-        category: f.category,
+        category: CAT_FORMATION,
         subcategory: f.subcategory || null,
         summary: resume,
         content: "", pdf_url: "", audio_url: "",
@@ -19034,26 +19037,15 @@ export default function App() {
                   <input value={fmForm.title} onChange={e => setFmForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex : Vendre sur WhatsApp en 7 jours" style={champ} />
                   <div style={{ height: 12 }} />
 
-                  <label style={labelSt}>Catégorie *</label>
-                  <select value={fmForm.category} onChange={e => setFmForm(f => ({ ...f, category: e.target.value, subcategory: "" }))} style={champ}>
-                    <option value="">— Choisis une catégorie —</option>
-                    {(() => {
-                      const dispo = Object.keys(CATEGORIES).filter(c => CATEGORIES_FORMATION.indexOf(c) !== -1);
-                      const liste = dispo.length > 0 ? dispo : Object.keys(CATEGORIES);
-                      return liste.map(c => <option key={c} value={c}>{c}</option>);
-                    })()}
+                  <label style={labelSt}>Catégorie</label>
+                  <div style={{ ...champ, background: G.bg, color: G.textDim, marginBottom: 12 }}>🎓 {CAT_FORMATION}</div>
+
+                  <label style={labelSt}>Sous-catégorie *</label>
+                  <select value={fmForm.subcategory} onChange={e => setFmForm(f => ({ ...f, subcategory: e.target.value }))} style={champ}>
+                    <option value="">— Choisis une sous-catégorie —</option>
+                    {SOUS_CATS_FORMATION.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   <div style={{ height: 12 }} />
-                  {fmForm.category && CATEGORIES[fmForm.category] && CATEGORIES[fmForm.category].length > 0 ? (
-                    <>
-                      <label style={labelSt}>Sous-catégorie</label>
-                      <select value={fmForm.subcategory} onChange={e => setFmForm(f => ({ ...f, subcategory: e.target.value }))} style={champ}>
-                        <option value="">— Aucune —</option>
-                        {CATEGORIES[fmForm.category].map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <div style={{ height: 12 }} />
-                    </>
-                  ) : null}
 
                   <label style={labelSt}>Prix en FCFA *</label>
                   <input value={fmForm.price} onChange={e => setFmForm(f => ({ ...f, price: e.target.value.replace(/\D/g, "") }))} inputMode="numeric" placeholder="Ex : 15000" style={champ} />
