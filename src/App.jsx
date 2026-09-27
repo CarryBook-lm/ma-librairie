@@ -18479,18 +18479,24 @@ export default function App() {
                 {sousEntete.join(" · ")}
               </div>
             </div>
-            {bqCats.length > 0 ? (
-              <button onClick={() => setBqMenuCats(v => !v)} title="Les catégories"
+            {(bqCats.length > 0 || auteurProfil) ? (
+              <button onClick={() => setBqMenuCats(v => !v)} title="Menu"
                 style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 10, border: "1.5px solid " + ACclair, background: bqMenuCats ? ACdim : "transparent", color: cEntTxt, fontSize: 19, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 ☰
               </button>
             ) : null}
             {/* Le menu tombe sous le hamburger, sur la moitie de l'ecran seulement. */}
-            {bqMenuCats && bqCats.length > 0 ? (
+            {bqMenuCats && (bqCats.length > 0 || auteurProfil) ? (
               <div style={{ position: "absolute", top: "100%", right: 10, marginTop: 6, width: "50%", minWidth: 190, maxWidth: 300, background: "#fff", border: "1px solid #ccc", borderRadius: 10, boxShadow: "0 8px 22px rgba(0,0,0,0.22)", overflow: "hidden", zIndex: 30, maxHeight: "60vh", overflowY: "auto" }}>
+                {auteurProfil ? (
+                  <button onClick={() => { setBqMenuCats(false); setPage("espace_auteur"); setAuteurTab("meslivres"); try { window.scrollTo(0, 0); } catch (e) {} }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "12px 12px", background: AC, border: "none", color: "#fff", fontSize: 13.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                    ✍️ Mon espace auteur
+                  </button>
+                ) : null}
                 {["Tous"].concat(bqCats).map((c, idx) => (
                   <button key={c} onClick={() => { setBoutiqueCat(c); setBqMenuCats(false); try { window.scrollTo(0, 0); } catch (e) {} }}
-                    style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 12px", background: boutiqueCat === c ? "#f0f0f0" : "#fff", border: "none", borderTop: idx === 0 ? "none" : "1px solid #eee", color: "#000", fontSize: 13.5, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", fontFamily: "Georgia, serif" }}>
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "11px 12px", background: boutiqueCat === c ? "#f0f0f0" : "#fff", border: "none", borderTop: (idx === 0 && !auteurProfil) ? "none" : "1px solid #eee", color: "#000", fontSize: 13.5, fontWeight: boutiqueCat === c ? "bold" : "normal", cursor: "pointer", fontFamily: "Georgia, serif" }}>
                     {c}
                   </button>
                 ))}
