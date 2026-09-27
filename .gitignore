@@ -26,3 +26,5 @@ dist-ssr
 .vercel
 carrybooks.jks 
 android/app/release/ 
+
+src/App-BACKUP-avant-carrycare.jsx

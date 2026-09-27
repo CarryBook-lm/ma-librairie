@@ -17,7 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
 // Champs "surs" renvoyes au client (JAMAIS password_hash)
-const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_motif_refus, abonnement_actif, couleur, vitrine_nom, vitrine_logo, vitrine_logo_192, vitrine_entete, coul_entete, coul_entete_texte, coul_fond, coul_prix, coul_bouton, coul_bouton_texte, vitrine_formations_lien, banni, banni_motif";
+const SAFE = "id, nom_complet, email, pays, telephone, bio, photo_url, code_source, pixel_meta, pixel_tiktok, facebook, instagram, tiktok, linkedin, youtube, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_motif_refus, abonnement_actif, couleur, vitrine_nom, vitrine_logo, vitrine_logo_192, vitrine_entete, coul_entete, coul_entete_texte, coul_fond, coul_prix, coul_bouton, coul_bouton_texte, vitrine_formations_lien, mode_vente, banni, banni_motif";
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -88,6 +88,8 @@ export default async function handler(req, res) {
         bio: String(body.bio || "").trim() || null,
         photo_url: body.photo_url || null,
         code_source: code,
+        vitrine_nom: String(body.vitrine_nom || "").trim() || null,
+        mode_vente: String(body.mode_vente || "") === "vitrine" ? "vitrine" : "les_deux",
       };
       const { data, error } = await supa.from("auteurs").insert(row).select(SAFE).maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
@@ -142,7 +144,7 @@ export default async function handler(req, res) {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
       const patch = {};
-      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube", "couleur", "vitrine_nom", "vitrine_logo", "vitrine_logo_192", "vitrine_entete", "coul_entete", "coul_entete_texte", "coul_fond", "coul_prix", "coul_bouton", "coul_bouton_texte", "vitrine_formations_lien", "abonnement_actif"].forEach((k) => {
+      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube", "couleur", "vitrine_nom", "vitrine_logo", "vitrine_logo_192", "vitrine_entete", "coul_entete", "coul_entete_texte", "coul_fond", "coul_prix", "coul_bouton", "coul_bouton_texte", "vitrine_formations_lien", "mode_vente", "abonnement_actif"].forEach((k) => {
         if (k in body) patch[k] = (body[k] === "" ? null : body[k]);
       });
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Rien a mettre a jour." });

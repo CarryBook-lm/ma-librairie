@@ -14119,6 +14119,9 @@ export default function App() {
   const [auteurPixelTiktok, setAuteurPixelTiktok] = useState("");
   const [auteurCouleur, setAuteurCouleur] = useState("");
   const [auteurVitrineNom, setAuteurVitrineNom] = useState("");
+  // 27/09 : ou l'auteur vend par defaut. "les_deux" = vitrine + catalogue CarryBooks,
+  // "vitrine" = uniquement sa vitrine. Choisi a l'inscription, modifiable a tout moment.
+  const [auteurModeVente, setAuteurModeVente] = useState("les_deux");
   const [auteurVitrineLogo, setAuteurVitrineLogo] = useState("");
   const [auteurVitrineLogo192, setAuteurVitrineLogo192] = useState("");
   const [auteurCoulEntete, setAuteurCoulEntete] = useState("");
@@ -14720,6 +14723,7 @@ export default function App() {
     setAuteurBio(prof.bio || ""); setAuteurPhoto(prof.photo_url || "");
     setAuteurCouleur(prof.couleur || "");
     setAuteurVitrineNom(prof.vitrine_nom || ""); setAuteurVitrineLogo(prof.vitrine_logo || "");
+    setAuteurModeVente(prof.mode_vente === "vitrine" ? "vitrine" : "les_deux");
     setAuteurVitrineLogo192(prof.vitrine_logo_192 || "");
     setAuteurCoulEntete(prof.coul_entete || ""); setAuteurCoulEnteteTexte(prof.coul_entete_texte || "");
     setAuteurCoulFond(prof.coul_fond || ""); setAuteurCoulPrix(prof.coul_prix || "");
@@ -14776,7 +14780,7 @@ export default function App() {
         const ind = CODES[auteurPays] || ""; const t = (auteurTel || "").trim();
         return t ? ((ind ? ind + " " : "") + t) : null;
       })();
-      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword, pays: auteurPays || null, telephone: telComplet, bio: auteurBio || null, photo_url: auteurPhoto || null }) });
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword, pays: auteurPays || null, telephone: telComplet, bio: auteurBio || null, photo_url: auteurPhoto || null, vitrine_nom: auteurVitrineNom.trim() || null, mode_vente: auteurModeVente === "vitrine" ? "vitrine" : "les_deux" }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurAuthEmail(""); setAuteurAuthPassword(""); setAuteurAuthNom(""); }
       else { setAuteurAuthMsg(data.error || "Creation impossible."); }
@@ -17529,6 +17533,7 @@ export default function App() {
         coul_bouton: auteurCoulBouton || null,
         coul_bouton_texte: auteurCoulBoutonTexte || null,
         vitrine_formations_lien: auteurFormationsLien.trim() || null,
+        mode_vente: auteurModeVente === "vitrine" ? "vitrine" : "les_deux",
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
@@ -18706,6 +18711,10 @@ export default function App() {
               <label style={labelSt}>Ton nom d'auteur</label>
               <input value={auteurAuthNom} onChange={e => setAuteurAuthNom(e.target.value)} placeholder="ex : Landrine Maff" style={champ} />
               <div style={{ height: 12 }} />
+              <label style={labelSt}>Le nom de ta vitrine</label>
+              <input value={auteurVitrineNom} onChange={e => setAuteurVitrineNom(e.target.value)} placeholder={auteurAuthNom.trim() ? ("ex : " + auteurAuthNom.trim()) : "ex : Les Éditions du Baobab"} maxLength={40} style={champ} />
+              <div style={{ fontSize: 11.5, color: G.textDim, marginTop: -2, lineHeight: 1.5 }}>C'est le nom affiché tout en haut de ta boutique. Ça peut très bien être ton nom d'auteur. Tu pourras le changer quand tu veux.</div>
+              <div style={{ height: 12 }} />
             </>)}
             <label style={labelSt}>Ton email d'auteur</label>
             <input type="email" value={auteurAuthEmail} onChange={e => setAuteurAuthEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
@@ -18742,6 +18751,25 @@ export default function App() {
                   <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
                 </label>
               </div>
+              <div style={{ height: 18 }} />
+              <label style={labelSt}>Où veux-tu vendre tes livres ?</label>
+              <div style={{ fontSize: 11.5, color: G.textDim, marginTop: -2, marginBottom: 10, lineHeight: 1.5 }}>Ta vitrine à toi, tu l'as dans tous les cas. Ce choix dit seulement si tes livres apparaissent <b>aussi</b> dans le catalogue de carrybooks.com. Tu pourras en changer à tout moment, et même livre par livre.</div>
+              {[
+                ["les_deux", "🌍 Ma vitrine + CarryBooks", "Tes livres sont dans ta vitrine ET dans le catalogue CarryBooks. Ils passent par une validation sous 24 h. Tu touches 85 % quand la vente vient de toi, 50 % quand c'est CarryBooks qui t'amène le lecteur.", "Conseillé"],
+                ["vitrine", "🏪 Ma vitrine uniquement", "Tes livres n'apparaissent nulle part sur carrybooks.com. Ils sont en ligne tout de suite, sans validation, et tu touches 85 % sur chaque vente. Réservé aux auteurs vérifiés.", ""],
+              ].map(function (o) {
+                const val = o[0], titre = o[1], desc = o[2], badge = o[3];
+                const actif = (auteurModeVente === val);
+                return (
+                  <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? G.gold : G.border), background: actif ? "#fdfaf2" : "#fff", borderRadius: 10, padding: 12, marginBottom: 10, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <input type="radio" checked={actif} onChange={() => setAuteurModeVente(val)} style={{ width: 17, height: 17, marginTop: 2, flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}{badge ? <span style={{ marginLeft: 6, fontSize: 10.5, color: G.gold, border: "1px solid " + G.gold, borderRadius: 20, padding: "1px 7px", fontWeight: "bold" }}>{badge}</span> : null}</div>
+                      <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>{desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </>)}
             {auteurAuthMsg && <div style={{ color: "#e53935", fontSize: 13, marginTop: 10 }}>{auteurAuthMsg}</div>}
             <button onClick={auteurAuthMode === "signup" ? auteurSignup : auteurLogin} disabled={auteurAuthLoading} style={{ width: "100%", padding: 14, marginTop: 16, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurAuthLoading ? 0.6 : 1 }}>
@@ -18821,7 +18849,7 @@ export default function App() {
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
-                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(false); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
               )}
               {/* PUBLIER */}
@@ -19853,6 +19881,28 @@ export default function App() {
                     ))}
                   </div>
 
+                  <label style={labelSt}>Où mes livres se vendent</label>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 10, lineHeight: 1.5 }}>C'est le choix proposé d'avance quand tu publies. Tu peux toujours en décider autrement livre par livre.</div>
+                  <div style={{ marginBottom: 16 }}>
+                    {[
+                      ["les_deux", "🌍 Ma vitrine + CarryBooks", "Dans ta vitrine et dans le catalogue CarryBooks, après validation sous 24 h. 85 % quand la vente vient de toi, 50 % quand elle vient de CarryBooks."],
+                      ["vitrine", "🏪 Ma vitrine uniquement", "Nulle part sur carrybooks.com. En ligne tout de suite, sans validation, 85 % sur chaque vente. Réservé aux auteurs vérifiés."],
+                    ].map(function (o) {
+                      const val = o[0], titre = o[1], desc = o[2];
+                      const actif = (auteurModeVente === val);
+                      const cA = auteurCouleur || G.gold;
+                      return (
+                        <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? cA : G.border), background: actif ? G.bg : "#fff", borderRadius: 10, padding: 11, marginBottom: 8, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                          <input type="radio" checked={actif} onChange={() => setAuteurModeVente(val)} style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0 }} />
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{titre}</div>
+                            <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 3, lineHeight: 1.5 }}>{desc}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                 </div>
 
@@ -20113,7 +20163,7 @@ export default function App() {
             <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
             )}
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
-            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(false); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
