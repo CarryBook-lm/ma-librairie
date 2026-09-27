@@ -628,18 +628,39 @@ export default function Admin() {
     await rechargerEA();
     alert("✅ Auteur réintégré, livres de nouveau visibles.");
   };
+  // 27/09 : on ne charge PLUS toute la table support_messages d'un coup.
+  // Supabase s'arrete a 1000 lignes ; au-dela, les messages les plus RECENTS
+  // etaient coupes et un message qu'on venait d'envoyer n'apparaissait jamais.
+  // Le fil ouvert est desormais charge a part, en entier, par chargerFil.
+  const chargerFil = async (auteurId) => {
+    if (!auteurId) return;
+    const { data } = await supabase.from("support_messages")
+      .select("id, auteur_id, cote, texte, image_url, lu_admin, annonce_id, created_at")
+      .eq("auteur_id", auteurId).order("created_at", { ascending: true }).limit(2000);
+    setSupAll(prev => { const n = Object.assign({}, prev); n[auteurId] = { msgs: data || [] }; return n; });
+  };
   const chargerSupportAdmin = async (auteursArg) => {
     const auts = auteursArg || eaAuteurs;
-    const { data: msgs } = await supabase.from("support_messages").select("id, auteur_id, cote, texte, image_url, lu_admin, annonce_id, created_at").order("created_at", { ascending: true });
-    const by = {};
-    (msgs || []).forEach(m => { (by[m.auteur_id] = by[m.auteur_id] || { msgs: [], nonLus: 0, last: null }); by[m.auteur_id].msgs.push(m); if (m.cote === "auteur" && !m.lu_admin) by[m.auteur_id].nonLus++; by[m.auteur_id].last = m; });
-    setSupAll(by);
-    const fils = (auts || []).map(a => { const b = by[a.id] || { nonLus: 0, last: null }; return { auteur: a, nonLus: b.nonLus, last: b.last, lastAt: b.last ? new Date(b.last.created_at).getTime() : 0 }; });
+    // Apercus : les 3000 messages les plus recents, du plus recent au plus ancien.
+    // Non lus : seulement les lignes concernees, jamais toute la table.
+    const [recents, nonlus] = await Promise.all([
+      supabase.from("support_messages").select("id, auteur_id, cote, texte, image_url, annonce_id, created_at").order("created_at", { ascending: false }).limit(3000),
+      supabase.from("support_messages").select("id, auteur_id").eq("cote", "auteur").eq("lu_admin", false).limit(5000),
+    ]);
+    const dernier = {};
+    (recents.data || []).forEach(m => { if (!dernier[m.auteur_id]) dernier[m.auteur_id] = m; });
+    const compte = {};
+    (nonlus.data || []).forEach(m => { compte[m.auteur_id] = (compte[m.auteur_id] || 0) + 1; });
+    const fils = (auts || []).map(a => {
+      const last = dernier[a.id] || null;
+      return { auteur: a, nonLus: compte[a.id] || 0, last: last, lastAt: last ? new Date(last.created_at).getTime() : 0 };
+    });
     fils.sort((x, y) => ((y.nonLus > 0 ? 1 : 0) - (x.nonLus > 0 ? 1 : 0)) || (y.lastAt - x.lastAt));
     setSupFils(fils);
   };
   const ouvrirFil = async (a) => {
     setSupSel(a);
+    await chargerFil(a.id);
     await supabase.from("support_messages").update({ lu_admin: true }).eq("auteur_id", a.id).eq("cote", "auteur").eq("lu_admin", false);
     await chargerSupportAdmin();
   };
@@ -661,7 +682,7 @@ export default function Admin() {
     setSupSending(true);
     try {
       const { error } = await supabase.from("support_messages").insert([{ auteur_id: supSel.id, cote: "admin", texte: t, image_url: supImg || null, lu_admin: true, lu_auteur: false }]);
-      if (error) { alert("Erreur : " + error.message); } else { setSupInput(""); setSupImg(""); await chargerSupportAdmin(); }
+      if (error) { alert("Erreur : " + error.message); } else { setSupInput(""); setSupImg(""); await chargerFil(supSel.id); await chargerSupportAdmin(); }
     } catch (e) { alert("Erreur : " + (e && e.message)); }
     setSupSending(false);
   };
@@ -676,6 +697,7 @@ export default function Admin() {
       const rows = (eaAuteurs || []).map(a => ({ auteur_id: a.id, cote: "admin", texte: t, annonce_id: ann.id, lu_admin: true, lu_auteur: false }));
       if (rows.length) { const { error: e2 } = await supabase.from("support_messages").insert(rows); if (e2) throw e2; }
       setAnnonceTxt(""); setAnnonceOpen(false);
+      if (supSel) await chargerFil(supSel.id);
       await chargerSupportAdmin();
       alert("✅ Annonce envoyée à " + rows.length + " auteur(s).");
     } catch (e) { alert("❌ " + (e.message || e)); }
