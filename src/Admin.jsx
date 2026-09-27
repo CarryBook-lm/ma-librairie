@@ -686,6 +686,16 @@ export default function Admin() {
     } catch (e) { alert("Erreur : " + (e && e.message)); }
     setSupSending(false);
   };
+  // 27/09 : supprimer un message qu'on a envoye par erreur. Uniquement les
+  // messages cote admin : on ne touche jamais a ce qu'un auteur a ecrit.
+  const supprimerMsgAdmin = async (m) => {
+    if (!m || m.cote !== "admin") return;
+    if (!window.confirm("Supprimer ce message ? Il disparaitra aussi chez l'auteur.")) return;
+    const { error } = await supabase.from("support_messages").delete().eq("id", m.id);
+    if (error) { alert("Erreur : " + error.message); return; }
+    if (supSel) await chargerFil(supSel.id);
+    await chargerSupportAdmin();
+  };
   const envoyerAnnonce = async () => {
     const t = annonceTxt.trim();
     if (!t) return;
@@ -4739,7 +4749,10 @@ export default function Admin() {
                           {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: "#c9a84c", marginBottom: 3 }}>📢 Annonce</div> : null}
                           {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                           {m.texte}
-                          <div style={{ fontSize: 9, opacity: 0.55, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 9, marginTop: 3 }}>
+                            {m.cote === "admin" ? <button onClick={() => supprimerMsgAdmin(m)} title="Supprimer ce message" style={{ background: "none", border: "none", color: "#fff", opacity: 0.6, fontSize: 12, cursor: "pointer", padding: 0, lineHeight: 1 }}>🗑</button> : null}
+                            <div style={{ fontSize: 9, opacity: 0.55 }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
+                          </div>
                         </div>
                       ))}
                     </div>
