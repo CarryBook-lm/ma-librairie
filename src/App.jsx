@@ -19794,6 +19794,34 @@ export default function App() {
               )}
               {/* MA VITRINE : deux cartes — identite (nom, logo, en-tete) et apparence (couleurs). */}
               {auteurTab === "vitrine" && (<>
+                {auteurProfil && auteurProfil.code_source ? (() => {
+                  const lienV = "https://carrybooks.com/auteur/" + auteurProfil.code_source;
+                  const nomV = (auteurVitrineNom || "").trim() || (auteurProfil.nom_complet || "ma librairie");
+                  const partager = () => {
+                    const texte = "📚 Découvre " + nomV + " sur CarryBooks :\n" + lienV;
+                    try {
+                      if (navigator.share) { navigator.share({ title: nomV, text: texte, url: lienV }); return; }
+                    } catch (e) {}
+                    window.open("https://wa.me/?text=" + encodeURIComponent(texte), "_blank");
+                  };
+                  return (
+                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.gold), borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                      <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔗 Le lien de ma vitrine</div>
+                      <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.5 }}>C'est LE lien à partager partout : WhatsApp, Facebook, TikTok, ta bio Instagram. Chaque vente qui passe par lui te rapporte davantage.</div>
+                      <input readOnly value={lienV} onFocus={e => e.target.select()}
+                        style={{ ...champ, fontSize: 12.5, background: G.bg, marginBottom: 10 }} />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => { try { navigator.clipboard.writeText(lienV); setAuteurMsg("✅ Lien copié !"); setTimeout(() => setAuteurMsg(""), 2500); } catch (e) { setAuteurMsg("Copie impossible, sélectionne le lien à la main."); } }}
+                          style={{ flex: 1, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📋 Copier</button>
+                        <button onClick={partager}
+                          style={{ flex: 1, padding: 12, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📤 Partager</button>
+                      </div>
+                      <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)}
+                        style={{ width: "100%", marginTop: 8, padding: 10, background: "none", border: "none", color: G.textDim, fontSize: 12.5, cursor: "pointer", fontFamily: "Georgia, serif", textDecoration: "underline" }}>👁️ Voir ma vitrine</button>
+                    </div>
+                  );
+                })() : null}
+
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🏪 Nom de la vitrine et logo</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Ta page auteur est ta boutique. Donne-lui un nom, un logo, et choisis ce qui apparaît tout en haut.</div>
