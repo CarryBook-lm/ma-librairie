@@ -1750,7 +1750,7 @@ const CATEGORIES_FALLBACK = {
 const CONTRAT_ARTICLES = [
   ["Article 1 - Objet du contrat", "Le présent contrat définit les conditions dans lesquelles l'Auteur publie, diffuse et vend ses œuvres numériques (romans, livres, guides, livres audio et autres contenus) sur la Plateforme CarryBooks, ainsi que les droits et obligations de chaque partie."],
   ["Article 2 - Déclaration et garantie de l'Auteur", "L'Auteur certifie sur l'honneur être le véritable auteur et/ou le détenteur exclusif de l'ensemble des droits des œuvres qu'il publie sur CarryBooks. Il garantit que ses œuvres sont originales, qu'elles ne violent aucun droit de propriété intellectuelle, aucun droit à l'image ni aucun droit d'un tiers, et qu'il dispose de tous les droits nécessaires pour les commercialiser."],
-  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 70 % du prix de vente lorsque la vente provient de son lien de promotion personnel, et 50 % lorsque la vente est réalisée par CarryBooks. Pour un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle (livre non référencé sur carrybooks.com, mis en ligne sans validation préalable et dont l'Auteur garantit détenir les droits), l'Auteur perçoit 85 % du prix de vente. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
+  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 85 % du prix de vente lorsque la vente est amenée par lui-même, c'est-à-dire par son lien de promotion personnel ou par sa vitrine d'auteur, et 50 % lorsque la vente est réalisée par CarryBooks. Un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle n'est pas référencé sur carrybooks.com, est mis en ligne sans validation préalable, et l'Auteur garantit en détenir les droits. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
   ["Article 3 bis - Programme d'abonnement (facultatif)", "CarryBooks propose un programme d'abonnement permettant aux lecteurs abonnés de lire les ROMANS (lus dans la liseuse) des auteurs participants. La participation est FACULTATIVE (activable dans l'espace auteur). L'auteur participant perçoit une commission fixe (montant défini par CarryBooks) à chaque déblocage d'un de ses romans par un abonné, une seule fois par livre (les relectures ne génèrent aucune commission). Les livres PDF et audio ne sont PAS concernés et restent payants. L'auteur peut se retirer à tout moment."],
   ["Article 4 - Validation et modération", "Toute œuvre soumise fait l'objet d'une validation préalable par CarryBooks avant sa mise en ligne. CarryBooks peut refuser, retirer ou suspendre toute œuvre non conforme au présent contrat, aux conditions d'utilisation, à la loi ou aux bonnes mœurs, sans indemnité."],
   ["Article 5 - Propriété intellectuelle et lutte contre le piratage", "L'Auteur conserve la propriété intellectuelle de ses œuvres et concède à CarryBooks le droit non exclusif de les diffuser et de les vendre. Il est formellement interdit de publier, revendre ou diffuser toute œuvre qui ne lui appartient pas, piratée, contrefaite, plagiée ou volée. Toute fraude, piratage, usurpation ou vente d'une œuvre appartenant à autrui entraîne le bannissement immédiat et définitif de l'Auteur, la suspension de tout paiement lié à la fraude, sans préjudice de poursuites judiciaires."],
@@ -19103,7 +19103,7 @@ export default function App() {
                         <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📍 Où vendre cette formation ?</div>
                         <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12.5, color: G.text, lineHeight: 1.5, marginBottom: 8 }}>
                           <input type="radio" checked={!pubExclusif} onChange={() => setPubExclusif(false)} style={{ width: 17, height: 17, marginTop: 1 }} />
-                          <span><b>🌍 Ma vitrine + CarryBooks</b> — visible par tous. Validation sous 24 h. <b>70 % / 50 %</b></span>
+                          <span><b>🌍 Ma vitrine + CarryBooks</b> — visible par tous. Validation sous 24 h. <b>85 % / 50 %</b></span>
                         </label>
                         <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: kycOk ? "pointer" : "not-allowed", fontSize: 12.5, color: G.text, lineHeight: 1.5, opacity: kycOk ? 1 : 0.55 }}>
                           <input type="radio" checked={pubExclusif} disabled={!kycOk} onChange={() => setPubExclusif(true)} style={{ width: 17, height: 17, marginTop: 1 }} />
@@ -19330,11 +19330,11 @@ export default function App() {
                         <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12, lineHeight: 1.5 }}>Tu pourras changer ce choix plus tard en modifiant ton livre.</div>
                         {carte(!pubExclusif, () => setPubExclusif(false), true, "🌍 Ma vitrine + CarryBooks", [
                           "Visible par tous les lecteurs : accueil, catalogue, recherche.",
-                          "Validation par CarryBooks sous 24 h avant la mise en ligne.",
-                        ], "70 % / 50 %")}
+                          "Validation par CarryBooks sous 24 h. 85 % si tu amènes la vente, 50 % si c'est CarryBooks.",
+                        ], "85 % / 50 %")}
                         {carte(pubExclusif, () => setPubExclusif(true), kycOk, "🏪 Ma vitrine uniquement", [
                           "Visible seulement sur ta page auteur. En ligne immédiatement, sans validation.",
-                          "À toi d'amener tes lecteurs : CarryBooks ne le mettra jamais en avant.",
+                          "À toi d'amener tes lecteurs, donc 85 % sur chaque vente.",
                         ], "85 %")}
                         {!kycOk ? (
                           <div style={{ fontSize: 11.5, color: "#b26a00", background: "#fff6e0", border: "1px solid #f0d9a0", borderRadius: 8, padding: 10, lineHeight: 1.5 }}>
@@ -19443,7 +19443,7 @@ export default function App() {
                           {b.summary ? <div style={{ fontSize: 13, color: G.text, lineHeight: 1.5, marginBottom: 12, maxHeight: 120, overflowY: "auto", background: G.bg, borderRadius: 8, padding: 10 }}>{b.summary}</div> : null}
                           {b.status === "actif" && auteurProfil.code_source ? (
                             <div style={{ marginBottom: 14 }}>
-                              <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>🔗 Ton lien de pub (70% pour toi) :</div>
+                              <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>🔗 Ton lien de pub (85% pour toi) :</div>
                               <div style={{ display: "flex", gap: 6 }}>
                                 <input readOnly value={lien} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.textDim, background: G.bg, minWidth: 0 }} />
                                 <button onClick={() => { try { navigator.clipboard.writeText(lien); setPubMsg("✅ Lien copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 10px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 6, cursor: "pointer" }}>Copier</button>
@@ -19582,7 +19582,7 @@ export default function App() {
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
                           {compteur("Ventes CarryBooks (50%)", sans.length, gains(sans), G.text)}
-                          {compteur("Ventes via mon lien (70%)", avec.length, gains(avec), G.gold)}
+                          {compteur("Ventes via mon lien (85%)", avec.length, gains(avec), G.gold)}
                           {vitr.length > 0 ? compteur("Ventes en vitrine (85%)", vitr.length, gains(vitr), G.green) : null}
                         </div>
                         <div style={{ background: G.gold + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
@@ -19993,7 +19993,7 @@ export default function App() {
                   <p>Après l'envoi, ton livre passe en <b>« en attente »</b>. L'équipe CarryBooks le vérifie, puis l'approuve. Une fois approuvé, il apparaît dans la boutique et devient achetable. Tu peux <b>modifier</b> un livre à tout moment (il repasse alors en validation).</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>7. Tes gains (commissions)</div>
-                  <p>Sur chaque vente : tu touches <b>70 %</b> si le client vient par <b>ton lien de pub</b> (que tu trouves dans « Mes livres »), et <b>50 %</b> si c'est CarryBooks qui vend. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p><p>Au moment de publier, tu choisis « <b>Où vendre ce livre ?</b> ». Si tu choisis <b>Ma vitrine uniquement</b>, le livre n'apparaît pas sur carrybooks.com : il est en ligne tout de suite, sans validation, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs, CarryBooks ne le mettra jamais en avant. Cette option demande d'être un auteur <b>vérifié</b>.</p>
+                  <p>Sur chaque vente : tu touches <b>85 %</b> si le client vient par <b>ton lien de pub</b> ou par <b>ta vitrine</b>, et <b>50 %</b> si c'est CarryBooks qui amène la vente. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p><p>Au moment de publier, tu choisis « <b>Où vendre ce livre ?</b> ». Si tu choisis <b>Ma vitrine uniquement</b>, le livre n'apparaît pas sur carrybooks.com : il est en ligne tout de suite, sans validation, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs, CarryBooks ne le mettra jamais en avant. Cette option demande d'être un auteur <b>vérifié</b>.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>8. Publicité (pixels)</div>
                   <p>Dans <b>Intégrations</b>, ajoute ton pixel <b>Facebook</b> et/ou <b>TikTok</b> pour suivre l'efficacité de tes publicités.</p>
@@ -20013,14 +20013,14 @@ export default function App() {
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>13. Vends en vitrine seule et touche 85 %</div>
                   <p>Au moment de publier, tu choisis <b>« Où vendre ce livre ? »</b> :</p>
-                  <p><b>🌍 Ma vitrine + CarryBooks</b> — ton livre est visible par tous les lecteurs du site. Validation sous 24 h. Tu touches <b>70 %</b> via ton lien, <b>50 %</b> si c'est CarryBooks qui amène la vente.</p>
-                  <p><b>🏪 Ma vitrine uniquement</b> — ton livre n'apparaît <b>que</b> sur ta vitrine. Il est <b>en ligne tout de suite, sans validation</b>, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs : CarryBooks ne le mettra jamais en avant. Réservé aux auteurs <b>vérifiés</b>.</p>
+                  <p><b>🌍 Ma vitrine + CarryBooks</b> — ton livre est visible par tous les lecteurs du site. Validation sous 24 h. Tu touches <b>85 %</b> si tu amènes la vente (ton lien ou ta vitrine), <b>50 %</b> si c'est CarryBooks qui l'amène.</p>
+                  <p><b>🏪 Ma vitrine uniquement</b> — ton livre n'apparaît <b>que</b> sur ta vitrine. Il est <b>en ligne tout de suite, sans validation</b>, et tu touches <b>85 %</b>, forcément, puisque toutes ses ventes viennent de toi. Réservé aux auteurs <b>vérifiés</b>.</p>
                   <p>Tu peux changer ce choix à tout moment en modifiant ton livre. Attention : passer de « vitrine seule » à « + CarryBooks » renvoie le livre en validation.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>14. Fais ta publicité avec tes propres pixels</div>
                   <p>Dans <b>☰ → 🔌 Intégrations</b>, colle ton <b>pixel Facebook</b> et ton <b>pixel TikTok</b>. Ils se déclenchent sur les pages de <b>TES</b> livres et sur ta vitrine, jamais sur ceux des autres.</p>
                   <p>Tu peux donc lancer tes propres publicités, voir exactement combien de personnes ont vu ton livre et combien ont acheté, et faire du reciblage. Les deux guides pas à pas sont dans <b>Intégrations</b>, avec un lien sous chaque champ.</p>
-                  <p><b>Le calcul à retenir :</b> en vitrine seule, sur un livre à 2 000 F, tu gardes <b>1 700 F</b> par vente. C'est cette marge qui finance ta publicité.</p>
+                  <p><b>Le calcul à retenir :</b> dès que tu amènes la vente, sur un livre à 2 000 F tu gardes <b>1 700 F</b>. C'est cette marge qui finance ta publicité.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>15. Vendre une formation vidéo</div>
                   <p>Dans <b>Publier</b>, choisis <b>« 🎓 Publier une Formation »</b>. Ta formation reste hébergée où tu veux — YouTube, Google Drive, WhatsApp, Telegram. Ici tu la <b>présentes</b> et tu la <b>vends</b>.</p>
@@ -23662,7 +23662,7 @@ export default function App() {
                 <div style={{ ...({ background: G.goldDim, border: "1px solid " + G.gold + "55", borderRadius: 10, padding: "12px 14px", margin: "10px 0" }), color: G.text, fontSize: 13.5, lineHeight: 1.6 }}>💡 <b>Bon à savoir :</b> une fois ton compte <b>validé</b>, le bouton <b>« Publie un livre »</b> de l’accueil devient <b>« Mon espace Auteur(e) »</b>. C’est normal : c’est ton raccourci pour revenir gérer tes livres et tes ventes.</div>
 
                 <div style={H}>Étape 2 — Compléter ton profil</div>
-                <p style={P}>Ajoute ta photo, une courte bio et tes réseaux sociaux. Tu obtiens une <b>boutique personnelle</b> avec un <b>lien de promotion</b> : partage-le, chaque vente via ce lien te rapporte <b>70 %</b> au lieu de 50 %. Et si tu choisis de vendre un livre <b>uniquement dans ta vitrine</b>, tu touches <b>85 %</b>.</p>
+                <p style={P}>Ajoute ta photo, une courte bio et tes réseaux sociaux. Tu obtiens une <b>boutique personnelle</b> avec un <b>lien de promotion</b> : partage-le, chaque vente via ce lien te rapporte <b>85 %</b> au lieu de 50 %.</p>
 
                 <div style={H}>Étape 3 — Faire vérifier ton identité</div>
                 <p style={P}>Obligatoire avant de publier. Remplis le formulaire d’identité (avec ton <b>numéro Mobile Money</b>, c’est là que tu seras payé), ajoute une photo de ta <b>pièce d’identité</b> (recto obligatoire, verso facultatif), puis <b>lis et signe le contrat en ligne</b> avec ton doigt. Une fois validé par CarryBooks, un badge « vérifié » apparaît et l’onglet Publier se débloque.</p>
@@ -23695,7 +23695,7 @@ export default function App() {
                 <div style={box}><b>Après la soumission</b> — dans « Mes livres », ton livre affiche : <b>En attente</b> (en cours de vérification), <b>En ligne</b> (validé, visible et vendable), ou <b>Refusé</b> (un motif s’affiche : corrige et resoumets). Tu peux modifier ou supprimer un livre depuis cet onglet.</div>
 
                 <div style={H}>Ta rémunération et tes retraits</div>
-                <p style={P}>Tu gagnes <b>70 %</b> sur les ventes via ton lien de promotion, <b>50 %</b> sur celles amenées par CarryBooks, et <b>85 %</b> sur un livre que tu vends uniquement dans ta vitrine. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
+                <p style={P}>Tu gagnes <b>85 %</b> sur les ventes que tu amènes toi-même — par ton lien de promotion ou par ta vitrine — et <b>50 %</b> sur celles amenées par CarryBooks. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
 
                 <div style={H}>Le programme d’abonnement (facultatif)</div>
                 <p style={P}>Dans les Paramètres, tu peux activer l’abonnement : tes <b>romans</b> deviennent lisibles par les abonnés et tu touches une <b>commission fixe à chaque déblocage</b>. Tes livres PDF et audio restent payants. Tu peux te retirer quand tu veux.</p>

@@ -47,7 +47,9 @@ async function recordAuthorSale(supabaseAdmin, { bookId, amount, extRef, authorS
     const { data: au } = await supabaseAdmin.from("auteurs").select("code_source").eq("id", auteurId).limit(1);
     const codeSource = au && au[0] ? au[0].code_source : null;
     const viaLien = authorSrc && codeSource && String(authorSrc).toLowerCase() === String(codeSource).toLowerCase();
-    const taux = exclusifVitrine ? 85 : (viaLien ? 70 : 50);
+    // 27/09 : une vente amenee par l'auteur vaut 85 %, que ce soit par son lien de
+    // pub ou par sa vitrine. Dans les deux cas c'est lui qui a amene le lecteur.
+    const taux = (exclusifVitrine || viaLien) ? 85 : 50;
     const partAuteur = Math.round(amount * taux / 100);
     const { error } = await supabaseAdmin.from("ventes_auteurs").insert([{
       auteur_id: auteurId, book_id: bookId, reference: extRef,
