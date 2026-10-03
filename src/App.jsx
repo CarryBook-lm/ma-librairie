@@ -22764,28 +22764,6 @@ export default function App() {
 
                 {/* NOUVEAUTÉS (ARTICLES PHYSIQUES) - d�plac�e juste avant la cat�gorie 'Livres Papiers' */}
 
-                {/* ATELIER DES AUTEURS — 03/10 : detache de la categorie "Livres Gratuits".
-                    Il y etait accroche, donc le jour ou plus aucun livre gratuit n'etait
-                    visible, la categorie sautait et l'Atelier disparaissait avec elle. */}
-                {tutosAccueil.length > 0 && (
-                  <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Atelier des Auteurs ! 📚</div>
-                    <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
-                      {tutosAccueil.map(t => (
-                        <div key={t.id} style={{ flexShrink: 0, width: "90%", maxWidth: 380 }}>
-                          <div onClick={() => { if (t.lien) window.location.href = t.lien; }} style={{ width: "100%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: t.lien ? "pointer" : "default", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", marginBottom: 8 }}>
-                            <img src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                          </div>
-                          {t.texte_html ? (<div style={{ padding: "0 2px" }}>
-                            <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, overflow: "hidden", whiteSpace: "pre-wrap", display: tutosOuverts[t.id] ? "block" : "-webkit-box", WebkitLineClamp: tutosOuverts[t.id] ? "none" : 5, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} />
-                            <button onClick={() => setTutosOuverts(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", padding: "4px 0 0" }}>{tutosOuverts[t.id] ? "Voir moins ▲" : "Voir plus ▼"}</button>
-                          </div>) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* CARROUSELS PAR CATÉGORIE - UNIQUEMENT LIVRES NUMÉRIQUES */}
                 {(() => {
                   const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && surCarryBooks(b);
@@ -22900,6 +22878,28 @@ export default function App() {
                     </Fragment>
                   );
                 }); })()}
+
+                {/* ATELIER DES AUTEURS — 03/10 : detache de la categorie "Livres Gratuits".
+                    Il y etait accroche, donc le jour ou plus aucun livre gratuit n'etait
+                    visible, la categorie sautait et l'Atelier disparaissait avec elle. */}
+                {tutosAccueil.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Atelier des Auteurs ! 📚</div>
+                    <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                      {tutosAccueil.map(t => (
+                        <div key={t.id} style={{ flexShrink: 0, width: "90%", maxWidth: 380 }}>
+                          <div onClick={() => { if (t.lien) window.location.href = t.lien; }} style={{ width: "100%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: t.lien ? "pointer" : "default", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", marginBottom: 8 }}>
+                            <img src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          </div>
+                          {t.texte_html ? (<div style={{ padding: "0 2px" }}>
+                            <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, overflow: "hidden", whiteSpace: "pre-wrap", display: tutosOuverts[t.id] ? "block" : "-webkit-box", WebkitLineClamp: tutosOuverts[t.id] ? "none" : 5, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} />
+                            <button onClick={() => setTutosOuverts(o => ({ ...o, [t.id]: !o[t.id] }))} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer", padding: "4px 0 0" }}>{tutosOuverts[t.id] ? "Voir moins ▲" : "Voir plus ▼"}</button>
+                          </div>) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* STATS SITE (toujours affichées, indépendantes des catégories) */}
                 <div style={{ padding: "4px 12px 24px" }}>
