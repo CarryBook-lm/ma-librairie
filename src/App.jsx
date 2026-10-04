@@ -22990,8 +22990,10 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                         {catBooks.map(book => (
-                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: catBooks.length === 1 ? "86%" : catBooks.length === 2 ? "46%" : "40vw", maxWidth: catBooks.length === 1 ? 320 : catBooks.length === 2 ? 210 : 175, cursor: "pointer", textAlign: "center" }}>
-                            <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: book.product_type === "formation" ? "82vw" : (catBooks.length === 1 ? "86%" : catBooks.length === 2 ? "46%" : "40vw"), maxWidth: book.product_type === "formation" ? 340 : (catBooks.length === 1 ? 320 : catBooks.length === 2 ? 210 : 175), cursor: "pointer", textAlign: "center" }}>
+                            {/* 04/10 : une formation a une affiche A4 PAYSAGE. Sans ce test elle
+                                tombait dans le gabarit portrait commun et se faisait rogner. */}
+                            <div style={{ width: "100%", aspectRatio: book.product_type === "formation" ? "297 / 210" : "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
                                 ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
