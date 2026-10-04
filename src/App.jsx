@@ -18318,6 +18318,152 @@ export default function App() {
 
   // ================= BOUTIQUE D'UN AUTEUR =================
   // ================= PAGE D'UNE FORMATION =================
+  // 04/10 : le modal de paiement n'etait pose que sur la page detail et sur
+  // l'accueil. Sur la page Formation il manquait : cliquer sur Acheter ne
+  // faisait rien. Il est desormais ecrit ici une fois et pose aux deux endroits.
+  const paiementModalNode = (
+        showPayment && paymentBook && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+            <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+              {paymentStep === 1 && (
+                <>
+                  <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
+                  {paymentBook.coverUrl && (
+                    <div style={{ textAlign: "center", marginBottom: 14 }}>
+                      <img src={paymentBook.coverUrl} alt={paymentBook.title} style={{ height: 110, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                    </div>
+                  )}
+                  <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17, textAlign: "center" }}>{paymentBook.title}</h3>
+                  <p style={{ color: "#888", fontSize: 13, marginBottom: 6, textAlign: "center" }}>par {paymentBook.author || "Auteur"}</p>
+                  <div style={{ background: "#fff8e1", padding: "10px 14px", borderRadius: 8, marginBottom: 18, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: "#7a5c00", marginBottom: 4 }}>Prix du livre</div>
+                    <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{paymentBook.price?.toLocaleString()} FCFA</div>
+                  </div>
+                  <button onClick={() => setPaymentStep(2)} style={{
+                    width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+                    border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+                  }}>
+                    💎 Continuer vers le paiement
+                  </button>
+                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>Annuler</button>
+                </>
+              )}
+              {paymentStep === 2 && (
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
+                  <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
+                  <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>Avec quel opérateur veux-tu payer ?</p>
+                  <button onClick={() => { setPaymentMethod("mtn"); setPaymentStep(3); }} style={{
+                    width: "100%", padding: 16, marginBottom: 10, background: "#FFCC00", color: "#000",
+                    border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
+                  }}>📱 MTN Mobile Money</button>
+                  <button onClick={() => { setPaymentMethod("orange"); setPaymentStep(3); }} style={{
+                    width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
+                    border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
+                  }}>📱 Orange Money</button>
+                  <button onClick={() => setPaymentStep(1)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>← Retour</button>
+                </div>
+              )}
+              {paymentStep === 3 && (
+                <div style={{ padding: "10px 0" }}>
+                  <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro {paymentMethod === "mtn" ? "MTN" : "ORANGE"}</h3>
+                  <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
+                  <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
+                    placeholder="6XXXXXXXX"
+                    style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "left", boxSizing: "border-box" }} />
+                  <button onClick={handlePurchase} disabled={!phoneNumber || phoneNumber.length < 8}
+                    style={{ width: "100%", padding: 14, background: phoneNumber && phoneNumber.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: phoneNumber && phoneNumber.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
+                    💎 Payer {paymentBook.price?.toLocaleString()} FCFA
+                  </button>
+                  <button onClick={() => setPaymentStep(2)} style={{ width: "100%", background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", padding: 8 }}>← Retour</button>
+                </div>
+              )}
+              {paymentStep === 4 && (
+                <div style={{ textAlign: "center", padding: "30px 0" }}>
+                  <div style={{ fontSize: 70, marginBottom: 16, display: "inline-block", animation: "spin 2s linear infinite" }}>⏳</div>
+                  <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Finalisation du paiement...</h3>
+                  <div style={{ background: "#ffe4e1", border: "2px solid #dc3545", padding: 14, borderRadius: 8, textAlign: "center", marginBottom: 16, animation: "pulseWarning 1.5s ease-in-out infinite" }}>
+                    <p style={{ color: "#dc3545", fontSize: 14, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
+                      ⚠️ NE QUITTEZ PAS CET ÉCRAN<br/>jusqu'à finalisation complète du paiement
+                    </p>
+                  </div>
+                  <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
+                    🔔 Un message de retrait va apparaître sur votre téléphone. Composez votre code PIN.<br/>
+                    Cela peut prendre jusqu'à 30 secondes.
+                  </p>
+                </div>
+              )}
+              {paymentStep === 5 && (
+                <div style={{ textAlign: "center", padding: "32px 0" }}>
+                  <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
+                  <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
+                  <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
+  
+                  {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
+                        style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                        📖 Lire
+                      </button>
+                      <button onClick={async () => {
+                        try {
+                          // 🛡️ Télécharger avec watermark anti-piratage
+                          await downloadProtectedPDF(
+                            paymentBook.pdf_url,
+                            (paymentBook.title || "livre") + ".pdf",
+                            {
+                              name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                              email: user?.email || "",
+                              phone: phoneNumber || user?.user_metadata?.phone || "",
+                              userId: user?.id,
+                              bookId: paymentBook?.id,
+                            }
+                          );
+                        } catch (err) { alert("Erreur lors du téléchargement"); }
+                      }}
+                        style={{ flex: 1, padding: 14, background: "transparent", border: "2px solid " + G.gold, borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                        ⬇️ Télécharger
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
+                      style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      📖 Lire maintenant
+                    </button>
+                  )}
+                </div>
+              )}
+              {paymentStep === 6 && (
+                <div style={{ padding: "24px 0" }}>
+                  <div style={{ textAlign: "center", marginBottom: 20 }}>
+                    <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
+                    <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
+                    <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Si tu as été débité(e), ton livre sera débloqué automatiquement dès confirmation — tu peux fermer cette page. Tu le retrouveras dans « Ma bibliothèque ».</p>
+                  </div>
+                  <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
+                    <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
+                    <p style={{ color: "#7a4a00", fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+                      ✅ Vérifie ton solde Mobile Money<br/>
+                      ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
+                      ✅ Patiente quelques minutes et réessaie<br/>
+                      ✅ Vérifie ta connexion internet
+                    </p>
+                  </div>
+                  <button onClick={() => { setPaymentStep(2); setPaymentMethod(null); setPhoneNumber(""); }} style={{
+                    width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
+                    border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
+                  }}>
+                    🔁 Réessayer
+                  </button>
+                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>
+                    Annuler
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+  );
   if (page === "formation") {
     const b = fvBook || {};
     const aut = boutiqueAuteur && String(boutiqueAuteur.id) === String(b.auteur_id) ? boutiqueAuteur : null;
@@ -18382,6 +18528,8 @@ export default function App() {
             </div>
           ) : null}
         </div>
+        {showLecteurModal && lecteurModalNode}
+        {paiementModalNode}
       </div>
     );
   }
@@ -25453,147 +25601,7 @@ export default function App() {
         </div>
       )}
       {/* PAYMENT MODAL */}
-      {showPayment && paymentBook && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
-            {paymentStep === 1 && (
-              <>
-                <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
-                {paymentBook.coverUrl && (
-                  <div style={{ textAlign: "center", marginBottom: 14 }}>
-                    <img src={paymentBook.coverUrl} alt={paymentBook.title} style={{ height: 110, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
-                  </div>
-                )}
-                <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17, textAlign: "center" }}>{paymentBook.title}</h3>
-                <p style={{ color: "#888", fontSize: 13, marginBottom: 6, textAlign: "center" }}>par {paymentBook.author || "Auteur"}</p>
-                <div style={{ background: "#fff8e1", padding: "10px 14px", borderRadius: 8, marginBottom: 18, textAlign: "center" }}>
-                  <div style={{ fontSize: 11, color: "#7a5c00", marginBottom: 4 }}>Prix du livre</div>
-                  <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{paymentBook.price?.toLocaleString()} FCFA</div>
-                </div>
-                <button onClick={() => setPaymentStep(2)} style={{
-                  width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
-                  border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
-                }}>
-                  💎 Continuer vers le paiement
-                </button>
-                <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>Annuler</button>
-              </>
-            )}
-            {paymentStep === 2 && (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ fontSize: 32, marginBottom: 14 }}>💳</div>
-                <h3 style={{ color: "#1a1a1a", marginBottom: 8, fontSize: 16 }}>Choisis ta méthode</h3>
-                <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>Avec quel opérateur veux-tu payer ?</p>
-                <button onClick={() => { setPaymentMethod("mtn"); setPaymentStep(3); }} style={{
-                  width: "100%", padding: 16, marginBottom: 10, background: "#FFCC00", color: "#000",
-                  border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
-                }}>📱 MTN Mobile Money</button>
-                <button onClick={() => { setPaymentMethod("orange"); setPaymentStep(3); }} style={{
-                  width: "100%", padding: 16, marginBottom: 14, background: "#FF6600", color: "#fff",
-                  border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
-                }}>📱 Orange Money</button>
-                <button onClick={() => setPaymentStep(1)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer" }}>← Retour</button>
-              </div>
-            )}
-            {paymentStep === 3 && (
-              <div style={{ padding: "10px 0" }}>
-                <h3 style={{ color: "#1a1a1a", marginBottom: 4, fontSize: 16, textAlign: "center" }}>Entre ton numéro {paymentMethod === "mtn" ? "MTN" : "ORANGE"}</h3>
-                <p style={{ color: "#888", fontSize: 12, marginBottom: 16, textAlign: "center" }}>9 chiffres, sans +237</p>
-                <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
-                  placeholder="6XXXXXXXX"
-                  style={{ width: "100%", padding: "14px", background: "#f5f5f5", border: "2px solid #ddd", borderRadius: 10, color: "#1a1a1a", fontSize: 16, marginBottom: 10, textAlign: "left", boxSizing: "border-box" }} />
-                <button onClick={handlePurchase} disabled={!phoneNumber || phoneNumber.length < 8}
-                  style={{ width: "100%", padding: 14, background: phoneNumber && phoneNumber.length >= 8 ? "#1a1a1a" : "#ccc", border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", cursor: phoneNumber && phoneNumber.length >= 8 ? "pointer" : "not-allowed", fontSize: 14, marginBottom: 10 }}>
-                  💎 Payer {paymentBook.price?.toLocaleString()} FCFA
-                </button>
-                <button onClick={() => setPaymentStep(2)} style={{ width: "100%", background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", padding: 8 }}>← Retour</button>
-              </div>
-            )}
-            {paymentStep === 4 && (
-              <div style={{ textAlign: "center", padding: "30px 0" }}>
-                <div style={{ fontSize: 70, marginBottom: 16, display: "inline-block", animation: "spin 2s linear infinite" }}>⏳</div>
-                <h3 style={{ color: "#1a1a1a", marginBottom: 12, fontSize: 16 }}>Finalisation du paiement...</h3>
-                <div style={{ background: "#ffe4e1", border: "2px solid #dc3545", padding: 14, borderRadius: 8, textAlign: "center", marginBottom: 16, animation: "pulseWarning 1.5s ease-in-out infinite" }}>
-                  <p style={{ color: "#dc3545", fontSize: 14, lineHeight: 1.5, margin: 0, fontWeight: "bold" }}>
-                    ⚠️ NE QUITTEZ PAS CET ÉCRAN<br/>jusqu'à finalisation complète du paiement
-                  </p>
-                </div>
-                <p style={{ color: "#666", fontSize: 12, lineHeight: 1.5 }}>
-                  🔔 Un message de retrait va apparaître sur votre téléphone. Composez votre code PIN.<br/>
-                  Cela peut prendre jusqu'à 30 secondes.
-                </p>
-              </div>
-            )}
-            {paymentStep === 5 && (
-              <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
-                <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
-                <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
-
-                {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                      style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                      📖 Lire
-                    </button>
-                    <button onClick={async () => {
-                      try {
-                        // 🛡️ Télécharger avec watermark anti-piratage
-                        await downloadProtectedPDF(
-                          paymentBook.pdf_url,
-                          (paymentBook.title || "livre") + ".pdf",
-                          {
-                            name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
-                            email: user?.email || "",
-                            phone: phoneNumber || user?.user_metadata?.phone || "",
-                            userId: user?.id,
-                            bookId: paymentBook?.id,
-                          }
-                        );
-                      } catch (err) { alert("Erreur lors du téléchargement"); }
-                    }}
-                      style={{ flex: 1, padding: 14, background: "transparent", border: "2px solid " + G.gold, borderRadius: 10, color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                      ⬇️ Télécharger
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                    style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                    📖 Lire maintenant
-                  </button>
-                )}
-              </div>
-            )}
-            {paymentStep === 6 && (
-              <div style={{ padding: "24px 0" }}>
-                <div style={{ textAlign: "center", marginBottom: 20 }}>
-                  <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
-                  <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
-                  <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Si tu as été débité(e), ton livre sera débloqué automatiquement dès confirmation — tu peux fermer cette page. Tu le retrouveras dans « Ma bibliothèque ».</p>
-                </div>
-                <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
-                  <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
-                  <p style={{ color: "#7a4a00", fontSize: 12, lineHeight: 1.7, margin: 0 }}>
-                    ✅ Vérifie ton solde Mobile Money<br/>
-                    ✅ Réessaie avec l'autre opérateur (MTN/Orange)<br/>
-                    ✅ Patiente quelques minutes et réessaie<br/>
-                    ✅ Vérifie ta connexion internet
-                  </p>
-                </div>
-                <button onClick={() => { setPaymentStep(2); setPaymentMethod(null); setPhoneNumber(""); }} style={{
-                  width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
-                  border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
-                }}>
-                  🔁 Réessayer
-                </button>
-                <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); }} style={{ width: "100%", background: "none", border: "1px solid #ddd", borderRadius: 10, color: "#666", fontSize: 13, cursor: "pointer", padding: 12 }}>
-                  Annuler
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {paiementModalNode}
 
     </div>
   );
