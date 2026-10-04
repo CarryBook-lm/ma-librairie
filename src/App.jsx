@@ -18399,7 +18399,20 @@ export default function App() {
                   <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
                   <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
   
-                  {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
+                  {/* 04/10 : une formation ne se "lit" pas. Apres paiement on renvoie
+                      l'acheteur sur sa page de formation, ou s'affichent les liens d'acces. */}
+                  {paymentBook.product_type === "formation" ? (
+                    <button onClick={() => {
+                      const f = paymentBook;
+                      setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber("");
+                      setFvBook(f); setFvPaye(true); setFvContenu(""); setFvLiens([]);
+                      setPage("formation");
+                      try { window.scrollTo(0, 0); } catch (e) {}
+                    }}
+                      style={{ width: "100%", padding: 14, background: G.green, border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      🎓 Accéder à ma formation
+                    </button>
+                  ) : paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
                         style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
@@ -22138,7 +22151,20 @@ export default function App() {
                   <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Paiement réussi !</h3>
                   <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>{paymentBook.title} est à toi 📚</p>
 
-                  {paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
+                  {/* 04/10 : une formation ne se "lit" pas. Apres paiement on renvoie
+                      l'acheteur sur sa page de formation, ou s'affichent les liens d'acces. */}
+                  {paymentBook.product_type === "formation" ? (
+                    <button onClick={() => {
+                      const f = paymentBook;
+                      setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber("");
+                      setFvBook(f); setFvPaye(true); setFvContenu(""); setFvLiens([]);
+                      setPage("formation");
+                      try { window.scrollTo(0, 0); } catch (e) {}
+                    }}
+                      style={{ width: "100%", padding: 14, background: G.green, border: "none", borderRadius: 10, color: "#fff", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      🎓 Accéder à ma formation
+                    </button>
+                  ) : paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
                         style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
