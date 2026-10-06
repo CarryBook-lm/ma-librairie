@@ -144,7 +144,7 @@ export default async function handler(req, res) {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
       const patch = {};
-      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube", "couleur", "vitrine_nom", "vitrine_logo", "vitrine_logo_192", "vitrine_entete", "coul_entete", "coul_entete_texte", "coul_fond", "coul_prix", "coul_bouton", "coul_bouton_texte", "vitrine_formations_lien", "mode_vente", "abonnement_actif"].forEach((k) => {
+      ["nom_complet", "pays", "telephone", "bio", "photo_url", "pixel_meta", "pixel_tiktok", "facebook", "instagram", "tiktok", "linkedin", "youtube", "couleur", "vitrine_nom", "vitrine_logo", "vitrine_logo_192", "vitrine_entete", "coul_entete", "coul_entete_texte", "coul_fond", "coul_prix", "coul_bouton", "coul_bouton_texte", "vitrine_formations_lien", "mode_vente", "kyc_paiement_phone", "abonnement_actif"].forEach((k) => {
         if (k in body) patch[k] = (body[k] === "" ? null : body[k]);
       });
       if (Object.keys(patch).length === 0) return res.status(400).json({ error: "Rien a mettre a jour." });

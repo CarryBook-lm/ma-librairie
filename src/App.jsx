@@ -17512,6 +17512,11 @@ export default function App() {
         nom_complet: auteurNom.trim(),
         pays: auteurPays.trim(),
         telephone: telComplet,
+        // 06/10 : le champ s'appelle « Numéro Mobile Money (pour être payé) », mais
+        // les virements lisaient kyc_paiement_phone, fige au moment de la verification
+        // d'identite. Un auteur a ete paye pendant des semaines sur son ancien numero.
+        // Les deux colonnes sont desormais tenues ensemble.
+        kyc_paiement_phone: telComplet || undefined,
         bio: auteurBio.trim(),
         photo_url: auteurPhoto || null,
         pixel_meta: auteurPixel.trim(),
@@ -20310,6 +20315,7 @@ export default function App() {
                 <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
                 <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder={auteurPays ? "Ton numéro" : "Choisis d'abord ton pays"} disabled={!auteurPays} style={{ ...champ, flex: 1, marginBottom: 0, opacity: auteurPays ? 1 : 0.6 }} />
               </div>
+              <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 6, lineHeight: 1.5 }}>C'est sur ce numéro que CarryBooks envoie tes retraits. Si tu le changes ici, tes prochains virements partiront sur le nouveau numéro.</div>
               <div style={{ height: 14 }} />
               <label style={labelSt}>Ton adresse email *</label>
               <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
