@@ -326,6 +326,53 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, titre: livre.title });
     }
 
+    // 06/10 : PUBLIER EN VITRINE SEULE.
+    // La politique RLS de books n'autorise le navigateur a inserer qu'un livre
+    // "brouillon" ou "en_attente" - c'est voulu, sinon n'importe quel visiteur
+    // mettrait un livre en ligne. Une publication en vitrine ecrit status
+    // "actif" : elle doit donc passer par ici, avec la cle de service, apres
+    // verification de l'auteur. La regle "reserve aux auteurs verifies" est
+    // ainsi appliquee par le serveur, et plus seulement par le navigateur.
+    if (action === "livre_vitrine") {
+      const id = Number(body.id || 0);
+      const bookId = Number(body.book_id || 0);
+      const champs = body.payload && typeof body.payload === "object" ? body.payload : null;
+      if (!id || !champs) return res.status(400).json({ error: "id et payload requis." });
+
+      const { data: aa } = await supa.from("auteurs").select("id, kyc_status, banni").eq("id", id).limit(1);
+      const aut = aa && aa[0];
+      if (!aut) return res.status(404).json({ error: "Compte auteur introuvable." });
+      if (aut.banni) return res.status(403).json({ error: "Ton compte est suspendu." });
+      if (aut.kyc_status !== "valide") {
+        return res.status(403).json({ error: "La vente en vitrine seule est reservee aux auteurs verifies. Termine ta verification d'identite dans Mon compte." });
+      }
+
+      // Le navigateur ne choisit pas les champs sensibles : on les impose ici.
+      const row = Object.assign({}, champs);
+      delete row.id;
+      delete row.created_at;
+      row.auteur_id = id;
+      row.status = "actif";
+      row.moderation = "valide";
+      row.exclusif_vitrine = true;
+      row.motif_refus = null;
+      row.masque = false;
+
+      if (bookId) {
+        const { data: bs } = await supa.from("books").select("id, auteur_id").eq("id", bookId).limit(1);
+        const livre = bs && bs[0];
+        if (!livre) return res.status(404).json({ error: "Ce livre est introuvable. Recharge la page." });
+        if (String(livre.auteur_id) !== String(id)) return res.status(403).json({ error: "Ce livre ne t'appartient pas." });
+        const { error } = await supa.from("books").update(row).eq("id", bookId);
+        if (error) return res.status(500).json({ error: error.message });
+        return res.status(200).json({ ok: true, id: bookId });
+      }
+
+      const { data: cree, error } = await supa.from("books").insert(row).select("id").maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, id: cree && cree.id });
+    }
+
     return res.status(400).json({ error: "Action inconnue." });
   } catch (e) {
     return res.status(500).json({ error: e.message });

@@ -17987,7 +17987,16 @@ export default function App() {
         exclusif_vitrine: enVitrineSeule,
       };
       let idFormation = pubEditId;
-      if (pubEditId) {
+      if (enVitrineSeule) {
+        // Meme raison que pour un livre : seul le serveur peut ecrire un "actif".
+        const rv = await fetch("/api/auteur-auth", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "livre_vitrine", id: auteurProfil.id, book_id: pubEditId || 0, payload }),
+        });
+        const rj = await rv.json().catch(() => ({}));
+        if (!rj.ok) throw new Error(rj.error || "Publication impossible. Réessaie.");
+        idFormation = rj.id || pubEditId;
+      } else if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
         if (error) throw error;
       } else {
@@ -18067,14 +18076,25 @@ export default function App() {
         exclusif_vitrine: enVitrineSeule,
         product_type: "numerique", can_read: true, can_download: f.type === "roman" ? false : (f.type === "guide" || f.type === "audio") ? pubDownloadable : true,
       };
-      if (pubEditId) {
+      // 06/10 : un livre "actif" ne peut pas etre ecrit depuis le navigateur — la
+      // politique RLS de books ne laisse passer que brouillon / en_attente. La
+      // publication en vitrine passe donc par le serveur, qui verifie l'auteur.
+      if (enVitrineSeule) {
+        const rv = await fetch("/api/auteur-auth", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "livre_vitrine", id: auteurProfil.id, book_id: pubEditId || 0, payload }),
+        });
+        const rj = await rv.json().catch(() => ({}));
+        if (!rj.ok) throw new Error(rj.error || "Publication impossible. Réessaie.");
+        setPubMsg("✅ Ton livre est EN LIGNE dans ta vitrine. Partage ton lien pour le vendre : tu touches 85 % sur chaque vente.");
+      } else if (pubEditId) {
         const { error } = await supabase.from("books").update(payload).eq("id", pubEditId);
         if (error) throw error;
-        setPubMsg(enVitrineSeule ? "✅ Ton livre est EN LIGNE dans ta vitrine. Partage ton lien pour le vendre : tu touches 85 % sur chaque vente." : "✅ Ton livre a été modifié et renvoyé pour validation. Le traitement peut durer jusqu'à 24h.");
+        setPubMsg("✅ Ton livre a été modifié et renvoyé pour validation. Le traitement peut durer jusqu'à 24h.");
       } else {
         const { error } = await supabase.from("books").insert(payload);
         if (error) throw error;
-        setPubMsg(enVitrineSeule ? "✅ Ton livre est EN LIGNE dans ta vitrine. Partage ton lien pour le vendre : tu touches 85 % sur chaque vente." : "✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par CarryBooks.");
+        setPubMsg("✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par CarryBooks.");
       }
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
