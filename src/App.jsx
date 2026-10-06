@@ -17515,8 +17515,10 @@ export default function App() {
         // 06/10 : le champ s'appelle « Numéro Mobile Money (pour être payé) », mais
         // les virements lisaient kyc_paiement_phone, fige au moment de la verification
         // d'identite. Un auteur a ete paye pendant des semaines sur son ancien numero.
-        // Les deux colonnes sont desormais tenues ensemble.
-        kyc_paiement_phone: telComplet || undefined,
+        // On synchronise donc les deux colonnes — mais SEULEMENT si l'auteur vient de
+        // changer son numero. Quelques auteurs ont volontairement un compte de
+        // paiement different : enregistrer sa bio ne doit pas deplacer leur argent.
+        kyc_paiement_phone: (telComplet && telComplet !== ((auteurProfil && auteurProfil.telephone) || "")) ? telComplet : undefined,
         bio: auteurBio.trim(),
         photo_url: auteurPhoto || null,
         pixel_meta: auteurPixel.trim(),
