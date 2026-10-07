@@ -22854,10 +22854,6 @@ export default function App() {
                     juste sous le hero. youtube-nocookie evite de poser les cookies
                     publicitaires de YouTube sur carrybooks.com. */}
                 <div style={{ margin: "0 16px 28px", borderRadius: 14, overflow: "hidden", border: "1px solid " + G.border, background: "#fff" }}>
-                  <div style={{ padding: "12px 14px 10px" }}>
-                    <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>Yolli — ta prochaine histoire commence ici</div>
-                    <div style={{ fontSize: 12, color: G.textDim, marginTop: 3, lineHeight: 1.5 }}>Des rencontres vraies, pour construire une histoire qui te ressemble.</div>
-                  </div>
                   <div style={{ width: "100%", aspectRatio: "16 / 9", background: "#000" }}>
                     <iframe
                       src="https://www.youtube-nocookie.com/embed/qv3VXakEfsU?rel=0"
@@ -22868,10 +22864,10 @@ export default function App() {
                       style={{ width: "100%", height: "100%", border: "none", display: "block" }}
                     />
                   </div>
-                  <div style={{ padding: 12 }}>
+                  <div style={{ padding: 10 }}>
                     <a href="https://yolli.net/?src=carrybooks" target="_blank" rel="noopener noreferrer"
                       onClick={() => { try { trackPixelEvent("Lead", { content_name: "Yolli depuis CarryBooks" }); } catch (e) {} }}
-                      style={{ display: "block", textAlign: "center", padding: 14, borderRadius: 10, background: "linear-gradient(135deg, #e0399a, #8e2de2)", color: "#fff", fontWeight: "bold", fontSize: 15, textDecoration: "none", fontFamily: "Georgia, serif" }}>
+                      style={{ display: "block", textAlign: "center", padding: "9px 14px", borderRadius: 9, background: "linear-gradient(135deg, #e0399a, #8e2de2)", color: "#fff", fontWeight: "bold", fontSize: 14, textDecoration: "none", fontFamily: "Georgia, serif" }}>
                       Inscrivez-vous
                     </a>
                   </div>
