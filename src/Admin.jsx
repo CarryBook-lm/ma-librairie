@@ -402,6 +402,10 @@ export default function Admin() {
   const [eaSearch, setEaSearch] = useState("");
   const [eaSelectedKyc, setEaSelectedKyc] = useState(null); // auteur sélectionné (vérif)
   const [eaTodo, setEaTodo] = useState({ livres: 0, kyc: 0, retraits: 0 });
+  // 07/10 : compteur des clics sur l'encart Yolli de l'accueil CarryBooks.
+  // La table clics_pub est generique (colonne "cible") : un futur encart
+  // MaBoutik ou Dayligoo se comptera sans une ligne de code en plus ici.
+  const [clicsYolli, setClicsYolli] = useState({ total: 0, jour: 0, sem: 0, mois: 0 });
   // Sous-vue de l'onglet Produits : null=accueil cartes, "digital"|"physical"|"article"|"audio"
   const [productSubView, setProductSubView] = useState(null);
   // Sous-onglet à l'intérieur d'une sous-vue : "list"|"shipping"|"orders"
@@ -639,6 +643,23 @@ export default function Admin() {
       .eq("auteur_id", auteurId).order("created_at", { ascending: true }).limit(2000);
     setSupAll(prev => { const n = Object.assign({}, prev); n[auteurId] = { msgs: data || [] }; return n; });
   };
+  useEffect(() => {
+    if (view !== "dashboard") return;
+    (async () => {
+      const compte = () => supabase.from("clics_pub").select("id", { count: "exact", head: true }).eq("cible", "yolli");
+      const ilya = (j) => new Date(Date.now() - j * 86400000).toISOString();
+      const minuit = (() => { const t = new Date(); t.setHours(0, 0, 0, 0); return t.toISOString(); })();
+      try {
+        const [t, j, s, m] = await Promise.all([
+          compte(),
+          compte().gte("created_at", minuit),
+          compte().gte("created_at", ilya(7)),
+          compte().gte("created_at", ilya(30)),
+        ]);
+        setClicsYolli({ total: t.count || 0, jour: j.count || 0, sem: s.count || 0, mois: m.count || 0 });
+      } catch (e) {}
+    })();
+  }, [view]);
   const chargerSupportAdmin = async (auteursArg) => {
     const auts = auteursArg || eaAuteurs;
     // Apercus : les 3000 messages les plus recents, du plus recent au plus ancien.
@@ -2498,6 +2519,20 @@ export default function Admin() {
               <div style={{ fontSize: 11, color: "#888" }}>
                 {grandTodayRevenue === 0 ? "Pas de revenus aujourd'hui" : "Revenus du jour"}
               </div>
+            </div>
+
+            {/* COMPTEUR YOLLI — clics sur le bouton « Inscrivez-vous » de l'accueil */}
+            <div style={{ background: "linear-gradient(135deg, #2a0d22 0%, #1d0d33 100%)", border: "1.5px solid #e0399a", borderRadius: 10, padding: 18, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#f06bb4", letterSpacing: 2, marginBottom: 10, textTransform: "uppercase", textAlign: "center" }}>💞 Clics vers Yolli</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                {[["Aujourd'hui", clicsYolli.jour], ["7 jours", clicsYolli.sem], ["30 jours", clicsYolli.mois], ["Total", clicsYolli.total]].map(([lab, n]) => (
+                  <div key={lab} style={{ background: "rgba(255,255,255,0.06)", borderRadius: 8, padding: "10px 4px", textAlign: "center" }}>
+                    <div style={{ fontSize: 20, fontWeight: "bold", color: "#f06bb4" }}>{Number(n || 0).toLocaleString("fr-FR")}</div>
+                    <div style={{ fontSize: 10, color: "#b79ac0", marginTop: 2 }}>{lab}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 10.5, color: "#8a7b92", marginTop: 10, textAlign: "center", lineHeight: 1.5 }}>Nombre d'appuis sur « Inscrivez-vous » sous la vidéo de l'accueil. Les inscriptions réellement faites se comptent dans Yolli.</div>
             </div>
 
             {/* SECTION SOLDE CAMPAY A RETIRER */}

@@ -22866,7 +22866,12 @@ export default function App() {
                   </div>
                   <div style={{ padding: 10 }}>
                     <a href="https://yolli.net/?src=carrybooks" target="_blank" rel="noopener noreferrer"
-                      onClick={() => { try { trackPixelEvent("Lead", { content_name: "Yolli depuis CarryBooks" }); } catch (e) {} }}
+                      onClick={() => {
+                        try { trackPixelEvent("Lead", { content_name: "Yolli depuis CarryBooks" }); } catch (e) {}
+                        // On enregistre le clic sans attendre la reponse : le lien s'ouvre
+                        // dans un autre onglet, la page reste vivante et l'insertion finit.
+                        try { supabase.from("clics_pub").insert([{ cible: "yolli", page: "accueil" }]); } catch (e) {}
+                      }}
                       style={{ display: "block", textAlign: "center", padding: "9px 14px", borderRadius: 9, background: "linear-gradient(135deg, #e0399a, #8e2de2)", color: "#fff", fontWeight: "bold", fontSize: 14, textDecoration: "none", fontFamily: "Georgia, serif" }}>
                       Inscrivez-vous
                     </a>
