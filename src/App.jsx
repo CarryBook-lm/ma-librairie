@@ -1731,6 +1731,12 @@ function idYoutube(url) {
 }
 // Une formation a UNE seule categorie et ses propres sous-categories. La liste est
 // ecrite ici et pas lue en base : le formulaire ne depend donc de rien d'autre.
+// 08/10 : prix plancher du CATALOGUE CarryBooks. Sous ce montant, une vente ne
+// rembourse pas le clic publicitaire qui l'a amenee. DEUX EXCEPTIONS :
+//  - les livres GRATUITS (type "gratuit", prix 0), produits d'appel assumes ;
+//  - les livres vendus UNIQUEMENT dans la vitrine de l'auteur : CarryBooks ne
+//    paie aucune publicite pour eux, l'auteur fixe donc son prix librement.
+const PRIX_MINI = 2000;
 const CAT_FORMATION = "Formation Vidéo";
 const SOUS_CATS_FORMATION = ["IA", "Application", "Site Web", "Réseaux Sociaux", "Logiciel", "Gagner de l'argent", "BRVM", "Crypto", "Trading", "Vente"];
 const CATEGORIES_FALLBACK = {
@@ -17966,6 +17972,10 @@ export default function App() {
     if (!f.subcategory) { setFmMsg("⚠️ Choisis une sous-catégorie."); return; }
     if (!f.cover) { setFmMsg("⚠️ Ajoute la couverture (A4 paysage)."); return; }
     if (!String(f.price).trim() || (parseInt(f.price) || 0) <= 0) { setFmMsg("⚠️ Indique le prix de ta formation."); return; }
+    if ((parseInt(f.price) || 0) < PRIX_MINI && !(!!pubExclusif && !!(auteurProfil && auteurProfil.kyc_status === "valide"))) {
+      setFmMsg("💰 Pour le catalogue CarryBooks, le prix minimum est de " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA. En vitrine uniquement, tu fixes ton prix librement.");
+      return;
+    }
     if (!f.contenu.trim()) { setFmMsg("⚠️ Présente ta formation dans la zone de texte."); return; }
     if (fmLiens.length === 0) { setFmMsg("⚠️ Ajoute au moins un lien d'accès : c'est ce que reçoit l'acheteur après son paiement."); return; }
     const kycValide = !!(auteurProfil && auteurProfil.kyc_status === "valide");
@@ -18041,6 +18051,12 @@ export default function App() {
     if (!f.category) errs.category = true;
     if (!f.subcategory) errs.subcategory = true;
     if (!isGratuit && !String(f.price).trim()) errs.price = true;
+    const versVitrineSeule = !!pubExclusif && !!(auteurProfil && auteurProfil.kyc_status === "valide");
+    if (!isGratuit && !versVitrineSeule && String(f.price).trim() && (parseInt(f.price) || 0) < PRIX_MINI) {
+      setPubErrors({ price: true });
+      setPubMsg("💰 Pour le catalogue CarryBooks, le prix minimum est de " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA. Mets " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA ou plus — ou choisis « Ma vitrine uniquement », où tu fixes ton prix librement.");
+      return;
+    }
     if (!f.cover) errs.cover = true;
     if (!f.summary.trim()) errs.summary = true;
     if (needsExtract && !String(f.extract_pages).trim()) errs.extract_pages = true;
@@ -19271,6 +19287,7 @@ export default function App() {
 
                   <label style={labelSt}>Prix en FCFA *</label>
                   <input value={fmForm.price} onChange={e => setFmForm(f => ({ ...f, price: e.target.value.replace(/\D/g, "") }))} inputMode="numeric" placeholder="Ex : 15000" style={champ} />
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>Minimum {PRIX_MINI.toLocaleString("fr-FR")} FCFA pour le catalogue CarryBooks. En vitrine uniquement, tu fixes ton prix librement.</div>
                   <div style={{ height: 16 }} />
 
                   <label style={labelSt}>Présentation de la formation *</label>
@@ -19436,7 +19453,8 @@ export default function App() {
                   <div style={{ height: 14 }} />
                   {pubForm.type !== "gratuit" && (<>
                   <label style={labelSt}>Prix (FCFA) *</label>
-                  <input type="number" value={pubForm.price} onChange={e => { setPubForm(f => ({ ...f, price: e.target.value })); setPubErrors(p => ({ ...p, price: false })); }} placeholder="Ex : 1000" style={{ ...champ, ...(pubErrors.price ? { border: "2px solid #e53935" } : {}) }} />
+                  <input type="number" value={pubForm.price} onChange={e => { setPubForm(f => ({ ...f, price: e.target.value })); setPubErrors(p => ({ ...p, price: false })); }} placeholder="Ex : 3000" style={{ ...champ, ...(pubErrors.price ? { border: "2px solid #e53935" } : {}) }} />
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>Minimum {PRIX_MINI.toLocaleString("fr-FR")} FCFA pour le catalogue CarryBooks. En vitrine uniquement, tu fixes ton prix librement.</div>
                   <div style={{ height: 14 }} />
                   </>)}
                   <label style={labelSt}>Couverture * (A4 portrait, ex : 1240 × 1754 px)</label>

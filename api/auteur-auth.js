@@ -347,6 +347,9 @@ export default async function handler(req, res) {
         return res.status(403).json({ error: "La vente en vitrine seule est reservee aux auteurs verifies. Termine ta verification d'identite dans Mon compte." });
       }
 
+      // Pas de prix plancher ici : cette action ne sert QU'A la publication en
+      // vitrine seule, ou l'auteur fixe son prix librement. Le plancher de
+      // 2 000 FCFA ne vaut que pour le catalogue CarryBooks.
       // Le navigateur ne choisit pas les champs sensibles : on les impose ici.
       const row = Object.assign({}, champs);
       delete row.id;
