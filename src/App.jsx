@@ -17447,8 +17447,11 @@ export default function App() {
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
     // 🎁 Parrainage : visible UNIQUEMENT si activé par l'admin (cache si active === false)
     ...(appReferralSettings?.active !== false ? [{ id: "referral", label: "🎁 Mon parrainage" }] : []),
-    { id: "quiz", label: "🎯 Quiz" },
-    { id: "myResults", label: "💎 Mes résultats" },
+    // Quiz et resultats CarryCare : CarryBooks uniquement.
+    ...(EST_HOMOROMANCE ? [] : [
+      { id: "quiz", label: "🎯 Quiz" },
+      { id: "myResults", label: "💎 Mes résultats" },
+    ]),
     { id: "about", label: "À propos" },
     { id: "faq", label: "FAQ" },
     { id: "contact", label: "Contact" },
@@ -22838,7 +22841,8 @@ export default function App() {
                     }}
                   />
 
-                  {/* Carte CARRYCARE - banniere pleine largeur */}
+                  {/* Carte CARRYCARE - banniere pleine largeur. Absente de HomoRomance. */}
+                  {!EST_HOMOROMANCE && (
                   <img
                     src="/carrycare-banner.png?v=2"
                     alt="CarryCare"
@@ -22861,6 +22865,7 @@ export default function App() {
                     onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                     onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                   />
+                  )}
                   {/* Animation du chevron */}
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
                 </div>
@@ -22927,7 +22932,9 @@ export default function App() {
 
                 {/* PUB YOLLI — 07/10 : video de presentation + bouton d'inscription,
                     juste sous le hero. youtube-nocookie evite de poser les cookies
-                    publicitaires de YouTube sur carrybooks.com. */}
+                    publicitaires de YouTube sur carrybooks.com.
+                    09/10 : absente de HomoRomance. */}
+                {!EST_HOMOROMANCE && (
                 <div style={{ margin: "0 16px 28px", borderRadius: 14, overflow: "hidden", border: "1px solid " + G.border, background: "#fff" }}>
                   <div style={{ width: "100%", aspectRatio: "16 / 9", background: "#000" }}>
                     <iframe
@@ -22952,6 +22959,7 @@ export default function App() {
                     </a>
                   </div>
                 </div>
+                )}
 
                 {/* BEST-SELLERS — Top 5 livres les plus achetés (num�riques uniquement sur la home) */}
                 {(() => {
@@ -25440,8 +25448,8 @@ export default function App() {
         )}
 
 
-        {/* CARRY'QUIZ WIDGET — compact 3 lines */}
-        {page === "home" && (
+        {/* CARRY'QUIZ WIDGET — compact 3 lines. Absent de HomoRomance. */}
+        {page === "home" && !EST_HOMOROMANCE && (
           <div style={{ padding: "12px 16px 0", background: G.bg }}>
             <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", borderRadius: 12, padding: "12px 14px", border: "1px solid " + G.gold, textAlign: "center" }}>
               {/* Line 1: Logo + Title */}
