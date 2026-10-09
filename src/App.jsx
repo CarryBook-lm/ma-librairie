@@ -1889,6 +1889,15 @@ function surCarryBooks(b) {
   return true;
 }
 
+// Sur quelle etiquette ce livre est-il range dans le menu du haut ?
+// CarryBooks : sa categorie (Romans, Jeunesse...).
+// HomoRomance : sa SOUS-categorie (Romance, Erotique, Drame...), puisque tous
+// les livres du site sont dans la seule categorie "HomoRomance".
+function champCategorie(b) {
+  if (!b) return "";
+  return (EST_HOMOROMANCE ? b.subcategory : b.category) || "";
+}
+
 function renderBadgeVerifie(show) {
   if (!show) return null;
   return (
@@ -13593,7 +13602,7 @@ function ReclamerLivre({ G, setPage }) {
 
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
-  const [CATEGORIES, setCATEGORIES] = useState(CATEGORIES_FALLBACK);
+  const [CATEGORIES, setCATEGORIES] = useState(EST_HOMOROMANCE ? {} : CATEGORIES_FALLBACK);
 
   // ===== MODULE POD (Print On Demand) — Commande papier =====
   const [shippingZones, setShippingZones] = useState([]); // zones actives chargées depuis Supabase
@@ -14694,7 +14703,14 @@ export default function App() {
               .filter(s => s.category_id === c.id)
               .map(s => s.name);
           });
-          setCATEGORIES(obj);
+          if (EST_HOMOROMANCE) {
+            // Le menu du haut porte les sous-categories de "HomoRomance".
+            const objHR = {};
+            (obj[CAT_HOMOROMANCE] || []).forEach(s => { objHR[s] = []; });
+            setCATEGORIES(objHR);
+          } else {
+            setCATEGORIES(obj);
+          }
         }
       } catch (e) {
         console.error('Erreur fetchCategoriesFromSupabase:', e);
@@ -17411,8 +17427,8 @@ export default function App() {
     const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.author?.toLowerCase().includes(searchQuery.toLowerCase());
     let matchCat = selectedCategory === "Tous" ||
-      b.category === selectedCategory ||
-      b.category?.toLowerCase().startsWith(selectedCategory.toLowerCase().replace(/s$/, ""));
+      champCategorie(b) === selectedCategory ||
+      champCategorie(b).toLowerCase().startsWith(selectedCategory.toLowerCase().replace(/s$/, ""));
     if (selectedCategory === "Livres Gratuits") matchCat = b.price === 0;
     if (selectedCategory === "Livre Audio") matchCat = b.category === "Livre Audio" || !!b.audio_url;
     const matchSub = selectedSubCategory === "Tous" || b.subcategory === selectedSubCategory;
@@ -22856,7 +22872,7 @@ export default function App() {
                   <div id="exploreCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
                     {Object.keys(CATEGORIES).map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
-                      const bk = (books || []).find(b => b.status === "actif" && surCarryBooks(b) && b.cover && (b.category === cat || (b.category || "").toLowerCase().startsWith(low)));
+                      const bk = (books || []).find(b => b.status === "actif" && surCarryBooks(b) && b.cover && (champCategorie(b) === cat || champCategorie(b).toLowerCase().startsWith(low)));
                       const cover = bk ? bk.cover : null;
                       return (
                         <div key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); setPage("catalog"); window.scrollTo(0, 0); }} style={{ flex: "0 0 auto", width: "calc((100% - 44px) / 4.5)", position: "relative", borderRadius: 10, overflow: "hidden", cursor: "pointer", aspectRatio: "1 / 1.5", background: cover ? "#111" : "linear-gradient(135deg, " + G.gold + ", #8a6d1f)" }}>
@@ -23055,12 +23071,12 @@ export default function App() {
                 {(() => {
                   const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && surCarryBooks(b);
                   const isRomanCat = k => /^roman/i.test(k) || /saga/i.test(k) || /romance/i.test(k) || /po[eé]sie/i.test(k) || /audio/i.test(k);
-                  const catHasBooks = k => books.some(b => isDigitalReco(b) && (b.category === k || (b.category || "").toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
+                  const catHasBooks = k => books.some(b => isDigitalReco(b) && (champCategorie(b) === k || champCategorie(b).toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
                   const firstGuideCat = Object.keys(CATEGORIES).find(k => !isRomanCat(k) && catHasBooks(k));
                   const owned = new Set([...(purchasedBooks || []), ...(favoriteBooks || [])]);
-                  const likedCats = {}; books.forEach(b => { if (owned.has(b.id) && b.category) likedCats[b.category] = (likedCats[b.category] || 0) + 1; });
+                  const likedCats = {}; books.forEach(b => { if (owned.has(b.id) && champCategorie(b)) likedCats[champCategorie(b)] = (likedCats[champCategorie(b)] || 0) + 1; });
                   const catsAimees = Object.keys(likedCats).sort((a, b) => likedCats[b] - likedCats[a]);
-                  let reco = melangerListe(catsAimees.length ? books.filter(b => isDigitalReco(b) && !owned.has(b.id) && catsAimees.includes(b.category)) : []);
+                  let reco = melangerListe(catsAimees.length ? books.filter(b => isDigitalReco(b) && !owned.has(b.id) && catsAimees.includes(champCategorie(b))) : []);
                   if (reco.length < 4) { const pop = (topPurchasedBooks && topPurchasedBooks.length ? topPurchasedBooks : books.filter(isDigitalReco)).filter(b => !owned.has(b.id) && !reco.find(r => r.id === b.id)); reco = [...reco, ...pop]; }
                   reco = reco.slice(0, 12);
                   return Object.keys(CATEGORIES).map(cat => {
@@ -23068,7 +23084,7 @@ export default function App() {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const catBooks = melangerListe(books.filter(b => 
                     isDigitalBook(b) && surCarryBooks(b) && 
-                    (b.category === cat || b.category?.toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")))
+                    (champCategorie(b) === cat || champCategorie(b).toLowerCase().startsWith(cat.toLowerCase().replace(/s$/, "")))
                   ));
                   if (catBooks.length === 0) return null;
                   // D�sactiver l'insertion des "Nouveaut�s Produits Physiques" sur la home num�rique
