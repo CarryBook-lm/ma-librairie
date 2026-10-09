@@ -1877,7 +1877,9 @@ const EST_HOMOROMANCE = (function () {
   } catch (e) { return false; }
 })();
 const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
-const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png" : "/logo-carrybooks.png";
+// Le service worker sert les images "cache d'abord" : on change le numero de version
+// a chaque fois qu'on remplace le logo, sinon les anciennes visiteuses gardent l'ancien.
+const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=2" : "/logo-carrybooks.png";
 
 // Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
 // jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
