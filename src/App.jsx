@@ -1811,7 +1811,9 @@ const CONTRAT_ARTICLES = [
   ["Article 7 - Conditions d'utilisation", "L'Auteur déclare avoir pris connaissance et accepter les Conditions Générales d'Utilisation de " + SITE_NOM + ", qui font partie intégrante du présent contrat."],
   ["Article 8 - Durée, résiliation et sanctions", "Le contrat prend effet à la signature pour une durée indéterminée. Chaque partie peut y mettre fin à tout moment. En cas de manquement grave (fraude, piratage, contenu illicite, fausses déclarations), " + SITE_NOM + " peut résilier le contrat et bannir l'Auteur avec effet immédiat, sans préavis ni indemnité."],
   ["Article 9 - Protection des données", "Les informations personnelles et la pièce d'identité de l'Auteur sont collectées uniquement aux fins d'identification, de lutte contre la fraude et de paiement. Elles sont conservées de manière confidentielle."],
-  ["Article 10 - Loi applicable et litiges", "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis."],
+  ["Article 10 - Loi applicable et litiges", (EST_HOMOROMANCE
+    ? "En cas de litige, les parties recherchent une solution amiable avant toute autre démarche."
+    : "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis.")],
 ];
 
 // ============================================================
@@ -14288,7 +14290,7 @@ export default function App() {
   const [selAuteurId, setSelAuteurId] = useState(null);
   const [addAuteurOpen, setAddAuteurOpen] = useState(false);
   const [addAuteurNom, setAddAuteurNom] = useState("");
-  const listeAuteursPub = () => [{ id: 0, nom: (auteurProfil && auteurProfil.nom_complet) || "Landrine Maff", ville: (auteurProfil && auteurProfil.pays) || "Cameroun", photo_url: (auteurProfil && auteurProfil.photo_url) || null, verifie: true }, ...profilsAuteurs.filter(p => !/landrine/i.test(p.nom))];
+  const listeAuteursPub = () => [{ id: 0, nom: (auteurProfil && auteurProfil.nom_complet) || (EST_HOMOROMANCE ? "Johanna Morisson" : "Landrine Maff"), ville: EST_HOMOROMANCE ? "" : ((auteurProfil && auteurProfil.pays) || "Cameroun"), photo_url: (auteurProfil && auteurProfil.photo_url) || null, verifie: true }, ...profilsAuteurs.filter(p => !/landrine/i.test(p.nom))];
   const profilCoche = () => listeAuteursPub().find(a => a.id === selAuteurId) || null;
   const chargerProfilsAuteurs = async () => { const { data } = await supabase.from("auteurs_affichage").select("*").order("nom", { ascending: true }); setProfilsAuteurs(data || []); if (selAuteurId === null) setSelAuteurId(0); };
   useEffect(() => { chargerProfilsAuteurs(); }, [auteurProfil]);
@@ -19029,7 +19031,7 @@ export default function App() {
             </div>
             {auteurAuthMode === "signup" && (<>
               <label style={labelSt}>Ton nom d'auteur</label>
-              <input value={auteurAuthNom} onChange={e => setAuteurAuthNom(e.target.value)} placeholder="ex : Landrine Maff" style={champ} />
+              <input value={auteurAuthNom} onChange={e => setAuteurAuthNom(e.target.value)} placeholder={EST_HOMOROMANCE ? "ex : Johanna Morisson" : "ex : Landrine Maff"} style={champ} />
               <div style={{ height: 12 }} />
               <label style={labelSt}>Le nom de ta vitrine</label>
               <input value={auteurVitrineNom} onChange={e => setAuteurVitrineNom(e.target.value)} placeholder={auteurAuthNom.trim() ? ("ex : " + auteurAuthNom.trim()) : "ex : Les Éditions du Baobab"} maxLength={40} style={champ} />
@@ -24975,7 +24977,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                {SITE_NOM} (« nous », « notre », « nos ») est une application de lecture numérique opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Sylviane Landrine Maffo, basée à Yaoundé, Cameroun. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
+                {SITE_NOM} (« nous », « notre », « nos ») est une application de lecture numérique{EST_HOMOROMANCE ? "." : null}{!EST_HOMOROMANCE && <> opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Sylviane Landrine Maffo, basée à Yaoundé, Cameroun.</>} Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
               </p>
             </div>
 
@@ -25083,9 +25085,11 @@ export default function App() {
               </p>
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
                 📧 <strong>E-mail :</strong> {SITE_EMAIL}<br />
+                {!EST_HOMOROMANCE && (<>
                 🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
                 👤 <strong>Responsable :</strong> Sylviane Landrine Maffo<br />
                 📍 <strong>Adresse :</strong> Yaoundé, Cameroun
+                </>)}
               </p>
             </div>
 
@@ -25102,7 +25106,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Chez <strong style={{ color: G.text }}>{SITE_NOM}</strong> (opérée par CARRY'GOO, Yaoundé, Cameroun), vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
+                Chez <strong style={{ color: G.text }}>{SITE_NOM}</strong>{!EST_HOMOROMANCE && " (opérée par CARRY'GOO, Yaoundé, Cameroun)"}, vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
               </p>
             </div>
 
@@ -25144,8 +25148,10 @@ export default function App() {
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>NOUS CONTACTER</div>
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
                 📧 <strong>E-mail :</strong> {SITE_EMAIL}<br />
+                {!EST_HOMOROMANCE && (<>
                 🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
                 📍 <strong>Adresse :</strong> Yaoundé, Cameroun
+                </>)}
               </p>
             </div>
 
@@ -25174,12 +25180,17 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>1. ÉDITEUR DU SITE</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+                {EST_HOMOROMANCE ? (<>
+                Le site <strong style={{ color: G.text }}>{SITE_DOMAINE}</strong> est édité par <strong style={{ color: G.text }}>{SITE_NOM}</strong>.<br /><br />
+                <strong style={{ color: G.text }}>Contact :</strong> {SITE_EMAIL}
+                </>) : (<>
                 Le site <strong style={{ color: G.text }}>carrybooks.com</strong> est édité par <strong style={{ color: G.text }}>CARRY'GOO</strong>, établissement enregistré au Cameroun.<br /><br />
                 <strong style={{ color: G.text }}>Siège social :</strong> Carrefour Sapeurs Pompiers Mimboman, Yaoundé, Cameroun<br />
                 <strong style={{ color: G.text }}>RCCM :</strong> RC/YAE/2025/M/133<br />
                 <strong style={{ color: G.text }}>NIU :</strong> P028417945459A<br />
                 <strong style={{ color: G.text }}>Directrice de publication :</strong> Sylviane Landrine Maffo<br />
                 <strong style={{ color: G.text }}>Contact :</strong> {SITE_EMAIL}
+                </>)}
               </p>
             </div>
 
@@ -25279,7 +25290,9 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>12. DROIT APPLICABLE</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Les présentes CGU sont régies par le droit camerounais. Tout litige sera soumis aux tribunaux compétents de Yaoundé, après tentative de règlement amiable.
+                {EST_HOMOROMANCE
+                  ? "Tout litige fera l'objet d'une tentative de règlement amiable avant toute autre démarche."
+                  : "Les présentes CGU sont régies par le droit camerounais. Tout litige sera soumis aux tribunaux compétents de Yaoundé, après tentative de règlement amiable."}
               </p>
             </div>
 
