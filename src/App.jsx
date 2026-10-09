@@ -13732,6 +13732,69 @@ export default function App() {
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
+
+  // 09/10 : PROCHAINES SORTIES. Remplace "Explore par categorie" sur l'accueil.
+  // Une couverture, un resume, une date. La couverture disparait le jour de la sortie.
+  const [sorties, setSorties] = useState([]);
+  const [sortieOuverte, setSortieOuverte] = useState(null);
+  const [sortieCover, setSortieCover] = useState("");
+  const [sortieResume, setSortieResume] = useState("");
+  const [sortieDate, setSortieDate] = useState("");
+  const [sortieMsg, setSortieMsg] = useState("");
+  const [sortieEnvoi, setSortieEnvoi] = useState(false);
+  const [sortieUploading, setSortieUploading] = useState(false);
+  const siteCourant = EST_HOMOROMANCE ? "homoromance" : "carrybooks";
+  const chargerSorties = async () => {
+    try {
+      const aujourdhui = new Date().toISOString().slice(0, 10);
+      const { data } = await supabase.from("sorties_prevues")
+        .select("id, cover, resume, date_sortie")
+        .eq("site", siteCourant)
+        .gte("date_sortie", aujourdhui)
+        .order("date_sortie", { ascending: true });
+      setSorties(data || []);
+    } catch (e) {}
+  };
+  useEffect(() => { chargerSorties(); }, []);
+  function dateEnFrancais(d) {
+    try {
+      const p = String(d).split("-");
+      const mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+      return parseInt(p[2], 10) + " " + mois[parseInt(p[1], 10) - 1] + " " + p[0];
+    } catch (e) { return d; }
+  }
+  const uploadSortieCover = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    setSortieUploading(true); setSortieMsg("");
+    try {
+      const fd = new FormData(); fd.append("image", file);
+      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (d && d.success && d.data && d.data.url) setSortieCover(d.data.url);
+      else setSortieMsg("❌ Échec de l'envoi de la couverture.");
+    } catch (e2) { setSortieMsg("❌ Erreur réseau."); }
+    setSortieUploading(false);
+    e.target.value = "";
+  };
+  const envoyerSortie = async () => {
+    if (!sortieCover) { setSortieMsg("Ajoute la couverture."); return; }
+    if (!sortieDate) { setSortieMsg("Choisis la date de sortie."); return; }
+    setSortieEnvoi(true); setSortieMsg("");
+    try {
+      const { error } = await supabase.from("sorties_prevues").insert([{
+        auteur_id: (auteurProfil && auteurProfil.id) || null,
+        site: siteCourant,
+        cover: sortieCover,
+        resume: sortieResume || null,
+        date_sortie: sortieDate,
+      }]);
+      if (error) throw error;
+      setSortieCover(""); setSortieResume(""); setSortieDate("");
+      setSortieMsg("✅ Ton annonce est en ligne. La couverture restera sur l'accueil jusqu'au jour de la sortie.");
+      chargerSorties();
+    } catch (e) { setSortieMsg("❌ Envoi impossible. Réessaie."); }
+    setSortieEnvoi(false);
+  };
   // 09/10 : sur HomoRomance, seuls comptent les auteurs qui ont au moins 1 livre
   // de la categorie HomoRomance. Tout le reste (annonces, listes d'auteurs) s'y rapporte.
   const [auteursHR, setAuteursHR] = useState(null);
@@ -19333,6 +19396,7 @@ export default function App() {
                       <div style={{ display: "grid", gap: 8 }}>
                         {[
                           { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
+                          { t: "sortie", c: "#2e0138", ic: "🗓️", l: "Annoncer une prochaine sortie", s: "Une couverture, un résumé et une date : ton livre s'affiche sur l'accueil jusqu'au jour de sa sortie" },
                           { t: "guide", c: "#c9952a", ic: "📥", l: "Publier un Livre PDF", s: "Liseuse PDF et téléchargeable" },
                           { t: "formation", c: "#7b3fa0", ic: "🎓", l: "Publier une Formation", s: "Vends une formation hébergée sur YouTube, Drive, WhatsApp…" },
                           { t: "audio", c: "#1d9e75", ic: "🎧", l: "Publier un Livre Audio", s: "À écouter sur le site ou télécharger" },
@@ -19347,6 +19411,29 @@ export default function App() {
                         ))}
                       </div>
                     </>
+                  ) : pubTypeSelected === "sortie" ? (<>
+                  <button onClick={() => { setPubTypeSelected(null); setSortieMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 10 }}>← Retour</button>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🗓️ Annoncer une prochaine sortie</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>La couverture apparaîtra sur l'accueil avec sa date. Le jour de la sortie, elle disparaît toute seule.</div>
+                  <label style={labelSt}>Couverture *</label>
+                  <input type="file" accept="image/*" id="sortieCoverInput" style={{ display: "none" }} onChange={uploadSortieCover} />
+                  <button onClick={() => document.getElementById("sortieCoverInput").click()} disabled={sortieUploading}
+                    style={{ width: "100%", padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 10 }}>
+                    {sortieUploading ? "Envoi…" : (sortieCover ? "Changer la couverture" : "Choisir la couverture")}
+                  </button>
+                  {sortieCover ? <img src={sortieCover} alt="" style={{ width: 110, borderRadius: 8, display: "block", marginBottom: 12 }} /> : null}
+                  <label style={labelSt}>Résumé</label>
+                  <textarea value={sortieResume} onChange={ev => setSortieResume(ev.target.value)} rows={6} style={{ ...champ, resize: "vertical" }} />
+                  <div style={{ height: 10 }} />
+                  <label style={labelSt}>Date de sortie *</label>
+                  <input type="date" value={sortieDate} onChange={ev => setSortieDate(ev.target.value)} style={champ} />
+                  <div style={{ height: 14 }} />
+                  <button onClick={envoyerSortie} disabled={sortieEnvoi}
+                    style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: sortieEnvoi ? "not-allowed" : "pointer", opacity: sortieEnvoi ? 0.6 : 1 }}>
+                    {sortieEnvoi ? "Envoi…" : "📤 Annoncer cette sortie"}
+                  </button>
+                  {sortieMsg ? <div style={{ marginTop: 12, fontSize: 13, color: G.text, lineHeight: 1.5 }}>{sortieMsg}</div> : null}
+                  </>
                   ) : pubTypeSelected === "editeur" ? (<>
                   <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Publier pour un auteur</div>
@@ -22967,28 +23054,24 @@ export default function App() {
                   <style>{`@keyframes pulseArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }`}</style>
                 </div>
 
-                {/* CARTES DE CATEGORIES — rangee horizontale scrollable, format vertical */}
-                <div style={{ padding: "18px 0 0" }}>
-                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10, padding: "0 14px" }}>📚 Explore par catégorie</div>
-                  <div style={{ position: "relative" }}>
-                  <button onClick={() => { const el = document.getElementById("exploreCats"); if (el) el.scrollBy({ left: -240, behavior: "smooth" }); }} style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
-                  <button onClick={() => { const el = document.getElementById("exploreCats"); if (el) el.scrollBy({ left: 240, behavior: "smooth" }); }} style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
-                  <div id="exploreCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
-                    {categoriesAffichees.map(cat => {
-                      const low = cat.toLowerCase().replace(/s$/, "");
-                      const bk = (books || []).find(b => b.status === "actif" && surCarryBooks(b) && b.cover && (champCategorie(b) === cat || champCategorie(b).toLowerCase().startsWith(low)));
-                      const cover = bk ? bk.cover : null;
-                      return (
-                        <div key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); setPage("catalog"); window.scrollTo(0, 0); }} style={{ flex: "0 0 auto", width: "calc((100% - 44px) / 4.5)", position: "relative", borderRadius: 10, overflow: "hidden", cursor: "pointer", aspectRatio: "1 / 1.5", background: cover ? "#111" : "linear-gradient(135deg, " + G.gold + ", #8a6d1f)" }}>
-                          {cover ? <img src={cover} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.62 }} /> : null}
-                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.05))" }} />
-                          <div style={{ position: "absolute", bottom: 5, left: 5, right: 5, color: "#fff", fontSize: 9.5, fontWeight: "bold", textShadow: "0 1px 3px rgba(0,0,0,0.9)", lineHeight: 1.15, textAlign: "center" }}>{cat}</div>
+                {/* 09/10 : PROCHAINES SORTIES — remplace "Explore par categorie". */}
+                {sorties.length > 0 && (
+                  <div style={{ marginBottom: 28, paddingTop: 18 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>🗓️ Prochaines sorties</div>
+                    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                      {sorties.map(sv => (
+                        <div key={sv.id} onClick={() => setSortieOuverte(sv)} style={{ flexShrink: 0, width: "27vw", maxWidth: 120, cursor: "pointer", textAlign: "left" }}>
+                          <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6 }}>
+                            <img src={sv.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          </div>
+                          <div style={{ fontSize: 9.5, fontWeight: "bold", color: G.boutonTexte, background: G.bouton, display: "inline-block", padding: "2px 7px", borderRadius: 6 }}>
+                            {dateEnFrancais(sv.date_sortie)}
+                          </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                  </div>
-                </div>
+                )}
 
 
                 {/* HERO CAROUSEL - num�rique uniquement */}
@@ -23115,6 +23198,19 @@ export default function App() {
                     </div>
                   );
                 })()}
+
+                {sortieOuverte && (
+                  <div onClick={() => setSortieOuverte(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+                    <div onClick={ev => ev.stopPropagation()} style={{ background: G.carte, borderRadius: 14, maxWidth: 420, width: "100%", maxHeight: "86vh", overflowY: "auto", padding: 18 }}>
+                      <img src={sortieOuverte.cover} alt="" style={{ width: "100%", borderRadius: 10, marginBottom: 14, display: "block" }} />
+                      {sortieOuverte.resume ? <div style={{ color: G.text, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", marginBottom: 14 }}>{sortieOuverte.resume}</div> : null}
+                      <div style={{ color: G.boutonTexte, background: G.bouton, padding: "11px 14px", borderRadius: 10, fontWeight: "bold", fontSize: 14, textAlign: "center" }}>
+                        Date de sortie le {dateEnFrancais(sortieOuverte.date_sortie)}
+                      </div>
+                      <button onClick={() => setSortieOuverte(null)} style={{ width: "100%", marginTop: 12, padding: 12, background: "none", border: "1px solid " + G.border, borderRadius: 10, color: G.textDim, fontSize: 13, cursor: "pointer" }}>Fermer</button>
+                    </div>
+                  </div>
+                )}
 
                 {/* ANNONCES DES AUTEURS (carrousel 16:9 horizontal) */}
                 {annoncesActives.filter(a => auteurDuSite(a.auteur_id)).length > 0 && (
