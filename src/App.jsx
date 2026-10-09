@@ -679,14 +679,14 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     const rawName = String(clientInfo.name || "").trim();
 
     let clientName;
-    if (rawName && rawName !== "Client CarryBooks") {
+    if (rawName && rawName !== "Client " + SITE_NOM) {
       clientName = rawName.substring(0, 50);
     } else if (rawEmail) {
       clientName = rawEmail.split("@")[0].substring(0, 50);
     } else if (rawPhone) {
       clientName = rawPhone.substring(0, 20);
     } else {
-      clientName = "Client CarryBooks";
+      clientName = "Client " + SITE_NOM;
     }
 
     const clientEmail = rawEmail.substring(0, 60);
@@ -1550,7 +1550,7 @@ async function downloadBodyDiagnosticPDF(result, opts = {}) {
 
     // Télécharger
     const dateStr = new Date().toISOString().split("T")[0];
-    const fileName = "Diagnostic-CarryBooks-Corps-" + dateStr + ".pdf";
+    const fileName = "Diagnostic-" + SITE_NOM + "-Corps-" + dateStr + ".pdf";
     await outputCarryCarePDF(doc, fileName, opts);
 
     console.log("[CarryCare] PDF telecharge:", fileName);
@@ -1754,15 +1754,15 @@ const CATEGORIES_FALLBACK = {
 };
 
 const CONTRAT_ARTICLES = [
-  ["Article 1 - Objet du contrat", "Le présent contrat définit les conditions dans lesquelles l'Auteur publie, diffuse et vend ses œuvres numériques (romans, livres, guides, livres audio et autres contenus) sur la Plateforme CarryBooks, ainsi que les droits et obligations de chaque partie."],
-  ["Article 2 - Déclaration et garantie de l'Auteur", "L'Auteur certifie sur l'honneur être le véritable auteur et/ou le détenteur exclusif de l'ensemble des droits des œuvres qu'il publie sur CarryBooks. Il garantit que ses œuvres sont originales, qu'elles ne violent aucun droit de propriété intellectuelle, aucun droit à l'image ni aucun droit d'un tiers, et qu'il dispose de tous les droits nécessaires pour les commercialiser."],
-  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 85 % du prix de vente lorsque la vente est amenée par lui-même, c'est-à-dire par son lien de promotion personnel ou par sa vitrine d'auteur, et 50 % lorsque la vente est réalisée par CarryBooks. Ces pourcentages s'entendent NETS pour l'Auteur : les frais d'encaissement du paiement et les frais de reversement Mobile Money sont entièrement à la charge de CarryBooks et ne sont jamais déduits de la part de l'Auteur. Un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle n'est pas référencé sur carrybooks.com, est mis en ligne sans validation préalable, et l'Auteur garantit en détenir les droits. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
-  ["Article 3 bis - Programme d'abonnement (facultatif)", "CarryBooks propose un programme d'abonnement permettant aux lecteurs abonnés de lire les ROMANS (lus dans la liseuse) des auteurs participants. La participation est FACULTATIVE (activable dans l'espace auteur). L'auteur participant perçoit une commission fixe (montant défini par CarryBooks) à chaque déblocage d'un de ses romans par un abonné, une seule fois par livre (les relectures ne génèrent aucune commission). Les livres PDF et audio ne sont PAS concernés et restent payants. L'auteur peut se retirer à tout moment."],
-  ["Article 4 - Validation et modération", "Toute œuvre soumise fait l'objet d'une validation préalable par CarryBooks avant sa mise en ligne. CarryBooks peut refuser, retirer ou suspendre toute œuvre non conforme au présent contrat, aux conditions d'utilisation, à la loi ou aux bonnes mœurs, sans indemnité."],
-  ["Article 5 - Propriété intellectuelle et lutte contre le piratage", "L'Auteur conserve la propriété intellectuelle de ses œuvres et concède à CarryBooks le droit non exclusif de les diffuser et de les vendre. Il est formellement interdit de publier, revendre ou diffuser toute œuvre qui ne lui appartient pas, piratée, contrefaite, plagiée ou volée. Toute fraude, piratage, usurpation ou vente d'une œuvre appartenant à autrui entraîne le bannissement immédiat et définitif de l'Auteur, la suspension de tout paiement lié à la fraude, sans préjudice de poursuites judiciaires."],
-  ["Article 6 - Obligations de l'Auteur", "Fournir des informations exactes et une pièce d'identité valide ; ne publier que des contenus licites ; s'abstenir de tout contenu haineux, diffamatoire, violent, ou portant atteinte à autrui ou aux mineurs ; répondre de toute réclamation d'un tiers et garantir CarryBooks contre tout recours."],
-  ["Article 7 - Conditions d'utilisation", "L'Auteur déclare avoir pris connaissance et accepter les Conditions Générales d'Utilisation de CarryBooks, qui font partie intégrante du présent contrat."],
-  ["Article 8 - Durée, résiliation et sanctions", "Le contrat prend effet à la signature pour une durée indéterminée. Chaque partie peut y mettre fin à tout moment. En cas de manquement grave (fraude, piratage, contenu illicite, fausses déclarations), CarryBooks peut résilier le contrat et bannir l'Auteur avec effet immédiat, sans préavis ni indemnité."],
+  ["Article 1 - Objet du contrat", "Le présent contrat définit les conditions dans lesquelles l'Auteur publie, diffuse et vend ses œuvres numériques (romans, livres, guides, livres audio et autres contenus) sur la Plateforme " + SITE_NOM + ", ainsi que les droits et obligations de chaque partie."],
+  ["Article 2 - Déclaration et garantie de l'Auteur", "L'Auteur certifie sur l'honneur être le véritable auteur et/ou le détenteur exclusif de l'ensemble des droits des œuvres qu'il publie sur " + SITE_NOM + ". Il garantit que ses œuvres sont originales, qu'elles ne violent aucun droit de propriété intellectuelle, aucun droit à l'image ni aucun droit d'un tiers, et qu'il dispose de tous les droits nécessaires pour les commercialiser."],
+  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 85 % du prix de vente lorsque la vente est amenée par lui-même, c'est-à-dire par son lien de promotion personnel ou par sa vitrine d'auteur, et 50 % lorsque la vente est réalisée par " + SITE_NOM + ". Ces pourcentages s'entendent NETS pour l'Auteur : les frais d'encaissement du paiement et les frais de reversement Mobile Money sont entièrement à la charge de " + SITE_NOM + " et ne sont jamais déduits de la part de l'Auteur. Un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle n'est pas référencé sur carrybooks.com, est mis en ligne sans validation préalable, et l'Auteur garantit en détenir les droits. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
+  ["Article 3 bis - Programme d'abonnement (facultatif)", SITE_NOM + " propose un programme d'abonnement permettant aux lecteurs abonnés de lire les ROMANS (lus dans la liseuse) des auteurs participants. La participation est FACULTATIVE (activable dans l'espace auteur). L'auteur participant perçoit une commission fixe (montant défini par " + SITE_NOM + ") à chaque déblocage d'un de ses romans par un abonné, une seule fois par livre (les relectures ne génèrent aucune commission). Les livres PDF et audio ne sont PAS concernés et restent payants. L'auteur peut se retirer à tout moment."],
+  ["Article 4 - Validation et modération", "Toute œuvre soumise fait l'objet d'une validation préalable par " + SITE_NOM + " avant sa mise en ligne. " + SITE_NOM + " peut refuser, retirer ou suspendre toute œuvre non conforme au présent contrat, aux conditions d'utilisation, à la loi ou aux bonnes mœurs, sans indemnité."],
+  ["Article 5 - Propriété intellectuelle et lutte contre le piratage", "L'Auteur conserve la propriété intellectuelle de ses œuvres et concède à " + SITE_NOM + " le droit non exclusif de les diffuser et de les vendre. Il est formellement interdit de publier, revendre ou diffuser toute œuvre qui ne lui appartient pas, piratée, contrefaite, plagiée ou volée. Toute fraude, piratage, usurpation ou vente d'une œuvre appartenant à autrui entraîne le bannissement immédiat et définitif de l'Auteur, la suspension de tout paiement lié à la fraude, sans préjudice de poursuites judiciaires."],
+  ["Article 6 - Obligations de l'Auteur", "Fournir des informations exactes et une pièce d'identité valide ; ne publier que des contenus licites ; s'abstenir de tout contenu haineux, diffamatoire, violent, ou portant atteinte à autrui ou aux mineurs ; répondre de toute réclamation d'un tiers et garantir " + SITE_NOM + " contre tout recours."],
+  ["Article 7 - Conditions d'utilisation", "L'Auteur déclare avoir pris connaissance et accepter les Conditions Générales d'Utilisation de " + SITE_NOM + ", qui font partie intégrante du présent contrat."],
+  ["Article 8 - Durée, résiliation et sanctions", "Le contrat prend effet à la signature pour une durée indéterminée. Chaque partie peut y mettre fin à tout moment. En cas de manquement grave (fraude, piratage, contenu illicite, fausses déclarations), " + SITE_NOM + " peut résilier le contrat et bannir l'Auteur avec effet immédiat, sans préavis ni indemnité."],
   ["Article 9 - Protection des données", "Les informations personnelles et la pièce d'identité de l'Auteur sont collectées uniquement aux fins d'identification, de lutte contre la fraude et de paiement. Elles sont conservées de manière confidentielle."],
   ["Article 10 - Loi applicable et litiges", "Le présent contrat est régi par le droit en vigueur au Cameroun. En cas de litige, les parties recherchent une solution amiable ; à défaut, les tribunaux compétents de Yaoundé seront saisis."],
 ];
@@ -1876,10 +1876,10 @@ const EST_HOMOROMANCE = (function () {
     return (window.location.search || "").indexOf("site=homoromance") !== -1;
   } catch (e) { return false; }
 })();
-const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
+const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : SITE_NOM;
 // Le service worker sert les images "cache d'abord" : on change le numero de version
 // a chaque fois qu'on remplace le logo, sinon les anciennes visiteuses gardent l'ancien.
-const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=2" : "/logo-carrybooks.png";
+const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=3" : "/logo-carrybooks.png";
 
 // Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
 // jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
@@ -1929,7 +1929,10 @@ const G_CARRYBOOKS = {
 // cartes en bleu nuit. Couleurs relevees sur la reference donnee par Landrine le 09/10.
 const G_HOMOROMANCE = {
   bg: "#0d0d17", surface: "#161729", surface2: "#1e1f33", border: "#2a2b42",
-  gold: "#ff3d9a", goldLight: "#ff7ac0", goldDim: "rgba(255,61,154,0.14)",
+  // 09/10 : plus aucun rose. Violet de la marque #3c0145 pour les aplats ;
+  // un violet plus clair de la meme famille pour tout ce qui est TEXTE ou trait
+  // pose sur le fond presque noir, sinon ce serait illisible.
+  gold: "#a855f7", goldLight: "#c78aff", goldDim: "rgba(168,85,247,0.16)",
   text: "#f2f0f7", textDim: "#9290a8", textFaint: "#6e6c84",
   green: "#4caf50", greenDim: "rgba(76,175,80,0.18)",
   navBg: "#0d0d17", navSurface: "#161729", navBorder: "#2a2b42", navText: "#f2f0f7",
@@ -2444,7 +2447,7 @@ function ShareButtons({ quizName, quizType }) {
 
   const text = quizType === "carrycare"
     ? "💜 Fais ton test " + quizName + " personnalisé sur CarryCare 👇\n" + carryCareUrl
-    : "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + bookstoreUrl;
+    : "🎯 Découvre Carry'Quiz sur " + SITE_NOM + " 👇\n" + bookstoreUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -2477,7 +2480,7 @@ function ShareCarryQuiz() {
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   const quizUrl = "https://carrybooks.com/carry-quiz" + refSuffix;
   const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
-  const text = "🎯 Découvre Carry'Quiz sur CarryBooks 👇\n" + quizUrl + "\n\n💜 Et ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
+  const text = "🎯 Découvre Carry'Quiz sur " + SITE_NOM + " 👇\n" + quizUrl + "\n\n💜 Et ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
     window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -7294,7 +7297,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
     addBullet("Evite les 'miracles 7 jours' c'est faux et dangereux.", { bold: true });
 
     // KIT EXFOLIA — COUP DE CŒUR FINAL
-    addSectionTitle("Coup de coeur CarryBooks");
+    addSectionTitle("Coup de coeur " + SITE_NOM);
     addParagraph("Pour un kit complet et naturel qui traite plusieurs problemes a la fois (acne severe, taches tenaces, melasma, cernes, rides), voici notre recommandation :");
     addKitExfoliaBox();
 
@@ -7366,7 +7369,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
     }
 
     const dateStr = new Date().toISOString().split("T")[0];
-    const fileName = "Diagnostic-CarryBooks-Visage-" + dateStr + ".pdf";
+    const fileName = "Diagnostic-" + SITE_NOM + "-Visage-" + dateStr + ".pdf";
     await outputCarryCarePDF(doc, fileName, opts);
     console.log("[CarryCare] PDF Facial telecharge:", fileName);
   } catch (err) {
@@ -10231,7 +10234,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* PROCHAINEMENT */}
         <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "linear-gradient(135deg, #fdf8f8 0%, #f5d7d9 100%)", border: "1px dashed " + CC.rose, borderRadius: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📚 Prochainement sur CarryBooks</div>
+          <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>📚 Prochainement sur {SITE_NOM}</div>
           <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6 }}>
             Notre futur livre <strong>"Aliments du Cameroun et leurs calories"</strong> avec plus de 400 aliments locaux détaillés (calories, protéines, glucides, lipides). Reste connectée !
           </div>
@@ -10614,7 +10617,7 @@ async function downloadLigneDiagnosticPDF(result, opts = {}) {
     }
 
     const dateStr = new Date().toISOString().split("T")[0];
-    await outputCarryCarePDF(doc, "Plan-CarryBooks-Garde-la-Ligne-" + dateStr + ".pdf", opts);
+    await outputCarryCarePDF(doc, "Plan-" + SITE_NOM + "-Garde-la-Ligne-" + dateStr + ".pdf", opts);
   } catch (err) {
     console.error("[CarryCare] Erreur PDF Ligne:", err);
     alert("Erreur lors du telechargement du PDF. Verifie ta connexion internet et reessaie.");
@@ -12095,7 +12098,7 @@ async function downloadCapDiagnosticPDF(result, opts = {}) {
     }
     
     const dateStr = new Date().toISOString().split("T")[0];
-    await outputCarryCarePDF(doc, "Diagnostic-CarryBooks-Capillaire-" + dateStr + ".pdf", opts);
+    await outputCarryCarePDF(doc, "Diagnostic-" + SITE_NOM + "-Capillaire-" + dateStr + ".pdf", opts);
   } catch (err) {
     console.error("[CarryCare] Erreur PDF Capillaire:", err);
     alert("Erreur lors du telechargement du PDF. Verifie ta connexion internet et reessaie.");
@@ -13947,17 +13950,17 @@ export default function App() {
   const bandeauInstallNode = invitInstall ? (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}>
-        <img src="/icon-192.png" alt="CarryBooks" style={{ width: 84, height: 84, borderRadius: 18, marginBottom: 14 }} />
-        <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginBottom: 6 }}>Installer CarryBooks</div>
+        <img src="/icon-192.png" alt={SITE_NOM} style={{ width: 84, height: 84, borderRadius: 18, marginBottom: 14 }} />
+        <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginBottom: 6 }}>Installer {SITE_NOM}</div>
         <div style={{ fontSize: 13, color: "#6a6252", lineHeight: 1.55, marginBottom: 18 }}>Tes livres toujours à portée de main, sans repasser par Facebook.</div>
-        <button onClick={() => { setInvitInstall(false); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📲 Installer CarryBooks</button>
+        <button onClick={() => { setInvitInstall(false); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📲 Installer {SITE_NOM}</button>
         <button onClick={fermerInvitInstall} style={{ width: "100%", padding: 11, background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer", marginTop: 6 }}>Plus tard</button>
       </div>
     </div>
   ) : showInstallBanner ? (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, background: "rgba(106,17,203,0.88)", color: "#fff", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.15)", backdropFilter: "blur(2px)" }}>
       <span style={{ fontSize: 16 }}>📱</span>
-      <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application CarryBooks</span>
+      <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application {SITE_NOM}</span>
       <button onClick={triggerInstall} style={{ background: "#fff", color: "#6a11cb", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Installer</button>
       <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
     </div>
@@ -14926,7 +14929,7 @@ export default function App() {
         <button onClick={() => { setShowLecteurModal(false); setPendingBuyBook(null); setPendingEspaceAuteur(false); if (page === "library") setPage("home"); }} aria-label="Fermer" style={{ position: "absolute", top: 12, right: 12, background: "#f0ece2", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", color: "#666", fontWeight: "bold", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
           <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />
-          <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur CarryBooks 📚</h2>
+          <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur {SITE_NOM} 📚</h2>
           <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
         </div>
         <label style={LEC_LABEL}>Ton prénom *</label>
@@ -16154,7 +16157,7 @@ export default function App() {
     if (referralCode) {
       url += "?ref=" + referralCode;
     }
-    const text = "📚 Découvrez \"" + book.title + "\" par " + book.author + " sur CarryBooks !";
+    const text = "📚 Découvrez \"" + book.title + "\" par " + book.author + " sur " + SITE_NOM + " !";
     if (navigator.share) {
       navigator.share({ title: book.title, text, url }).catch(() => {});
     } else {
@@ -16209,7 +16212,7 @@ export default function App() {
           action: "collect",
           amount: price,
           phone,
-          description: "Abonnement CarryBooks " + subPlan,
+          description: "Abonnement " + SITE_NOM + " " + subPlan,
           external_reference: externalRef
         })
       });
@@ -16283,7 +16286,7 @@ export default function App() {
             trackMetaConversion({
               reference: payData.reference,
               amount: price,
-              description: "Abonnement CarryBooks " + subPlan,
+              description: "Abonnement " + SITE_NOM + " " + subPlan,
               external_reference: externalRef,
               phone: phone
             });
@@ -16335,9 +16338,9 @@ export default function App() {
     if (referralCode) {
       url += "?ref=" + referralCode;
     }
-    const text = "📚 Découvre « " + book.title + " » de " + book.author + " sur CarryBooks !\n" + url;
+    const text = "📚 Découvre « " + book.title + " » de " + book.author + " sur " + SITE_NOM + " !\n" + url;
     if (navigator.share) {
-      navigator.share({ title: book.title, text: "Découvre ce livre sur CarryBooks !", url });
+      navigator.share({ title: book.title, text: "Découvre ce livre sur " + SITE_NOM + " !", url });
     } else {
       const waUrl = "https://wa.me/?text=" + encodeURIComponent(text);
       window.open(waUrl, "_blank");
@@ -16582,7 +16585,7 @@ export default function App() {
           action: "collect",
           amount: total,
           phone: phone,
-          description: "Commande panier CarryBooks - " + items.length + " article(s)",
+          description: "Commande panier " + SITE_NOM + " - " + items.length + " article(s)",
           external_reference: externalRef
         })
       });
@@ -16767,7 +16770,7 @@ export default function App() {
           action: "collect",
           amount: total,
           phone: phone,
-          description: "Commande papier " + paperOrderBook.title + " - CarryBooks POD",
+          description: "Commande papier " + paperOrderBook.title + " - " + SITE_NOM + " POD",
           external_reference: externalRef
         })
       });
@@ -17160,7 +17163,7 @@ export default function App() {
           action: "collect",
           amount: finalPrice,
           phone: phone,
-          description: "Achat " + paymentBook.title + " sur CarryBooks",
+          description: "Achat " + paymentBook.title + " sur " + SITE_NOM,
           external_reference: externalRef
         })
       });
@@ -17462,7 +17465,7 @@ export default function App() {
 
   const navItems = [
     { id: "auteurs", label: "👤 Auteur(es)" },
-    { id: "comment_publier", label: "❓ Comment publier sur CarryBooks" },
+    { id: "comment_publier", label: "❓ Comment publier sur " + SITE_NOM },
     { id: "home", label: "Accueil" },
     { id: "catalog", label: "Catalogue" },
     { id: "subscription", label: "Abonnement" },
@@ -17734,7 +17737,7 @@ export default function App() {
         setRetraitOpen(false); setRetraitMsg("");
         const { data: rr } = await supabase.from("retraits").select("*").eq("auteur_id", auteurSession.id).order("created_at", { ascending: false });
         setRetraitsAuteur(rr || []);
-        alert("✅ Demande de retrait envoyée. Elle sera traitée par CarryBooks (paiement Mobile Money).");
+        alert("✅ Demande de retrait envoyée. Elle sera traitée par " + SITE_NOM + " (paiement Mobile Money).");
       } else { setRetraitMsg("❌ " + (data.error || "Erreur.")); }
     } catch (e) { setRetraitMsg("❌ " + (e.message || e)); }
     setRetraitSaving(false);
@@ -17766,7 +17769,7 @@ export default function App() {
       page.drawText(String(value || ""), { x: M + lw + 4, y: y - 11, size: 10, font, color: blue });
       y -= 16;
     };
-    page.drawText("CarryBooks", { x: M, y: y - 18, size: 20, font: bold, color: gold }); y -= 26;
+    page.drawText(SITE_NOM, { x: M, y: y - 18, size: 20, font: bold, color: gold }); y -= 26;
     page.drawText("CONTRAT D'AUTEUR", { x: M, y: y - 13, size: 14, font: bold, color: dark }); y -= 22;
     line("Je soussigné(e), dont les informations figurent ci-dessous, déclare accepter l'intégralité des clauses du présent contrat :", font, 10, dark, 14);
     y -= 4;
@@ -18056,7 +18059,7 @@ export default function App() {
     if (!f.cover) { setFmMsg("⚠️ Ajoute la couverture (A4 paysage)."); return; }
     if (!String(f.price).trim() || (parseInt(f.price) || 0) <= 0) { setFmMsg("⚠️ Indique le prix de ta formation."); return; }
     if ((parseInt(f.price) || 0) < PRIX_MINI && !(!!pubExclusif && !!(auteurProfil && auteurProfil.kyc_status === "valide"))) {
-      setFmMsg("💰 Pour le catalogue CarryBooks, le prix minimum est de " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA. En vitrine uniquement, tu fixes ton prix librement.");
+      setFmMsg("💰 Pour le catalogue " + SITE_NOM + ", le prix minimum est de " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA. En vitrine uniquement, tu fixes ton prix librement.");
       return;
     }
     if (!f.contenu.trim()) { setFmMsg("⚠️ Présente ta formation dans la zone de texte."); return; }
@@ -18137,7 +18140,7 @@ export default function App() {
     const versVitrineSeule = !!pubExclusif && !!(auteurProfil && auteurProfil.kyc_status === "valide");
     if (!isGratuit && !versVitrineSeule && String(f.price).trim() && (parseInt(f.price) || 0) < PRIX_MINI) {
       setPubErrors({ price: true });
-      setPubMsg("💰 Pour le catalogue CarryBooks, le prix minimum est de " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA. Mets " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA ou plus — ou choisis « Ma vitrine uniquement », où tu fixes ton prix librement.");
+      setPubMsg("💰 Pour le catalogue " + SITE_NOM + ", le prix minimum est de " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA. Mets " + PRIX_MINI.toLocaleString("fr-FR") + " FCFA ou plus — ou choisis « Ma vitrine uniquement », où tu fixes ton prix librement.");
       return;
     }
     if (!f.cover) errs.cover = true;
@@ -18155,7 +18158,7 @@ export default function App() {
     // Vitrine seule : reservee aux auteurs verifies, et certification des droits obligatoire
     const kycValide = !!(auteurProfil && auteurProfil.kyc_status === "valide");
     const enVitrineSeule = !!pubExclusif && kycValide;
-    if (pubExclusif && !kycValide) { setPubMsg("🔒 La vente en vitrine seule est réservée aux auteurs vérifiés. Termine ta vérification d'identité dans « Mon compte », ou choisis « Ma vitrine + CarryBooks »."); return; }
+    if (pubExclusif && !kycValide) { setPubMsg("🔒 La vente en vitrine seule est réservée aux auteurs vérifiés. Termine ta vérification d'identité dans « Mon compte », ou choisis « Ma vitrine + " + SITE_NOM + " »."); return; }
     if (enVitrineSeule && !pubExclusifCertifie) { setPubMsg("☑️ Coche la case de certification des droits avant de publier dans ta vitrine."); return; }
     if (needsExtract && (parseInt(f.extract_pages) || 0) < 1) { setPubMsg("Le nombre de pages gratuites doit être au moins 1."); return; }
     // Minimum 30 pages (~7500 mots à 250 mots/page) pour les romans texte — sauf admin (id 8)
@@ -18200,7 +18203,7 @@ export default function App() {
       } else {
         const { error } = await supabase.from("books").insert(payload);
         if (error) throw error;
-        setPubMsg("✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par CarryBooks.");
+        setPubMsg("✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par " + SITE_NOM + ".");
       }
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
@@ -18551,7 +18554,7 @@ export default function App() {
                             paymentBook.pdf_url,
                             (paymentBook.title || "livre") + ".pdf",
                             {
-                              name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                              name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client " + SITE_NOM,
                               email: user?.email || "",
                               phone: phoneNumber || user?.user_metadata?.phone || "",
                               userId: user?.id,
@@ -18953,7 +18956,7 @@ export default function App() {
 
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                   <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé</div>
-                  <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>CarryBooks</b></div>
+                  <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>
                 </div>
 
               </div>
@@ -19042,7 +19045,7 @@ export default function App() {
               <label style={labelSt}>Où veux-tu vendre tes livres ?</label>
               <div style={{ fontSize: 11.5, color: G.textDim, marginTop: -2, marginBottom: 10, lineHeight: 1.5 }}>Ta vitrine à toi, tu l'as dans tous les cas. Ce choix dit seulement si tes livres apparaissent <b>aussi</b> dans le catalogue de carrybooks.com. Tu pourras en changer à tout moment, et même livre par livre.</div>
               {[
-                ["les_deux", "🌍 Ma vitrine + CarryBooks", "Tes livres sont dans ta vitrine ET dans le catalogue CarryBooks. Ils passent par une validation sous 24 h. Tu touches 85 % quand la vente vient de toi, 50 % quand c'est CarryBooks qui t'amène le lecteur.", "Conseillé"],
+                ["les_deux", "🌍 Ma vitrine + " + SITE_NOM, "Tes livres sont dans ta vitrine ET dans le catalogue " + SITE_NOM + ". Ils passent par une validation sous 24 h. Tu touches 85 % quand la vente vient de toi, 50 % quand c'est " + SITE_NOM + " qui t'amène le lecteur.", "Conseillé"],
                 ["vitrine", "🏪 Ma vitrine uniquement", "Tes livres n'apparaissent nulle part sur carrybooks.com. Ils sont en ligne tout de suite, sans validation, et tu touches 85 % sur chaque vente. Réservé aux auteurs vérifiés.", ""],
               ].map(function (o) {
                 const val = o[0], titre = o[1], desc = o[2], badge = o[3];
@@ -19094,7 +19097,7 @@ export default function App() {
             <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
               <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
                 <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>💸 Retirer mes fonds</div>
-                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par CarryBooks. <b>Minimum : 2 000 FCFA.</b></div>
+                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par {SITE_NOM}. <b>Minimum : 2 000 FCFA.</b></div>
                 <label style={labelSt}>Montant à retirer (FCFA)</label>
                 <input type="number" value={retraitMontant} onChange={e => setRetraitMontant(e.target.value)} placeholder="Ex : 50000" style={champ} />
                 {retraitMsg && <div style={{ fontSize: 13, marginTop: 10, color: retraitMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{retraitMsg}</div>}
@@ -19113,7 +19116,7 @@ export default function App() {
 
           {!auteurProfil && (
             <div style={{ textAlign: "center", padding: 30 }}>
-              <p style={{ color: G.textDim, fontSize: 14, marginBottom: 16 }}>Connecte-toi pour publier tes livres sur CarryBooks.</p>
+              <p style={{ color: G.textDim, fontSize: 14, marginBottom: 16 }}>Connecte-toi pour publier tes livres sur {SITE_NOM}.</p>
               <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 24px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>🔑 Se connecter</button>
             </div>
           )}
@@ -19214,7 +19217,7 @@ export default function App() {
                       <div style={{ height: 16 }} />
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Lis et signe le contrat</div>
                       <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 14, fontSize: 13, color: G.text, lineHeight: 1.6, marginBottom: 10 }}>
-                        <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 10, fontSize: 14 }}>CONTRAT D'AUTEUR — CarryBooks</div>
+                        <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 10, fontSize: 14 }}>CONTRAT D'AUTEUR — {SITE_NOM}</div>
                         <div style={{ marginBottom: 10 }}>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare accepter l'intégralité des clauses ci-dessous :</div>
                         {CONTRAT_ARTICLES.map(([t, b], i) => (
                           <div key={i} style={{ marginBottom: 10 }}>
@@ -19237,7 +19240,7 @@ export default function App() {
                     </>
                   ) : !pubTypeSelected ? (
                     <>
-                      {auteurProfil && auteurProfil.banni ? (<div style={{ background: "#fdecea", borderRadius: 10, padding: 14, marginBottom: 16, border: "1px solid #ef9a9a" }}><div style={{ fontSize: 14, color: "#c62828", fontWeight: "bold", marginBottom: 4 }}>🚫 Compte suspendu</div><div style={{ fontSize: 12, color: "#c62828", lineHeight: 1.5 }}>Ton compte a été suspendu et tu ne peux plus publier.{auteurProfil.banni_motif ? " Motif : " + auteurProfil.banni_motif : ""} Contacte CarryBooks si tu penses qu'il s'agit d'une erreur.</div></div>) : null}
+                      {auteurProfil && auteurProfil.banni ? (<div style={{ background: "#fdecea", borderRadius: 10, padding: 14, marginBottom: 16, border: "1px solid #ef9a9a" }}><div style={{ fontSize: 14, color: "#c62828", fontWeight: "bold", marginBottom: 4 }}>🚫 Compte suspendu</div><div style={{ fontSize: 12, color: "#c62828", lineHeight: 1.5 }}>Ton compte a été suspendu et tu ne peux plus publier.{auteurProfil.banni_motif ? " Motif : " + auteurProfil.banni_motif : ""} Contacte {SITE_NOM} si tu penses qu'il s'agit d'une erreur.</div></div>) : null}
                       {auteurProfil && auteurProfil.banni ? null : (() => { const stk = (auteurProfil || {}).kyc_status; if (stk === "valide") return (mesLivres.length === 0 ? (<div style={{ background: "#e8f5e9", borderRadius: 10, padding: 12, marginBottom: 16, border: "1px solid #a5d6a7" }}><div style={{ fontSize: 13, color: "#2e7d32", fontWeight: "bold" }}>✅ Ton compte est vérifié — tu peux publier !</div></div>) : null); return (
                         <div style={{ background: stk === "en_attente" ? "#fff8e1" : stk === "refuse" ? "#fdecea" : G.goldDim, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                           {stk === "en_attente" ? (
@@ -19370,7 +19373,7 @@ export default function App() {
 
                   <label style={labelSt}>Prix en FCFA *</label>
                   <input value={fmForm.price} onChange={e => setFmForm(f => ({ ...f, price: e.target.value.replace(/\D/g, "") }))} inputMode="numeric" placeholder="Ex : 15000" style={champ} />
-                  <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>Minimum {PRIX_MINI.toLocaleString("fr-FR")} FCFA pour le catalogue CarryBooks. En vitrine uniquement, tu fixes ton prix librement.</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>Minimum {PRIX_MINI.toLocaleString("fr-FR")} FCFA pour le catalogue {SITE_NOM}. En vitrine uniquement, tu fixes ton prix librement.</div>
                   <div style={{ height: 16 }} />
 
                   <label style={labelSt}>Présentation de la formation *</label>
@@ -19419,7 +19422,7 @@ export default function App() {
                         <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📍 Où vendre cette formation ?</div>
                         <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12.5, color: G.text, lineHeight: 1.5, marginBottom: 8 }}>
                           <input type="radio" checked={!pubExclusif} onChange={() => setPubExclusif(false)} style={{ width: 17, height: 17, marginTop: 1 }} />
-                          <span><b>🌍 Ma vitrine + CarryBooks</b> — visible par tous. Validation sous 24 h. <b>85 % / 50 %</b></span>
+                          <span><b>🌍 Ma vitrine + {SITE_NOM}</b> — visible par tous. Validation sous 24 h. <b>85 % / 50 %</b></span>
                         </label>
                         <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: kycOk ? "pointer" : "not-allowed", fontSize: 12.5, color: G.text, lineHeight: 1.5, opacity: kycOk ? 1 : 0.55 }}>
                           <input type="radio" checked={pubExclusif} disabled={!kycOk} onChange={() => setPubExclusif(true)} style={{ width: 17, height: 17, marginTop: 1 }} />
@@ -19537,7 +19540,7 @@ export default function App() {
                   {pubForm.type !== "gratuit" && (<>
                   <label style={labelSt}>Prix (FCFA) *</label>
                   <input type="number" value={pubForm.price} onChange={e => { setPubForm(f => ({ ...f, price: e.target.value })); setPubErrors(p => ({ ...p, price: false })); }} placeholder="Ex : 3000" style={{ ...champ, ...(pubErrors.price ? { border: "2px solid #e53935" } : {}) }} />
-                  <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>Minimum {PRIX_MINI.toLocaleString("fr-FR")} FCFA pour le catalogue CarryBooks. En vitrine uniquement, tu fixes ton prix librement.</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 4, lineHeight: 1.5 }}>Minimum {PRIX_MINI.toLocaleString("fr-FR")} FCFA pour le catalogue {SITE_NOM}. En vitrine uniquement, tu fixes ton prix librement.</div>
                   <div style={{ height: 14 }} />
                   </>)}
                   <label style={labelSt}>Couverture * (A4 portrait, ex : 1240 × 1754 px)</label>
@@ -19645,9 +19648,9 @@ export default function App() {
                       <div style={{ background: G.bg, border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 14 }}>
                         <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, marginBottom: 3 }}>📍 Où vendre ce livre ?</div>
                         <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12, lineHeight: 1.5 }}>Tu pourras changer ce choix plus tard en modifiant ton livre.</div>
-                        {carte(!pubExclusif, () => setPubExclusif(false), true, "🌍 Ma vitrine + CarryBooks", [
+                        {carte(!pubExclusif, () => setPubExclusif(false), true, "🌍 Ma vitrine + " + SITE_NOM, [
                           "Visible par tous les lecteurs : accueil, catalogue, recherche.",
-                          "Validation par CarryBooks sous 24 h. 85 % si tu amènes la vente, 50 % si c'est CarryBooks.",
+                          "Validation par " + SITE_NOM + " sous 24 h. 85 % si tu amènes la vente, 50 % si c'est " + SITE_NOM + ".",
                         ], "85 % / 50 %")}
                         {carte(pubExclusif, () => setPubExclusif(true), kycOk, "🏪 Ma vitrine uniquement", [
                           "Visible seulement sur ta page auteur. En ligne immédiatement, sans validation.",
@@ -19661,7 +19664,7 @@ export default function App() {
                         {pubExclusif && kycOk ? (
                           <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10 }}>
                             <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
-                            <span>Je certifie être l'auteur de ce livre ou détenir les droits de le vendre. Comme il est publié sans validation, en cas de réclamation CarryBooks le retire immédiatement et mon compte peut être suspendu.</span>
+                            <span>Je certifie être l'auteur de ce livre ou détenir les droits de le vendre. Comme il est publié sans validation, en cas de réclamation {SITE_NOM} le retire immédiatement et mon compte peut être suspendu.</span>
                           </label>
                         ) : null}
                       </div>
@@ -19733,7 +19736,7 @@ export default function App() {
                               <span style={{ fontSize: 12, color: st.c, fontWeight: "bold" }}>{st.t}</span>
                               <span style={{ fontSize: 14, color: G.gold, fontWeight: "bold" }}>{b.price ? b.price + " F" : "Gratuit"}</span>
                             </div>
-                            {b.moderation === "refuse" ? <div style={{ fontSize: 12, color: "#c62828", marginTop: 6, background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", lineHeight: 1.5 }}><b>Motif du refus :</b> {b.motif_refus || "aucun motif n'a été indiqué — écris à CarryBooks pour connaître le motif."}</div> : null}
+                            {b.moderation === "refuse" ? <div style={{ fontSize: 12, color: "#c62828", marginTop: 6, background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", lineHeight: 1.5 }}><b>Motif du refus :</b> {b.motif_refus || "aucun motif n'a été indiqué — écris à " + SITE_NOM + " pour connaître le motif."}</div> : null}
                           </div>
                         </div>
                       );
@@ -19756,7 +19759,7 @@ export default function App() {
                               {b.category ? <div style={{ fontSize: 12, color: G.textDim, marginTop: 2 }}>{b.category}{b.subcategory ? " · " + b.subcategory : ""}</div> : null}
                             </div>
                           </div>
-                          {b.moderation === "refuse" ? <div style={{ fontSize: 13, color: "#c62828", lineHeight: 1.6, marginBottom: 12, background: "#fdecea", border: "1px solid #e53935", borderRadius: 8, padding: 12 }}><b>❌ Motif du refus</b><br/>{b.motif_refus || "Aucun motif n'a été indiqué. Écris à CarryBooks pour connaître le motif."}<br/><br/><span style={{ color: "#7a2a24" }}>Corrige ton livre avec le bouton ✏️ Modifier ci-dessous, puis renvoie ton livre à la validation.</span></div> : null}
+                          {b.moderation === "refuse" ? <div style={{ fontSize: 13, color: "#c62828", lineHeight: 1.6, marginBottom: 12, background: "#fdecea", border: "1px solid #e53935", borderRadius: 8, padding: 12 }}><b>❌ Motif du refus</b><br/>{b.motif_refus || "Aucun motif n'a été indiqué. Écris à " + SITE_NOM + " pour connaître le motif."}<br/><br/><span style={{ color: "#7a2a24" }}>Corrige ton livre avec le bouton ✏️ Modifier ci-dessous, puis renvoie ton livre à la validation.</span></div> : null}
                           {b.summary ? <div style={{ fontSize: 13, color: G.text, lineHeight: 1.5, marginBottom: 12, maxHeight: 120, overflowY: "auto", background: G.bg, borderRadius: 8, padding: 10 }}>{b.summary}</div> : null}
                           {b.status === "actif" && auteurProfil.code_source ? (
                             <div style={{ marginBottom: 14 }}>
@@ -19898,14 +19901,14 @@ export default function App() {
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-                          {compteur("Ventes CarryBooks (50%)", sans.length, gains(sans), G.text)}
+                          {compteur("Ventes " + SITE_NOM + " (50%)", sans.length, gains(sans), G.text)}
                           {compteur("Ventes via mon lien (85%)", avec.length, gains(avec), G.gold)}
                           {vitr.length > 0 ? compteur("Ventes en vitrine (85%)", vitr.length, gains(vitr), G.green) : null}
                         </div>
                         <div style={{ background: G.gold + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
                           <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>TOTAL — {vv.length} livre(s) vendu(s)</div>
                           <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{fmt(gains(vv))}</div>
-                          <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions CarryBooks)</div>
+                          <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions {SITE_NOM})</div>
                         </div>
                         <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
@@ -20115,7 +20118,7 @@ export default function App() {
                   const lienV = "https://carrybooks.com/auteur/" + auteurProfil.code_source;
                   const nomV = (auteurVitrineNom || "").trim() || (auteurProfil.nom_complet || "ma librairie");
                   const partager = () => {
-                    const texte = "📚 Découvre " + nomV + " sur CarryBooks :\n" + lienV;
+                    const texte = "📚 Découvre " + nomV + " sur " + SITE_NOM + " :\n" + lienV;
                     try {
                       if (navigator.share) { navigator.share({ title: nomV, text: texte, url: lienV }); return; }
                     } catch (e) {}
@@ -20158,7 +20161,7 @@ export default function App() {
                     </label>
                     {auteurVitrineLogo ? <button type="button" onClick={() => { setAuteurVitrineLogo(""); setAuteurVitrineLogo192(""); }} style={{ padding: "10px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Retirer le logo</button> : null}
                   </div>
-                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>Image carrée, au moins 200 × 200 pixels. Sans logo, c'est ta photo de profil qui s'affiche sur ta vitrine, et l'icône CarryBooks qui sert d'icône à ton application.</div>
+                  <div style={{ fontSize: 11, color: G.textDim, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>Image carrée, au moins 200 × 200 pixels. Sans logo, c'est ta photo de profil qui s'affiche sur ta vitrine, et l'icône {SITE_NOM} qui sert d'icône à ton application.</div>
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
@@ -20174,7 +20177,7 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textDim, marginTop: -2, marginBottom: 10, lineHeight: 1.5 }}>C'est le choix proposé d'avance quand tu publies. Tu peux toujours en décider autrement livre par livre.</div>
                   <div style={{ marginBottom: 16 }}>
                     {[
-                      ["les_deux", "🌍 Ma vitrine + CarryBooks", "Dans ta vitrine et dans le catalogue CarryBooks, après validation sous 24 h. 85 % quand la vente vient de toi, 50 % quand elle vient de CarryBooks."],
+                      ["les_deux", "🌍 Ma vitrine + " + SITE_NOM, "Dans ta vitrine et dans le catalogue " + SITE_NOM + ", après validation sous 24 h. 85 % quand la vente vient de toi, 50 % quand elle vient de " + SITE_NOM + "."],
                       ["vitrine", "🏪 Ma vitrine uniquement", "Nulle part sur carrybooks.com. En ligne tout de suite, sans validation, 85 % sur chaque vente. Réservé aux auteurs vérifiés."],
                     ].map(function (o) {
                       const val = o[0], titre = o[1], desc = o[2];
@@ -20261,7 +20264,7 @@ export default function App() {
                         </div>
                         <div style={{ background: cEnt, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div style={{ fontSize: 11, fontWeight: "bold", color: cEntTxt }}>{enteteCoche("nom_auteur") ? nomA : "Qui suis-je ?"}</div>
-                          <div style={{ fontSize: 9.5, color: cEntTxt, opacity: 0.7 }}>Propulsé par CarryBooks</div>
+                          <div style={{ fontSize: 9.5, color: cEntTxt, opacity: 0.7 }}>Propulsé par {SITE_NOM}</div>
                         </div>
                       </div>
                     );
@@ -20304,7 +20307,7 @@ export default function App() {
               {/* COMMENT PUBLIER */}
               {auteurTab === "aide" && (
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
-                  <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur CarryBooks</div>
+                  <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur {SITE_NOM}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 14 }}>Tout ce que tu dois savoir de A à Z, pas à pas.</div>
                   <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
 
@@ -20326,13 +20329,13 @@ export default function App() {
                   <p>Le <b>résumé</b> donne envie de lire. L'<b>extrait</b> = le nombre de premières pages visibles gratuitement avant l'achat (mets une valeur qui donne envie sans tout dévoiler).</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>5. Catégories</div>
-                  <p>Choisis la catégorie et la sous-catégorie dans les listes proposées. Tous les livres sont mélangés dans la boutique CarryBooks.</p>
+                  <p>Choisis la catégorie et la sous-catégorie dans les listes proposées. Tous les livres sont mélangés dans la boutique {SITE_NOM}.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>6. Validation</div>
-                  <p>Après l'envoi, ton livre passe en <b>« en attente »</b>. L'équipe CarryBooks le vérifie, puis l'approuve. Une fois approuvé, il apparaît dans la boutique et devient achetable. Tu peux <b>modifier</b> un livre à tout moment (il repasse alors en validation).</p>
+                  <p>Après l'envoi, ton livre passe en <b>« en attente »</b>. L'équipe {SITE_NOM} le vérifie, puis l'approuve. Une fois approuvé, il apparaît dans la boutique et devient achetable. Tu peux <b>modifier</b> un livre à tout moment (il repasse alors en validation).</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>7. Tes gains (commissions)</div>
-                  <p>Sur chaque vente : tu touches <b>85 %</b> si le client vient par <b>ton lien de pub</b> ou par <b>ta vitrine</b>, et <b>50 %</b> si c'est CarryBooks qui amène la vente. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p><p>Au moment de publier, tu choisis « <b>Où vendre ce livre ?</b> ». Si tu choisis <b>Ma vitrine uniquement</b>, le livre n'apparaît pas sur carrybooks.com : il est en ligne tout de suite, sans validation, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs, CarryBooks ne le mettra jamais en avant. Cette option demande d'être un auteur <b>vérifié</b>.</p>
+                  <p>Sur chaque vente : tu touches <b>85 %</b> si le client vient par <b>ton lien de pub</b> ou par <b>ta vitrine</b>, et <b>50 %</b> si c'est {SITE_NOM} qui amène la vente. Suis tes ventes et tes gains dans l'onglet <b>Stats</b>.</p><p>Au moment de publier, tu choisis « <b>Où vendre ce livre ?</b> ». Si tu choisis <b>Ma vitrine uniquement</b>, le livre n'apparaît pas sur carrybooks.com : il est en ligne tout de suite, sans validation, et tu touches <b>85 %</b>. En échange, c'est toi qui amènes les lecteurs, {SITE_NOM} ne le mettra jamais en avant. Cette option demande d'être un auteur <b>vérifié</b>.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>8. Publicité (pixels)</div>
                   <p>Dans <b>Intégrations</b>, ajoute ton pixel <b>Facebook</b> et/ou <b>TikTok</b> pour suivre l'efficacité de tes publicités.</p>
@@ -20344,22 +20347,22 @@ export default function App() {
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 14 }}>11. Ta vitrine : ta boutique à toi</div>
                   <p>Tu as une <b>vitrine personnelle</b> à l'adresse <b>carrybooks.com/auteur/TON-CODE</b>. C'est une page qui n'affiche <b>que tes livres</b>, à ton nom, à tes couleurs. Retrouve le lien dans <b>☰ → 🏪 Ma vitrine</b>, avec un bouton <b>Partager</b> pour l'envoyer en un geste sur WhatsApp, Facebook ou TikTok.</p>
                   <p><b>Tu l'habilles toi-même</b> dans <b>☰ → 🏪 Ma vitrine</b> : un <b>nom de boutique</b> (par exemple « Les Éditions du Baobab »), un <b>logo</b>, et <b>5 couleurs</b> — le fond de l'en-tête et du pied de page, le texte, l'arrière-plan et le prix. Tu choisis aussi ce qui s'affiche tout en haut : ton logo, ton nom, ton pays, ton nombre de followers.</p>
-                  <p><b>Un lecteur qui arrive par ton lien reste chez toi.</b> Il ne repart pas sur CarryBooks : il navigue dans ta vitrine, cherche dans tes livres, et achète chez toi.</p>
+                  <p><b>Un lecteur qui arrive par ton lien reste chez toi.</b> Il ne repart pas sur {SITE_NOM} : il navigue dans ta vitrine, cherche dans tes livres, et achète chez toi.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>12. Ta vitrine s'installe comme une application</div>
-                  <p>Quand un lecteur ouvre ton lien dans <b>Chrome</b>, il peut <b>installer ta vitrine sur son téléphone</b>. Elle s'ajoute à son écran d'accueil comme une vraie application, <b>avec ton nom et ton logo</b>, et s'ouvre directement sur ta boutique. Mets un logo dans <b>🏪 Ma vitrine</b> : sans lui, c'est l'icône CarryBooks qui s'affiche.</p>
+                  <p>Quand un lecteur ouvre ton lien dans <b>Chrome</b>, il peut <b>installer ta vitrine sur son téléphone</b>. Elle s'ajoute à son écran d'accueil comme une vraie application, <b>avec ton nom et ton logo</b>, et s'ouvre directement sur ta boutique. Mets un logo dans <b>🏪 Ma vitrine</b> : sans lui, c'est l'icône {SITE_NOM} qui s'affiche.</p>
                   <p>Un bouton <b>« Comment télécharger l'application »</b> est déjà en bas de ta vitrine, tu n'as rien à faire.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>13. Vends en vitrine seule et touche 85 %</div>
                   <p>Au moment de publier, tu choisis <b>« Où vendre ce livre ? »</b> :</p>
-                  <p><b>🌍 Ma vitrine + CarryBooks</b> — ton livre est visible par tous les lecteurs du site. Validation sous 24 h. Tu touches <b>85 %</b> si tu amènes la vente (ton lien ou ta vitrine), <b>50 %</b> si c'est CarryBooks qui l'amène.</p>
+                  <p><b>🌍 Ma vitrine + {SITE_NOM}</b> — ton livre est visible par tous les lecteurs du site. Validation sous 24 h. Tu touches <b>85 %</b> si tu amènes la vente (ton lien ou ta vitrine), <b>50 %</b> si c'est {SITE_NOM} qui l'amène.</p>
                   <p><b>🏪 Ma vitrine uniquement</b> — ton livre n'apparaît <b>que</b> sur ta vitrine. Il est <b>en ligne tout de suite, sans validation</b>, et tu touches <b>85 %</b>, forcément, puisque toutes ses ventes viennent de toi. Réservé aux auteurs <b>vérifiés</b>.</p>
-                  <p>Tu peux changer ce choix à tout moment en modifiant ton livre. Attention : passer de « vitrine seule » à « + CarryBooks » renvoie le livre en validation.</p>
+                  <p>Tu peux changer ce choix à tout moment en modifiant ton livre. Attention : passer de « vitrine seule » à « + {SITE_NOM} » renvoie le livre en validation.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>14. Fais ta publicité avec tes propres pixels</div>
                   <p>Dans <b>☰ → 🔌 Intégrations</b>, colle ton <b>pixel Facebook</b> et ton <b>pixel TikTok</b>. Ils se déclenchent sur les pages de <b>TES</b> livres et sur ta vitrine, jamais sur ceux des autres.</p>
                   <p>Tu peux donc lancer tes propres publicités, voir exactement combien de personnes ont vu ton livre et combien ont acheté, et faire du reciblage. Les deux guides pas à pas sont dans <b>Intégrations</b>, avec un lien sous chaque champ.</p>
-                  <p><b>Le calcul à retenir :</b> dès que tu amènes la vente, sur un livre à 2 000 F tu gardes <b>1 700 F</b>. C'est cette marge qui finance ta publicité.</p><p><b>85 % NETS.</b> Les frais d'encaissement et les frais de reversement Mobile Money sont payés par CarryBooks : rien n'est retiré de ta part. 1 700 F annoncés, 1 700 F reçus.</p>
+                  <p><b>Le calcul à retenir :</b> dès que tu amènes la vente, sur un livre à 2 000 F tu gardes <b>1 700 F</b>. C'est cette marge qui finance ta publicité.</p><p><b>85 % NETS.</b> Les frais d'encaissement et les frais de reversement Mobile Money sont payés par {SITE_NOM} : rien n'est retiré de ta part. 1 700 F annoncés, 1 700 F reçus.</p>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>15. Vendre une formation vidéo</div>
                   <p>Dans <b>Publier</b>, choisis <b>« 🎓 Publier une Formation »</b>. Ta formation reste hébergée où tu veux — YouTube, Google Drive, WhatsApp, Telegram. Ici tu la <b>présentes</b> et tu la <b>vends</b>.</p>
@@ -20369,11 +20372,11 @@ export default function App() {
               {/* SUPPORT (bientôt) */}
               {auteurTab === "support" && (
                 <div>
-                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Une question, un souci de paiement, une suggestion ? Écris-nous : l’équipe CarryBooks te répond ici, généralement sous 24h.</div>
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Une question, un souci de paiement, une suggestion ? Écris-nous : l’équipe {SITE_NOM} te répond ici, généralement sous 24h.</div>
                   <div style={{ maxHeight: 380, overflowY: "auto", background: "#faf8f3", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                     {supportMsgs.length === 0 ? <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 20 }}>Aucun message pour l’instant. Écris-nous ci-dessous 👇</div> : supportMsgs.map(m => (
                       <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : "#fff", color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                        {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce CarryBooks</div> : null}
+                        {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce {SITE_NOM}</div> : null}
                         {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                         {m.texte}
                         <div style={{ fontSize: 9, opacity: 0.6, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
@@ -20394,7 +20397,7 @@ export default function App() {
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
                   <div style={{ fontSize: 30, marginBottom: 8 }}>🔔</div>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Notifications</div>
-                  <div style={{ fontSize: 13, color: G.textDim }}>Les messages de CarryBooks apparaîtront ici. (Bientôt disponible)</div>
+                  <div style={{ fontSize: 13, color: G.textDim }}>Les messages de {SITE_NOM} apparaîtront ici. (Bientôt disponible)</div>
                 </div>
               )}
               {pubMsg && <div style={{ marginTop: 14, fontSize: 13, textAlign: "center", color: pubMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{pubMsg}</div>}
@@ -20403,7 +20406,7 @@ export default function App() {
 
                     {lecteur && auteurChecked && !auteurProfil && (
             <div>
-              <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>Crée ton profil auteur pour publier tes livres sur CarryBooks. Tes livres seront vérifiés avant leur mise en ligne.</p>
+              <p style={{ color: G.textDim, fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>Crée ton profil auteur pour publier tes livres sur {SITE_NOM}. Tes livres seront vérifiés avant leur mise en ligne.</p>
               <label style={labelSt}>Nom complet *</label>
               <input value={auteurNom} onChange={e => setAuteurNom(e.target.value)} placeholder="Ton nom d'auteur" style={champ} />
               <div style={{ height: 14 }} />
@@ -20418,7 +20421,7 @@ export default function App() {
                 <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px", borderRadius: 8, border: "1px solid " + G.border, background: G.bg, color: G.text, fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>{(() => { const s = PAYS_LISTE.find(p => p.nom === auteurPays); return s ? (s.flag + " " + (s.code || "")) : "+___"; })()}</div>
                 <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder={auteurPays ? "Ton numéro" : "Choisis d'abord ton pays"} disabled={!auteurPays} style={{ ...champ, flex: 1, marginBottom: 0, opacity: auteurPays ? 1 : 0.6 }} />
               </div>
-              <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 6, lineHeight: 1.5 }}>C'est sur ce numéro que CarryBooks envoie tes retraits. Si tu le changes ici, tes prochains virements partiront sur le nouveau numéro.</div>
+              <div style={{ fontSize: 11.5, color: G.textDim, marginTop: 6, lineHeight: 1.5 }}>C'est sur ce numéro que {SITE_NOM} envoie tes retraits. Si tu le changes ici, tes prochains virements partiront sur le nouveau numéro.</div>
               <div style={{ height: 14 }} />
               <label style={labelSt}>Ton adresse email *</label>
               <input type="email" value={auteurEmail} onChange={e => setAuteurEmail(e.target.value)} placeholder="ex : nom@gmail.com" style={champ} />
@@ -20472,7 +20475,7 @@ export default function App() {
             <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 270, maxWidth: "80%", background: G.navSurface, boxShadow: "2px 0 12px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: 16, borderBottom: "1px solid " + G.navBorder }}>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil && renderBadgeVerifie(auteurProfil.kyc_status === "valide")}{auteurProfil ? auteurProfil.nom_complet : ""}</div>
-                <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur CarryBooks</div>
+                <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur {SITE_NOM}</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
             <button onClick={() => { setAuteurTab("vitrine"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "vitrine" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "vitrine" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🏪</span> Ma vitrine</button>
@@ -20908,7 +20911,7 @@ export default function App() {
                   </p>
                   <div style={{ fontSize: 24, color: "#c9a84c", marginBottom: 12 }}>❦</div>
                   <p style={{ fontSize: 13, color: readerDark ? "#888" : "#888", letterSpacing: 3, textTransform: "uppercase" }}>
-                    CarryBooks
+                    {SITE_NOM}
                   </p>
                 </div>
               ) : currentPageContent === "__SPECIAL_COPYRIGHT__" ? (
@@ -20934,7 +20937,7 @@ export default function App() {
                     Copyright © {new Date().getFullYear()}
                   </p>
                   <p style={{ fontSize: 13, color: "#c9a84c", letterSpacing: 3, textTransform: "uppercase", fontWeight: "bold", marginBottom: 18 }}>
-                    CarryBooks
+                    {SITE_NOM}
                   </p>
                   <a href="https://www.carrybooks.com" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                     style={{ fontSize: 12, color: "#c9a84c", marginBottom: 22, textDecoration: "underline" }}>
@@ -21799,7 +21802,7 @@ export default function App() {
                     book.pdf_url,
                     (book.title || "livre") + ".pdf",
                     {
-                      name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                      name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client " + SITE_NOM,
                       email: user?.email || "",
                       phone: user?.user_metadata?.phone || "",
                       userId: user?.id,
@@ -22306,7 +22309,7 @@ export default function App() {
                             paymentBook.pdf_url,
                             (paymentBook.title || "livre") + ".pdf",
                             {
-                              name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                              name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client " + SITE_NOM,
                               email: user?.email || "",
                               phone: phoneNumber || user?.user_metadata?.phone || "",
                               userId: user?.id,
@@ -22445,7 +22448,7 @@ export default function App() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 20 }}>
             <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
               <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 48, marginBottom: 20 }} />
-              <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur CarryBooks 📚</h2>
+              <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur {SITE_NOM} 📚</h2>
               <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
               <div style={{ textAlign: "left", marginBottom: 24, padding: "0 8px" }}>
                 <div style={{ fontSize: 13, color: G.text, marginBottom: 6 }}>✅ Accéder à tes livres depuis n'importe quel appareil</div>
@@ -22542,7 +22545,7 @@ export default function App() {
         <div onClick={fermerDailyInstall} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, maxWidth: 360, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
             <div style={{ fontSize: 46, marginBottom: 6 }}>📲</div>
-            <div style={{ fontSize: 18, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Installe l’application CarryBooks</div>
+            <div style={{ fontSize: 18, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Installe l’application {SITE_NOM}</div>
             <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6, marginBottom: 18 }}>Accède à tes livres plus vite, même hors connexion, directement depuis ton écran d’accueil.</div>
             {installPlatform === "ios" ? (
               <div style={{ textAlign: "left", background: "#f7f4ee", borderRadius: 12, padding: 14, marginBottom: 16 }}>
@@ -22571,7 +22574,7 @@ export default function App() {
             }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
             <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
-              Installer CarryBooks
+              Installer {SITE_NOM}
             </h2>
             <p style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>
               Pour ajouter l'app à ton iPhone :
@@ -22725,7 +22728,7 @@ export default function App() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
           <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
             <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 48, marginBottom: 20 }} />
-            <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur CarryBooks 📚</h2>
+            <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur {SITE_NOM} 📚</h2>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
             <div style={{ textAlign: "left", marginBottom: 24, padding: "0 8px" }}>
               <div style={{ fontSize: 13, color: G.text, marginBottom: 6 }}>✅ Accéder à tes livres depuis n'importe quel appareil</div>
@@ -22810,7 +22813,7 @@ export default function App() {
                   <button onClick={() => { if (auteurProfil || lecteur || user) { setPage("espace_auteur"); } else { setPendingEspaceAuteur(true); setShowLecteurModal(true); } }} style={{ flex: 1, padding: "10px 6px", background: G.bouton, border: "none", color: G.boutonTexte, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "8px 0 0 8px", borderRight: "1px solid rgba(0,0,0,0.12)" }}>
                     <span style={{ fontSize: 18 }}>{estAuteurValide ? "✍️" : "📖"}</span>
                     <span style={{ lineHeight: 1.15, textAlign: "center", fontSize: 11.5 }}>{estAuteurValide ? "MON ESPACE AUTEUR(E)" : "PUBLIE UN LIVRE"}</span>
-                    <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>{estAuteurValide ? "Gère tes livres et tes ventes" : "Vends tes livres sur CarryBooks"}</span>
+                    <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>{estAuteurValide ? "Gère tes livres et tes ventes" : "Vends tes livres sur " + SITE_NOM}</span>
                   </button>
                   ); })()}
                   {!window.matchMedia("(display-mode: standalone)").matches && (
@@ -22833,7 +22836,7 @@ export default function App() {
                     }} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", borderRight: "1px solid " + G.border, color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                       <span style={{ fontSize: 18 }}>📲</span>
                       <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>Installez l'app</span>
-                      <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>CarryBooks</span>
+                      <span style={{ lineHeight: 1.2, textAlign: "center", fontSize: 11 }}>{SITE_NOM}</span>
                     </button>
                   )}
                   <button onClick={() => { if (!exigerConnexion()) return; setPage("library"); }} style={{ flex: 1, padding: "10px 6px", background: G.surface, border: "none", color: G.text, fontWeight: "bold", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: "0 8px 8px 0" }}>
@@ -22972,7 +22975,7 @@ export default function App() {
                   <div style={{ padding: 10 }}>
                     <a href="https://yolli.net/?src=carrybooks" target="_blank" rel="noopener noreferrer"
                       onClick={() => {
-                        try { trackPixelEvent("Lead", { content_name: "Yolli depuis CarryBooks" }); } catch (e) {}
+                        try { trackPixelEvent("Lead", { content_name: "Yolli depuis " + SITE_NOM }); } catch (e) {}
                         // On enregistre le clic sans attendre la reponse : le lien s'ouvre
                         // dans un autre onglet, la page reste vivante et l'insertion finit.
                         try { supabase.from("clics_pub").insert([{ cible: "yolli", page: "accueil" }]); } catch (e) {}
@@ -23241,7 +23244,7 @@ export default function App() {
 
                 {/* STATS SITE (toujours affichées, indépendantes des catégories) */}
                 <div style={{ padding: "4px 12px 24px" }}>
-                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>CarryBooks, les chiffres en temps réel</div>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>{SITE_NOM}, les chiffres en temps réel</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
                     {[
                       { ic: "👁️", n: siteStats.visites, l: "Visites" },
@@ -24008,7 +24011,7 @@ export default function App() {
                   {row(1, <span>Connecte-toi et ouvre le <b>Gestionnaire d’événements</b> (lien ci-dessus).</span>)}
                   {row(2, <span>Clique sur <b>« Connecter des données »</b> (ou le bouton <b>« + »</b>), puis choisis <b>« Web »</b>.</span>)}
                   {row(3, <span>Sélectionne <b>« Pixel Meta »</b> et clique <b>« Connecter »</b>.</span>)}
-                  {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « CarryBooks ») et valide.</span>)}
+                  {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « {SITE_NOM} ») et valide.</span>)}
                   {row(5, <span>Ton pixel est créé. Repère son <b>identifiant (ID)</b> : une suite de <b>15 à 16 chiffres</b>.</span>)}
                   {row(6, <span>Copie cet ID, reviens dans <b>Intégrations</b> de ton espace auteur et colle-le dans <b>« Pixel Facebook (ID) »</b>.</span>)}
                 </div>
@@ -24021,7 +24024,7 @@ export default function App() {
                   {row(1, <span>Connecte-toi au <b>Gestionnaire d’événements</b> (lien ci-dessus).</span>)}
                   {row(2, <span>Clique sur <b>« Connecter une source de données »</b>, puis choisis <b>« Web »</b>.</span>)}
                   {row(3, <span>Sélectionne <b>« Installation manuelle du code Pixel »</b>.</span>)}
-                  {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « CarryBooks ») et valide.</span>)}
+                  {row(4, <span>Donne un <b>nom</b> à ton pixel (ex : « {SITE_NOM} ») et valide.</span>)}
                   {row(5, <span>Ton pixel est créé. Repère son <b>identifiant (ID)</b> : une suite de <b>lettres et chiffres</b> (ex : C1A2B3…).</span>)}
                   {row(6, <span>Copie cet ID, reviens dans <b>Intégrations</b> et colle-le dans <b>« Pixel TikTok (ID) »</b>.</span>)}
                 </div>
@@ -24035,7 +24038,7 @@ export default function App() {
         {page === "comment_publier" && (
           <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 60px" }}>
             <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
-            <h1 style={{ color: G.gold, fontSize: 22, marginBottom: 6 }}>Comment publier sur CarryBooks</h1>
+            <h1 style={{ color: G.gold, fontSize: 22, marginBottom: 6 }}>Comment publier sur {SITE_NOM}</h1>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Le guide complet pour t’inscrire et publier tes livres, même sans aucune expérience.</p>
             <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 24 }}>⬇️ Télécharger le guide en PDF</a>
 
@@ -24057,7 +24060,7 @@ export default function App() {
                 <p style={P}>Ajoute ta photo, une courte bio et tes réseaux sociaux. Tu obtiens une <b>boutique personnelle</b> avec un <b>lien de promotion</b> : partage-le, chaque vente via ce lien te rapporte <b>85 %</b> au lieu de 50 %.</p>
 
                 <div style={H}>Étape 3 — Faire vérifier ton identité</div>
-                <p style={P}>Obligatoire avant de publier. Remplis le formulaire d’identité (avec ton <b>numéro Mobile Money</b>, c’est là que tu seras payé), ajoute une photo de ta <b>pièce d’identité</b> (recto obligatoire, verso facultatif), puis <b>lis et signe le contrat en ligne</b> avec ton doigt. Une fois validé par CarryBooks, un badge « vérifié » apparaît et l’onglet Publier se débloque.</p>
+                <p style={P}>Obligatoire avant de publier. Remplis le formulaire d’identité (avec ton <b>numéro Mobile Money</b>, c’est là que tu seras payé), ajoute une photo de ta <b>pièce d’identité</b> (recto obligatoire, verso facultatif), puis <b>lis et signe le contrat en ligne</b> avec ton doigt. Une fois validé par {SITE_NOM}, un badge « vérifié » apparaît et l’onglet Publier se débloque.</p>
 
                 <div style={H}>Étape 4 — Publier ton livre</div>
                 <p style={P}>Appuie sur l’onglet <b>Publier</b> (bouton « + » au centre), puis « Publier un livre ». Choisis parmi <b>4 types</b> :</p>
@@ -24072,7 +24075,7 @@ export default function App() {
                 <p style={P}>Remplis dans l’ordre : <span style={FL}>Titre</span>, <span style={FL}>Catégorie</span>, <span style={FL}>Sous-catégorie</span> (elle s’active après la catégorie), <span style={FL}>Prix (FCFA)</span>, <span style={FL}>Couverture</span> (image A4 portrait, ~1240×1754 px, nette), <span style={FL}>Résumé</span> (2-3 phrases), <span style={FL}>Pages gratuites</span> (l’extrait lisible avant achat, ex : 10), puis <span style={FL}>Texte du roman</span>. Tu peux <b>écrire ton roman directement ici, sur la plateforme</b> : tape ton texte dans la grande zone, ou colle-le depuis Word. <b>Pas besoin de tout finir d’un coup</b> : appuie sur <b>« Enregistrer (continuer plus tard) »</b> et ton travail est gardé. Tu peux revenir l’écrire sur <b>plusieurs jours, à ta convenance</b> ; ton texte s’enregistre aussi tout seul pendant que tu écris. Tu <b>retrouves à tout moment ton livre en cours d’écriture dans « Mes livres » → onglet « En cours d’édition »</b> : ouvre-le pour continuer là où tu t’étais arrêté(e). (Dans « Mes livres », 3 onglets : <b>Tous mes livres</b> = tes livres publiés, <b>En cours d’édition</b> = tes textes pas encore finis, <b>En attente</b> = soumis mais pas encore validés.) Quand ton roman est terminé, appuie sur <b>Soumettre pour validation</b>.</p>
 
                 <div style={H2}>📢 Publier une annonce (mettre un livre en avant)</div>
-                <p style={P}>Depuis <b>Publier</b>, choisis <b>« Publier une annonce »</b> : ajoute une <b>bannière au format A4 paysage</b> (large) et colle le <b>lien de ton livre</b> (copie-le depuis « Mes livres » en ouvrant le livre). Une fois validée par CarryBooks, ton annonce s’affiche sur l’accueil (entre Best-sellers et Nouveautés) avec un bouton « Découvrir ».</p>
+                <p style={P}>Depuis <b>Publier</b>, choisis <b>« Publier une annonce »</b> : ajoute une <b>bannière au format A4 paysage</b> (large) et colle le <b>lien de ton livre</b> (copie-le depuis « Mes livres » en ouvrant le livre). Une fois validée par {SITE_NOM}, ton annonce s’affiche sur l’accueil (entre Best-sellers et Nouveautés) avec un bouton « Découvrir ».</p>
                 <div style={H2}>Type 2 — Livre PDF</div>
                 <p style={P}>Mêmes champs (Titre, Catégorie, Sous-catégorie, Prix, Couverture, Résumé, Pages gratuites), puis <span style={FL}>Fichier PDF du livre</span> : prépare-le au format <b>A5</b>, avec une <b>taille de police comprise entre 13 et 16</b> et le <b>numéro de page en bas au centre</b>. Ensuite, choisis si le PDF sera <b>Téléchargeable</b> (le client peut le télécharger) ou en <b>Lecture seule</b> (protégé, non téléchargeable). Puis <b>Soumettre pour validation</b>.</p>
 
@@ -24087,12 +24090,12 @@ export default function App() {
                 <div style={box}><b>Après la soumission</b> — dans « Mes livres », ton livre affiche : <b>En attente</b> (en cours de vérification), <b>En ligne</b> (validé, visible et vendable), ou <b>Refusé</b> (un motif s’affiche : corrige et resoumets). Tu peux modifier ou supprimer un livre depuis cet onglet.</div>
 
                 <div style={H}>Ta rémunération et tes retraits</div>
-                <p style={P}>Tu gagnes <b>85 %</b> sur les ventes que tu amènes toi-même — par ton lien de promotion ou par ta vitrine — et <b>50 %</b> sur celles amenées par CarryBooks. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
+                <p style={P}>Tu gagnes <b>85 %</b> sur les ventes que tu amènes toi-même — par ton lien de promotion ou par ta vitrine — et <b>50 %</b> sur celles amenées par {SITE_NOM}. Dans l’onglet <b>Ventes</b>, tu vois ton portefeuille et le montant <b>disponible au retrait</b> : appuie sur « Retirer les fonds », indique le montant, et tu es payé par <b>Mobile Money</b> (les gains deviennent retirables quelques jours après chaque vente).</p>
 
                 <div style={H}>Le programme d’abonnement (facultatif)</div>
                 <p style={P}>Dans les Paramètres, tu peux activer l’abonnement : tes <b>romans</b> deviennent lisibles par les abonnés et tu touches une <b>commission fixe à chaque déblocage</b>. Tes livres PDF et audio restent payants. Tu peux te retirer quand tu veux.</p>
 
-                <div style={{ ...box, textAlign: "center" }}>Une question ? Écris-nous à <b>carrybooks.com@gmail.com</b>. Bienvenue dans la famille CarryBooks !</div>
+                <div style={{ ...box, textAlign: "center" }}>Une question ? Écris-nous à <b>carrybooks.com@gmail.com</b>. Bienvenue dans la famille {SITE_NOM} !</div>
               </div>);
             })()}
           </div>
@@ -24119,7 +24122,7 @@ export default function App() {
                   book.pdf_url,
                   (book.title || "livre") + ".pdf",
                   {
-                    name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client CarryBooks",
+                    name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Client " + SITE_NOM,
                     email: user?.email || "",
                     phone: user?.user_metadata?.phone || "",
                     userId: user?.id,
@@ -24183,7 +24186,7 @@ export default function App() {
             {/* En-tête */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 4 }}>Parrainage</div>
-              <h2 style={{ fontSize: 22, color: G.text, margin: 0, fontFamily: "Georgia, serif" }}>Gagne de l'argent avec CarryBooks</h2>
+              <h2 style={{ fontSize: 22, color: G.text, margin: 0, fontFamily: "Georgia, serif" }}>Gagne de l'argent avec {SITE_NOM}</h2>
               <p style={{ fontSize: 13, color: G.textFaint, marginTop: 6, lineHeight: 1.5 }}>
                 Partage tes liens, tes ami(e)s achètent, tu touches une commission directement sur Mobile Money.
               </p>
@@ -24298,7 +24301,7 @@ export default function App() {
                       const url = "https://carrybooks.com/?ref=" + referralCode;
                       const discount = parseFloat(appReferralSettings?.referred_discount_pct);
                       const discountTxt = discount > 0 ? ` Avec mon lien tu as -${discount}% sur ta 1ère commande :` : " :";
-                      const text = "📚 Découvre CarryBooks ! Des livres et articles de qualité au Cameroun." + discountTxt + "\n" + url;
+                      const text = "📚 Découvre " + SITE_NOM + " ! Des livres et articles de qualité au Cameroun." + discountTxt + "\n" + url;
                       window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
                     }} style={{ padding: "10px 8px", background: "#25D366", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
                     <button onClick={() => {
@@ -24358,7 +24361,7 @@ export default function App() {
                   <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 10, letterSpacing: 1, textTransform: "uppercase" }}>💡 Comment ça marche</div>
                   <ol style={{ fontSize: 12, color: G.textDim, lineHeight: 1.7, paddingLeft: 18, margin: 0 }}>
                     <li>Partage ton lien sur WhatsApp, Facebook, etc.</li>
-                    <li>Ton/ta client(e) clique et achète sur CarryBooks</li>
+                    <li>Ton/ta client(e) clique et achète sur {SITE_NOM}</li>
                     <li>Tu gagnes <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_digital ?? 20}%</strong> sur les livres numériques et <strong style={{ color: G.gold }}>{appReferralSettings?.reward_pct_physical ?? 10}%</strong> sur les articles physiques</li>
                     {(parseFloat(appReferralSettings?.referred_discount_pct) > 0) && (
                       <li>Ton/ta client(e) bénéficie de <strong style={{ color: G.gold }}>{appReferralSettings?.referred_discount_pct}%</strong> de réduction</li>
@@ -24862,7 +24865,7 @@ export default function App() {
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
-                CarryBooks est la première librairie numérique africaine pensée pour les lecteurs camerounais et africains. Notre mission est de rendre la lecture accessible à tous, partout en Afrique, depuis son téléphone.
+                {SITE_NOM} est la première librairie numérique africaine pensée pour les lecteurs camerounais et africains. Notre mission est de rendre la lecture accessible à tous, partout en Afrique, depuis son téléphone.
               </p>
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
@@ -24909,14 +24912,14 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                CarryBooks (« nous », « notre », « nos ») est une application de lecture numérique opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Sylviane Landrine Maffo, basée à Yaoundé, Cameroun. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
+                {SITE_NOM} (« nous », « notre », « nos ») est une application de lecture numérique opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Sylviane Landrine Maffo, basée à Yaoundé, Cameroun. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
               </p>
             </div>
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>1. DONNÉES QUE NOUS COLLECTONS</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
-                Lorsque vous utilisez CarryBooks, nous pouvons collecter les informations suivantes :
+                Lorsque vous utilisez {SITE_NOM}, nous pouvons collecter les informations suivantes :
               </p>
               <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
                 <li><strong style={{ color: G.text }}>Informations de compte</strong> : nom, prénom, adresse e-mail, photo de profil (lors de la connexion via Google).</li>
@@ -24992,7 +24995,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>7. PUBLIC ET MINEURS</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                CarryBooks est destinée aux personnes âgées de <strong style={{ color: G.text }}>15 ans et plus</strong>. Si vous avez moins de 15 ans, vous ne devez pas utiliser cette application. Si nous découvrons qu'un compte appartient à un enfant de moins de 15 ans, nous le supprimerons immédiatement.
+                {SITE_NOM} est destinée aux personnes âgées de <strong style={{ color: G.text }}>15 ans et plus</strong>. Si vous avez moins de 15 ans, vous ne devez pas utiliser cette application. Si nous découvrons qu'un compte appartient à un enfant de moins de 15 ans, nous le supprimerons immédiatement.
               </p>
             </div>
 
@@ -25024,7 +25027,7 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
-              Merci de faire confiance à CarryBooks 💜
+              Merci de faire confiance à {SITE_NOM} 💜
             </div>
           </div>
         )}
@@ -25036,14 +25039,14 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Chez <strong style={{ color: G.text }}>CarryBooks</strong> (opérée par CARRY'GOO, Yaoundé, Cameroun), vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
+                Chez <strong style={{ color: G.text }}>{SITE_NOM}</strong> (opérée par CARRY'GOO, Yaoundé, Cameroun), vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
               </p>
             </div>
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>COMMENT DEMANDER LA SUPPRESSION</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginTop: 0 }}>
-                Pour supprimer votre compte CarryBooks et vos données, envoyez un e-mail à l'adresse ci-dessous depuis l'adresse e-mail liée à votre compte :
+                Pour supprimer votre compte {SITE_NOM} et vos données, envoyez un e-mail à l'adresse ci-dessous depuis l'adresse e-mail liée à votre compte :
               </p>
               <p style={{ color: G.text, fontSize: 15, lineHeight: 1.9, margin: "0 0 12px 0", textAlign: "center" }}>
                 📧 <strong style={{ color: G.gold }}>carrybooks.com@gmail.com</strong>
@@ -25084,7 +25087,7 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
-              Merci de faire confiance à CarryBooks 💜
+              Merci de faire confiance à {SITE_NOM} 💜
             </div>
           </div>
         )}
@@ -25101,7 +25104,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Bienvenue sur CarryBooks. En accédant à notre site et en utilisant nos services, vous acceptez les présentes Conditions Générales d'Utilisation (« CGU »). Veuillez les lire attentivement.
+                Bienvenue sur {SITE_NOM}. En accédant à notre site et en utilisant nos services, vous acceptez les présentes Conditions Générales d'Utilisation (« CGU »). Veuillez les lire attentivement.
               </p>
             </div>
 
@@ -25120,7 +25123,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>2. OBJET</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                CarryBooks est une plateforme numérique proposant la vente et le téléchargement de livres digitaux (ebooks), guides pratiques, diagnostics CarryCare (quiz beauté et bien-être) et autres produits éducatifs en langue française destinés au public africain et international.
+                {SITE_NOM} est une plateforme numérique proposant la vente et le téléchargement de livres digitaux (ebooks), guides pratiques, diagnostics CarryCare (quiz beauté et bien-être) et autres produits éducatifs en langue française destinés au public africain et international.
               </p>
             </div>
 
@@ -25148,7 +25151,7 @@ export default function App() {
                 <li>Cartes bancaires VISA / Mastercard</li>
               </ul>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
-                Le paiement est effectué via nos partenaires sécurisés (CamPay, NotchPay). Aucune donnée bancaire n'est conservée par CarryBooks.
+                Le paiement est effectué via nos partenaires sécurisés (CamPay, NotchPay). Aucune donnée bancaire n'est conservée par {SITE_NOM}.
               </p>
             </div>
 
@@ -25169,14 +25172,14 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>7. PROPRIÉTÉ INTELLECTUELLE</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Tous les contenus (livres, guides, quiz, logos, textes, images) sont la propriété exclusive de CarryBooks ou de ses partenaires éditoriaux. <strong style={{ color: G.text }}>Toute reproduction, redistribution ou revente</strong> du contenu acheté est strictement interdite et constitue une violation du droit d'auteur. L'achat vous donne un droit d'usage personnel uniquement.
+                Tous les contenus (livres, guides, quiz, logos, textes, images) sont la propriété exclusive de {SITE_NOM} ou de ses partenaires éditoriaux. <strong style={{ color: G.text }}>Toute reproduction, redistribution ou revente</strong> du contenu acheté est strictement interdite et constitue une violation du droit d'auteur. L'achat vous donne un droit d'usage personnel uniquement.
               </p>
             </div>
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>8. PROGRAMME DE PARRAINAGE</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Le programme de parrainage permet aux utilisateurs de gagner des récompenses en partageant leur code. Les conditions, pourcentages et délais sont précisés dans la section « Parrainage » de votre compte. CarryBooks se réserve le droit de modifier ou suspendre ce programme à tout moment.
+                Le programme de parrainage permet aux utilisateurs de gagner des récompenses en partageant leur code. Les conditions, pourcentages et délais sont précisés dans la section « Parrainage » de votre compte. {SITE_NOM} se réserve le droit de modifier ou suspendre ce programme à tout moment.
               </p>
             </div>
 
@@ -25189,7 +25192,7 @@ export default function App() {
                 <li>Pirater ou tenter de contourner les protections du site.</li>
                 <li>Partager, copier ou revendre les contenus achetés.</li>
                 <li>Utiliser de faux numéros ou comptes pour frauder le système.</li>
-                <li>Spammer ou nuire à la communauté CarryBooks.</li>
+                <li>Spammer ou nuire à la communauté {SITE_NOM}.</li>
               </ul>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
                 Tout manquement entraînera la suspension immédiate du compte sans remboursement.
@@ -25199,7 +25202,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>10. RESPONSABILITÉ</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                CarryBooks s'efforce d'assurer la disponibilité du service mais ne peut garantir une accessibilité ininterrompue (maintenance, pannes réseau, etc.). Notre responsabilité est limitée au montant payé pour le produit concerné.
+                {SITE_NOM} s'efforce d'assurer la disponibilité du service mais ne peut garantir une accessibilité ininterrompue (maintenance, pannes réseau, etc.). Notre responsabilité est limitée au montant payé pour le produit concerné.
               </p>
             </div>
 
@@ -25225,7 +25228,7 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: "center", padding: "20px 0", color: G.textFaint, fontSize: 12, fontStyle: "italic" }}>
-              Merci d'utiliser CarryBooks 📚
+              Merci d'utiliser {SITE_NOM} 📚
             </div>
           </div>
         )}
@@ -25243,7 +25246,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Chez CarryBooks, nous prenons la satisfaction de nos clientes très au sérieux. Cette politique explique <strong style={{ color: G.text }}>quand</strong> et <strong style={{ color: G.text }}>comment</strong> un remboursement peut être accordé pour un achat effectué sur notre plateforme.
+                Chez {SITE_NOM}, nous prenons la satisfaction de nos clientes très au sérieux. Cette politique explique <strong style={{ color: G.text }}>quand</strong> et <strong style={{ color: G.text }}>comment</strong> un remboursement peut être accordé pour un achat effectué sur notre plateforme.
               </p>
             </div>
 
@@ -25313,7 +25316,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>7. FRAIS DE TRANSACTION</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Les éventuels frais retenus par Mobile Money ou le partenaire bancaire (CamPay, NotchPay) lors du remboursement restent à la charge du client, sauf si l'erreur provient de CarryBooks (dans ce cas, frais pris en charge par nous).
+                Les éventuels frais retenus par Mobile Money ou le partenaire bancaire (CamPay, NotchPay) lors du remboursement restent à la charge du client, sauf si l'erreur provient de {SITE_NOM} (dans ce cas, frais pris en charge par nous).
               </p>
             </div>
 
@@ -25516,7 +25519,7 @@ export default function App() {
                 <br /><br />
                 Désormais, tous vos achats se retrouveront automatiquement dans « Ma bibliothèque ».
                 <br /><br />
-                💡 Pensez aussi à cliquer sur <b style={{ color: "#fff" }}>« Télécharger l'application CarryBooks »</b> (juste à côté de « Ma bibliothèque ») pour profiter pleinement de CarryBooks.
+                💡 Pensez aussi à cliquer sur <b style={{ color: "#fff" }}>« Télécharger l'application {SITE_NOM} »</b> (juste à côté de « Ma bibliothèque ») pour profiter pleinement de {SITE_NOM}.
               </div>
             </div>
           </div>
@@ -25529,7 +25532,7 @@ export default function App() {
             <div style={{ background: "#fff", width: "100%", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px" }}>
               <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📲</div>
-                <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208" }}>Installer CarryBooks</div>
+                <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208" }}>Installer {SITE_NOM}</div>
                 <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>Acces rapide depuis ton ecran</div>
               </div>
               {isInAppBrowser() ? (
