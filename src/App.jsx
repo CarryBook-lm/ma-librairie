@@ -1920,6 +1920,7 @@ const G_CARRYBOOKS = {
   pied: "#ede7d9", piedBordure: "#d8cdb8", piedTexte: "#7a6a50", piedFaint: "#b0a090",
   surGold: "#000",
   carte: "#fff", carteTexte: "#1a1208",
+  champ: "#fff", champBordure: "#d8cdb8",
 };
 
 // HomoRomance : theme SOMBRE. Fond presque noir bleute, titres et accents en rose vif,
@@ -1935,6 +1936,8 @@ const G_HOMOROMANCE = {
   surGold: "#fff",
   // Fond des cartes et des fenetres : blanc sur CarryBooks, bleu nuit ici.
   carte: "#161729", carteTexte: "#f2f0f7",
+  // Champ de recherche et pastilles de categorie : fond noir, contour violet.
+  champ: "#0d0d17", champBordure: "#8e2de2",
 };
 
 const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
@@ -22736,7 +22739,7 @@ export default function App() {
               if (e.target.value && page === "home") setPage("catalog");
             }}
               placeholder="Rechercher un livre, un auteur, un produit..."
-              style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "11px 14px 11px 40px", background: G.champ, border: "1px solid " + G.champBordure, borderRadius: 8, color: G.text, fontSize: 14, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
                 ✕
@@ -22748,12 +22751,12 @@ export default function App() {
           <button onClick={() => { const el = document.getElementById("filterCats"); if (el) el.scrollBy({ left: 200, behavior: "smooth" }); }} style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 16, cursor: "pointer" }}>›</button>
           <div id="filterCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, padding: "0 34px 4px" }}>
             <button onClick={() => { setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); }}
-              style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === "Tous" ? G.gold : G.border), background: selectedCategory === "Tous" ? G.goldDim : "transparent", color: selectedCategory === "Tous" ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+              style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === "Tous" ? G.gold : G.champBordure), background: selectedCategory === "Tous" ? G.goldDim : G.champ, color: selectedCategory === "Tous" ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
               Tous
             </button>
             {Object.keys(CATEGORIES).map(cat => (
               <button key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); }}
-                style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === cat ? G.gold : G.border), background: selectedCategory === cat ? G.goldDim : "transparent", color: selectedCategory === cat ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+                style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === cat ? G.gold : G.champBordure), background: selectedCategory === cat ? G.goldDim : G.champ, color: selectedCategory === cat ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
                 {cat}
               </button>
             ))}
@@ -22762,12 +22765,12 @@ export default function App() {
           {selectedCategory !== "Tous" && CATEGORIES[selectedCategory] && (
             <div onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, marginTop: 6 }}>
               <button onClick={() => setSelectedSubCategory("Tous")}
-                style={{ flexShrink: 0, padding: "4px 12px", borderRadius: 20, border: "1px solid " + (selectedSubCategory === "Tous" ? G.goldLight : G.border), background: selectedSubCategory === "Tous" ? G.goldDim : "transparent", color: selectedSubCategory === "Tous" ? G.gold : G.textFaint, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+                style={{ flexShrink: 0, padding: "4px 12px", borderRadius: 20, border: "1px solid " + (selectedSubCategory === "Tous" ? G.goldLight : G.champBordure), background: selectedSubCategory === "Tous" ? G.goldDim : G.champ, color: selectedSubCategory === "Tous" ? G.gold : G.textFaint, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
                 Tous
               </button>
               {CATEGORIES[selectedCategory].map(sub => (
                 <button key={sub} onClick={() => setSelectedSubCategory(sub)}
-                  style={{ flexShrink: 0, padding: "4px 12px", borderRadius: 20, border: "1px solid " + (selectedSubCategory === sub ? G.goldLight : G.border), background: selectedSubCategory === sub ? G.goldDim : "transparent", color: selectedSubCategory === sub ? G.gold : G.textFaint, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  style={{ flexShrink: 0, padding: "4px 12px", borderRadius: 20, border: "1px solid " + (selectedSubCategory === sub ? G.goldLight : G.champBordure), background: selectedSubCategory === sub ? G.goldDim : G.champ, color: selectedSubCategory === sub ? G.gold : G.textFaint, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
                   {sub}
                 </button>
               ))}
