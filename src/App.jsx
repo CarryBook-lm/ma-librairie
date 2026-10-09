@@ -35,10 +35,37 @@ function estAuteurAutoriseHR(nom) {
 // la mesure ment et le texte deborde.
 // ============================================================
 const LIV_INTERLIGNE = 1.6;
-const LIV_ESPACE_EM = 0;        // espace entre deux paragraphes, en em
-const LIV_RETRAIT = "1.5em";    // retrait de la premiere ligne
+const LIV_ESPACE_EM = 0.28;        // respiration entre deux paragraphes, en em
+const LIV_ESPACE_TITRE_EM = 1.1;   // au-dessus d'un titre de chapitre
+const LIV_ESPACE_SOUS_TITRE_EM = 0.5; // juste en dessous du titre
+const LIV_RETRAIT = "1.5em";       // retrait de la premiere ligne
 const LIV_RATIO = 16 / 9;       // hauteur de la page = largeur x ce rapport
 const LIV_SUITE = "\u0001";     // marque la suite d'un paragraphe coupe entre 2 pages
+
+// Un titre de chapitre merite de l'air au-dessus.
+function estTitreChapitre(x) {
+  const brut = String(x || "");
+  const t = brut.split(LIV_SUITE).join("").replace(/<[^>]*>/g, "").trim();
+  if (!t || t.length > 120) return false;
+  if (/^(chapitre|partie|prologue|epilogue|\u00e9pilogue)\b/i.test(t)) return true;
+  // un paragraphe court entierement en gras est un titre
+  return /^<(b|strong)[^>]*>[\s\S]*<\/(b|strong)>$/i.test(brut.trim());
+}
+
+// Les marges et le retrait d'un paragraphe. UN SEUL endroit : le banc d'essai
+// qui mesure et l'affichage s'en servent tous les deux, donc ils ne peuvent
+// pas diverger.
+function styleParagraphe(x, premier) {
+  const suite = String(x).indexOf(LIV_SUITE) === 0;
+  const titre = estTitreChapitre(x);
+  return {
+    suite: suite,
+    hautEm: premier ? 0 : (titre ? LIV_ESPACE_TITRE_EM : 0),
+    basEm: titre ? LIV_ESPACE_SOUS_TITRE_EM : LIV_ESPACE_EM,
+    retrait: (suite || titre) ? "0" : LIV_RETRAIT,
+    texte: suite ? String(x).slice(1) : String(x)
+  };
+}
 const EST_HOMOROMANCE = (function () {
   try {
     if (typeof window === "undefined") return false;
@@ -17614,11 +17641,9 @@ export default function App() {
     return banc;
   }
   function rendreDansBanc(banc, paras) {
-    banc.innerHTML = paras.map(function (x) {
-      const suite = String(x).indexOf(LIV_SUITE) === 0;
-      const t = suite ? String(x).slice(1) : String(x);
-      const retrait = suite ? "0" : LIV_RETRAIT;
-      return '<p style="margin:0 0 ' + LIV_ESPACE_EM + 'em;text-indent:' + retrait + '">' + t.trim() + "</p>";
+    banc.innerHTML = paras.map(function (x, i) {
+      const st = styleParagraphe(x, i === 0);
+      return '<p style="margin:' + st.hautEm + 'em 0 ' + st.basEm + 'em;text-indent:' + st.retrait + '">' + st.texte.trim() + "</p>";
     }).join("");
   }
 
@@ -17736,11 +17761,15 @@ export default function App() {
         g2++;
         rendreDansBanc(banc, pages[i]);
         // Le decoupage a la ligne garantit deja que la page tient. Ce filet
-        // n'est la que pour un cas pathologique. Tolerance de 3px : scrollHeight
-        // est arrondi, et on ne veut pas declencher une cascade de corrections
-        // pour un pixel. On n'insere JAMAIS de texte dans une page existante
-        // (ce serait une reaction en chaine) : on cree une page a part.
-        if (banc.scrollHeight <= budget + 3) { i++; continue; }
+        // n'est la que pour un cas pathologique. On mesure le BAS DU DERNIER
+        // PARAGRAPHE, pas scrollHeight : celui-ci compte la marge du bas, qui
+        // ne gene personne en fin de page et ferait couper des pages pleines.
+        // Tolerance de 3px pour ne pas reagir a un arrondi.
+        const dernierP = banc.lastElementChild;
+        const hautePage = dernierP
+          ? (dernierP.getBoundingClientRect().bottom - banc.getBoundingClientRect().top)
+          : 0;
+        if (hautePage <= budget + 3) { i++; continue; }
         const dernier = pages[i][pages[i].length - 1];
         const mots = String(dernier).split(/\s+/);
         if (pages[i].length > 1) {
@@ -21136,8 +21165,7 @@ export default function App() {
         ? x
         : String(x || "").split(/\n+/).filter(t => t.trim());
       return liste.map(function (para, i) {
-        const estSuite = String(para).indexOf(LIV_SUITE) === 0;
-        const texte = estSuite ? String(para).slice(1) : String(para);
+        const st = styleParagraphe(para, i === 0);
         return (
           <p key={i} style={{
             fontFamily: readerFont,
@@ -21146,13 +21174,14 @@ export default function App() {
             color: readerDark ? "#e0e0e0" : "#1a1a1a",
             textAlign: "justify",
             margin: 0,
-            marginBottom: LIV_ESPACE_EM + "em",
-            textIndent: estSuite ? "0" : LIV_RETRAIT,
+            marginTop: st.hautEm + "em",
+            marginBottom: st.basEm + "em",
+            textIndent: st.retrait,
             wordBreak: "break-word",
             overflowWrap: "break-word",
             userSelect: "none",
             WebkitUserSelect: "none"
-          }} dangerouslySetInnerHTML={{ __html: texte.trim() }} />
+          }} dangerouslySetInnerHTML={{ __html: st.texte.trim() }} />
         );
       });
     };
