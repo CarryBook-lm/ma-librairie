@@ -17713,13 +17713,52 @@ export default function App() {
     };
   }, [page, reading, readerScrollMode, readerSize, readerFont]);
 
+  // On garde sous la main le decoupage courant et la page lue, sans en faire
+  // des dependances (sinon le recalcul se declencherait en boucle).
+  const pagesRef = useRef(null);
+  const pageLueRef = useRef(0);
+  useEffect(() => { pagesRef.current = pagesMesurees; }, [pagesMesurees]);
+  useEffect(() => { pageLueRef.current = readingPage; }, [readingPage]);
+
+  // Texte nu d'une page, pour pouvoir la reconnaitre apres un recalcul.
+  function texteNu(x) {
+    return String(x || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  }
+
   // Recalcule les pages des que la boite, la taille ou la police changent.
   useEffect(() => {
     if (page !== "reader" || !reading || readerScrollMode) { setPagesMesurees(null); return; }
     if (!boitePage.l || !boitePage.h) return;
     const contenu = translatedContent || reading.content;
     if (!contenu) { setPagesMesurees(null); return; }
-    setPagesMesurees(decouperEnPages(contenu, boitePage.l, boitePage.h, readerSize, readerFont));
+
+    // 09/10 : si la lectrice change la taille du texte, le livre est redecoupe
+    // et le nombre de pages change. Sans rien faire, elle resterait sur le MEME
+    // NUMERO de page, donc a un tout autre endroit du livre. On retient le debut
+    // du passage en cours pour le retrouver dans le nouveau decoupage.
+    const decalage = excerptMode ? 0 : 2;   // 2 pages speciales avant le texte
+    const anciennes = pagesRef.current;
+    const iAncien = pageLueRef.current - decalage;
+    let ancre = "";
+    if (anciennes && anciennes.length && iAncien >= 0 && iAncien < anciennes.length) {
+      ancre = texteNu(anciennes[iAncien]).slice(0, 60);
+    }
+
+    const nouvelles = decouperEnPages(contenu, boitePage.l, boitePage.h, readerSize, readerFont);
+    setPagesMesurees(nouvelles);
+
+    if (ancre && ancre.length > 12 && nouvelles && nouvelles.length) {
+      let trouve = -1;
+      for (let k = 0; k < nouvelles.length; k++) {
+        if (texteNu(nouvelles[k]).indexOf(ancre) !== -1) { trouve = k; break; }
+      }
+      // Passage introuvable (un paragraphe a pu etre coupe) : on se replace
+      // au meme endroit du livre, en proportion.
+      if (trouve < 0 && anciennes && anciennes.length) {
+        trouve = Math.min(nouvelles.length - 1, Math.round((iAncien / anciennes.length) * nouvelles.length));
+      }
+      if (trouve >= 0) setReadingPage(trouve + decalage);
+    }
   }, [page, reading, readerScrollMode, translatedContent, boitePage.l, boitePage.h, readerSize, readerFont]);
 
   // Apres un recalcul, ne pas rester bloque sur une page qui n existe plus.
