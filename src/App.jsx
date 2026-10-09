@@ -14,6 +14,17 @@ const PAYDUNYA_ENABLED = false;
 //   carrybooks.com  -> site historique, strictement inchange.
 // ============================================================
 const CAT_HOMOROMANCE = "HomoRomance";
+// 09/10 : AU LANCEMENT, homoromance.com ne montre QUE les livres de Johanna Morisson.
+// Pour ouvrir le site a d'autres auteurs plus tard : mettre AUTEUR_UNIQUE_HR a "".
+const AUTEUR_UNIQUE_HR = "johanna morisson";
+function normNom(x) {
+  try { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase(); }
+  catch (e) { return String(x || "").trim().toLowerCase(); }
+}
+function estAuteurAutoriseHR(nom) {
+  if (!AUTEUR_UNIQUE_HR) return true;
+  return normNom(nom) === AUTEUR_UNIQUE_HR;
+}
 const EST_HOMOROMANCE = (function () {
   try {
     if (typeof window === "undefined") return false;
@@ -1916,7 +1927,10 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
 function surCarryBooks(b) {
   if (!b || b.masque || b.exclusif_vitrine) return false;
   // Sur homoromance.com : on ne montre QUE les romans de la categorie HomoRomance.
-  if (EST_HOMOROMANCE) return (b.category || "") === CAT_HOMOROMANCE;
+  if (EST_HOMOROMANCE) {
+    if ((b.category || "") !== CAT_HOMOROMANCE) return false;
+    return estAuteurAutoriseHR(b.author);
+  }
   return true;
 }
 
@@ -13803,9 +13817,9 @@ export default function App() {
     let vivant = true;
     (async () => {
       try {
-        const { data } = await supabase.from("books").select("auteur_id")
+        const { data } = await supabase.from("books").select("auteur_id, author")
           .eq("category", CAT_HOMOROMANCE).not("auteur_id", "is", null);
-        if (vivant) setAuteursHR(new Set((data || []).map(r => r.auteur_id)));
+        if (vivant) setAuteursHR(new Set((data || []).filter(r => estAuteurAutoriseHR(r.author)).map(r => r.auteur_id)));
       } catch (e) { if (vivant) setAuteursHR(new Set()); }
     })();
     return () => { vivant = false; };
@@ -23064,7 +23078,7 @@ export default function App() {
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6 }}>
                             <img src={sv.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
-                          <div style={{ fontSize: 9.5, fontWeight: "bold", color: G.boutonTexte, background: G.bouton, display: "inline-block", padding: "2px 7px", borderRadius: 6 }}>
+                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>
                             {dateEnFrancais(sv.date_sortie)}
                           </div>
                         </div>
@@ -23078,7 +23092,7 @@ export default function App() {
                 {(() => {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && surCarryBooks(b) && isDigitalBook(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
-                  const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(isDigitalBook).slice(0, 5);
+                  const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(b => isDigitalBook(b) && surCarryBooks(b)).slice(0, 5);
                   if (heroBooks.length === 0) return null;
                   const featuredBook = heroBooks[heroIndex % heroBooks.length];
                   return (
@@ -23460,7 +23474,7 @@ export default function App() {
                   <div style={{ marginBottom: 28 }}>
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Mes favoris</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
-                      {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
+                      {books.filter(b => favoriteBooks.includes(b.id) && surCarryBooks(b)).map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
@@ -24343,7 +24357,7 @@ export default function App() {
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-                {books.filter(b => favoriteBooks.includes(b.id)).map(book => (
+                {books.filter(b => favoriteBooks.includes(b.id) && surCarryBooks(b)).map(book => (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => openBook(book)}>
                     <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
                       {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}

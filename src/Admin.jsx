@@ -31,16 +31,31 @@ function livres(select, options) {
 }
 
 // Les auteurs du site = ceux qui ont au moins 1 livre de la categorie affichee.
-// On le calcule une seule fois, puis on filtre les listes avec.
-let _auteursDuSite = null;
+// On le calcule a partir de la liste des auteurs deja chargee : pas de course.
+// 09/10 : AU LANCEMENT, HomoRomance n'affiche QUE Johanna Morisson.
+// Pour ouvrir le site a d'autres auteurs : mettre AUTEUR_UNIQUE_HR a "".
+const AUTEUR_UNIQUE_HR = "johanna morisson";
+function normNom(x) {
+  try { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase(); }
+  catch (e) { return String(x || "").trim().toLowerCase(); }
+}
+// Ne garde que les auteurs du site affiche.
+function filtrerAuteursHR(liste) {
+  if (!EST_HOMOROMANCE || !AUTEUR_UNIQUE_HR) return liste || [];
+  return (liste || []).filter(a => a && normNom(a.nom_complet) === AUTEUR_UNIQUE_HR);
+}
+// Memorise leurs identifiants pour filtrer les annonces, les livres, etc.
+function memoriserAuteursDuSite(liste) {
+  if (!EST_HOMOROMANCE) return;
+  _auteursDuSite = new Set(filtrerAuteursHR(liste).map(a => a.id));
+}
 async function chargerAuteursDuSite() {
   if (!EST_HOMOROMANCE) return null;
   if (_auteursDuSite) return _auteursDuSite;
   try {
-    const { data } = await supabase.from("books").select("auteur_id")
-      .eq("category", CAT_HOMOROMANCE).not("auteur_id", "is", null);
-    _auteursDuSite = new Set((data || []).map(r => r.auteur_id));
-  } catch (e) { _auteursDuSite = new Set(); }
+    const { data } = await supabase.from("auteurs").select("id, nom_complet");
+    memoriserAuteursDuSite(data || []);
+  } catch (e) { _auteursDuSite = null; }
   return _auteursDuSite;
 }
 // Ne garde que les lignes qui appartiennent au site affiche.
@@ -586,8 +601,8 @@ export default function Admin() {
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
         ]);
-        await chargerAuteursDuSite();
-        setEaAuteurs(filtrerParAuteur(aut, "id"));
+        memoriserAuteursDuSite(aut || []);
+        setEaAuteurs(filtrerAuteursHR(aut));
         chargerSupportAdmin(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
@@ -596,7 +611,6 @@ export default function Admin() {
         const { data: vitr } = await livres("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
         setEaVitrine(vitr || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
-        await chargerAuteursDuSite();
         setEaAnnonces(filtrerParAuteur(anns, "auteur_id"));
         const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
         const pmap = {}; (rp || []).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
@@ -657,8 +671,8 @@ export default function Admin() {
       supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
       livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
-    await chargerAuteursDuSite();
-    setEaAuteurs(filtrerParAuteur(aut, "id")); setEaBooks(bks || []);
+    memoriserAuteursDuSite(aut || []);
+    setEaAuteurs(filtrerAuteursHR(aut)); setEaBooks(bks || []);
     if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
   };
   const bannirAuteur = async (a) => {
