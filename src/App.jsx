@@ -1697,7 +1697,7 @@ const COMPTES_LIES = { 8: [9] };
 const idsComptesLies = (id) => [id].concat(COMPTES_LIES[id] || []);
 const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
-const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
+const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: (EST_HOMOROMANCE ? G.carte : "#fff") };
 // Capture globale de l'événement d'installation PWA (Android/Chrome) dès le chargement,
 // pour que le bouton "Installe l'application" puisse installer en un clic.
 if (typeof window !== "undefined") {
@@ -2566,7 +2566,7 @@ function ShareButtons({ quizName, quizType }) {
   }
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #e0e0e0", borderRadius: 12, padding: 16, marginTop: 20, marginBottom: 12 }}>
+    <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid #e0e0e0", borderRadius: 12, padding: 16, marginTop: 20, marginBottom: 12 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a1a1a", marginBottom: 12, textAlign: "center" }}>📤 Partage avec tes amies</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
         <button onClick={shareWhatsApp} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "10px 8px", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
@@ -2818,7 +2818,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
       <div style={{ padding: "16px", filter: "blur(6px)", userSelect: "none", pointerEvents: "none", opacity: 0.5 }}>
         <div style={{ background: G.surface, borderRadius: 12, padding: 16, textAlign: "center" }}>
           <div style={{ fontSize: 28 }}>{quiz.emoji}</div>
-          <div style={{ fontSize: 16, fontWeight: "bold", color: quizResult?.color || G.bouton, marginTop: 6 }}>{quizResult?.level || "Résultat prêt"}</div>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: quizResult?.color || G.text, marginTop: 6 }}>{quizResult?.level || "Résultat prêt"}</div>
           <div style={{ fontSize: 13, color: G.textDim, marginTop: 6 }}>████████ ██████ ████ ███████</div>
           <div style={{ fontSize: 12, color: G.textDim, marginTop: 4 }}>██████ ████ ███████ ████ ██████</div>
           <div style={{ fontSize: 12, color: G.textDim, marginTop: 4 }}>████ ██████████ ███████ ████████</div>
@@ -2826,7 +2826,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
       </div>
 
       {/* Payment card */}
-      <div style={{ position: "sticky", bottom: 0, background: "#fff", margin: "0", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", boxShadow: "0 -8px 40px rgba(0,0,0,0.2)", zIndex: 10 }}>
+      <div style={{ position: "sticky", bottom: 0, background: (EST_HOMOROMANCE ? G.carte : "#fff"), margin: "0", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", boxShadow: "0 -8px 40px rgba(0,0,0,0.2)", zIndex: 10 }}>
         {quizPaymentStep === 1 && (
           <>
             <div style={{ textAlign: "center", marginBottom: 18 }}>
@@ -3241,7 +3241,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
           zIndex: 300, padding: 16
         }}>
           <div style={{
-            background: "#fff", borderRadius: 12, padding: 24,
+            background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 12, padding: 24,
             maxWidth: 400, width: "100%", maxHeight: "90vh", overflow: "auto"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -3630,7 +3630,7 @@ function DiagnosticShareButtons({ url, title, message }) {
   };
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #e8d4b8", borderRadius: 14, padding: 16, marginBottom: 16 }}>
+    <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid #e8d4b8", borderRadius: 14, padding: 16, marginBottom: 16 }}>
       <div style={{ fontSize: 12, fontWeight: "bold", color: "#7a6a50", marginBottom: 12, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
         💛 Partage avec tes amies
       </div>
@@ -3879,7 +3879,7 @@ function CarryCareHome({ setPage, setCarryCarePage, setBfStep, setBfTypeAnswers,
       {/* Carte Mes résultats */}
       <div style={{ padding: "20px 16px 0", textAlign: "left" }}>
         <div onClick={() => setPage("myResults")} style={{
-          background: "#fff", borderRadius: 18, padding: "16px",
+          background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 18, padding: "16px",
           cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
           boxShadow: "0 4px 14px rgba(126,87,194,0.10)",
           border: "1px solid rgba(126,87,194,0.10)",
@@ -5140,7 +5140,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
     const current = getCurrentQuestionNumber();
     const pct = Math.min(100, Math.round((current / total) * 100));
     return (
-      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 11, color: CC.textFaint, fontWeight: "bold", letterSpacing: 0.5 }}>QUESTION {current} / {total}</div>
           <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold" }}>{pct}%</div>
@@ -5163,7 +5163,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
             <div style={{ fontSize: 22, fontWeight: "bold", color: CC.noir, marginBottom: 8, fontFamily: "Georgia, serif" }}>Test Beauté Faciale</div>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Personnalisé selon ton profil</div>
           </div>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Avant de commencer</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -5180,7 +5180,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
               </div>
             </div>
           </div>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 20 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
@@ -5223,7 +5223,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
           {activeQuestions.map((q) => (
-            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={q.id} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: q.note ? 6 : 12 }}>{q.q}</div>
               {q.note && <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>{q.note}</div>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -5253,7 +5253,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
         <Header title="Étape 2 / 5 — Tes objectifs" onBack={() => setBfStep(1)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels sont tes objectifs principaux ?</div>
             <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Choisis 1 à 3 objectifs maximum</div>
             {bfObjectives.length > 0 && (
@@ -5289,11 +5289,11 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
         <Header title="Étape 3 / 5 — Type de peau" onBack={() => setBfStep(2)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Pour qu'on puisse déterminer ton type de peau exact</div>
           </div>
           {BF_TYPE_QUESTIONS.map((q) => (
-            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={q.id} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{q.q}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {q.options.map(opt => (
@@ -5322,7 +5322,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
         <Header title="Étape 4 / 5 — Tes problèmes" onBack={() => setBfStep(3)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels problèmes tu rencontres sur ton visage ?</div>
             <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Coche tout ce qui te concerne (autant que tu veux)</div>
           </div>
@@ -5353,11 +5353,11 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
         <Header title="Étape 5 / 5 — Mode de vie" onBack={() => setBfStep(4)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Dernière étape ! On personnalise tes recommandations.</div>
           </div>
           {BF_LIFESTYLE_QUESTIONS.map(q => (
-            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={q.id} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: q.note ? 4 : 12 }}>{q.q}</div>
               {q.note && <div style={{ fontSize: 11, color: CC.textFaint, fontStyle: "italic", marginBottom: 10 }}>{q.note}</div>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -5416,7 +5416,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
               <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton test personnalisé</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Type de peau identifié : <strong>{bfResult?.skinType?.name}</strong></div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton diagnostic complet inclut :</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
                 ✅ Ton type de peau facial exact<br/>
@@ -6034,7 +6034,7 @@ function KitExfoliaCard({ skinTone }) {
           <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5 }}>Kit complet à base d'<strong>hydrolats de plantes et produits bio</strong>. Traite acné sévère, taches tenaces, mélasma, mamies, cernes, rougeurs, rides.</div>
         </div>
       </div>
-      <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, padding: 10, marginBottom: 10 }}>
         <div style={{ fontSize: 11, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>📦 Contenu du kit (5 produits) :</div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
           <li><strong>Lotion Jour 60ml</strong> — protège le visage des intempéries</li>
@@ -6044,7 +6044,7 @@ function KitExfoliaCard({ skinTone }) {
           <li><strong>Savon/Masque 100g</strong> — absorbe les impuretés</li>
         </ul>
       </div>
-      <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, padding: 10, marginBottom: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <span style={{ fontSize: 11, color: CC.textFaint }}>PRIX {teintLabel}</span>
           <span style={{ fontSize: 22, fontWeight: "bold", color: "#c9952a" }}>{prix}</span>
@@ -6103,7 +6103,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
   }
 
   const Section = ({ title, color, children }) => (
-    <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+    <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: color || CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
       {children}
     </div>
@@ -6236,7 +6236,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
                 <li>Une <strong>crème hydratante</strong></li>
                 <li>Une <strong>protection solaire SPF 30+</strong></li>
               </ol>
-              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+              <div style={{ marginTop: 10, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
                 💡 <strong>Bonne nouvelle pour économiser</strong> : le <strong>nettoyant</strong> et la <strong>lotion tonique</strong> seront aussi utilisés le soir (achète-en 1 seul de chaque){(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) ? ". Le contour des yeux servira aussi le soir (achète-en 1 seul)" : ""}.
               </div>
             </div>
@@ -6282,36 +6282,36 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
             <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 12 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine matin (étape par étape)</div>
               
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 1 — Nettoyer (1 minute)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Mouille ton visage à l'eau tiède (jamais brûlante). Prends une noisette de <strong>nettoyant</strong>, fais mousser un peu avec de l'eau, puis masse ton visage en mouvements circulaires pendant <strong>30 secondes</strong>. Insiste sur la zone T (front, nez, menton). Rince à l'eau tiède et tamponne avec une serviette propre (sans frotter).</div>
               </div>
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 2 — Tonifier (30 secondes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Imbibe un coton de <strong>lotion tonique</strong> (juste assez pour humidifier). Passe-le sur tout ton visage en tapotant doucement, sans frotter. Évite le contour des yeux. <strong>Laisse sécher 30 secondes</strong> avant l'étape suivante.</div>
               </div>
 
               {(objectives.includes("glow") || objectives.includes("unifier") || problems.includes("terne") || problems.includes("taches_acne") || problems.includes("melasma")) && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 3 — Sérum vitamine C (2 minutes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Dépose <strong>3 à 4 gouttes</strong> de sérum dans la paume de ta main. Tapote tes doigts dans le sérum puis applique sur tout le visage en partant du centre vers l'extérieur. <strong>Attends 1 à 2 minutes</strong> que le sérum pénètre.</div>
                 </div>
               )}
 
               {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 4 — Contour des yeux (30 secondes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prélève une petite quantité de crème (taille d'un grain de riz). <strong>Tapote doucement avec ton annulaire</strong> (le doigt le plus délicat) autour des yeux : sous les cernes, sur les paupières, jusqu'à la tempe. Ne frotte JAMAIS cette zone, elle est très fragile.</div>
                 </div>
               )}
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 5 — Crème hydratante (1 minute)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prends une noisette de <strong>crème hydratante</strong>, chauffe-la entre tes paumes, puis applique sur le visage et le cou en mouvements ascendants (de bas en haut). <strong>Attends 2 minutes</strong> que la crème pénètre bien.</div>
               </div>
 
-              <div style={{ marginBottom: 4, padding: 12, background: "#fff", borderRadius: 8, border: "2px solid #e67e22" }}>
+              <div style={{ marginBottom: 4, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, border: "2px solid #e67e22" }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>Étape 6 — Protection solaire (1 minute) ⭐ ÉTAPE LA PLUS IMPORTANTE</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Mets l'équivalent de <strong>2 doigts pleins</strong> de protection solaire (l'index et le majeur entiers, du bout au pli). Étale sur tout le visage, le cou, les oreilles et même les paupières si possible. N'oublie pas le dessous du menton.</div>
               </div>
@@ -6354,7 +6354,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
                   <li>Un <strong>soin localisé</strong> sur les boutons</li>
                 )}
               </ol>
-              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+              <div style={{ marginTop: 10, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
                 💡 <strong>Économies</strong> : Plusieurs produits sont déjà ceux du matin (nettoyant, lotion tonique{(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) ? ", contour des yeux" : ""}). Tu n'as pas besoin de tout racheter !
               </div>
             </div>
@@ -6425,57 +6425,57 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine soir (étape par étape)</div>
 
               {(lifestyle.makeup === "occasional" || lifestyle.makeup === "daily_light" || lifestyle.makeup === "daily_full") && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 1 — Démaquiller (1 minute)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Imbibe un coton de <strong>démaquillant</strong> et passe-le sur tes yeux, ta bouche et tout ton visage. Répète jusqu'à ce que le coton soit propre. Le démaquillage est <strong>essentiel</strong> avant le nettoyage.</div>
                 </div>
               )}
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape {lifestyle.makeup === "never" ? "1" : "2"} — Nettoyer en profondeur (1-2 minutes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Le soir, ton visage a accumulé pollution, sébum et résidus. Utilise le même <strong>nettoyant</strong> que le matin mais <strong>double la durée du massage</strong> : 1 minute au lieu de 30 secondes.</div>
               </div>
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape {lifestyle.makeup === "never" ? "2" : "3"} — Tonifier (30 secondes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Identique au matin avec ta <strong>lotion tonique</strong>. Imbibe un coton et tapote sur le visage.</div>
               </div>
 
               {!isPregnant && problems.includes("acne_active") && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8, border: "1px solid #ffc107" }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, border: "1px solid #ffc107" }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 4 — Sérum acide salicylique (2 minutes) ⚠️</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Le SOIR uniquement (jamais le matin avec la vitamine C). Dépose 3-4 gouttes, applique sur le visage en évitant le contour des yeux. <strong>Concentre sur les zones avec acné</strong>. Laisse pénétrer 1-2 minutes.</div>
                 </div>
               )}
 
               {!isPregnant && (objectives.includes("anti_age") || profile?.age === "36-45" || profile?.age === "46+" || problems.includes("rides")) && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8, border: "1px solid #ffc107" }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, border: "1px solid #ffc107" }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 4 — Sérum rétinol (2 minutes) ⚠️</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Dépose 2-3 gouttes seulement (très puissant). Applique en évitant contour des yeux et bouche. <strong>Commence 2x/semaine</strong> pour habituer ta peau, puis augmente progressivement.</div>
                 </div>
               )}
 
               {(problems.includes("taches_acne") || problems.includes("melasma") || objectives.includes("unifier")) && !isPregnant && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 5 — Sérum anti-taches (1 minute)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Dépose 3-4 gouttes, applique sur le visage en insistant sur les zones avec taches.</div>
                 </div>
               )}
 
               {(problems.includes("cernes") || problems.includes("poches") || objectives.includes("cernes")) && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 6 — Contour des yeux (30 secondes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Identique au matin. Tapote doucement avec ton annulaire.</div>
                 </div>
               )}
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 7 — Crème nuit (1 minute)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Plus riche que la crème de jour. Étale généreusement sur tout le visage et le cou. Tu peux laisser un léger excès, ta peau l'absorbera pendant la nuit.</div>
               </div>
 
               {problems.includes("acne_active") && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 8 — Soin localisé sur les boutons (30 secondes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>En dernier, applique <strong>une petite goutte uniquement sur les boutons</strong> (pas tout le visage). Patches anti-acné en option pour la nuit.</div>
                 </div>
@@ -6617,7 +6617,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
         </Section>
 
         {/* OÙ RETROUVER SES RÉSULTATS */}
-        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px dashed " + CC.rose, borderRadius: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 28 }}>📂</div>
             <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir }}>Garde ton diagnostic à portée de main</div>
@@ -6644,7 +6644,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
               Vergetures, hyperpigmentation, cellulite, pieds secs, taches...<br/>Découvre une routine sur mesure pour ton corps.
             </div>
           </div>
-          <div style={{ background: "#fff", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 10, padding: 14, marginBottom: 12 }}>
             <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
               ✓ Test <strong>complet et personnalisé</strong><br/>
               ✓ Routine matin et soir adaptée<br/>
@@ -7620,7 +7620,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
     const current = getCurrentQuestionNumber();
     const pct = Math.min(100, Math.round((current / total) * 100));
     return (
-      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 11, color: CC.textFaint, fontWeight: "bold", letterSpacing: 0.5 }}>QUESTION {current} / {total}</div>
           <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold" }}>{pct}%</div>
@@ -7645,7 +7645,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Personnalisé selon ton profil</div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Avant de commencer</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -7669,7 +7669,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 20 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 20, marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 14, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
@@ -7713,7 +7713,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
           {activeQuestions.map((q) => (
-            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={q.id} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: q.note ? 6 : 12 }}>{q.q}</div>
               {q.note && <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic", marginBottom: 12 }}>{q.note}</div>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -7743,7 +7743,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
         <Header title="Étape 2 / 5 — Tes objectifs" onBack={() => setBbStep(1)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels sont tes objectifs principaux ?</div>
             <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Choisis 1 à 3 objectifs maximum</div>
             {bbObjectives.length > 0 && (
@@ -7779,11 +7779,11 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
         <Header title="Étape 3 / 5 — Type de peau" onBack={() => setBbStep(2)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Pour qu'on puisse déterminer ton type de peau exact</div>
           </div>
           {BB_TYPE_QUESTIONS.map((q) => (
-            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={q.id} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{q.q}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {q.options.map(opt => (
@@ -7812,7 +7812,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
         <Header title="Étape 4 / 5 — Tes problèmes" onBack={() => setBbStep(3)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quels problèmes tu rencontres sur ton corps ?</div>
             <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Coche tout ce qui te concerne (autant que tu veux)</div>
           </div>
@@ -7843,11 +7843,11 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
         <Header title="Étape 5 / 5 — Mode de vie" onBack={() => setBbStep(4)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 13, color: CC.textDim, fontStyle: "italic" }}>Dernière étape ! On personnalise tes recommandations.</div>
           </div>
           {BB_LIFESTYLE_QUESTIONS.map(q => (
-            <div key={q.id} style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={q.id} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>{q.q}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {q.options.map(opt => (
@@ -7912,7 +7912,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6, fontStyle: "italic" }}>Type de peau identifié : <strong>{bbResult?.skinType?.name}</strong></div>
             </div>
 
-            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton diagnostic complet inclut :</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
                 ✅ Ton type de peau corporelle exact<br/>
@@ -8420,7 +8420,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
   // Style commun
   const Section = ({ title, color, children }) => (
-    <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+    <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: color || CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
       {children}
     </div>
@@ -8505,7 +8505,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
                 )}
                 <li>Une <strong>protection solaire SPF 30+</strong> (essentiel)</li>
               </ol>
-              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+              <div style={{ marginTop: 10, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
                 💡 <strong>Bonne nouvelle pour économiser</strong> : le <strong>gel douche</strong> servira aussi pour la douche du soir (achète-en 1 seul).
               </div>
             </div>
@@ -8539,24 +8539,24 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
             <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #fff5f8 0%, #f5d7d9 100%)", border: "1px solid " + CC.rose, borderRadius: 12 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine matin (étape par étape)</div>
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 1 — Douche (5-7 minutes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prends une douche à l'eau <strong>tiède</strong> (jamais brûlante). Applique le <strong>gel douche</strong> avec tes mains ou un gant doux. Insiste sur les zones sensibles (acné, hyperpigmentation). Rince bien et tamponne avec une serviette propre (sans frotter).</div>
               </div>
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 2 — Lotion hydratante (2 minutes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Sur peau encore légèrement humide, applique généreusement la <strong>lotion hydratante</strong> sur tout le corps en mouvements ascendants (de bas en haut). N'oublie pas le cou, les coudes, les genoux et les pieds. <strong>Attends 2 minutes</strong> que ça pénètre.</div>
               </div>
 
               {(problems.includes("hyperpigmentation") || problems.includes("aisselles")) && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 4 }}>Étape 3 — Déodorant (30 secondes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique ton <strong>déodorant doux</strong> sur des aisselles propres et sèches. Évite ceux à base d'alcool ou avec des sels d'aluminium agressifs qui empirent l'hyperpigmentation.</div>
                 </div>
               )}
 
-              <div style={{ marginBottom: 4, padding: 12, background: "#fff", borderRadius: 8, border: "2px solid #e67e22" }}>
+              <div style={{ marginBottom: 4, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, border: "2px solid #e67e22" }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#e67e22", marginBottom: 4 }}>Étape {problems.includes("hyperpigmentation") || problems.includes("aisselles") ? "4" : "3"} — Protection solaire (2 minutes) ⭐ ÉTAPE LA PLUS IMPORTANTE</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique généreusement la <strong>protection solaire</strong> sur toutes les zones exposées : visage, cou, bras, jambes, mains. Renouvelle toutes les 2 heures si tu restes longtemps au soleil.</div>
               </div>
@@ -8585,7 +8585,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
                 )}
                 <li>Une <strong>crème ou beurre nourrissant</strong></li>
               </ol>
-              <div style={{ marginTop: 10, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
+              <div style={{ marginTop: 10, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 6, fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>
                 💡 <strong>Économies</strong> : Le <strong>gel douche</strong> est le même que le matin. Pas besoin de protection solaire le soir !
               </div>
             </div>
@@ -8621,26 +8621,26 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
             <div style={{ marginTop: 18, padding: 16, background: "linear-gradient(135deg, #f0e8f3 0%, #d8c5dc 100%)", border: "1px solid #9c7ba8", borderRadius: 12 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 12 }}>📝 Comment appliquer ta routine soir (étape par étape)</div>
 
-              <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 1 — Douche douce (5-7 minutes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Prends ta douche du soir avec ton <strong>gel douche</strong> du matin. Eau tiède, jamais brûlante. C'est le moment idéal pour bien nettoyer après une journée de chaleur.</div>
               </div>
 
               {(objectives.includes("vergetures") || problems.includes("vergetures_rouges") || problems.includes("vergetures_blanches")) && !isPregnant && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 2 — Soin anti-vergetures (3 minutes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Sur peau légèrement humide, applique le soin sur les zones concernées (ventre, cuisses, hanches, poitrine, bras). <strong>Masse en cercles pendant 2 minutes</strong> — c'est le massage qui aide la peau à reformer ses fibres de collagène.</div>
                 </div>
               )}
 
               {(objectives.includes("unifier") || problems.includes("taches_noires") || problems.includes("hyperpigmentation")) && !isPregnant && (
-                <div style={{ marginBottom: 12, padding: 12, background: "#fff", borderRadius: 8 }}>
+                <div style={{ marginBottom: 12, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape 3 — Soin anti-taches (2 minutes)</div>
                   <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique le soin anti-taches sur les zones concernées (entre-cuisses, aisselles, coudes, genoux). Laisse pénétrer 1-2 minutes avant la crème nourrissante.</div>
                 </div>
               )}
 
-              <div style={{ marginBottom: 4, padding: 12, background: "#fff", borderRadius: 8 }}>
+              <div style={{ marginBottom: 4, padding: 12, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 4 }}>Étape {(objectives.includes("vergetures") || problems.includes("vergetures_rouges")) ? "4" : "2"} — Crème ou beurre nourrissant (3 minutes)</div>
                 <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.6 }}>Applique généreusement sur tout le corps. Le soir, ta peau a besoin de <strong>plus d'hydratation</strong> car elle se régénère pendant la nuit. N'oublie pas les pieds et les talons.</div>
               </div>
@@ -8694,7 +8694,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
                               <div style={{ fontSize: 12, color: CC.textDim, lineHeight: 1.5, marginBottom: 6 }}>100% naturelle, à base d'huiles végétales pressées à froid. Spécialement conçue pour <strong>les zones sombres</strong> (entre-cuisses, aisselles, coudes, genoux, cou).</div>
                             </div>
                           </div>
-                          <div style={{ background: "#fff", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+                          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8, padding: 10, marginBottom: 10 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                               <span style={{ fontSize: 11, color: CC.textFaint }}>PRIX</span>
                               <span style={{ fontSize: 22, fontWeight: "bold", color: "#c9952a" }}>9 000 FCFA</span>
@@ -8795,7 +8795,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
         </Section>
 
         {/* ═══ OÙ RETROUVER SES RÉSULTATS ═══ */}
-        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px dashed " + CC.rose, borderRadius: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 28 }}>📂</div>
             <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir }}>Garde ton diagnostic à portée de main</div>
@@ -8822,7 +8822,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
               Acné, points noirs, pores dilatés, cernes, taches...<br/>Découvre une routine sur mesure pour ton visage.
             </div>
           </div>
-          <div style={{ background: "#fff", borderRadius: 10, padding: 14, marginBottom: 12 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 10, padding: 14, marginBottom: 12 }}>
             <div style={{ fontSize: 13, color: CC.noir, lineHeight: 1.7 }}>
               ✓ Test <strong>complet et personnalisé</strong><br/>
               ✓ Routine matin et soir adaptée<br/>
@@ -9347,7 +9347,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
     const current = getCurrentQ();
     const pct = Math.min(100, Math.round((current / totalQuestions) * 100));
     return (
-      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), padding: "10px 16px 14px", borderBottom: "1px solid " + CC.border }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 11, color: CC.textFaint, fontWeight: "bold" }}>QUESTION {current} / {totalQuestions}</div>
           <div style={{ fontSize: 11, color: CC.rose, fontWeight: "bold" }}>{pct}%</div>
@@ -9381,7 +9381,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             <div style={{ fontSize: 13, color: "#5d4037", lineHeight: 1.7, marginBottom: 12 }}>
               Ce quiz est un <strong>outil éducatif</strong> qui te donne des principes d'alimentation équilibrée et des exemples de menus. <strong>Il ne remplace pas l'avis d'un médecin ou d'un nutritionniste.</strong>
             </div>
-            <div style={{ background: "#fff", padding: 12, borderRadius: 8, marginBottom: 10 }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), padding: 12, borderRadius: 8, marginBottom: 10 }}>
               <div style={{ fontSize: 12, fontWeight: "bold", color: "#5d4037", marginBottom: 6 }}>🚫 Ce quiz N'EST PAS adapté si :</div>
               <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: "#5d4037", lineHeight: 1.6 }}>
                 <li>Tu as moins de <strong>18 ans</strong> et veux perdre du poids (consulte un médecin)</li>
@@ -9396,7 +9396,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           </div>
 
           {/* Ce que tu vas découvrir */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -9444,7 +9444,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
           {/* Genre */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Tu es :</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -9457,7 +9457,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           </div>
 
           {/* Age */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quel est ton âge ?</div>
             <div style={{ fontSize: 11, color: CC.textFaint, marginBottom: 10, fontStyle: "italic" }}>Important pour calculer tes besoins</div>
             <input type="number" min="1" max="100" value={lgProfile.age || ""} onChange={(e) => setLgProfile({ ...lgProfile, age: parseInt(e.target.value) || 0 })} placeholder="Ex: 28" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
@@ -9469,13 +9469,13 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           </div>
 
           {/* Taille */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quelle est ta taille ? (en cm)</div>
             <input type="number" min="100" max="220" value={lgProfile.height || ""} onChange={(e) => setLgProfile({ ...lgProfile, height: parseInt(e.target.value) || 0 })} placeholder="Ex: 165" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
           </div>
 
           {/* Poids */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>Quel est ton poids actuel ? (en kg)</div>
             <input type="number" min="20" max="250" value={lgProfile.weight || ""} onChange={(e) => setLgProfile({ ...lgProfile, weight: parseInt(e.target.value) || 0 })} placeholder="Ex: 65" style={{ width: "100%", padding: 12, fontSize: 16, border: "1.5px solid " + CC.border, borderRadius: 10, outline: "none" }} />
           </div>
@@ -9495,7 +9495,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
         <Header title="Étape 2 / 5 — Ton objectif" onBack={() => setLgStep(1)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CC.noir, marginBottom: 6 }}>Quel est ton objectif principal ?</div>
             <div style={{ fontSize: 12, color: CC.textFaint, fontStyle: "italic" }}>Choisis ce qui te ressemble le plus</div>
           </div>
@@ -9535,13 +9535,13 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
         <Header title="Étape 3 / 5 — Santé" onBack={() => setLgStep(2)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6, fontStyle: "italic" }}>🔒 Ces informations sont strictement confidentielles et servent uniquement à adapter tes recommandations.</div>
           </div>
 
           {/* Grossesse / allaitement (femmes adultes) */}
           {isFemme && isAdult && (
-            <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Es-tu enceinte ou allaitante ?</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {[
@@ -9562,7 +9562,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           )}
 
           {/* Diabète */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>As-tu du diabète (type 1 ou 2) ?</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -9581,7 +9581,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           </div>
 
           {/* Allergies */}
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Allergies ou intolérances alimentaires ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -9613,7 +9613,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Combien de repas prends-tu par jour ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -9626,7 +9626,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Combien d'eau bois-tu par jour ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -9639,7 +9639,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Tu prends un petit-déjeuner ?</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -9652,7 +9652,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Grignotage entre les repas ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -9665,7 +9665,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>À quelle fréquence manges-tu fast-food / boutique ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -9695,7 +9695,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Quel est ton niveau d'activité physique ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {LG_ACTIVITY_LEVELS.map(o => (
@@ -9710,7 +9710,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Combien d'heures dors-tu par nuit ?</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -9723,7 +9723,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Niveau de stress quotidien ?</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -9786,7 +9786,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
               <div style={{ fontSize: 18, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>Ton plan alimentaire est prêt</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.6 }}>Calculé spécialement pour toi avec aliments du Cameroun</div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CC.border }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 8 }}>✨ Ton plan inclut :</div>
               <div style={{ fontSize: 13, color: CC.noirSoft, lineHeight: 1.8 }}>
                 ✅ Tes besoins caloriques approximatifs<br/>
@@ -9936,7 +9936,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
   if (conditions.pregnancy === "allaite") displayedCalories = tdee + 500;
 
   const Section = ({ title, color, children }) => (
-    <div style={{ background: "#fff", border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+    <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: color || CC.rose, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
       {children}
     </div>
@@ -10053,7 +10053,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
             </ul>
           </Section>
 
-          <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+          <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px dashed " + CC.rose, borderRadius: 14 }}>
             <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir, marginBottom: 10 }}>📂 Garde ces conseils sous la main</div>
             <div style={{ fontSize: 13, color: CC.textDim, lineHeight: 1.6 }}>Tu peux retrouver ce guide à tout moment dans <strong>Menu → Mes résultats</strong>. Tu peux aussi le télécharger en PDF.</div>
           </div>
@@ -10272,7 +10272,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {filterByAllergies(LG_PETITS_DEJ_30, conditions.allergies).map((m, i) => (
-              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+              <div key={m.id} style={{ padding: "10px 12px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
                   <div style={{ fontSize: 11, fontWeight: "bold", color: "#e67e22", background: "#fff5e6", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
@@ -10290,7 +10290,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {filterByAllergies(LG_DEJEUNERS_30, conditions.allergies).map((m, i) => (
-              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+              <div key={m.id} style={{ padding: "10px 12px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
                   <div style={{ fontSize: 11, fontWeight: "bold", color: "#4caf50", background: "#f0f9f0", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
@@ -10308,7 +10308,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {filterByAllergies(LG_GOUTERS_30, conditions.allergies).map((m, i) => (
-              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+              <div key={m.id} style={{ padding: "10px 12px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
                   <div style={{ fontSize: 11, fontWeight: "bold", color: CC.rose, background: "#fdf0f1", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
@@ -10326,7 +10326,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {filterByAllergies(LG_DINERS_30, conditions.allergies).map((m, i) => (
-              <div key={m.id} style={{ padding: "10px 12px", background: "#fff", border: "1px solid " + CC.border, borderRadius: 8 }}>
+              <div key={m.id} style={{ padding: "10px 12px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CC.border, borderRadius: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: CC.noir, flex: 1 }}>{i + 1}. {m.titre}</div>
                   <div style={{ fontSize: 11, fontWeight: "bold", color: "#9c7ba8", background: "#f0e8f3", padding: "2px 8px", borderRadius: 10, whiteSpace: "nowrap" }}>{m.kcal} kcal</div>
@@ -10346,7 +10346,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
         </div>
 
         {/* OÙ RETROUVER */}
-        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CC.rose, borderRadius: 14 }}>
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px dashed " + CC.rose, borderRadius: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 28 }}>📂</div>
             <div style={{ fontSize: 15, fontWeight: "bold", color: CC.noir }}>Garde ton plan à portée de main</div>
@@ -11176,15 +11176,15 @@ function CapProductSection({ category, budget, customTitle, customNumber }) {
       
       {explanation && (
         <>
-          <div style={{ marginBottom: 8, padding: 10, background: "#fff", borderRadius: 8 }}>
+          <div style={{ marginBottom: 8, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
             <div style={{ fontSize: 11, fontWeight: "bold", color: CAP.or, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>💡 C'est quoi ?</div>
             <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{explanation.cest_quoi}</div>
           </div>
-          <div style={{ marginBottom: 8, padding: 10, background: "#fff", borderRadius: 8 }}>
+          <div style={{ marginBottom: 8, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
             <div style={{ fontSize: 11, fontWeight: "bold", color: CAP.or, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>🎯 Pourquoi en utiliser ?</div>
             <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{explanation.pourquoi}</div>
           </div>
-          <div style={{ marginBottom: 12, padding: 10, background: "#fff", borderRadius: 8 }}>
+          <div style={{ marginBottom: 12, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 8 }}>
             <div style={{ fontSize: 11, fontWeight: "bold", color: CAP.or, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>📝 Comment l'utiliser ?</div>
             <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{explanation.comment}</div>
           </div>
@@ -11200,7 +11200,7 @@ function CapProductSection({ category, budget, customTitle, customNumber }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {products.map((p, i) => (
-            <div key={i} style={{ padding: "8px 12px", background: "#fff", border: "1px solid " + CAP.border, borderRadius: 8, fontSize: 12 }}>
+            <div key={i} style={{ padding: "8px 12px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 8, fontSize: 12 }}>
               <div style={{ fontWeight: "bold", color: CAP.noir, marginBottom: 2 }}>✓ {p.name}</div>
               <div style={{ fontSize: 11, color: CAP.textFaint }}>📍 Disponible : {p.lieu}</div>
             </div>
@@ -11221,7 +11221,7 @@ function CapProductList({ category, budget }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div style={{ fontSize: 11, color: CAP.or, fontWeight: "bold", marginBottom: 2 }}>🛒 Choisis UN SEUL produit ci-dessous :</div>
       {products.map((p, i) => (
-        <div key={i} style={{ padding: "8px 12px", background: "#fff", border: "1px solid " + CAP.border, borderRadius: 8, fontSize: 12 }}>
+        <div key={i} style={{ padding: "8px 12px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 8, fontSize: 12 }}>
           <div style={{ fontWeight: "bold", color: CAP.noir, marginBottom: 2 }}>✓ {p.name}</div>
           <div style={{ fontSize: 11, color: CAP.textFaint }}>📍 {p.lieu}</div>
         </div>
@@ -11315,7 +11315,7 @@ function CapProductCategory({ category, budget, titre, emoji, description, pourq
   const products = getCapProducts(category, budget);
   if (products.length === 0) return null;
   return (
-    <div style={{ marginBottom: 18, background: "#fff", border: "1px solid " + CAP.border, borderRadius: 10, overflow: "hidden" }}>
+    <div style={{ marginBottom: 18, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 10, overflow: "hidden" }}>
       {/* En-tête : nom + explication */}
       <div style={{ padding: 14, background: "#fdf6e3", borderBottom: "1px solid " + CAP.border }}>
         <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>{emoji} {titre}</div>
@@ -11366,7 +11366,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
   const isFra = texture === "4A" || texture === "4B" || texture === "4C" || etat === "defrise";
 
   const Section = ({ title, color, children }) => (
-    <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+    <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
       <div style={{ fontSize: 13, fontWeight: "bold", color: color || CAP.or, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>{title}</div>
       {children}
     </div>
@@ -11486,10 +11486,10 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
               {(problems.includes("frisottis") || problems.includes("no_definition")) && <li>Un <strong>gel coiffant</strong> (pour définir les boucles)</li>}
               {(objectives.includes("pousse") || objectives.includes("anti_chute") || problems.includes("lents")) && <li>Une <strong>huile spéciale pousse</strong> (massage cuir chevelu)</li>}
             </ol>
-            <div style={{ marginTop: 12, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+            <div style={{ marginTop: 12, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 6, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
               💡 <strong>Important :</strong> Pour chaque type de produit, tu choisis <strong>1 SEUL</strong> dans la liste qu'on te propose. Pas besoin d'acheter toutes les marques !
             </div>
-            <div style={{ marginTop: 8, padding: 10, background: "#fff", borderRadius: 6, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
+            <div style={{ marginTop: 8, padding: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 6, fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
               🛒 <strong>Astuce économies :</strong> Achète d'abord le shampoing + après-shampoing + leave-in. C'est la base. Ajoute progressivement les autres produits.
             </div>
           </div>
@@ -11620,7 +11620,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
               <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.5 }}>{s.desc}</div>
             </div>
           ))}
-          <div style={{ marginTop: 12, padding: 14, background: "#fff", border: "2px solid #9c7ba8", borderRadius: 10 }}>
+          <div style={{ marginTop: 12, padding: 14, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid #9c7ba8", borderRadius: 10 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: "#9c7ba8", marginBottom: 6 }}>💜 INVESTISSEMENT NUMÉRO 1</div>
             <div style={{ fontSize: 12, color: CAP.textDim, lineHeight: 1.6 }}>
               Achète une <strong>taie d'oreiller en satin ou soie</strong> (5000-10000 FCFA dans les marchés ou en ligne). Ça change tout : moins de casse pendant la nuit, moins de frizz au réveil, cheveux mieux préservés.
@@ -11772,7 +11772,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
         </Section>
 
         {/* OÙ RETROUVER */}
-        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: "#fff", border: "2px dashed " + CAP.or, borderRadius: 14 }}>
+        <div style={{ marginTop: 16, marginBottom: 16, padding: 18, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px dashed " + CAP.or, borderRadius: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 28 }}>📂</div>
             <div style={{ fontSize: 15, fontWeight: "bold", color: CAP.noir }}>Garde ton diagnostic à portée de main</div>
@@ -12286,7 +12286,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
     const current = getCurrentQ();
     const pct = Math.min(100, Math.round((current / totalQuestions) * 100));
     return (
-      <div style={{ background: "#fff", padding: "10px 16px 14px", borderBottom: "1px solid " + CAP.border }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), padding: "10px 16px 14px", borderBottom: "1px solid " + CAP.border }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 11, color: CAP.textFaint, fontWeight: "bold" }}>QUESTION {current} / {totalQuestions}</div>
           <div style={{ fontSize: 11, color: CAP.or, fontWeight: "bold" }}>{pct}%</div>
@@ -12311,7 +12311,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
             <div style={{ fontSize: 13, color: CAP.noirSoft, fontStyle: "italic" }}>Routine personnalisée + produits adaptés à TES cheveux</div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.or, marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Tu vas découvrir</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -12356,7 +12356,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
           {/* Genre */}
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu es :</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {CAP_GENDERS.map(g => (
@@ -12370,7 +12370,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
           </div>
 
           {/* Âge */}
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Ton âge :</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {CAP_AGE_RANGES.map(a => (
@@ -12397,7 +12397,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
           {/* Texture */}
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 4 }}>Ton type de cheveux ?</div>
             <div style={{ fontSize: 11, color: CAP.textFaint, marginBottom: 10, fontStyle: "italic" }}>Si tu hésites, choisis "Je ne sais pas" — on te guidera</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -12415,7 +12415,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
           </div>
 
           {/* État actuel */}
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>État actuel de tes cheveux :</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {CAP_ETATS.map(e => (
@@ -12428,7 +12428,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
           </div>
 
           {/* Longueur */}
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Longueur actuelle :</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {CAP_LONGUEURS.map(l => (
@@ -12468,7 +12468,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
         <Header title="Étape 3 / 6 — Tes problèmes" onBack={() => setCapStep(2)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>Quels problèmes rencontres-tu ?</div>
             <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic" }}>Tu peux en sélectionner plusieurs</div>
           </div>
@@ -12508,7 +12508,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
         <Header title="Étape 4 / 6 — Tes objectifs" onBack={() => setCapStep(3)} />
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 16, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: "bold", color: CAP.noir, marginBottom: 6 }}>Quels sont tes objectifs ?</div>
             <div style={{ fontSize: 12, color: CAP.textFaint, fontStyle: "italic" }}>Choisis 1 à 3 objectifs prioritaires ({capObjectives.length}/3)</div>
           </div>
@@ -12542,7 +12542,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu laves tes cheveux à quelle fréquence ?</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {CAP_LAVAGE_FREQ.map(f => (
@@ -12558,7 +12558,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
             { key: "proteines", q: "Tu fais des soins protéinés (1x/mois) ?" },
             { key: "chaleur", q: "Tu utilises sèche-cheveux / fer à lisser souvent ?" }
           ].map(item => (
-            <div key={item.key} style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div key={item.key} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>{item.q}</div>
               <div style={{ display: "flex", gap: 8 }}>
                 {[
@@ -12589,7 +12589,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
         <ProgressBar />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu bois combien d'eau par jour ?</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -12602,7 +12602,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Tu dors combien d'heures ?</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -12615,7 +12615,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Niveau de stress quotidien :</div>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -12628,7 +12628,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Port de tresses / perruques (en %) :</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
@@ -12642,7 +12642,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
             </div>
           </div>
 
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Ton budget produits :</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {CAP_BUDGET.map(b => (
@@ -12706,7 +12706,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
               <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir, marginBottom: 10 }}>Ton diagnostic capillaire est prêt</div>
               <div style={{ fontSize: 13, color: CAP.noirSoft, lineHeight: 1.6 }}>Routine + produits + marques recommandées</div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CAP.border }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 14, padding: 18, marginBottom: 16, border: "1px solid " + CAP.border }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>✨ Ton diag inclut :</div>
               <div style={{ fontSize: 13, color: CAP.noirSoft, lineHeight: 1.8 }}>
                 ✅ Analyse de ton type de cheveux<br/>
@@ -12871,7 +12871,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
       <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
         <Header title="Beauté Capillaire" onBack={() => { setCarryCarePage("home"); setCapStep(1); }} />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 1 / 4</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>Quel est ton type de cheveux ?</div>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginTop: 6 }}>Choisis celui qui te ressemble le plus</div>
@@ -12906,7 +12906,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
       <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
         <Header title="Tes problèmes" onBack={() => setCapStep(1)} />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 2 / 4</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>Coche tes préoccupations</div>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginTop: 6 }}>Tu peux en cocher plusieurs (ou aucune)</div>
@@ -12944,7 +12944,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
       <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
         <Header title="Ma routine" onBack={() => setCapStep(2)} />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 3 / 4</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>À quelle fréquence laves-tu tes cheveux ?</div>
           </div>
@@ -12980,7 +12980,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
       <div style={{ minHeight: "100vh", background: CAP.blanc, paddingBottom: 80 }}>
         <Header title="Mon âge" onBack={() => setCapStep(3)} />
         <div style={{ padding: "16px", maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16, textAlign: "center" }}>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginBottom: 4 }}>Étape 4 / 4</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: CAP.noir }}>Quel est ton âge ?</div>
             <div style={{ fontSize: 12, color: CAP.textFaint, marginTop: 6 }}>Pour des conseils adaptés à tes cheveux</div>
@@ -13215,7 +13215,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
               border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer", marginBottom: 10
             }}>🔄 Réessayer</button>
             <button onClick={() => { setCapPaymentStep(1); setCapPaymentMethod(null); setCapPaymentPhone(""); }} style={{
-              width: "100%", padding: 14, background: "#fff", color: CAP.noir,
+              width: "100%", padding: 14, background: (EST_HOMOROMANCE ? G.carte : "#fff"), color: CAP.noir,
               border: "1.5px solid " + CAP.border, borderRadius: 12, fontSize: 14, cursor: "pointer"
             }}>Annuler</button>
           </div>
@@ -13257,7 +13257,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
           </div>
 
           {/* ROUTINE PRINCIPALE */}
-          <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
             <div style={{ fontSize: 16, fontWeight: "bold", color: CAP.noir, marginBottom: 8 }}>{textureData.titre}</div>
             <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.6, marginBottom: 14, fontStyle: "italic" }}>{textureData.intro}</div>
 
@@ -13288,7 +13288,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
 
           {/* PROBLÈMES CIBLÉS */}
           {problemLabels.length > 0 && (
-            <div style={{ background: "#fff", border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + CAP.border, borderRadius: 14, padding: 18, marginBottom: 16 }}>
               <div style={{ fontSize: 16, fontWeight: "bold", color: CAP.noir, marginBottom: 14 }}>🎯 Tes préoccupations ciblées</div>
               {problemLabels.map(p => {
                 const pcontent = CAP_CONTENT.problems[p.id];
@@ -13331,7 +13331,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
           {/* CTA bas */}
           <div style={{ textAlign: "center", marginTop: 20 }}>
             <button onClick={restart}
-              style={{ padding: "12px 24px", background: "#fff", color: CAP.noir, border: "1.5px solid " + CAP.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
+              style={{ padding: "12px 24px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), color: CAP.noir, border: "1.5px solid " + CAP.border, borderRadius: 10, fontSize: 13, cursor: "pointer", marginRight: 8 }}>
               🔄 Refaire le test
             </button>
             <button onClick={() => { setCarryCarePage("home"); setCapStep(1); }}
@@ -14156,7 +14156,7 @@ export default function App() {
   const fermerInvitInstall = () => { setInvitInstall(false); };
   const bandeauInstallNode = invitInstall ? (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 24, maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}>
         <img src="/icon-192.png" alt={SITE_NOM} style={{ width: 84, height: 84, borderRadius: 18, marginBottom: 14 }} />
         <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginBottom: 6 }}>Installer {SITE_NOM}</div>
         <div style={{ fontSize: 13, color: "#6a6252", lineHeight: 1.55, marginBottom: 18 }}>Tes livres toujours à portée de main, sans repasser par Facebook.</div>
@@ -14168,7 +14168,7 @@ export default function App() {
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, background: "rgba(106,17,203,0.88)", color: "#fff", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.15)", backdropFilter: "blur(2px)" }}>
       <span style={{ fontSize: 16 }}>📱</span>
       <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application {SITE_NOM}</span>
-      <button onClick={triggerInstall} style={{ background: "#fff", color: "#6a11cb", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Installer</button>
+      <button onClick={triggerInstall} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), color: "#6a11cb", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Installer</button>
       <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
     </div>
   ) : null;
@@ -15132,7 +15132,7 @@ export default function App() {
   }, [auteurProfil]);
   const lecteurModalNode = (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20 }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", position: "relative" }}>
+      <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", position: "relative" }}>
         <button onClick={() => { setShowLecteurModal(false); setPendingBuyBook(null); setPendingEspaceAuteur(false); if (page === "library") setPage("home"); }} aria-label="Fermer" style={{ position: "absolute", top: 12, right: 12, background: "#f0ece2", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", color: "#666", fontWeight: "bold", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
           <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />
@@ -19064,7 +19064,7 @@ export default function App() {
   const paiementModalNode = (
         showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-            <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
               {paymentStep === 1 && (
                 <>
                   <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
@@ -19245,7 +19245,7 @@ export default function App() {
 
           {/* ===== ACCES : uniquement apres paiement ===== */}
           {fvPaye ? (
-            <div style={{ background: "#fff", border: "2px solid " + G.green, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid " + G.green, borderRadius: 12, padding: 16, marginBottom: 18 }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: G.green, marginBottom: 4 }}>✅ Tu as accès à cette formation</div>
               <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Retrouve ces liens à tout moment dans <b>Ma bibliothèque</b>.</div>
               {fvLiens.length === 0 ? (
@@ -19263,14 +19263,14 @@ export default function App() {
           {fvLoading && !fvContenu ? (
             <div style={{ padding: 24, textAlign: "center", color: G.textDim }}>Chargement…</div>
           ) : (
-            <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 12, padding: 16, marginBottom: 18 }}>
               {rendreFormation(fvContenu, FC)}
             </div>
           )}
 
           {/* ===== ACHETER ===== */}
           {!fvPaye ? (
-            <div style={{ background: "#fff", border: "2px solid " + FC, borderRadius: 12, padding: 16, textAlign: "center" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid " + FC, borderRadius: 12, padding: 16, textAlign: "center" }}>
               <div style={{ fontSize: 12, color: G.textDim, marginBottom: 4 }}>Accès complet à la formation</div>
               <div style={{ fontSize: 26, fontWeight: "bold", color: FC, marginBottom: 12 }}>{b.price ? Number(b.price).toLocaleString() + " FCFA" : "Gratuit"}</div>
               <button onClick={() => acheterFormation(b)}
@@ -19393,7 +19393,7 @@ export default function App() {
             ) : null}
             {/* Le menu tombe sous le hamburger, sur la moitie de l'ecran seulement. */}
             {bqMenuCats && (bqCats.length > 0 || auteurProfil) ? (
-              <div style={{ position: "absolute", top: "100%", right: 10, marginTop: 6, width: "50%", minWidth: 190, maxWidth: 300, background: "#fff", border: "1px solid #ccc", borderRadius: 10, boxShadow: "0 8px 22px rgba(0,0,0,0.22)", overflow: "hidden", zIndex: 30, maxHeight: "60vh", overflowY: "auto" }}>
+              <div style={{ position: "absolute", top: "100%", right: 10, marginTop: 6, width: "50%", minWidth: 190, maxWidth: 300, background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid #ccc", borderRadius: 10, boxShadow: "0 8px 22px rgba(0,0,0,0.22)", overflow: "hidden", zIndex: 30, maxHeight: "60vh", overflowY: "auto" }}>
                 {auteurProfil ? (
                   <button onClick={() => { setBqMenuCats(false); setPage("espace_auteur"); setAuteurTab("meslivres"); try { window.scrollTo(0, 0); } catch (e) {} }}
                     style={{ display: "block", width: "100%", textAlign: "left", padding: "12px 12px", background: AC, border: "none", color: "#fff", fontSize: 13.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>
@@ -19415,7 +19415,7 @@ export default function App() {
                 <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={boutiqueSearch} onChange={e => setBoutiqueSearch(e.target.value)}
                   placeholder={nomVitrine ? ("Rechercher dans " + nomVitrine + "…") : ("Rechercher dans les livres de " + nomAuteur.split(" ")[0] + "…")}
-                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: "#fff", border: "1.5px solid #bdbdbd", borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "10px 34px 10px 36px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1.5px solid #bdbdbd", borderRadius: 8, color: G.text, fontSize: 13.5, fontFamily: "Georgia, serif", boxSizing: "border-box" }} />
                 {boutiqueSearch ? (
                   <button onClick={() => setBoutiqueSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 17, cursor: "pointer", padding: 4 }}>✕</button>
                 ) : null}
@@ -19635,7 +19635,7 @@ export default function App() {
               <div style={{ height: 12 }} />
               <label style={labelSt}>Ton numéro Mobile Money (pour être payé)</label>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ padding: "12px 10px", background: "#f2f2f2", borderRadius: 8, fontSize: 14, color: G.textDim, whiteSpace: "nowrap" }}>{indicatif || "🌍"}</span>
+                <span style={{ padding: "12px 10px", background: EST_HOMOROMANCE ? G.surface2 : "#f2f2f2", borderRadius: 8, fontSize: 14, color: G.textDim, whiteSpace: "nowrap" }}>{indicatif || "🌍"}</span>
                 <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
               </div>
               <div style={{ height: 12 }} />
@@ -19662,7 +19662,7 @@ export default function App() {
                 const val = o[0], titre = o[1], desc = o[2], badge = o[3];
                 const actif = (auteurModeVente === val);
                 return (
-                  <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? G.gold : G.border), background: actif ? "#fdfaf2" : "#fff", borderRadius: 10, padding: 12, marginBottom: 10, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? G.gold : G.border), background: actif ? (EST_HOMOROMANCE ? G.surface2 : "#fdfaf2") : (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 10, padding: 12, marginBottom: 10, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <input type="radio" checked={actif} onChange={() => setAuteurModeVente(val)} style={{ width: 17, height: 17, marginTop: 2, flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}{badge ? <span style={{ marginLeft: 6, fontSize: 10.5, color: G.gold, border: "1px solid " + G.gold, borderRadius: 20, padding: "1px 7px", fontWeight: "bold" }}>{badge}</span> : null}</div>
@@ -19706,7 +19706,7 @@ export default function App() {
         <div style={{ padding: eaLarge ? 24 : 16, maxWidth: eaMax, margin: "0 auto" }}>
           {retraitOpen && (
             <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-              <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
+              <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
                 <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>💸 Retirer mes fonds</div>
                 <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par {SITE_NOM}. <b>Minimum : 2 000 FCFA.</b></div>
                 <label style={labelSt}>Montant à retirer (FCFA)</label>
@@ -19746,9 +19746,9 @@ export default function App() {
                     <div style={{ fontSize: 12, color: G.textDim }}>Voici ton tableau de bord auteur.</div>
                   </div>
                   <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                    <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{mesLivres.filter(b => b.status === "actif").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En ligne</div></div>
-                    <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
-                    <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
+                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{mesLivres.filter(b => b.status === "actif").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En ligne</div></div>
+                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
+                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
                   <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
@@ -19756,7 +19756,7 @@ export default function App() {
               {/* PUBLIER */}
               {auteurTab === "publier" && (
                 <div>
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   {kycOpen ? (
                     <>
                       <button onClick={() => { setKycOpen(false); setKycMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Retour</button>
@@ -19827,7 +19827,7 @@ export default function App() {
                       )}
                       <div style={{ height: 16 }} />
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Lis et signe le contrat</div>
-                      <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 14, fontSize: 13, color: G.text, lineHeight: 1.6, marginBottom: 10 }}>
+                      <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 14, fontSize: 13, color: G.text, lineHeight: 1.6, marginBottom: 10 }}>
                         <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 10, fontSize: 14 }}>CONTRAT D'AUTEUR — {SITE_NOM}</div>
                         <div style={{ marginBottom: 10 }}>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare accepter l'intégralité des clauses ci-dessous :</div>
                         {CONTRAT_ARTICLES.map(([t, b], i) => (
@@ -19861,14 +19861,14 @@ export default function App() {
                             {auteurProfil.kyc_motif_refus ? <div style={{ fontSize: 12, color: "#c62828", marginBottom: 8 }}>{auteurProfil.kyc_motif_refus}</div> : null}
                             <button onClick={openKyc} style={{ padding: "10px 16px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>Corriger et re-soumettre</button>
                           </>) : (<>
-                            <div style={{ fontSize: 13, color: G.text, fontWeight: "bold", marginBottom: 4 }}>🔒 Vérification requise avant de publier</div>
+                            <div style={{ fontSize: 13, color: EST_HOMOROMANCE ? "#5a4a10" : G.text, fontWeight: "bold", marginBottom: 4 }}>🔒 Vérification requise avant de publier</div>
                             <div style={{ fontSize: 12, color: G.textDim, marginBottom: 10 }}>Pour publier et être payé(e), soumets d'abord tes informations, ta pièce d'identité et le contrat signé.</div>
                             <button onClick={openKyc} style={{ padding: "12px 18px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>Soumets tes informations</button>
                           </>)}
                         </div>
                       ); })()}
-                      <div style={{ fontSize: 15, fontWeight: "bold", color: EST_HOMOROMANCE ? "#2e0138" : G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
-                      <div style={{ fontSize: 11, color: EST_HOMOROMANCE ? "#5a5a6e" : G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
+                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
                       <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.bouton, border: "none", borderRadius: 10, color: G.boutonTexte, fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
                       <div style={{ display: "grid", gap: 8 }}>
                         {[
@@ -19959,14 +19959,14 @@ export default function App() {
                     const stA = a.statut === "active" ? { t: "✅ En ligne", c: G.green } : a.statut === "refusee" ? { t: "❌ Refusée", c: "#e11d48" } : { t: "⏳ En attente de validation", c: "#c9a84c" };
                     const occupe = annonceBusyId === a.id;
                     return (
-                      <div key={a.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: "#fff" }}>
+                      <div key={a.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? G.carte : "#fff" }}>
                         <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, display: "block", marginBottom: 8 }} />
                         <div style={{ fontSize: 12, fontWeight: "bold", color: stA.c, marginBottom: 4 }}>{stA.t}</div>
                         <div style={{ fontSize: 11, color: G.textDim, wordBreak: "break-all", marginBottom: 8 }}>{a.lien}</div>
                         {a.statut === "refusee" && a.motif_refus ? <div style={{ fontSize: 12, color: "#c62828", background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", marginBottom: 8, lineHeight: 1.5 }}><b>Motif du refus :</b> {a.motif_refus}</div> : null}
                         <input id={"annonceMaj" + a.id} type="file" accept="image/*" onChange={e => { changerImageAnnonce(a, e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={() => document.getElementById("annonceMaj" + a.id).click()} disabled={occupe} style={{ flex: 1, padding: 10, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>{occupe ? "Envoi…" : "🖼️ Changer l’image"}</button>
+                          <button onClick={() => document.getElementById("annonceMaj" + a.id).click()} disabled={occupe} style={{ flex: 1, padding: 10, background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : G.surClair, border: "2px solid " + G.gold, borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>{occupe ? "Envoi…" : "🖼️ Changer l’image"}</button>
                           <button onClick={() => supprimerMonAnnonce(a)} disabled={occupe} style={{ flex: 1, padding: 10, background: "#e11d48", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>🗑️ Supprimer</button>
                         </div>
                       </div>
@@ -20014,15 +20014,15 @@ export default function App() {
                   <label style={labelSt}>Présentation de la formation *</label>
                   <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => document.getElementById("fmImg916").click()} disabled={fmUploading}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                       <span style={{ display: "inline-block", width: 11, height: 19, border: "2px solid currentColor", borderRadius: 2, flexShrink: 0 }} />Image 9:16</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => document.getElementById("fmImg169").click()} disabled={fmUploading}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                       <span style={{ display: "inline-block", width: 21, height: 12, border: "2px solid currentColor", borderRadius: 2, flexShrink: 0 }} />Image 16:9</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmLienDansTexte(true); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>🔗 Un lien</button>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>🔗 Un lien</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmYtUrl(""); setFmYtOuvert(true); }}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid #FF0000", background: "#fff", color: "#c4302b", fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>▶️ Vidéo YouTube</button>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid #FF0000", background: EST_HOMOROMANCE ? G.carte : "#fff", color: "#c4302b", fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>▶️ Vidéo YouTube</button>
                   </div>
                   <input id="fmImg916" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "916"); e.target.value = ""; }} style={{ display: "none" }} />
                   <input id="fmImg169" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "169"); e.target.value = ""; }} style={{ display: "none" }} />
@@ -20036,7 +20036,7 @@ export default function App() {
                   {fmLiens.length > 0 ? (
                     <div style={{ marginBottom: 10 }}>
                       {fmLiens.map((l, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", border: "1px solid " + G.border, borderRadius: 8, background: "#fff", marginBottom: 6 }}>
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? G.carte : "#fff", marginBottom: 6 }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{l.titre}</div>
                             <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.url}</div>
@@ -20047,7 +20047,7 @@ export default function App() {
                     </div>
                   ) : null}
                   <button type="button" onClick={() => { setFmLienDansTexte(false); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
-                    style={{ width: "100%", padding: 12, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>➕ Insérer un lien</button>
+                    style={{ width: "100%", padding: 12, background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>➕ Insérer un lien</button>
                   <div style={{ height: 18 }} />
 
                   {(() => {
@@ -20064,7 +20064,7 @@ export default function App() {
                           <span><b>🏪 Ma vitrine uniquement</b> — en ligne tout de suite, sans validation. <b>85 %</b></span>
                         </label>
                         {pubExclusif && kycOk ? (
-                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10, marginTop: 10 }}>
+                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10, marginTop: 10 }}>
                             <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
                             <span>Je certifie être l'auteur de cette formation ou détenir les droits de la vendre. Publiée sans validation, elle est retirée immédiatement en cas de réclamation.</span>
                           </label>
@@ -20082,7 +20082,7 @@ export default function App() {
 
                   {fmYtOuvert ? (
                     <div onClick={() => setFmYtOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
                         <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>▶️ Vidéo de présentation</div>
                         <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Colle l'adresse de ta vidéo YouTube. Elle se lira directement dans ta page de vente, sans quitter le site.</div>
                         <label style={labelSt}>Adresse de la vidéo *</label>
@@ -20093,7 +20093,7 @@ export default function App() {
                           </div>
                         ) : (fmYtUrl.trim() ? <div style={{ fontSize: 12, color: "#e53935", marginTop: 8 }}>Adresse non reconnue. Copie l'adresse complète depuis YouTube.</div> : null)}
                         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                          <button onClick={() => setFmYtOuvert(false)} style={{ flex: 1, padding: 12, background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+                          <button onClick={() => setFmYtOuvert(false)} style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
                           <button onClick={fmValiderVideo} style={{ flex: 1, padding: 12, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Insérer</button>
                         </div>
                       </div>
@@ -20102,7 +20102,7 @@ export default function App() {
 
                   {fmLienOuvert ? (
                     <div onClick={() => setFmLienOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
                         <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔗 {fmLienDansTexte ? "Un lien dans la présentation" : "Un lien d'accès"}</div>
                         <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>{fmLienDansTexte ? "Ce lien apparaîtra dans le texte de ta page de vente, visible par tout le monde." : "Ce lien n'est donné qu'à l'acheteur, après son paiement."}</div>
                         <label style={labelSt}>Titre du lien *</label>
@@ -20111,7 +20111,7 @@ export default function App() {
                         <label style={labelSt}>Adresse du lien *</label>
                         <input value={fmLienUrl} onChange={e => setFmLienUrl(e.target.value)} placeholder="https://..." style={champ} />
                         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                          <button onClick={() => setFmLienOuvert(false)} style={{ flex: 1, padding: 12, background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+                          <button onClick={() => setFmLienOuvert(false)} style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
                           <button onClick={fmValiderLien} style={{ flex: 1, padding: 12, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Ajouter</button>
                         </div>
                       </div>
@@ -20129,14 +20129,14 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Coche l’auteur dont tu publies le livre.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                     {listeAuteursPub().map(a => (
-                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : "#fff", cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
+                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
                         {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
                         <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom}</div><div style={{ fontSize: 10, color: G.textDim }}>{a.ville || ""} {a.verifie ? "✅" : ""}</div></div>
                       </button>
                     ))}
                   </div>
                   {addAuteurOpen ? (
-                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
                       <label style={labelSt}>Nom du nouvel auteur</label>
                       <input value={addAuteurNom} onChange={e => setAddAuteurNom(e.target.value)} placeholder="Ex. Johanna Morisson" style={champ} />
                       <div style={{ height: 8 }} />
@@ -20151,7 +20151,7 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={ajouterProfilAuteur} style={{ flex: 1, padding: 10, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Enregistrer l’auteur</button>
-                        <button onClick={() => { setAddAuteurOpen(false); setAddAuteurNom(""); }} style={{ padding: "10px 14px", background: "#eee", border: "none", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Annuler</button>
+                        <button onClick={() => { setAddAuteurOpen(false); setAddAuteurNom(""); }} style={{ padding: "10px 14px", background: EST_HOMOROMANCE ? G.surface2 : "#eee", border: "none", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Annuler</button>
                       </div>
                     </div>
                   ) : (
@@ -20203,10 +20203,10 @@ export default function App() {
                     <>
                       <label style={labelSt}>Texte du roman *</label>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("b")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
-                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("i")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
-                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("u")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
-                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={undoRoman} title="Annuler la dernière mise en forme ou le dernier collage" style={{ height: 36, padding: "0 12px", border: "1px solid " + G.border, borderRadius: 8, background: "#faf8f3", cursor: "pointer", fontSize: 13, fontWeight: "bold", color: G.textDim }}>↩️ Annuler</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("b")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? G.surface2 : "#faf8f3", cursor: "pointer", fontWeight: "bold", fontSize: 16 }}>G</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("i")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? G.surface2 : "#faf8f3", cursor: "pointer", fontStyle: "italic", fontSize: 16 }}>I</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => wrapRomanSel("u")} style={{ width: 40, height: 36, border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? G.surface2 : "#faf8f3", cursor: "pointer", textDecoration: "underline", fontSize: 16 }}>S</button>
+                        <button type="button" onMouseDown={e => e.preventDefault()} onClick={undoRoman} title="Annuler la dernière mise en forme ou le dernier collage" style={{ height: 36, padding: "0 12px", border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? G.surface2 : "#faf8f3", cursor: "pointer", fontSize: 13, fontWeight: "bold", color: G.textDim }}>↩️ Annuler</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Gras · Italique · Souligné — sélectionne un passage puis clique pour personnaliser la mise en page. ↩️ Annuler revient en arrière.</div>
                       <textarea ref={romanEditorRef} onPaste={collerRoman} value={pubForm.content} onChange={e => { setPubForm(f => ({ ...f, content: e.target.value })); setPubErrors(p => ({ ...p, content: false })); }} onBlur={() => { if (pubDraftMode && pubForm.title.trim()) pubSaveDraft(true); }} placeholder="Écris ou colle ici le texte complet de ton roman…" style={{ ...champ, height: "70vh", minHeight: 400, lineHeight: 1.6, resize: "vertical", ...(pubErrors.content ? { border: "2px solid #e53935" } : {}) }} />
@@ -20232,8 +20232,8 @@ export default function App() {
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Que peut faire l’acheteur ?</label>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
-                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6 }}>{pubDownloadable ? "L’acheteur peut écouter ET télécharger le fichier audio." : "L’acheteur peut seulement écouter (audio protégé, non téléchargeable)."}</div>
                     </>
@@ -20257,8 +20257,8 @@ export default function App() {
                     <div style={{ marginTop: 14 }}>
                       <label style={labelSt}>Le PDF sera-t-il téléchargeable ?</label>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
-                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6, lineHeight: 1.4 }}>{pubDownloadable ? "Le client pourra télécharger le PDF après achat." : "Le client pourra seulement lire le PDF (protégé, non téléchargeable)."}</div>
                     </div>
@@ -20268,9 +20268,9 @@ export default function App() {
                     const kycOk = !!(auteurProfil && auteurProfil.kyc_status === "valide");
                     const carte = (actif, onClick, dispo, titre, lignes, badge) => (
                       <button type="button" onClick={dispo ? onClick : undefined} disabled={!dispo}
-                        style={{ width: "100%", textAlign: "left", padding: 12, marginBottom: 10, borderRadius: 10, border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.goldDim : "#fff", cursor: dispo ? "pointer" : "not-allowed", opacity: dispo ? 1 : 0.55, fontFamily: "Georgia, serif" }}>
+                        style={{ width: "100%", textAlign: "left", padding: 12, marginBottom: 10, borderRadius: 10, border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), cursor: dispo ? "pointer" : "not-allowed", opacity: dispo ? 1 : 0.55, fontFamily: "Georgia, serif" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.bouton : G.border), background: actif ? G.bouton : "#fff", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: G.boutonTexte, fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
+                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.bouton : G.border), background: actif ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: G.boutonTexte, fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
                           <span style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}</span>
                           <span style={{ marginLeft: "auto", background: G.bouton, color: "#fff", fontSize: 11, fontWeight: "bold", padding: "3px 9px", borderRadius: 12, whiteSpace: "nowrap" }}>{badge}</span>
                         </div>
@@ -20297,7 +20297,7 @@ export default function App() {
                           </div>
                         ) : null}
                         {pubExclusif && kycOk ? (
-                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10 }}>
+                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10 }}>
                             <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
                             <span>Je certifie être l'auteur de ce livre ou détenir les droits de le vendre. Comme il est publié sans validation, en cas de réclamation {SITE_NOM} le retire immédiatement et mon compte peut être suspendu.</span>
                           </label>
@@ -20308,15 +20308,15 @@ export default function App() {
                   <div style={{ height: 18 }} />
                   {pubDraftMsg && <div style={{ fontSize: 11, color: G.green, textAlign: "center", marginBottom: 8 }}>{pubDraftMsg}</div>}
                   {pubDraftMode && (
-                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
+                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
                   <button onClick={pubSaveRoman} disabled={pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation"))}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setPubAuthorVille(""); setPubAuthorPhoto(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {pubRomanPdfAlert && (
                     <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-                      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
                         <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
-                        <div style={{ fontSize: 16, fontWeight: "bold", color: "#1a1208", marginBottom: 12 }}>Les romans se publient uniquement en format Texte</div>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#1a1208", marginBottom: 12 }}>Les romans se publient uniquement en format Texte</div>
                         <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.7, textAlign: "left", marginBottom: 20 }}>
                           Pour publier un roman (y compris une Saga), retournez à <b>« Publier un Roman (Texte) »</b>.<br/><br/>
                           Si votre roman est dans un fichier PDF ou Word, <b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
@@ -20333,7 +20333,7 @@ export default function App() {
               {/* MES LIVRES */}
               {auteurTab === "meslivres" && (
                 <div>
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
                   {mesLivres.filter(b => b.moderation === "refuse").length > 0 && (
                     <div onClick={() => setMesLivresTab("refuse")} style={{ background: "#fdecea", border: "1px solid #e53935", borderRadius: 10, padding: 12, marginBottom: 12, cursor: "pointer" }}>
@@ -20343,12 +20343,12 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous mes livres" }, { t: "edition", l: "En cours d'édition" }, { t: "attente", l: "En attente" }, { t: "refuse", l: "❌ Refusés" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.bouton : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
                   <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous" }, { t: "roman", l: "Texte" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : "#fff", color: mesLivresType === o.t ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
                     ))}
                   </div>
                   {(() => {
@@ -20384,7 +20384,7 @@ export default function App() {
                     const lien = SITE_URL + "/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
                     return (
                       <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                        <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
+                        <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
                           <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
                             {b.cover ? <img src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
                             <div style={{ flex: 1, minWidth: 0 }}>
@@ -20451,34 +20451,34 @@ export default function App() {
                           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
                           {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
                           <div style={{ fontSize: 10.5, opacity: 0.85, marginBottom: 8, textAlign: "center" }}>🔒 Les fonds deviennent retirables {delaiRetrait} jour{delaiRetrait > 1 ? "s" : ""} après chaque vente.</div>
-                          <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? "#fff" : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
+                          <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? (EST_HOMOROMANCE ? G.carte : "#fff") : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
                         </div>
                       );
                     })()}
                     <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 10 }}>💰 Mes ventes</div>
                     <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                       {periods.map(([id, lab]) => (
-                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                       ))}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <span style={{ fontSize: 12, color: G.textDim, whiteSpace: "nowrap" }}>Ou un jour :</span>
-                      <input type="date" value={statsDate} onChange={e => setStatsDate(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 13, minWidth: 0 }} />
+                      <input type="date" value={statsDate} onChange={e => setStatsDate(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 13, minWidth: 0 }} />
                       {statsDate && <button onClick={() => setStatsDate("")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>✕</button>}
                     </div>
                     <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
-                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
                     </div>
                     <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
-                      <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
                     </div>
                     <div style={{ background: G.bouton, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
                       <div style={{ fontSize: 12, opacity: 0.9 }}>Montant total (cette période)</div>
                       <div style={{ fontSize: 24, fontWeight: "bold" }}>{fmt(grandTotal)}</div>
                     </div>
-                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 12 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 12 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Détail par livre</div>
                       {Object.keys(grpP).length === 0 ? (
                         <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
@@ -20531,7 +20531,7 @@ export default function App() {
                       <div>
                         <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
@@ -20545,7 +20545,7 @@ export default function App() {
                           <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{fmt(gains(vv))}</div>
                           <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions {SITE_NOM})</div>
                         </div>
-                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>En ligne</span><span style={{ color: G.green, fontWeight: "bold" }}>{mesLivres.filter(b => b.status === "actif").length}</span></div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>En attente</span><span style={{ color: "#c9a84c", fontWeight: "bold" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</span></div>
@@ -20559,10 +20559,10 @@ export default function App() {
                       <div>
                         <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
-                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                         <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Livres vendus (mes gains)</div>
                         {Object.keys(grpP).length === 0 ? (
                           <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
@@ -20578,7 +20578,7 @@ export default function App() {
 
                     {statsSubTab === "charts" && (
                       <div>
-                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📈 Gains — 7 derniers jours</div>
                           <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120 }}>
                             {dayGains.map((g, i) => (
@@ -20589,7 +20589,7 @@ export default function App() {
                             ))}
                           </div>
                         </div>
-                        <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>🏆 Best-sellers</div>
                           {best.length === 0 ? (
                             <div style={{ fontSize: 13, color: G.textDim }}>Pas encore de ventes.</div>
@@ -20612,14 +20612,14 @@ export default function App() {
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Gère les tutoriels affichés sur l’accueil (au-dessus des Livres gratuits).</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                     {[{ t: "auteur", l: "Tuto Auteur" }, { t: "lecteur", l: "Tuto Lecteur" }].map(o => (
-                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.bouton : "#fff", color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
+                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
                     ))}
                   </div>
                   {tutoBookTab === "lecteur" ? (
                     <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 24 }}>Tuto Lecteur — bientôt.</div>
                   ) : (
                   <div>
-                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>{tutoEditId ? "✏️ Modifier le tuto" : "➕ Nouveau tuto"}</div>
                       <label style={labelSt}>Image (16:9) *</label>
                       {tutoImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={tutoImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setTutoImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
@@ -20631,23 +20631,23 @@ export default function App() {
                       <div style={{ height: 10 }} />
                       <label style={labelSt}>Texte (sous la carte)</label>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("bold"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("italic"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("underline"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("bold"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? G.carte : "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("italic"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? G.carte : "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("underline"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? G.carte : "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
                         {["#e11d48", "#2563eb", "#16a34a", "#9333ea", "#ea580c", "#1a1208"].map(col => (
                           <button key={col} onMouseDown={e => { e.preventDefault(); fmtTuto("foreColor", col); }} title="Couleur" style={{ width: 26, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: col, cursor: "pointer" }} />
                         ))}
                       </div>
-                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } }} style={{ minHeight: 120, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: "#fff", outline: "none", whiteSpace: "pre-wrap" }} />
+                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } }} style={{ minHeight: 120, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: EST_HOMOROMANCE ? G.carte : "#fff", outline: "none", whiteSpace: "pre-wrap" }} />
                       {tutoMsg && <div style={{ fontSize: 13, marginTop: 8, fontWeight: "bold", color: tutoMsg === "OK_ENREGISTRE" ? G.green : "#e11d48" }}>{tutoMsg === "OK_ENREGISTRE" ? "✅ Tuto enregistré !" : tutoMsg}</div>}
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <button onClick={enregistrerTuto} style={{ flex: 1, padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{tutoEditId ? "Mettre à jour" : "Enregistrer"}</button>
-                        {tutoEditId && <button onClick={() => { setTutoEditId(null); setTutoImg(""); setTutoLien(""); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg(""); }} style={{ padding: "12px 16px", background: "#eee", color: G.text, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Annuler</button>}
+                        {tutoEditId && <button onClick={() => { setTutoEditId(null); setTutoImg(""); setTutoLien(""); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg(""); }} style={{ padding: "12px 16px", background: EST_HOMOROMANCE ? G.surface2 : "#eee", color: G.text, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Annuler</button>}
                       </div>
                     </div>
                     <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>Tutos publiés ({tutos.length})</div>
                     {tutos.map(t => (
-                      <div key={t.id} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
+                      <div key={t.id} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
                         <img src={t.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />
                         {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", marginBottom: 8, whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
                         <div style={{ display: "flex", gap: 8 }}>
@@ -20662,7 +20662,7 @@ export default function App() {
               )}
 
               {auteurTab === "compte" && (
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>👤 Mon compte</div>
                   {!compteEdit ? (
                     <div>
@@ -20675,7 +20675,7 @@ export default function App() {
                         <div style={{ marginTop: 12, padding: 12, background: G.goldDim, borderRadius: 8 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur tes réseaux sociaux)</div>
                           <div style={{ display: "flex", gap: 6 }}>
-                            <input readOnly value={SITE_URL + "/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: "#fff", minWidth: 0 }} />
+                            <input readOnly value={SITE_URL + "/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: EST_HOMOROMANCE ? G.carte : "#fff", minWidth: 0 }} />
                             <button onClick={() => { try { navigator.clipboard.writeText(SITE_URL + "/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.bouton, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
                           </div>
                         </div>
@@ -20687,7 +20687,7 @@ export default function App() {
                         <a href={auteurProfil.kyc_contrat_url + "?download=contrat-signe-carrybooks.pdf"} rel="noopener noreferrer" style={{ display: "block", marginTop: 10, padding: "10px 16px", background: G.goldDim, color: G.gold, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>📄 Télécharger mon contrat signé</a>
                       ) : null}
                       <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : G.surClair, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
                     </div>
                   ) : (
                     <div>
@@ -20708,7 +20708,7 @@ export default function App() {
                       </div>
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Ton email de connexion (visible par tes lecteurs)</label>
-                      <input type="email" value={auteurEmail} readOnly style={{ ...champ, background: "#f2f2f2", color: G.textDim }} />
+                      <input type="email" value={auteurEmail} readOnly style={{ ...champ, background: EST_HOMOROMANCE ? G.surface2 : "#f2f2f2", color: G.textDim }} />
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Photo de profil (facultatif)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
@@ -20760,14 +20760,14 @@ export default function App() {
                     window.open("https://wa.me/?text=" + encodeURIComponent(texte), "_blank");
                   };
                   return (
-                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.bouton), borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.bouton), borderRadius: 10, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔗 Le lien de ma vitrine</div>
                       <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.5 }}>C'est LE lien à partager partout : WhatsApp, Facebook, TikTok, ta bio Instagram. Chaque vente qui passe par lui te rapporte davantage.</div>
                       <input readOnly value={lienV} onFocus={e => e.target.select()}
                         style={{ ...champ, fontSize: 12.5, background: G.bg, marginBottom: 10 }} />
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={() => { try { navigator.clipboard.writeText(lienV); setAuteurMsg("✅ Lien copié !"); setTimeout(() => setAuteurMsg(""), 2500); } catch (e) { setAuteurMsg("Copie impossible, sélectionne le lien à la main."); } }}
-                          style={{ flex: 1, padding: 12, background: "#fff", color: auteurCouleur || G.bouton, border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📋 Copier</button>
+                          style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : (auteurCouleur || G.bouton), border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📋 Copier</button>
                         <button onClick={partager}
                           style={{ flex: 1, padding: 12, background: auteurCouleur || G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📤 Partager</button>
                       </div>
@@ -20777,7 +20777,7 @@ export default function App() {
                   );
                 })() : null}
 
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🏪 Nom de la vitrine et logo</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Ta page auteur est ta boutique. Donne-lui un nom, un logo, et choisis ce qui apparaît tout en haut.</div>
 
@@ -20790,11 +20790,11 @@ export default function App() {
                     <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                       {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
                     </div>
-                    <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.bouton, border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
+                    <label style={{ padding: "10px 16px", background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : (auteurCouleur || G.bouton), border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
                       {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
                       <input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; e.target.value = ""; uploadVitrineLogo(f); }} style={{ display: "none" }} />
                     </label>
-                    {auteurVitrineLogo ? <button type="button" onClick={() => { setAuteurVitrineLogo(""); setAuteurVitrineLogo192(""); }} style={{ padding: "10px 14px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Retirer le logo</button> : null}
+                    {auteurVitrineLogo ? <button type="button" onClick={() => { setAuteurVitrineLogo(""); setAuteurVitrineLogo192(""); }} style={{ padding: "10px 14px", background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}>Retirer le logo</button> : null}
                   </div>
                   <div style={{ fontSize: 11, color: G.textDim, marginTop: -8, marginBottom: 16, lineHeight: 1.5 }}>Image carrée, au moins 200 × 200 pixels. Sans logo, c'est ta photo de profil qui s'affiche sur ta vitrine, et l'icône {SITE_NOM} qui sert d'icône à ton application.</div>
 
@@ -20819,7 +20819,7 @@ export default function App() {
                       const actif = (auteurModeVente === val);
                       const cA = auteurCouleur || G.bouton;
                       return (
-                        <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? cA : G.border), background: actif ? G.bg : "#fff", borderRadius: 10, padding: 11, marginBottom: 8, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                        <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? cA : G.border), background: actif ? G.bg : (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 10, padding: 11, marginBottom: 8, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
                           <input type="radio" checked={actif} onChange={() => setAuteurModeVente(val)} style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0 }} />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{titre}</div>
@@ -20833,7 +20833,7 @@ export default function App() {
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                 </div>
 
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🎨 Apparence</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Les couleurs de ta page auteur. L'aperçu en bas se met à jour à chaque choix.</div>
                   <label style={labelSt}>Les couleurs de ma vitrine</label>
@@ -20844,7 +20844,7 @@ export default function App() {
                         <div key={r.cle} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + G.border }}>
                           <button type="button" onClick={() => setPalettePour(r.cle)} style={{ width: 34, height: 34, borderRadius: 8, background: actuelle, border: "2px solid " + G.border, flexShrink: 0, cursor: "pointer", padding: 0 }} />
                           <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: G.text, lineHeight: 1.35 }}>{r.lab}</div>
-                          <button type="button" onClick={() => setPalettePour(r.cle)} style={{ padding: "7px 12px", background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>Changer</button>
+                          <button type="button" onClick={() => setPalettePour(r.cle)} style={{ padding: "7px 12px", background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>Changer</button>
                           {r.val() ? <button type="button" onClick={() => r.set("")} title="Revenir à la couleur d'origine" style={{ background: "none", border: "none", color: G.textFaint, fontSize: 17, cursor: "pointer", padding: "0 2px" }}>↺</button> : null}
                         </div>
                       );
@@ -20892,7 +20892,7 @@ export default function App() {
                         <div style={{ background: cFond, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
                           <div style={{ width: 42, height: 58, borderRadius: 5, background: G.border, flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: "bold", color: "#1a1208", marginBottom: 2 }}>Mon livre</div>
+                            <div style={{ fontSize: 12, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#1a1208", marginBottom: 2 }}>Mon livre</div>
                             <div style={{ fontSize: 10, color: "#b0a090", marginBottom: 2 }}>{nomA}</div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: cPrix }}>2 000 FCFA</div>
                           </div>
@@ -20906,13 +20906,13 @@ export default function App() {
                   })()}
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer ma vitrine"}</button>
                   {auteurProfil && auteurProfil.code_source ? (
-                    <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.bouton, border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
+                    <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : (auteurCouleur || G.bouton), border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
                   ) : null}
                 </div>
               </>)}
               {/* INTÉGRATIONS : pixels Facebook et TikTok */}
               {auteurTab === "integration" && (
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔌 Pixels publicitaires</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
                   <label style={labelSt}>Pixel Facebook (ID)</label>
@@ -20929,7 +20929,7 @@ export default function App() {
               )}
               {/* PARAMÈTRES : programme d'abonnement */}
               {auteurTab === "parametres" && (<>
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📚 Programme d'abonnement</div>
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.6 }}>En participant, tes <b>romans</b> deviennent lisibles par les abonnés dans la liseuse. Tu reçois une commission fixe (250 F) à chaque livre débloqué par un abonné. Tes livres PDF et audio, eux, restent toujours payants. Tu peux te retirer à tout moment.</div>
                   <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13, color: G.text }}>
@@ -20941,7 +20941,7 @@ export default function App() {
               </>)}
               {/* COMMENT PUBLIER */}
               {auteurTab === "aide" && (
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
                   <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur {SITE_NOM}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 14 }}>Tout ce que tu dois savoir de A à Z, pas à pas.</div>
                   <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.bouton, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
@@ -21008,9 +21008,9 @@ export default function App() {
               {auteurTab === "support" && (
                 <div>
                   <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Une question, un souci de paiement, une suggestion ? Écris-nous : l’équipe {SITE_NOM} te répond ici, généralement sous 24h.</div>
-                  <div style={{ maxHeight: 380, overflowY: "auto", background: "#faf8f3", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ maxHeight: 380, overflowY: "auto", background: EST_HOMOROMANCE ? G.surface2 : "#faf8f3", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                     {supportMsgs.length === 0 ? <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 20 }}>Aucun message pour l’instant. Écris-nous ci-dessous 👇</div> : supportMsgs.map(m => (
-                      <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : "#fff", color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : (EST_HOMOROMANCE ? G.carte : "#fff"), color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                         {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce {SITE_NOM}</div> : null}
                         {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                         {m.texte}
@@ -21021,7 +21021,7 @@ export default function App() {
                   {supportImg ? (<div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}><img src={supportImg} alt="" style={{ maxHeight: 90, borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setSupportImg("")} style={{ position: "absolute", top: -8, right: -8, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : null}
                   {supportImgUploading ? <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>⏳ Envoi de l'image…</div> : null}
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                    <label style={{ padding: "11px 12px", background: "#f0ece2", border: "1px solid " + G.border, borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupportImage(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
+                    <label style={{ padding: "11px 12px", background: EST_HOMOROMANCE ? G.surface2 : "#f0ece2", border: "1px solid " + G.border, borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupportImage(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
                     <textarea value={supportInput} onChange={e => setSupportInput(e.target.value)} placeholder="Écris ton message…" rows={2} style={{ flex: 1, padding: "10px 12px", border: "1px solid " + G.border, borderRadius: 10, fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
                     <button onClick={envoyerSupport} disabled={supportSending || (!supportInput.trim() && !supportImg)} style={{ padding: "11px 16px", background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supportSending || (!supportInput.trim() && !supportImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
                   </div>
@@ -21029,7 +21029,7 @@ export default function App() {
               )}
               {/* NOTIFICATIONS */}
               {auteurTab === "notifs" && (
-                <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, textAlign: "center" }}>
                   <div style={{ fontSize: 30, marginBottom: 8 }}>🔔</div>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Notifications</div>
                   <div style={{ fontSize: 13, color: G.textDim }}>Les messages de {SITE_NOM} apparaîtront ici. (Bientôt disponible)</div>
@@ -21744,14 +21744,14 @@ export default function App() {
         {!readerScrollMode && (
         <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={goToPrevPage} disabled={readingPage === 0}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === 0 ? (readerDark ? "#555" : "#bbb") : G.boutonTexte, fontSize: 24, lineHeight: 1, fontWeight: "bold", cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === 0 ? (readerDark ? "#666" : "#9a9a9a") : G.boutonTexte, fontSize: 24, lineHeight: 1, fontWeight: "bold", cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
           </button>
           <input type="range" min={0} max={total - 1} value={readingPage}
             onChange={function(e) { setReadingPage(Number(e.target.value)); window.scrollTo(0,0); }}
             style={{ flex: 1, accentColor: G.bouton }} />
           <button onClick={goToNextPage} disabled={readingPage === total - 1}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === total - 1 ? (readerDark ? "#555" : "#bbb") : G.boutonTexte, lineHeight: 1, fontWeight: "bold", fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === total - 1 ? (readerDark ? "#666" : "#9a9a9a") : G.boutonTexte, lineHeight: 1, fontWeight: "bold", fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
             ›
           </button>
         </div>
@@ -21801,7 +21801,7 @@ export default function App() {
                   value={paperOrderForm.customer_name}
                   onChange={e => setPaperOrderForm(f => ({ ...f, customer_name: e.target.value }))}
                   placeholder="Ex: Nadia Mballa"
-                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                 />
               </div>
               <div style={{ marginBottom: 14 }}>
@@ -21811,7 +21811,7 @@ export default function App() {
                   value={paperOrderForm.customer_phone}
                   onChange={e => setPaperOrderForm(f => ({ ...f, customer_phone: e.target.value }))}
                   placeholder="Ex: 6XX XX XX XX"
-                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                 />
               </div>
               <div style={{ marginBottom: 14 }}>
@@ -21821,7 +21821,7 @@ export default function App() {
                   value={paperOrderForm.customer_email}
                   onChange={e => setPaperOrderForm(f => ({ ...f, customer_email: e.target.value }))}
                   placeholder="Ex: nadia@gmail.com"
-                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                 />
               </div>
 
@@ -21842,7 +21842,7 @@ export default function App() {
                       shipping_agency: ""
                     }));
                   }}
-                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                  style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                 >
                   <option value="">— Choisis ta ville —</option>
                   {shippingZones.map(z => (
@@ -21861,7 +21861,7 @@ export default function App() {
                     onChange={e => setPaperOrderForm(f => ({ ...f, shipping_address: e.target.value }))}
                     placeholder="Quartier, rue, point de repère..."
                     rows={3}
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", color: G.text, fontFamily: "inherit" }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", color: G.text, fontFamily: "inherit" }}
                   />
                   <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 {zone.instructions}</div>
                 </div>
@@ -21875,7 +21875,7 @@ export default function App() {
                     value={paperOrderForm.shipping_agency}
                     onChange={e => setPaperOrderForm(f => ({ ...f, shipping_agency: e.target.value }))}
                     placeholder="Ex: General Express, Buca Voyages... (ou laisser vide)"
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   />
                   <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>
                     💡 Si tu ne sais pas, laisse vide — on te proposera une agence au téléphone
@@ -21890,7 +21890,7 @@ export default function App() {
                   onChange={e => setPaperOrderForm(f => ({ ...f, shipping_notes: e.target.value }))}
                   placeholder="Une remarque pour nous ?"
                   rows={2}
-                  style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", color: G.text, fontFamily: "inherit" }}
+                  style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", resize: "vertical", color: G.text, fontFamily: "inherit" }}
                 />
               </div>
 
@@ -22020,7 +22020,7 @@ export default function App() {
                     value={paperPaymentPhone}
                     onChange={e => setPaperPaymentPhone(e.target.value)}
                     placeholder="Ex: 6XX XX XX XX"
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   />
                 </div>
               )}
@@ -22285,7 +22285,7 @@ export default function App() {
                     <div>
                       <div style={{ display: "flex", gap: 2 }}>
                         {[1,2,3,4,5].map(s => (
-                          <span key={s} style={{ fontSize: 14, color: s <= Math.round(r.avg) ? "#f5c518" : G.border }}>★</span>
+                          <span key={s} style={{ fontSize: 14, color: s <= Math.round(r.avg) ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border) }}>★</span>
                         ))}
                       </div>
                       <div style={{ fontSize: 10, color: G.textFaint }}>{r.count} avis</div>
@@ -22296,7 +22296,7 @@ export default function App() {
                       <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>Ton avis</div>
                       <div style={{ display: "flex", gap: 4 }}>
                         {[1,2,3,4,5].map(s => (
-                          <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : G.border, padding: 0 }}>★</button>
+                          <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border), padding: 0 }}>★</button>
                         ))}
                       </div>
                     </div>
@@ -22549,7 +22549,7 @@ export default function App() {
                     style={{
                       padding: "8px 16px",
                       background: reviewSaving || reviewComment.trim().length < 3 ? G.surface2 : G.gold,
-                      color: reviewSaving || reviewComment.trim().length < 3 ? G.textFaint : "#000",
+                      color: reviewSaving || reviewComment.trim().length < 3 ? G.textFaint : G.boutonTexte,
                       border: "none", borderRadius: 6, fontSize: 12, fontWeight: "bold",
                       cursor: reviewSaving || reviewComment.trim().length < 3 ? "not-allowed" : "pointer"
                     }}
@@ -22585,7 +22585,7 @@ export default function App() {
                         </div>
                         <div style={{ display: "flex", gap: 1 }}>
                           {[1,2,3,4,5].map(s => (
-                            <span key={s} style={{ fontSize: 12, color: s <= review.rating ? "#f5c518" : G.border }}>★</span>
+                            <span key={s} style={{ fontSize: 12, color: s <= review.rating ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border) }}>★</span>
                           ))}
                         </div>
                       </div>
@@ -22722,7 +22722,7 @@ export default function App() {
 
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-            <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
               {paymentStep === 1 && (
                 <>
                   <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
@@ -22766,7 +22766,7 @@ export default function App() {
                           value={promoCodeInput}
                           onChange={e => { setPromoCodeInput(e.target.value.toUpperCase()); setPromoMessage({ type: "", text: "" }); }}
                           placeholder="ENTRE TON CODE"
-                          style={{ flex: 1, padding: "8px 12px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, textTransform: "uppercase", color: "#1a1a1a", background: "#fff" }}
+                          style={{ flex: 1, padding: "8px 12px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, textTransform: "uppercase", color: EST_HOMOROMANCE ? G.text : "#1a1a1a", background: (EST_HOMOROMANCE ? G.carte : "#fff") }}
                         />
                         <button
                           onClick={async () => {
@@ -22884,7 +22884,7 @@ export default function App() {
                   {showPawapayCountries && (
                     <div style={{ background: "#f3effc", border: "1px solid #6d28d9", borderRadius: 10, padding: 12, marginBottom: 14, textAlign: "left" }}>
                       <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8 }}>Choisis ton pays, puis paie avec ton Mobile Money local :</div>
-                      <select value={pawapayCountry} onChange={e => setPawapayCountry(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #ccc", fontSize: 14, marginBottom: 10, background: "#fff", color: "#1a1a1a" }}>
+                      <select value={pawapayCountry} onChange={e => setPawapayCountry(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #ccc", fontSize: 14, marginBottom: 10, background: (EST_HOMOROMANCE ? G.carte : "#fff"), color: EST_HOMOROMANCE ? G.text : "#1a1a1a" }}>
                         <option value="">— Choisis ton pays —</option>
                         <option value="CMR">🇨🇲 Cameroun</option>
                         <option value="CIV">🇨🇮 Côte d'Ivoire</option>
@@ -23041,7 +23041,7 @@ export default function App() {
         {/* MODAL DÉBLOQUER VIA ABONNEMENT (sur page détail) */}
         {showSubUnlockModal && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 9999 }}>
-            <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
               <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
               <div style={{ textAlign: "center", marginBottom: 16 }}>
                 {showSubUnlockModal.coverUrl && (
@@ -23083,7 +23083,7 @@ export default function App() {
         {/* MODAL LIMITE ATTEINTE (sur page détail) */}
         {showSubLimitModal && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 9999 }}>
-            <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
               <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
               <div style={{ textAlign: "center", marginBottom: 16 }}>
                 <div style={{ fontSize: 56, marginBottom: 12 }}>📚</div>
@@ -23122,7 +23122,7 @@ export default function App() {
         {/* AUTH MODAL (pour la page detail, sinon ne s'affiche pas car page detail a son propre return) */}
         {showAuthModal && authChecked && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 20 }}>
-            <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
               <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 48, marginBottom: 20 }} />
               <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur {SITE_NOM} 📚</h2>
               <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
@@ -23132,7 +23132,7 @@ export default function App() {
                 <div style={{ fontSize: 13, color: G.text }}>✅ Sans mot de passe</div>
               </div>
               <button onClick={signInWithGoogle}
-                style={{ width: "100%", padding: "14px 0", background: "#fff", border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+                style={{ width: "100%", padding: "14px 0", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid " + G.bouton, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
                 <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
                 Continuer avec Google
               </button>
@@ -23160,7 +23160,7 @@ export default function App() {
           zIndex: 9999, padding: 20
         }}>
           <div style={{
-            background: "#ffffff", borderRadius: 16, padding: 28,
+            background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: 16, padding: 28,
             width: "100%", maxWidth: 340, textAlign: "center",
             boxShadow: "0 20px 60px rgba(0,0,0,0.5)"
           }}>
@@ -23219,7 +23219,7 @@ export default function App() {
       {/* 📲 POPUP QUOTIDIEN D'INSTALLATION */}
       {showDailyInstall && (
         <div onClick={fermerDailyInstall} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 18, maxWidth: 360, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 18, maxWidth: 360, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
             <div style={{ fontSize: 46, marginBottom: 6 }}>📲</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Installe l’application {SITE_NOM}</div>
             <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6, marginBottom: 18 }}>Accède à tes livres plus vite, même hors connexion, directement depuis ton écran d’accueil.</div>
@@ -23245,7 +23245,7 @@ export default function App() {
         }} onClick={() => setShowIosInstructions(false)}>
           <div onClick={(e) => e.stopPropagation()}
             style={{
-              background: "#fff", borderRadius: 16, padding: 28, maxWidth: 360, width: "100%",
+              background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 28, maxWidth: 360, width: "100%",
               textAlign: "center"
             }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
@@ -23402,7 +23402,7 @@ export default function App() {
       {/* AUTH MODAL */}
       {showAuthModal && authChecked && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
-          <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
             <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 48, marginBottom: 20 }} />
             <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur {SITE_NOM} 📚</h2>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
@@ -23412,7 +23412,7 @@ export default function App() {
               <div style={{ fontSize: 13, color: G.text }}>✅ Sans mot de passe</div>
             </div>
             <button onClick={signInWithGoogle}
-              style={{ width: "100%", padding: "14px 0", background: "#fff", border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+              style={{ width: "100%", padding: "14px 0", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid " + G.bouton, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
               <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
               Continuer avec Google
             </button>
@@ -23633,7 +23633,7 @@ export default function App() {
                     publicitaires de YouTube sur carrybooks.com.
                     09/10 : absente de HomoRomance. */}
                 {!EST_HOMOROMANCE && (
-                <div style={{ margin: "0 16px 28px", borderRadius: 14, overflow: "hidden", border: "1px solid " + G.border, background: "#fff" }}>
+                <div style={{ margin: "0 16px 28px", borderRadius: 14, overflow: "hidden", border: "1px solid " + G.border, background: (EST_HOMOROMANCE ? G.carte : "#fff") }}>
                   <div style={{ width: "100%", aspectRatio: "16 / 9", background: "#000" }}>
                     <iframe
                       src="https://www.youtube-nocookie.com/embed/qv3VXakEfsU?rel=0"
@@ -24006,7 +24006,7 @@ export default function App() {
                       <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 8 }}>👤 Auteur(es)</div>
                       <div style={{ display: "grid", gap: 8 }}>
                         {matches.map(a => (
-                          <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+                          <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 10, padding: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
                             <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold", flexShrink: 0 }}>
                               {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
                             </div>
@@ -24237,7 +24237,7 @@ export default function App() {
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: G.textFaint, pointerEvents: "none" }}>🔍</span>
                 <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Rechercher un livre papier..."
-                  style={{ width: "100%", padding: "11px 14px 11px 40px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
+                  style={{ width: "100%", padding: "11px 14px 11px 40px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, color: G.text, fontSize: 14, boxSizing: "border-box" }} />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: G.textDim, fontSize: 18, cursor: "pointer", padding: 4 }}>
                     ✕
@@ -24380,7 +24380,7 @@ export default function App() {
                   <input type="text" value={cartCheckoutForm.customer_name}
                     onChange={e => setCartCheckoutForm(f => ({ ...f, customer_name: e.target.value }))}
                     placeholder="Ex: Marie Ndoumbe"
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   />
                 </div>
 
@@ -24389,7 +24389,7 @@ export default function App() {
                   <input type="tel" value={cartCheckoutForm.customer_phone}
                     onChange={e => setCartCheckoutForm(f => ({ ...f, customer_phone: e.target.value }))}
                     placeholder="Ex: 6XX XXX XXX"
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   />
                 </div>
 
@@ -24398,7 +24398,7 @@ export default function App() {
                   <input type="email" value={cartCheckoutForm.customer_email}
                     onChange={e => setCartCheckoutForm(f => ({ ...f, customer_email: e.target.value }))}
                     placeholder="Pour recevoir la confirmation"
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   />
                 </div>
 
@@ -24417,7 +24417,7 @@ export default function App() {
                         shipping_agency: ""
                       }));
                     }}
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                   >
                     <option value="">-- Choisir ta ville --</option>
                     {shippingZones.map(z => (
@@ -24438,7 +24438,7 @@ export default function App() {
                           onChange={e => setCartCheckoutForm(f => ({ ...f, shipping_address: e.target.value }))}
                           placeholder="Ex: Quartier Bastos, derrière la pharmacie..."
                           rows={2}
-                          style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text, resize: "vertical", fontFamily: "inherit" }}
+                          style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text, resize: "vertical", fontFamily: "inherit" }}
                         />
                         <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 {zone.instructions || "Indique tous les détails pour qu'on te trouve facilement"}</div>
                       </div>
@@ -24450,7 +24450,7 @@ export default function App() {
                       <input type="text" value={cartCheckoutForm.shipping_agency}
                         onChange={e => setCartCheckoutForm(f => ({ ...f, shipping_agency: e.target.value }))}
                         placeholder="Ex: General Express... (ou laisser vide)"
-                        style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                        style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                       />
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 4 }}>💡 Si tu ne sais pas, laisse vide — on te proposera une agence au téléphone</div>
                     </div>
@@ -24463,7 +24463,7 @@ export default function App() {
                     onChange={e => setCartCheckoutForm(f => ({ ...f, shipping_notes: e.target.value }))}
                     placeholder="Ex: appeler avant de livrer..."
                     rows={2}
-                    style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text, resize: "vertical", fontFamily: "inherit" }}
+                    style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text, resize: "vertical", fontFamily: "inherit" }}
                   />
                 </div>
 
@@ -24575,7 +24575,7 @@ export default function App() {
                       value={cartPaymentPhone}
                       onChange={e => setCartPaymentPhone(e.target.value)}
                       placeholder="Ex: 6XX XX XX XX"
-                      style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
+                      style={{ width: "100%", padding: "12px 14px", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: G.text }}
                     />
                   </div>
                 )}
@@ -24707,8 +24707,8 @@ export default function App() {
             <h1 style={{ color: G.gold, fontSize: 21, marginBottom: 4 }}>Comment créer un pixel</h1>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Un « pixel » est un petit code qui mesure l’efficacité de tes publicités. Suis les étapes, copie l’identifiant (ID) obtenu, puis colle-le dans tes Intégrations.</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-              <button onClick={() => setPixelGuideTab("facebook")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.bouton, background: pixelGuideTab === "facebook" ? G.bouton : "transparent", color: pixelGuideTab === "facebook" ? G.boutonTexte : G.bouton, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel Facebook</button>
-              <button onClick={() => setPixelGuideTab("tiktok")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.bouton, background: pixelGuideTab === "tiktok" ? G.bouton : "transparent", color: pixelGuideTab === "tiktok" ? G.boutonTexte : G.bouton, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel TikTok</button>
+              <button onClick={() => setPixelGuideTab("facebook")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.bouton, background: pixelGuideTab === "facebook" ? G.bouton : "transparent", color: pixelGuideTab === "facebook" ? G.boutonTexte : G.text, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel Facebook</button>
+              <button onClick={() => setPixelGuideTab("tiktok")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.bouton, background: pixelGuideTab === "tiktok" ? G.bouton : "transparent", color: pixelGuideTab === "tiktok" ? G.boutonTexte : G.text, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel TikTok</button>
             </div>
             {(() => {
               const P = { color: G.text, fontSize: 14, lineHeight: 1.7, marginBottom: 8 };
@@ -24743,7 +24743,7 @@ export default function App() {
                 <div style={box}><b>Astuce :</b> l’ID TikTok mélange lettres et chiffres. Copie-le exactement, sans espace avant ni après.</div>
               </div>);
             })()}
-            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("integration"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Intégrations</button>
+            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("integration"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: (EST_HOMOROMANCE ? G.bouton : "#fff"), color: EST_HOMOROMANCE ? G.boutonTexte : G.surClair, border: "2px solid " + G.bouton, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Intégrations</button>
           </div>
         )}
 
@@ -26258,7 +26258,7 @@ export default function App() {
         {/* INSTALL GUIDE MODAL */}
         {showInstallModal && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "flex-end" }}>
-            <div style={{ background: "#fff", width: "100%", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px" }}>
+            <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), width: "100%", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px" }}>
               <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📲</div>
                 <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208" }}>Installer {SITE_NOM}</div>
@@ -26326,7 +26326,7 @@ export default function App() {
       {/* MODAL DÉBLOQUER VIA ABONNEMENT */}
       {showSubUnlockModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
             <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               {showSubUnlockModal.coverUrl && (
@@ -26368,7 +26368,7 @@ export default function App() {
       {/* MODAL LIMITE ATTEINTE */}
       {showSubLimitModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px" }}>
             <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 56, marginBottom: 12 }}>📚</div>
@@ -26407,7 +26407,7 @@ export default function App() {
       {/* SUBSCRIPTION PAYMENT MODAL */}
       {showSubModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
-          <div style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+          <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
             {subPaymentStep === 1 && (
               <>
                 <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
