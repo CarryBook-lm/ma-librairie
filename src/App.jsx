@@ -44,6 +44,15 @@ const LIV_RATIO = 16 / 9;       // hauteur de la page = largeur x ce rapport
 // coin a l'autre ; plus on monte vers 90, plus le pli se redresse et plus le
 // mouvement va franchement de droite a gauche, comme une vraie page.
 const LIV_ANGLE_PLI = 72;
+// La taille du texte par defaut suit la largeur de l'ecran : 14 sur un
+// telephone de 360 points de large, moins sur un petit, plus sur un grand.
+// La lectrice peut toujours la changer avec le bouton Aa.
+function tailleTexteParDefaut() {
+  try {
+    const l = (typeof window !== "undefined" && window.innerWidth) ? window.innerWidth : 360;
+    return Math.max(12, Math.min(19, Math.round(14 * l / 360)));
+  } catch (e) { return 14; }
+}
 const PLI_RAD = LIV_ANGLE_PLI * Math.PI / 180;
 const PLI_SIN = Math.sin(PLI_RAD), PLI_COS = Math.cos(PLI_RAD);
 const PLI_COS2 = Math.cos(2 * PLI_RAD), PLI_SIN2 = Math.sin(2 * PLI_RAD);
@@ -13980,7 +13989,7 @@ export default function App() {
       setCategorieUrlFaite(true);
     }
   }, [CATEGORIES, categorieUrlFaite]);
-  const [readerSize, setReaderSize] = useState(14);
+  const [readerSize, setReaderSize] = useState(() => tailleTexteParDefaut());
   const [readerFont, setReaderFont] = useState("Georgia, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [readerDark, setReaderDark] = useState(false);
@@ -17953,6 +17962,33 @@ export default function App() {
     };
     window.requestAnimationFrame(pas);
   }
+
+  // ============================================================
+  // Le nombre de pages annonce sur la fiche produit.
+  // Il etait calcule a 250 mots par page, une convention de livre PAPIER :
+  // il n'avait rien a voir avec ce que la lectrice voit vraiment. On le
+  // recalcule avec le moteur de pagination de la liseuse, pour l'ecran et
+  // la taille de texte de la personne qui regarde.
+  // ============================================================
+  const [pagesReelles, setPagesReelles] = useState(null);
+  useEffect(() => {
+    if (page !== "detail" || !selectedBook) { setPagesReelles(null); return; }
+    const contenu = selectedBook.content;
+    if (!contenu || selectedBook.audio_url || selectedBook.pdf_url) { setPagesReelles(null); return; }
+    let vivant = true;
+    // On laisse la fiche s'afficher d'abord : le calcul passe apres.
+    const t = setTimeout(() => {
+      try {
+        const largeur = Math.max(200, ((typeof window !== "undefined" && window.innerWidth) || 360) - 36);
+        const dispo = ((typeof window !== "undefined" && window.innerHeight) || 740) - 42 - 20 - 69 - 28;
+        const hauteur = Math.max(120, Math.min(Math.round(dispo), Math.round(largeur * LIV_RATIO)));
+        const pg = decouperEnPages(contenu, largeur, hauteur, readerSize, readerFont);
+        // + les 4 pages speciales que la liseuse ajoute autour du texte.
+        if (vivant && pg && pg.length) setPagesReelles(pg.length + 4);
+      } catch (e) {}
+    }, 120);
+    return () => { vivant = false; clearTimeout(t); };
+  }, [page, selectedBook, readerSize, readerFont]);
 
   // Recalcule les pages des que la boite, la taille ou la police changent.
   useEffect(() => {
@@ -22232,7 +22268,7 @@ export default function App() {
             {book.category && <span style={{ background: G.goldDim, color: G.gold, fontSize: 10, padding: "3px 10px", borderRadius: 10, letterSpacing: 1 }}>{book.category}</span>}
           </div>
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
-          {book.audio_url ? (book.duree_audio ? <div style={{ textAlign: "center", fontSize: 13, color: G.gold, fontWeight: "bold", marginBottom: 6 }}>🎧 {Math.floor(book.duree_audio / 60)} min d’écoute</div> : null) : (book.nb_pages ? <div style={{ textAlign: "center", fontSize: 13, color: G.gold, fontWeight: "bold", marginBottom: 6 }}>📄 {book.nb_pages} pages</div> : null)}
+          {book.audio_url ? (book.duree_audio ? <div style={{ textAlign: "center", fontSize: 13, color: G.gold, fontWeight: "bold", marginBottom: 6 }}>🎧 {Math.floor(book.duree_audio / 60)} min d’écoute</div> : null) : ((pagesReelles || book.nb_pages) ? <div style={{ textAlign: "center", fontSize: 13, color: G.gold, fontWeight: "bold", marginBottom: 6 }}>📄 {pagesReelles || book.nb_pages} pages</div> : null)}
           {book.author_photo ? <img src={book.author_photo} alt="" style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold, display: "block", margin: "0 auto 6px" }} /> : null}
           <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span>{book.author_ville ? <span style={{ color: G.textDim }}> · {book.author_ville}</span> : null}</p>
           <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 1 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
