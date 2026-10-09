@@ -1860,11 +1860,33 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
   );
 }
 
+// ============================================================
+// 09/10 : HOMOROMANCE - deuxieme vitrine sur le MEME code.
+// On regarde le nom de domaine par lequel la visiteuse arrive :
+//   homoromance.com -> catalogue limite a la categorie "HomoRomance",
+//                      habillage rose/violet, logo HomoRomance.
+//   carrybooks.com  -> site historique, strictement inchange.
+// ============================================================
+const CAT_HOMOROMANCE = "HomoRomance";
+const EST_HOMOROMANCE = (function () {
+  try {
+    if (typeof window === "undefined") return false;
+    if ((window.location.hostname || "").toLowerCase().indexOf("homoromance") !== -1) return true;
+    // Apercu avant bascule du domaine : carrybooks.com/?site=homoromance
+    return (window.location.search || "").indexOf("site=homoromance") !== -1;
+  } catch (e) { return false; }
+})();
+const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
+const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png" : "/logo-carrybooks.png";
+
 // Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
 // jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
 // Il reste achetable par son lien direct, et reste visible dans Ma bibliotheque une fois achete.
 function surCarryBooks(b) {
-  return !!b && !b.masque && !b.exclusif_vitrine;
+  if (!b || b.masque || b.exclusif_vitrine) return false;
+  // Sur homoromance.com : on ne montre QUE les romans de la categorie HomoRomance.
+  if (EST_HOMOROMANCE) return (b.category || "") === CAT_HOMOROMANCE;
+  return true;
 }
 
 function renderBadgeVerifie(show) {
@@ -1877,13 +1899,30 @@ function renderBadgeVerifie(show) {
   );
 }
 
-const G = {
+const G_CARRYBOOKS = {
   bg: "#f5f0e8", surface: "#ede7d9", surface2: "#e8e0ce", border: "#d8cdb8",
   gold: "#c9a84c", goldLight: "#e0be7a", goldDim: "rgba(201,168,76,0.15)",
   text: "#1a1208", textDim: "#7a6a50", textFaint: "#b0a090",
   green: "#4caf50", greenDim: "rgba(76,175,80,0.15)",
   navBg: "#f5f0e8", navSurface: "#ede7d9", navBorder: "#d8cdb8", navText: "#1a1208",
+  entete: "rgba(245,240,232,0.97)", enteteBordure: "#d8cdb8", enteteTexte: "#1a1208",
+  pied: "#ede7d9", piedBordure: "#d8cdb8", piedTexte: "#7a6a50", piedFaint: "#b0a090",
+  surGold: "#000",
 };
+
+// HomoRomance : violet profond pour l'entete et le pied de page, magenta pour les accents.
+const G_HOMOROMANCE = {
+  bg: "#fdf4f9", surface: "#fbe8f3", surface2: "#f7d9ea", border: "#f0bcd8",
+  gold: "#d6179b", goldLight: "#f05fc0", goldDim: "rgba(214,23,155,0.12)",
+  text: "#2a0626", textDim: "#7d4a6e", textFaint: "#a87c9b",
+  green: "#4caf50", greenDim: "rgba(76,175,80,0.15)",
+  navBg: "#fdf4f9", navSurface: "#fbe8f3", navBorder: "#f0bcd8", navText: "#2a0626",
+  entete: "#2a0a3c", enteteBordure: "#4a1560", enteteTexte: "#ffffff",
+  pied: "#2a0a3c", piedBordure: "#4a1560", piedTexte: "#ebc6e4", piedFaint: "#b98fb0",
+  surGold: "#fff",
+};
+
+const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
 
 
 // ============================================================
@@ -14854,7 +14893,7 @@ export default function App() {
       <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", position: "relative" }}>
         <button onClick={() => { setShowLecteurModal(false); setPendingBuyBook(null); setPendingEspaceAuteur(false); if (page === "library") setPage("home"); }} aria-label="Fermer" style={{ position: "absolute", top: 12, right: 12, background: "#f0ece2", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", color: "#666", fontWeight: "bold", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
-          <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 44, marginBottom: 12 }} />
+          <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />
           <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur CarryBooks 📚</h2>
           <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
         </div>
@@ -21444,7 +21483,7 @@ export default function App() {
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {!user && !lecteur && (
-              <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+              <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: G.surGold, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
             )}
             <button onClick={() => shareBook(book)} style={{ background: "none", border: "none", color: G.textDim, fontSize: 20, cursor: "pointer" }}>🔗</button>
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
@@ -22361,7 +22400,7 @@ export default function App() {
         {showAuthModal && authChecked && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 20 }}>
             <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
-              <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
+              <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 48, marginBottom: 20 }} />
               <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur CarryBooks 📚</h2>
               <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
               <div style={{ textAlign: "left", marginBottom: 24, padding: "0 8px" }}>
@@ -22537,28 +22576,28 @@ export default function App() {
       )}
 
       {/* NAVBAR */}
-      <nav style={{ position: "fixed", top: showInstallBanner ? (!isOnline ? 80 : 44) : (!isOnline ? 36 : 0), left: 0, right: 0, zIndex: 100, background: "rgba(245,240,232,0.97)", borderBottom: "1px solid " + G.navBorder, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: showInstallBanner ? (!isOnline ? 80 : 44) : (!isOnline ? 36 : 0), left: 0, right: 0, zIndex: 100, background: G.entete, borderBottom: "1px solid " + G.enteteBordure, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
-          <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
+          <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
           {user
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : lecteur
               ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
-              : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+              : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: G.surGold, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
           {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
           {user && user.email === ADMIN_EMAIL && (
             <button
               onClick={() => { window.location.href = "/admin"; }}
               title="Espace admin"
-              style={{ background: "none", border: "none", color: "#1a1208", fontSize: 24, cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}
+              style={{ background: "none", border: "none", color: G.enteteTexte, fontSize: 24, cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}
             >
               ⚙️
             </button>
           )}
-                    <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: "#1a1208", fontSize: 28, cursor: "pointer", padding: 4 }}>
+                    <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", color: G.enteteTexte, fontSize: 28, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
         </div>
@@ -22641,7 +22680,7 @@ export default function App() {
       {showAuthModal && authChecked && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
           <div style={{ background: "#ffffff", borderRadius: 16, padding: 32, width: "100%", maxWidth: 340, textAlign: "center", border: "1px solid #e0d8c8" }}>
-            <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
+            <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 48, marginBottom: 20 }} />
             <h2 style={{ color: G.text, fontSize: 18, marginBottom: 8 }}>Bienvenue sur CarryBooks 📚</h2>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>Connecte-toi en un clic avec Google pour :</p>
             <div style={{ textAlign: "left", marginBottom: 24, padding: "0 8px" }}>
@@ -24769,7 +24808,7 @@ export default function App() {
           <div style={{ padding: "32px 16px 80px" }}>
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>À propos de nous</div>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 60, borderRadius: 8, marginBottom: 12 }} />
+              <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 60, borderRadius: 8, marginBottom: 12 }} />
               <p style={{ color: G.gold, fontSize: 13, fontStyle: "italic", letterSpacing: 1 }}>Lis. Apprends. Évolue.</p>
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
@@ -25475,32 +25514,32 @@ export default function App() {
 
         {/* FOOTER */}
         {page !== "reader" && (
-          <div style={{ background: G.navSurface, borderTop: "1px solid " + G.navBorder, padding: "28px 16px 40px" }}>
+          <div style={{ background: G.pied, borderTop: "1px solid " + G.piedBordure, padding: "28px 16px 40px" }}>
             {/* Logo */}
             <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <img src="/logo-carrybooks.png" alt="CarryBooks" style={{ height: 40, borderRadius: 6 }} />
+              <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
             </div>
             {/* Liens */}
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 24px", marginBottom: 20 }}>
-              <button onClick={() => setPage("faq")} style={{ background: "none", border: "none", color: G.textDim, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>FAQ</button>
-              <button onClick={() => setPage("about")} style={{ background: "none", border: "none", color: G.textDim, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>À propos de nous</button>
-              <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.textDim, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
+              <button onClick={() => setPage("faq")} style={{ background: "none", border: "none", color: G.piedTexte, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>FAQ</button>
+              <button onClick={() => setPage("about")} style={{ background: "none", border: "none", color: G.piedTexte, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>À propos de nous</button>
+              <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.piedTexte, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
             </div>
             {/* Liens légaux */}
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 16px", marginBottom: 20 }}>
-              <button onClick={() => setPage("cgu")} style={{ background: "none", border: "none", color: G.textFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Conditions d'utilisation</button>
-              <button onClick={() => setPage("remboursement")} style={{ background: "none", border: "none", color: G.textFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de remboursement</button>
-              <button onClick={() => setPage("confidentialite")} style={{ background: "none", border: "none", color: G.textFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de confidentialité</button>
+              <button onClick={() => setPage("cgu")} style={{ background: "none", border: "none", color: G.piedFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Conditions d'utilisation</button>
+              <button onClick={() => setPage("remboursement")} style={{ background: "none", border: "none", color: G.piedFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de remboursement</button>
+              <button onClick={() => setPage("confidentialite")} style={{ background: "none", border: "none", color: G.piedFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de confidentialité</button>
             </div>
             {/* Réseaux sociaux */}
             <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
               <a href="https://www.facebook.com/mycarrybooks" target="_blank" rel="noreferrer"
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
                 <span style={{ fontSize: 24 }}>📘</span>
-                <span style={{ fontSize: 10, color: G.textFaint }}>Facebook</span>
+                <span style={{ fontSize: 10, color: G.piedFaint }}>Facebook</span>
               </a>
             </div>
-            <div style={{ color: G.textFaint, fontSize: 11, textAlign: "center" }}>© 2026 CarryBooks. Tous droits réservés.</div>
+            <div style={{ color: G.piedFaint, fontSize: 11, textAlign: "center" }}>© 2026 {SITE_NOM}. Tous droits réservés.</div>
           </div>
         )}
       {/* MODAL DÉBLOQUER VIA ABONNEMENT */}
