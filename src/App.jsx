@@ -2692,7 +2692,7 @@ function QuizPlay({ quiz, answers, setAnswers, currentQ, setCurrentQ, setQuizPag
               display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s",
               transform: selected === i ? "scale(0.98)" : "scale(1)"
             }}>
-              <span style={{ width: 26, height: 26, borderRadius: "50%", background: selected === i ? G.gold : G.goldDim, border: "1px solid " + G.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: "bold", color: selected === i ? "#fff" : G.gold, flexShrink: 0 }}>{String.fromCharCode(65 + i)}</span>
+              <span style={{ width: 26, height: 26, borderRadius: "50%", background: selected === i ? G.bouton : "transparent", border: "1px solid " + G.bouton, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: "bold", color: selected === i ? G.boutonTexte : G.text, flexShrink: 0 }}>{String.fromCharCode(65 + i)}</span>
               {opt}
             </button>
           ))}
@@ -2818,7 +2818,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
       <div style={{ padding: "16px", filter: "blur(6px)", userSelect: "none", pointerEvents: "none", opacity: 0.5 }}>
         <div style={{ background: G.surface, borderRadius: 12, padding: 16, textAlign: "center" }}>
           <div style={{ fontSize: 28 }}>{quiz.emoji}</div>
-          <div style={{ fontSize: 16, fontWeight: "bold", color: quizResult?.color || G.gold, marginTop: 6 }}>{quizResult?.level || "Résultat prêt"}</div>
+          <div style={{ fontSize: 16, fontWeight: "bold", color: quizResult?.color || G.bouton, marginTop: 6 }}>{quizResult?.level || "Résultat prêt"}</div>
           <div style={{ fontSize: 13, color: G.textDim, marginTop: 6 }}>████████ ██████ ████ ███████</div>
           <div style={{ fontSize: 12, color: G.textDim, marginTop: 4 }}>██████ ████ ███████ ████ ██████</div>
           <div style={{ fontSize: 12, color: G.textDim, marginTop: 4 }}>████ ██████████ ███████ ████████</div>
@@ -19647,7 +19647,7 @@ export default function App() {
                 <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                   {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurAuthNom ? auteurAuthNom.charAt(0).toUpperCase() : "?")}
                 </div>
-                <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.bouton, color: G.boutonTexte, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                   {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Ajouter une photo")}
                   <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
                 </label>
@@ -20232,8 +20232,8 @@ export default function App() {
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Que peut faire l’acheteur ?</label>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
-                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6 }}>{pubDownloadable ? "L’acheteur peut écouter ET télécharger le fichier audio." : "L’acheteur peut seulement écouter (audio protégé, non téléchargeable)."}</div>
                     </>
@@ -20257,8 +20257,8 @@ export default function App() {
                     <div style={{ marginTop: 14 }}>
                       <label style={labelSt}>Le PDF sera-t-il téléchargeable ?</label>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
-                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : "#fff", color: pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : "#fff", color: !pubDownloadable ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6, lineHeight: 1.4 }}>{pubDownloadable ? "Le client pourra télécharger le PDF après achat." : "Le client pourra seulement lire le PDF (protégé, non téléchargeable)."}</div>
                     </div>
@@ -20270,7 +20270,7 @@ export default function App() {
                       <button type="button" onClick={dispo ? onClick : undefined} disabled={!dispo}
                         style={{ width: "100%", textAlign: "left", padding: 12, marginBottom: 10, borderRadius: 10, border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.goldDim : "#fff", cursor: dispo ? "pointer" : "not-allowed", opacity: dispo ? 1 : 0.55, fontFamily: "Georgia, serif" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.gold : "#fff", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
+                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.bouton : G.border), background: actif ? G.bouton : "#fff", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: G.boutonTexte, fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
                           <span style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}</span>
                           <span style={{ marginLeft: "auto", background: G.bouton, color: "#fff", fontSize: 11, fontWeight: "bold", padding: "3px 9px", borderRadius: 12, whiteSpace: "nowrap" }}>{badge}</span>
                         </div>
@@ -20310,7 +20310,7 @@ export default function App() {
                   {pubDraftMode && (
                     <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
-                  <button onClick={pubSaveRoman} disabled={pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation"))}</button>
+                  <button onClick={pubSaveRoman} disabled={pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation"))}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setPubAuthorVille(""); setPubAuthorPhoto(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {pubRomanPdfAlert && (
                     <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -20343,12 +20343,12 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous mes livres" }, { t: "edition", l: "En cours d'édition" }, { t: "attente", l: "En attente" }, { t: "refuse", l: "❌ Refusés" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.gold : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.bouton : "#fff", color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
                   <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous" }, { t: "roman", l: "Texte" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : "#fff", color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : "#fff", color: mesLivresType === o.t ? G.gold : (EST_HOMOROMANCE ? "#5a5a6e" : G.textDim), fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
                     ))}
                   </div>
                   {(() => {
@@ -20458,7 +20458,7 @@ export default function App() {
                     <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 10 }}>💰 Mes ventes</div>
                     <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                       {periods.map(([id, lab]) => (
-                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                       ))}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -20523,7 +20523,7 @@ export default function App() {
                   <div>
                     <div style={{ display: "flex", gap: 6, marginBottom: 16, background: G.bg, borderRadius: 10, padding: 4 }}>
                       {subtabs.map(([id, lab]) => (
-                        <button key={id} onClick={() => setStatsSubTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: "none", background: statsSubTab === id ? G.gold : "transparent", color: statsSubTab === id ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>{lab}</button>
+                        <button key={id} onClick={() => setStatsSubTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 8, border: "none", background: statsSubTab === id ? G.bouton : "transparent", color: statsSubTab === id ? "#fff" : G.textDim, fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>{lab}</button>
                       ))}
                     </div>
 
@@ -20531,7 +20531,7 @@ export default function App() {
                       <div>
                         <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
@@ -20559,7 +20559,7 @@ export default function App() {
                       <div>
                         <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.gold : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : "#fff", color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
                         <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
@@ -20612,7 +20612,7 @@ export default function App() {
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Gère les tutoriels affichés sur l’accueil (au-dessus des Livres gratuits).</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                     {[{ t: "auteur", l: "Tuto Auteur" }, { t: "lecteur", l: "Tuto Lecteur" }].map(o => (
-                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.gold : "#fff", color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
+                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.bouton : "#fff", color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
                     ))}
                   </div>
                   {tutoBookTab === "lecteur" ? (
@@ -20715,7 +20715,7 @@ export default function App() {
                         <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
                           {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
                         </div>
-                        <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                        <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.bouton, color: G.boutonTexte, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                           {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Choisir une photo")}
                           <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
                         </label>
@@ -20760,16 +20760,16 @@ export default function App() {
                     window.open("https://wa.me/?text=" + encodeURIComponent(texte), "_blank");
                   };
                   return (
-                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.gold), borderRadius: 10, padding: 16, marginBottom: 14 }}>
+                    <div style={{ background: "#fff", border: "1px solid " + G.border, borderTop: "3px solid " + (auteurCouleur || G.bouton), borderRadius: 10, padding: 16, marginBottom: 14 }}>
                       <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔗 Le lien de ma vitrine</div>
                       <div style={{ fontSize: 12, color: G.textDim, marginBottom: 12, lineHeight: 1.5 }}>C'est LE lien à partager partout : WhatsApp, Facebook, TikTok, ta bio Instagram. Chaque vente qui passe par lui te rapporte davantage.</div>
                       <input readOnly value={lienV} onFocus={e => e.target.select()}
                         style={{ ...champ, fontSize: 12.5, background: G.bg, marginBottom: 10 }} />
                       <div style={{ display: "flex", gap: 8 }}>
                         <button onClick={() => { try { navigator.clipboard.writeText(lienV); setAuteurMsg("✅ Lien copié !"); setTimeout(() => setAuteurMsg(""), 2500); } catch (e) { setAuteurMsg("Copie impossible, sélectionne le lien à la main."); } }}
-                          style={{ flex: 1, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📋 Copier</button>
+                          style={{ flex: 1, padding: 12, background: "#fff", color: auteurCouleur || G.bouton, border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📋 Copier</button>
                         <button onClick={partager}
-                          style={{ flex: 1, padding: 12, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📤 Partager</button>
+                          style={{ flex: 1, padding: 12, background: auteurCouleur || G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>📤 Partager</button>
                       </div>
                       <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)}
                         style={{ width: "100%", marginTop: 8, padding: 10, background: "none", border: "none", color: G.textDim, fontSize: 12.5, cursor: "pointer", fontFamily: "Georgia, serif", textDecoration: "underline" }}>👁️ Voir ma vitrine</button>
@@ -20787,10 +20787,10 @@ export default function App() {
 
                   <label style={labelSt}>Logo de ma vitrine</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                       {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
                     </div>
-                    <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
+                    <label style={{ padding: "10px 16px", background: "#fff", color: auteurCouleur || G.bouton, border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
                       {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
                       <input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; e.target.value = ""; uploadVitrineLogo(f); }} style={{ display: "none" }} />
                     </label>
@@ -20817,7 +20817,7 @@ export default function App() {
                     ].map(function (o) {
                       const val = o[0], titre = o[1], desc = o[2];
                       const actif = (auteurModeVente === val);
-                      const cA = auteurCouleur || G.gold;
+                      const cA = auteurCouleur || G.bouton;
                       return (
                         <div key={val} onClick={() => setAuteurModeVente(val)} style={{ border: "2px solid " + (actif ? cA : G.border), background: actif ? G.bg : "#fff", borderRadius: 10, padding: 11, marginBottom: 8, cursor: "pointer", display: "flex", gap: 10, alignItems: "flex-start" }}>
                           <input type="radio" checked={actif} onChange={() => setAuteurModeVente(val)} style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0 }} />
@@ -20830,7 +20830,7 @@ export default function App() {
                     })}
                   </div>
 
-                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                 </div>
 
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 14 }}>
@@ -20904,9 +20904,9 @@ export default function App() {
                       </div>
                     );
                   })()}
-                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer ma vitrine"}</button>
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: auteurCouleur || G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1, fontFamily: "Georgia, serif" }}>{auteurSaving ? "Enregistrement…" : "Enregistrer ma vitrine"}</button>
                   {auteurProfil && auteurProfil.code_source ? (
-                    <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.gold, border: "2px solid " + (auteurCouleur || G.gold), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
+                    <button onClick={() => ouvrirBoutiqueAuteur(auteurProfil.code_source)} style={{ width: "100%", marginTop: 10, padding: 12, background: "#fff", color: auteurCouleur || G.bouton, border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>👁️ Voir ma vitrine</button>
                   ) : null}
                 </div>
               </>)}
@@ -21066,7 +21066,7 @@ export default function App() {
                 <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
                   {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
                 </div>
-                <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.bouton, color: G.boutonTexte, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                   {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Choisir une photo")}
                   <input type="file" accept="image/*" onChange={e => uploadAuteurPhoto(e.target.files[0])} style={{ display: "none" }} />
                 </label>
@@ -21120,7 +21120,7 @@ export default function App() {
             <button onClick={() => { setAuteurTab("support"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "support" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "support" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>💬</span> Support{supportNonLus > 0 && <span style={{ marginLeft: "auto", background: "#e11d48", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 7px" }}>{supportNonLus}</span>}</button>
             <button onClick={() => { setAuteurTab("notifs"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "notifs" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "notifs" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔔</span> Activer les notifications</button>
                 {auteurProfil && auteurProfil.code_source ? (
-                  <button onClick={() => { setAuteurMenu(false); ouvrirBoutiqueAuteur(auteurProfil.code_source); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: (auteurCouleur || G.gold) + "22", border: "none", borderBottom: "1px solid " + G.navBorder, color: G.text, fontSize: 14, fontWeight: "bold", cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏪</span> Retour à ma vitrine</button>
+                  <button onClick={() => { setAuteurMenu(false); ouvrirBoutiqueAuteur(auteurProfil.code_source); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: (auteurCouleur || G.bouton) + "22", border: "none", borderBottom: "1px solid " + G.navBorder, color: G.text, fontSize: 14, fontWeight: "bold", cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏪</span> Retour à ma vitrine</button>
                 ) : null}
                 <button onClick={() => { setAuteurMenu(false); setPage("home"); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: G.textDim, fontSize: 14, cursor: "pointer", textAlign: "left", marginTop: 8 }}><span style={{ fontSize: 18 }}>🏠</span> Retour à la boutique</button>
                 <button onClick={auteurLogout} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: "none", border: "none", color: "#e53935", fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🚪</span> Se déconnecter</button>
@@ -21212,6 +21212,12 @@ export default function App() {
     // affichee et par les couches du pli : un seul endroit, donc aucun
     // risque que les deux divergent.
     const fondLecture = readerDark ? "#1a1a1a" : "#ffffff";
+    // La liseuse a son propre theme jour/nuit, independant du reste du site.
+    // G.gold y vaut BLANC sur HomoRomance : pose sur les fonds clairs de ce
+    // panneau, il devient invisible. On prend un accent qui tient sur les deux
+    // themes, et on marque le choix actif par une pastille pleine.
+    const accentLecture = readerDark ? (EST_HOMOROMANCE ? "#b98fd0" : "#d4b65e") : G.bouton;
+    const surAccent = readerDark ? "#17171f" : G.boutonTexte;
     const rendreParas = (x) => {
       const liste = Array.isArray(x)
         ? x
@@ -21352,7 +21358,7 @@ export default function App() {
             if (audioPlaying) { stopAudio(); }
             else { playMp3(reading.audio_url); }
           }}
-            style={{ background: audioPlaying ? G.gold : "none", border: "1px solid " + (audioPlaying ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, color: audioPlaying ? "#000" : (readerDark ? "#ccc" : "#888"), cursor: "pointer", fontSize: 16, padding: "4px 10px" }}>
+            style={{ background: audioPlaying ? accentLecture : "none", border: "1px solid " + (audioPlaying ? accentLecture : (readerDark ? "#444" : "#ddd")), borderRadius: 6, color: audioPlaying ? surAccent : (readerDark ? "#ccc" : "#888"), cursor: "pointer", fontSize: 16, padding: "4px 10px" }}>
             {audioPlaying ? "⏸" : "🔊"}
           </button>
           )}
@@ -21369,9 +21375,9 @@ export default function App() {
             width: 52,
             height: 52,
             borderRadius: "50%",
-            background: showReaderSettings ? G.gold : (readerDark ? "#222" : "#fff"),
-            color: showReaderSettings ? "#000" : (readerDark ? "#ccc" : "#555"),
-            border: "1.5px solid " + (showReaderSettings ? G.gold : (readerDark ? "#444" : "#ddd")),
+            background: showReaderSettings ? accentLecture : (readerDark ? "#222" : "#fff"),
+            color: showReaderSettings ? surAccent : (readerDark ? "#ccc" : "#555"),
+            border: "1.5px solid " + (showReaderSettings ? accentLecture : (readerDark ? "#444" : "#ddd")),
             boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             fontSize: 18,
             fontWeight: "bold",
@@ -21401,11 +21407,11 @@ export default function App() {
               <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Mode</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => setReaderDark(false)}
-                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (!readerDark ? G.gold : "#ddd"), borderRadius: 6, background: !readerDark ? "#fdf8ee" : "#fff", color: !readerDark ? G.gold : "#555", cursor: "pointer", fontSize: 13 }}>
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (!readerDark ? accentLecture : "#ddd"), borderRadius: 6, background: !readerDark ? accentLecture : "#fff", color: !readerDark ? surAccent : "#555", cursor: "pointer", fontSize: 13, fontWeight: !readerDark ? "bold" : "normal" }}>
                   ☀️ Jour
                 </button>
                 <button onClick={() => setReaderDark(true)}
-                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (readerDark ? G.gold : "#555"), borderRadius: 6, background: readerDark ? "#333" : "#222", color: readerDark ? G.gold : "#aaa", cursor: "pointer", fontSize: 13 }}>
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (readerDark ? accentLecture : "#555"), borderRadius: 6, background: readerDark ? accentLecture : "#222", color: readerDark ? surAccent : "#aaa", cursor: "pointer", fontSize: 13, fontWeight: readerDark ? "bold" : "normal" }}>
                   🌙 Nuit
                 </button>
               </div>
@@ -21427,7 +21433,7 @@ export default function App() {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {FONTS.map(f => (
                   <button key={f.value} onClick={() => setReaderFont(f.value)}
-                    style={{ padding: "6px 12px", border: "1.5px solid " + (readerFont === f.value ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: readerFont === f.value ? (readerDark ? "#333" : "#fdf8ee") : (readerDark ? "#2a2a2a" : "#fff"), color: readerFont === f.value ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontFamily: f.value }}>
+                    style={{ padding: "6px 12px", border: "1.5px solid " + (readerFont === f.value ? accentLecture : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: readerFont === f.value ? accentLecture : (readerDark ? "#2a2a2a" : "#fff"), color: readerFont === f.value ? surAccent : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontFamily: f.value, fontWeight: readerFont === f.value ? "bold" : "normal" }}>
                     {f.label}
                   </button>
                 ))}
@@ -21438,11 +21444,11 @@ export default function App() {
               <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Mode de lecture</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => setReaderScrollMode(false)}
-                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (!readerScrollMode ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: !readerScrollMode ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: !readerScrollMode ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (!readerScrollMode ? accentLecture : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: !readerScrollMode ? accentLecture : "transparent", color: !readerScrollMode ? surAccent : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontWeight: !readerScrollMode ? "bold" : "normal" }}>
                   📄 Page à page
                 </button>
                 <button onClick={() => setReaderScrollMode(true)}
-                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (readerScrollMode ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: readerScrollMode ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: readerScrollMode ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (readerScrollMode ? accentLecture : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: readerScrollMode ? accentLecture : "transparent", color: readerScrollMode ? surAccent : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontWeight: readerScrollMode ? "bold" : "normal" }}>
                   📜 Scroll
                 </button>
               </div>
@@ -21452,11 +21458,11 @@ export default function App() {
               <div style={{ fontSize: 11, color: readerDark ? "#888" : "#aaa", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Traduction</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => translating ? null : (translateLang === "fr" ? resetTranslation() : translateText(reading.content, "fr"))}
-                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (translateLang === "fr" ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: translateLang === "fr" ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: translateLang === "fr" ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (translateLang === "fr" ? accentLecture : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: translateLang === "fr" ? accentLecture : "transparent", color: translateLang === "fr" ? surAccent : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontWeight: translateLang === "fr" ? "bold" : "normal" }}>
                   🇫🇷 Français
                 </button>
                 <button onClick={() => translating ? null : (translateLang === "en" ? resetTranslation() : translateText(reading.content, "en"))}
-                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (translateLang === "en" ? G.gold : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: translateLang === "en" ? (readerDark ? "#333" : "#fdf8ee") : "transparent", color: translateLang === "en" ? G.gold : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13 }}>
+                  style={{ flex: 1, padding: "8px 0", border: "1.5px solid " + (translateLang === "en" ? accentLecture : (readerDark ? "#444" : "#ddd")), borderRadius: 6, background: translateLang === "en" ? accentLecture : "transparent", color: translateLang === "en" ? surAccent : (readerDark ? "#aaa" : "#555"), cursor: "pointer", fontSize: 13, fontWeight: translateLang === "en" ? "bold" : "normal" }}>
                   🇬🇧 English
                 </button>
                 {translateLang && (
@@ -21466,7 +21472,7 @@ export default function App() {
                   </button>
                 )}
               </div>
-              {translating && <p style={{ color: G.gold, fontSize: 12, marginTop: 6, textAlign: "center" }}>Traduction en cours...</p>}
+              {translating && <p style={{ color: accentLecture, fontSize: 12, marginTop: 6, textAlign: "center" }}>Traduction en cours...</p>}
             </div>
                       </div>
           </>
@@ -21496,7 +21502,7 @@ export default function App() {
             })}
             {excerptMode && (
               <div style={{ marginTop: 48, padding: 24, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
-                <div style={{ color: G.gold, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
+                <div style={{ color: accentLecture, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
                 <div style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>Achetez le livre pour lire la suite</div>
                 <button onClick={() => { setPage("detail"); setReading(null); }}
                   style={{ padding: "11px 28px", background: G.bouton, border: "none", borderRadius: 4, color: G.boutonTexte, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
@@ -21704,7 +21710,7 @@ export default function App() {
 
               {excerptMode && readingPage === total - 1 && (
                 <div style={{ marginTop: 24, padding: 20, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
-                  <div style={{ color: G.gold, fontSize: 14, marginBottom: 6, fontStyle: "italic" }}>Fin de l'extrait</div>
+                  <div style={{ color: accentLecture, fontSize: 14, marginBottom: 6, fontStyle: "italic" }}>Fin de l'extrait</div>
                   <div style={{ color: "#888", fontSize: 13, marginBottom: 14 }}>Achetez le livre pour lire la suite</div>
                   <button onClick={(e) => { e.stopPropagation(); setPage("detail"); setReading(null); }}
                     style={{ padding: "10px 24px", background: G.bouton, border: "none", borderRadius: 4, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
@@ -24701,8 +24707,8 @@ export default function App() {
             <h1 style={{ color: G.gold, fontSize: 21, marginBottom: 4 }}>Comment créer un pixel</h1>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Un « pixel » est un petit code qui mesure l’efficacité de tes publicités. Suis les étapes, copie l’identifiant (ID) obtenu, puis colle-le dans tes Intégrations.</p>
             <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-              <button onClick={() => setPixelGuideTab("facebook")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.gold, background: pixelGuideTab === "facebook" ? G.gold : "transparent", color: pixelGuideTab === "facebook" ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel Facebook</button>
-              <button onClick={() => setPixelGuideTab("tiktok")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.gold, background: pixelGuideTab === "tiktok" ? G.gold : "transparent", color: pixelGuideTab === "tiktok" ? "#fff" : G.gold, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel TikTok</button>
+              <button onClick={() => setPixelGuideTab("facebook")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.bouton, background: pixelGuideTab === "facebook" ? G.bouton : "transparent", color: pixelGuideTab === "facebook" ? G.boutonTexte : G.bouton, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel Facebook</button>
+              <button onClick={() => setPixelGuideTab("tiktok")} style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid " + G.bouton, background: pixelGuideTab === "tiktok" ? G.bouton : "transparent", color: pixelGuideTab === "tiktok" ? G.boutonTexte : G.bouton, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Pixel TikTok</button>
             </div>
             {(() => {
               const P = { color: G.text, fontSize: 14, lineHeight: 1.7, marginBottom: 8 };
