@@ -110,6 +110,14 @@ Detecte comme bot: ${isBotVisit}
     return;
   }
 
+  // 09/10 : le meme code sert carrybooks.com ET homoromance.com.
+  // On repart TOUJOURS du domaine demande, jamais d'une adresse ecrite en dur,
+  // sinon rafraichir une page de HomoRomance renvoie sur CarryBooks.
+  const hote = req.headers["x-forwarded-host"] || req.headers.host || "carrybooks.com";
+  const protocole = String(req.headers["x-forwarded-proto"] || "https").split(",")[0];
+  const base = protocole + "://" + hote;
+  const nomDuSite = /homoromance/i.test(hote) ? "HomoRomance" : "CarryBooks";
+
   if (!slug) {
     res.status(400).send("Missing slug");
     return;
@@ -122,7 +130,7 @@ Detecte comme bot: ${isBotVisit}
       .filter(([key]) => key !== "type" && key !== "slug")
       .map(([key, val]) => `&${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
       .join("");
-    res.setHeader("Location", `https://carrybooks.com/?book=${encodeURIComponent(slug)}${extraParams}`);
+    res.setHeader("Location", `${base}/?book=${encodeURIComponent(slug)}${extraParams}`);
     res.status(302).end();
     return;
   }
@@ -190,16 +198,16 @@ Detecte comme bot: ${isBotVisit}
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>CarryBooks</title>
+<title>${nomDuSite}</title>
 <meta property="og:type" content="website">
-<meta property="og:title" content="CarryBooks">
-<meta property="og:description" content="CarryBooks - Ta librairie numerique camerounaise.">
+<meta property="og:title" content="${nomDuSite}">
+<meta property="og:description" content="${nomDuSite}">
 <meta property="og:image" content="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg">
-<meta property="og:url" content="https://carrybooks.com">
-<meta property="og:site_name" content="CarryBooks">
+<meta property="og:url" content="${base}">
+<meta property="og:site_name" content="${nomDuSite}">
 <meta name="twitter:card" content="summary_large_image">
 </head>
-<body><h1>CarryBooks</h1></body>
+<body><h1>${nomDuSite}</h1></body>
 </html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -216,7 +224,7 @@ Detecte comme bot: ${isBotVisit}
   const description = escapeHtml(rawDesc);
   const cover = book.cover || "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
   const urlPath = book.product_type === "article" ? "article" : "livre";
-  const url = `https://carrybooks.com/${urlPath}/${slug}`;
+  const url = `${base}/${urlPath}/${slug}`;
   const priceLabel = book.price > 0 ? `${book.price.toLocaleString("fr-FR")} FCFA` : "Gratuit";
   const ogType = book.product_type === "article" ? "product" : "book";
 
@@ -260,7 +268,7 @@ Detecte comme bot: ${isBotVisit}
 <meta property="og:image:secure_url" content="${escapeHtml(ogImageUrl)}">
 <meta property="og:image:alt" content="${title} — CarryBooks">
 <meta property="og:url" content="${escapeHtml(url)}">
-<meta property="og:site_name" content="CarryBooks">
+<meta property="og:site_name" content="${nomDuSite}">
 <meta property="og:locale" content="fr_FR">
 
 <!-- Format LARGE pour grandes vignettes mobile -->
@@ -285,7 +293,7 @@ ${jsonLd}
 <p>${description}</p>
 <p><strong>${priceLabel}</strong></p>
 <p><img src="${escapeHtml(cover)}" alt="${title}" style="max-width:300px"></p>
-<p><a href="https://carrybooks.com/?book=${encodeURIComponent(slug)}">Voir sur CarryBooks</a></p>
+<p><a href="${base}/?book=${encodeURIComponent(slug)}">Voir sur ${nomDuSite}</a></p>
 </body>
 </html>`;
 

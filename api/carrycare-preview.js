@@ -87,7 +87,7 @@ export default async function handler(req, res) {
       .map(([key, val]) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
       .join("&");
     const suffix = extraParams ? `?${extraParams}` : "";
-    res.setHeader("Location", `https://carrybooks.com${cfg.path}${suffix}`);
+    res.setHeader("Location", `${(String(req.headers["x-forwarded-proto"] || "https").split(",")[0])}://${(req.headers["x-forwarded-host"] || req.headers.host || "carrybooks.com")}${cfg.path}${suffix}`);
     res.status(302).end();
     return;
   }
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
   // ⚠️ og:url DOIT pointer vers l'URL /partage/ elle-même (auto-reference),
   // sinon Facebook suit cette URL, relit la vraie page et affiche le logo par defaut.
   // (meme principe que /livre/:slug pour les livres.)
-  const url = escapeHtml("https://carrybooks.com/partage/" + page);
+  const url = escapeHtml("https://" + (req.headers["x-forwarded-host"] || req.headers.host || "carrybooks.com") + "/partage/" + page);
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
