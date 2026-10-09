@@ -19102,7 +19102,7 @@ export default function App() {
   }
 
   if (page === "espace_auteur") {
-    const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.champBordure, background: G.champ, color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
+    const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.champBordure, background: EST_HOMOROMANCE ? "#fff" : G.champ, color: EST_HOMOROMANCE ? "#111" : G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
     const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
     const eaLarge = (typeof window !== "undefined" && window.innerWidth >= 700);
     const eaMax = eaLarge ? 900 : 620;
@@ -19390,8 +19390,8 @@ export default function App() {
                           </>)}
                         </div>
                       ); })()}
-                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
-                      <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: EST_HOMOROMANCE ? "#2e0138" : G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
+                      <div style={{ fontSize: 11, color: EST_HOMOROMANCE ? "#5a5a6e" : G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
                       <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.bouton, border: "none", borderRadius: 10, color: G.boutonTexte, fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
                       <div style={{ display: "grid", gap: 8 }}>
                         {[
@@ -25723,9 +25723,9 @@ export default function App() {
 
         {page === "home" && (
           <div style={{ padding: "16px 16px 28px", background: G.bg }}>
-            <div style={{ background: "#161206", borderRadius: 12, padding: 16, border: "1px solid #3d2b0a" }}>
+            <div style={{ background: EST_HOMOROMANCE ? G.surface : "#161206", borderRadius: 12, padding: 16, border: "1px solid " + (EST_HOMOROMANCE ? G.border : "#3d2b0a") }}>
               <div style={{ fontSize: 15, fontWeight: "bold", color: G.gold, marginBottom: 10 }}>❓ Achats introuvables ?</div>
-              <div style={{ fontSize: 13, color: "#c8bfae", lineHeight: 1.65, marginBottom: 14 }}>
+              <div style={{ fontSize: 13, color: EST_HOMOROMANCE ? G.textDim : "#c8bfae", lineHeight: 1.65, marginBottom: 14 }}>
                 Ouvrez <b style={{ color: "#fff" }}>« Ma bibliothèque »</b> : juste sous l'en-tête, vous verrez le message <b style={{ color: "#fff" }}>« 💡 As-tu perdu tes livres ? »</b>. Cliquez sur <b style={{ color: "#fff" }}>« Récupère-les ici »</b>, puis saisissez le numéro de téléphone utilisé lors de l'achat — vos livres réapparaîtront aussitôt dans votre bibliothèque, <b style={{ color: "#fff" }}>à vie</b>.
                 <br /><br />
                 Désormais, tous vos achats se retrouveront automatiquement dans « Ma bibliothèque ».

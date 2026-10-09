@@ -2883,7 +2883,7 @@ export default function Admin() {
               <p style={{ color: "#888", fontSize: 13 }}>Choisis le type de produit que tu veux gérer</p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: EST_HOMOROMANCE ? "1fr" : "repeat(2, 1fr)", gap: 14 }}>
               {/* CARTE 1 : LIVRES NUMÉRIQUES */}
               <div
                 onClick={() => { setProductSubView("digital"); setProductSubTab("list"); }}
@@ -2908,6 +2908,7 @@ export default function Admin() {
               </div>
 
               {/* CARTE 2 : LIVRES PHYSIQUES */}
+              {!EST_HOMOROMANCE && (
               <div
                 onClick={() => { setProductSubView("physical"); setProductSubTab("list"); }}
                 style={{
@@ -2929,8 +2930,10 @@ export default function Admin() {
                   {books.filter(b => b.product_type === 'papier').length} produits
                 </div>
               </div>
+              )}
 
               {/* CARTE 3 : ARTICLES DIVERS */}
+              {!EST_HOMOROMANCE && (
               <div
                 onClick={() => { setProductSubView("article"); setProductSubTab("list"); }}
                 style={{
@@ -2952,8 +2955,10 @@ export default function Admin() {
                   {books.filter(b => b.product_type === 'article').length} produits
                 </div>
               </div>
+              )}
 
               {/* CARTE 4 : LIVRES AUDIO & PODCASTS */}
+              {!EST_HOMOROMANCE && (
               <div
                 onClick={() => { setProductSubView("audio"); setProductSubTab("list"); }}
                 style={{
@@ -2975,6 +2980,7 @@ export default function Admin() {
                   {books.filter(b => b.product_type === 'audio').length} produits
                 </div>
               </div>
+              )}
             </div>
           </div>
         )}
