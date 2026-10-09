@@ -29,6 +29,9 @@ const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybo
 // Tout lien interne doit rester sur le domaine par lequel la visiteuse est arrivee.
 const SITE_DOMAINE = EST_HOMOROMANCE ? "homoromance.com" : "carrybooks.com";
 const SITE_URL = "https://" + SITE_DOMAINE;
+// Adresse de contact affichee aux lecteurs. ADMIN_EMAIL, lui, ne change JAMAIS :
+// c'est l'identifiant qui ouvre l'espace admin sur les deux sites.
+const SITE_EMAIL = EST_HOMOROMANCE ? "Homoromancebook@gmail.com" : "carrybooks.com@gmail.com";
 // Les liens saisis par les auteurs (annonces) contiennent souvent carrybooks.com :
 // on les ramene sur le domaine courant pour ne jamais sortir du site.
 // Nombre de livres reellement visibles sur le site affiche.
@@ -2833,7 +2836,7 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
             <div style={{ textAlign: "center", marginBottom: 18 }}>
               <div style={{ fontSize: 56, marginBottom: 12 }}>❌</div>
               <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 17 }}>Paiement non finalisé</h3>
-              <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</p>
+              <p style={{ color: "#888", fontSize: 13 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur {SITE_EMAIL}</p>
             </div>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 14, borderRadius: 8, marginBottom: 18 }}>
               <p style={{ color: "#7a4a00", fontSize: 12, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
@@ -5464,7 +5467,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
               <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>Paiement non finalisé</h3>
-              <p style={{ color: CC.textFaint, fontSize: 14 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</p>
+              <p style={{ color: CC.textFaint, fontSize: 14 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur {SITE_EMAIL}</p>
             </div>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 16, borderRadius: 10, marginBottom: 20 }}>
               <p style={{ color: "#7a4a00", fontSize: 13, fontWeight: "bold", marginBottom: 8, marginTop: 0 }}>💡 Essaie ces solutions :</p>
@@ -7989,7 +7992,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
           <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
-              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</h3>
+              <h3 style={{ color: "#c62828", marginBottom: 8, fontSize: 18 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur {SITE_EMAIL}</h3>
               <p style={{ color: CC.textFaint, fontSize: 14 }}>Le réseau de l\'opérateur est peut-être occupé.</p>
             </div>
             <div style={{ background: "#fff8e1", borderLeft: "3px solid #ff9800", padding: 16, borderRadius: 10, marginBottom: 20 }}>
@@ -9804,7 +9807,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           <div style={{ padding: 20, maxWidth: 600, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 64, marginBottom: 14 }}>❌</div>
-              <h3 style={{ color: "#c62828", marginBottom: 8 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</h3>
+              <h3 style={{ color: "#c62828", marginBottom: 8 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur {SITE_EMAIL}</h3>
               <p style={{ color: CC.textFaint, fontSize: 14 }}>Réessaie ou change de méthode</p>
             </div>
             <button onClick={() => { setLgPaymentStep(2); setLgPaymentMethod(null); setLgPaymentPhone(""); }} style={{ width: "100%", padding: 16, background: CC.noir, color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: "bold", cursor: "pointer", marginBottom: 10 }}>🔁 Réessayer</button>
@@ -13114,7 +13117,7 @@ function CapillaireQuiz({ setPage, setCarryCarePage, capStep, setCapStep, capTex
           <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
             <div style={{ fontSize: 80, marginBottom: 16 }}>❌</div>
             <div style={{ fontSize: 20, fontWeight: "bold", color: "#d32f2f", marginBottom: 12 }}>Paiement non finalisé</div>
-            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur carrybooks.com@gmail.com</div>
+            <div style={{ fontSize: 14, color: CAP.textDim, marginBottom: 20 }}>⏳ Le réseau Orange peut mettre quelques minutes à confirmer. Ne ferme pas cette page : reste ici jusqu'à l'affichage de ton diagnostic. Si tu as été débité(e) et que ça ne se débloque pas, contacte-nous sur {SITE_EMAIL}</div>
             <div style={{ background: "#fdf8e8", border: "1px solid #e8c547", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "left" }}>
               <div style={{ fontSize: 13, fontWeight: "bold", color: CAP.noir, marginBottom: 8, textAlign: "center" }}>💡 Essaie ces solutions :</div>
               <div style={{ fontSize: 13, color: CAP.textDim, lineHeight: 1.8, textAlign: "center" }}>
@@ -21011,9 +21014,9 @@ export default function App() {
                   <p style={{ fontSize: 11, color: readerDark ? "#888" : "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
                     Une question ?
                   </p>
-                  <a href="mailto:carrybooks.com@gmail.com" onClick={(e) => e.stopPropagation()}
+                  <a href={"mailto:" + SITE_EMAIL} onClick={(e) => e.stopPropagation()}
                     style={{ fontSize: 13, color: "#c9a84c", textDecoration: "underline", marginBottom: 14 }}>
-                    carrybooks.com@gmail.com
+                    {SITE_EMAIL}
                   </a>
                 </div>
               ) : (
@@ -24141,7 +24144,7 @@ export default function App() {
                 <div style={H}>Le programme d’abonnement (facultatif)</div>
                 <p style={P}>Dans les Paramètres, tu peux activer l’abonnement : tes <b>romans</b> deviennent lisibles par les abonnés et tu touches une <b>commission fixe à chaque déblocage</b>. Tes livres PDF et audio restent payants. Tu peux te retirer quand tu veux.</p>
 
-                <div style={{ ...box, textAlign: "center" }}>Une question ? Écris-nous à <b>carrybooks.com@gmail.com</b>. Bienvenue dans la famille {SITE_NOM} !</div>
+                <div style={{ ...box, textAlign: "center" }}>Une question ? Écris-nous à <b>{SITE_EMAIL}</b>. Bienvenue dans la famille {SITE_NOM} !</div>
               </div>);
             })()}
           </div>
@@ -24867,7 +24870,7 @@ export default function App() {
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>Contact</div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>EMAIL</div>
-              <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.text, fontSize: 15, textDecoration: "none" }}>carrybooks.com@gmail.com</a>
+              <a href={"mailto:" + SITE_EMAIL} style={{ color: G.text, fontSize: 15, textDecoration: "none" }}>{SITE_EMAIL}</a>
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>WHATSAPP</div>
@@ -24876,7 +24879,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>SUPPORT</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Pour toute question ou problème, écrivez-nous à <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.gold }}>carrybooks.com@gmail.com</a>. Nous répondons sous 24h.
+                Pour toute question ou problème, écrivez-nous à <a href={"mailto:" + SITE_EMAIL} style={{ color: G.gold }}>{SITE_EMAIL}</a>. Nous répondons sous 24h.
               </p>
             </div>
           </div>
@@ -24891,7 +24894,7 @@ export default function App() {
               { q: "Qu'est-ce que l'abonnement ?", r: "L'abonnement mensuel te donne accès à un certain nombre de livres par mois pour un prix fixe. Tu peux aussi acheter des livres en dehors de ton quota." },
               { q: "Puis-je lire hors connexion ?", r: "Oui ! Après avoir acheté un livre, clique sur 'Télécharger hors connexion' sur la page du livre pour le sauvegarder sur ton appareil." },
               { q: "Mes achats sont-ils sauvegardés ?", r: "Oui, en te connectant avec Google, tous tes achats sont synchronisés et accessibles depuis n'importe quel appareil." },
-              { q: "Comment contacter le support ?", r: "Écris-nous à carrybooks.com@gmail.com. Nous répondons sous 24h." },
+              { q: "Comment contacter le support ?", r: "Écris-nous à " + SITE_EMAIL + ". Nous répondons sous 24h." },
             ].map((item, i) => (
               <div key={i} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}>❓ {item.q}</div>
@@ -25040,7 +25043,7 @@ export default function App() {
                 <li><strong style={{ color: G.text }}>Vous opposer</strong> au traitement de vos données.</li>
               </ul>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
-                Pour exercer ces droits, contactez-nous par e-mail à <strong style={{ color: G.gold }}>carrybooks.com@gmail.com</strong>. Nous répondrons sous 30 jours maximum.
+                Pour exercer ces droits, contactez-nous par e-mail à <strong style={{ color: G.gold }}>{SITE_EMAIL}</strong>. Nous répondrons sous 30 jours maximum.
               </p>
             </div>
 
@@ -25071,7 +25074,7 @@ export default function App() {
                 Pour toute question concernant cette politique ou vos données personnelles :
               </p>
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
-                📧 <strong>E-mail :</strong> carrybooks.com@gmail.com<br />
+                📧 <strong>E-mail :</strong> {SITE_EMAIL}<br />
                 🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
                 👤 <strong>Responsable :</strong> Sylviane Landrine Maffo<br />
                 📍 <strong>Adresse :</strong> Yaoundé, Cameroun
@@ -25101,7 +25104,7 @@ export default function App() {
                 Pour supprimer votre compte {SITE_NOM} et vos données, envoyez un e-mail à l'adresse ci-dessous depuis l'adresse e-mail liée à votre compte :
               </p>
               <p style={{ color: G.text, fontSize: 15, lineHeight: 1.9, margin: "0 0 12px 0", textAlign: "center" }}>
-                📧 <strong style={{ color: G.gold }}>carrybooks.com@gmail.com</strong>
+                📧 <strong style={{ color: G.gold }}>{SITE_EMAIL}</strong>
               </p>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
                 Indiquez en objet : <strong style={{ color: G.text }}>« Suppression de mon compte »</strong>. Nous vérifierons votre identité, puis traiterons votre demande.
@@ -25132,7 +25135,7 @@ export default function App() {
             <div style={{ background: G.goldDim, border: "1px solid " + G.gold, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>NOUS CONTACTER</div>
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
-                📧 <strong>E-mail :</strong> carrybooks.com@gmail.com<br />
+                📧 <strong>E-mail :</strong> {SITE_EMAIL}<br />
                 🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
                 📍 <strong>Adresse :</strong> Yaoundé, Cameroun
               </p>
@@ -25168,7 +25171,7 @@ export default function App() {
                 <strong style={{ color: G.text }}>RCCM :</strong> RC/YAE/2025/M/133<br />
                 <strong style={{ color: G.text }}>NIU :</strong> P028417945459A<br />
                 <strong style={{ color: G.text }}>Directrice de publication :</strong> Sylviane Landrine Maffo<br />
-                <strong style={{ color: G.text }}>Contact :</strong> carrybooks.com@gmail.com
+                <strong style={{ color: G.text }}>Contact :</strong> {SITE_EMAIL}
               </p>
             </div>
 
@@ -25210,7 +25213,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>5. LIVRAISON ET ACCÈS AUX PRODUITS</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Les produits numériques sont accessibles <strong style={{ color: G.text }}>immédiatement</strong> après confirmation du paiement, depuis la section « Ma Bibliothèque » de votre compte. En cas de problème technique, écrivez-nous à carrybooks.com@gmail.com.
+                Les produits numériques sont accessibles <strong style={{ color: G.text }}>immédiatement</strong> après confirmation du paiement, depuis la section « Ma Bibliothèque » de votre compte. En cas de problème technique, écrivez-nous à {SITE_EMAIL}.
               </p>
             </div>
 
@@ -25275,7 +25278,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>13. CONTACT</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Pour toute question concernant ces conditions : <strong style={{ color: G.text }}>carrybooks.com@gmail.com</strong>
+                Pour toute question concernant ces conditions : <strong style={{ color: G.text }}>{SITE_EMAIL}</strong>
               </p>
             </div>
 
@@ -25340,7 +25343,7 @@ export default function App() {
                 Pour faire une demande de remboursement, suivez ces étapes :
               </p>
               <ol style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
-                <li>Envoyez un e-mail à <strong style={{ color: G.text }}>carrybooks.com@gmail.com</strong> dans les <strong style={{ color: G.text }}>14 jours</strong> suivant l'achat.</li>
+                <li>Envoyez un e-mail à <strong style={{ color: G.text }}>{SITE_EMAIL}</strong> dans les <strong style={{ color: G.text }}>14 jours</strong> suivant l'achat.</li>
                 <li>Indiquez en objet : « Demande de remboursement ».</li>
                 <li>Précisez : votre nom, votre numéro de téléphone de paiement, la date d'achat, le nom du produit et la raison de votre demande.</li>
                 <li>Joignez une preuve si possible (capture d'écran, code de transaction CamPay/NotchPay).</li>
@@ -25382,7 +25385,7 @@ export default function App() {
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>9. CONTACT</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Pour toute question ou demande : <strong style={{ color: G.text }}>carrybooks.com@gmail.com</strong><br /><br />
+                Pour toute question ou demande : <strong style={{ color: G.text }}>{SITE_EMAIL}</strong><br /><br />
                 Nous répondons sous 24h en jours ouvrés.
               </p>
             </div>
@@ -25627,7 +25630,7 @@ export default function App() {
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 24px", marginBottom: 20 }}>
               <button onClick={() => setPage("faq")} style={{ background: "none", border: "none", color: G.piedTexte, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>FAQ</button>
               <button onClick={() => setPage("about")} style={{ background: "none", border: "none", color: G.piedTexte, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>À propos de nous</button>
-              <a href="mailto:carrybooks.com@gmail.com" style={{ color: G.piedTexte, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
+              <a href={"mailto:" + SITE_EMAIL} style={{ color: G.piedTexte, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
             </div>
             {/* Liens légaux */}
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 16px", marginBottom: 20 }}>
