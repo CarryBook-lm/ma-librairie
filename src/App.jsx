@@ -1919,18 +1919,22 @@ const G_CARRYBOOKS = {
   entete: "rgba(245,240,232,0.97)", enteteBordure: "#d8cdb8", enteteTexte: "#1a1208",
   pied: "#ede7d9", piedBordure: "#d8cdb8", piedTexte: "#7a6a50", piedFaint: "#b0a090",
   surGold: "#000",
+  carte: "#fff", carteTexte: "#1a1208",
 };
 
-// HomoRomance : violet profond pour l'entete et le pied de page, magenta pour les accents.
+// HomoRomance : theme SOMBRE. Fond presque noir bleute, titres et accents en rose vif,
+// cartes en bleu nuit. Couleurs relevees sur la reference donnee par Landrine le 09/10.
 const G_HOMOROMANCE = {
-  bg: "#fdf4f9", surface: "#fbe8f3", surface2: "#f7d9ea", border: "#f0bcd8",
-  gold: "#d6179b", goldLight: "#f05fc0", goldDim: "rgba(214,23,155,0.12)",
-  text: "#2a0626", textDim: "#7d4a6e", textFaint: "#a87c9b",
-  green: "#4caf50", greenDim: "rgba(76,175,80,0.15)",
-  navBg: "#fdf4f9", navSurface: "#fbe8f3", navBorder: "#f0bcd8", navText: "#2a0626",
-  entete: "#2a0a3c", enteteBordure: "#4a1560", enteteTexte: "#ffffff",
-  pied: "#2a0a3c", piedBordure: "#4a1560", piedTexte: "#ebc6e4", piedFaint: "#b98fb0",
+  bg: "#0d0d17", surface: "#161729", surface2: "#1e1f33", border: "#2a2b42",
+  gold: "#ff3d9a", goldLight: "#ff7ac0", goldDim: "rgba(255,61,154,0.14)",
+  text: "#f2f0f7", textDim: "#9290a8", textFaint: "#6e6c84",
+  green: "#4caf50", greenDim: "rgba(76,175,80,0.18)",
+  navBg: "#0d0d17", navSurface: "#161729", navBorder: "#2a2b42", navText: "#f2f0f7",
+  entete: "rgba(13,13,23,0.97)", enteteBordure: "#22233a", enteteTexte: "#ffffff",
+  pied: "#0a0a12", piedBordure: "#22233a", piedTexte: "#9290a8", piedFaint: "#6e6c84",
   surGold: "#fff",
+  // Fond des cartes et des fenetres : blanc sur CarryBooks, bleu nuit ici.
+  carte: "#161729", carteTexte: "#f2f0f7",
 };
 
 const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
