@@ -25,6 +25,20 @@ function estAuteurAutoriseHR(nom) {
   if (!AUTEUR_UNIQUE_HR) return true;
   return normNom(nom) === AUTEUR_UNIQUE_HR;
 }
+
+// ============================================================
+// 09/10 : TYPOGRAPHIE DE LA LISEUSE, MODE PAGE A PAGE.
+// Effet livre imprime : AUCUNE ligne blanche entre les paragraphes,
+// juste un retrait de premiere ligne. C'est ce qui remplit la page.
+// Ces trois valeurs sont utilisees DEUX fois : par le banc d'essai qui
+// mesure, et par l'affichage. Elles doivent rester identiques, sinon
+// la mesure ment et le texte deborde.
+// ============================================================
+const LIV_INTERLIGNE = 1.6;
+const LIV_ESPACE_EM = 0;        // espace entre deux paragraphes, en em
+const LIV_RETRAIT = "1.5em";    // retrait de la premiere ligne
+const LIV_RATIO = 16 / 9;       // hauteur de la page = largeur x ce rapport
+const LIV_SUITE = "\u0001";     // marque la suite d'un paragraphe coupe entre 2 pages
 const EST_HOMOROMANCE = (function () {
   try {
     if (typeof window === "undefined") return false;
@@ -17590,7 +17604,7 @@ export default function App() {
     banc.style.width = largeur + "px";
     banc.style.fontFamily = police;
     banc.style.fontSize = taille + "px";
-    banc.style.lineHeight = "1.7";
+    banc.style.lineHeight = String(LIV_INTERLIGNE);
     banc.style.textAlign = "justify";
     banc.style.wordBreak = "break-word";
     banc.style.overflowWrap = "break-word";
@@ -17599,81 +17613,151 @@ export default function App() {
     document.body.appendChild(banc);
     return banc;
   }
-  function rendreDansBanc(banc, paras, premierSansRetrait) {
-    banc.innerHTML = paras.map(function (x, i) {
-      const retrait = (premierSansRetrait && i === 0) ? "0" : "1.5em";
-      return '<p style="margin:0 0 0.9em;text-indent:' + retrait + '">' + x.trim() + "</p>";
+  function rendreDansBanc(banc, paras) {
+    banc.innerHTML = paras.map(function (x) {
+      const suite = String(x).indexOf(LIV_SUITE) === 0;
+      const t = suite ? String(x).slice(1) : String(x);
+      const retrait = suite ? "0" : LIV_RETRAIT;
+      return '<p style="margin:0 0 ' + LIV_ESPACE_EM + 'em;text-indent:' + retrait + '">' + t.trim() + "</p>";
     }).join("");
   }
 
+  // Dernier caractere du paragraphe qui tient encore au-dessus de "limite".
+  // Dichotomie sur un texte DEJA mis en page : on ne fait que lire des
+  // positions, aucune remise en page, donc c'est tres rapide.
+  function offsetQuiTient(plage, noeudTexte, refHaut, limite) {
+    const n = noeudTexte.length;
+    let bas = 1, haut = n, res = 0;
+    while (bas <= haut) {
+      const m = (bas + haut) >> 1;
+      plage.setStart(noeudTexte, 0);
+      plage.setEnd(noeudTexte, m);
+      if (plage.getBoundingClientRect().bottom - refHaut <= limite) { res = m; bas = m + 1; }
+      else haut = m - 1;
+    }
+    return res;
+  }
+  // Le rectangle d'une selection mesure l'ENCRE du texte, pas la boite de ligne :
+  // il manque la moitie de l'interligne en dessous. Sans cette correction, le
+  // decoupage croit qu'une ligne de plus tient et la page deborde de 2 a 3 px.
+  function demiInterligne(taille) {
+    return Math.max(0, taille * (LIV_INTERLIGNE - 1) / 2);
+  }
+
+  // ============================================================
+  // Decoupage en pages, a la ligne pres.
+  // Comme dans un livre imprime, un paragraphe peut se terminer sur la page
+  // suivante : c'est la seule facon de remplir chaque page jusqu'en bas.
+  // Methode : on met TOUT le livre en page une seule fois dans le banc, puis
+  // on cherche les points de coupe en lisant des positions (sans jamais
+  // remettre en page). La suite d'un paragraphe coupe est marquee par
+  // LIV_SUITE : elle s'affiche sans retrait de premiere ligne.
+  // ============================================================
   function decouperEnPages(contenu, largeur, hauteur, taille, police) {
     let banc = null;
     try {
       if (typeof document === "undefined" || !largeur || !hauteur || !contenu) return null;
-      let paras = String(contenu).split(/\n+/).filter(x => x.trim());
+      const paras = String(contenu).split(/\n+/).map(x => x.trim()).filter(x => x);
       if (!paras.length) return null;
-      const budget = Math.max(80, hauteur - 2);
+      // La zone fait exactement "hauteur" pixels : une page de cette hauteur
+      // tient PILE. Retirer une marge ici rejetterait des pages parfaitement
+      // pleines et les ferait couper pour rien.
+      const budget = Math.max(80, hauteur);
       banc = ouvrirBanc(largeur, taille, police);
-      const marge = taille * 0.9;
-      const mesurerChaque = () => {
-        rendreDansBanc(banc, paras, false);
-        const h = [];
-        for (let i = 0; i < banc.children.length; i++) h.push(banc.children[i].getBoundingClientRect().height + marge);
-        return h;
-      };
-      let hauteurs = mesurerChaque();
+      rendreDansBanc(banc, paras);
 
-      // 1) Un paragraphe plus haut qu'une page entiere : on le coupe en morceaux.
-      //    On ne coupe pas ceux qui contiennent du HTML, pour ne pas casser une balise.
-      if (hauteurs.some(h => h > budget)) {
-        const refaits = [];
-        for (let i = 0; i < paras.length; i++) {
-          if (hauteurs[i] <= budget || paras[i].indexOf("<") !== -1) { refaits.push(paras[i]); continue; }
-          const morceaux = Math.ceil(hauteurs[i] / budget) + 1;
-          const mots = paras[i].split(/\s+/);
-          const parMorceau = Math.max(1, Math.ceil(mots.length / morceaux));
-          for (let j = 0; j < mots.length; j += parMorceau) refaits.push(mots.slice(j, j + parMorceau).join(" "));
-        }
-        paras = refaits;
-        hauteurs = mesurerChaque();
+      const refBanc = banc.getBoundingClientRect().top;
+      const els = [];
+      for (let i = 0; i < banc.children.length; i++) {
+        const n = banc.children[i];
+        const r = n.getBoundingClientRect();
+        // On ne sait couper proprement qu'un paragraphe de texte simple.
+        const coupable = paras[i].indexOf("<") === -1 && n.firstChild && n.firstChild.nodeType === 3;
+        els.push({ el: n, haut: r.top - refBanc, bas: r.bottom - refBanc, coupable: coupable });
       }
 
-      // 2) Remplissage : on empile tant que ca tient.
+      const plage = document.createRange();
       const pages = [];
-      let courante = [], cumul = 0;
-      for (let i = 0; i < paras.length; i++) {
-        if (courante.length && cumul + hauteurs[i] > budget) { pages.push(courante); courante = []; cumul = 0; }
-        courante.push(paras[i]);
-        cumul += hauteurs[i];
-      }
-      if (courante.length) pages.push(courante);
+      let p = 0, off = 0, yHaut = 0, garde = 0;
 
-      // 3) Verification page par page, en situation reelle. La somme des hauteurs
-      //    n'est pas toujours exacte au pixel pres (justification, retrait de la
-      //    premiere ligne) : si une page depasse, on repousse son dernier
-      //    paragraphe sur la suivante, et on remesure.
-      // Une page a PLUSIEURS paragraphes ne peut pas depasser : sa hauteur reelle
-      // est toujours inferieure ou egale a la somme mesuree (le retrait de la
-      // premiere ligne ne fait que raccourcir), et cette somme tient dans le
-      // budget par construction. On ne verifie donc que les pages a UNE seule
-      // entree : ce sont les seules qui peuvent encore etre trop hautes.
-      let garde = 0;
-      for (let i = 0; i < pages.length && garde < 50000; ) {
+      while (p < els.length && garde < 200000) {
         garde++;
-        if (pages[i].length > 1) { i++; continue; }
-        rendreDansBanc(banc, pages[i], true);
-        if (banc.scrollHeight <= budget) { i++; continue; }
-        const seul = pages[i][0];
-        const mots = seul.split(/\s+/);
-        if (seul.indexOf("<") !== -1 || mots.length < 2) { i++; continue; }
-        // On la coupe en deux et on remet le reste sur une page neuve,
-        // juste apres, qui sera verifiee a son tour.
-        const moitie = Math.ceil(mots.length / 2);
-        pages[i][0] = mots.slice(0, moitie).join(" ");
-        pages.splice(i + 1, 0, [mots.slice(moitie).join(" ")]);
+        const limite = yHaut + budget;
+
+        // Jusqu'ou peut-on aller sans depasser le bas de la page ?
+        let k = p;
+        while (k < els.length && els[k].bas <= limite) k++;
+
+        let finP, finOff, yFin;
+        if (k >= els.length) {
+          finP = els.length - 1; finOff = paras[finP].length; yFin = els[finP].bas;
+        } else if (els[k].haut >= limite || !els[k].coupable) {
+          finP = k; finOff = 0; yFin = els[k].haut;
+        } else {
+          const noeud = els[k].el.firstChild;
+          const demi = demiInterligne(taille);
+          const c = offsetQuiTient(plage, noeud, refBanc, limite - demi);
+          const minimum = (k === p) ? off : 0;
+          if (c > minimum) {
+            finP = k; finOff = c;
+            plage.setStart(noeud, 0); plage.setEnd(noeud, c);
+            yFin = plage.getBoundingClientRect().bottom - refBanc + demi;
+          } else { finP = k; finOff = 0; yFin = els[k].haut; }
+        }
+
+        // Toujours avancer, meme dans un cas tordu : sinon boucle infinie.
+        if (finP < p || (finP === p && finOff <= off)) {
+          finP = p; finOff = paras[p].length; yFin = els[p].bas;
+        }
+
+        const morceaux = [];
+        for (let i = p; i <= finP; i++) {
+          const t = paras[i];
+          const d = (i === p) ? off : 0;
+          const f = (i === finP) ? finOff : t.length;
+          if (f <= d) continue;
+          const bout = t.slice(d, f).trim();
+          if (bout) morceaux.push(((i === p && off > 0) ? LIV_SUITE : "") + bout);
+        }
+        if (morceaux.length) pages.push(morceaux);
+
+        if (finOff >= paras[finP].length) {
+          p = finP + 1; off = 0;
+          yHaut = (p < els.length) ? els[p].haut : yFin;
+        } else {
+          p = finP; off = finOff; yHaut = yFin;
+        }
       }
 
-      const sortie = pages.filter(p => p.length).map(p => p.join("\n\n"));
+      // Filet de securite : on verifie chaque page pour de vrai. Si l'une
+      // depasse malgre tout, on renvoie la fin sur la page suivante.
+      let g2 = 0;
+      for (let i = 0; i < pages.length && g2 < 50000; ) {
+        g2++;
+        rendreDansBanc(banc, pages[i]);
+        // Le decoupage a la ligne garantit deja que la page tient. Ce filet
+        // n'est la que pour un cas pathologique. Tolerance de 3px : scrollHeight
+        // est arrondi, et on ne veut pas declencher une cascade de corrections
+        // pour un pixel. On n'insere JAMAIS de texte dans une page existante
+        // (ce serait une reaction en chaine) : on cree une page a part.
+        if (banc.scrollHeight <= budget + 3) { i++; continue; }
+        const dernier = pages[i][pages[i].length - 1];
+        const mots = String(dernier).split(/\s+/);
+        if (pages[i].length > 1) {
+          pages[i].pop();
+          pages.splice(i + 1, 0, [dernier]);
+          i++;
+          continue;
+        }
+        if (mots.length < 2 || String(dernier).indexOf("<") !== -1) { i++; continue; }
+        const garder = Math.max(1, mots.length - Math.max(1, Math.round(mots.length * 0.08)));
+        const tete = mots.slice(0, garder).join(" ");
+        const reste = mots.slice(garder).join(" ");
+        pages[i][0] = (String(dernier).indexOf(LIV_SUITE) === 0 ? "" : "") + tete;
+        pages.splice(i + 1, 0, [LIV_SUITE + reste]);
+      }
+
+      const sortie = pages.filter(x => x.length).map(x => x.join("\n\n"));
       return sortie.length ? sortie : null;
     } catch (e) { return null; }
     finally { try { if (banc && banc.parentNode) banc.parentNode.removeChild(banc); } catch (e) {} }
@@ -17697,8 +17781,9 @@ export default function App() {
         };
         const dispo = (window.innerHeight || 0) - haut("reader-entete", 42) - haut("reader-compteur", 20) - haut("reader-nav", 69) - 28;
         if (dispo < 120) return;
-        // Format d une page de livre : 9 de large pour 13 de haut.
-        const h = Math.max(120, Math.min(Math.round(dispo), Math.round(l * 13 / 9)));
+        // Format d une page de livre : 9 de large pour 16 de haut,
+        // sans jamais depasser la place reellement disponible.
+        const h = Math.max(120, Math.min(Math.round(dispo), Math.round(l * LIV_RATIO)));
         setBoitePage(b => (Math.abs(b.l - l) < 2 && Math.abs(b.h - h) < 2) ? b : { l: l, h: h });
       } catch (e) {}
     };
@@ -17722,7 +17807,7 @@ export default function App() {
 
   // Texte nu d'une page, pour pouvoir la reconnaitre apres un recalcul.
   function texteNu(x) {
-    return String(x || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    return String(x || "").split(LIV_SUITE).join("").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   }
 
   // Recalcule les pages des que la boite, la taille ou la police changent.
@@ -21222,7 +21307,7 @@ export default function App() {
               display: "flex",
               flexDirection: "column",
               alignItems: "stretch",
-              justifyContent: boitePage.h ? "center" : "flex-start"
+              justifyContent: "flex-start"
             }}>
             <div id="reader-page-scroll" style={{
               // 09/10 : zone de page DELIMITEE. Avant, "flex: 1" laissait la zone
@@ -21234,6 +21319,7 @@ export default function App() {
               minHeight: 0,
               width: "100%",
               overflowY: "auto",
+              scrollbarWidth: "none",
               transition: "transform 0.18s ease, opacity 0.18s ease",
               transform: pageSlideDir === 1 ? "translateX(-30px)" : pageSlideDir === -1 ? "translateX(30px)" : "translateX(0)",
               opacity: pageSlideDir !== 0 ? 0.3 : 1
@@ -21382,21 +21468,25 @@ export default function App() {
                 // ===== PAGES NORMALES (texte du roman) =====
                 <>
               {scrollAllParagraphs.map(function(para, i) {
+                // Un paragraphe commence sur la page precedente : sa suite
+                // s'affiche sans retrait, comme dans un livre.
+                const estSuite = String(para).indexOf(LIV_SUITE) === 0;
+                const texte = estSuite ? String(para).slice(1) : String(para);
                 return (
                   <p key={i} style={{
                     fontFamily: readerFont,
                     fontSize: readerSize + "px",
-                    lineHeight: "1.7",
+                    lineHeight: String(LIV_INTERLIGNE),
                     color: readerDark ? "#e0e0e0" : "#1a1a1a",
                     textAlign: "justify",
                     margin: 0,
-                    marginBottom: "0.9em",
-                    textIndent: i === 0 ? "0" : "1.5em",
+                    marginBottom: LIV_ESPACE_EM + "em",
+                    textIndent: estSuite ? "0" : LIV_RETRAIT,
                     wordBreak: "break-word",
                     overflowWrap: "break-word",
                     userSelect: "none",
                     WebkitUserSelect: "none"
-                  }} dangerouslySetInnerHTML={{ __html: para.trim() }} />
+                  }} dangerouslySetInnerHTML={{ __html: texte.trim() }} />
                 );
               })}
 
