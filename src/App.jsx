@@ -6,6 +6,30 @@ import { createClient } from "@supabase/supabase-js";
 // compte PayDunya est validé et les clés PRODUCTION en place (PAYDUNYA_MODE=live).
 const PAYDUNYA_ENABLED = false;
 
+// ============================================================
+// 09/10 : HOMOROMANCE - deuxieme vitrine sur le MEME code.
+// On regarde le nom de domaine par lequel la visiteuse arrive :
+//   homoromance.com -> catalogue limite a la categorie "HomoRomance",
+//                      habillage rose/violet, logo HomoRomance.
+//   carrybooks.com  -> site historique, strictement inchange.
+// ============================================================
+const CAT_HOMOROMANCE = "HomoRomance";
+const EST_HOMOROMANCE = (function () {
+  try {
+    if (typeof window === "undefined") return false;
+    if ((window.location.hostname || "").toLowerCase().indexOf("homoromance") !== -1) return true;
+    // Apercu avant bascule du domaine : carrybooks.com/?site=homoromance
+    return (window.location.search || "").indexOf("site=homoromance") !== -1;
+  } catch (e) { return false; }
+})();
+const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
+// Le service worker sert les images "cache d'abord" : on change le numero de version
+// a chaque fois qu'on remplace le logo, sinon les anciennes visiteuses gardent l'ancien.
+const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
+// Tout lien interne doit rester sur le domaine par lequel la visiteuse est arrivee.
+const SITE_DOMAINE = EST_HOMOROMANCE ? "homoromance.com" : "carrybooks.com";
+const SITE_URL = "https://" + SITE_DOMAINE;
+
 // 🔐 Bouton admin visible UNIQUEMENT pour cet email connecté
 const ADMIN_EMAIL = "carrybooks.com@gmail.com";
 
@@ -372,7 +396,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
   console.log("[AD] Taille pages :", PAGE_WIDTH, "x", PAGE_HEIGHT);
 
   const margin = Math.round(PAGE_WIDTH * 0.07);
-  const baseUrl = "https://carrybooks.com";
+  const baseUrl = SITE_URL;
 
   // ============================================================
   // 📄 PAGE 1 : Pub CarryCare (image plein écran + 4 zones cliquables + bandeau)
@@ -622,7 +646,7 @@ async function addAdPages(pdfDoc, PDFLib, supabase, currentBookId) {
 
     // Si aucun livre, message
     if (allPayBooks.length === 0) {
-      const noText = "Decouvrez tous nos livres sur carrybooks.com";
+      const noText = "Decouvrez tous nos livres sur " + SITE_DOMAINE;
       const noW = fontItalic.widthOfTextAtSize(noText, 14);
       page2.drawText(noText, {
         x: (PAGE_WIDTH - noW) / 2,
@@ -785,7 +809,7 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const yy = String(now.getFullYear()).slice(-2);
     const purchaseDate = dd + "/" + mm + "/" + yy;
-    const siteUrl = "https://carrybooks.com";
+    const siteUrl = SITE_URL;
 
     // 5. Ajouter le watermark sur CHAQUE page (UNIQUEMENT EN BAS)
     const pages = pdfDoc.getPages();
@@ -806,7 +830,7 @@ async function downloadProtectedPDF(pdfUrl, fileName, clientInfo) {
 
       // 🔻 EN BAS DROITE : "Plus de livres sur" (noir) + "carrybooks.com" (bleu CLIQUABLE)
       const prefixText = "Plus de livres sur ";
-      const linkText = "carrybooks.com";
+      const linkText = SITE_DOMAINE;
       const linkSize = 8;
       const prefixWidth = helveticaFont.widthOfTextAtSize(prefixText, linkSize);
       const linkWidth = helveticaBold.widthOfTextAtSize(linkText, linkSize);
@@ -989,7 +1013,7 @@ async function downloadBodyDiagnosticPDF(result, opts = {}) {
       doc.setFontSize(8);
       doc.setTextColor(...GRIS);
       doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7);
       doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8);
@@ -1510,8 +1534,8 @@ async function downloadBodyDiagnosticPDF(result, opts = {}) {
     doc.setTextColor(0, 102, 204);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, {
-      url: "https://carrybooks.com/mes-resultats"
+    doc.textWithLink(SITE_URL + "/mes-resultats", margin + 5, y, {
+      url: SITE_URL + "/mes-resultats"
     });
     y += 8;
 
@@ -1524,8 +1548,8 @@ async function downloadBodyDiagnosticPDF(result, opts = {}) {
     doc.setTextColor(0, 102, 204);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, {
-      url: "https://carrybooks.com/carrycare"
+    doc.textWithLink(SITE_URL + "/carrycare", margin + 5, y, {
+      url: SITE_URL + "/carrycare"
     });
     y = linkBoxStart + 53;
 
@@ -1541,7 +1565,7 @@ async function downloadBodyDiagnosticPDF(result, opts = {}) {
       doc.setFontSize(8);
       doc.setTextColor(...GRIS);
       doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7);
       doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8);
@@ -1756,7 +1780,7 @@ const CATEGORIES_FALLBACK = {
 const CONTRAT_ARTICLES = [
   ["Article 1 - Objet du contrat", "Le présent contrat définit les conditions dans lesquelles l'Auteur publie, diffuse et vend ses œuvres numériques (romans, livres, guides, livres audio et autres contenus) sur la Plateforme " + SITE_NOM + ", ainsi que les droits et obligations de chaque partie."],
   ["Article 2 - Déclaration et garantie de l'Auteur", "L'Auteur certifie sur l'honneur être le véritable auteur et/ou le détenteur exclusif de l'ensemble des droits des œuvres qu'il publie sur " + SITE_NOM + ". Il garantit que ses œuvres sont originales, qu'elles ne violent aucun droit de propriété intellectuelle, aucun droit à l'image ni aucun droit d'un tiers, et qu'il dispose de tous les droits nécessaires pour les commercialiser."],
-  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 85 % du prix de vente lorsque la vente est amenée par lui-même, c'est-à-dire par son lien de promotion personnel ou par sa vitrine d'auteur, et 50 % lorsque la vente est réalisée par " + SITE_NOM + ". Ces pourcentages s'entendent NETS pour l'Auteur : les frais d'encaissement du paiement et les frais de reversement Mobile Money sont entièrement à la charge de " + SITE_NOM + " et ne sont jamais déduits de la part de l'Auteur. Un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle n'est pas référencé sur carrybooks.com, est mis en ligne sans validation préalable, et l'Auteur garantit en détenir les droits. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
+  ["Article 3 - Rémunération de l'Auteur", "L'Auteur perçoit 85 % du prix de vente lorsque la vente est amenée par lui-même, c'est-à-dire par son lien de promotion personnel ou par sa vitrine d'auteur, et 50 % lorsque la vente est réalisée par " + SITE_NOM + ". Ces pourcentages s'entendent NETS pour l'Auteur : les frais d'encaissement du paiement et les frais de reversement Mobile Money sont entièrement à la charge de " + SITE_NOM + " et ne sont jamais déduits de la part de l'Auteur. Un livre que l'Auteur choisit de vendre EXCLUSIVEMENT dans sa vitrine personnelle n'est pas référencé sur " + SITE_DOMAINE + ", est mis en ligne sans validation préalable, et l'Auteur garantit en détenir les droits. Les paiements sont effectués par Mobile Money au numéro indiqué. Pays éligibles au paiement : Cameroun, Côte d'Ivoire, RDC, Bénin, Sénégal, Congo-Brazzaville, Gabon, Rwanda, Kenya, Mozambique, Ouganda, Sierra Leone, Zambie. L'Auteur de la diaspora ou d'un pays non éligible doit obligatoirement fournir un numéro Mobile Money valide d'un des pays éligibles pour être payé."],
   ["Article 3 bis - Programme d'abonnement (facultatif)", SITE_NOM + " propose un programme d'abonnement permettant aux lecteurs abonnés de lire les ROMANS (lus dans la liseuse) des auteurs participants. La participation est FACULTATIVE (activable dans l'espace auteur). L'auteur participant perçoit une commission fixe (montant défini par " + SITE_NOM + ") à chaque déblocage d'un de ses romans par un abonné, une seule fois par livre (les relectures ne génèrent aucune commission). Les livres PDF et audio ne sont PAS concernés et restent payants. L'auteur peut se retirer à tout moment."],
   ["Article 4 - Validation et modération", "Toute œuvre soumise fait l'objet d'une validation préalable par " + SITE_NOM + " avant sa mise en ligne. " + SITE_NOM + " peut refuser, retirer ou suspendre toute œuvre non conforme au présent contrat, aux conditions d'utilisation, à la loi ou aux bonnes mœurs, sans indemnité."],
   ["Article 5 - Propriété intellectuelle et lutte contre le piratage", "L'Auteur conserve la propriété intellectuelle de ses œuvres et concède à " + SITE_NOM + " le droit non exclusif de les diffuser et de les vendre. Il est formellement interdit de publier, revendre ou diffuser toute œuvre qui ne lui appartient pas, piratée, contrefaite, plagiée ou volée. Toute fraude, piratage, usurpation ou vente d'une œuvre appartenant à autrui entraîne le bannissement immédiat et définitif de l'Auteur, la suspension de tout paiement lié à la fraude, sans préjudice de poursuites judiciaires."],
@@ -1860,26 +1884,6 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
   );
 }
 
-// ============================================================
-// 09/10 : HOMOROMANCE - deuxieme vitrine sur le MEME code.
-// On regarde le nom de domaine par lequel la visiteuse arrive :
-//   homoromance.com -> catalogue limite a la categorie "HomoRomance",
-//                      habillage rose/violet, logo HomoRomance.
-//   carrybooks.com  -> site historique, strictement inchange.
-// ============================================================
-const CAT_HOMOROMANCE = "HomoRomance";
-const EST_HOMOROMANCE = (function () {
-  try {
-    if (typeof window === "undefined") return false;
-    if ((window.location.hostname || "").toLowerCase().indexOf("homoromance") !== -1) return true;
-    // Apercu avant bascule du domaine : carrybooks.com/?site=homoromance
-    return (window.location.search || "").indexOf("site=homoromance") !== -1;
-  } catch (e) { return false; }
-})();
-const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : SITE_NOM;
-// Le service worker sert les images "cache d'abord" : on change le numero de version
-// a chaque fois qu'on remplace le logo, sinon les anciennes visiteuses gardent l'ancien.
-const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
 
 // Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
 // jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
@@ -2430,7 +2434,7 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
 // COMPOSANT PARTAGE RÉUTILISABLE
 // ═══════════════════════════════════════════════
 function ShareButtons({ quizName, quizType }) {
-  const baseUrl = "https://carrybooks.com";
+  const baseUrl = SITE_URL;
   // 🎁 Récupérer le code parrainage de l'utilisateur connecté depuis localStorage
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
@@ -2478,8 +2482,8 @@ function ShareCarryQuiz() {
   // 🎁 Code parrainage utilisateur
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
-  const quizUrl = "https://carrybooks.com/carry-quiz" + refSuffix;
-  const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
+  const quizUrl = SITE_URL + "/carry-quiz" + refSuffix;
+  const carryCareUrl = SITE_URL + "/partage/carrycare" + refSuffix;
   const text = "🎯 Découvre Carry'Quiz sur " + SITE_NOM + " 👇\n" + quizUrl + "\n\n💜 Et ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
@@ -2511,7 +2515,7 @@ function ShareCarryCare() {
   // 🎁 Code parrainage utilisateur
   const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
-  const carryCareUrl = "https://carrybooks.com/partage/carrycare" + refSuffix;
+  const carryCareUrl = SITE_URL + "/partage/carrycare" + refSuffix;
   const text = "💜 Découvre ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
 
   function shareWhatsApp() {
@@ -2910,17 +2914,17 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
   }
 
   function shareResult() {
-    const text = `J'ai fait le quiz "${quiz.title}" sur Carry'Quiz 🎯\n\n${result.level}\n\nFais le test toi aussi 👉 https://www.carrybooks.com`;
+    const text = `J'ai fait le quiz "${quiz.title}" sur Carry'Quiz 🎯\n\n${result.level}\n\nFais le test toi aussi 👉 ${SITE_URL}`;
     if (navigator.share) {
-      navigator.share({ title: "Carry'Quiz — " + quiz.title, text, url: "https://www.carrybooks.com" });
+      navigator.share({ title: "Carry'Quiz — " + quiz.title, text, url: SITE_URL });
     } else {
       navigator.clipboard.writeText(text).then(() => alert("Copié ! Partage sur WhatsApp 📲"));
     }
   }
 
   function shareWithPartner() {
-    const text = `Fais ce quiz avec moi 👉 "${quiz.title}" sur Carry'Quiz\n\nhttps://www.carrybooks.com`;
-    if (navigator.share) navigator.share({ title: quiz.title, text, url: "https://www.carrybooks.com" });
+    const text = `Fais ce quiz avec moi 👉 "${quiz.title}" sur Carry'Quiz\n\n${SITE_URL}`;
+    if (navigator.share) navigator.share({ title: quiz.title, text, url: SITE_URL });
     else navigator.clipboard.writeText(text).then(() => alert("Lien copié ! Envoie à ton/ta partenaire 💌"));
   }
 
@@ -3487,8 +3491,8 @@ function DiagnosticShareButtons({ url, title, message }) {
 
   // 🎯 Transformer l'URL réelle (/diagnostic-facial) en URL de partage (/partage/diagnostic-facial)
   // pour que Facebook/WhatsApp affichent la belle image dédiée au lieu du logo.
-  const shareUrl = url && url.includes("carrybooks.com/") && !url.includes("/partage/")
-    ? url.replace("carrybooks.com/", "carrybooks.com/partage/")
+  const shareUrl = url && url.includes(SITE_DOMAINE + "/") && !url.includes("/partage/")
+    ? url.replace(SITE_DOMAINE + "/", SITE_DOMAINE + "/partage/")
     : url;
 
   // 🎁 Récupérer le code parrainage de l'utilisateur connecté + l'ajouter à l'URL de partage
@@ -5098,7 +5102,7 @@ function BeautyFacialQuiz({ exigerConnexion, lecteur, payerCarrycarePawapay, set
           </button>
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
-              url="https://carrybooks.com/diagnostic-facial"
+              url={SITE_URL + "/diagnostic-facial"}
               title="Test Beauté Faciale CarryCare"
               message="🪞 Découvre ton type de peau exact + ta routine personnalisée en 5 min sur CarryCare !"
             />
@@ -6592,7 +6596,7 @@ function FacialDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
-          url="https://carrybooks.com/diagnostic-facial"
+          url={SITE_URL + "/diagnostic-facial"}
           title="Test Beauté Faciale CarryCare"
           message="🪞 J'ai fait mon Test Facial sur CarryCare et c'est incroyable ! Découvre ta routine personnalisée :"
         />
@@ -6855,7 +6859,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
       doc.setFontSize(8);
       doc.setTextColor(...GRIS);
       doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7);
       doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8);
@@ -7339,7 +7343,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
     doc.setTextColor(0, 102, 204);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, { url: "https://carrybooks.com/mes-resultats" });
+    doc.textWithLink(SITE_URL + "/mes-resultats", margin + 5, y, { url: SITE_URL + "/mes-resultats" });
     y += 8;
     doc.setTextColor(...NOIR);
     doc.setFont("helvetica", "bold");
@@ -7349,7 +7353,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
     doc.setTextColor(0, 102, 204);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, { url: "https://carrybooks.com/carrycare" });
+    doc.textWithLink(SITE_URL + "/carrycare", margin + 5, y, { url: SITE_URL + "/carrycare" });
     y = linkBoxStart + 53;
 
     addFooter();
@@ -7361,7 +7365,7 @@ async function downloadFacialDiagnosticPDF(result, opts = {}) {
       doc.setFontSize(8);
       doc.setTextColor(...GRIS);
       doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7);
       doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8);
@@ -7588,7 +7592,7 @@ function BeautyBodyQuiz({ exigerConnexion, setPage, setCarryCarePage, bbStep, se
           </button>
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
-              url="https://carrybooks.com/diagnostic-corporel"
+              url={SITE_URL + "/diagnostic-corporel"}
               title="Test Beauté Corporelle CarryCare"
               message="🧴 Vergetures, taches, hydratation... Découvre la routine corps parfaite pour toi sur CarryCare !"
             />
@@ -8762,7 +8766,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
-          url="https://carrybooks.com/diagnostic-corporel"
+          url={SITE_URL + "/diagnostic-corporel"}
           title="Test Beauté Corporelle CarryCare"
           message="🧴 J'ai fait mon Test Corporel sur CarryCare ! Vergetures, taches, hydratation... découvre ta routine corps :"
         />
@@ -9319,7 +9323,7 @@ function LigneQuizV2({ exigerConnexion, setPage, setCarryCarePage, lgStep, setLg
           </div>
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
-              url="https://carrybooks.com/garde-la-ligne"
+              url={SITE_URL + "/garde-la-ligne"}
               title="Sante et Poids CarryCare"
               message="⚖️ Plan alimentaire personnalisé selon ton profil. Garde la ligne intelligemment avec CarryCare !"
             />
@@ -10274,7 +10278,7 @@ function LigneDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
-          url="https://carrybooks.com/garde-la-ligne"
+          url={SITE_URL + "/garde-la-ligne"}
           title="Sante et Poids CarryCare"
           message="⚖️ J'ai mon plan alimentaire personnalisé sur CarryCare ! Garde la ligne intelligemment, fais-le aussi :"
         />
@@ -10328,7 +10332,7 @@ async function downloadLigneDiagnosticPDF(result, opts = {}) {
       const pageNum = doc.internal.getNumberOfPages();
       doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
       doc.setFontSize(8); doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7); doc.text("Plan genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8); doc.text("Page " + pageNum, pageW - margin, pageH - 9, { align: "right" });
     }
@@ -10598,11 +10602,11 @@ async function downloadLigneDiagnosticPDF(result, opts = {}) {
     doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
     doc.text("Retrouve tes resultats en ligne", margin + 5, y); y += 4.5;
     doc.setTextColor(0, 102, 204); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, { url: "https://carrybooks.com/mes-resultats" }); y += 8;
+    doc.textWithLink(SITE_URL + "/mes-resultats", margin + 5, y, { url: SITE_URL + "/mes-resultats" }); y += 8;
     doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
     doc.text("Decouvre nos autres diagnostics (visage, corps, cheveux)", margin + 5, y); y += 4.5;
     doc.setTextColor(0, 102, 204); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, { url: "https://carrybooks.com/carrycare" });
+    doc.textWithLink(SITE_URL + "/carrycare", margin + 5, y, { url: SITE_URL + "/carrycare" });
     y = linkBoxStart + 53;
 
     addFooter();
@@ -10611,7 +10615,7 @@ async function downloadLigneDiagnosticPDF(result, opts = {}) {
       doc.setPage(i);
       doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
       doc.setFontSize(8); doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7); doc.text("Plan genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8); doc.text("Page " + i, pageW - margin, pageH - 9, { align: "right" });
     }
@@ -11700,7 +11704,7 @@ function CapDiagnosticResult({ result, onBack, setCarryCarePage }) {
 
         {/* 🎯 BOUTONS DE PARTAGE — Marketing viral */}
         <DiagnosticShareButtons
-          url="https://carrybooks.com/diagnostic-capillaire"
+          url={SITE_URL + "/diagnostic-capillaire"}
           title="Test Beauté Capillaire CarryCare"
           message="💇‍♀️ J'ai ma routine capillaire sur mesure grâce à CarryCare ! Découvre la tienne :"
         />
@@ -11754,7 +11758,7 @@ async function downloadCapDiagnosticPDF(result, opts = {}) {
       const pageNum = doc.internal.getNumberOfPages();
       doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
       doc.setFontSize(8); doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7); doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8); doc.text("Page " + pageNum, pageW - margin, pageH - 9, { align: "right" });
     }
@@ -12080,11 +12084,11 @@ async function downloadCapDiagnosticPDF(result, opts = {}) {
     doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
     doc.text("Retrouve tes resultats en ligne", margin + 5, y); y += 4.5;
     doc.setTextColor(0, 102, 204); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/mes-resultats", margin + 5, y, { url: "https://carrybooks.com/mes-resultats" }); y += 8;
+    doc.textWithLink(SITE_URL + "/mes-resultats", margin + 5, y, { url: SITE_URL + "/mes-resultats" }); y += 8;
     doc.setTextColor(...NOIR); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
     doc.text("Decouvre nos autres diagnostics", margin + 5, y); y += 4.5;
     doc.setTextColor(0, 102, 204); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.textWithLink("https://carrybooks.com/carrycare", margin + 5, y, { url: "https://carrybooks.com/carrycare" });
+    doc.textWithLink(SITE_URL + "/carrycare", margin + 5, y, { url: SITE_URL + "/carrycare" });
     
     // FOOTERS sur toutes les pages
     const totalPages = doc.internal.getNumberOfPages();
@@ -12092,7 +12096,7 @@ async function downloadCapDiagnosticPDF(result, opts = {}) {
       doc.setPage(i);
       doc.setDrawColor(...GRIS_CLAIR); doc.line(margin, pageH - 15, pageW - margin, pageH - 15);
       doc.setFontSize(8); doc.setTextColor(...GRIS); doc.setFont("helvetica", "normal");
-      doc.text("carrybooks.com", margin, pageH - 9);
+      doc.text(SITE_DOMAINE, margin, pageH - 9);
       doc.setFontSize(7); doc.text("Diagnostic genere le " + new Date().toLocaleDateString("fr-FR"), pageW / 2, pageH - 9, { align: "center" });
       doc.setFontSize(8); doc.text("Page " + i, pageW - margin, pageH - 9, { align: "right" });
     }
@@ -12231,7 +12235,7 @@ function CapillaireQuizV2({ exigerConnexion, setPage, setCarryCarePage, capStep,
           </button>
           <div style={{ marginTop: 20 }}>
             <DiagnosticShareButtons
-              url="https://carrybooks.com/diagnostic-capillaire"
+              url={SITE_URL + "/diagnostic-capillaire"}
               title="Test Beauté Capillaire CarryCare"
               message="💇‍♀️ Cheveux crépus, croissance, routines... Découvre LA routine capillaire faite pour toi !"
             />
@@ -15928,7 +15932,7 @@ export default function App() {
     // Navigateur + PWA : connexion Google directe (inchangée)
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: "https://www.carrybooks.com" }
+      options: { redirectTo: SITE_URL }
     });
   }
 
@@ -19046,7 +19050,7 @@ export default function App() {
               <div style={{ fontSize: 11.5, color: G.textDim, marginTop: -2, marginBottom: 10, lineHeight: 1.5 }}>Ta vitrine à toi, tu l'as dans tous les cas. Ce choix dit seulement si tes livres apparaissent <b>aussi</b> dans le catalogue de carrybooks.com. Tu pourras en changer à tout moment, et même livre par livre.</div>
               {[
                 ["les_deux", "🌍 Ma vitrine + " + SITE_NOM, "Tes livres sont dans ta vitrine ET dans le catalogue " + SITE_NOM + ". Ils passent par une validation sous 24 h. Tu touches 85 % quand la vente vient de toi, 50 % quand c'est " + SITE_NOM + " qui t'amène le lecteur.", "Conseillé"],
-                ["vitrine", "🏪 Ma vitrine uniquement", "Tes livres n'apparaissent nulle part sur carrybooks.com. Ils sont en ligne tout de suite, sans validation, et tu touches 85 % sur chaque vente. Réservé aux auteurs vérifiés.", ""],
+                ["vitrine", "🏪 Ma vitrine uniquement", "Tes livres n'apparaissent nulle part sur " + SITE_DOMAINE + ". Ils sont en ligne tout de suite, sans validation, et tu touches 85 % sur chaque vente. Réservé aux auteurs vérifiés.", ""],
               ].map(function (o) {
                 const val = o[0], titre = o[1], desc = o[2], badge = o[3];
                 const actif = (auteurModeVente === val);
@@ -19309,7 +19313,7 @@ export default function App() {
                   <input id="annonceImgInput" type="file" accept="image/*" onChange={e => { uploadAnnonceImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
                   <label style={labelSt}>Lien de destination * (vers ton livre)</label>
                   <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 8, lineHeight: 1.5, background: G.goldDim, border: "1px solid " + G.gold + "44", borderRadius: 8, padding: "8px 10px" }}>💡 Pour obtenir le lien : va dans <b>Mes livres</b>, ouvre le livre concerne, <b>copie son lien</b>, puis reviens le coller ici.</div>
-                  <input value={annonceLien} onChange={e => setAnnonceLien(e.target.value)} placeholder="https://carrybooks.com/livre/..." style={champ} />
+                  <input value={annonceLien} onChange={e => setAnnonceLien(e.target.value)} placeholder={SITE_URL + "/livre/..."} style={champ} />
                   <div style={{ height: 14 }} />
                   {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce publiee ! Elle est maintenant visible sur l’accueil.</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
                   <button onClick={soumettreAnnonce} disabled={annonceSending} style={{ width: "100%", padding: 14, background: G.gold, color: "#1a1208", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: annonceSending ? 0.6 : 1 }}>{annonceSending ? "Envoi…" : "📤 Soumettre l’annonce"}</button>
@@ -19746,7 +19750,7 @@ export default function App() {
                   {mesLivresDetail && (() => {
                     const b = mesLivresDetail;
                     const stx = b.status === "actif" ? { t: "✅ En ligne", c: G.green } : b.status === "brouillon" ? { t: "✍️ En cours d'édition", c: "#c9952a" } : (b.moderation === "refuse" ? { t: "❌ Refusé", c: "#e53935" } : { t: "⏳ En attente de validation", c: "#c9a84c" });
-                    const lien = "https://carrybooks.com/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
+                    const lien = SITE_URL + "/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
                     return (
                       <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
                         <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
@@ -20040,8 +20044,8 @@ export default function App() {
                         <div style={{ marginTop: 12, padding: 12, background: G.goldDim, borderRadius: 8 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur tes réseaux sociaux)</div>
                           <div style={{ display: "flex", gap: 6 }}>
-                            <input readOnly value={"https://carrybooks.com/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: "#fff", minWidth: 0 }} />
-                            <button onClick={() => { try { navigator.clipboard.writeText("https://carrybooks.com/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.gold, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
+                            <input readOnly value={SITE_URL + "/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: "#fff", minWidth: 0 }} />
+                            <button onClick={() => { try { navigator.clipboard.writeText(SITE_URL + "/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.gold, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
                           </div>
                         </div>
                       ) : null}
@@ -20115,7 +20119,7 @@ export default function App() {
               {/* MA VITRINE : deux cartes — identite (nom, logo, en-tete) et apparence (couleurs). */}
               {auteurTab === "vitrine" && (<>
                 {auteurProfil && auteurProfil.code_source ? (() => {
-                  const lienV = "https://carrybooks.com/auteur/" + auteurProfil.code_source;
+                  const lienV = SITE_URL + "/auteur/" + auteurProfil.code_source;
                   const nomV = (auteurVitrineNom || "").trim() || (auteurProfil.nom_complet || "ma librairie");
                   const partager = () => {
                     const texte = "📚 Découvre " + nomV + " sur " + SITE_NOM + " :\n" + lienV;
@@ -20178,7 +20182,7 @@ export default function App() {
                   <div style={{ marginBottom: 16 }}>
                     {[
                       ["les_deux", "🌍 Ma vitrine + " + SITE_NOM, "Dans ta vitrine et dans le catalogue " + SITE_NOM + ", après validation sous 24 h. 85 % quand la vente vient de toi, 50 % quand elle vient de " + SITE_NOM + "."],
-                      ["vitrine", "🏪 Ma vitrine uniquement", "Nulle part sur carrybooks.com. En ligne tout de suite, sans validation, 85 % sur chaque vente. Réservé aux auteurs vérifiés."],
+                      ["vitrine", "🏪 Ma vitrine uniquement", "Nulle part sur " + SITE_DOMAINE + ". En ligne tout de suite, sans validation, 85 % sur chaque vente. Réservé aux auteurs vérifiés."],
                     ].map(function (o) {
                       const val = o[0], titre = o[1], desc = o[2];
                       const actif = (auteurModeVente === val);
@@ -20939,7 +20943,7 @@ export default function App() {
                   <p style={{ fontSize: 13, color: "#c9a84c", letterSpacing: 3, textTransform: "uppercase", fontWeight: "bold", marginBottom: 18 }}>
                     {SITE_NOM}
                   </p>
-                  <a href="https://www.carrybooks.com" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                  <a href={SITE_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
                     style={{ fontSize: 12, color: "#c9a84c", marginBottom: 22, textDecoration: "underline" }}>
                     www.carrybooks.com
                   </a>
@@ -24298,18 +24302,18 @@ export default function App() {
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                     <button onClick={() => {
-                      const url = "https://carrybooks.com/?ref=" + referralCode;
+                      const url = SITE_URL + "/?ref=" + referralCode;
                       const discount = parseFloat(appReferralSettings?.referred_discount_pct);
                       const discountTxt = discount > 0 ? ` Avec mon lien tu as -${discount}% sur ta 1ère commande :` : " :";
                       const text = "📚 Découvre " + SITE_NOM + " ! Des livres et articles de qualité au Cameroun." + discountTxt + "\n" + url;
                       window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
                     }} style={{ padding: "10px 8px", background: "#25D366", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>💬 WhatsApp</button>
                     <button onClick={() => {
-                      const url = "https://carrybooks.com/?ref=" + referralCode;
+                      const url = SITE_URL + "/?ref=" + referralCode;
                       window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
                     }} style={{ padding: "10px 8px", background: "#1877F2", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>📘 Facebook</button>
                     <button onClick={() => {
-                      const url = "https://carrybooks.com/?ref=" + referralCode;
+                      const url = SITE_URL + "/?ref=" + referralCode;
                       navigator.clipboard?.writeText(url).then(() => alert("✅ Lien copié !")).catch(() => {});
                     }} style={{ padding: "10px 8px", background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 8, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>🔗 Copier</button>
                   </div>
