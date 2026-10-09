@@ -1922,6 +1922,7 @@ const G_CARRYBOOKS = {
   carte: "#fff", carteTexte: "#1a1208",
   champ: "#fff", champBordure: "#d8cdb8",
   bouton: "#c9a84c", boutonTexte: "#fff", prix: "#c9a84c",
+  prixFond: "transparent", prixPad: "0", prixRadius: 0,
 };
 
 // HomoRomance : theme SOMBRE. Fond presque noir bleute, titres et accents en rose vif,
@@ -1938,10 +1939,12 @@ const G_HOMOROMANCE = {
   // Fond des cartes et des fenetres : blanc sur CarryBooks, bleu nuit ici.
   carte: "#161729", carteTexte: "#f2f0f7",
   // Champ de recherche et pastilles de categorie : fond noir, contour violet.
-  champ: "#0d0d17", champBordure: "#8e2de2",
-  // Boutons en violet fonce, texte blanc. Les PRIX sont du texte pose sur le fond
-  // presque noir : un violet fonce y serait illisible, on prend un violet plus clair.
-  bouton: "#5b1a8a", boutonTexte: "#fff", prix: "#9d4edd",
+  champ: "#0d0d17", champBordure: "#3c0145",
+  // Violet de la marque, donne par Landrine le 09/10 : #3c0145.
+  // Il est presque aussi sombre que le fond, donc le prix devient une PASTILLE
+  // (fond violet, chiffre blanc) au lieu d'un simple texte, sinon il serait illisible.
+  bouton: "#3c0145", boutonTexte: "#fff", prix: "#fff",
+  prixFond: "#3c0145", prixPad: "2px 8px", prixRadius: 6,
 };
 
 const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
@@ -23083,7 +23086,7 @@ export default function App() {
                             {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -23133,7 +23136,7 @@ export default function App() {
                                 </div>
                                 <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                                 {book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
-                                <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", marginTop: 3 }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
+                                <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", marginTop: 3, display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
                               </div>
                             ))}
                           </div>
@@ -23351,7 +23354,7 @@ export default function App() {
                             </div>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold" }}>
+                          <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>
                             {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
                           </div>
                         )}
@@ -24151,7 +24154,7 @@ export default function App() {
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
                     <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
-                    <div style={{ fontSize: 12, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}</div>
+                    <div style={{ fontSize: 12, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}</div>
                   </div>
                 ))}
               </div>
