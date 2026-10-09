@@ -40,6 +40,15 @@ const LIV_ESPACE_TITRE_EM = 1.1;   // au-dessus d'un titre de chapitre
 const LIV_ESPACE_SOUS_TITRE_EM = 0.5; // juste en dessous du titre
 const LIV_RETRAIT = "1.5em";       // retrait de la premiere ligne
 const LIV_RATIO = 16 / 9;       // hauteur de la page = largeur x ce rapport
+// Inclinaison du pli, en degres depuis l'horizontale. 45 = pli en biais d'un
+// coin a l'autre ; plus on monte vers 90, plus le pli se redresse et plus le
+// mouvement va franchement de droite a gauche, comme une vraie page.
+const LIV_ANGLE_PLI = 72;
+const PLI_RAD = LIV_ANGLE_PLI * Math.PI / 180;
+const PLI_SIN = Math.sin(PLI_RAD), PLI_COS = Math.cos(PLI_RAD);
+const PLI_COS2 = Math.cos(2 * PLI_RAD), PLI_SIN2 = Math.sin(2 * PLI_RAD);
+// Distance signee d'un point a la droite du pli (normale unitaire).
+function pliProjection(x, y) { return x * PLI_SIN - y * PLI_COS; }
 const LIV_SUITE = "\u0001";     // marque la suite d'un paragraphe coupe entre 2 pages
 
 // Un titre de chapitre merite de l'air au-dessus.
@@ -17851,13 +17860,15 @@ export default function App() {
   const [pliTextes, setPliTextes] = useState({ dessus: "", dessous: "" });
   const pliEnCours = useRef(false);
 
-  // Le rectangle de la page coupe par la droite x+y=K (algorithme de decoupe
+  // Le rectangle de la page coupe par la droite x-y=K (algorithme de decoupe
   // de polygone) : d'un cote ce qui reste a plat, de l'autre ce qui se replie.
+  // Cette diagonale souleve le COTE DROIT de la feuille et la rabat vers la
+  // gauche : le geste d'une vraie page qu'on tourne.
   function polygoneDemiPlan(K, W, H, inferieur) {
     const r = [[0, 0], [W, 0], [W, H], [0, H]];
-    const dans = p => inferieur ? (p[0] + p[1] <= K) : (p[0] + p[1] >= K);
+    const dans = p => inferieur ? (pliProjection(p[0], p[1]) <= K) : (pliProjection(p[0], p[1]) >= K);
     const croise = (a, b) => {
-      const sa = a[0] + a[1], sb = b[0] + b[1], t = (K - sa) / (sb - sa);
+      const sa = pliProjection(a[0], a[1]), sb = pliProjection(b[0], b[1]), t = (K - sa) / (sb - sa);
       return [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])];
     };
     const o = [];
@@ -17871,8 +17882,10 @@ export default function App() {
   }
 
   function poserPli(K, W, H, sombre) {
-    const S = (W + H) || 1;
-    const pc = Math.max(0, Math.min(100, (K / S) * 100));
+    // Position du pli le long de l'axe perpendiculaire a la droite du pli.
+    // Cet axe va du coin bas-gauche (le plus loin) au coin haut-droit.
+    const course = (W * PLI_SIN + H * PLI_COS) || 1;
+    const pc = Math.max(0, Math.min(100, ((K + H * PLI_COS) / course) * 100));
     const boite = document.getElementById("pli-boite");
     const dessus = document.getElementById("pli-dessus");
     const rabat = document.getElementById("pli-rabat");
@@ -17884,22 +17897,24 @@ export default function App() {
     const haute = polygoneDemiPlan(K, W, H, false);
     dessus.style.clipPath = basse;
     rabat.style.clipPath = haute;
-    // Reflexion autour de x+y=K : (x,y) -> (K-y, K-x)
-    rabat.style.transform = "matrix(0,-1,-1,0," + K + "," + K + ")";
+    // Reflexion autour de la droite du pli : p -> p - 2(n.p - K)n
+    rabat.style.transform = "matrix(" + PLI_COS2.toFixed(6) + "," + PLI_SIN2.toFixed(6) + "," +
+      PLI_SIN2.toFixed(6) + "," + (-PLI_COS2).toFixed(6) + "," +
+      (2 * K * PLI_SIN).toFixed(3) + "," + (-2 * K * PLI_COS).toFixed(3) + ")";
     if (voile) {
       // Dos de la feuille : sombre au pli, ou le papier se courbe.
-      voile.style.background = "linear-gradient(135deg, rgba(0,0,0,0) calc(" + pc + "% - 2px), rgba(0,0,0,0.17) " + pc + "%, rgba(0,0,0,0.05) calc(" + pc + "% + 34px), rgba(0,0,0,0.015) calc(" + pc + "% + 90px))";
+      voile.style.background = "linear-gradient(" + LIV_ANGLE_PLI + "deg, rgba(0,0,0,0) calc(" + pc + "% - 2px), rgba(0,0,0,0.17) " + pc + "%, rgba(0,0,0,0.05) calc(" + pc + "% + 34px), rgba(0,0,0,0.015) calc(" + pc + "% + 90px))";
     }
     if (ombre) {
       // Ombre portee par la feuille soulevee sur la page d'arrivee.
       ombre.style.clipPath = haute;
-      ombre.style.background = "linear-gradient(135deg, rgba(0,0,0,0) calc(" + pc + "% - 1px), rgba(0,0,0,0.22) " + pc + "%, rgba(0,0,0,0.10) calc(" + pc + "% + 10px), rgba(0,0,0,0) calc(" + pc + "% + 34px))";
+      ombre.style.background = "linear-gradient(" + LIV_ANGLE_PLI + "deg, rgba(0,0,0,0) calc(" + pc + "% - 1px), rgba(0,0,0,0.22) " + pc + "%, rgba(0,0,0,0.10) calc(" + pc + "% + 10px), rgba(0,0,0,0) calc(" + pc + "% + 34px))";
     }
     if (arete) {
       // Fine arete claire : le bord du pli accroche la lumiere.
       const c = sombre ? "255,255,255,0.30" : "255,255,255,0.95";
       arete.style.clipPath = basse;
-      arete.style.background = "linear-gradient(135deg, rgba(255,255,255,0) calc(" + pc + "% - 3px), rgba(" + c + ") calc(" + pc + "% - 1px), rgba(255,255,255,0) calc(" + pc + "% + 1px))";
+      arete.style.background = "linear-gradient(" + LIV_ANGLE_PLI + "deg, rgba(255,255,255,0) calc(" + pc + "% - 3px), rgba(" + c + ") calc(" + pc + "% - 1px), rgba(255,255,255,0) calc(" + pc + "% + 1px))";
     }
     if (boite) boite.style.visibility = "visible";
     return true;
@@ -17918,19 +17933,21 @@ export default function App() {
     const sombre = !!readerDark;
     setPliTextes({ dessus: texteDessus, dessous: texteDessous });
     setPliActif(true);
-    const duree = 420;
+    const duree = 850;
     let t0 = null, pret = false;
     const pas = (t) => {
       if (!pret) {
         // On attend que les couches soient dans la page avant de demarrer.
-        if (!poserPli(sens === 1 ? S : 0, W, H, sombre)) { window.requestAnimationFrame(pas); return; }
+        if (!poserPli(sens === 1 ? W * PLI_SIN : -H * PLI_COS, W, H, sombre)) { window.requestAnimationFrame(pas); return; }
         pret = true; t0 = t;
         window.requestAnimationFrame(pas);
         return;
       }
       const p = Math.min(1, (t - t0) / duree);
       const e = 1 - Math.pow(1 - p, 3);   // depart franc, arrivee en douceur
-      poserPli(sens === 1 ? S * (1 - e) : S * e, W, H, sombre);
+      // K va de W*sin (feuille a plat) a -H*cos (feuille entierement repliee).
+      const plat = W * PLI_SIN, replie = -H * PLI_COS;
+      poserPli(sens === 1 ? plat + e * (replie - plat) : replie + e * (plat - replie), W, H, sombre);
       if (p < 1) window.requestAnimationFrame(pas);
       else { clearTimeout(secours); pliEnCours.current = false; setPliActif(false); fin(); }
     };
@@ -21720,14 +21737,14 @@ export default function App() {
         {!readerScrollMode && (
         <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={goToPrevPage} disabled={readingPage === 0}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === 0 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === 0 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === 0 ? (readerDark ? "#555" : "#bbb") : G.boutonTexte, fontSize: 24, lineHeight: 1, fontWeight: "bold", cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
           </button>
           <input type="range" min={0} max={total - 1} value={readingPage}
             onChange={function(e) { setReadingPage(Number(e.target.value)); window.scrollTo(0,0); }}
-            style={{ flex: 1, accentColor: G.gold }} />
+            style={{ flex: 1, accentColor: G.bouton }} />
           <button onClick={goToNextPage} disabled={readingPage === total - 1}
-            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === total - 1 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === total - 1 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
+            style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === total - 1 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === total - 1 ? (readerDark ? "#555" : "#bbb") : G.boutonTexte, lineHeight: 1, fontWeight: "bold", fontSize: 22, cursor: readingPage === total - 1 ? "not-allowed" : "pointer" }}>
             ›
           </button>
         </div>
