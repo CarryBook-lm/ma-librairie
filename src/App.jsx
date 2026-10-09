@@ -13930,7 +13930,7 @@ export default function App() {
       setCategorieUrlFaite(true);
     }
   }, [CATEGORIES, categorieUrlFaite]);
-  const [readerSize, setReaderSize] = useState(15);
+  const [readerSize, setReaderSize] = useState(13);
   const [readerFont, setReaderFont] = useState("Georgia, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [readerDark, setReaderDark] = useState(false);
@@ -17569,6 +17569,115 @@ export default function App() {
     setTranslateLang(null);
   }
 
+  // ============================================================
+  // 09/10 : LISEUSE, MODE PAGE A PAGE.
+  // Avant, une page faisait 1600 caracteres, quelle que soit la taille de
+  // l'ecran ou du texte : la fin de la page passait sous la bande du bas et il
+  // fallait faire defiler pour la lire. Maintenant on mesure pour de vrai la
+  // hauteur disponible entre la bande du haut et celle du bas, puis la hauteur
+  // de chaque paragraphe, et on remplit les pages sans jamais depasser.
+  // ============================================================
+  const [boitePage, setBoitePage] = useState({ l: 0, h: 0 });
+  const [pagesMesurees, setPagesMesurees] = useState(null);
+
+  // Mesure la hauteur de chaque paragraphe, rendu exactement comme dans la liseuse.
+  function mesurerParagraphes(paras, largeur, taille, police) {
+    const banc = document.createElement("div");
+    banc.setAttribute("aria-hidden", "true");
+    banc.style.cssText = "position:absolute;left:-10000px;top:0;visibility:hidden;pointer-events:none;";
+    banc.style.boxSizing = "border-box";
+    banc.style.width = largeur + "px";
+    banc.style.fontFamily = police;
+    banc.style.fontSize = taille + "px";
+    banc.style.lineHeight = "1.7";
+    banc.style.textAlign = "justify";
+    banc.style.wordBreak = "break-word";
+    banc.style.overflowWrap = "break-word";
+    banc.innerHTML = paras.map(function (x) {
+      return '<p style="margin:0 0 0.9em;text-indent:1.5em">' + x.trim() + "</p>";
+    }).join("");
+    document.body.appendChild(banc);
+    const marge = taille * 0.9;
+    const hauteurs = [];
+    for (let i = 0; i < banc.children.length; i++) {
+      hauteurs.push(banc.children[i].getBoundingClientRect().height + marge);
+    }
+    document.body.removeChild(banc);
+    return hauteurs;
+  }
+
+  function decouperEnPages(contenu, largeur, hauteur, taille, police) {
+    try {
+      if (typeof document === "undefined" || !largeur || !hauteur || !contenu) return null;
+      let paras = String(contenu).split(/\n+/).filter(x => x.trim());
+      if (!paras.length) return null;
+      const budget = Math.max(80, hauteur - 4);
+      let hauteurs = mesurerParagraphes(paras, largeur, taille, police);
+      // Un paragraphe plus haut qu une page entiere : on le coupe en morceaux.
+      // On ne coupe pas ceux qui contiennent du HTML, pour ne pas casser une balise.
+      if (hauteurs.some(h => h > budget)) {
+        const refaits = [];
+        for (let i = 0; i < paras.length; i++) {
+          if (hauteurs[i] <= budget || paras[i].indexOf("<") !== -1) { refaits.push(paras[i]); continue; }
+          const morceaux = Math.ceil(hauteurs[i] / budget) + 1;
+          const mots = paras[i].split(/\s+/);
+          const parMorceau = Math.ceil(mots.length / morceaux);
+          for (let j = 0; j < mots.length; j += parMorceau) refaits.push(mots.slice(j, j + parMorceau).join(" "));
+        }
+        paras = refaits;
+        hauteurs = mesurerParagraphes(paras, largeur, taille, police);
+      }
+      const pages = [];
+      let courante = [], cumul = 0;
+      for (let i = 0; i < paras.length; i++) {
+        if (courante.length && cumul + hauteurs[i] > budget) { pages.push(courante.join("\n\n")); courante = []; cumul = 0; }
+        courante.push(paras[i]);
+        cumul += hauteurs[i];
+      }
+      if (courante.length) pages.push(courante.join("\n\n"));
+      return pages.length ? pages : null;
+    } catch (e) { return null; }
+  }
+
+  // Hauteur et largeur reellement disponibles pour le texte.
+  useEffect(() => {
+    if (page !== "reader" || !reading || readerScrollMode) return;
+    const mesurer = () => {
+      try {
+        const el = document.getElementById("reader-page-scroll");
+        if (!el) return;
+        const l = el.clientWidth, h = el.clientHeight;
+        if (!l || !h) return;
+        setBoitePage(b => (Math.abs(b.l - l) < 2 && Math.abs(b.h - h) < 2) ? b : { l: l, h: h });
+      } catch (e) {}
+    };
+    const t1 = setTimeout(mesurer, 50);
+    const t2 = setTimeout(mesurer, 400);
+    window.addEventListener("resize", mesurer);
+    window.addEventListener("orientationchange", mesurer);
+    return () => {
+      clearTimeout(t1); clearTimeout(t2);
+      window.removeEventListener("resize", mesurer);
+      window.removeEventListener("orientationchange", mesurer);
+    };
+  }, [page, reading, readerScrollMode, readerSize, readerFont]);
+
+  // Recalcule les pages des que la boite, la taille ou la police changent.
+  useEffect(() => {
+    if (page !== "reader" || !reading || readerScrollMode) { setPagesMesurees(null); return; }
+    if (!boitePage.l || !boitePage.h) return;
+    const contenu = translatedContent || reading.content;
+    if (!contenu) { setPagesMesurees(null); return; }
+    setPagesMesurees(decouperEnPages(contenu, boitePage.l, boitePage.h, readerSize, readerFont));
+  }, [page, reading, readerScrollMode, translatedContent, boitePage.l, boitePage.h, readerSize, readerFont]);
+
+  // Apres un recalcul, ne pas rester bloque sur une page qui n existe plus.
+  useEffect(() => {
+    if (!pagesMesurees || !pagesMesurees.length) return;
+    const dernier = excerptMode ? 1 : pagesMesurees.length + 3;
+    setReadingPage(x => (x > dernier ? dernier : x));
+  }, [pagesMesurees, excerptMode]);
+
   function getPages(content) {
     if (!content) return ["Ce livre n'a pas encore de contenu."];
     const paragraphs = content.split(/\n+/).filter(p => p.trim());
@@ -20727,7 +20836,9 @@ export default function App() {
       );
     }
 
-    const allPages = getPages(translatedContent || reading.content);
+    const allPages = (!readerScrollMode && pagesMesurees && pagesMesurees.length)
+      ? pagesMesurees
+      : getPages(translatedContent || reading.content);
     // Pages spéciales : ajoutées seulement en mode lecture complète (pas extrait)
     const fullPages = excerptMode 
       ? allPages.slice(0, 2)
