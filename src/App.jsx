@@ -13732,6 +13732,27 @@ export default function App() {
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
+  // 09/10 : sur HomoRomance, seuls comptent les auteurs qui ont au moins 1 livre
+  // de la categorie HomoRomance. Tout le reste (annonces, listes d'auteurs) s'y rapporte.
+  const [auteursHR, setAuteursHR] = useState(null);
+  useEffect(() => {
+    if (!EST_HOMOROMANCE) return;
+    let vivant = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("books").select("auteur_id")
+          .eq("category", CAT_HOMOROMANCE).not("auteur_id", "is", null);
+        if (vivant) setAuteursHR(new Set((data || []).map(r => r.auteur_id)));
+      } catch (e) { if (vivant) setAuteursHR(new Set()); }
+    })();
+    return () => { vivant = false; };
+  }, []);
+  // Cet auteur appartient-il au site affiche ?
+  function auteurDuSite(id) {
+    if (!EST_HOMOROMANCE) return true;
+    if (!auteursHR) return false;   // tant qu'on ne sait pas, on ne montre rien
+    return auteursHR.has(id);
+  }
   const [seedMelange] = useState(() => Math.floor(Math.random() * 1000000));
   const melangerListe = (arr) => { const a = [...(arr || [])]; let s = seedMelange; for (let i = a.length - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor((s / 233280) * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const annoncesRef = useRef(null);
@@ -13778,7 +13799,7 @@ export default function App() {
   // 21/09 : les annonces de l'accueil changent de place a chaque ouverture du site.
   // melangerListe utilise seedMelange, tire une seule fois par chargement de page :
   // l'ordre reste stable pendant la visite, mais il est different a la visite suivante.
-  useEffect(() => { supabase.from("annonces_pub").select("id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(melangerListe(data || []))); }, []);
+  useEffect(() => { supabase.from("annonces_pub").select("id, auteur_id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(melangerListe(data || []))); }, []);
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
@@ -14308,7 +14329,7 @@ export default function App() {
   const [selAuteurId, setSelAuteurId] = useState(null);
   const [addAuteurOpen, setAddAuteurOpen] = useState(false);
   const [addAuteurNom, setAddAuteurNom] = useState("");
-  const listeAuteursPub = () => [{ id: 0, nom: (auteurProfil && auteurProfil.nom_complet) || (EST_HOMOROMANCE ? "Johanna Morisson" : "Landrine Maff"), ville: EST_HOMOROMANCE ? "" : ((auteurProfil && auteurProfil.pays) || "Cameroun"), photo_url: (auteurProfil && auteurProfil.photo_url) || null, verifie: true }, ...profilsAuteurs.filter(p => !/landrine/i.test(p.nom))];
+  const listeAuteursPub = () => [{ id: 0, nom: (auteurProfil && auteurProfil.nom_complet) || (EST_HOMOROMANCE ? "Johanna Morisson" : "Landrine Maff"), ville: EST_HOMOROMANCE ? "" : ((auteurProfil && auteurProfil.pays) || "Cameroun"), photo_url: (auteurProfil && auteurProfil.photo_url) || null, verifie: true }, ...profilsAuteurs.filter(p => !/landrine/i.test(p.nom) && auteurDuSite(p.id))];
   const profilCoche = () => listeAuteursPub().find(a => a.id === selAuteurId) || null;
   const chargerProfilsAuteurs = async () => { const { data } = await supabase.from("auteurs_affichage").select("*").order("nom", { ascending: true }); setProfilsAuteurs(data || []); if (selAuteurId === null) setSelAuteurId(0); };
   useEffect(() => { chargerProfilsAuteurs(); }, [auteurProfil]);
@@ -18408,7 +18429,7 @@ export default function App() {
     (async () => {
       try {
         const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
-        if (!cancel) setAuteursAll((data || []).filter(a => !a.banni));
+        if (!cancel) setAuteursAll((data || []).filter(a => !a.banni && auteurDuSite(a.id)));
       } catch (e) {}
     })();
     return () => { cancel = true; };
@@ -18423,7 +18444,7 @@ export default function App() {
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
         const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
-        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source && !a.banni));
+        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source && !a.banni && auteurDuSite(a.id)));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
     })();
@@ -23096,10 +23117,10 @@ export default function App() {
                 })()}
 
                 {/* ANNONCES DES AUTEURS (carrousel 16:9 horizontal) */}
-                {annoncesActives.length > 0 && (
+                {annoncesActives.filter(a => auteurDuSite(a.auteur_id)).length > 0 && (
                   <div style={{ marginBottom: 28 }}>
                     <div ref={annoncesRef} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollBehavior: "smooth", scrollSnapType: "x mandatory" }}>
-                      {annoncesActives.map(a => (
+                      {annoncesActives.filter(a => auteurDuSite(a.auteur_id)).map(a => (
                         <div key={a.id} onClick={() => { window.location.href = lienInterne(a.lien); }} style={{ flex: "0 0 88%", width: "88%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", scrollSnapAlign: "start" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>

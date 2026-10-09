@@ -30,6 +30,26 @@ function livres(select, options) {
   return q;
 }
 
+// Les auteurs du site = ceux qui ont au moins 1 livre de la categorie affichee.
+// On le calcule une seule fois, puis on filtre les listes avec.
+let _auteursDuSite = null;
+async function chargerAuteursDuSite() {
+  if (!EST_HOMOROMANCE) return null;
+  if (_auteursDuSite) return _auteursDuSite;
+  try {
+    const { data } = await supabase.from("books").select("auteur_id")
+      .eq("category", CAT_HOMOROMANCE).not("auteur_id", "is", null);
+    _auteursDuSite = new Set((data || []).map(r => r.auteur_id));
+  } catch (e) { _auteursDuSite = new Set(); }
+  return _auteursDuSite;
+}
+// Ne garde que les lignes qui appartiennent au site affiche.
+function filtrerParAuteur(liste, champ) {
+  if (!EST_HOMOROMANCE) return liste || [];
+  const ids = _auteursDuSite || new Set();
+  return (liste || []).filter(x => x && ids.has(x[champ || "id"]));
+}
+
 // CATEGORIES est maintenant chargé dynamiquement depuis Supabase
 // Voir state CATEGORIES dans le composant Admin
 // Fallback minimal si Supabase n'a pas encore répondu
@@ -566,7 +586,8 @@ export default function Admin() {
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
         ]);
-        setEaAuteurs(aut || []);
+        await chargerAuteursDuSite();
+        setEaAuteurs(filtrerParAuteur(aut, "id"));
         chargerSupportAdmin(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
@@ -575,7 +596,8 @@ export default function Admin() {
         const { data: vitr } = await livres("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
         setEaVitrine(vitr || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
-        setEaAnnonces(anns || []);
+        await chargerAuteursDuSite();
+        setEaAnnonces(filtrerParAuteur(anns, "auteur_id"));
         const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
         const pmap = {}; (rp || []).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
         await chargerSoldes();
@@ -635,7 +657,8 @@ export default function Admin() {
       supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
       livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
-    setEaAuteurs(aut || []); setEaBooks(bks || []);
+    await chargerAuteursDuSite();
+    setEaAuteurs(filtrerParAuteur(aut, "id")); setEaBooks(bks || []);
     if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
   };
   const bannirAuteur = async (a) => {
@@ -847,7 +870,7 @@ export default function Admin() {
   };
   const reloadAnnonces = async () => {
     const { data } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
-    setEaAnnonces(data || []); chargerTodo();
+    setEaAnnonces(filtrerParAuteur(data, "auteur_id")); chargerTodo();
   };
   const validerAnnonce = async (id) => { await supabase.from("annonces_pub").update({ statut: "active" }).eq("id", id); await reloadAnnonces(); };
   const refuserAnnonce = async (id) => { const m = window.prompt("Motif du refus (optionnel) :", ""); await supabase.from("annonces_pub").update({ statut: "refusee", motif_refus: m || null }).eq("id", id); await reloadAnnonces(); };
