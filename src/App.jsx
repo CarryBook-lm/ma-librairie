@@ -1921,6 +1921,7 @@ const G_CARRYBOOKS = {
   surGold: "#000",
   carte: "#fff", carteTexte: "#1a1208",
   champ: "#fff", champBordure: "#d8cdb8",
+  bouton: "#c9a84c", boutonTexte: "#fff", prix: "#c9a84c",
 };
 
 // HomoRomance : theme SOMBRE. Fond presque noir bleute, titres et accents en rose vif,
@@ -1938,6 +1939,9 @@ const G_HOMOROMANCE = {
   carte: "#161729", carteTexte: "#f2f0f7",
   // Champ de recherche et pastilles de categorie : fond noir, contour violet.
   champ: "#0d0d17", champBordure: "#8e2de2",
+  // Boutons en violet fonce, texte blanc. Les PRIX sont du texte pose sur le fond
+  // presque noir : un violet fonce y serait illisible, on prend un violet plus clair.
+  bouton: "#5b1a8a", boutonTexte: "#fff", prix: "#9d4edd",
 };
 
 const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
@@ -17444,6 +17448,15 @@ export default function App() {
     return matchSearch && matchCat && matchSub;
   });
 
+  // 09/10 : sur HomoRomance, une etiquette sans aucun livre ne sert a rien.
+  // On ne garde que celles qui ont au moins un livre visible.
+  const categoriesAffichees = Object.keys(CATEGORIES).filter(cat => {
+    if (!EST_HOMOROMANCE) return true;
+    const low = cat.toLowerCase().replace(/s$/, "");
+    return books.some(b => b.status === "actif" && surCarryBooks(b) &&
+      (champCategorie(b) === cat || champCategorie(b).toLowerCase().startsWith(low)));
+  });
+
   const navItems = [
     { id: "auteurs", label: "👤 Auteur(es)" },
     { id: "comment_publier", label: "❓ Comment publier sur CarryBooks" },
@@ -19120,7 +19133,7 @@ export default function App() {
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
                     <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
-                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
               )}
               {/* PUBLIER */}
@@ -21511,7 +21524,7 @@ export default function App() {
           </button>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {!user && !lecteur && (
-              <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: G.surGold, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+              <button onClick={() => setShowLecteurModal(true)} style={{ background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
             )}
             <button onClick={() => shareBook(book)} style={{ background: "none", border: "none", color: G.textDim, fontSize: 20, cursor: "pointer" }}>🔗</button>
             <button onClick={() => toggleFavorite(book.id)} style={{ background: "none", border: "none", color: isFav ? G.gold : G.textDim, fontSize: 22, cursor: "pointer" }}>{isFav ? "♥" : "♡"}</button>
@@ -22613,7 +22626,7 @@ export default function App() {
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : lecteur
               ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
-              : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, border: "none", borderRadius: 6, color: G.surGold, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
+              : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
           {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
           {user && user.email === ADMIN_EMAIL && (
@@ -22754,7 +22767,7 @@ export default function App() {
               style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === "Tous" ? G.gold : G.champBordure), background: selectedCategory === "Tous" ? G.goldDim : G.champ, color: selectedCategory === "Tous" ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
               Tous
             </button>
-            {Object.keys(CATEGORIES).map(cat => (
+            {categoriesAffichees.map(cat => (
               <button key={cat} onClick={() => { setSelectedCategory(cat); setSelectedSubCategory("Tous"); }}
                 style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid " + (selectedCategory === cat ? G.gold : G.champBordure), background: selectedCategory === cat ? G.goldDim : G.champ, color: selectedCategory === cat ? G.gold : G.textDim, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
                 {cat}
@@ -22884,7 +22897,7 @@ export default function App() {
                   <button onClick={() => { const el = document.getElementById("exploreCats"); if (el) el.scrollBy({ left: -240, behavior: "smooth" }); }} style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
                   <button onClick={() => { const el = document.getElementById("exploreCats"); if (el) el.scrollBy({ left: 240, behavior: "smooth" }); }} style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", zIndex: 5, width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
                   <div id="exploreCats" onWheel={e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; } }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 12px 4px", scrollbarWidth: "none" }}>
-                    {Object.keys(CATEGORIES).map(cat => {
+                    {categoriesAffichees.map(cat => {
                       const low = cat.toLowerCase().replace(/s$/, "");
                       const bk = (books || []).find(b => b.status === "actif" && surCarryBooks(b) && b.cover && (champCategorie(b) === cat || champCategorie(b).toLowerCase().startsWith(low)));
                       const cover = bk ? bk.cover : null;
@@ -23066,11 +23079,11 @@ export default function App() {
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
-                            {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse")}
+                            {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : (EST_HOMOROMANCE ? "" : "📖 Liseuse"))}
                             {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 4, marginTop: 2 }}>
-                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
@@ -23120,7 +23133,7 @@ export default function App() {
                                 </div>
                                 <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                                 {book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
-                                <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold", marginTop: 3 }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
+                                <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", marginTop: 3 }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
                               </div>
                             ))}
                           </div>
@@ -23182,7 +23195,7 @@ export default function App() {
                                 <span style={{ color: G.gold }}>{getProductBadge(book)}</span>
                               ) : (
                                 <>
-                                  {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse")}
+                                  {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : (EST_HOMOROMANCE ? "" : "📖 Liseuse"))}
                                   {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                                 </>
                               )}
@@ -23319,7 +23332,7 @@ export default function App() {
                             <span style={{ color: G.gold, fontSize: 9 }}>{getProductBadge(book)}</span>
                           ) : (
                             <>
-                              {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : "📖 Liseuse")}
+                              {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : (EST_HOMOROMANCE ? "" : "📖 Liseuse"))}
                               {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold, fontSize: 9 }}> · 📦 Aussi en papier</span>}
                             </>
                           )}
@@ -23338,7 +23351,7 @@ export default function App() {
                             </div>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>
+                          <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold" }}>
                             {book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}
                           </div>
                         )}
@@ -24138,7 +24151,7 @@ export default function App() {
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
                     <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
-                    <div style={{ fontSize: 12, color: book.price === 0 ? G.green : G.gold, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}</div>
+                    <div style={{ fontSize: 12, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold" }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " FCFA"}</div>
                   </div>
                 ))}
               </div>
