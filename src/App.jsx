@@ -13930,7 +13930,7 @@ export default function App() {
       setCategorieUrlFaite(true);
     }
   }, [CATEGORIES, categorieUrlFaite]);
-  const [readerSize, setReaderSize] = useState(13);
+  const [readerSize, setReaderSize] = useState(14);
   const [readerFont, setReaderFont] = useState("Georgia, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [readerDark, setReaderDark] = useState(false);
@@ -17581,7 +17581,8 @@ export default function App() {
   const [pagesMesurees, setPagesMesurees] = useState(null);
 
   // Mesure la hauteur de chaque paragraphe, rendu exactement comme dans la liseuse.
-  function mesurerParagraphes(paras, largeur, taille, police) {
+  // Un banc d'essai invisible, qui rend le texte EXACTEMENT comme la liseuse.
+  function ouvrirBanc(largeur, taille, police) {
     const banc = document.createElement("div");
     banc.setAttribute("aria-hidden", "true");
     banc.style.cssText = "position:absolute;left:-10000px;top:0;visibility:hidden;pointer-events:none;";
@@ -17593,50 +17594,89 @@ export default function App() {
     banc.style.textAlign = "justify";
     banc.style.wordBreak = "break-word";
     banc.style.overflowWrap = "break-word";
-    banc.innerHTML = paras.map(function (x) {
-      return '<p style="margin:0 0 0.9em;text-indent:1.5em">' + x.trim() + "</p>";
-    }).join("");
+    // overflow:auto -> les marges du dernier paragraphe comptent, comme dans la liseuse.
+    banc.style.overflow = "auto";
     document.body.appendChild(banc);
-    const marge = taille * 0.9;
-    const hauteurs = [];
-    for (let i = 0; i < banc.children.length; i++) {
-      hauteurs.push(banc.children[i].getBoundingClientRect().height + marge);
-    }
-    document.body.removeChild(banc);
-    return hauteurs;
+    return banc;
+  }
+  function rendreDansBanc(banc, paras, premierSansRetrait) {
+    banc.innerHTML = paras.map(function (x, i) {
+      const retrait = (premierSansRetrait && i === 0) ? "0" : "1.5em";
+      return '<p style="margin:0 0 0.9em;text-indent:' + retrait + '">' + x.trim() + "</p>";
+    }).join("");
   }
 
   function decouperEnPages(contenu, largeur, hauteur, taille, police) {
+    let banc = null;
     try {
       if (typeof document === "undefined" || !largeur || !hauteur || !contenu) return null;
       let paras = String(contenu).split(/\n+/).filter(x => x.trim());
       if (!paras.length) return null;
-      const budget = Math.max(80, hauteur - 4);
-      let hauteurs = mesurerParagraphes(paras, largeur, taille, police);
-      // Un paragraphe plus haut qu une page entiere : on le coupe en morceaux.
-      // On ne coupe pas ceux qui contiennent du HTML, pour ne pas casser une balise.
+      const budget = Math.max(80, hauteur - 2);
+      banc = ouvrirBanc(largeur, taille, police);
+      const marge = taille * 0.9;
+      const mesurerChaque = () => {
+        rendreDansBanc(banc, paras, false);
+        const h = [];
+        for (let i = 0; i < banc.children.length; i++) h.push(banc.children[i].getBoundingClientRect().height + marge);
+        return h;
+      };
+      let hauteurs = mesurerChaque();
+
+      // 1) Un paragraphe plus haut qu'une page entiere : on le coupe en morceaux.
+      //    On ne coupe pas ceux qui contiennent du HTML, pour ne pas casser une balise.
       if (hauteurs.some(h => h > budget)) {
         const refaits = [];
         for (let i = 0; i < paras.length; i++) {
           if (hauteurs[i] <= budget || paras[i].indexOf("<") !== -1) { refaits.push(paras[i]); continue; }
           const morceaux = Math.ceil(hauteurs[i] / budget) + 1;
           const mots = paras[i].split(/\s+/);
-          const parMorceau = Math.ceil(mots.length / morceaux);
+          const parMorceau = Math.max(1, Math.ceil(mots.length / morceaux));
           for (let j = 0; j < mots.length; j += parMorceau) refaits.push(mots.slice(j, j + parMorceau).join(" "));
         }
         paras = refaits;
-        hauteurs = mesurerParagraphes(paras, largeur, taille, police);
+        hauteurs = mesurerChaque();
       }
+
+      // 2) Remplissage : on empile tant que ca tient.
       const pages = [];
       let courante = [], cumul = 0;
       for (let i = 0; i < paras.length; i++) {
-        if (courante.length && cumul + hauteurs[i] > budget) { pages.push(courante.join("\n\n")); courante = []; cumul = 0; }
+        if (courante.length && cumul + hauteurs[i] > budget) { pages.push(courante); courante = []; cumul = 0; }
         courante.push(paras[i]);
         cumul += hauteurs[i];
       }
-      if (courante.length) pages.push(courante.join("\n\n"));
-      return pages.length ? pages : null;
+      if (courante.length) pages.push(courante);
+
+      // 3) Verification page par page, en situation reelle. La somme des hauteurs
+      //    n'est pas toujours exacte au pixel pres (justification, retrait de la
+      //    premiere ligne) : si une page depasse, on repousse son dernier
+      //    paragraphe sur la suivante, et on remesure.
+      // Une page a PLUSIEURS paragraphes ne peut pas depasser : sa hauteur reelle
+      // est toujours inferieure ou egale a la somme mesuree (le retrait de la
+      // premiere ligne ne fait que raccourcir), et cette somme tient dans le
+      // budget par construction. On ne verifie donc que les pages a UNE seule
+      // entree : ce sont les seules qui peuvent encore etre trop hautes.
+      let garde = 0;
+      for (let i = 0; i < pages.length && garde < 50000; ) {
+        garde++;
+        if (pages[i].length > 1) { i++; continue; }
+        rendreDansBanc(banc, pages[i], true);
+        if (banc.scrollHeight <= budget) { i++; continue; }
+        const seul = pages[i][0];
+        const mots = seul.split(/\s+/);
+        if (seul.indexOf("<") !== -1 || mots.length < 2) { i++; continue; }
+        // On la coupe en deux et on remet le reste sur une page neuve,
+        // juste apres, qui sera verifiee a son tour.
+        const moitie = Math.ceil(mots.length / 2);
+        pages[i][0] = mots.slice(0, moitie).join(" ");
+        pages.splice(i + 1, 0, [mots.slice(moitie).join(" ")]);
+      }
+
+      const sortie = pages.filter(p => p.length).map(p => p.join("\n\n"));
+      return sortie.length ? sortie : null;
     } catch (e) { return null; }
+    finally { try { if (banc && banc.parentNode) banc.parentNode.removeChild(banc); } catch (e) {} }
   }
 
   // Hauteur et largeur reellement disponibles pour le texte.
@@ -17646,8 +17686,19 @@ export default function App() {
       try {
         const el = document.getElementById("reader-page-scroll");
         if (!el) return;
-        const l = el.clientWidth, h = el.clientHeight;
-        if (!l || !h) return;
+        const l = el.clientWidth;
+        if (!l) return;
+        // On NE lit PAS la hauteur de la zone : etiree par son contenu, elle ment.
+        // On part de la fenetre et on retire les deux bandes et le compteur.
+        const haut = (id, parDefaut) => {
+          const e = document.getElementById(id);
+          const v = e ? e.getBoundingClientRect().height : 0;
+          return v > 0 ? v : parDefaut;
+        };
+        const dispo = (window.innerHeight || 0) - haut("reader-entete", 42) - haut("reader-compteur", 20) - haut("reader-nav", 69) - 28;
+        if (dispo < 120) return;
+        // Format d une page de livre : 9 de large pour 13 de haut.
+        const h = Math.max(120, Math.min(Math.round(dispo), Math.round(l * 13 / 9)));
         setBoitePage(b => (Math.abs(b.l - l) < 2 && Math.abs(b.h - h) < 2) ? b : { l: l, h: h });
       } catch (e) {}
     };
@@ -20939,7 +20990,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: readerDark ? "#1a1a1a" : "#ffffff", display: "flex", flexDirection: "column", fontFamily: readerFont }}>
         {/* Header */}
-        <div style={{ background: readerDark ? "#111" : "#fff", borderBottom: "1px solid " + (readerDark ? "#333" : "#ddd"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <div id="reader-entete" style={{ background: readerDark ? "#111" : "#fff", borderBottom: "1px solid " + (readerDark ? "#333" : "#ddd"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
             style={{ background: "none", border: "none", color: readerDark ? "#aaa" : "#888", cursor: "pointer", fontSize: 14 }}>
             ← Retour
@@ -21131,10 +21182,18 @@ export default function App() {
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "flex-start"
+              alignItems: "stretch",
+              justifyContent: boitePage.h ? "center" : "flex-start"
             }}>
             <div id="reader-page-scroll" style={{
-              flex: 1,
+              // 09/10 : zone de page DELIMITEE. Avant, "flex: 1" laissait la zone
+              // grandir avec son contenu (584px a vide, 1229px remplie) : la mesure
+              // etait fausse et le texte debordait sous la bande du bas.
+              // Maintenant la hauteur est imposee, au format 9:13 d'une page de livre.
+              flex: boitePage.h ? "0 0 auto" : 1,
+              height: boitePage.h ? boitePage.h + "px" : undefined,
+              minHeight: 0,
+              width: "100%",
               overflowY: "auto",
               transition: "transform 0.18s ease, opacity 0.18s ease",
               transform: pageSlideDir === 1 ? "translateX(-30px)" : pageSlideDir === -1 ? "translateX(30px)" : "translateX(0)",
@@ -21315,7 +21374,7 @@ export default function App() {
                 </>
               )}
             </div>
-            <div style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
+            <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
             {/* Indicateur de page : gris clair, transparent, MAJUSCULES, sans cadre */}
@@ -21349,7 +21408,7 @@ export default function App() {
 
         {/* Navigation - cachée en mode scroll */}
         {!readerScrollMode && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={goToPrevPage} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f5f5f5") : (readerDark ? "#2a2a2a" : "#fdf8ee"), border: "1px solid " + (readingPage === 0 ? (readerDark ? "#333" : "#e0e0e0") : G.gold), color: readingPage === 0 ? (readerDark ? "#444" : "#ccc") : G.gold, fontSize: 22, cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
