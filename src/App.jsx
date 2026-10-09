@@ -1933,7 +1933,7 @@ const G_CARRYBOOKS = {
   surGold: "#000",
   carte: "#fff", carteTexte: "#1a1208",
   champ: "#fff", champBordure: "#d8cdb8",
-  bouton: "#c9a84c", boutonTexte: "#fff", prix: "#c9a84c",
+  bouton: "#c9a84c", boutonTexte: "#fff", prix: "#c9a84c", surClair: "#c9a84c",
   prixFond: "transparent", prixPad: "0", prixRadius: 0,
 };
 
@@ -1944,7 +1944,10 @@ const G_HOMOROMANCE = {
   // 09/10 : plus aucun rose. Violet de la marque #3c0145 pour les aplats ;
   // un violet plus clair de la meme famille pour tout ce qui est TEXTE ou trait
   // pose sur le fond presque noir, sinon ce serait illisible.
-  gold: "#a855f7", goldLight: "#c78aff", goldDim: "rgba(168,85,247,0.16)",
+  // UN SEUL VIOLET sur le site : #2e0138. Il sert toujours de FOND, jamais de texte
+  // (sur le fond presque noir il serait invisible). Les textes d'accent sont BLANCS.
+  gold: "#ffffff", goldLight: "#ffffff", goldDim: "#2e0138",
+  surClair: "#2e0138",   // texte violet, sur les fenetres a fond blanc
   text: "#f2f0f7", textDim: "#9290a8", textFaint: "#6e6c84",
   green: "#4caf50", greenDim: "rgba(76,175,80,0.18)",
   navBg: "#0d0d17", navSurface: "#161729", navBorder: "#2a2b42", navText: "#f2f0f7",
@@ -1954,12 +1957,12 @@ const G_HOMOROMANCE = {
   // Fond des cartes et des fenetres : blanc sur CarryBooks, bleu nuit ici.
   carte: "#161729", carteTexte: "#f2f0f7",
   // Champ de recherche et pastilles de categorie : fond noir, contour violet.
-  champ: "#0d0d17", champBordure: "#3c0145",
+  champ: "#0d0d17", champBordure: "#2e0138",
   // Violet de la marque, donne par Landrine le 09/10 : #3c0145.
   // Il est presque aussi sombre que le fond, donc le prix devient une PASTILLE
   // (fond violet, chiffre blanc) au lieu d'un simple texte, sinon il serait illisible.
-  bouton: "#3c0145", boutonTexte: "#fff", prix: "#fff",
-  prixFond: "#3c0145", prixPad: "2px 8px", prixRadius: 6,
+  bouton: "#2e0138", boutonTexte: "#fff", prix: "#fff",
+  prixFond: "#2e0138", prixPad: "2px 8px", prixRadius: 6,
 };
 
 const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
@@ -3004,7 +3007,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
           </div>
         )}
 
-        <button onClick={() => setQuizPage("quizHome")} style={{ width: "100%", padding: "14px", background: G.gold, border: "none", borderRadius: 12, color: "#1a1208", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>
+        <button onClick={() => setQuizPage("quizHome")} style={{ width: "100%", padding: "14px", background: G.bouton, border: "none", borderRadius: 12, color: "#1a1208", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>
           🎯 Faire un autre Carry'Quiz
         </button>
       </div>
@@ -3217,7 +3220,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                     </p>
                     <button onClick={() => { setShowRecoverModal(false); window.location.reload(); }}
                       style={{
-                        width: "100%", padding: 14, background: G.gold, color: "#000",
+                        width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte,
                         border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer"
                       }}>
                       ✅ Voir mes livres
@@ -3286,7 +3289,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                             <span>Progression</span><span>{label}</span>
                           </div>
                           <div style={{ height: 3, background: G.border, borderRadius: 2 }}>
-                            <div style={{ height: "100%", width: "60%", background: G.gold, borderRadius: 2 }} />
+                            <div style={{ height: "100%", width: "60%", background: G.bouton, borderRadius: 2 }} />
                           </div>
                         </div>
                       ) : null;
@@ -14959,7 +14962,7 @@ export default function App() {
           <input type="tel" value={lecteurTel} onChange={e => setLecteurTel(e.target.value.replace(/\D/g, ""))} placeholder="6XXXXXXXX" style={{ ...LEC_INPUT, flex: 1 }} />
         </div>
         <div style={{ height: 18 }} />
-        <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
+        <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
         <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
           <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Déjà un compte Google ?</div>
           <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
@@ -18438,7 +18441,7 @@ export default function App() {
                   const tous = [...reels, ...fictifs].sort((x, y) => (x.nom || "").localeCompare(y.nom || "", "fr", { sensitivity: "base" }));
                   return tous.map(a => (
                     <div key={a.key} onClick={a.onClick} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                      <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                         {a.photo ? <img src={a.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom || "?").charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -18556,7 +18559,7 @@ export default function App() {
                   ) : paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                        style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                        style={{ flex: 1, padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                         📖 Lire
                       </button>
                       <button onClick={async () => {
@@ -18581,7 +18584,7 @@ export default function App() {
                     </div>
                   ) : (
                     <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                      style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      style={{ width: "100%", padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                       📖 Lire maintenant
                     </button>
                   )}
@@ -19045,7 +19048,7 @@ export default function App() {
               <div style={{ height: 12 }} />
               <label style={labelSt}>Photo de profil (tu peux sauter pour plus tard)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-                <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                   {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurAuthNom ? auteurAuthNom.charAt(0).toUpperCase() : "?")}
                 </div>
                 <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
@@ -19074,7 +19077,7 @@ export default function App() {
               })}
             </>)}
             {auteurAuthMsg && <div style={{ color: "#e53935", fontSize: 13, marginTop: 10 }}>{auteurAuthMsg}</div>}
-            <button onClick={auteurAuthMode === "signup" ? auteurSignup : auteurLogin} disabled={auteurAuthLoading} style={{ width: "100%", padding: 14, marginTop: 16, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurAuthLoading ? 0.6 : 1 }}>
+            <button onClick={auteurAuthMode === "signup" ? auteurSignup : auteurLogin} disabled={auteurAuthLoading} style={{ width: "100%", padding: 14, marginTop: 16, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurAuthLoading ? 0.6 : 1 }}>
               {auteurAuthLoading ? "..." : (auteurAuthMode === "signup" ? "Créer mon compte" : "Se connecter")}
             </button>
             <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: G.textDim }}>
@@ -19096,7 +19099,7 @@ export default function App() {
               ? <button onClick={() => setAuteurMenu(true)} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>☰</button>
               : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
             {auteurProfil && (
-              <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>
+              <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>
                 {auteurProfil.photo_url ? <img src={auteurProfil.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurProfil.nom_complet || "?").charAt(0).toUpperCase()}
               </div>
             )}
@@ -19114,7 +19117,7 @@ export default function App() {
                 <input type="number" value={retraitMontant} onChange={e => setRetraitMontant(e.target.value)} placeholder="Ex : 50000" style={champ} />
                 {retraitMsg && <div style={{ fontSize: 13, marginTop: 10, color: retraitMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{retraitMsg}</div>}
                 <div style={{ height: 14 }} />
-                <button onClick={requestRetrait} disabled={retraitSaving} style={{ width: "100%", padding: 13, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: retraitSaving ? 0.6 : 1 }}>{retraitSaving ? "Envoi…" : "Envoyer la demande"}</button>
+                <button onClick={requestRetrait} disabled={retraitSaving} style={{ width: "100%", padding: 13, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: retraitSaving ? 0.6 : 1 }}>{retraitSaving ? "Envoi…" : "Envoyer la demande"}</button>
                 <button onClick={() => setRetraitOpen(false)} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 6 }}>Annuler</button>
               </div>
             </div>
@@ -19129,7 +19132,7 @@ export default function App() {
           {!auteurProfil && (
             <div style={{ textAlign: "center", padding: 30 }}>
               <p style={{ color: G.textDim, fontSize: 14, marginBottom: 16 }}>Connecte-toi pour publier tes livres sur {SITE_NOM}.</p>
-              <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 24px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>🔑 Se connecter</button>
+              <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 24px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer" }}>🔑 Se connecter</button>
             </div>
           )}
 
@@ -19248,7 +19251,7 @@ export default function App() {
                       <button onClick={clearSig} style={{ marginTop: 6, background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>Effacer la signature</button>
                       {kycMsg && <div style={{ fontSize: 13, textAlign: "center", marginTop: 12, color: (kycMsg.indexOf("✅") === 0) ? G.green : "#e53935" }}>{kycMsg}</div>}
                       <div style={{ height: 16 }} />
-                      <button onClick={submitKyc} disabled={kycSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: kycSaving ? 0.6 : 1 }}>{kycSaving ? "Envoi…" : "Soumettre ma vérification"}</button>
+                      <button onClick={submitKyc} disabled={kycSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: kycSaving ? 0.6 : 1 }}>{kycSaving ? "Envoi…" : "Soumettre ma vérification"}</button>
                     </>
                   ) : !pubTypeSelected ? (
                     <>
@@ -19260,17 +19263,17 @@ export default function App() {
                           ) : stk === "refuse" ? (<>
                             <div style={{ fontSize: 13, color: "#c62828", fontWeight: "bold", marginBottom: 6 }}>❌ Vérification refusée</div>
                             {auteurProfil.kyc_motif_refus ? <div style={{ fontSize: 12, color: "#c62828", marginBottom: 8 }}>{auteurProfil.kyc_motif_refus}</div> : null}
-                            <button onClick={openKyc} style={{ padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>Corriger et re-soumettre</button>
+                            <button onClick={openKyc} style={{ padding: "10px 16px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>Corriger et re-soumettre</button>
                           </>) : (<>
                             <div style={{ fontSize: 13, color: G.text, fontWeight: "bold", marginBottom: 4 }}>🔒 Vérification requise avant de publier</div>
                             <div style={{ fontSize: 12, color: G.textDim, marginBottom: 10 }}>Pour publier et être payé(e), soumets d'abord tes informations, ta pièce d'identité et le contrat signé.</div>
-                            <button onClick={openKyc} style={{ padding: "12px 18px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>Soumets tes informations</button>
+                            <button onClick={openKyc} style={{ padding: "12px 18px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>Soumets tes informations</button>
                           </>)}
                         </div>
                       ); })()}
                       <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>➕ Que veux-tu publier ?</div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 12 }}>Choisis le type de contenu. Chaque type a sa propre page.</div>
-                      <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.gold, border: "none", borderRadius: 10, color: "#1a1208", fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
+                      <button onClick={() => setAuteurTab("aide")} style={{ width: "100%", padding: "12px 14px", background: G.bouton, border: "none", borderRadius: 10, color: "#1a1208", fontWeight: "bold", fontSize: 14, lineHeight: 1.35, cursor: "pointer", marginBottom: 16, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 18, flexShrink: 0 }}>❓</span><span style={{ fontSize: 14 }}>Comment publier ? Lis le guide pas à pas</span></button>
                       <div style={{ display: "grid", gap: 8 }}>
                         {[
                           { t: "roman", c: "#6a11cb", ic: "📖", l: "Publier un Roman (Texte)", s: "À lire dans la liseuse électronique" },
@@ -19324,7 +19327,7 @@ export default function App() {
                   <input value={annonceLien} onChange={e => setAnnonceLien(e.target.value)} placeholder={SITE_URL + "/livre/..."} style={champ} />
                   <div style={{ height: 14 }} />
                   {annonceMsg && (annonceMsg === "OK_ENVOYE" ? <div style={{ fontSize: 13, color: G.green, marginBottom: 12, fontWeight: "bold" }}>✅ Annonce publiee ! Elle est maintenant visible sur l’accueil.</div> : <div style={{ fontSize: 13, color: "#e11d48", marginBottom: 12, fontWeight: "bold" }}>{annonceMsg}</div>)}
-                  <button onClick={soumettreAnnonce} disabled={annonceSending} style={{ width: "100%", padding: 14, background: G.gold, color: "#1a1208", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: annonceSending ? 0.6 : 1 }}>{annonceSending ? "Envoi…" : "📤 Soumettre l’annonce"}</button>
+                  <button onClick={soumettreAnnonce} disabled={annonceSending} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: annonceSending ? 0.6 : 1 }}>{annonceSending ? "Envoi…" : "📤 Soumettre l’annonce"}</button>
                   <div style={{ height: 22 }} />
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📢 Mes annonces</div>
                   <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Toutes tes annonces sont listées ici. Tu peux changer l’image d’une annonce ou supprimer une annonce. Un même lien ne peut servir qu’à une seule annonce : pour réutiliser un lien, supprime d’abord l’annonce qui porte ce lien.</div>
@@ -19343,7 +19346,7 @@ export default function App() {
                         {a.statut === "refusee" && a.motif_refus ? <div style={{ fontSize: 12, color: "#c62828", background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", marginBottom: 8, lineHeight: 1.5 }}><b>Motif du refus :</b> {a.motif_refus}</div> : null}
                         <input id={"annonceMaj" + a.id} type="file" accept="image/*" onChange={e => { changerImageAnnonce(a, e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={() => document.getElementById("annonceMaj" + a.id).click()} disabled={occupe} style={{ flex: 1, padding: 10, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>{occupe ? "Envoi…" : "🖼️ Changer l’image"}</button>
+                          <button onClick={() => document.getElementById("annonceMaj" + a.id).click()} disabled={occupe} style={{ flex: 1, padding: 10, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>{occupe ? "Envoi…" : "🖼️ Changer l’image"}</button>
                           <button onClick={() => supprimerMonAnnonce(a)} disabled={occupe} style={{ flex: 1, padding: 10, background: "#e11d48", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>🗑️ Supprimer</button>
                         </div>
                       </div>
@@ -19424,7 +19427,7 @@ export default function App() {
                     </div>
                   ) : null}
                   <button type="button" onClick={() => { setFmLienDansTexte(false); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
-                    style={{ width: "100%", padding: 12, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>➕ Insérer un lien</button>
+                    style={{ width: "100%", padding: 12, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>➕ Insérer un lien</button>
                   <div style={{ height: 18 }} />
 
                   {(() => {
@@ -19451,7 +19454,7 @@ export default function App() {
                   })()}
 
                   <button onClick={pubSaveFormation} disabled={fmSaving || fmUploading}
-                    style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (fmSaving || fmUploading) ? "not-allowed" : "pointer", opacity: (fmSaving || fmUploading) ? 0.6 : 1, fontFamily: "Georgia, serif" }}>
+                    style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (fmSaving || fmUploading) ? "not-allowed" : "pointer", opacity: (fmSaving || fmUploading) ? 0.6 : 1, fontFamily: "Georgia, serif" }}>
                     {fmSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation")}
                   </button>
                   <button onClick={() => { setPubOpen(false); setPubTypeSelected(null); setFmMsg(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
@@ -19471,7 +19474,7 @@ export default function App() {
                         ) : (fmYtUrl.trim() ? <div style={{ fontSize: 12, color: "#e53935", marginTop: 8 }}>Adresse non reconnue. Copie l'adresse complète depuis YouTube.</div> : null)}
                         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                           <button onClick={() => setFmYtOuvert(false)} style={{ flex: 1, padding: 12, background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
-                          <button onClick={fmValiderVideo} style={{ flex: 1, padding: 12, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Insérer</button>
+                          <button onClick={fmValiderVideo} style={{ flex: 1, padding: 12, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Insérer</button>
                         </div>
                       </div>
                     </div>
@@ -19489,7 +19492,7 @@ export default function App() {
                         <input value={fmLienUrl} onChange={e => setFmLienUrl(e.target.value)} placeholder="https://..." style={champ} />
                         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                           <button onClick={() => setFmLienOuvert(false)} style={{ flex: 1, padding: 12, background: "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
-                          <button onClick={fmValiderLien} style={{ flex: 1, padding: 12, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Ajouter</button>
+                          <button onClick={fmValiderLien} style={{ flex: 1, padding: 12, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Ajouter</button>
                         </div>
                       </div>
                     </div>
@@ -19527,7 +19530,7 @@ export default function App() {
                         <button onClick={() => document.getElementById("pubAuthorPhotoInput").click()} disabled={pubAuthorPhotoUp} style={{ padding: "8px 14px", border: "1px solid " + G.gold, borderRadius: 8, background: G.goldDim, color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>{pubAuthorPhotoUp ? "Envoi…" : "📷 Photo"}</button>
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={ajouterProfilAuteur} style={{ flex: 1, padding: 10, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Enregistrer l’auteur</button>
+                        <button onClick={ajouterProfilAuteur} style={{ flex: 1, padding: 10, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Enregistrer l’auteur</button>
                         <button onClick={() => { setAddAuteurOpen(false); setAddAuteurNom(""); }} style={{ padding: "10px 14px", background: "#eee", border: "none", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Annuler</button>
                       </div>
                     </div>
@@ -19649,7 +19652,7 @@ export default function App() {
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                           <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.gold : "#fff", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
                           <span style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}</span>
-                          <span style={{ marginLeft: "auto", background: G.gold, color: "#fff", fontSize: 11, fontWeight: "bold", padding: "3px 9px", borderRadius: 12, whiteSpace: "nowrap" }}>{badge}</span>
+                          <span style={{ marginLeft: "auto", background: G.bouton, color: "#fff", fontSize: 11, fontWeight: "bold", padding: "3px 9px", borderRadius: 12, whiteSpace: "nowrap" }}>{badge}</span>
                         </div>
                         {lignes.map((l, i) => (
                           <div key={i} style={{ fontSize: 11.5, color: G.textDim, lineHeight: 1.5, paddingLeft: 26 }}>{l}</div>
@@ -19685,7 +19688,7 @@ export default function App() {
                   <div style={{ height: 18 }} />
                   {pubDraftMsg && <div style={{ fontSize: 11, color: G.green, textAlign: "center", marginBottom: 8 }}>{pubDraftMsg}</div>}
                   {pubDraftMode && (
-                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
+                    <button onClick={() => pubSaveDraft(false)} disabled={pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 13, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", marginBottom: 8, opacity: (pubSavingDraft || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.5 : 1 }}>{pubSavingDraft ? "Enregistrement…" : "💾 Enregistrer (continuer plus tard)"}</button>
                   )}
                   <button onClick={pubSaveRoman} disabled={pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))} style={{ width: "100%", padding: 14, background: (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "#ccc" : G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? "not-allowed" : "pointer", opacity: (pubSaving || (!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category)))) ? 0.6 : 1 }}>{(!pubEditId && pubForm.type === "guide" && (/^roman/i.test(pubForm.category) || /saga/i.test(pubForm.category))) ? "Change de catégorie ou passe en Texte" : (pubSaving ? "Envoi…" : (pubExclusif ? "🏪 Publier dans ma vitrine" : "📤 Soumettre pour validation"))}</button>
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setPubAuthorVille(""); setPubAuthorPhoto(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
@@ -19699,7 +19702,7 @@ export default function App() {
                           Si votre roman est dans un fichier PDF ou Word, <b>copiez le texte</b>, collez-le dans l’éditeur, faites la mise en page, puis publiez.<br/><br/>
                           Le format <b>PDF</b> est réservé aux <b>autres catégories</b> (guides, cuisine, business, etc.).
                         </div>
-                        <button onClick={() => setPubRomanPdfAlert(false)} style={{ width: "100%", padding: 13, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>J’ai compris</button>
+                        <button onClick={() => setPubRomanPdfAlert(false)} style={{ width: "100%", padding: 13, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>J’ai compris</button>
                       </div>
                     </div>
                   )}
@@ -19851,7 +19854,7 @@ export default function App() {
                       <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
                       <div style={{ flex: 1, background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
                     </div>
-                    <div style={{ background: G.gold, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
+                    <div style={{ background: G.bouton, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
                       <div style={{ fontSize: 12, opacity: 0.9 }}>Montant total (cette période)</div>
                       <div style={{ fontSize: 24, fontWeight: "bold" }}>{fmt(grandTotal)}</div>
                     </div>
@@ -19917,7 +19920,7 @@ export default function App() {
                           {compteur("Ventes via mon lien (85%)", avec.length, gains(avec), G.gold)}
                           {vitr.length > 0 ? compteur("Ventes en vitrine (85%)", vitr.length, gains(vitr), G.green) : null}
                         </div>
-                        <div style={{ background: G.gold + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
+                        <div style={{ background: G.bouton + "18", border: "1px solid " + G.gold, borderRadius: 10, padding: 14, textAlign: "center" }}>
                           <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>TOTAL — {vv.length} livre(s) vendu(s)</div>
                           <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{fmt(gains(vv))}</div>
                           <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions {SITE_NOM})</div>
@@ -19960,7 +19963,7 @@ export default function App() {
                           <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120 }}>
                             {dayGains.map((g, i) => (
                               <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                                <div style={{ width: "100%", height: Math.round((g / maxG) * 90) + 2, background: G.gold, borderRadius: "4px 4px 0 0" }} title={fmt(g)}></div>
+                                <div style={{ width: "100%", height: Math.round((g / maxG) * 90) + 2, background: G.bouton, borderRadius: "4px 4px 0 0" }} title={fmt(g)}></div>
                                 <div style={{ fontSize: 9, color: G.textDim }}>{["Di","Lu","Ma","Me","Je","Ve","Sa"][days[i].getDay()]}</div>
                               </div>
                             ))}
@@ -20018,7 +20021,7 @@ export default function App() {
                       <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } }} style={{ minHeight: 120, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: "#fff", outline: "none", whiteSpace: "pre-wrap" }} />
                       {tutoMsg && <div style={{ fontSize: 13, marginTop: 8, fontWeight: "bold", color: tutoMsg === "OK_ENREGISTRE" ? G.green : "#e11d48" }}>{tutoMsg === "OK_ENREGISTRE" ? "✅ Tuto enregistré !" : tutoMsg}</div>}
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                        <button onClick={enregistrerTuto} style={{ flex: 1, padding: 12, background: G.gold, color: "#1a1208", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{tutoEditId ? "Mettre à jour" : "Enregistrer"}</button>
+                        <button onClick={enregistrerTuto} style={{ flex: 1, padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{tutoEditId ? "Mettre à jour" : "Enregistrer"}</button>
                         {tutoEditId && <button onClick={() => { setTutoEditId(null); setTutoImg(""); setTutoLien(""); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg(""); }} style={{ padding: "12px 16px", background: "#eee", color: G.text, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Annuler</button>}
                       </div>
                     </div>
@@ -20053,7 +20056,7 @@ export default function App() {
                           <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur tes réseaux sociaux)</div>
                           <div style={{ display: "flex", gap: 6 }}>
                             <input readOnly value={SITE_URL + "/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: "#fff", minWidth: 0 }} />
-                            <button onClick={() => { try { navigator.clipboard.writeText(SITE_URL + "/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.gold, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
+                            <button onClick={() => { try { navigator.clipboard.writeText(SITE_URL + "/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.bouton, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
                           </div>
                         </div>
                       ) : null}
@@ -20063,8 +20066,8 @@ export default function App() {
                       {auteurProfil.kyc_contrat_url ? (
                         <a href={auteurProfil.kyc_contrat_url + "?download=contrat-signe-carrybooks.pdf"} rel="noopener noreferrer" style={{ display: "block", marginTop: 10, padding: "10px 16px", background: G.goldDim, color: G.gold, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: "bold", textDecoration: "none" }}>📄 Télécharger mon contrat signé</a>
                       ) : null}
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
-                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(false); setCompteEdit(true); }} style={{ marginTop: 14, padding: "10px 16px", background: G.bouton, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>✏️ Modifier</button>
+                      <button onClick={() => { setAuteurNom(auteurProfil.nom_complet || ""); setAuteurPays(auteurProfil.pays || ""); setAuteurTel(numeroLocal(auteurProfil.telephone)); setAuteurEmail(auteurProfil.email || ""); setAuteurBio(auteurProfil.bio || ""); setAuteurFb(auteurProfil.facebook || ""); setAuteurIg(auteurProfil.instagram || ""); setAuteurTk(auteurProfil.tiktok || ""); setAuteurLi(auteurProfil.linkedin || ""); setAuteurYt(auteurProfil.youtube || ""); setAuteurMsg(""); setCompteEditSocials(true); setCompteEdit(true); }} style={{ display: "block", width: "100%", marginTop: 10, padding: "12px 16px", background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>🌐 Ajouter les liens de mes réseaux sociaux</button>
                     </div>
                   ) : (
                     <div>
@@ -20089,7 +20092,7 @@ export default function App() {
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Photo de profil (facultatif)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                        <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
+                        <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
                           {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
                         </div>
                         <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
@@ -20117,7 +20120,7 @@ export default function App() {
                       <label style={labelSt}>YouTube</label>
                       <input value={auteurYt} onChange={e => setAuteurYt(e.target.value)} placeholder="https://youtube.com/@ta-chaine" style={champ} />
                       <div style={{ height: 16 }} />
-                      <button onClick={() => { saveAuteur(); setCompteEdit(false); setCompteEditSocials(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
+                      <button onClick={() => { saveAuteur(); setCompteEdit(false); setCompteEditSocials(false); }} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer"}</button>
                       <button onClick={() => { setCompteEdit(false); setCompteEditSocials(false); setAuteurMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                     </div>
                   )}
@@ -20300,7 +20303,7 @@ export default function App() {
                   <input value={auteurPixelTiktok} onChange={e => setAuteurPixelTiktok(e.target.value)} placeholder="Ex : C1A2B3..." style={champ} />
                   <a onClick={() => { setPixelGuideTab("tiktok"); setPage("guide_pixel"); }} style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6, cursor: "pointer" }}>❓ Comment créer un pixel TikTok ?</a>
                   <div style={{ height: 18 }} />
-                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
+                  <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
                   {auteurMsg && <div style={{ marginTop: 12, fontSize: 13, textAlign: "center", color: auteurMsg.indexOf("✅") === 0 ? G.green : "#e53935" }}>{auteurMsg}</div>}
                 </div>
               )}
@@ -20321,7 +20324,7 @@ export default function App() {
                 <div style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
                   <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur {SITE_NOM}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 14 }}>Tout ce que tu dois savoir de A à Z, pas à pas.</div>
-                  <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
+                  <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.bouton, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 4 types de livres</div>
                   <p><b>📖 Roman (texte)</b> : tu écris ou colles ton texte directement sur la plateforme. Tu peux l'écrire sur <b>plusieurs jours</b> : appuie sur <b>« Enregistrer (continuer plus tard) »</b>, puis retrouve ton roman dans <b>« Mes livres » → onglet « En cours d'édition »</b> pour reprendre quand tu veux. Il se lit dans la liseuse et n'est PAS téléchargeable (protégé).</p>
@@ -20400,7 +20403,7 @@ export default function App() {
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
                     <label style={{ padding: "11px 12px", background: "#f0ece2", border: "1px solid " + G.border, borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupportImage(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
                     <textarea value={supportInput} onChange={e => setSupportInput(e.target.value)} placeholder="Écris ton message…" rows={2} style={{ flex: 1, padding: "10px 12px", border: "1px solid " + G.border, borderRadius: 10, fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
-                    <button onClick={envoyerSupport} disabled={supportSending || (!supportInput.trim() && !supportImg)} style={{ padding: "11px 16px", background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supportSending || (!supportInput.trim() && !supportImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
+                    <button onClick={envoyerSupport} disabled={supportSending || (!supportInput.trim() && !supportImg)} style={{ padding: "11px 16px", background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supportSending || (!supportInput.trim() && !supportImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
                   </div>
                 </div>
               )}
@@ -20440,7 +20443,7 @@ export default function App() {
               <div style={{ height: 14 }} />
               <label style={labelSt}>Photo de profil (facultatif)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
+                <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
                   {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
                 </div>
                 <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.gold, color: "#fff", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
@@ -20451,7 +20454,7 @@ export default function App() {
               <label style={labelSt}>Petite présentation (facultatif)</label>
               <textarea value={auteurBio} onChange={e => setAuteurBio(e.target.value)} placeholder="Quelques mots sur toi…" rows={6} style={{ ...champ, resize: "vertical", minHeight: 130 }} />
               <div style={{ height: 20 }} />
-              <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.gold, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Créer mon espace auteur"}</button>
+              <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Créer mon espace auteur"}</button>
             </div>
           )}
 
@@ -20468,7 +20471,7 @@ export default function App() {
             <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
             )}
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
-            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.gold, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.bouton, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
@@ -20828,7 +20831,7 @@ export default function App() {
                 <div style={{ color: G.gold, fontSize: 15, marginBottom: 8, fontStyle: "italic" }}>— Fin de l'extrait —</div>
                 <div style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>Achetez le livre pour lire la suite</div>
                 <button onClick={() => { setPage("detail"); setReading(null); }}
-                  style={{ padding: "11px 28px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                  style={{ padding: "11px 28px", background: G.bouton, border: "none", borderRadius: 4, color: "#000", fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
                   Acheter ce livre
                 </button>
               </div>
@@ -21036,7 +21039,7 @@ export default function App() {
                   <div style={{ color: G.gold, fontSize: 14, marginBottom: 6, fontStyle: "italic" }}>Fin de l'extrait</div>
                   <div style={{ color: "#888", fontSize: 13, marginBottom: 14 }}>Achetez le livre pour lire la suite</div>
                   <button onClick={(e) => { e.stopPropagation(); setPage("detail"); setReading(null); }}
-                    style={{ padding: "10px 24px", background: G.gold, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
+                    style={{ padding: "10px 24px", background: G.bouton, border: "none", borderRadius: 4, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
                     Acheter ce livre
                   </button>
                 </div>
@@ -21268,7 +21271,7 @@ export default function App() {
                 style={{
                   width: "100%",
                   padding: 15,
-                  background: G.gold,
+                  background: G.bouton,
                   border: "none",
                   borderRadius: 8,
                   color: "#000",
@@ -21477,7 +21480,7 @@ export default function App() {
                 style={{
                   width: "100%",
                   padding: 15,
-                  background: G.gold,
+                  background: G.bouton,
                   border: "none",
                   borderRadius: 8,
                   color: "#000",
@@ -21682,7 +21685,7 @@ export default function App() {
           {!isPaperOnlyBook && (
             <button
               onClick={() => startReading(book)}
-              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              style={{ width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
               {owned || free ? (book.audio_url ? "🎧 Écouter maintenant" : "📖 Lire maintenant") : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.audio_url ? "🎧 Écouter — " : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ")) + book.price?.toLocaleString() + " FCFA"}
             </button>
           )}
@@ -21739,7 +21742,7 @@ export default function App() {
                   style={{
                     width: "100%",
                     padding: 15,
-                    background: G.gold,
+                    background: G.bouton,
                     border: "none",
                     borderRadius: 6,
                     color: "#000",
@@ -21908,7 +21911,7 @@ export default function App() {
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <div style={{
                             width: 32, height: 32, borderRadius: "50%",
-                            background: G.gold, color: "#000",
+                            background: G.bouton, color: G.boutonTexte,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             fontSize: 12, fontWeight: "bold"
                           }}>
@@ -22036,7 +22039,7 @@ export default function App() {
                   {isOnPromo(book) ? <div style={{ fontSize: 11, color: G.textFaint, textDecoration: "line-through", lineHeight: 1.2 }}>{book.original_price?.toLocaleString()} FCFA</div> : null}
                   <div style={{ fontSize: 19, fontWeight: "bold", color: G.gold, lineHeight: 1.25, whiteSpace: "nowrap" }}>{book.price?.toLocaleString()} FCFA</div>
                 </div>
-                <button type="button" onClick={() => startReading(book)} style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
+                <button type="button" onClick={() => startReading(book)} style={{ flex: 1, padding: 14, background: G.bouton, border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>
                   {aboDispo ? "✨ Débloquer" : "⚡ Acheter"}
                 </button>
               </div>
@@ -22311,7 +22314,7 @@ export default function App() {
                   ) : paymentBook.can_download && paymentBook.pdf_url && paymentBook.pdf_url !== "pending" ? (
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                        style={{ flex: 1, padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                        style={{ flex: 1, padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                         📖 Lire
                       </button>
                       <button onClick={async () => {
@@ -22336,7 +22339,7 @@ export default function App() {
                     </div>
                   ) : (
                     <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
-                      style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                      style={{ width: "100%", padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                       📖 Lire maintenant
                     </button>
                   )}
@@ -22643,7 +22646,7 @@ export default function App() {
           {user
             ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : lecteur
-              ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
+              ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
               : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
           {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
@@ -22816,7 +22819,7 @@ export default function App() {
             {page === "home" && !searchQuery && selectedCategory === "Tous" ? (
               <>
                 {/* BANDE ROUGE : achats dans Ma bibliothèque */}
-                <div style={{ background: "#d32f2f", color: "#fff", fontSize: 9.5, fontWeight: "bold", textAlign: "center", padding: "5px 4px", whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>
+                <div style={{ background: EST_HOMOROMANCE ? G.bouton : "#d32f2f", color: "#fff", fontSize: 9.5, fontWeight: "bold", textAlign: "center", padding: "5px 4px", whiteSpace: "nowrap", letterSpacing: "-0.3px" }}>
                   VOS ACHATS SONT DISPONIBLES DANS « MA BIBLIOTHÈQUE »  ⬇️
                 </div>
                 {/* 3 RECTANGLES : Publier · Installer · Bibliothèque */}
@@ -23291,10 +23294,10 @@ export default function App() {
                       { ic: "📖", n: siteStats.livres, l: "Livres" },
                       { ic: "✍️", n: siteStats.auteurs, l: "Auteurs" },
                     ].map((s, i) => (
-                      <div key={i} style={{ background: "linear-gradient(135deg, #2a2410, #1a1208)", borderRadius: 12, padding: "12px 6px", textAlign: "center", border: "1px solid " + G.gold + "33" }}>
+                      <div key={i} style={{ background: EST_HOMOROMANCE ? G.bouton : "linear-gradient(135deg, #2a2410, #1a1208)", borderRadius: 12, padding: "12px 6px", textAlign: "center", border: "1px solid " + (EST_HOMOROMANCE ? G.bouton : G.gold + "33") }}>
                         <div style={{ fontSize: 18 }}>{s.ic}</div>
-                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.gold, marginTop: 2 }}>{(s.n || 0).toLocaleString("fr-FR")}</div>
-                        <div style={{ fontSize: 9.5, color: "#c9b98a", marginTop: 1 }}>{s.l}</div>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.boutonTexte, marginTop: 2 }}>{(s.n || 0).toLocaleString("fr-FR")}</div>
+                        <div style={{ fontSize: 9.5, color: EST_HOMOROMANCE ? "#e8dcee" : "#c9b98a", marginTop: 1 }}>{s.l}</div>
                       </div>
                     ))}
                   </div>
@@ -23334,7 +23337,7 @@ export default function App() {
                       <div style={{ display: "grid", gap: 8 }}>
                         {matches.map(a => (
                           <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", background: G.gold, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold", flexShrink: 0 }}>
+                            <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold", flexShrink: 0 }}>
                               {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
@@ -23424,7 +23427,7 @@ export default function App() {
                 <div style={{ color: G.textDim, marginBottom: 16 }}>Ton panier est vide</div>
                 <button 
                   onClick={() => setPage("catalog")} 
-                  style={{ background: G.gold, color: "#000", border: "none", padding: "12px 24px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}
+                  style={{ background: G.bouton, color: G.boutonTexte, border: "none", padding: "12px 24px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}
                 >
                   Découvrir nos produits
                 </button>
@@ -23494,7 +23497,7 @@ export default function App() {
                     setPage("cart_checkout");
                     window.scrollTo(0, 0);
                   }} 
-                  style={{ width: "100%", background: G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15, marginBottom: 8 }}
+                  style={{ width: "100%", background: G.bouton, color: G.boutonTexte, border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15, marginBottom: 8 }}
                 >
                   📦 Passer la commande
                 </button>
@@ -23829,7 +23832,7 @@ export default function App() {
                     setCartCheckoutStep(2);
                     window.scrollTo(0, 0);
                   }}
-                  style={{ width: "100%", background: G.gold, color: "#000", border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15 }}
+                  style={{ width: "100%", background: G.bouton, color: G.boutonTexte, border: "none", padding: "14px 0", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 15 }}
                 >
                   Continuer vers le paiement →
                 </button>
@@ -24018,7 +24021,7 @@ export default function App() {
                 </div>
                 <button 
                   onClick={() => { setPage("home"); setCartCheckoutStep(1); }}
-                  style={{ background: G.gold, color: "#000", border: "none", padding: "14px 24px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}
+                  style={{ background: G.bouton, color: G.boutonTexte, border: "none", padding: "14px 24px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 14 }}
                 >
                   Retour à l'accueil
                 </button>
@@ -24039,9 +24042,9 @@ export default function App() {
             </div>
             {(() => {
               const P = { color: G.text, fontSize: 14, lineHeight: 1.7, marginBottom: 8 };
-              const NUM = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 11, background: G.gold, color: "#fff", fontSize: 12, fontWeight: "bold", marginRight: 8, flexShrink: 0 };
+              const NUM = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 11, background: G.bouton, color: "#fff", fontSize: 12, fontWeight: "bold", marginRight: 8, flexShrink: 0 };
               const row = (n, txt) => (<div key={n} style={{ display: "flex", alignItems: "flex-start", marginBottom: 12 }}><span style={NUM}>{n}</span><span style={{ color: G.text, fontSize: 14, lineHeight: 1.6 }}>{txt}</span></div>);
-              const btn = (href, label) => (<a href={href} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 13.5, padding: "11px 18px", borderRadius: 10, textDecoration: "none", marginBottom: 6 }}>{label}</a>);
+              const btn = (href, label) => (<a href={href} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.bouton, color: "#fff", fontWeight: "bold", fontSize: 13.5, padding: "11px 18px", borderRadius: 10, textDecoration: "none", marginBottom: 6 }}>{label}</a>);
               const box = { background: G.goldDim, border: "1px solid " + G.gold + "55", borderRadius: 10, padding: "12px 14px", margin: "14px 0", fontSize: 13, lineHeight: 1.6, color: G.text };
               if (pixelGuideTab === "facebook") return (<div>
                 <p style={P}>Le pixel Facebook se crée dans le <b>Gestionnaire d’événements Meta</b>. Tu as besoin d’un compte Facebook.</p>
@@ -24070,7 +24073,7 @@ export default function App() {
                 <div style={box}><b>Astuce :</b> l’ID TikTok mélange lettres et chiffres. Copie-le exactement, sans espace avant ni après.</div>
               </div>);
             })()}
-            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("integration"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: "#fff", color: G.gold, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Intégrations</button>
+            <button onClick={() => { setPage("espace_auteur"); setAuteurTab("integration"); }} style={{ marginTop: 10, width: "100%", padding: 13, background: "#fff", color: G.surClair, border: "2px solid " + G.gold, borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>← Revenir aux Intégrations</button>
           </div>
         )}
 
@@ -24079,7 +24082,7 @@ export default function App() {
             <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
             <h1 style={{ color: G.gold, fontSize: 22, marginBottom: 6 }}>Comment publier sur {SITE_NOM}</h1>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Le guide complet pour t’inscrire et publier tes livres, même sans aucune expérience.</p>
-            <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.gold, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 24 }}>⬇️ Télécharger le guide en PDF</a>
+            <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.bouton, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 24 }}>⬇️ Télécharger le guide en PDF</a>
 
             {(() => {
               const H = { color: G.gold, fontSize: 17, fontWeight: "bold", margin: "22px 0 8px" };
@@ -24216,7 +24219,7 @@ export default function App() {
                 <p style={{ fontSize: 14, color: G.textDim, lineHeight: 1.6, marginBottom: 20 }}>
                   Notre programme de parrainage est en cours de finalisation. Reviens bientôt pour découvrir tous les détails !
                 </p>
-                <button onClick={() => setPage("home")} style={{ padding: "12px 28px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>
+                <button onClick={() => setPage("home")} style={{ padding: "12px 28px", background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>
                   ← RETOUR À L'ACCUEIL
                 </button>
               </div>
@@ -24236,7 +24239,7 @@ export default function App() {
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "32px 20px", textAlign: "center" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
                 <p style={{ fontSize: 14, color: G.text, marginBottom: 16 }}>Connecte-toi pour accéder à ton programme de parrainage</p>
-                <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 28px", background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>SE CONNECTER</button>
+                <button onClick={() => setShowLecteurModal(true)} style={{ padding: "12px 28px", background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1 }}>SE CONNECTER</button>
               </div>
             )}
 
@@ -24315,14 +24318,14 @@ export default function App() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                     <span style={{ fontSize: 20 }}>🎯</span>
                     <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold }}>Partager un livre précis</div>
-                    <span style={{ background: G.gold, color: "#1a1a1a", fontSize: 9, fontWeight: "bold", padding: "2px 6px", borderRadius: 4, marginLeft: "auto" }}>+ EFFICACE</span>
+                    <span style={{ background: G.bouton, color: G.boutonTexte, fontSize: 9, fontWeight: "bold", padding: "2px 6px", borderRadius: 4, marginLeft: "auto" }}>+ EFFICACE</span>
                   </div>
                   <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 12 }}>
                     Va sur n'importe quel livre, clique sur <span style={{ color: G.gold }}>🔗</span> en haut à droite. Ton code sera automatiquement ajouté au lien partagé.
                   </div>
                   <button
                     onClick={() => setPage("home")}
-                    style={{ width: "100%", padding: 12, background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 0.5 }}
+                    style={{ width: "100%", padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 0.5 }}
                   >
                     📚 PARCOURIR LES LIVRES
                   </button>
@@ -24502,7 +24505,7 @@ export default function App() {
                 <button onClick={() => { setShowWithdrawModal(false); setWithdrawMessage({ type: "", text: "" }); }} disabled={withdrawLoading} style={{ padding: 12, background: G.surface2, color: G.text, border: "1px solid " + G.border, borderRadius: 8, fontSize: 13, cursor: withdrawLoading ? "not-allowed" : "pointer" }}>
                   Annuler
                 </button>
-                <button onClick={requestWithdrawal} disabled={withdrawLoading} style={{ padding: 12, background: G.gold, color: "#1a1a1a", border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: withdrawLoading ? "not-allowed" : "pointer" }}>
+                <button onClick={requestWithdrawal} disabled={withdrawLoading} style={{ padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: withdrawLoading ? "not-allowed" : "pointer" }}>
                   {withdrawLoading ? "..." : "Confirmer"}
                 </button>
               </div>
@@ -24542,7 +24545,7 @@ export default function App() {
             </div>
 
             <button onClick={() => { if (!user && !lecteur) { setShowLecteurModal(true); return; } setShowSubModal(true); setSubPaymentStep(1); setSubPaymentMethod(null); setSubPhone(""); }}
-              style={{ width: "100%", padding: 15, background: G.gold, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              style={{ width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: "#000", cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
               {subscription ? "Renouveler l'abonnement" : "S'abonner maintenant"}
             </button>
 
@@ -24623,7 +24626,7 @@ export default function App() {
                           setRecoverMsg("Aucun résultat trouvé pour ce numéro. Vérifie-le et réessaie, ou contacte-nous sur WhatsApp.");
                         }
                       }}
-                      style={{ flex: 1, background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "11px 0", fontSize: 14, fontWeight: "bold", cursor: recovering ? "wait" : "pointer", opacity: recovering ? 0.7 : 1 }}
+                      style={{ flex: 1, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, padding: "11px 0", fontSize: 14, fontWeight: "bold", cursor: recovering ? "wait" : "pointer", opacity: recovering ? 0.7 : 1 }}
                     >{recovering ? "..." : "Récupérer"}</button>
                   </div>
                 </div>
@@ -24634,7 +24637,7 @@ export default function App() {
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 24, textAlign: "center" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
                 <div style={{ fontSize: 15, color: G.text, marginBottom: 16 }}>Connecte-toi pour voir tes résultats sauvegardés</div>
-                <button onClick={() => setShowLecteurModal(true)} style={{ background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Se connecter</button>
+                <button onClick={() => setShowLecteurModal(true)} style={{ background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Se connecter</button>
               </div>
             )}
 
@@ -24647,7 +24650,7 @@ export default function App() {
                 <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
                 <div style={{ fontSize: 15, color: G.text, marginBottom: 8 }}>Aucun résultat pour le moment</div>
                 <div style={{ fontSize: 13, color: G.textDim, marginBottom: 16 }}>Fais un diagnostic CarryCare pour commencer.</div>
-                <button onClick={() => setPage("home")} style={{ background: G.gold, color: "#000", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Découvrir CarryCare</button>
+                <button onClick={() => setPage("home")} style={{ background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Découvrir CarryCare</button>
               </div>
             )}
 
@@ -25538,7 +25541,7 @@ export default function App() {
                 ))}
                 <button onClick={() => { setPage("quiz"); setQuizPage("quizHome"); setQuizCategory("Tous"); }} style={{
                   flex: 1, padding: "6px 4px", borderRadius: 8, border: "none",
-                  background: G.gold, color: "#1a1208", fontSize: 11, fontWeight: "bold", cursor: "pointer",
+                  background: G.bouton, color: G.boutonTexte, fontSize: 11, fontWeight: "bold", cursor: "pointer",
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2
                 }}>
                   <span>🔥</span>
@@ -25797,7 +25800,7 @@ export default function App() {
                 <h3 style={{ color: G.gold, marginBottom: 8, fontSize: 18 }}>Bienvenue dans le club !</h3>
                 <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>Profite de tes {subSettings.books_per_month} livres ce mois 📚</p>
                 <button onClick={() => { setShowSubModal(false); setSubPaymentStep(1); setSubPaymentMethod(null); setSubPhone(""); setPage("home"); }}
-                  style={{ width: "100%", padding: 14, background: G.gold, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+                  style={{ width: "100%", padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: "#000", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
                   📚 Explorer les livres
                 </button>
               </div>
