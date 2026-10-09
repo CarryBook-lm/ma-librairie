@@ -17810,6 +17810,104 @@ export default function App() {
     return String(x || "").split(LIV_SUITE).join("").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   }
 
+  // ============================================================
+  // 09/10 : PLI DE PAGE, facon liseuse.
+  // Trois couches superposees : la page d'arrivee (dessous), la page de
+  // depart (dessus) et le DOS de cette page (le rabat). Le rabat est la page
+  // reflechie autour de la diagonale x+y=K ; on fait varier K et la feuille
+  // se replie. Tout est pilote en ecrivant directement dans le DOM, sans
+  // repasser par React : 60 images par seconde meme sur un telephone lent.
+  // ============================================================
+  const [pliActif, setPliActif] = useState(false);
+  const [pliTextes, setPliTextes] = useState({ dessus: "", dessous: "" });
+  const pliEnCours = useRef(false);
+
+  // Le rectangle de la page coupe par la droite x+y=K (algorithme de decoupe
+  // de polygone) : d'un cote ce qui reste a plat, de l'autre ce qui se replie.
+  function polygoneDemiPlan(K, W, H, inferieur) {
+    const r = [[0, 0], [W, 0], [W, H], [0, H]];
+    const dans = p => inferieur ? (p[0] + p[1] <= K) : (p[0] + p[1] >= K);
+    const croise = (a, b) => {
+      const sa = a[0] + a[1], sb = b[0] + b[1], t = (K - sa) / (sb - sa);
+      return [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])];
+    };
+    const o = [];
+    for (let i = 0; i < 4; i++) {
+      const a = r[i], b = r[(i + 1) % 4], da = dans(a), db = dans(b);
+      if (da) o.push(a);
+      if (da !== db) o.push(croise(a, b));
+    }
+    if (!o.length) return "polygon(0px 0px, 0px 0px, 0px 0px)";
+    return "polygon(" + o.map(p => p[0].toFixed(1) + "px " + p[1].toFixed(1) + "px").join(",") + ")";
+  }
+
+  function poserPli(K, W, H, sombre) {
+    const S = (W + H) || 1;
+    const pc = Math.max(0, Math.min(100, (K / S) * 100));
+    const boite = document.getElementById("pli-boite");
+    const dessus = document.getElementById("pli-dessus");
+    const rabat = document.getElementById("pli-rabat");
+    const ombre = document.getElementById("pli-ombre");
+    const arete = document.getElementById("pli-arete");
+    const voile = document.getElementById("pli-voile");
+    if (!dessus || !rabat) return false;
+    const basse = polygoneDemiPlan(K, W, H, true);
+    const haute = polygoneDemiPlan(K, W, H, false);
+    dessus.style.clipPath = basse;
+    rabat.style.clipPath = haute;
+    // Reflexion autour de x+y=K : (x,y) -> (K-y, K-x)
+    rabat.style.transform = "matrix(0,-1,-1,0," + K + "," + K + ")";
+    if (voile) {
+      // Dos de la feuille : sombre au pli, ou le papier se courbe.
+      voile.style.background = "linear-gradient(135deg, rgba(0,0,0,0) calc(" + pc + "% - 2px), rgba(0,0,0,0.17) " + pc + "%, rgba(0,0,0,0.05) calc(" + pc + "% + 34px), rgba(0,0,0,0.015) calc(" + pc + "% + 90px))";
+    }
+    if (ombre) {
+      // Ombre portee par la feuille soulevee sur la page d'arrivee.
+      ombre.style.clipPath = haute;
+      ombre.style.background = "linear-gradient(135deg, rgba(0,0,0,0) calc(" + pc + "% - 1px), rgba(0,0,0,0.22) " + pc + "%, rgba(0,0,0,0.10) calc(" + pc + "% + 10px), rgba(0,0,0,0) calc(" + pc + "% + 34px))";
+    }
+    if (arete) {
+      // Fine arete claire : le bord du pli accroche la lumiere.
+      const c = sombre ? "255,255,255,0.30" : "255,255,255,0.95";
+      arete.style.clipPath = basse;
+      arete.style.background = "linear-gradient(135deg, rgba(255,255,255,0) calc(" + pc + "% - 3px), rgba(" + c + ") calc(" + pc + "% - 1px), rgba(255,255,255,0) calc(" + pc + "% + 1px))";
+    }
+    if (boite) boite.style.visibility = "visible";
+    return true;
+  }
+
+  // sens = 1 : page suivante (la feuille se replie vers le haut a gauche)
+  // sens = -1 : page precedente (elle se deplie, mouvement inverse)
+  function animerPli(texteDessus, texteDessous, sens, fin) {
+    const W = boitePage.l, H = boitePage.h;
+    if (!W || !H || typeof window === "undefined" || !window.requestAnimationFrame) { fin(); return; }
+    // Filet : si une image est perdue, on ne reste jamais bloque sur le pli.
+    const secours = setTimeout(() => { pliEnCours.current = false; setPliActif(false); }, 2500);
+    const S = W + H;
+    if (pliEnCours.current) return;      // un pli a la fois
+    pliEnCours.current = true;
+    const sombre = !!readerDark;
+    setPliTextes({ dessus: texteDessus, dessous: texteDessous });
+    setPliActif(true);
+    const duree = 420;
+    let t0 = null, pret = false;
+    const pas = (t) => {
+      if (!pret) {
+        // On attend que les couches soient dans la page avant de demarrer.
+        if (!poserPli(sens === 1 ? S : 0, W, H, sombre)) { window.requestAnimationFrame(pas); return; }
+        pret = true; t0 = t;
+        window.requestAnimationFrame(pas);
+        return;
+      }
+      const p = Math.min(1, (t - t0) / duree);
+      const e = 1 - Math.pow(1 - p, 3);   // depart franc, arrivee en douceur
+      poserPli(sens === 1 ? S * (1 - e) : S * e, W, H, sombre);
+      if (p < 1) window.requestAnimationFrame(pas);
+      else { clearTimeout(secours); pliEnCours.current = false; setPliActif(false); fin(); }
+    };
+    window.requestAnimationFrame(pas);
+  }
+
   // Recalcule les pages des que la boite, la taille ou la police changent.
   useEffect(() => {
     if (page !== "reader" || !reading || readerScrollMode) { setPagesMesurees(null); return; }
@@ -21029,9 +21127,59 @@ export default function App() {
       ? pages.filter(p => !p.startsWith("__SPECIAL_")).flatMap(p => p.split(/\n+/).filter(x => x.trim()))
       : (pages[readingPage] && !isSpecialPage ? pages[readingPage].split(/\n+/).filter(p => p.trim().length > 0) : []);
 
-    // ========== NAVIGATION PAGES (avec animation slide) ==========
+    // Dessine les paragraphes d'une page. Utilise a la fois par la page
+    // affichee et par les couches du pli : un seul endroit, donc aucun
+    // risque que les deux divergent.
+    const fondLecture = readerDark ? "#1a1a1a" : "#ffffff";
+    const rendreParas = (x) => {
+      const liste = Array.isArray(x)
+        ? x
+        : String(x || "").split(/\n+/).filter(t => t.trim());
+      return liste.map(function (para, i) {
+        const estSuite = String(para).indexOf(LIV_SUITE) === 0;
+        const texte = estSuite ? String(para).slice(1) : String(para);
+        return (
+          <p key={i} style={{
+            fontFamily: readerFont,
+            fontSize: readerSize + "px",
+            lineHeight: String(LIV_INTERLIGNE),
+            color: readerDark ? "#e0e0e0" : "#1a1a1a",
+            textAlign: "justify",
+            margin: 0,
+            marginBottom: LIV_ESPACE_EM + "em",
+            textIndent: estSuite ? "0" : LIV_RETRAIT,
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
+            userSelect: "none",
+            WebkitUserSelect: "none"
+          }} dangerouslySetInnerHTML={{ __html: texte.trim() }} />
+        );
+      });
+    };
+
+    // ========== NAVIGATION PAGES ==========
+    function allerPage(np) {
+      setReadingPage(np);
+      if (reading) { try { localStorage.setItem("readingProgress_" + reading.id, np); } catch (e) {} }
+      setPageIndicator("PAGE " + (np + 1) + " / " + total);
+      setTimeout(() => setPageIndicator(null), 700);
+      setTimeout(() => {
+        const el = document.getElementById("reader-page-scroll");
+        if (el) el.scrollTop = 0;
+      }, 20);
+    }
+    // Le pli n'a de sens qu'entre deux pages de texte : les pages speciales
+    // (introduction, titre, copyright) gardent le glissement.
+    function pageDeTexte(i) {
+      const c = pages[i];
+      return typeof c === "string" && c.indexOf("__SPECIAL_") !== 0;
+    }
     function goToNextPage() {
       if (readingPage >= total - 1) return;
+      if (!readerScrollMode && boitePage.h && pageDeTexte(readingPage) && pageDeTexte(readingPage + 1)) {
+        animerPli(pages[readingPage], pages[readingPage + 1], 1, () => allerPage(readingPage + 1));
+        return;
+      }
       setPageSlideDir(1);
       setTimeout(() => {
         setReadingPage(p => {
@@ -21059,6 +21207,10 @@ export default function App() {
     }
     function goToPrevPage() {
       if (readingPage <= 0) return;
+      if (!readerScrollMode && boitePage.h && pageDeTexte(readingPage) && pageDeTexte(readingPage - 1)) {
+        animerPli(pages[readingPage - 1], pages[readingPage], -1, () => allerPage(readingPage - 1));
+        return;
+      }
       setPageSlideDir(-1);
       setTimeout(() => {
         setReadingPage(p => {
@@ -21309,6 +21461,14 @@ export default function App() {
               alignItems: "stretch",
               justifyContent: "flex-start"
             }}>
+            <div style={{
+              position: "relative",
+              width: "100%",
+              flex: boitePage.h ? "0 0 auto" : 1,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0
+            }}>
             <div id="reader-page-scroll" style={{
               // 09/10 : zone de page DELIMITEE. Avant, "flex: 1" laissait la zone
               // grandir avec son contenu (584px a vide, 1229px remplie) : la mesure
@@ -21467,28 +21627,7 @@ export default function App() {
               ) : (
                 // ===== PAGES NORMALES (texte du roman) =====
                 <>
-              {scrollAllParagraphs.map(function(para, i) {
-                // Un paragraphe commence sur la page precedente : sa suite
-                // s'affiche sans retrait, comme dans un livre.
-                const estSuite = String(para).indexOf(LIV_SUITE) === 0;
-                const texte = estSuite ? String(para).slice(1) : String(para);
-                return (
-                  <p key={i} style={{
-                    fontFamily: readerFont,
-                    fontSize: readerSize + "px",
-                    lineHeight: String(LIV_INTERLIGNE),
-                    color: readerDark ? "#e0e0e0" : "#1a1a1a",
-                    textAlign: "justify",
-                    margin: 0,
-                    marginBottom: LIV_ESPACE_EM + "em",
-                    textIndent: estSuite ? "0" : LIV_RETRAIT,
-                    wordBreak: "break-word",
-                    overflowWrap: "break-word",
-                    userSelect: "none",
-                    WebkitUserSelect: "none"
-                  }} dangerouslySetInnerHTML={{ __html: texte.trim() }} />
-                );
-              })}
+              {rendreParas(scrollAllParagraphs)}
 
               {excerptMode && readingPage === total - 1 && (
                 <div style={{ marginTop: 24, padding: 20, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
@@ -21502,6 +21641,19 @@ export default function App() {
               )}
                 </>
               )}
+            </div>
+            {pliActif && boitePage.h ? (
+              <div id="pli-boite" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: boitePage.h + "px", visibility: "hidden", zIndex: 5, pointerEvents: "none", overflow: "hidden" }}>
+                <div id="pli-dessous" style={{ position: "absolute", inset: 0, background: fondLecture, overflow: "hidden" }}>{rendreParas(pliTextes.dessous)}</div>
+                <div id="pli-ombre" style={{ position: "absolute", inset: 0, zIndex: 2 }} />
+                <div id="pli-dessus" style={{ position: "absolute", inset: 0, zIndex: 3, background: fondLecture, overflow: "hidden" }}>{rendreParas(pliTextes.dessus)}</div>
+                <div id="pli-arete" style={{ position: "absolute", inset: 0, zIndex: 4 }} />
+                <div id="pli-rabat" style={{ position: "absolute", inset: 0, zIndex: 5, background: fondLecture, transformOrigin: "0 0", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", inset: 0, opacity: 0.10 }}>{rendreParas(pliTextes.dessus)}</div>
+                  <div id="pli-voile" style={{ position: "absolute", inset: 0 }} />
+                </div>
+              </div>
+            ) : null}
             </div>
             <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
