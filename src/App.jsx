@@ -13654,6 +13654,24 @@ function ReclamerLivre({ G, setPage }) {
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
   const [CATEGORIES, setCATEGORIES] = useState(EST_HOMOROMANCE ? {} : CATEGORIES_FALLBACK);
+  // 09/10 : l'identite de l'editeur (raison sociale, responsable, adresse, RCCM, NIU)
+  // n'est PLUS ecrite dans le code. Elle est lue dans la base, et uniquement sur
+  // CarryBooks. Le fichier envoye aux navigateurs ne contient donc aucune donnee
+  // personnelle, ni sur HomoRomance ni ailleurs.
+  const [identiteEd, setIdentiteEd] = useState(null);
+  useEffect(() => {
+    if (EST_HOMOROMANCE) return;
+    let vivant = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from("identite_editeur")
+          .select("entreprise, responsable, adresse, siege, rccm, niu").eq("id", 1).maybeSingle();
+        if (vivant && data) setIdentiteEd(data);
+      } catch (e) {}
+    })();
+    return () => { vivant = false; };
+  }, []);
+  const idEd = identiteEd || {};
 
   // ===== MODULE POD (Print On Demand) — Commande papier =====
   const [shippingZones, setShippingZones] = useState([]); // zones actives chargées depuis Supabase
@@ -24977,7 +24995,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                {SITE_NOM} (« nous », « notre », « nos ») est une application de lecture numérique{EST_HOMOROMANCE ? "." : null}{!EST_HOMOROMANCE && <> opérée par <strong style={{ color: G.text }}>CARRY'GOO</strong>, dirigée par Sylviane Landrine Maffo, basée à Yaoundé, Cameroun.</>} Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
+                {SITE_NOM} (« nous », « notre », « nos ») est une application de lecture numérique{EST_HOMOROMANCE ? "." : null}{!EST_HOMOROMANCE && identiteEd && <> opérée par <strong style={{ color: G.text }}>{idEd.entreprise}</strong>, dirigée par {idEd.responsable}, basée à {idEd.adresse}.</>} Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre application web et mobile.
               </p>
             </div>
 
@@ -25085,10 +25103,10 @@ export default function App() {
               </p>
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
                 📧 <strong>E-mail :</strong> {SITE_EMAIL}<br />
-                {!EST_HOMOROMANCE && (<>
-                🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
-                👤 <strong>Responsable :</strong> Sylviane Landrine Maffo<br />
-                📍 <strong>Adresse :</strong> Yaoundé, Cameroun
+                {!EST_HOMOROMANCE && identiteEd && (<>
+                🏢 <strong>Entreprise :</strong> {idEd.entreprise}<br />
+                👤 <strong>Responsable :</strong> {idEd.responsable}<br />
+                📍 <strong>Adresse :</strong> {idEd.adresse}
                 </>)}
               </p>
             </div>
@@ -25106,7 +25124,7 @@ export default function App() {
 
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-                Chez <strong style={{ color: G.text }}>{SITE_NOM}</strong>{!EST_HOMOROMANCE && " (opérée par CARRY'GOO, Yaoundé, Cameroun)"}, vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
+                Chez <strong style={{ color: G.text }}>{SITE_NOM}</strong>{!EST_HOMOROMANCE && identiteEd ? " (opérée par " + idEd.entreprise + ", " + idEd.adresse + ")" : ""}, vous pouvez à tout moment demander la suppression de votre compte et de toutes les données associées. Cette page vous explique comment procéder.
               </p>
             </div>
 
@@ -25148,9 +25166,9 @@ export default function App() {
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 12 }}>NOUS CONTACTER</div>
               <p style={{ color: G.text, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
                 📧 <strong>E-mail :</strong> {SITE_EMAIL}<br />
-                {!EST_HOMOROMANCE && (<>
-                🏢 <strong>Entreprise :</strong> CARRY'GOO<br />
-                📍 <strong>Adresse :</strong> Yaoundé, Cameroun
+                {!EST_HOMOROMANCE && identiteEd && (<>
+                🏢 <strong>Entreprise :</strong> {idEd.entreprise}<br />
+                📍 <strong>Adresse :</strong> {idEd.adresse}
                 </>)}
               </p>
             </div>
@@ -25183,14 +25201,14 @@ export default function App() {
                 {EST_HOMOROMANCE ? (<>
                 Le site <strong style={{ color: G.text }}>{SITE_DOMAINE}</strong> est édité par <strong style={{ color: G.text }}>{SITE_NOM}</strong>.<br /><br />
                 <strong style={{ color: G.text }}>Contact :</strong> {SITE_EMAIL}
-                </>) : (<>
-                Le site <strong style={{ color: G.text }}>carrybooks.com</strong> est édité par <strong style={{ color: G.text }}>CARRY'GOO</strong>, établissement enregistré au Cameroun.<br /><br />
-                <strong style={{ color: G.text }}>Siège social :</strong> Carrefour Sapeurs Pompiers Mimboman, Yaoundé, Cameroun<br />
-                <strong style={{ color: G.text }}>RCCM :</strong> RC/YAE/2025/M/133<br />
-                <strong style={{ color: G.text }}>NIU :</strong> P028417945459A<br />
-                <strong style={{ color: G.text }}>Directrice de publication :</strong> Sylviane Landrine Maffo<br />
+                </>) : identiteEd ? (<>
+                Le site <strong style={{ color: G.text }}>{SITE_DOMAINE}</strong> est édité par <strong style={{ color: G.text }}>{idEd.entreprise}</strong>.<br /><br />
+                <strong style={{ color: G.text }}>Siège social :</strong> {idEd.siege}<br />
+                <strong style={{ color: G.text }}>RCCM :</strong> {idEd.rccm}<br />
+                <strong style={{ color: G.text }}>NIU :</strong> {idEd.niu}<br />
+                <strong style={{ color: G.text }}>Directrice de publication :</strong> {idEd.responsable}<br />
                 <strong style={{ color: G.text }}>Contact :</strong> {SITE_EMAIL}
-                </>)}
+                </>) : null}
               </p>
             </div>
 
