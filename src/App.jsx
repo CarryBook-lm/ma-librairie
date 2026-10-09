@@ -18492,11 +18492,11 @@ export default function App() {
             <div>
               <div style={{ display: "grid", gap: 10 }}>
                 {(() => {
-                  const reels = auteursList.map(a => ({ key: "a" + a.id, nom: a.nom_complet, photo: a.photo_url, lieu: a.pays, onClick: () => ouvrirBoutiqueAuteur(a.code_source) }));
-                  const fictifs = profilsAuteurs.filter(p => !auteursList.some(a => (a.nom_complet || "").trim().toLowerCase() === (p.nom || "").trim().toLowerCase())).map(p => ({ key: "pf" + p.id, nom: p.nom, photo: p.photo_url, lieu: p.ville, onClick: () => ouvrirBoutiqueProfil(p) }));
+                  const reels = auteursList.filter(a => auteurDuSite(a.id)).map(a => ({ key: "a" + a.id, nom: a.nom_complet, photo: a.photo_url, lieu: a.pays, onClick: () => ouvrirBoutiqueAuteur(a.code_source) }));
+                  const fictifs = profilsAuteurs.filter(p => auteurDuSite(p.id)).filter(p => !auteursList.some(a => (a.nom_complet || "").trim().toLowerCase() === (p.nom || "").trim().toLowerCase())).map(p => ({ key: "pf" + p.id, nom: p.nom, photo: p.photo_url, lieu: p.ville, onClick: () => ouvrirBoutiqueProfil(p) }));
                   const tous = [...reels, ...fictifs].sort((x, y) => (x.nom || "").localeCompare(y.nom || "", "fr", { sensitivity: "base" }));
                   return tous.map(a => (
-                    <div key={a.key} onClick={a.onClick} style={{ background: "#fff", border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+                    <div key={a.key} onClick={a.onClick} style={{ background: G.carte, border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
                       <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
                         {a.photo ? <img src={a.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom || "?").charAt(0).toUpperCase()}
                       </div>
@@ -19039,7 +19039,7 @@ export default function App() {
   }
 
   if (page === "espace_auteur") {
-    const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.border, background: "#fff", color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
+    const champ = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid " + G.champBordure, background: G.champ, color: G.text, fontSize: 14, marginBottom: 4, boxSizing: "border-box" };
     const labelSt = { fontSize: 12, color: G.textDim, marginBottom: 6, display: "block", fontWeight: "bold" };
     const eaLarge = (typeof window !== "undefined" && window.innerWidth >= 700);
     const eaMax = eaLarge ? 900 : 620;
