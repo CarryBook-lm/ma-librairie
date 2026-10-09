@@ -23074,10 +23074,14 @@ export default function App() {
                 {/* NOUVEAUTÉS (PRODUITS NUMÉRIQUES) - numérique + mixte */}
                 {(() => {
                   // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
+                  // 09/10 : surCarryBooks() manquait ici — la rangee montrait TOUS les livres,
+                  // y compris ceux qui n'appartiennent pas au site affiche.
                   const digitalBooks = books.filter(b => 
-                    b.product_type === 'numerique' || 
-                    b.product_type === 'mixte' || 
-                    !b.product_type
+                    b.status === "actif" && surCarryBooks(b) && (
+                      b.product_type === 'numerique' || 
+                      b.product_type === 'mixte' || 
+                      !b.product_type
+                    )
                   ).slice(0, 10);
                   if (digitalBooks.length === 0) return null;
                   return (
@@ -23124,13 +23128,6 @@ export default function App() {
                   const isDigitalReco = b => b.product_type !== "papier" && b.product_type !== "article" && surCarryBooks(b);
                   const isRomanCat = k => /^roman/i.test(k) || /saga/i.test(k) || /romance/i.test(k) || /po[eé]sie/i.test(k) || /audio/i.test(k);
                   const catHasBooks = k => books.some(b => isDigitalReco(b) && (champCategorie(b) === k || champCategorie(b).toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
-                  const firstGuideCat = Object.keys(CATEGORIES).find(k => !isRomanCat(k) && catHasBooks(k));
-                  const owned = new Set([...(purchasedBooks || []), ...(favoriteBooks || [])]);
-                  const likedCats = {}; books.forEach(b => { if (owned.has(b.id) && champCategorie(b)) likedCats[champCategorie(b)] = (likedCats[champCategorie(b)] || 0) + 1; });
-                  const catsAimees = Object.keys(likedCats).sort((a, b) => likedCats[b] - likedCats[a]);
-                  let reco = melangerListe(catsAimees.length ? books.filter(b => isDigitalReco(b) && !owned.has(b.id) && catsAimees.includes(champCategorie(b))) : []);
-                  if (reco.length < 4) { const pop = (topPurchasedBooks && topPurchasedBooks.length ? topPurchasedBooks : books.filter(isDigitalReco)).filter(b => !owned.has(b.id) && !reco.find(r => r.id === b.id)); reco = [...reco, ...pop]; }
-                  reco = reco.slice(0, 12);
                   return Object.keys(CATEGORIES).map(cat => {
                   // Filtrer par cat�gorie ET ne garder QUE les livres num�riques (num/mixte/audio/podcast)
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
@@ -23144,25 +23141,6 @@ export default function App() {
                   const physicalNewBooks = [];
                   return (
                     <Fragment key={cat}>
-                      {cat === firstGuideCat && reco.length > 0 && (
-                        <div style={{ marginBottom: 28 }}>
-                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>✨ Pour vous</div>
-                          <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
-                            {reco.map(book => (
-                              <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "23vw", maxWidth: 105, cursor: "pointer" }}>
-                                <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
-                                  {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
-                                </div>
-                                <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-                                {!EST_HOMOROMANCE && book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
-                                {!EST_HOMOROMANCE && (<>
-                                <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", marginTop: 3, display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
-                                </>)}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                       {/* Nouveautés Produits Physiques (juste avant Livres Papiers) */}
                       {isLivresPapiers && physicalNewBooks.length > 0 && (
                         <div style={{ marginBottom: 28 }}>
@@ -23262,6 +23240,47 @@ export default function App() {
                   </div>
                 )}
 
+                {/* 09/10 : POUR VOUS descend ici, juste au-dessus des chiffres en temps reel. */}
+                {(() => {
+                  const estReco = b => b.product_type !== "papier" && b.product_type !== "article"
+                    && b.status === "actif" && surCarryBooks(b);
+                  const dispo = books.filter(estReco);
+                  const possede = new Set([...(purchasedBooks || []), ...(favoriteBooks || [])]);
+                  const compte = {};
+                  dispo.forEach(b => { if (possede.has(b.id) && champCategorie(b)) compte[champCategorie(b)] = (compte[champCategorie(b)] || 0) + 1; });
+                  const aimees = Object.keys(compte).sort((a, b) => compte[b] - compte[a]);
+                  let reco = melangerListe(dispo.filter(b => !possede.has(b.id) && aimees.includes(champCategorie(b))));
+                  if (reco.length < 4) {
+                    // Completer : les plus achetes (on retrouve le VRAI livre par son id), puis les plus recents.
+                    const pop = (topPurchasedBooks || []).map(p => dispo.find(b => b.id === p.book_id)).filter(Boolean);
+                    const recents = [...dispo].sort((a, b) => (b.id || 0) - (a.id || 0));
+                    [...pop, ...recents].forEach(b => {
+                      if (reco.length < 12 && !possede.has(b.id) && !reco.find(r => r.id === b.id)) reco.push(b);
+                    });
+                  }
+                  reco = reco.slice(0, 12);
+                  if (reco.length === 0) return null;
+                  return (
+                    <div style={{ marginBottom: 28 }}>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>✨ Pour vous</div>
+                      <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                        {reco.map(book => (
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "23vw", maxWidth: 105, cursor: "pointer" }}>
+                            <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
+                              {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
+                            {!EST_HOMOROMANCE && book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                            {!EST_HOMOROMANCE && (
+                            <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", marginTop: 3, display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                
                 {/* STATS SITE (toujours affichées, indépendantes des catégories) */}
                 <div style={{ padding: "4px 12px 24px" }}>
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12, padding: "0 4px" }}>{SITE_NOM}, les chiffres en temps réel</div>
