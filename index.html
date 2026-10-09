@@ -37,7 +37,7 @@
         document.documentElement.setAttribute("data-site", "homoromance");
         var T = "HomoRomance";
         var D = "HomoRomance - Romans d'amour entre femmes. Lis. Vibre. Recommence.";
-        var IMG = location.origin + "/icon-homoromance-512.png?v=3";
+        var IMG = location.origin + "/icon-homoromance-512.png?v=5";
         document.title = T;
         function set(sel, attr, val) {
           var el = document.querySelector(sel);
@@ -46,8 +46,8 @@
         set('link[rel="manifest"]', "href", "/manifest-homoromance.json");
         set('meta[name="theme-color"]', "content", "#0d0d17");
         set('link[rel="icon"]', "type", "image/x-icon");
-        set('link[rel="icon"]', "href", "/favicon-homoromance.ico?v=3");
-        set('link[rel="apple-touch-icon"]', "href", "/icon-homoromance-180.png?v=3");
+        set('link[rel="icon"]', "href", "/favicon-homoromance.ico?v=5");
+        set('link[rel="apple-touch-icon"]', "href", "/icon-homoromance-180.png?v=5");
         set('meta[name="description"]', "content", D);
         set('meta[property="og:title"]', "content", T);
         set('meta[property="og:description"]', "content", D);
@@ -172,7 +172,7 @@
       (function () {
         if (document.documentElement.getAttribute("data-site") !== "homoromance") return;
         var img = document.querySelector(".splash-logo");
-        if (img) { img.src = "/icon-homoromance-512.png?v=3"; img.alt = "HomoRomance"; }
+        if (img) { img.src = "/icon-homoromance-512.png?v=5"; img.alt = "HomoRomance"; }
         var t = document.querySelector(".splash-title");
         if (t) t.textContent = "HomoRomance";
         var g = document.querySelector(".splash-tagline");

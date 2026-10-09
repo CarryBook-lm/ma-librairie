@@ -95,7 +95,7 @@ const EST_HOMOROMANCE = (function () {
 const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
 // Le service worker sert les images "cache d'abord" : on change le numero de version
 // a chaque fois qu'on remplace le logo, sinon les anciennes visiteuses gardent l'ancien.
-const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
+const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=5" : "/logo-carrybooks.png";
 // Tout lien interne doit rester sur le domaine par lequel la visiteuse est arrivee.
 const SITE_DOMAINE = EST_HOMOROMANCE ? "homoromance.com" : "carrybooks.com";
 const SITE_URL = "https://" + SITE_DOMAINE;
@@ -1697,7 +1697,7 @@ const COMPTES_LIES = { 8: [9] };
 const idsComptesLies = (id) => [id].concat(COMPTES_LIES[id] || []);
 const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
-const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: (EST_HOMOROMANCE ? G.carte : "#fff") };
+const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
 // Capture globale de l'événement d'installation PWA (Android/Chrome) dès le chargement,
 // pour que le bouton "Installe l'application" puisse installer en un clic.
 if (typeof window !== "undefined") {
