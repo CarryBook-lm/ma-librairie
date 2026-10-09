@@ -31,6 +31,10 @@ const SITE_DOMAINE = EST_HOMOROMANCE ? "homoromance.com" : "carrybooks.com";
 const SITE_URL = "https://" + SITE_DOMAINE;
 // Les liens saisis par les auteurs (annonces) contiennent souvent carrybooks.com :
 // on les ramene sur le domaine courant pour ne jamais sortir du site.
+// Nombre de livres reellement visibles sur le site affiche.
+function compterLivresVisibles(liste) {
+  return (liste || []).filter(b => b && b.status === "actif" && surCarryBooks(b)).length;
+}
 function lienInterne(u) {
   try {
     if (!u) return u;
@@ -24903,30 +24907,36 @@ export default function App() {
             <div style={{ fontSize: 10, letterSpacing: 3, color: G.gold, textTransform: "uppercase", marginBottom: 24 }}>À propos de nous</div>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 60, borderRadius: 8, marginBottom: 12 }} />
-              <p style={{ color: G.gold, fontSize: 13, fontStyle: "italic", letterSpacing: 1 }}>Lis. Apprends. Évolue.</p>
+              {!EST_HOMOROMANCE && <p style={{ color: G.gold, fontSize: 13, fontStyle: "italic", letterSpacing: 1 }}>Lis. Apprends. Évolue.</p>}
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
-                {SITE_NOM} est la première librairie numérique africaine pensée pour les lecteurs camerounais et africains. Notre mission est de rendre la lecture accessible à tous, partout en Afrique, depuis son téléphone.
+                {EST_HOMOROMANCE
+                  ? "HomoRomance est la librairie dédiée aux romans d'amour entre femmes. Notre mission est de rendre ces histoires accessibles à toutes, partout, depuis son téléphone."
+                  : SITE_NOM + " est la première librairie numérique africaine pensée pour les lecteurs camerounais et africains. Notre mission est de rendre la lecture accessible à tous, partout en Afrique, depuis son téléphone."}
               </p>
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>NOTRE VISION</div>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.9, margin: 0 }}>
-                Faire de l'Afrique un continent de lecteurs numériques, en proposant des œuvres africaines et internationales accessibles via Mobile Money.
+                {EST_HOMOROMANCE
+                  ? "Réunir au même endroit les plus belles histoires d'amour entre femmes, écrites sans détour, et les rendre accessibles à toutes."
+                  : "Faire de l'Afrique un continent de lecteurs numériques, en proposant des œuvres africaines et internationales accessibles via Mobile Money."}
               </p>
             </div>
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 20 }}>
-              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>CARRYBOOKS EN CHIFFRES</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginTop: 8 }}>
+              <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, marginBottom: 8 }}>{SITE_NOM.toUpperCase()} EN CHIFFRES</div>
+              <div style={{ display: "grid", gridTemplateColumns: EST_HOMOROMANCE ? "1fr" : "repeat(2, 1fr)", gap: 12, marginTop: 8 }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{books.length}+</div>
+                  <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{compterLivresVisibles(books)}+</div>
                   <div style={{ fontSize: 11, color: G.textFaint }}>Livres disponibles</div>
                 </div>
+                {!EST_HOMOROMANCE && (
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>🌍</div>
                   <div style={{ fontSize: 11, color: G.textFaint }}>Afrique & Monde</div>
                 </div>
+                )}
               </div>
             </div>
 
@@ -25190,7 +25200,7 @@ export default function App() {
               <ul style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, paddingLeft: 20, margin: 0 }}>
                 <li>MTN Mobile Money</li>
                 <li>Orange Money</li>
-                <li>Cartes bancaires VISA / Mastercard</li>
+                {!EST_HOMOROMANCE && <li>Cartes bancaires VISA / Mastercard</li>}
               </ul>
               <p style={{ color: G.textDim, fontSize: 14, lineHeight: 1.8, marginBottom: 0, marginTop: 12 }}>
                 Le paiement est effectué via nos partenaires sécurisés (CamPay, NotchPay). Aucune donnée bancaire n'est conservée par {SITE_NOM}.
