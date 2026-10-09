@@ -29,6 +29,14 @@ const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybo
 // Tout lien interne doit rester sur le domaine par lequel la visiteuse est arrivee.
 const SITE_DOMAINE = EST_HOMOROMANCE ? "homoromance.com" : "carrybooks.com";
 const SITE_URL = "https://" + SITE_DOMAINE;
+// Les liens saisis par les auteurs (annonces) contiennent souvent carrybooks.com :
+// on les ramene sur le domaine courant pour ne jamais sortir du site.
+function lienInterne(u) {
+  try {
+    if (!u) return u;
+    return String(u).replace(/^(https?:\/\/)(www\.)?carrybooks\.com/i, "https://" + SITE_DOMAINE);
+  } catch (e) { return u; }
+}
 
 // 🔐 Bouton admin visible UNIQUEMENT pour cet email connecté
 const ADMIN_EMAIL = "carrybooks.com@gmail.com";
@@ -23034,12 +23042,14 @@ export default function App() {
                             <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                               {book.title}
                             </div>
+                            {!EST_HOMOROMANCE && (<>
                             <div style={{ fontSize: 10, color: G.textFaint, marginBottom: 4 }}>
                               {book.author || "Auteur"}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold }}>
                               {book.price === 0 ? "Gratuit" : (book.price?.toLocaleString() + " FCFA")}
                             </div>
+                            </>)}
                           </div>
                         ))}
                       </div>
@@ -23052,7 +23062,7 @@ export default function App() {
                   <div style={{ marginBottom: 28 }}>
                     <div ref={annoncesRef} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollBehavior: "smooth", scrollSnapType: "x mandatory" }}>
                       {annoncesActives.map(a => (
-                        <div key={a.id} onClick={() => { window.location.href = a.lien; }} style={{ flex: "0 0 88%", width: "88%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", scrollSnapAlign: "start" }}>
+                        <div key={a.id} onClick={() => { window.location.href = lienInterne(a.lien); }} style={{ flex: "0 0 88%", width: "88%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", scrollSnapAlign: "start" }}>
                           <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>
                         </div>
@@ -23087,17 +23097,19 @@ export default function App() {
                               </div>
                             )}
                           </div>
-                          <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                          <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{!EST_HOMOROMANCE && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
                           <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
                             {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : (EST_HOMOROMANCE ? "" : "📖 Liseuse"))}
                             {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
                           </div>
+                          {!EST_HOMOROMANCE && (<>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 4, marginTop: 2 }}>
                             <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
                           </div>
+                          </>)}
                         </div>
                       ))}
                     </div>
@@ -23142,8 +23154,10 @@ export default function App() {
                                   {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
                                 </div>
                                 <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-                                {book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                                {!EST_HOMOROMANCE && book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                                {!EST_HOMOROMANCE && (<>
                                 <div style={{ fontSize: 13, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", marginTop: 3, display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : (book.price || 0).toLocaleString() + " F"}</div>
+                                </>)}
                               </div>
                             ))}
                           </div>
@@ -23199,7 +23213,7 @@ export default function App() {
                                 </div>
                               )}
                             </div>
-                            <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                            <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{!EST_HOMOROMANCE && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
                             <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
                               {(isPaperOnly(book)) ? (
                                 <span style={{ color: G.gold }}>{getProductBadge(book)}</span>
@@ -23210,12 +23224,14 @@ export default function App() {
                                 </>
                               )}
                             </div>
+                            {!EST_HOMOROMANCE && (<>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 2 }}>
                             <span style={{ fontSize: 10, color: (isPaperOnly(book)) ? G.gold : (book.price === 0 ? G.green : G.gold), fontWeight: "bold" }}>{(isPaperOnly(book)) ? getDisplayPrice(book).toLocaleString() + " F" : (book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F")}</span>
                             {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
                               <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
                             )}
                           </div>
+                            </>)}
                           </div>
                         ))}
                       </div>
