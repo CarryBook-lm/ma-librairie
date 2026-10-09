@@ -15180,7 +15180,6 @@ export default function App() {
   const [readerScrollMode, setReaderScrollMode] = useState(false);
   const [pageSlideDir, setPageSlideDir] = useState(0); // -1 = retour, 0 = idle, 1 = avance
   const [touchStart, setTouchStart] = useState(null);
-  const [pageIndicator, setPageIndicator] = useState(null); // Affiche "PAGE 3/85" temporairement
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translateLang, setTranslateLang] = useState(null);
   const [translating, setTranslating] = useState(false);
@@ -21243,8 +21242,6 @@ export default function App() {
     function allerPage(np) {
       setReadingPage(np);
       if (reading) { try { localStorage.setItem("readingProgress_" + reading.id, np); } catch (e) {} }
-      setPageIndicator("PAGE " + (np + 1) + " / " + total);
-      setTimeout(() => setPageIndicator(null), 700);
       setTimeout(() => {
         const el = document.getElementById("reader-page-scroll");
         if (el) el.scrollTop = 0;
@@ -21267,9 +21264,6 @@ export default function App() {
         setReadingPage(p => {
           const np = Math.min(total - 1, p + 1);
           if (reading) localStorage.setItem("readingProgress_" + reading.id, np);
-          // Afficher l'indicateur "PAGE X/Y" en gros
-          setPageIndicator("PAGE " + (np + 1) + " / " + total);
-          setTimeout(() => setPageIndicator(null), 700);
           return np;
         });
         setPageSlideDir(0);
@@ -21298,9 +21292,6 @@ export default function App() {
         setReadingPage(p => {
           const np = Math.max(0, p - 1);
           if (reading) localStorage.setItem("readingProgress_" + reading.id, np);
-          // Afficher l'indicateur "PAGE X/Y" en gros
-          setPageIndicator("PAGE " + (np + 1) + " / " + total);
-          setTimeout(() => setPageIndicator(null), 700);
           return np;
         });
         setPageSlideDir(0);
@@ -21740,32 +21731,6 @@ export default function App() {
             <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
-            {/* Indicateur de page : gris clair, transparent, MAJUSCULES, sans cadre */}
-            {pageIndicator && (
-              <div style={{
-                position: "fixed",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                background: readerDark ? "rgba(40,40,40,0.85)" : "rgba(255,255,255,0.92)",
-                color: readerDark ? "#e0e0e0" : "#555",
-                fontSize: 22,
-                fontWeight: "bold",
-                fontFamily: "Georgia, serif",
-                letterSpacing: 2.5,
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-                padding: "12px 28px",
-                borderRadius: 50,
-                boxShadow: readerDark ? "0 4px 20px rgba(0,0,0,0.5)" : "0 4px 20px rgba(0,0,0,0.15)",
-                zIndex: 300,
-                pointerEvents: "none",
-                animation: "pageIndicatorAppear 0.7s ease-out"
-              }}>
-                {pageIndicator}
-                <style>{`@keyframes pageIndicatorAppear{0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)}30%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}`}</style>
-              </div>
-            )}
           </div>
         )}
 
