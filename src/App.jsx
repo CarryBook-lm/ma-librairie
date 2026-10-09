@@ -47,6 +47,14 @@ function lienInterne(u) {
 
 // 🔐 Bouton admin visible UNIQUEMENT pour cet email connecté
 const ADMIN_EMAIL = "carrybooks.com@gmail.com";
+// 09/10 : HomoRomance a sa propre adresse d'administration. Les 2 ouvrent l'admin,
+// chacune sur le site depuis lequel elle se connecte.
+const ADMIN_EMAILS = [ADMIN_EMAIL, "homoromancebook@gmail.com"];
+function estAdmin(u) {
+  try {
+    return !!u && ADMIN_EMAILS.indexOf(String(u.email || "").trim().toLowerCase()) !== -1;
+  } catch (e) { return false; }
+}
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -16193,7 +16201,7 @@ export default function App() {
 
   function hasAccess(book) {
     // Accès total pour l'admin (Landrine) : peut tout lire sans payer
-    if ((auteurProfil && auteurProfil.id === 8) || (user && user.email === ADMIN_EMAIL)) return true;
+    if ((auteurProfil && auteurProfil.id === 8) || estAdmin(user)) return true;
     // L'auteur peut lire gratuitement SES propres livres
     if (auteurProfil && book.auteur_id && String(book.auteur_id) === String(auteurProfil.id)) return true;
     if (book.price === 0) return true;
@@ -22657,7 +22665,7 @@ export default function App() {
               : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
           }
           {/* Bouton ADMIN — visible uniquement pour l'email admin (remplace le panier) */}
-          {user && user.email === ADMIN_EMAIL && (
+          {estAdmin(user) && (
             <button
               onClick={() => { window.location.href = "/admin"; }}
               title="Espace admin"
