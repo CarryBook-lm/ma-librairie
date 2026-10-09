@@ -6,6 +6,30 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
+// ============================================================
+// 09/10 : ADMIN HOMOROMANCE
+// Le meme admin sert les 2 sites. Ouvert depuis homoromance.com, il ne montre
+// QUE HomoRomance : ses livres, ses auteurs, ses chiffres. Aucune trace de CarryBooks.
+// ============================================================
+const CAT_HOMOROMANCE = "HomoRomance";
+const EST_HOMOROMANCE = (function () {
+  try {
+    if (typeof window === "undefined") return false;
+    if ((window.location.hostname || "").toLowerCase().indexOf("homoromance") !== -1) return true;
+    return (window.location.search || "").indexOf("site=homoromance") !== -1;
+  } catch (e) { return false; }
+})();
+const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
+const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
+
+// Toute LECTURE de la table books passe par ici : sur HomoRomance on ne sort
+// jamais de la categorie HomoRomance.
+function livres(select, options) {
+  let q = supabase.from("books").select(select, options);
+  if (EST_HOMOROMANCE) q = q.eq("category", CAT_HOMOROMANCE);
+  return q;
+}
+
 // CATEGORIES est maintenant chargé dynamiquement depuis Supabase
 // Voir state CATEGORIES dans le composant Admin
 // Fallback minimal si Supabase n'a pas encore répondu
@@ -537,7 +561,7 @@ export default function Admin() {
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
           supabase.from("auteurs").select("id, nom_complet, telephone, email, code_source, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
-          supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
+          livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
           supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
@@ -546,9 +570,9 @@ export default function Admin() {
         chargerSupportAdmin(aut || []);
         setEaBooks(bks || []);
         setEaKyc(kyc || []);
-        const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
+        const { data: av } = await livres("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
         setEaAValider(av || []);
-        const { data: vitr } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
+        const { data: vitr } = await livres("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
         setEaVitrine(vitr || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
         setEaAnnonces(anns || []);
@@ -609,7 +633,7 @@ export default function Admin() {
   const rechargerEA = async () => {
     const [{ data: aut }, { data: bks }] = await Promise.all([
       supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
-      supabase.from("books").select("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
+      livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
     setEaAuteurs(aut || []); setEaBooks(bks || []);
     if (aut) { const maj = (aut || []).find(x => eaSelectedAuteur && String(x.id) === String(eaSelectedAuteur.id)); if (maj) setEaSelectedAuteur(maj); }
@@ -737,7 +761,7 @@ export default function Admin() {
   const chargerTodo = async () => {
     try {
       const [{ count: nbLivres }, { count: nbKyc }, { count: nbRetraits }, { count: nbSupport }] = await Promise.all([
-        supabase.from("books").select("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("moderation", "en_attente"),
+        livres("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("moderation", "en_attente"),
         supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "en_attente"),
         supabase.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
         supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("cote", "auteur").eq("lu_admin", false),
@@ -853,7 +877,7 @@ export default function Admin() {
   };
   // 26/09 : livres mis en ligne SANS validation (vendus seulement dans la vitrine de leur auteur).
   const reloadVitrine = async () => {
-    const { data: vitr } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
+    const { data: vitr } = await livres("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("exclusif_vitrine", true).eq("status", "actif").order("created_at", { ascending: false });
     setEaVitrine(vitr || []);
   };
   const retirerLivreVitrine = async (b) => {
@@ -879,7 +903,7 @@ export default function Admin() {
     alert("✅ Le livre est dans « Livres à valider ». Publie-le pour qu'il apparaisse sur CarryBooks.");
   };
   const reloadAValider = async () => {
-    const { data: av } = await supabase.from("books").select("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
+    const { data: av } = await livres("id, title, author, auteur_id, price, cover, category, subcategory, summary, content, pdf_url, audio_url, status, moderation, created_at").eq("moderation", "en_attente").order("created_at", { ascending: true });
     setEaAValider(av || []); chargerTodo();
   };
   const validerLivre = async (b) => {
@@ -1654,7 +1678,7 @@ export default function Admin() {
     if (data && data.length > 0) {
       // Récupérer les titres des livres
       const bookIds = [...new Set(data.map(r => r.book_id))];
-      const { data: booksData } = await supabase.from("books").select("id, title").in("id", bookIds);
+      const { data: booksData } = await livres("id, title").in("id", bookIds);
       const titlesMap = {};
       if (booksData) booksData.forEach(b => { titlesMap[b.id] = b.title; });
       const enriched = data
@@ -1824,7 +1848,7 @@ export default function Admin() {
   }
 
   async function fetchBooks() {
-    const { data } = await supabase.from("books").select("*").neq("status", "brouillon").order("created_at", { ascending: false });
+    const { data } = await livres("*").neq("status", "brouillon").order("created_at", { ascending: false });
     if (data) setBooks(data);
   }
 
@@ -2466,10 +2490,12 @@ export default function Admin() {
             { id: "espace_auteur", label: "Espace auteur", icon: "✍️" },
             { id: "categories", label: "Catégories", icon: "🗂️" },
             { id: "users", label: "Utilisateurs", icon: "👥" },
-            { id: "subscription", label: "Abonnements", icon: "⭐" },
-            { id: "promos", label: "Codes Promo", icon: "🎟️" },
-            { id: "referrals", label: "Parrainages", icon: "🎁" },
-            { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
+            ...(EST_HOMOROMANCE ? [] : [
+              { id: "subscription", label: "Abonnements", icon: "⭐" },
+              { id: "promos", label: "Codes Promo", icon: "🎟️" },
+              { id: "referrals", label: "Parrainages", icon: "🎁" },
+              { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
+            ]),
 
             { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "comptabilite", label: "Comptabilité", icon: "💰" },
