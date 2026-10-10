@@ -39,7 +39,18 @@ const LIV_ESPACE_EM = 0.28;        // respiration entre deux paragraphes, en em
 const LIV_ESPACE_TITRE_EM = 1.1;   // au-dessus d'un titre de chapitre
 const LIV_ESPACE_SOUS_TITRE_EM = 0.5; // juste en dessous du titre
 const LIV_RETRAIT = "1.5em";       // retrait de la premiere ligne
-const LIV_RATIO = 16 / 9;       // hauteur de la page = largeur x ce rapport
+const LIV_RATIO = 3;            // plafond de hauteur : la page remplit toute la feuille (avant 16/9)
+// LIVRE OUVERT : toutes les cotes au meme endroit, pour que le decor, le texte
+// et le pli de page ne se desaccordent jamais.
+const LIVRE_SLIVER = 10;       // largeur du bout de page visible a gauche
+const LIVRE_TRANCHE = 14;      // largeur de la tranche a droite
+const LIVRE_FEUILLE_G = 9;     // la feuille commence ici (elle recouvre un peu le bout de page)
+const LIVRE_FEUILLE_D = 12;    // et finit ici, avant la tranche
+const LIVRE_PAD_G = 26;        // marge du texte a gauche
+const LIVRE_PAD_D = 26;        // marge du texte a droite
+const LIVRE_NAV = 69;          // hauteur de la barre du bas
+const LIVRE_COINS = "3px 16px 16px 3px / 3px 26px 26px 3px";
+const LIVRE_LUMIERE = "radial-gradient(ellipse at 58% 46%, rgba(255,252,242,0.35), rgba(255,252,242,0) 70%)";
 // Inclinaison du pli, en degres depuis l'horizontale. 45 = pli en biais d'un
 // coin a l'autre ; plus on monte vers 90, plus le pli se redresse et plus le
 // mouvement va franchement de droite a gauche, comme une vraie page.
@@ -111,7 +122,7 @@ function tranchePages(sombre) {
 // AU-DESSUS du texte : elle ne doit donc jamais eclaircir (ca delaverait les lettres).
 function ombreFeuille() {
   const r = function (a) { return "rgba(60,45,25," + a + ")"; };
-  return "linear-gradient(90deg, " + r(0.55) + " 0px, " + r(0.30) + " 5px, " + r(0.14) + " 16px, " + r(0.05) + " 44px, " + r(0) + " 80px), " +
+  return "linear-gradient(90deg, " + r(0.50) + " 0px, " + r(0.26) + " 4px, " + r(0.11) + " 12px, " + r(0.04) + " 30px, " + r(0) + " 54px), " +
     "linear-gradient(270deg, " + r(0.16) + " 0px, " + r(0) + " 26px), " +
     "linear-gradient(180deg, " + r(0.10) + " 0px, " + r(0) + " 34px), " +
     "linear-gradient(0deg, " + r(0.12) + " 0px, " + r(0) + " 40px)";
@@ -18026,7 +18037,12 @@ export default function App() {
   // sens = 1 : page suivante (la feuille se replie vers le haut a gauche)
   // sens = -1 : page precedente (elle se deplie, mouvement inverse)
   function animerPli(texteDessus, texteDessous, sens, fin) {
-    const W = boitePage.l, H = boitePage.h;
+    let W = boitePage.l, H = boitePage.h;
+    if (!readerDark) {
+      // Mode jour : le pli suit la feuille entiere (zone de texte + marges + bas de page).
+      const cont = document.getElementById("reader-livre");
+      if (cont) { W = cont.clientWidth - LIVRE_FEUILLE_G - LIVRE_FEUILLE_D; H = cont.clientHeight - LIVRE_NAV; }
+    }
     if (!W || !H || typeof window === "undefined" || !window.requestAnimationFrame) { fin(); return; }
     // Filet : si une image est perdue, on ne reste jamais bloque sur le pli.
     const secours = setTimeout(() => { pliEnCours.current = false; setPliActif(false); }, 2500);
@@ -18073,7 +18089,7 @@ export default function App() {
     // On laisse la fiche s'afficher d'abord : le calcul passe apres.
     const t = setTimeout(() => {
       try {
-        const largeur = Math.max(200, ((typeof window !== "undefined" && window.innerWidth) || 360) - 70);
+        const largeur = Math.max(200, ((typeof window !== "undefined" && window.innerWidth) || 360) - (LIVRE_PAD_G + LIVRE_PAD_D));
         const dispo = ((typeof window !== "undefined" && window.innerHeight) || 740) - 42 - 20 - 69 - 28;
         const hauteur = Math.max(120, Math.min(Math.round(dispo), Math.round(largeur * LIV_RATIO)));
         const pg = decouperEnPages(contenu, largeur, hauteur, readerSize, readerFont);
@@ -21623,6 +21639,7 @@ export default function App() {
         ) : (
           // === MODE PAGE A PAGE : page qui remplit l'ecran + swipe + animation slide ===
           <div
+            id="reader-livre"
             onContextMenu={e => e.preventDefault()}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
@@ -21635,7 +21652,7 @@ export default function App() {
             style={{
               flex: 1,
               position: "relative",
-              padding: readerDark ? "16px 18px 80px 18px" : "16px 30px 80px 40px",
+              padding: readerDark ? "16px 18px 80px 18px" : ("16px " + LIVRE_PAD_D + "px 80px " + LIVRE_PAD_G + "px"),
               maxWidth: "100%",
               width: "100%",
               boxSizing: "border-box",
@@ -21653,10 +21670,10 @@ export default function App() {
             {!readerDark && (
               <>
                 {/* LIVRE OUVERT : fond derriere, page de gauche, tranche, feuille */}
-                <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 69, background: "#cfc8b6", pointerEvents: "none" }} />
-                <div aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, bottom: 69, width: 24, pointerEvents: "none", background: "linear-gradient(90deg, #d8d1bf 0%, #d2cab6 45%, #bdb299 82%, #8f8468 100%)" }} />
-                <div aria-hidden="true" style={{ position: "absolute", right: 0, top: 0, bottom: 69, width: 15, pointerEvents: "none", clipPath: "polygon(0 0, 100% 3.5%, 100% 96.5%, 0 100%)", backgroundImage: tranchePages(false) }} />
-                <div aria-hidden="true" style={{ position: "absolute", left: 23, right: 13, top: 0, bottom: 69, pointerEvents: "none", background: "radial-gradient(ellipse at 58% 46%, rgba(255,252,242,0.35), rgba(255,252,242,0) 70%), " + PAPIER_CLAIR, borderRadius: "3px 16px 16px 3px / 3px 26px 26px 3px", boxShadow: "2px 0 4px rgba(60,45,25,0.35)" }} />
+                <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: LIVRE_NAV, background: "#cfc8b6", pointerEvents: "none" }} />
+                <div aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, bottom: LIVRE_NAV, width: LIVRE_SLIVER + 2, pointerEvents: "none", background: "linear-gradient(90deg, #d8d1bf 0%, #d2cab6 45%, #bdb299 82%, #8f8468 100%)" }} />
+                <div aria-hidden="true" style={{ position: "absolute", right: 0, top: 0, bottom: LIVRE_NAV, width: LIVRE_TRANCHE + 2, pointerEvents: "none", clipPath: "polygon(0 0, 100% 3.5%, 100% 96.5%, 0 100%)", backgroundImage: tranchePages(false) }} />
+                <div aria-hidden="true" style={{ position: "absolute", left: LIVRE_FEUILLE_G, right: LIVRE_FEUILLE_D, top: 0, bottom: LIVRE_NAV, pointerEvents: "none", background: LIVRE_LUMIERE + ", " + PAPIER_CLAIR, borderRadius: LIVRE_COINS, boxShadow: "2px 0 4px rgba(60,45,25,0.35)" }} />
               </>
             )}
             <div style={{
@@ -21840,7 +21857,7 @@ export default function App() {
                 </>
               )}
             </div>
-            {pliActif && boitePage.h ? (
+            {pliActif && boitePage.h && readerDark ? (
               <div id="pli-boite" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: boitePage.h + "px", visibility: "hidden", zIndex: 5, pointerEvents: "none", overflow: "hidden" }}>
                 <div id="pli-dessous" style={{ position: "absolute", inset: 0, ...fondPapier(readerDark), overflow: "hidden" }}>{rendreParas(pliTextes.dessous)}</div>
                 <div id="pli-ombre" style={{ position: "absolute", inset: 0, zIndex: 2 }} />
@@ -21853,10 +21870,23 @@ export default function App() {
               </div>
             ) : null}
             </div>
+            {pliActif && boitePage.h && !readerDark ? (
+              /* Mode jour : le pli couvre TOUTE la feuille, jusqu'en bas, pas seulement la zone de texte. */
+              <div id="pli-boite" style={{ position: "absolute", left: LIVRE_FEUILLE_G, right: LIVRE_FEUILLE_D, top: 0, bottom: LIVRE_NAV, visibility: "hidden", zIndex: 5, pointerEvents: "none", overflow: "hidden", borderRadius: LIVRE_COINS }}>
+                <div id="pli-dessous" style={{ position: "absolute", inset: 0, ...fondPapier(false), backgroundImage: LIVRE_LUMIERE, boxSizing: "border-box", padding: "16px " + (LIVRE_PAD_D - LIVRE_FEUILLE_D) + "px 0 " + (LIVRE_PAD_G - LIVRE_FEUILLE_G) + "px", overflow: "hidden" }}>{rendreParas(pliTextes.dessous)}</div>
+                <div id="pli-ombre" style={{ position: "absolute", inset: 0, zIndex: 2 }} />
+                <div id="pli-dessus" style={{ position: "absolute", inset: 0, zIndex: 3, ...fondPapier(false), backgroundImage: LIVRE_LUMIERE, boxSizing: "border-box", padding: "16px " + (LIVRE_PAD_D - LIVRE_FEUILLE_D) + "px 0 " + (LIVRE_PAD_G - LIVRE_FEUILLE_G) + "px", overflow: "hidden" }}>{rendreParas(pliTextes.dessus)}</div>
+                <div id="pli-arete" style={{ position: "absolute", inset: 0, zIndex: 4 }} />
+                <div id="pli-rabat" style={{ position: "absolute", inset: 0, zIndex: 5, ...fondPapier(false), backgroundImage: LIVRE_LUMIERE, transformOrigin: "0 0", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", inset: 0, opacity: 0.10, boxSizing: "border-box", padding: "16px " + (LIVRE_PAD_D - LIVRE_FEUILLE_D) + "px 0 " + (LIVRE_PAD_G - LIVRE_FEUILLE_G) + "px" }}>{rendreParas(pliTextes.dessus)}</div>
+                  <div id="pli-voile" style={{ position: "absolute", inset: 0 }} />
+                </div>
+              </div>
+            ) : null}
             {!readerDark && (
-              <div aria-hidden="true" style={{ position: "absolute", left: 23, right: 13, top: 0, bottom: 69, zIndex: 6, pointerEvents: "none", borderRadius: "3px 16px 16px 3px / 3px 26px 26px 3px", overflow: "hidden", backgroundImage: ombreFeuille() }} />
+              <div aria-hidden="true" style={{ position: "absolute", left: LIVRE_FEUILLE_G, right: LIVRE_FEUILLE_D, top: 0, bottom: LIVRE_NAV, zIndex: 6, pointerEvents: "none", borderRadius: LIVRE_COINS, overflow: "hidden", backgroundImage: ombreFeuille() }} />
             )}
-            <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#e8e8e8" : "#000000", fontSize: 13, fontWeight: 600, marginTop: 8, fontFamily: readerFont }}>
+            <div id="reader-compteur" style={{ position: "relative", zIndex: 1, textAlign: "center", color: readerDark ? "#e8e8e8" : "#000000", fontSize: 13, fontWeight: 600, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
           </div>
