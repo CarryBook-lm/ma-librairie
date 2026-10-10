@@ -60,6 +60,53 @@ const PLI_COS2 = Math.cos(2 * PLI_RAD), PLI_SIN2 = Math.sin(2 * PLI_RAD);
 function pliProjection(x, y) { return x * PLI_SIN - y * PLI_COS; }
 const LIV_SUITE = "\u0001";     // marque la suite d'un paragraphe coupe entre 2 pages
 
+// ============================================================
+// 10/10 : ASPECT LIVRE DE POCHE. Papier creme bouffant (grain fin), ombre de
+// reliure a gauche, police Garamond, texte justifie avec cesures.
+// La police est HEBERGEE chez nous (public/fonts) : aucune dependance a Google.
+// Garamond a un petit oeil : a taille egale elle parait plus petite que
+// Georgia, on la grossit donc d'un facteur fixe. Ce facteur est applique
+// PARTOUT par tailleEffective(), meme fonction pour le banc de mesure et
+// l'affichage, donc la mesure reste juste.
+// ============================================================
+const POLICE_GARAMOND = '"EB Garamond", Garamond, "Times New Roman", serif';
+const LIV_FACTEUR_GARAMOND = 1.08;
+function tailleEffective(taille, police) {
+  return String(police || "").indexOf("Garamond") !== -1
+    ? Math.round(taille * LIV_FACTEUR_GARAMOND * 10) / 10
+    : taille;
+}
+// Interligne et graisse : sur ta photo les lignes sont serrees (environ 1.2) et
+// l'encre bien noire. 1.3 reste confortable sur telephone.
+const LIV_INTERLIGNE_GARAMOND = 1.3;
+function interligne(police) {
+  return String(police || "").indexOf("Garamond") !== -1 ? LIV_INTERLIGNE_GARAMOND : LIV_INTERLIGNE;
+}
+function poidsPolice(police) {
+  return String(police || "").indexOf("Garamond") !== -1 ? 450 : "normal";
+}
+const PAPIER_CLAIR = "#e6e2d8";
+const PAPIER_SOMBRE = "#1d1a15";
+const ENCRE_CLAIRE = "#141210";
+const ENCRE_SOMBRE = "#ddd5c6";
+const PAPIER_GRAIN_CLAIR = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='g' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.30 0 0 0 0 0.27 0 0 0 0 0.22 0.42 0 0 0 -0.11'/></filter><rect width='200' height='200' filter='url(%23g)'/></svg>\")";
+const PAPIER_GRAIN_SOMBRE = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='g' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.86 0 0 0 0 0.72 0.26 0 0 0 -0.07'/></filter><rect width='200' height='200' filter='url(%23g)'/></svg>\")";
+function fondPapier(sombre) {
+  return {
+    backgroundColor: sombre ? PAPIER_SOMBRE : PAPIER_CLAIR,
+    backgroundImage: sombre ? PAPIER_GRAIN_SOMBRE : PAPIER_GRAIN_CLAIR,
+    backgroundSize: "200px 200px"
+  };
+}
+// Le creux de la reliure a gauche, et un leger assombrissement des bords.
+function ombreReliure(sombre) {
+  const c = sombre ? "0,0,0" : "70,55,35";
+  return "linear-gradient(90deg, rgba(" + c + ",0.34) 0px, rgba(" + c + ",0.14) 12px, rgba(" + c + ",0.05) 34px, rgba(" + c + ",0) 64px), " +
+    "linear-gradient(270deg, rgba(" + c + ",0.12) 0px, rgba(" + c + ",0) 22px), " +
+    "linear-gradient(180deg, rgba(" + c + ",0.10) 0px, rgba(" + c + ",0) 26px), " +
+    "linear-gradient(0deg, rgba(" + c + ",0.10) 0px, rgba(" + c + ",0) 26px)";
+}
+
 // Un titre de chapitre merite de l'air au-dessus.
 function estTitreChapitre(x) {
   const brut = String(x || "");
@@ -68,6 +115,16 @@ function estTitreChapitre(x) {
   if (/^(chapitre|partie|prologue|epilogue|\u00e9pilogue)\b/i.test(t)) return true;
   // un paragraphe court entierement en gras est un titre
   return /^<(b|strong)[^>]*>[\s\S]*<\/(b|strong)>$/i.test(brut.trim());
+}
+
+// Typographie francaise : jamais de ? ! : ; ou » seul en debut de ligne, ni de «
+// seul en fin de ligne. On remplace l'espace par une espace insecable (meme
+// longueur : les positions de coupe restent valables). Les balises ne sont pas touchees.
+function espacesInsecables(s) {
+  return String(s).split(/(<[^>]*>)/).map(function (seg) {
+    if (seg.charAt(0) === "<") return seg;
+    return seg.replace(/ ([?!:;\u00bb])/g, "\u00a0$1").replace(/(\u00ab) /g, "$1\u00a0");
+  }).join("");
 }
 
 // Les marges et le retrait d'un paragraphe. UN SEUL endroit : le banc d'essai
@@ -81,7 +138,7 @@ function styleParagraphe(x, premier) {
     hautEm: premier ? 0 : (titre ? LIV_ESPACE_TITRE_EM : 0),
     basEm: titre ? LIV_ESPACE_SOUS_TITRE_EM : LIV_ESPACE_EM,
     retrait: (suite || titre) ? "0" : LIV_RETRAIT,
-    texte: suite ? String(x).slice(1) : String(x)
+    texte: espacesInsecables(suite ? String(x).slice(1) : String(x))
   };
 }
 const EST_HOMOROMANCE = (function () {
@@ -13990,7 +14047,7 @@ export default function App() {
     }
   }, [CATEGORIES, categorieUrlFaite]);
   const [readerSize, setReaderSize] = useState(() => tailleTexteParDefaut());
-  const [readerFont, setReaderFont] = useState("Georgia, serif");
+  const [readerFont, setReaderFont] = useState(POLICE_GARAMOND);
   const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [readerDark, setReaderDark] = useState(false);
   const [excerptMode, setExcerptMode] = useState(false);
@@ -17637,6 +17694,20 @@ export default function App() {
   // ============================================================
   const [boitePage, setBoitePage] = useState({ l: 0, h: 0 });
   const [pagesMesurees, setPagesMesurees] = useState(null);
+  // La police Garamond se telecharge a la premiere ouverture. Tant qu'elle n'est
+  // pas la, la mesure se fait avec une police de secours : on recalcule des
+  // qu'elle arrive (la lectrice garde sa page grace a l'ancre).
+  const [policesTick, setPolicesTick] = useState(0);
+  useEffect(() => {
+    try {
+      if (typeof document === "undefined" || !document.fonts || !document.fonts.load) return;
+      Promise.all([
+        document.fonts.load('16px "EB Garamond"'),
+        document.fonts.load('italic 16px "EB Garamond"'),
+        document.fonts.load('bold 16px "EB Garamond"')
+      ]).then(function () { setPolicesTick(function (n) { return n + 1; }); }).catch(function () {});
+    } catch (e) {}
+  }, []);
 
   // Mesure la hauteur de chaque paragraphe, rendu exactement comme dans la liseuse.
   // Un banc d'essai invisible, qui rend le texte EXACTEMENT comme la liseuse.
@@ -17647,10 +17718,15 @@ export default function App() {
     banc.style.boxSizing = "border-box";
     banc.style.width = largeur + "px";
     banc.style.fontFamily = police;
-    banc.style.fontSize = taille + "px";
-    banc.style.lineHeight = String(LIV_INTERLIGNE);
+    banc.style.fontSize = tailleEffective(taille, police) + "px";
+    banc.style.lineHeight = String(interligne(police));
+    banc.style.fontWeight = String(poidsPolice(police));
     banc.style.textAlign = "justify";
-    banc.style.wordBreak = "break-word";
+    // Cesures a la francaise, comme un livre imprime. MEME reglage que l'affichage.
+    banc.setAttribute("lang", "fr");
+    banc.style.hyphens = "auto";
+    banc.style.webkitHyphens = "auto";
+    banc.style.wordBreak = "normal";
     banc.style.overflowWrap = "break-word";
     // overflow:auto -> les marges du dernier paragraphe comptent, comme dans la liseuse.
     banc.style.overflow = "auto";
@@ -17682,8 +17758,8 @@ export default function App() {
   // Le rectangle d'une selection mesure l'ENCRE du texte, pas la boite de ligne :
   // il manque la moitie de l'interligne en dessous. Sans cette correction, le
   // decoupage croit qu'une ligne de plus tient et la page deborde de 2 a 3 px.
-  function demiInterligne(taille) {
-    return Math.max(0, taille * (LIV_INTERLIGNE - 1) / 2);
+  function demiInterligne(taille, police) {
+    return Math.max(0, taille * (Number(interligne(police)) - 1) / 2);
   }
 
   // ============================================================
@@ -17737,7 +17813,7 @@ export default function App() {
           finP = k; finOff = 0; yFin = els[k].haut;
         } else {
           const noeud = els[k].el.firstChild;
-          const demi = demiInterligne(taille);
+          const demi = demiInterligne(tailleEffective(taille, police), police);
           const c = offsetQuiTient(plage, noeud, refBanc, limite - demi);
           const minimum = (k === p) ? off : 0;
           if (c > minimum) {
@@ -17987,7 +18063,7 @@ export default function App() {
       } catch (e) {}
     }, 120);
     return () => { vivant = false; clearTimeout(t); };
-  }, [page, selectedBook, readerSize, readerFont]);
+  }, [page, selectedBook, readerSize, readerFont, policesTick]);
 
   // Recalcule les pages des que la boite, la taille ou la police changent.
   useEffect(() => {
@@ -18023,7 +18099,7 @@ export default function App() {
       }
       if (trouve >= 0) setReadingPage(trouve + decalage);
     }
-  }, [page, reading, readerScrollMode, translatedContent, boitePage.l, boitePage.h, readerSize, readerFont]);
+  }, [page, reading, readerScrollMode, translatedContent, boitePage.l, boitePage.h, readerSize, readerFont, policesTick]);
 
   // Apres un recalcul, ne pas rester bloque sur une page qui n existe plus.
   useEffect(() => {
@@ -21225,17 +21301,20 @@ export default function App() {
       return liste.map(function (para, i) {
         const st = styleParagraphe(para, i === 0);
         return (
-          <p key={i} style={{
+          <p key={i} lang="fr" style={{
             fontFamily: readerFont,
-            fontSize: readerSize + "px",
-            lineHeight: String(LIV_INTERLIGNE),
-            color: readerDark ? "#e0e0e0" : "#1a1a1a",
+            fontSize: tailleEffective(readerSize, readerFont) + "px",
+            lineHeight: String(interligne(readerFont)),
+            fontWeight: poidsPolice(readerFont),
+            color: readerDark ? ENCRE_SOMBRE : ENCRE_CLAIRE,
             textAlign: "justify",
             margin: 0,
             marginTop: st.hautEm + "em",
             marginBottom: st.basEm + "em",
             textIndent: st.retrait,
-            wordBreak: "break-word",
+            hyphens: "auto",
+            WebkitHyphens: "auto",
+            wordBreak: "normal",
             overflowWrap: "break-word",
             userSelect: "none",
             WebkitUserSelect: "none"
@@ -21336,6 +21415,7 @@ export default function App() {
     }
 
     const FONTS = [
+      { label: "Garamond", value: POLICE_GARAMOND },
       { label: "Georgia", value: "Georgia, serif" },
       { label: "Arial", value: "Arial, sans-serif" },
       { label: "Verdana", value: "Verdana, sans-serif" },
@@ -21343,9 +21423,13 @@ export default function App() {
     ];
 
     return (
-      <div style={{ minHeight: "100vh", background: readerDark ? "#1a1a1a" : "#ffffff", display: "flex", flexDirection: "column", fontFamily: readerFont }}>
+      <div style={{ minHeight: "100vh", ...fondPapier(readerDark), display: "flex", flexDirection: "column", fontFamily: readerFont }}>
+        {/* Creux de la reliure et bords du papier (decor, ne bloque aucun clic) */}
+        {!readerScrollMode && (
+          <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 6, pointerEvents: "none", backgroundImage: ombreReliure(readerDark) }} />
+        )}
         {/* Header */}
-        <div id="reader-entete" style={{ background: readerDark ? "#111" : "#fff", borderBottom: "1px solid " + (readerDark ? "#333" : "#ddd"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <div id="reader-entete" style={{ background: readerDark ? "#13110e" : "#d9d4c7", borderBottom: "1px solid " + (readerDark ? "#333" : "#bbb4a2"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
             style={{ background: "none", border: "none", color: readerDark ? "#aaa" : "#888", cursor: "pointer", fontSize: 14 }}>
             ← Retour
@@ -21484,11 +21568,14 @@ export default function App() {
             style={{ flex: 1, padding: "20px 12px 100px 12px", maxWidth: "100%", width: "100%", boxSizing: "border-box", overflowX: "hidden", userSelect: "none", WebkitUserSelect: "none", MozUserSelect: "none", msUserSelect: "none" }}>
             {scrollAllParagraphs.map(function(para, i) {
               return (
-                <p key={i} style={{
+                <p key={i} lang="fr" style={{
                   fontFamily: readerFont,
-                  fontSize: readerSize + "px",
+                  fontSize: tailleEffective(readerSize, readerFont) + "px",
+                  fontWeight: poidsPolice(readerFont),
                   lineHeight: "1.9",
-                  color: readerDark ? "#e0e0e0" : "#1a1a1a",
+                  color: readerDark ? ENCRE_SOMBRE : ENCRE_CLAIRE,
+                  hyphens: "auto",
+                  WebkitHyphens: "auto",
                   textAlign: "justify",
                   margin: 0,
                   marginBottom: "1em",
@@ -21723,11 +21810,11 @@ export default function App() {
             </div>
             {pliActif && boitePage.h ? (
               <div id="pli-boite" style={{ position: "absolute", left: 0, top: 0, width: "100%", height: boitePage.h + "px", visibility: "hidden", zIndex: 5, pointerEvents: "none", overflow: "hidden" }}>
-                <div id="pli-dessous" style={{ position: "absolute", inset: 0, background: fondLecture, overflow: "hidden" }}>{rendreParas(pliTextes.dessous)}</div>
+                <div id="pli-dessous" style={{ position: "absolute", inset: 0, ...fondPapier(readerDark), overflow: "hidden" }}>{rendreParas(pliTextes.dessous)}</div>
                 <div id="pli-ombre" style={{ position: "absolute", inset: 0, zIndex: 2 }} />
-                <div id="pli-dessus" style={{ position: "absolute", inset: 0, zIndex: 3, background: fondLecture, overflow: "hidden" }}>{rendreParas(pliTextes.dessus)}</div>
+                <div id="pli-dessus" style={{ position: "absolute", inset: 0, zIndex: 3, ...fondPapier(readerDark), overflow: "hidden" }}>{rendreParas(pliTextes.dessus)}</div>
                 <div id="pli-arete" style={{ position: "absolute", inset: 0, zIndex: 4 }} />
-                <div id="pli-rabat" style={{ position: "absolute", inset: 0, zIndex: 5, background: fondLecture, transformOrigin: "0 0", overflow: "hidden" }}>
+                <div id="pli-rabat" style={{ position: "absolute", inset: 0, zIndex: 5, ...fondPapier(readerDark), transformOrigin: "0 0", overflow: "hidden" }}>
                   <div style={{ position: "absolute", inset: 0, opacity: 0.10 }}>{rendreParas(pliTextes.dessus)}</div>
                   <div id="pli-voile" style={{ position: "absolute", inset: 0 }} />
                 </div>
@@ -21742,7 +21829,7 @@ export default function App() {
 
         {/* Navigation - cachée en mode scroll */}
         {!readerScrollMode && (
-        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: readerDark ? "#111" : "#fff", borderTop: "1px solid " + (readerDark ? "#333" : "#e0e0e0"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 7, background: readerDark ? "#13110e" : "#d9d4c7", borderTop: "1px solid " + (readerDark ? "#333" : "#bbb4a2"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={goToPrevPage} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === 0 ? (readerDark ? "#666" : "#9a9a9a") : G.boutonTexte, fontSize: 24, lineHeight: 1, fontWeight: "bold", cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
