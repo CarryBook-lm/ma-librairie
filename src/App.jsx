@@ -98,6 +98,14 @@ function fondPapier(sombre) {
     backgroundSize: "200px 200px"
   };
 }
+// La tranche des pages empilees, visible a droite : de fines lignes verticales
+// et un leger creux d'ombre du cote du texte.
+function tranchePages(sombre) {
+  const clair = sombre ? "#3a352c" : "#f3eee2";
+  const trait = sombre ? "#1a1712" : "#cfc6b2";
+  return "linear-gradient(90deg, rgba(60,45,25,0.30) 0px, rgba(60,45,25,0) 3px), " +
+    "repeating-linear-gradient(90deg, " + clair + " 0px, " + clair + " 1.3px, " + trait + " 1.3px, " + trait + " 2px)";
+}
 // Le creux de la reliure a gauche, et un leger assombrissement des bords.
 function ombreReliure(sombre) {
   const c = sombre ? "0,0,0" : "70,55,35";
@@ -21431,6 +21439,13 @@ export default function App() {
         {/* Creux de la reliure et bords du papier (decor, ne bloque aucun clic) */}
         {!readerScrollMode && (
           <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 6, pointerEvents: "none", backgroundImage: ombreReliure(readerDark) }} />
+        )}
+        {/* Tranche des pages a droite + cadre noir autour (decor, ne bloque aucun clic) */}
+        {!readerScrollMode && (
+          <div aria-hidden="true" style={{ position: "fixed", top: 0, bottom: 0, right: 0, width: 9, zIndex: 6, pointerEvents: "none", backgroundImage: tranchePages(readerDark) }} />
+        )}
+        {!readerScrollMode && (
+          <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 20, pointerEvents: "none", boxShadow: "inset 0 0 0 3px #000" }} />
         )}
         {/* Header */}
         <div id="reader-entete" style={{ background: readerDark ? "#13110e" : "#d9d4c7", borderBottom: "1px solid " + (readerDark ? "#333" : "#bbb4a2"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
