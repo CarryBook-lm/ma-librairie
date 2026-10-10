@@ -96,7 +96,16 @@ function interligne(police) {
 function poidsPolice(police) {
   return String(police || "").indexOf("Garamond") !== -1 ? 450 : "normal";
 }
-const PAPIER_CLAIR = "#e8e2d4";
+const PAPIER_CLAIR = "#f0ede6";
+// Telephone tres faible : pas d'animation de page tournee (changement de page direct).
+const TEL_FAIBLE = (function () {
+  try {
+    const n = typeof navigator !== "undefined" ? navigator : {};
+    if (n.deviceMemory && n.deviceMemory <= 2) return true;
+    if (n.hardwareConcurrency && n.hardwareConcurrency <= 2) return true;
+  } catch (e) {}
+  return false;
+})();
 const PAPIER_SOMBRE = "#000000";
 const ENCRE_CLAIRE = "#141210";
 const ENCRE_SOMBRE = "#e6e6e6";
@@ -17732,9 +17741,7 @@ export default function App() {
     try {
       if (typeof document === "undefined" || !document.fonts || !document.fonts.load) return;
       Promise.all([
-        document.fonts.load('16px "EB Garamond"'),
-        document.fonts.load('italic 16px "EB Garamond"'),
-        document.fonts.load('bold 16px "EB Garamond"')
+        document.fonts.ready
       ]).then(function () { setPolicesTick(function (n) { return n + 1; }); }).catch(function () {});
     } catch (e) {}
   }, []);
@@ -21375,7 +21382,7 @@ export default function App() {
     }
     function goToNextPage() {
       if (readingPage >= total - 1) return;
-      if (!readerScrollMode && boitePage.h && pageDeTexte(readingPage) && pageDeTexte(readingPage + 1)) {
+      if (!TEL_FAIBLE && !readerScrollMode && boitePage.h && pageDeTexte(readingPage) && pageDeTexte(readingPage + 1)) {
         animerPli(pages[readingPage], pages[readingPage + 1], 1, () => allerPage(readingPage + 1));
         return;
       }
@@ -21403,7 +21410,7 @@ export default function App() {
     }
     function goToPrevPage() {
       if (readingPage <= 0) return;
-      if (!readerScrollMode && boitePage.h && pageDeTexte(readingPage) && pageDeTexte(readingPage - 1)) {
+      if (!TEL_FAIBLE && !readerScrollMode && boitePage.h && pageDeTexte(readingPage) && pageDeTexte(readingPage - 1)) {
         animerPli(pages[readingPage - 1], pages[readingPage], -1, () => allerPage(readingPage - 1));
         return;
       }
@@ -21451,7 +21458,6 @@ export default function App() {
 
     const FONTS = [
       { label: "Palatino", value: "Palatino, serif" },
-      { label: "Garamond", value: POLICE_GARAMOND },
       { label: "Georgia", value: "Georgia, serif" },
       { label: "Arial", value: "Arial, sans-serif" },
       { label: "Verdana", value: "Verdana, sans-serif" },
@@ -21467,7 +21473,7 @@ export default function App() {
           <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 20, pointerEvents: "none", boxShadow: "inset 0 0 0 3px #000" }} />
         )}
         {/* Header */}
-        <div id="reader-entete" style={{ background: readerDark ? "#000" : "#d9d4c7", borderBottom: "1px solid " + (readerDark ? "#222" : "#bbb4a2"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <div id="reader-entete" style={{ background: readerDark ? "#000" : "#e0dcd2", borderBottom: "1px solid " + (readerDark ? "#222" : "#bbb4a2"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
             style={{ background: "none", border: "none", color: readerDark ? "#aaa" : "#888", cursor: "pointer", fontSize: 14 }}>
             ← Retour
@@ -21896,7 +21902,7 @@ export default function App() {
 
         {/* Navigation - cachée en mode scroll */}
         {!readerScrollMode && (
-        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 7, background: readerDark ? "#000" : "#d9d4c7", borderTop: "1px solid " + (readerDark ? "#222" : "#bbb4a2"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 7, background: readerDark ? "#000" : "#e0dcd2", borderTop: "1px solid " + (readerDark ? "#222" : "#bbb4a2"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={goToPrevPage} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === 0 ? (readerDark ? "#666" : "#9a9a9a") : G.boutonTexte, fontSize: 24, lineHeight: 1, fontWeight: "bold", cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
