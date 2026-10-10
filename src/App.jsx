@@ -44,13 +44,13 @@ const LIV_RATIO = 16 / 9;       // hauteur de la page = largeur x ce rapport
 // coin a l'autre ; plus on monte vers 90, plus le pli se redresse et plus le
 // mouvement va franchement de droite a gauche, comme une vraie page.
 const LIV_ANGLE_PLI = 72;
-// La taille du texte par defaut suit la largeur de l'ecran : 14 sur un
+// La taille du texte par defaut suit la largeur de l'ecran : 13 sur un
 // telephone de 360 points de large, moins sur un petit, plus sur un grand.
 // La lectrice peut toujours la changer avec le bouton Aa.
 function tailleTexteParDefaut() {
   try {
     const l = (typeof window !== "undefined" && window.innerWidth) ? window.innerWidth : 360;
-    return Math.max(12, Math.min(19, Math.round(14 * l / 360)));
+    return Math.max(11, Math.min(18, Math.round(13 * l / 360)));
   } catch (e) { return 14; }
 }
 const PLI_RAD = LIV_ANGLE_PLI * Math.PI / 180;
@@ -14047,7 +14047,7 @@ export default function App() {
     }
   }, [CATEGORIES, categorieUrlFaite]);
   const [readerSize, setReaderSize] = useState(() => tailleTexteParDefaut());
-  const [readerFont, setReaderFont] = useState(POLICE_GARAMOND);
+  const [readerFont, setReaderFont] = useState("Palatino, serif");
   const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [readerDark, setReaderDark] = useState(false);
   const [excerptMode, setExcerptMode] = useState(false);
@@ -21415,11 +21415,11 @@ export default function App() {
     }
 
     const FONTS = [
+      { label: "Palatino", value: "Palatino, serif" },
       { label: "Garamond", value: POLICE_GARAMOND },
       { label: "Georgia", value: "Georgia, serif" },
       { label: "Arial", value: "Arial, sans-serif" },
       { label: "Verdana", value: "Verdana, sans-serif" },
-      { label: "Palatino", value: "Palatino, serif" },
     ];
 
     return (
@@ -21821,7 +21821,7 @@ export default function App() {
               </div>
             ) : null}
             </div>
-            <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#555" : "#ccc", fontSize: 12, marginTop: 8, fontFamily: readerFont }}>
+            <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#e8e8e8" : "#000000", fontSize: 13, fontWeight: 600, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
           </div>
