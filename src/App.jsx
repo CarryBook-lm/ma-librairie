@@ -106,6 +106,16 @@ function tranchePages(sombre) {
   return "linear-gradient(90deg, rgba(60,45,25,0.30) 0px, rgba(60,45,25,0) 3px), " +
     "repeating-linear-gradient(90deg, " + clair + " 0px, " + clair + " 1.3px, " + trait + " 1.3px, " + trait + " 2px)";
 }
+// 10/10 : EFFET LIVRE OUVERT. Ombre portee sur la feuille elle-meme : creux
+// sombre contre la reliure, bords haut et bas un peu plus fonces. Elle est posee
+// AU-DESSUS du texte : elle ne doit donc jamais eclaircir (ca delaverait les lettres).
+function ombreFeuille() {
+  const r = function (a) { return "rgba(60,45,25," + a + ")"; };
+  return "linear-gradient(90deg, " + r(0.55) + " 0px, " + r(0.30) + " 5px, " + r(0.14) + " 16px, " + r(0.05) + " 44px, " + r(0) + " 80px), " +
+    "linear-gradient(270deg, " + r(0.16) + " 0px, " + r(0) + " 26px), " +
+    "linear-gradient(180deg, " + r(0.10) + " 0px, " + r(0) + " 34px), " +
+    "linear-gradient(0deg, " + r(0.12) + " 0px, " + r(0) + " 40px)";
+}
 // Le creux de la reliure a gauche, et un leger assombrissement des bords.
 function ombreReliure(sombre) {
   const c = sombre ? "0,0,0" : "70,55,35";
@@ -18063,7 +18073,7 @@ export default function App() {
     // On laisse la fiche s'afficher d'abord : le calcul passe apres.
     const t = setTimeout(() => {
       try {
-        const largeur = Math.max(200, ((typeof window !== "undefined" && window.innerWidth) || 360) - 36);
+        const largeur = Math.max(200, ((typeof window !== "undefined" && window.innerWidth) || 360) - 70);
         const dispo = ((typeof window !== "undefined" && window.innerHeight) || 740) - 42 - 20 - 69 - 28;
         const hauteur = Math.max(120, Math.min(Math.round(dispo), Math.round(largeur * LIV_RATIO)));
         const pg = decouperEnPages(contenu, largeur, hauteur, readerSize, readerFont);
@@ -21434,13 +21444,9 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", ...fondPapier(readerDark), display: "flex", flexDirection: "column", fontFamily: readerFont }}>
         {/* Creux de la reliure et bords du papier (decor, ne bloque aucun clic) */}
-        {!readerScrollMode && !readerDark && (
-          <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 6, pointerEvents: "none", backgroundImage: ombreReliure(readerDark) }} />
-        )}
+
         {/* Tranche des pages a droite + cadre noir autour (decor, ne bloque aucun clic) */}
-        {!readerScrollMode && !readerDark && (
-          <div aria-hidden="true" style={{ position: "fixed", top: 0, bottom: 0, right: 0, width: 9, zIndex: 6, pointerEvents: "none", backgroundImage: tranchePages(readerDark) }} />
-        )}
+
         {!readerScrollMode && !readerDark && (
           <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 20, pointerEvents: "none", boxShadow: "inset 0 0 0 3px #000" }} />
         )}
@@ -21628,7 +21634,8 @@ export default function App() {
             }}
             style={{
               flex: 1,
-              padding: "16px 18px 80px 18px",
+              position: "relative",
+              padding: readerDark ? "16px 18px 80px 18px" : "16px 30px 80px 40px",
               maxWidth: "100%",
               width: "100%",
               boxSizing: "border-box",
@@ -21643,6 +21650,15 @@ export default function App() {
               alignItems: "stretch",
               justifyContent: "flex-start"
             }}>
+            {!readerDark && (
+              <>
+                {/* LIVRE OUVERT : fond derriere, page de gauche, tranche, feuille */}
+                <div aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 69, background: "#cfc8b6", pointerEvents: "none" }} />
+                <div aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, bottom: 69, width: 24, pointerEvents: "none", background: "linear-gradient(90deg, #d8d1bf 0%, #d2cab6 45%, #bdb299 82%, #8f8468 100%)" }} />
+                <div aria-hidden="true" style={{ position: "absolute", right: 0, top: 0, bottom: 69, width: 15, pointerEvents: "none", clipPath: "polygon(0 0, 100% 3.5%, 100% 96.5%, 0 100%)", backgroundImage: tranchePages(false) }} />
+                <div aria-hidden="true" style={{ position: "absolute", left: 23, right: 13, top: 0, bottom: 69, pointerEvents: "none", background: "radial-gradient(ellipse at 58% 46%, rgba(255,252,242,0.35), rgba(255,252,242,0) 70%), " + PAPIER_CLAIR, borderRadius: "3px 16px 16px 3px / 3px 26px 26px 3px", boxShadow: "2px 0 4px rgba(60,45,25,0.35)" }} />
+              </>
+            )}
             <div style={{
               position: "relative",
               width: "100%",
@@ -21837,6 +21853,9 @@ export default function App() {
               </div>
             ) : null}
             </div>
+            {!readerDark && (
+              <div aria-hidden="true" style={{ position: "absolute", left: 23, right: 13, top: 0, bottom: 69, zIndex: 6, pointerEvents: "none", borderRadius: "3px 16px 16px 3px / 3px 26px 26px 3px", overflow: "hidden", backgroundImage: ombreFeuille() }} />
+            )}
             <div id="reader-compteur" style={{ textAlign: "center", color: readerDark ? "#e8e8e8" : "#000000", fontSize: 13, fontWeight: 600, marginTop: 8, fontFamily: readerFont }}>
               {readingPage + 1} / {total}
             </div>
