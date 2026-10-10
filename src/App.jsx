@@ -101,10 +101,14 @@ function fondPapier(sombre) {
 // Le creux de la reliure a gauche, et un leger assombrissement des bords.
 function ombreReliure(sombre) {
   const c = sombre ? "0,0,0" : "70,55,35";
-  return "linear-gradient(90deg, rgba(" + c + ",0.34) 0px, rgba(" + c + ",0.14) 12px, rgba(" + c + ",0.05) 34px, rgba(" + c + ",0) 64px), " +
-    "linear-gradient(270deg, rgba(" + c + ",0.12) 0px, rgba(" + c + ",0) 22px), " +
-    "linear-gradient(180deg, rgba(" + c + ",0.10) 0px, rgba(" + c + ",0) 26px), " +
-    "linear-gradient(0deg, rgba(" + c + ",0.10) 0px, rgba(" + c + ",0) 26px)";
+  const r = function (a) { return "rgba(" + c + "," + a + ")"; };
+  // Le milieu du livre : une bande un peu plus sombre (le bord de la page de
+  // gauche), puis le TRAIT fin du pli de la reliure, puis une ombre douce qui
+  // s'efface sur la page. Mesure sur la photo : trait a ~2 % du bord.
+  return "linear-gradient(90deg, " + r(0.07) + " 0px, " + r(0.09) + " 5px, " + r(0.22) + " 5.8px, " + r(0.48) + " 6.6px, " + r(0.22) + " 7.4px, " + r(0.16) + " 8.6px, " + r(0.07) + " 20px, " + r(0) + " 38px), " +
+    "linear-gradient(270deg, " + r(0.07) + " 0px, " + r(0) + " 18px), " +
+    "linear-gradient(180deg, " + r(0.06) + " 0px, " + r(0) + " 22px), " +
+    "linear-gradient(0deg, " + r(0.06) + " 0px, " + r(0) + " 22px)";
 }
 
 // Un titre de chapitre merite de l'air au-dessus.
