@@ -86,15 +86,16 @@ function poidsPolice(police) {
   return String(police || "").indexOf("Garamond") !== -1 ? 450 : "normal";
 }
 const PAPIER_CLAIR = "#e6e2d8";
-const PAPIER_SOMBRE = "#1d1a15";
+const PAPIER_SOMBRE = "#000000";
 const ENCRE_CLAIRE = "#141210";
-const ENCRE_SOMBRE = "#ddd5c6";
+const ENCRE_SOMBRE = "#e6e6e6";
 const PAPIER_GRAIN_CLAIR = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='g' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.30 0 0 0 0 0.27 0 0 0 0 0.22 0.42 0 0 0 -0.11'/></filter><rect width='200' height='200' filter='url(%23g)'/></svg>\")";
 const PAPIER_GRAIN_SOMBRE = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='g' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.86 0 0 0 0 0.72 0.26 0 0 0 -0.07'/></filter><rect width='200' height='200' filter='url(%23g)'/></svg>\")";
 function fondPapier(sombre) {
   return {
     backgroundColor: sombre ? PAPIER_SOMBRE : PAPIER_CLAIR,
-    backgroundImage: sombre ? PAPIER_GRAIN_SOMBRE : PAPIER_GRAIN_CLAIR,
+    // Mode nuit : tout noir, sans grain ni motif.
+    backgroundImage: sombre ? "none" : PAPIER_GRAIN_CLAIR,
     backgroundSize: "200px 200px"
   };
 }
@@ -21437,18 +21438,18 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", ...fondPapier(readerDark), display: "flex", flexDirection: "column", fontFamily: readerFont }}>
         {/* Creux de la reliure et bords du papier (decor, ne bloque aucun clic) */}
-        {!readerScrollMode && (
+        {!readerScrollMode && !readerDark && (
           <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 6, pointerEvents: "none", backgroundImage: ombreReliure(readerDark) }} />
         )}
         {/* Tranche des pages a droite + cadre noir autour (decor, ne bloque aucun clic) */}
-        {!readerScrollMode && (
+        {!readerScrollMode && !readerDark && (
           <div aria-hidden="true" style={{ position: "fixed", top: 0, bottom: 0, right: 0, width: 9, zIndex: 6, pointerEvents: "none", backgroundImage: tranchePages(readerDark) }} />
         )}
-        {!readerScrollMode && (
+        {!readerScrollMode && !readerDark && (
           <div aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, right: 0, bottom: 0, zIndex: 20, pointerEvents: "none", boxShadow: "inset 0 0 0 3px #000" }} />
         )}
         {/* Header */}
-        <div id="reader-entete" style={{ background: readerDark ? "#13110e" : "#d9d4c7", borderBottom: "1px solid " + (readerDark ? "#333" : "#bbb4a2"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
+        <div id="reader-entete" style={{ background: readerDark ? "#000" : "#d9d4c7", borderBottom: "1px solid " + (readerDark ? "#222" : "#bbb4a2"), padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
           <button onClick={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
             style={{ background: "none", border: "none", color: readerDark ? "#aaa" : "#888", cursor: "pointer", fontSize: 14 }}>
             ← Retour
@@ -21848,7 +21849,7 @@ export default function App() {
 
         {/* Navigation - cachée en mode scroll */}
         {!readerScrollMode && (
-        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 7, background: readerDark ? "#13110e" : "#d9d4c7", borderTop: "1px solid " + (readerDark ? "#333" : "#bbb4a2"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div id="reader-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 7, background: readerDark ? "#000" : "#d9d4c7", borderTop: "1px solid " + (readerDark ? "#222" : "#bbb4a2"), padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <button onClick={goToPrevPage} disabled={readingPage === 0}
             style={{ width: 44, height: 44, borderRadius: "50%", background: readingPage === 0 ? (readerDark ? "#222" : "#f1f1f1") : G.bouton, border: "none", color: readingPage === 0 ? (readerDark ? "#666" : "#9a9a9a") : G.boutonTexte, fontSize: 24, lineHeight: 1, fontWeight: "bold", cursor: readingPage === 0 ? "not-allowed" : "pointer" }}>
             ‹
