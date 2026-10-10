@@ -85,7 +85,7 @@ function interligne(police) {
 function poidsPolice(police) {
   return String(police || "").indexOf("Garamond") !== -1 ? 450 : "normal";
 }
-const PAPIER_CLAIR = "#e6e2d8";
+const PAPIER_CLAIR = "#e8e2d4";
 const PAPIER_SOMBRE = "#000000";
 const ENCRE_CLAIRE = "#141210";
 const ENCRE_SOMBRE = "#e6e6e6";
@@ -94,9 +94,8 @@ const PAPIER_GRAIN_SOMBRE = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://ww
 function fondPapier(sombre) {
   return {
     backgroundColor: sombre ? PAPIER_SOMBRE : PAPIER_CLAIR,
-    // Mode nuit : tout noir, sans grain ni motif.
-    backgroundImage: sombre ? "none" : PAPIER_GRAIN_CLAIR,
-    backgroundSize: "200px 200px"
+    // Fond UNI, sans grain ni motif (le grain fatiguait les yeux).
+    backgroundImage: "none"
   };
 }
 // La tranche des pages empilees, visible a droite : de fines lignes verticales
@@ -114,10 +113,7 @@ function ombreReliure(sombre) {
   // Le milieu du livre : une bande un peu plus sombre (le bord de la page de
   // gauche), puis le TRAIT fin du pli de la reliure, puis une ombre douce qui
   // s'efface sur la page. Mesure sur la photo : trait a ~2 % du bord.
-  return "linear-gradient(90deg, " + r(0.07) + " 0px, " + r(0.09) + " 5px, " + r(0.22) + " 5.8px, " + r(0.48) + " 6.6px, " + r(0.22) + " 7.4px, " + r(0.16) + " 8.6px, " + r(0.07) + " 20px, " + r(0) + " 38px), " +
-    "linear-gradient(270deg, " + r(0.07) + " 0px, " + r(0) + " 18px), " +
-    "linear-gradient(180deg, " + r(0.06) + " 0px, " + r(0) + " 22px), " +
-    "linear-gradient(0deg, " + r(0.06) + " 0px, " + r(0) + " 22px)";
+  return "linear-gradient(90deg, " + r(0.07) + " 0px, " + r(0.09) + " 5px, " + r(0.22) + " 5.8px, " + r(0.48) + " 6.6px, " + r(0.22) + " 7.4px, " + r(0.16) + " 8.6px, " + r(0.07) + " 20px, " + r(0) + " 38px)";
 }
 
 // Un titre de chapitre merite de l'air au-dessus.
