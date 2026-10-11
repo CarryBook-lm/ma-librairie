@@ -14669,6 +14669,24 @@ export default function App() {
     const scZone = ta.scrollTop, scPage = window.scrollY || window.pageYOffset || 0;
     pousserHistRoman(pubForm.content || "");
     restaurerVueRoman(ta, pos, pos, scZone, scPage);
+    // 11/10 : apres un collage, le navigateur envoie le curseur a la FIN du texte colle
+    // (parfois apres notre premiere remise en place, quand le texte est long). On remet
+    // le curseur au DEBUT du texte colle, a plusieurs reprises, tant que l'auteur(e)
+    // n'a ni tape ni touche la zone.
+    let stop = false;
+    const arreter = () => { stop = true; try { ta.removeEventListener("keydown", arreter); ta.removeEventListener("pointerdown", arreter); } catch (e) {} };
+    try { ta.addEventListener("keydown", arreter); ta.addEventListener("pointerdown", arreter); } catch (e) {}
+    [150, 350, 700, 1200].forEach((ms) => setTimeout(() => {
+      if (stop) return;
+      try {
+        if (ta.selectionStart !== pos || ta.selectionEnd !== pos) {
+          ta.setSelectionRange(Math.min(pos, (ta.value || "").length), Math.min(pos, (ta.value || "").length));
+          ta.scrollTop = scZone;
+          window.scrollTo(0, scPage);
+        }
+      } catch (e) {}
+      if (ms === 1200) arreter();
+    }, ms));
   };
   const chargerTutos = async () => { const { data } = await supabase.from("tutoriels").select("*").order("ordre", { ascending: true }).order("created_at", { ascending: false }); setTutos(data || []); };
   const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd }); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
