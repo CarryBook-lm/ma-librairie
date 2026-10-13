@@ -14,6 +14,13 @@ const PAYDUNYA_ENABLED = false;
 //   carrybooks.com  -> site historique, strictement inchange.
 // ============================================================
 const CAT_HOMOROMANCE = "HomoRomance";
+// 13/10 : extrait gratuit d'un roman = 7 pages au minimum (decision de Landrine). Avant, le lecteur
+// coupait en dur a 2 pages, quel que soit le reglage "Pages gratuites" du livre.
+const EXTRAIT_PAGES_ROMAN = 7;
+function nbPagesExtraitRoman(b) {
+  const n = parseInt(b && b.extract_pages);
+  return Math.max(EXTRAIT_PAGES_ROMAN, isNaN(n) ? 0 : n);
+}
 // 09/10 : AU LANCEMENT, homoromance.com ne montre QUE les livres de Johanna Morisson.
 // Pour ouvrir le site a d'autres auteurs plus tard : mettre AUTEUR_UNIQUE_HR a "".
 const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres auteurs (decision de Landrine). Texte uniquement.
@@ -18205,9 +18212,9 @@ export default function App() {
   // Apres un recalcul, ne pas rester bloque sur une page qui n existe plus.
   useEffect(() => {
     if (!pagesMesurees || !pagesMesurees.length) return;
-    const dernier = excerptMode ? 1 : pagesMesurees.length + 3;
+    const dernier = excerptMode ? Math.max(0, Math.min(pagesMesurees.length, nbPagesExtraitRoman(reading)) - 1) : pagesMesurees.length + 3;
     setReadingPage(x => (x > dernier ? dernier : x));
-  }, [pagesMesurees, excerptMode]);
+  }, [pagesMesurees, excerptMode, reading]);
 
   function getPages(content) {
     if (!content) return ["Ce livre n'a pas encore de contenu."];
@@ -21372,7 +21379,7 @@ export default function App() {
       : getPages(translatedContent || reading.content);
     // Pages spéciales : ajoutées seulement en mode lecture complète (pas extrait)
     const fullPages = excerptMode 
-      ? allPages.slice(0, 2)
+      ? allPages.slice(0, nbPagesExtraitRoman(reading))
       : ["__SPECIAL_INTRO__", "__SPECIAL_TITLE__", ...allPages, "__SPECIAL_COPYRIGHT__", "__SPECIAL_REFERRAL__"];
     const pages = fullPages;
     const total = pages.length;
