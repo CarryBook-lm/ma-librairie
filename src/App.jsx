@@ -16,7 +16,14 @@ const PAYDUNYA_ENABLED = false;
 const CAT_HOMOROMANCE = "HomoRomance";
 // 09/10 : AU LANCEMENT, homoromance.com ne montre QUE les livres de Johanna Morisson.
 // Pour ouvrir le site a d'autres auteurs plus tard : mettre AUTEUR_UNIQUE_HR a "".
-const AUTEUR_UNIQUE_HR = "johanna morisson";
+const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres auteurs (decision de Landrine). Texte uniquement.
+// Mode texte = roman lu dans la liseuse : ni PDF, ni audio.
+function estModeTexte(b) {
+  if (!b) return false;
+  const pdf = b.pdf_url && String(b.pdf_url).trim() !== "";
+  const audio = b.audio_url && String(b.audio_url).trim() !== "";
+  return !pdf && !audio;
+}
 function normNom(x) {
   try { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase(); }
   catch (e) { return String(x || "").trim().toLowerCase(); }
@@ -2084,6 +2091,7 @@ function surCarryBooks(b) {
   // Sur homoromance.com : on ne montre QUE les romans de la categorie HomoRomance.
   if (EST_HOMOROMANCE) {
     if ((b.category || "") !== CAT_HOMOROMANCE) return false;
+    if (!estModeTexte(b)) return false;
     return estAuteurAutoriseHR(b.author);
   }
   return true;
@@ -13972,9 +13980,9 @@ export default function App() {
     let vivant = true;
     (async () => {
       try {
-        const { data } = await supabase.from("books").select("auteur_id, author")
+        const { data } = await supabase.from("books").select("auteur_id, author, pdf_url, audio_url")
           .eq("category", CAT_HOMOROMANCE).not("auteur_id", "is", null);
-        if (vivant) setAuteursHR(new Set((data || []).filter(r => estAuteurAutoriseHR(r.author)).map(r => r.auteur_id)));
+        if (vivant) setAuteursHR(new Set((data || []).filter(r => estModeTexte(r) && estAuteurAutoriseHR(r.author)).map(r => r.auteur_id)));
       } catch (e) { if (vivant) setAuteursHR(new Set()); }
     })();
     return () => { vivant = false; };
