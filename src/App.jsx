@@ -25,6 +25,12 @@ function masquerNomHR(a) {
   if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
   return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, nom_complet: "Johanna Morisson" };
 }
+// Pareil pour les listes publiques (Nos auteurs, recherche, boutique) : le nom et le
+// pays du compte 8 ne sont jamais montres sur HomoRomance.
+function masquerPublicHR(a) {
+  if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
+  return { ...a, nom_complet: "Johanna Morisson", pays: "" };
+}
 function estModeTexte(b) {
   if (!b) return false;
   const pdf = b.pdf_url && String(b.pdf_url).trim() !== "";
@@ -19002,7 +19008,7 @@ export default function App() {
         const { data: aut } = await supabase.from("auteurs_public").select("*").eq("code_source", boutiqueCode).limit(1);
         const a = aut && aut[0] ? aut[0] : null;
         if (cancel) return;
-        setBoutiqueAuteur(a);
+        setBoutiqueAuteur(masquerPublicHR(a));
         // Le manifeste est deja injecte par api/vitrine.js quand on arrive
         // directement sur le lien. Ici on couvre le cas ou on arrive depuis
         // une autre page du site, sans rechargement.
@@ -19122,7 +19128,7 @@ export default function App() {
     (async () => {
       try {
         const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
-        if (!cancel) setAuteursAll((data || []).filter(a => !a.banni && auteurDuSite(a.id)));
+        if (!cancel) setAuteursAll((data || []).filter(a => !a.banni && auteurDuSite(a.id)).map(masquerPublicHR));
       } catch (e) {}
     })();
     return () => { cancel = true; };
@@ -19137,7 +19143,7 @@ export default function App() {
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
         const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
-        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source && !a.banni && auteurDuSite(a.id)));
+        if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source && !a.banni && auteurDuSite(a.id)).map(masquerPublicHR));
       } catch (e) { if (!cancel) setAuteursList([]); }
       if (!cancel) setAuteursListLoading(false);
     })();
