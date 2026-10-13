@@ -22468,8 +22468,7 @@ export default function App() {
                     </span>
                     {isOnPromo(book) && !isPaperOnlyBook ? <span style={{ marginLeft: 8, fontSize: 13, color: G.textFaint, textDecoration: "line-through" }}>{book.original_price?.toLocaleString()} FCFA</span> : null}
                   </div>
-                  <button type="button" onClick={() => { if (owned || free) { const el = document.getElementById("avis-hr"); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" }); } else { showToast("Lis ce roman pour laisser un avis", "success"); } }}
-                    style={{ background: G.bouton, color: "#fff", border: "1px solid #ffffff55", borderRadius: 999, padding: "6px 14px", fontSize: 10, fontWeight: 800, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>Laissez un avis</button>
+                  
                 </div>
               </div>
               {book.summary && (
