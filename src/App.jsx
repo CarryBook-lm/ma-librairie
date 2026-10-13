@@ -18,6 +18,13 @@ const CAT_HOMOROMANCE = "HomoRomance";
 // Pour ouvrir le site a d'autres auteurs plus tard : mettre AUTEUR_UNIQUE_HR a "".
 const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres auteurs (decision de Landrine). Texte uniquement.
 // Mode texte = roman lu dans la liseuse : ni PDF, ni audio.
+// 13/10 : sur homoromance.com, le compte de Landrine (id 8) s'affiche sous le nom
+// Johanna Morisson PARTOUT a l'ecran. Le vrai nom reste dans la base (paiements)
+// et dans vrai_nom_cache, pour qu'un enregistrement du profil ne l'ecrase pas.
+function masquerNomHR(a) {
+  if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
+  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, nom_complet: "Johanna Morisson" };
+}
 function estModeTexte(b) {
   if (!b) return false;
   const pdf = b.pdf_url && String(b.pdf_url).trim() !== "";
@@ -15148,7 +15155,8 @@ export default function App() {
         if (raw) {
           const a = JSON.parse(raw);
           if (a && a.id) {
-            setAuteurSession(a); setAuteurProfil(a); remplirProfilAuteur(a);
+            const aAff = masquerNomHR(a);
+            setAuteurSession(aAff); setAuteurProfil(aAff); remplirProfilAuteur(aAff);
             try {
               const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id }) });
               const data = await res.json().catch(() => ({}));
@@ -15168,7 +15176,8 @@ export default function App() {
   }, []);
 
   const appliquerSessionAuteur = (a) => {
-    setAuteurSession(a); setAuteurProfil(a); remplirProfilAuteur(a);
+    const aAff = masquerNomHR(a);
+    setAuteurSession(aAff); setAuteurProfil(aAff); remplirProfilAuteur(aAff);
     try { localStorage.setItem("carrybooks_auteur", JSON.stringify(a)); } catch (e) {}
   };
   const auteurLogin = async () => {
@@ -18356,7 +18365,7 @@ export default function App() {
       const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         action: "update",
         id: auteurSession.id,
-        nom_complet: auteurNom.trim(),
+        nom_complet: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? auteurProfil.vrai_nom_cache : auteurNom.trim(),
         pays: auteurPays.trim(),
         telephone: telComplet,
         // 06/10 : le champ s'appelle « Numéro Mobile Money (pour être payé) », mais
