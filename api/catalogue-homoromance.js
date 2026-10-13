@@ -56,7 +56,9 @@ export default async function handler(req, res) {
       if ((b.pdf_url && String(b.pdf_url).trim() !== "") || (b.audio_url && String(b.audio_url).trim() !== "")) return;
       if (normNom(b.author) !== AUTEUR_UNIQUE_HR) return;
 
-      const desc = (b.summary && b.summary.trim()) ? b.summary : b.title;
+      // 13/10 : description VOLONTAIREMENT sobre. Les resumes des romans contiennent des scenes
+      // explicites ; Meta controle chaque article du catalogue et refuse les descriptions sexuelles.
+      const desc = b.title + " - roman d'amour entre femmes de Johanna Morisson, a lire en ligne sur HomoRomance.";
       const img = String(b.cover).startsWith("http") ? b.cover : (base + "/" + String(b.cover).replace(/^\//, ""));
       const lien = base + "/livre/" + slugify(b.title);
       const prix = (Number(b.price) || 0) + " XAF";
