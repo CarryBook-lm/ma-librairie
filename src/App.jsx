@@ -22445,8 +22445,8 @@ export default function App() {
                     : <div style={{ width: "100%", aspectRatio: "2 / 3", background: G.surface2, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                  {(book.subcategory || book.category) ? <div style={{ fontSize: 11, letterSpacing: 2.2, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8 }}>{book.subcategory || book.category}</div> : null}
-                  <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 27, lineHeight: 1.12, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
+                  {(book.subcategory || book.category) ? <div style={{ fontSize: 10, letterSpacing: 1.4, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8, lineHeight: 1.4 }}>{book.subcategory || book.category}</div> : null}
+                  <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: ((book.title || "").length > 28 ? 19 : ((book.title || "").length > 16 ? 22 : 26)), lineHeight: 1.15, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
                   <div style={{ fontSize: 14, color: G.textDim, lineHeight: 1.5, marginBottom: 12, fontFamily: "system-ui, sans-serif" }}>roman signé <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
                   {(() => {
                     const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
