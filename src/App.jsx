@@ -23,13 +23,13 @@ const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres a
 // et dans vrai_nom_cache, pour qu'un enregistrement du profil ne l'ecrase pas.
 function masquerNomHR(a) {
   if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
-  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, nom_complet: "Johanna Morisson" };
+  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, vrai_photo_cache: (a.vrai_photo_cache !== undefined ? a.vrai_photo_cache : (a.photo_url || null)), nom_complet: "Johanna Morisson", photo_url: null };
 }
 // Pareil pour les listes publiques (Nos auteurs, recherche, boutique) : le nom et le
 // pays du compte 8 ne sont jamais montres sur HomoRomance.
 function masquerPublicHR(a) {
   if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
-  return { ...a, nom_complet: "Johanna Morisson", pays: "" };
+  return { ...a, nom_complet: "Johanna Morisson", pays: "", photo_url: null };
 }
 function estModeTexte(b) {
   if (!b) return false;
@@ -18382,7 +18382,7 @@ export default function App() {
         // paiement different : enregistrer sa bio ne doit pas deplacer leur argent.
         kyc_paiement_phone: (telComplet && telComplet !== ((auteurProfil && auteurProfil.telephone) || "")) ? telComplet : undefined,
         bio: auteurBio.trim(),
-        photo_url: auteurPhoto || null,
+        photo_url: auteurPhoto || ((EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? (auteurProfil.vrai_photo_cache || null) : null),
         pixel_meta: auteurPixel.trim(),
         pixel_tiktok: auteurPixelTiktok.trim(),
         facebook: auteurFb.trim() || null,
