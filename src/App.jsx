@@ -20558,7 +20558,7 @@ export default function App() {
                             </div>
                           </div>
                           {b.moderation === "refuse" ? <div style={{ fontSize: 13, color: "#c62828", lineHeight: 1.6, marginBottom: 12, background: "#fdecea", border: "1px solid #e53935", borderRadius: 8, padding: 12 }}><b>❌ Motif du refus</b><br/>{b.motif_refus || "Aucun motif n'a été indiqué. Écris à " + SITE_NOM + " pour connaître le motif."}<br/><br/><span style={{ color: "#7a2a24" }}>Corrige ton livre avec le bouton ✏️ Modifier ci-dessous, puis renvoie ton livre à la validation.</span></div> : null}
-                          {b.summary ? <div style={{ fontSize: 13, color: G.text, lineHeight: 1.5, marginBottom: 12, maxHeight: 120, overflowY: "auto", background: G.bg, borderRadius: 8, padding: 10 }}>{b.summary}</div> : null}
+                          {b.summary ? <div style={{ fontSize: 13, color: G.text, lineHeight: 1.5, marginBottom: 12, maxHeight: 120, overflowY: "auto", background: G.bg, borderRadius: 8, padding: 10, whiteSpace: "pre-line" }}>{b.summary}</div> : null}
                           {b.status === "actif" && auteurProfil.code_source ? (
                             <div style={{ marginBottom: 14 }}>
                               <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>🔗 Ton lien de pub (85% pour toi) :</div>
@@ -22476,7 +22476,7 @@ export default function App() {
           {book.summary && (
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Résumé</div>
-              <p style={{ color: G.text, lineHeight: 1.8, fontSize: 12, margin: 0, fontStyle: "italic", textAlign: "justify" }}>{book.summary}</p>
+              <p style={{ color: G.text, lineHeight: 1.8, fontSize: 12, margin: 0, fontStyle: "italic", textAlign: "justify", whiteSpace: "pre-line" }}>{book.summary}</p>
             </div>
           )}
           {/* ⭐ Ratings */}
