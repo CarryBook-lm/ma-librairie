@@ -13609,7 +13609,7 @@ function trackPixelEvent(eventName, params = {}, eventID = null) {
 // au pixel (qui les hache en SHA-256 automatiquement) pour mieux relier les
 // conversions aux comptes Facebook → meilleur ciblage et suivi des ventes.
 // ⚠️ Vérifie que cet ID correspond bien à celui de ton index.html / Events Manager.
-const META_PIXEL_ID = EST_HOMOROMANCE ? "1156478440372871" : "1482084486156586"; // 13/10 : un pixel par site
+const META_PIXEL_ID = EST_HOMOROMANCE ? "926061127027460" : "1482084486156586"; // 13/10 : un pixel par site
 function setPixelAdvancedMatching({ email, phone } = {}) {
   try {
     if (typeof window === "undefined" || typeof window.fbq !== "function") return;
