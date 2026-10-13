@@ -22444,7 +22444,7 @@ export default function App() {
                     ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", display: "block", borderRadius: 14, boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }} />
                     : <div style={{ width: "100%", aspectRatio: "2 / 3", background: G.surface2, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                   {(book.subcategory || book.category) ? <div style={{ fontSize: 11, letterSpacing: 2.2, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8 }}>{book.subcategory || book.category}</div> : null}
                   <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 27, lineHeight: 1.12, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
                   <div style={{ fontSize: 14, color: G.textDim, lineHeight: 1.5, marginBottom: 12, fontFamily: "system-ui, sans-serif" }}>roman signé <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
@@ -22473,7 +22473,7 @@ export default function App() {
                 </div>
               </div>
               {book.summary && (
-                <div style={{ borderLeft: "4px solid " + G.text, paddingLeft: 14, marginBottom: 22 }}>
+                <div style={{ borderLeft: "4px solid " + G.text, paddingLeft: 14, marginBottom: 22, textAlign: "left" }}>
                   <div style={{ fontSize: 22, color: G.text, fontWeight: 700, marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>Résumé</div>
                   <div style={{ color: G.text, fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-line", fontFamily: "system-ui, sans-serif", ...(resumeDeplie === book.id ? {} : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }) }}>{book.summary}</div>
                   {book.summary.length > 160 ? (
@@ -22900,7 +22900,7 @@ export default function App() {
               !sameAuthor.find(x => x.id === b.id)
             );
             // Combine en priorité : sub+auteur > sous-cat > auteur > catégorie, max 8 livres
-            const recommendations = [...sameSubAndAuthor, ...sameSub, ...sameAuthor, ...sameCat].slice(0, 8);
+            const recommendations = [...sameSubAndAuthor, ...sameSub, ...sameAuthor, ...sameCat].filter(x => x.status === "actif" && surCarryBooks(x)).slice(0, 8);
 
             if (recommendations.length === 0) return null;
 
