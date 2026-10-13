@@ -13609,7 +13609,7 @@ function trackPixelEvent(eventName, params = {}, eventID = null) {
 // au pixel (qui les hache en SHA-256 automatiquement) pour mieux relier les
 // conversions aux comptes Facebook → meilleur ciblage et suivi des ventes.
 // ⚠️ Vérifie que cet ID correspond bien à celui de ton index.html / Events Manager.
-const META_PIXEL_ID = "1482084486156586";
+const META_PIXEL_ID = EST_HOMOROMANCE ? "1156478440372871" : "1482084486156586"; // 13/10 : un pixel par site
 function setPixelAdvancedMatching({ email, phone } = {}) {
   try {
     if (typeof window === "undefined" || typeof window.fbq !== "function") return;
@@ -13631,6 +13631,8 @@ function setPixelAdvancedMatching({ email, phone } = {}) {
 // Capte 100% des conversions, même celles bloquées par AdBlock/iOS/data savers
 // Fonctionne en parallèle du Pixel JS - Meta dédoublonne automatiquement
 async function trackMetaConversion(data) {
+  // 13/10 : l'API serveur (fonction Supabase) est reliee au pixel de CarryBooks : on n'y envoie rien depuis HomoRomance.
+  if (EST_HOMOROMANCE) return;
   try {
     await fetch("https://huikxujxsklboejkbnda.supabase.co/functions/v1/meta-conversion", {
       method: "POST",

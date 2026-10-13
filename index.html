@@ -70,7 +70,11 @@
       t.src=v;s=b.getElementsByTagName(e)[0];
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '1482084486156586');
+      /* 13/10 : un pixel par site. homoromance.com a son propre pixel (HomoRomance Pixel),
+         carrybooks.com garde le sien. */
+      var __hr = (location.hostname || "").toLowerCase().indexOf("homoromance") !== -1
+              || (location.search || "").indexOf("site=homoromance") !== -1;
+      fbq('init', __hr ? '1156478440372871' : '1482084486156586');
       fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"

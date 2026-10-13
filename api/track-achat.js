@@ -70,8 +70,14 @@ export default async function handler(req, res) {
     }
     if (!found) return res.status(404).json({ error: "achat introuvable" });
 
-    const PIXEL = process.env.META_PIXEL_ID;
-    const TOKEN = process.env.META_ACCESS_TOKEN;
+    // 13/10 : un achat fait sur homoromance.com ne doit JAMAIS partir vers le pixel de CarryBooks.
+    // HomoRomance utilise ses propres variables (META_PIXEL_ID_HR / META_ACCESS_TOKEN_HR) ;
+    // tant qu'elles n'existent pas, l'evenement serveur est ignore (le pixel navigateur compte deja la vente).
+    const hote = String(req.headers["origin"] || req.headers["referer"] || req.headers["host"] || "").toLowerCase();
+    const estHR = hote.indexOf("homoromance") !== -1;
+    const PIXEL = estHR ? process.env.META_PIXEL_ID_HR : process.env.META_PIXEL_ID;
+    const TOKEN = estHR ? process.env.META_ACCESS_TOKEN_HR : process.env.META_ACCESS_TOKEN;
+    if (estHR && (!PIXEL || !TOKEN)) return res.status(200).json({ ok: true, ignore: "HomoRomance sans API Conversions" });
     if (!PIXEL || !TOKEN) return res.status(500).json({ error: "config Meta manquante" });
 
     const amount = Number(found.amount) || 0;
