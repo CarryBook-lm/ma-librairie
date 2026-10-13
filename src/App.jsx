@@ -21,8 +21,11 @@ const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres a
 // 13/10 : sur homoromance.com, le compte de Landrine (id 8) s'affiche sous le nom
 // Johanna Morisson PARTOUT a l'ecran. Le vrai nom reste dans la base (paiements)
 // et dans vrai_nom_cache, pour qu'un enregistrement du profil ne l'ecrase pas.
-function masquerNomHR(a) {
-  if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
+function masquerNomHR(a0) {
+  if (!EST_HOMOROMANCE || !a0) return a0;
+  // 13/10 : plus de boutique perso sur HomoRomance : pas de lien /auteur/CODE ni de vitrine.
+  const a = { ...a0, code_source: null };
+  if (a.id !== 8) return a;
   return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, vrai_photo_cache: (a.vrai_photo_cache !== undefined ? a.vrai_photo_cache : (a.photo_url || null)), nom_complet: "Johanna Morisson", photo_url: null };
 }
 // Pareil pour les listes publiques (Nos auteurs, recherche, boutique) : le nom et le
@@ -1889,6 +1892,7 @@ const getCategorieFromURL = () => {
 
 const getPageFromURL = () => {
   const path = window.location.pathname;
+  if (EST_HOMOROMANCE && (path === "/auteurs" || path.startsWith("/auteur/"))) return "home";
   if (path.startsWith("/categorie/")) return "catalog";
   if (path.startsWith("/livre/")) return "detail";
   if (path.startsWith("/auteur/")) return "auteur_boutique";
@@ -15479,7 +15483,7 @@ export default function App() {
       // 👤 Boutique auteur : /auteur/<code> — le code sert de lien-boutique ET de parrainage
       try {
         const p = window.location.pathname;
-        if (p.startsWith("/auteur/")) {
+        if (!EST_HOMOROMANCE && p.startsWith("/auteur/")) {
           const codeBoutique = decodeURIComponent(p.replace("/auteur/", "").split("/")[0] || "").trim();
           if (codeBoutique) {
             setBoutiqueCode(codeBoutique);
@@ -18234,7 +18238,7 @@ export default function App() {
   });
 
   const navItems = [
-    { id: "auteurs", label: "👤 Auteur(es)" },
+    ...(EST_HOMOROMANCE ? [] : [{ id: "auteurs", label: "👤 Auteur(es)" }]),
     { id: "comment_publier", label: "❓ Comment publier sur " + SITE_NOM },
     { id: "home", label: "Accueil" },
     { id: "catalog", label: "Catalogue" },
@@ -18402,7 +18406,7 @@ export default function App() {
         coul_bouton: auteurCoulBouton || null,
         coul_bouton_texte: auteurCoulBoutonTexte || null,
         vitrine_formations_lien: auteurFormationsLien.trim() || null,
-        mode_vente: auteurModeVente === "vitrine" ? "vitrine" : "les_deux",
+        mode_vente: (!EST_HOMOROMANCE && auteurModeVente === "vitrine") ? "vitrine" : "les_deux",
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
@@ -19817,7 +19821,7 @@ export default function App() {
               {[
                 ["les_deux", "🌍 Ma vitrine + " + SITE_NOM, "Tes livres sont dans ta vitrine ET dans le catalogue " + SITE_NOM + ". Ils passent par une validation sous 24 h. Tu touches 85 % quand la vente vient de toi, 50 % quand c'est " + SITE_NOM + " qui t'amène le lecteur.", "Conseillé"],
                 ["vitrine", "🏪 Ma vitrine uniquement", "Tes livres n'apparaissent nulle part sur " + SITE_DOMAINE + ". Ils sont en ligne tout de suite, sans validation, et tu touches 85 % sur chaque vente. Réservé aux auteurs vérifiés.", ""],
-              ].map(function (o) {
+              ].filter(function (o) { return !(EST_HOMOROMANCE && o[0] === "vitrine"); }).map(function (o) {
                 const val = o[0], titre = o[1], desc = o[2], badge = o[3];
                 const actif = (auteurModeVente === val);
                 return (
@@ -20973,7 +20977,7 @@ export default function App() {
                     {[
                       ["les_deux", "🌍 Ma vitrine + " + SITE_NOM, "Dans ta vitrine et dans le catalogue " + SITE_NOM + ", après validation sous 24 h. 85 % quand la vente vient de toi, 50 % quand elle vient de " + SITE_NOM + "."],
                       ["vitrine", "🏪 Ma vitrine uniquement", "Nulle part sur " + SITE_DOMAINE + ". En ligne tout de suite, sans validation, 85 % sur chaque vente. Réservé aux auteurs vérifiés."],
-                    ].map(function (o) {
+                    ].filter(function (o) { return !(EST_HOMOROMANCE && o[0] === "vitrine"); }).map(function (o) {
                       const val = o[0], titre = o[1], desc = o[2];
                       const actif = (auteurModeVente === val);
                       const cA = auteurCouleur || G.bouton;
@@ -21272,7 +21276,7 @@ export default function App() {
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur {SITE_NOM}</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
-            <button onClick={() => { setAuteurTab("vitrine"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "vitrine" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "vitrine" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🏪</span> Ma vitrine</button>
+{!EST_HOMOROMANCE && (            <button onClick={() => { setAuteurTab("vitrine"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "vitrine" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "vitrine" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🏪</span> Ma vitrine</button>)}
             <button onClick={() => { setAuteurTab("integration"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "integration" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "integration" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔌</span> Intégrations</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
             <button onClick={() => { setAuteurTab("compte"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "compte" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "compte" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>👤</span> Mon profil</button>
@@ -24200,7 +24204,7 @@ export default function App() {
                 </div>
                 {searchQuery && (() => {
                   const q = searchQuery.toLowerCase().trim();
-                  const matches = auteursAll.filter(a => (a.nom_complet || "").toLowerCase().includes(q));
+                  const matches = EST_HOMOROMANCE ? [] : auteursAll.filter(a => (a.nom_complet || "").toLowerCase().includes(q));
                   if (matches.length === 0) return null;
                   return (
                     <div style={{ marginBottom: 20 }}>
