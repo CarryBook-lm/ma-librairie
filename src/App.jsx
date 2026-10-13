@@ -14057,6 +14057,7 @@ export default function App() {
   // melangerListe utilise seedMelange, tire une seule fois par chargement de page :
   // l'ordre reste stable pendant la visite, mais il est different a la visite suivante.
   useEffect(() => { supabase.from("annonces_pub").select("id, auteur_id, image_url, lien").eq("statut", "active").order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setAnnoncesActives(melangerListe(data || []))); }, []);
+  const [resumeDeplie, setResumeDeplie] = useState(null); // 13/10 : fiche livre HomoRomance, id du livre dont le resume est deplie
   const [bookReviews, setBookReviews] = useState([]); // Liste des avis textuels publics du livre actuel
   const [reviewComment, setReviewComment] = useState(""); // Texte du commentaire en cours
   const [reviewSaving, setReviewSaving] = useState(false);
@@ -22434,6 +22435,68 @@ export default function App() {
           return null;
         })()}
         <div style={{ padding: "24px 16px 40px" }}>
+          {EST_HOMOROMANCE ? (
+            <>
+              {/* 13/10 : fiche livre HomoRomance. Couverture a gauche, infos a droite, resume replie. */}
+              <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 22 }}>
+                <div style={{ flex: "0 0 40%", maxWidth: 200 }}>
+                  {book.cover
+                    ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", display: "block", borderRadius: 14, boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }} />
+                    : <div style={{ width: "100%", aspectRatio: "2 / 3", background: G.surface2, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {(book.subcategory || book.category) ? <div style={{ fontSize: 11, letterSpacing: 2.2, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8 }}>{book.subcategory || book.category}</div> : null}
+                  <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: 27, lineHeight: 1.12, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
+                  <div style={{ fontSize: 14, color: G.textDim, lineHeight: 1.5, marginBottom: 12, fontFamily: "system-ui, sans-serif" }}>roman signé <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
+                  {(() => {
+                    const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontFamily: "system-ui, sans-serif" }}>
+                        <span style={{ letterSpacing: 2, fontSize: 18, color: "#f5c518" }}>{[1,2,3,4,5].map(s => <span key={s} style={{ color: (r.count > 0 && s <= Math.round(r.avg)) ? "#f5c518" : "#55566f" }}>★</span>)}</span>
+                        {r.count > 0 ? <span style={{ fontSize: 15, fontWeight: 800, color: G.text }}>{r.avg.toFixed(1)}/5</span> : null}
+                      </div>
+                    );
+                  })()}
+                  <div style={{ fontSize: 13, color: G.textDim, marginBottom: 10, fontFamily: "system-ui, sans-serif" }}>
+                    {(() => { const r = bookRatings[book.id] || { count: 0 }; return r.count > 0 ? (r.count + " avis") : "Pas encore d'avis"; })()}
+                    {(pagesReelles || book.nb_pages) ? <span> · 📖 {pagesReelles || book.nb_pages} pages</span> : null}
+                    {(book.nb_ventes || 0) >= 1 ? <span> · 👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : null}
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ display: "inline-block", background: G.prixFond, color: "#fff", fontWeight: 800, fontSize: 17, padding: "5px 14px", borderRadius: 8, border: "1px solid #ffffff33", fontFamily: "system-ui, sans-serif" }}>
+                      {isPaperOnlyBook ? (getDisplayPrice(book).toLocaleString() + " FCFA") : (free ? "Gratuit" : (book.price?.toLocaleString() + " FCFA"))}
+                    </span>
+                    {isOnPromo(book) && !isPaperOnlyBook ? <span style={{ marginLeft: 8, fontSize: 13, color: G.textFaint, textDecoration: "line-through" }}>{book.original_price?.toLocaleString()} FCFA</span> : null}
+                  </div>
+                  <button type="button" onClick={() => { if (owned || free) { const el = document.getElementById("avis-hr"); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" }); } else { showToast("Lis ce roman pour laisser un avis", "success"); } }}
+                    style={{ background: G.bouton, color: "#fff", border: "1px solid #ffffff55", borderRadius: 999, padding: "7px 16px", fontSize: 12, fontWeight: 800, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>Laissez un avis</button>
+                </div>
+              </div>
+              {book.summary && (
+                <div style={{ borderLeft: "4px solid " + G.text, paddingLeft: 14, marginBottom: 22 }}>
+                  <div style={{ fontSize: 22, color: G.text, fontWeight: 700, marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>Résumé</div>
+                  <div style={{ color: G.text, fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-line", fontFamily: "system-ui, sans-serif", ...(resumeDeplie === book.id ? {} : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }) }}>{book.summary}</div>
+                  {book.summary.length > 160 ? (
+                    <button type="button" onClick={() => setResumeDeplie(resumeDeplie === book.id ? null : book.id)} style={{ background: "none", border: "none", color: G.text, fontSize: 15, fontWeight: 700, cursor: "pointer", padding: "10px 0 2px", fontFamily: "system-ui, sans-serif" }}>{resumeDeplie === book.id ? "Voir moins ▲" : "Voir plus ▼"}</button>
+                  ) : null}
+                </div>
+              )}
+              {(owned || free) ? (() => {
+                const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
+                return (
+                  <div id="avis-hr" style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "12px 16px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 13, color: G.textDim, fontFamily: "system-ui, sans-serif" }}>Ton avis</span>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[1,2,3,4,5].map(s => (
+                        <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24, color: s <= r.userRating ? "#f5c518" : "#55566f", padding: 0 }}>★</button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })() : null}
+            </>
+          ) : (
+            <>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             {book.cover
               ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
@@ -22511,6 +22574,8 @@ export default function App() {
             );
           })()}
 
+            </>
+          )}
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
             {!isArticle(book) && (
               <button onClick={() => startReading(book, true)}
@@ -22551,7 +22616,7 @@ export default function App() {
           {!isPaperOnlyBook && (
             <button
               onClick={() => startReading(book)}
-              style={{ width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              style={EST_HOMOROMANCE ? { width: "100%", padding: "20px 15px", background: G.bouton, border: "2px solid #ffffff66", borderRadius: 999, color: "#fff", cursor: "pointer", fontSize: 19, fontWeight: 700, fontFamily: "system-ui, sans-serif", boxShadow: "0 8px 22px rgba(46,1,56,0.6)" } : { width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
               {owned || free ? (book.audio_url ? "🎧 Écouter maintenant" : "📖 Lire maintenant") : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.audio_url ? "🎧 Écouter — " : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ")) + book.price?.toLocaleString() + " FCFA"}
             </button>
           )}
@@ -22841,13 +22906,13 @@ export default function App() {
 
             return (
               <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1px solid " + G.border }}>
-                <div style={{ fontSize: 11, letterSpacing: 2, color: G.gold, textTransform: "uppercase", marginBottom: 4, textAlign: "center" }}>
-                  🎯 Ceci pourrait vous intéresser
+                <div style={{ fontSize: EST_HOMOROMANCE ? 15 : 11, letterSpacing: 2, color: EST_HOMOROMANCE ? G.text : G.gold, textTransform: "uppercase", marginBottom: EST_HOMOROMANCE ? 16 : 4, textAlign: "center", fontFamily: EST_HOMOROMANCE ? "system-ui, sans-serif" : undefined }}>
+                  {EST_HOMOROMANCE ? "Ceci pourrait vous intéresser" : "🎯 Ceci pourrait vous intéresser"}
                 </div>
-                <div style={{ fontSize: 13, color: G.textDim, marginBottom: 18, textAlign: "center", fontStyle: "italic" }}>
+                {EST_HOMOROMANCE ? null : (<div style={{ fontSize: 13, color: G.textDim, marginBottom: 18, textAlign: "center", fontStyle: "italic" }}>
                   D'autres lecteurs ont aussi aimé...
-                </div>
-                <div style={{
+                </div>)}
+                <div style={EST_HOMOROMANCE ? { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 } : {
                   display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12,
                   scrollbarWidth: "thin", WebkitOverflowScrolling: "touch"
                 }}>
@@ -22858,7 +22923,7 @@ export default function App() {
                         setSelectedBook(rec);
                         window.scrollTo(0, 0);
                       }}
-                      style={{
+                      style={EST_HOMOROMANCE ? { cursor: "pointer", minWidth: 0 } : {
                         flexShrink: 0, width: 130, cursor: "pointer",
                         background: G.surface, borderRadius: 8, padding: 8,
                         border: "1px solid " + G.border, transition: "transform 0.2s"
@@ -22867,7 +22932,7 @@ export default function App() {
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
                       {rec.cover
-                        ? <img src={rec.cover} alt={rec.title} style={{ width: "100%", height: 170, objectFit: "cover", borderRadius: 4, marginBottom: 6 }} />
+                        ? <img src={rec.cover} alt={rec.title} style={{ width: "100%", height: EST_HOMOROMANCE ? "auto" : 170, aspectRatio: EST_HOMOROMANCE ? "2 / 3" : undefined, objectFit: "cover", borderRadius: EST_HOMOROMANCE ? 10 : 4, marginBottom: 6, display: "block" }} />
                         : <div style={{ width: "100%", height: 170, background: G.surface2, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, marginBottom: 6 }}>📖</div>}
                       <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {rec.title}
