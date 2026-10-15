@@ -1829,7 +1829,7 @@ const idsComptesLies = (id) => [id].concat(COMPTES_LIES[id] || []);
 // apparaitre dans Mes livres meme s ils ne sont pas rattaches au compte (auteur_id vide ou autre).
 const filtreMesLivres = (p) => {
   const ids = idsComptesLies(p.id).join(",");
-  return (EST_HOMOROMANCE && p.id === 8) ? ("auteur_id.in.(" + ids + "),author.ilike.%Johanna Morisson%") : ("auteur_id.in.(" + ids + ")");
+  return (EST_HOMOROMANCE && p.id === 8) ? "author.ilike.%Johanna Morisson%" : ("auteur_id.in.(" + ids + ")");
 };
 const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
