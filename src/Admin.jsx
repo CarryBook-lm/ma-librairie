@@ -24,6 +24,7 @@ const HR_DEBUT_MS = new Date("2026-10-15T12:50:00+01:00").getTime(); // meme heu
 // Support : un fil par site (colonne site de support_messages / support_annonces).
 const SITE_SUP = EST_HOMOROMANCE ? "hr" : "cb";
 const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
+const ACC = EST_HOMOROMANCE ? "#c05cf0" : "#c9a84c"; // couleur d'accent du site
 const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
 
 // Toute LECTURE de la table books passe par ici : sur HomoRomance on ne sort
@@ -38,6 +39,7 @@ function livres(select, options) {
 // On le calcule a partir de la liste des auteurs deja chargee : pas de course.
 // 09/10 : AU LANCEMENT, HomoRomance n'affiche QUE Johanna Morisson.
 // Pour ouvrir le site a d'autres auteurs : mettre AUTEUR_UNIQUE_HR a "".
+let _auteursDuSite = null;
 const AUTEUR_UNIQUE_HR = "johanna morisson";
 function normNom(x) {
   try { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase(); }
@@ -281,7 +283,7 @@ function ComptabiliteView() {
   const auj = compute(todayStart, tomorrowStart);
 
   const fmt = (n) => (Math.round(n)).toLocaleString("fr-FR") + " F";
-  const GOLD = "#c9a84c";
+  const GOLD = ("" + ACC + "");
 
   const box = (label, value, color, emoji) => (
     <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, flex: "1 1 160px", minWidth: 150 }}>
@@ -1481,7 +1483,7 @@ export default function Admin() {
     return (
       <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
         <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 320, textAlign: "center" }}>
-          <div style={{ width: 40, height: 40, border: "3px solid #2a2a2a", borderTop: "3px solid #c9a84c", borderRadius: "50%", margin: "0 auto 16px", animation: "spin 0.9s linear infinite" }} />
+          <div style={{ width: 40, height: 40, border: "3px solid #2a2a2a", borderTop: ("3px solid " + ACC + ""), borderRadius: "50%", margin: "0 auto 16px", animation: "spin 0.9s linear infinite" }} />
           <p style={{ color: "#888", fontSize: 13 }}>Verification des droits...</p>
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
@@ -1494,20 +1496,20 @@ export default function Admin() {
       <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
         <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, textAlign: "center" }}>
           <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
-          <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>Administration</h2>
+          <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 8 }}>Administration</h2>
           <p style={{ color: "#f44336", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>{authError}</p>
           {currentUser && (
             <p style={{ color: "#888", fontSize: 12, marginBottom: 16 }}>
-              Connecte en tant que :<br /><span style={{ color: "#c9a84c" }}>{currentUser.email}</span>
+              Connecte en tant que :<br /><span style={{ color: ("" + ACC + "") }}>{currentUser.email}</span>
             </p>
           )}
           {currentUser ? (
             <button onClick={handleSignOut}
-              style={{ width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, marginBottom: 8 }}>
+              style={{ width: "100%", padding: 13, background: ("" + ACC + ""), border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, marginBottom: 8 }}>
               Se deconnecter
             </button>
           ) : (
-            <a href="/" style={{ display: "block", width: "100%", padding: 13, background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, textDecoration: "none", boxSizing: "border-box" }}>
+            <a href="/" style={{ display: "block", width: "100%", padding: 13, background: ("" + ACC + ""), border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14, textDecoration: "none", boxSizing: "border-box" }}>
               Aller a la connexion
             </a>
           )}
@@ -1913,7 +1915,13 @@ export default function Admin() {
 
   async function fetchBooks() {
     const { data } = await livres("*").neq("status", "brouillon").order("created_at", { ascending: false });
-    if (data) setBooks(data);
+    if (data) {
+      if (EST_HOMOROMANCE && AUTEUR_UNIQUE_HR) {
+        await chargerAuteursDuSite();
+        const ids = _auteursDuSite || new Set();
+        setBooks(data.filter(b => ids.has(b.auteur_id) || normNom(b.author || b.auteur) === AUTEUR_UNIQUE_HR));
+      } else setBooks(data);
+    }
   }
 
   // 🔄 Activer/Désactiver un compte parrain
@@ -2528,7 +2536,7 @@ export default function Admin() {
 
       {/* TOP NAV MOBILE */}
       <div style={{ background: "#1a1a1a", borderBottom: "1px solid #2a2a2a", padding: "0 16px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}><button onClick={() => { window.location.href = "/espace-auteur"; }} title="Retour à mon espace auteur" style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 18, cursor: "pointer", padding: "3px 10px", lineHeight: 1 }}>←</button><div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c", letterSpacing: 2 }}>CARRYBOOKS</div></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}><button onClick={() => { window.location.href = "/espace-auteur"; }} title="Retour à mon espace auteur" style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: ("" + ACC + ""), fontSize: 18, cursor: "pointer", padding: "3px 10px", lineHeight: 1 }}>←</button><div style={{ fontSize: 18, fontWeight: "bold", color: ("" + ACC + ""), letterSpacing: 2 }}>{SITE_NOM.toUpperCase()}</div></div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={() => window.open("/", "_blank")}
             style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
@@ -2539,7 +2547,7 @@ export default function Admin() {
             🔒 Déco
           </button>
           <button onClick={() => setShowMenu(m => !m)}
-            style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 22, cursor: "pointer", padding: 4 }}>
+            style={{ background: "none", border: "none", color: ("" + ACC + ""), fontSize: 22, cursor: "pointer", padding: 4 }}>
             {showMenu ? "✕" : "☰"}
           </button>
         </div>
@@ -2547,7 +2555,7 @@ export default function Admin() {
 
       {/* MENU DROPDOWN MOBILE */}
       {showMenu && (
-        <div style={{ position: "fixed", bottom: 58, left: 0, right: 0, maxHeight: "62vh", overflowY: "auto", background: "#1a1a1a", borderTop: "2px solid #c9a84c", zIndex: 49, boxShadow: "0 -6px 20px rgba(0,0,0,0.5)" }}>
+        <div style={{ position: "fixed", bottom: 58, left: 0, right: 0, maxHeight: "62vh", overflowY: "auto", background: "#1a1a1a", borderTop: ("2px solid " + ACC + ""), zIndex: 49, boxShadow: "0 -6px 20px rgba(0,0,0,0.5)" }}>
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Produits", icon: "📚" },
@@ -2575,8 +2583,8 @@ export default function Admin() {
             }}
               style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                 background: view === item.id ? "#2a2a2a" : "transparent",
-                color: view === item.id ? "#c9a84c" : "#aaa",
-                borderLeft: "3px solid " + (view === item.id ? "#c9a84c" : "transparent"),
+                color: view === item.id ? ("" + ACC + "") : "#aaa",
+                borderLeft: "3px solid " + (view === item.id ? ("" + ACC + "") : "transparent"),
                 borderBottom: "1px solid #2a2a2a" }}>
               <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
               {item.id === "espace_auteur" && ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0)) > 0 && (
@@ -2593,12 +2601,12 @@ export default function Admin() {
         {/* DASHBOARD */}
         {view === "dashboard" && (
           <div>
-            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>Tableau de bord</h1>
+            <h1 style={{ fontSize: 20, color: ("" + ACC + ""), marginBottom: 20 }}>Tableau de bord</h1>
 
             {/* SECTION CA TOTAL */}
-            <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #1f1810 100%)", border: "1.5px solid #c9a84c", borderRadius: 10, padding: 20, marginBottom: 12, textAlign: "center" }}>
-              <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase" }}>💰 Chiffre d'affaires total</div>
-              <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", marginBottom: 4 }}>{grandTotalRevenue.toLocaleString()} F</div>
+            <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #1f1810 100%)", border: ("1.5px solid " + ACC + ""), borderRadius: 10, padding: 20, marginBottom: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 11, color: ("" + ACC + ""), letterSpacing: 2, marginBottom: 6, textTransform: "uppercase" }}>💰 Chiffre d'affaires total</div>
+              <div style={{ fontSize: 32, fontWeight: "bold", color: ("" + ACC + ""), marginBottom: 4 }}>{grandTotalRevenue.toLocaleString()} F</div>
               <div style={{ fontSize: 11, color: "#888" }}>Toutes sources confondues</div>
             </div>
 
@@ -2668,7 +2676,7 @@ export default function Admin() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueBooks.toLocaleString()} F</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: ("" + ACC + "") }}>{revenueBooks.toLocaleString()} F</div>
                       <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{totalSales} vente{totalSales > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -2688,7 +2696,7 @@ export default function Admin() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueSubscriptions.toLocaleString()} F</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: ("" + ACC + "") }}>{revenueSubscriptions.toLocaleString()} F</div>
                       <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{subscribers.length} abo{subscribers.length > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -2708,7 +2716,7 @@ export default function Admin() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueQuiz.toLocaleString()} F</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: ("" + ACC + "") }}>{revenueQuiz.toLocaleString()} F</div>
                       <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{quizPayments.length} achat{quizPayments.length > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -2728,7 +2736,7 @@ export default function Admin() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryCare.toLocaleString()} F</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: ("" + ACC + "") }}>{revenueCarryCare.toLocaleString()} F</div>
                       <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carrycarePayments.filter(p => (p.amount || 0) > 0).length} achat{carrycarePayments.filter(p => (p.amount || 0) > 0).length > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -2754,7 +2762,7 @@ export default function Admin() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryShop.toLocaleString()} F</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: ("" + ACC + "") }}>{revenueCarryShop.toLocaleString()} F</div>
                       <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carryshopOrders.length} commande{carryshopOrders.length > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -2774,7 +2782,7 @@ export default function Admin() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     <div style={{ padding: "12px", borderRight: "1px solid #2a2a2a", textAlign: "center" }}>
                       <div style={{ fontSize: 10, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Total</div>
-                      <div style={{ fontSize: 16, fontWeight: "bold", color: "#c9a84c" }}>{revenueCarryColor.toLocaleString()} F</div>
+                      <div style={{ fontSize: 16, fontWeight: "bold", color: ("" + ACC + "") }}>{revenueCarryColor.toLocaleString()} F</div>
                       <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>{carrycolorOrders.length} commande{carrycolorOrders.length > 1 ? "s" : ""}</div>
                     </div>
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -2792,9 +2800,9 @@ export default function Admin() {
               <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>📊 Périodes (toutes sources)</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                 {/* HIER */}
-                <div style={{ background: "linear-gradient(135deg, #2a2418 0%, #1f1a10 100%)", border: "1px solid #c9a84c44", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>🟡 Hier</div>
-                  <div style={{ fontSize: 15, fontWeight: "bold", color: "#c9a84c", lineHeight: 1.1 }}>{yesterdayTotal.toLocaleString()} F</div>
+                <div style={{ background: "linear-gradient(135deg, #2a2418 0%, #1f1a10 100%)", border: ("1px solid " + ACC + "44"), borderRadius: 8, padding: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>🟡 Hier</div>
+                  <div style={{ fontSize: 15, fontWeight: "bold", color: ("" + ACC + ""), lineHeight: 1.1 }}>{yesterdayTotal.toLocaleString()} F</div>
                   <div style={{ fontSize: 9, color: "#888", marginTop: 4 }}>{yesterdayCount} transaction{yesterdayCount > 1 ? "s" : ""}</div>
                 </div>
                 {/* 7 JOURS */}
@@ -2815,7 +2823,7 @@ export default function Admin() {
               <div style={{ marginTop: 10, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 12 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 6, fontSize: 10, color: "#888", marginBottom: 8, paddingBottom: 6, borderBottom: "1px solid #2a2a2a", letterSpacing: 1, textTransform: "uppercase" }}>
                   <div>Source</div>
-                  <div style={{ textAlign: "right", color: "#c9a84c" }}>Hier</div>
+                  <div style={{ textAlign: "right", color: ("" + ACC + "") }}>Hier</div>
                   <div style={{ textAlign: "right", color: "#4caf50" }}>7 j</div>
                   <div style={{ textAlign: "right", color: "#4a9eff" }}>30 j</div>
                 </div>
@@ -2829,7 +2837,7 @@ export default function Admin() {
                 ].filter(r => !EST_HOMOROMANCE || r.label.indexOf("Livres") !== -1).map((row, i) => (
                   <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 6, fontSize: 11, padding: "6px 0", borderBottom: i < 5 ? "1px solid #1f1f1f" : "none" }}>
                     <div style={{ color: "#e8e0d0" }}>{row.label}</div>
-                    <div style={{ textAlign: "right", color: row.y.revenue > 0 ? "#c9a84c" : "#555" }}>{row.y.revenue.toLocaleString()}</div>
+                    <div style={{ textAlign: "right", color: row.y.revenue > 0 ? ("" + ACC + "") : "#555" }}>{row.y.revenue.toLocaleString()}</div>
                     <div style={{ textAlign: "right", color: row.w.revenue > 0 ? "#4caf50" : "#555" }}>{row.w.revenue.toLocaleString()}</div>
                     <div style={{ textAlign: "right", color: row.m.revenue > 0 ? "#4a9eff" : "#555" }}>{row.m.revenue.toLocaleString()}</div>
                   </div>
@@ -2892,13 +2900,13 @@ export default function Admin() {
               </div>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 8px", textAlign: "center" }}>
                 <div style={{ fontSize: 22, marginBottom: 6 }}>📚</div>
-                <div style={{ fontSize: 18, fontWeight: "bold", color: "#c9a84c" }}>{activeBooks}</div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: ("" + ACC + "") }}>{activeBooks}</div>
                 <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Livres actifs</div>
               </div>
             </div>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
-              <h3 style={{ color: "#c9a84c", marginBottom: 14, fontSize: 14 }}>Derniers livres ajoutés</h3>
+              <h3 style={{ color: ("" + ACC + ""), marginBottom: 14, fontSize: 14 }}>Derniers livres ajoutés</h3>
               {books.slice(0, 5).map(book => (
                 <div key={book.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid #2a2a2a" }}>
                   {book.cover
@@ -2920,7 +2928,7 @@ export default function Admin() {
         {view === "books" && productSubView === null && (
           <div>
             <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 24, color: "#c9a84c", marginBottom: 6 }}>📚 Produits</h1>
+              <h1 style={{ fontSize: 24, color: ("" + ACC + ""), marginBottom: 6 }}>📚 Produits</h1>
               <p style={{ color: "#888", fontSize: 13 }}>Choisis le type de produit que tu veux gérer</p>
             </div>
 
@@ -2937,13 +2945,13 @@ export default function Admin() {
                   transition: "all 0.2s",
                   textAlign: "center"
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseEnter={e => e.currentTarget.style.borderColor = ("" + ACC + "")}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
               >
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📖</div>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Numériques</div>
                 <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>PDF, Liseuse, Mixte</div>
-                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: ("" + ACC + "22"), border: ("1px solid " + ACC + ""), borderRadius: 20, fontSize: 12, color: ("" + ACC + ""), fontWeight: "bold" }}>
                   {books.filter(b => b.product_type !== 'papier' && b.product_type !== 'article' && b.product_type !== 'audio').length} produits
                 </div>
               </div>
@@ -2961,13 +2969,13 @@ export default function Admin() {
                   transition: "all 0.2s",
                   textAlign: "center"
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseEnter={e => e.currentTarget.style.borderColor = ("" + ACC + "")}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
               >
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📦</div>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Physiques</div>
                 <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Livres papier</div>
-                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: ("" + ACC + "22"), border: ("1px solid " + ACC + ""), borderRadius: 20, fontSize: 12, color: ("" + ACC + ""), fontWeight: "bold" }}>
                   {books.filter(b => b.product_type === 'papier').length} produits
                 </div>
               </div>
@@ -2986,13 +2994,13 @@ export default function Admin() {
                   transition: "all 0.2s",
                   textAlign: "center"
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseEnter={e => e.currentTarget.style.borderColor = ("" + ACC + "")}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
               >
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🎨</div>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Articles Divers</div>
                 <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Feutres, pinceaux, etc.</div>
-                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: ("" + ACC + "22"), border: ("1px solid " + ACC + ""), borderRadius: 20, fontSize: 12, color: ("" + ACC + ""), fontWeight: "bold" }}>
                   {books.filter(b => b.product_type === 'article').length} produits
                 </div>
               </div>
@@ -3011,13 +3019,13 @@ export default function Admin() {
                   transition: "all 0.2s",
                   textAlign: "center"
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#c9a84c"}
+                onMouseEnter={e => e.currentTarget.style.borderColor = ("" + ACC + "")}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "#2a2a2a"}
               >
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🎧</div>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: "#fff", marginBottom: 4 }}>Livres Audio & Podcasts</div>
                 <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>MP3, MP4, vidéo</div>
-                <div style={{ display: "inline-block", padding: "4px 10px", background: "#c9a84c22", border: "1px solid #c9a84c", borderRadius: 20, fontSize: 12, color: "#c9a84c", fontWeight: "bold" }}>
+                <div style={{ display: "inline-block", padding: "4px 10px", background: ("" + ACC + "22"), border: ("1px solid " + ACC + ""), borderRadius: 20, fontSize: 12, color: ("" + ACC + ""), fontWeight: "bold" }}>
                   {books.filter(b => b.product_type === 'audio').length} produits
                 </div>
               </div>
@@ -3033,11 +3041,11 @@ export default function Admin() {
             <div style={{ marginBottom: 20 }}>
               <button
                 onClick={() => { setProductSubView(null); setProductSubTab("list"); }}
-                style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, padding: "8px 14px", color: "#c9a84c", cursor: "pointer", fontSize: 12, marginBottom: 12 }}
+                style={{ background: "none", border: "1px solid #2a2a2a", borderRadius: 6, padding: "8px 14px", color: ("" + ACC + ""), cursor: "pointer", fontSize: 12, marginBottom: 12 }}
               >
                 ← Retour aux produits
               </button>
-              <h1 style={{ fontSize: 22, color: "#c9a84c", margin: 0 }}>
+              <h1 style={{ fontSize: 22, color: ("" + ACC + ""), margin: 0 }}>
                 {productSubView === "digital" && "📖 Livres Numériques"}
                 {productSubView === "physical" && "📦 Livres Physiques"}
                 {productSubView === "article" && "🎨 Articles Divers"}
@@ -3059,7 +3067,7 @@ export default function Admin() {
                       setShowForm(true);
                       setActiveTab("info");
                     }}
-                    style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}
+                    style={{ background: ("" + ACC + ""), color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}
                   >
                     + AJOUTER
                   </button>
@@ -3101,13 +3109,13 @@ export default function Admin() {
                   <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: "1px solid #2a2a2a" }}>
                     <button
                       onClick={() => setProductSubTab("list")}
-                      style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: "2px solid " + (productSubTab === "list" ? "#c9a84c" : "transparent"), color: productSubTab === "list" ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}
+                      style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: "2px solid " + (productSubTab === "list" ? ("" + ACC + "") : "transparent"), color: productSubTab === "list" ? ("" + ACC + "") : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}
                     >
                       📋 Liste
                     </button>
                     <button
                       onClick={() => setProductSubTab("shipping")}
-                      style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: "2px solid " + (productSubTab === "shipping" ? "#c9a84c" : "transparent"), color: productSubTab === "shipping" ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}
+                      style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: "2px solid " + (productSubTab === "shipping" ? ("" + ACC + "") : "transparent"), color: productSubTab === "shipping" ? ("" + ACC + "") : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}
                     >
                       🚚 Zones de livraison
                     </button>
@@ -3153,7 +3161,7 @@ export default function Admin() {
                           {isPhysical && (
                             <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
                               <button onClick={() => setStockFilter("all")}
-                                style={{ padding: "6px 14px", border: "1px solid " + (stockFilter === "all" ? "#c9a84c" : "#2a2a2a"), background: stockFilter === "all" ? "rgba(201,168,76,0.15)" : "transparent", color: stockFilter === "all" ? "#c9a84c" : "#aaa", borderRadius: 16, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                                style={{ padding: "6px 14px", border: "1px solid " + (stockFilter === "all" ? ("" + ACC + "") : "#2a2a2a"), background: stockFilter === "all" ? "rgba(201,168,76,0.15)" : "transparent", color: stockFilter === "all" ? ("" + ACC + "") : "#aaa", borderRadius: 16, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
                                 Tous ({baseList.length})
                               </button>
                               <button onClick={() => setStockFilter("inStock")}
@@ -3206,7 +3214,7 @@ export default function Admin() {
                           setShowForm(true);
                           setActiveTab("info");
                         }}
-                        style={{ background: "#c9a84c", color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}
+                        style={{ background: ("" + ACC + ""), color: "#000", border: "none", padding: "10px 16px", borderRadius: 6, cursor: "pointer", fontWeight: "bold", fontSize: 13 }}
                       >
                         + AJOUTER
                       </button>
@@ -3241,7 +3249,7 @@ export default function Admin() {
                             {productSearch || stockFilter !== "all" ? "Aucun produit ne correspond aux filtres" : "Aucun produit dans cette catégorie"}
                           </div>
                           {(productSearch || stockFilter !== "all") && (
-                            <button onClick={() => { setProductSearch(""); setStockFilter("all"); }} style={{ background: "#2a2a2a", color: "#c9a84c", border: "none", padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>
+                            <button onClick={() => { setProductSearch(""); setStockFilter("all"); }} style={{ background: "#2a2a2a", color: ("" + ACC + ""), border: "none", padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>
                               Réinitialiser les filtres
                             </button>
                           )}
@@ -3258,7 +3266,7 @@ export default function Admin() {
                     <div style={{ fontSize: 14, color: "#e8e0d0", marginBottom: 2, fontWeight: "bold" }}>{book.title}</div>
                     <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>{book.author}</div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      <span style={{ fontSize: 12, color: "#c9a84c" }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} F`}</span>
+                      <span style={{ fontSize: 12, color: ("" + ACC + "") }}>{book.price === 0 ? "Gratuit" : `${book.price?.toLocaleString()} F`}</span>
                       <span style={{ fontSize: 11, color: "#aaa" }}>{book.category}{book.subcategory ? " › " + book.subcategory : ""}</span>
                       {(book.product_type === 'article' || book.product_type === 'papier') && (
                         <span style={{ fontSize: 11, color: ruptured ? "#f44336" : "#4caf50", fontWeight: 600 }}>
@@ -3300,7 +3308,7 @@ export default function Admin() {
         {view === "categories" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>🗂️ Gestion des catégories</h1>
+              <h1 style={{ fontSize: 20, color: ("" + ACC + "") }}>🗂️ Gestion des catégories</h1>
               <button onClick={fetchCategories} disabled={catLoading} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
                 {catLoading ? "⏳ Chargement..." : "🔄 Actualiser"}
               </button>
@@ -3326,7 +3334,7 @@ export default function Admin() {
 
             {/* FORMULAIRE D'AJOUT DE CATÉGORIE */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-              <h3 style={{ color: "#c9a84c", fontSize: 14, marginBottom: 10 }}>➕ Nouvelle catégorie</h3>
+              <h3 style={{ color: ("" + ACC + ""), fontSize: 14, marginBottom: 10 }}>➕ Nouvelle catégorie</h3>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <input
                   type="text"
@@ -3345,7 +3353,7 @@ export default function Admin() {
                   disabled={catSaving || !newCatName.trim()}
                   style={{
                     padding: "10px 20px",
-                    background: catSaving || !newCatName.trim() ? "#333" : "#c9a84c",
+                    background: catSaving || !newCatName.trim() ? "#333" : ("" + ACC + ""),
                     color: catSaving || !newCatName.trim() ? "#666" : "#000",
                     border: "none", borderRadius: 6, fontSize: 14, fontWeight: 600,
                     cursor: catSaving || !newCatName.trim() ? "not-allowed" : "pointer"
@@ -3379,7 +3387,7 @@ export default function Admin() {
                               width: 24, height: 18, padding: 0,
                               background: idx === 0 ? "#1a1a1a" : "#2a2a2a",
                               border: "1px solid #333", borderRadius: 4,
-                              color: idx === 0 ? "#444" : "#c9a84c",
+                              color: idx === 0 ? "#444" : ("" + ACC + ""),
                               cursor: idx === 0 ? "not-allowed" : "pointer",
                               fontSize: 10
                             }}
@@ -3392,7 +3400,7 @@ export default function Admin() {
                               width: 24, height: 18, padding: 0,
                               background: idx === categoriesRaw.length - 1 ? "#1a1a1a" : "#2a2a2a",
                               border: "1px solid #333", borderRadius: 4,
-                              color: idx === categoriesRaw.length - 1 ? "#444" : "#c9a84c",
+                              color: idx === categoriesRaw.length - 1 ? "#444" : ("" + ACC + ""),
                               cursor: idx === categoriesRaw.length - 1 ? "not-allowed" : "pointer",
                               fontSize: 10
                             }}
@@ -3413,7 +3421,7 @@ export default function Admin() {
                               autoFocus
                               style={{
                                 flex: 1, minWidth: 150, padding: "6px 10px",
-                                background: "#0a0a0a", border: "1px solid #c9a84c",
+                                background: "#0a0a0a", border: ("1px solid " + ACC + ""),
                                 borderRadius: 6, color: "#fff", fontSize: 15, fontWeight: 600
                               }}
                             />
@@ -3429,7 +3437,7 @@ export default function Admin() {
                           </>
                         ) : (
                           <>
-                            <h2 style={{ flex: 1, color: "#c9a84c", fontSize: 16, fontWeight: 600, margin: 0 }}>
+                            <h2 style={{ flex: 1, color: ("" + ACC + ""), fontSize: 16, fontWeight: 600, margin: 0 }}>
                               {cat.name}
                               <span style={{ color: "#666", fontSize: 12, fontWeight: 400, marginLeft: 8 }}>
                                 ({subs.length} sous-cat.)
@@ -3437,7 +3445,7 @@ export default function Admin() {
                             </h2>
                             <button
                               onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); }}
-                              style={{ padding: "6px 10px", background: "#2a2a2a", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                              style={{ padding: "6px 10px", background: "#2a2a2a", color: ("" + ACC + ""), border: ("1px solid " + ACC + ""), borderRadius: 6, fontSize: 12, cursor: "pointer" }}
                             >✏️ Renommer</button>
                             <button
                               onClick={() => deleteCategory(cat.id, cat.name)}
@@ -3471,7 +3479,7 @@ export default function Admin() {
                                   autoFocus
                                   style={{
                                     flex: 1, minWidth: 120, padding: "4px 8px",
-                                    background: "#0a0a0a", border: "1px solid #c9a84c",
+                                    background: "#0a0a0a", border: ("1px solid " + ACC + ""),
                                     borderRadius: 4, color: "#fff", fontSize: 13
                                   }}
                                 />
@@ -3521,7 +3529,7 @@ export default function Admin() {
                             disabled={catSaving || !(newSubName[cat.id] || '').trim()}
                             style={{
                               padding: "6px 14px",
-                              background: catSaving || !(newSubName[cat.id] || '').trim() ? "#333" : "#c9a84c",
+                              background: catSaving || !(newSubName[cat.id] || '').trim() ? "#333" : ("" + ACC + ""),
                               color: catSaving || !(newSubName[cat.id] || '').trim() ? "#666" : "#000",
                               border: "none", borderRadius: 4, fontSize: 12, fontWeight: 600,
                               cursor: catSaving || !(newSubName[cat.id] || '').trim() ? "not-allowed" : "pointer"
@@ -3542,7 +3550,7 @@ export default function Admin() {
         {view === "paper_books" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>📦 Livres papier (POD)</h1>
+              <h1 style={{ fontSize: 20, color: ("" + ACC + "") }}>📦 Livres papier (POD)</h1>
               <button onClick={fetchBooks} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
             </div>
 
@@ -3570,7 +3578,7 @@ export default function Admin() {
                 {books.map(book => (
                   <div key={book.id} style={{
                     background: "#1a1a1a",
-                    border: "1px solid " + (book.has_paper_version ? "#c9a84c" : "#2a2a2a"),
+                    border: "1px solid " + (book.has_paper_version ? ("" + ACC + "") : "#2a2a2a"),
                     borderRadius: 8,
                     padding: 14
                   }}>
@@ -3582,7 +3590,7 @@ export default function Admin() {
                         <div style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>{book.title}</div>
                         <div style={{ color: "#888", fontSize: 12 }}>{book.author} • PDF: {book.price} F</div>
                         {book.has_paper_version && (
-                          <div style={{ color: "#c9a84c", fontSize: 12, marginTop: 4 }}>
+                          <div style={{ color: ("" + ACC + ""), fontSize: 12, marginTop: 4 }}>
                             📦 Papier: {book.paper_price || '?'} F
                             {book.paper_stock === -1 ? ' • Stock illimité' :
                              book.paper_stock === 0 ? ' • RUPTURE' :
@@ -3591,7 +3599,7 @@ export default function Admin() {
                         )}
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: book.has_paper_version ? "#c9a84c" : "#888", fontSize: 13 }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: book.has_paper_version ? ("" + ACC + "") : "#888", fontSize: 13 }}>
                           <input
                             type="checkbox"
                             checked={book.has_paper_version || false}
@@ -3612,7 +3620,7 @@ export default function Admin() {
                                 paper_description: book.paper_description || ''
                               });
                             }}
-                            style={{ padding: "6px 10px", background: "#2a2a2a", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                            style={{ padding: "6px 10px", background: "#2a2a2a", color: ("" + ACC + ""), border: ("1px solid " + ACC + ""), borderRadius: 6, fontSize: 12, cursor: "pointer" }}
                           >⚙️ Configurer</button>
                         )}
                       </div>
@@ -3683,7 +3691,7 @@ export default function Admin() {
         {(view === "shipping_zones" || (view === "books" && productSubTab === "shipping" && productSubView !== null && productSubView !== "audio" && productSubView !== "digital")) && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>🚚 Zones de livraison</h1>
+              <h1 style={{ fontSize: 20, color: ("" + ACC + "") }}>🚚 Zones de livraison</h1>
               <button onClick={fetchShippingZones} disabled={zoneLoading} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>
                 {zoneLoading ? "⏳ Chargement..." : "🔄 Actualiser"}
               </button>
@@ -3708,7 +3716,7 @@ export default function Admin() {
 
             {/* Formulaire d'ajout */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-              <h3 style={{ color: "#c9a84c", fontSize: 14, marginBottom: 12 }}>➕ Nouvelle zone</h3>
+              <h3 style={{ color: ("" + ACC + ""), fontSize: 14, marginBottom: 12 }}>➕ Nouvelle zone</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 10 }}>
                 <div>
                   <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Ville *</label>
@@ -3775,7 +3783,7 @@ export default function Admin() {
                 disabled={zoneSaving || !newZone.city.trim()}
                 style={{
                   padding: "8px 18px",
-                  background: zoneSaving || !newZone.city.trim() ? "#333" : "#c9a84c",
+                  background: zoneSaving || !newZone.city.trim() ? "#333" : ("" + ACC + ""),
                   color: zoneSaving || !newZone.city.trim() ? "#666" : "#000",
                   border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600,
                   cursor: zoneSaving || !newZone.city.trim() ? "not-allowed" : "pointer"
@@ -3803,30 +3811,30 @@ export default function Admin() {
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 10 }}>
                           <div>
                             <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Ville</label>
-                            <input type="text" value={editingZone.city} onChange={e => setEditingZone(z => ({ ...z, city: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                            <input type="text" value={editingZone.city} onChange={e => setEditingZone(z => ({ ...z, city: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: ("1px solid " + ACC + ""), borderRadius: 4, color: "#fff", fontSize: 13 }}/>
                           </div>
                           <div>
                             <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Frais</label>
-                            <input type="number" value={editingZone.delivery_fee} onChange={e => setEditingZone(z => ({ ...z, delivery_fee: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                            <input type="number" value={editingZone.delivery_fee} onChange={e => setEditingZone(z => ({ ...z, delivery_fee: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: ("1px solid " + ACC + ""), borderRadius: 4, color: "#fff", fontSize: 13 }}/>
                           </div>
                           <div>
                             <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Mode</label>
-                            <select value={editingZone.delivery_method} onChange={e => setEditingZone(z => ({ ...z, delivery_method: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}>
+                            <select value={editingZone.delivery_method} onChange={e => setEditingZone(z => ({ ...z, delivery_method: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: ("1px solid " + ACC + ""), borderRadius: 4, color: "#fff", fontSize: 13 }}>
                               <option value="domicile">Domicile</option>
                               <option value="agence">Agence</option>
                             </select>
                           </div>
                           <div>
                             <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Délai min</label>
-                            <input type="number" value={editingZone.delivery_days_min} onChange={e => setEditingZone(z => ({ ...z, delivery_days_min: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                            <input type="number" value={editingZone.delivery_days_min} onChange={e => setEditingZone(z => ({ ...z, delivery_days_min: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: ("1px solid " + ACC + ""), borderRadius: 4, color: "#fff", fontSize: 13 }}/>
                           </div>
                           <div>
                             <label style={{ display: "block", color: "#888", fontSize: 11, marginBottom: 4 }}>Délai max</label>
-                            <input type="number" value={editingZone.delivery_days_max} onChange={e => setEditingZone(z => ({ ...z, delivery_days_max: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                            <input type="number" value={editingZone.delivery_days_max} onChange={e => setEditingZone(z => ({ ...z, delivery_days_max: e.target.value }))} style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: ("1px solid " + ACC + ""), borderRadius: 4, color: "#fff", fontSize: 13 }}/>
                           </div>
                         </div>
                         <div style={{ marginBottom: 10 }}>
-                          <input type="text" value={editingZone.instructions || ''} onChange={e => setEditingZone(z => ({ ...z, instructions: e.target.value }))} placeholder="Instructions" style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: "1px solid #c9a84c", borderRadius: 4, color: "#fff", fontSize: 13 }}/>
+                          <input type="text" value={editingZone.instructions || ''} onChange={e => setEditingZone(z => ({ ...z, instructions: e.target.value }))} placeholder="Instructions" style={{ width: "100%", padding: "8px 10px", background: "#0a0a0a", border: ("1px solid " + ACC + ""), borderRadius: 4, color: "#fff", fontSize: 13 }}/>
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => updateShippingZone(zone.id)} disabled={zoneSaving} style={{ padding: "8px 16px", background: "#22c55e", color: "#000", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{zoneSaving ? "⏳" : "✓ Enregistrer"}</button>
@@ -3840,7 +3848,7 @@ export default function Admin() {
                             {zone.city}
                             {!zone.active && <span style={{ color: "#f87171", fontSize: 11, marginLeft: 8 }}>(désactivée)</span>}
                           </div>
-                          <div style={{ color: "#c9a84c", fontSize: 13, marginTop: 4 }}>
+                          <div style={{ color: ("" + ACC + ""), fontSize: 13, marginTop: 4 }}>
                             {zone.delivery_fee.toLocaleString()} FCFA •
                             {zone.delivery_method === 'domicile' ? ' 🏠 Domicile' : ' 🏢 Agence'} •
                             {' ' + zone.delivery_days_min}-{zone.delivery_days_max} jours
@@ -3856,7 +3864,7 @@ export default function Admin() {
                           <button onClick={() => {
                             setEditingZoneId(zone.id);
                             setEditingZone({ ...zone });
-                          }} style={{ padding: "6px 10px", background: "#2a2a2a", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>✏️ Modifier</button>
+                          }} style={{ padding: "6px 10px", background: "#2a2a2a", color: ("" + ACC + ""), border: ("1px solid " + ACC + ""), borderRadius: 6, fontSize: 12, cursor: "pointer" }}>✏️ Modifier</button>
                           <button onClick={() => deleteShippingZone(zone.id, zone.city)} disabled={zoneSaving} style={{ padding: "6px 10px", background: "#3a1a1a", color: "#f87171", border: "1px solid #ef4444", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>🗑️</button>
                         </div>
                       </div>
@@ -3871,16 +3879,16 @@ export default function Admin() {
         {view === "users" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h1 style={{ fontSize: 20, color: "#c9a84c" }}>Utilisateurs</h1>
+              <h1 style={{ fontSize: 20, color: ("" + ACC + "") }}>Utilisateurs</h1>
               <button onClick={() => { fetchUsers(); fetchUserStats(); }} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
             </div>
 
             {/* 👥 STATS COMPTES UTILISATEURS */}
-            <div style={{ background: "linear-gradient(135deg, #2a1f0a 0%, #1a1208 100%)", border: "1px solid #c9a84c", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "#c9a84c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: "bold" }}>👥 Comptes utilisateurs CarryBooks</div>
+            <div style={{ background: "linear-gradient(135deg, #2a1f0a 0%, #1a1208 100%)", border: ("1px solid " + ACC + ""), borderRadius: 8, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: ("" + ACC + ""), textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: "bold" }}>👥 Comptes utilisateurs CarryBooks</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#c9a84c", lineHeight: 1 }}>{userStats.total_users}</div>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: ("" + ACC + ""), lineHeight: 1 }}>{userStats.total_users}</div>
                   <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Total comptes</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
@@ -3903,11 +3911,11 @@ export default function Admin() {
               <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: "bold" }}>🛒 Acheteurs</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#c9a84c" }}>{[...new Set(users.map(u => u.user_id))].length}</div>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: ("" + ACC + "") }}>{[...new Set(users.map(u => u.user_id))].length}</div>
                   <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>Acheteurs</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 28, fontWeight: "bold", color: "#c9a84c" }}>{users.length}</div>
+                  <div style={{ fontSize: 28, fontWeight: "bold", color: ("" + ACC + "") }}>{users.length}</div>
                   <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>Achats total</div>
                 </div>
               </div>
@@ -3928,7 +3936,7 @@ export default function Admin() {
                         <div style={{ fontSize: 12, color: "#aaa" }}>Dernier achat : {new Date(lastPurchase.created_at).toLocaleDateString("fr-FR")}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ background: "#2a2a2a", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "#c9a84c", marginBottom: 4 }}>
+                        <div style={{ background: "#2a2a2a", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: ("" + ACC + ""), marginBottom: 4 }}>
                           {userPurchases.length} livre{userPurchases.length > 1 ? "s" : ""}
                         </div>
                         <div style={{ fontSize: 11, color: "#4caf50" }}>{userRevenue.toLocaleString()} F</div>
@@ -3960,11 +3968,11 @@ export default function Admin() {
         {/* ABONNEMENTS */}
         {view === "subscription" && (
           <div>
-            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>⭐ Abonnements</h1>
+            <h1 style={{ fontSize: 20, color: ("" + ACC + ""), marginBottom: 20 }}>⭐ Abonnements</h1>
 
             {/* Paramètres */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 16, letterSpacing: 1, textTransform: "uppercase" }}>Paramètres</div>
+              <div style={{ fontSize: 13, color: ("" + ACC + ""), marginBottom: 16, letterSpacing: 1, textTransform: "uppercase" }}>Paramètres</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Prix mensuel (FCFA)</label>
@@ -3979,11 +3987,11 @@ export default function Admin() {
 
                 {/* Quiz Price */}
                 <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: "bold", color: "#c9a84c", marginBottom: 12 }}>🎯 Prix des Quiz (FCFA)</div>
+                  <div style={{ fontSize: 13, fontWeight: "bold", color: ("" + ACC + ""), marginBottom: 12 }}>🎯 Prix des Quiz (FCFA)</div>
                   <input type="number" value={quizPrice} onChange={e => setQuizPrice(parseInt(e.target.value) || 0)}
                     style={{ width: "100%", padding: "10px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }} />
                   <button onClick={saveQuizPrice} disabled={quizPriceSaving}
-                    style={{ padding: "10px 20px", background: quizPriceSaving ? "#333" : "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer" }}>
+                    style={{ padding: "10px 20px", background: quizPriceSaving ? "#333" : ("" + ACC + ""), border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer" }}>
                     {quizPriceSaving ? "Sauvegarde..." : "💾 Sauvegarder le prix quiz"}
                   </button>
                 </div>
@@ -4001,14 +4009,14 @@ export default function Admin() {
                 </div>
 
                 <button onClick={saveSubSettings} disabled={subSettingsSaving}
-                  style={{ padding: "12px 0", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
+                  style={{ padding: "12px 0", background: ("" + ACC + ""), border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
                   {subSettingsSaving ? "Sauvegarde..." : "💾 Sauvegarder"}
                 </button>
               </div>
             </div>
 
             {/* Abonnés actifs */}
-            <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 13, color: ("" + ACC + ""), marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>
               Abonnés ({subscribers.filter(s => s.status === "actif").length} actifs)
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -4018,7 +4026,7 @@ export default function Admin() {
                   <div>Aucun abonnement enregistré</div>
                 </div>
               ) : subscribers.map(sub => (
-                <div key={sub.id} style={{ background: "#1a1a1a", border: "1px solid " + (sub.status === "actif" ? "#c9a84c44" : "#2a2a2a"), borderRadius: 8, padding: 14 }}>
+                <div key={sub.id} style={{ background: "#1a1a1a", border: "1px solid " + (sub.status === "actif" ? ("" + ACC + "44") : "#2a2a2a"), borderRadius: 8, padding: 14 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>ID : {sub.user_id?.substring(0, 16)}...</div>
@@ -4039,11 +4047,11 @@ export default function Admin() {
         {/* CODES PROMO */}
         {view === "promos" && (
           <div>
-            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>🎟️ Codes Promo</h1>
+            <h1 style={{ fontSize: 20, color: ("" + ACC + ""), marginBottom: 20 }}>🎟️ Codes Promo</h1>
 
             {/* Création nouveau code */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 16, letterSpacing: 1, textTransform: "uppercase" }}>Créer un code</div>
+              <div style={{ fontSize: 13, color: ("" + ACC + ""), marginBottom: 16, letterSpacing: 1, textTransform: "uppercase" }}>Créer un code</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Code (ex: BIENVENUE20)</label>
@@ -4067,27 +4075,27 @@ export default function Admin() {
                     placeholder="Illimité si vide"
                     style={{ width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 14, boxSizing: "border-box" }} />
                 </div>
-                <button onClick={createPromo} style={{ padding: 12, background: "#c9a84c", color: "#000", border: "none", borderRadius: 6, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
+                <button onClick={createPromo} style={{ padding: 12, background: ("" + ACC + ""), color: "#000", border: "none", borderRadius: 6, fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>
                   + Créer le code
                 </button>
               </div>
             </div>
 
             {/* Liste codes */}
-            <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Codes existants ({promoCodes.length})</div>
+            <div style={{ fontSize: 13, color: ("" + ACC + ""), marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>Codes existants ({promoCodes.length})</div>
             {promoCodes.length === 0 ? (
               <div style={{ color: "#888", textAlign: "center", padding: 30, fontSize: 13 }}>Aucun code créé pour l'instant</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {promoCodes.map(p => (
-                  <div key={p.id} style={{ background: "#1a1a1a", border: "1px solid " + (p.active ? "#c9a84c" : "#2a2a2a"), borderRadius: 8, padding: 14 }}>
+                  <div key={p.id} style={{ background: "#1a1a1a", border: "1px solid " + (p.active ? ("" + ACC + "") : "#2a2a2a"), borderRadius: 8, padding: 14 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                       <div>
-                        <div style={{ fontSize: 16, color: p.active ? "#c9a84c" : "#666", fontWeight: "bold", letterSpacing: 1 }}>{p.code}</div>
+                        <div style={{ fontSize: 16, color: p.active ? ("" + ACC + "") : "#666", fontWeight: "bold", letterSpacing: 1 }}>{p.code}</div>
                         <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>-{p.discount_pct}% • {p.uses_count || 0}{p.uses_max ? "/" + p.uses_max : ""} utilisations</div>
                         {p.expires_at && <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Expire le {new Date(p.expires_at).toLocaleDateString("fr-FR")}</div>}
                       </div>
-                      <div style={{ fontSize: 10, padding: "4px 8px", borderRadius: 4, background: p.active ? "#c9a84c22" : "#2a2a2a", color: p.active ? "#c9a84c" : "#888" }}>{p.active ? "ACTIF" : "INACTIF"}</div>
+                      <div style={{ fontSize: 10, padding: "4px 8px", borderRadius: 4, background: p.active ? ("" + ACC + "22") : "#2a2a2a", color: p.active ? ("" + ACC + "") : "#888" }}>{p.active ? "ACTIF" : "INACTIF"}</div>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => togglePromo(p.id, p.active)} style={{ flex: 1, padding: 8, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, cursor: "pointer" }}>
@@ -4107,35 +4115,35 @@ export default function Admin() {
         {/* STATISTIQUES */}
         {view === "stats" && (
           <div>
-            <h1 style={{ fontSize: 20, color: "#c9a84c", marginBottom: 20 }}>📈 Statistiques</h1>
+            <h1 style={{ fontSize: 20, color: ("" + ACC + ""), marginBottom: 20 }}>📈 Statistiques</h1>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
                 <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>💰 Revenus totaux</div>
-                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{(stats.totalRevenue || 0).toLocaleString()} F</div>
+                <div style={{ fontSize: 22, color: ("" + ACC + ""), fontWeight: "bold", marginTop: 6 }}>{(stats.totalRevenue || 0).toLocaleString()} F</div>
               </div>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
                 <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>🛒 Total ventes</div>
-                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases || 0}</div>
+                <div style={{ fontSize: 22, color: ("" + ACC + ""), fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases || 0}</div>
               </div>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
                 <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>👥 Clients uniques</div>
-                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalUsers || 0}</div>
+                <div style={{ fontSize: 22, color: ("" + ACC + ""), fontWeight: "bold", marginTop: 6 }}>{stats.totalUsers || 0}</div>
               </div>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
                 <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase" }}>📊 Panier moyen</div>
-                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases ? Math.round((stats.totalRevenue || 0) / stats.totalPurchases).toLocaleString() : 0} F</div>
+                <div style={{ fontSize: 22, color: ("" + ACC + ""), fontWeight: "bold", marginTop: 6 }}>{stats.totalPurchases ? Math.round((stats.totalRevenue || 0) / stats.totalPurchases).toLocaleString() : 0} F</div>
               </div>
               {/* Carte sp�cifique aux ventes panier (produits physiques) */}
-              <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 8, padding: 16 }}>
-                <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase" }}>🛒 Commandes panier</div>
-                <div style={{ fontSize: 22, color: "#c9a84c", fontWeight: "bold", marginTop: 6 }}>{stats.cartOrdersCount || 0}</div>
+              <div style={{ background: "#1a1a1a", border: ("1px solid " + ACC + ""), borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 11, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase" }}>🛒 Commandes panier</div>
+                <div style={{ fontSize: 22, color: ("" + ACC + ""), fontWeight: "bold", marginTop: 6 }}>{stats.cartOrdersCount || 0}</div>
                 <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>{(stats.cartRevenue || 0).toLocaleString()} F</div>
               </div>
             </div>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🏆 Top 5 livres vendus</div>
+              <div style={{ fontSize: 13, color: ("" + ACC + ""), marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🏆 Top 5 livres vendus</div>
               {(!stats.topBooks || stats.topBooks.length === 0) ? (
                 <div style={{ color: "#888", textAlign: "center", padding: 16, fontSize: 13 }}>Aucune vente pour l'instant</div>
               ) : (
@@ -4144,7 +4152,7 @@ export default function Admin() {
                     const book = books.find(bk => bk.id === b.id);
                     return (
                       <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 10, background: "#111", borderRadius: 6 }}>
-                        <div style={{ fontSize: 16, color: "#c9a84c", fontWeight: "bold", minWidth: 22 }}>#{i + 1}</div>
+                        <div style={{ fontSize: 16, color: ("" + ACC + ""), fontWeight: "bold", minWidth: 22 }}>#{i + 1}</div>
                         <div style={{ flex: 1, fontSize: 13, color: "#e8e0d0" }}>{book ? book.title : "Livre supprimé (#" + b.id + ")"}</div>
                         <div style={{ fontSize: 12, color: "#888" }}>{b.count} ventes</div>
                       </div>
@@ -4154,7 +4162,7 @@ export default function Admin() {
               )}
             </div>
 
-            <button onClick={() => { fetchStats(); }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 13, cursor: "pointer" }}>
+            <button onClick={() => { fetchStats(); }} style={{ width: "100%", padding: 12, background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: ("" + ACC + ""), fontSize: 13, cursor: "pointer" }}>
               🔄 Rafraîchir les statistiques
             </button>
           </div>
@@ -4163,17 +4171,17 @@ export default function Admin() {
         {/* PARRAINAGES */}
         {view === "referrals" && (
           <div>
-            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🎁 Parrainages</h2>
+            <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 20 }}>🎁 Parrainages</h2>
 
             {/* STATS */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 20 }}>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
                 <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Parrains</div>
-                <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{referralCodes.length}</div>
+                <div style={{ fontSize: 22, fontWeight: "bold", color: ("" + ACC + "") }}>{referralCodes.length}</div>
               </div>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
                 <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Filleuls</div>
-                <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{allReferrals.length}</div>
+                <div style={{ fontSize: 22, fontWeight: "bold", color: ("" + ACC + "") }}>{allReferrals.length}</div>
               </div>
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 14, textAlign: "center" }}>
                 <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", marginBottom: 4 }}>Total dû</div>
@@ -4187,7 +4195,7 @@ export default function Admin() {
 
             {/* DEMANDES DE RETRAIT */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: "#c9a84c", fontWeight: "bold", marginBottom: 12 }}>💸 Demandes de retrait</div>
+              <div style={{ fontSize: 13, color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 12 }}>💸 Demandes de retrait</div>
               {referralWithdrawals.length === 0 ? (
                 <div style={{ color: "#666", textAlign: "center", padding: 16, fontSize: 12 }}>Aucune demande</div>
               ) : (
@@ -4203,7 +4211,7 @@ export default function Admin() {
                           (wd.status === "approved" || wd.status === "paid" || wd.status === "completed") ? "#4caf50" :
                           wd.status === "processing" ? "#f0a020" :
                           wd.status === "failed" ? "#ff6b6b" :
-                          wd.status === "rejected" ? "#888" : "#c9a84c"
+                          wd.status === "rejected" ? "#888" : ("" + ACC + "")
                         }}>
                           {(wd.status === "approved" || wd.status === "paid" || wd.status === "completed") ? "✅ Versé" :
                            wd.status === "processing" ? "⏳ En cours chez CamPay" :
@@ -4238,7 +4246,7 @@ export default function Admin() {
 
             {/* TOP PARRAINS */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16 }}>
-              <div style={{ fontSize: 13, color: "#c9a84c", fontWeight: "bold", marginBottom: 12 }}>🏆 Top Parrains</div>
+              <div style={{ fontSize: 13, color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 12 }}>🏆 Top Parrains</div>
               {referralCodes.length === 0 ? (
                 <div style={{ color: "#666", textAlign: "center", padding: 16, fontSize: 12 }}>Aucun parrain encore</div>
               ) : (
@@ -4258,7 +4266,7 @@ export default function Admin() {
                           <div style={{ fontSize: 10, color: "#888" }}>Total gagné : {(c.total_earned || 0).toLocaleString()} F</div>
                         </div>
                         <div style={{ textAlign: "right", marginRight: 10 }}>
-                          <div style={{ fontSize: 11, color: "#c9a84c", fontWeight: "bold" }}>{(c.available_amount || 0).toLocaleString()} F</div>
+                          <div style={{ fontSize: 11, color: ("" + ACC + ""), fontWeight: "bold" }}>{(c.available_amount || 0).toLocaleString()} F</div>
                           <div style={{ fontSize: 9, color: "#666" }}>disponible</div>
                         </div>
                         <button
@@ -4289,7 +4297,7 @@ export default function Admin() {
         {/* PARAMÈTRES PARRAINAGE */}
         {view === "referral_settings" && (
           <div style={{ paddingBottom: 80 }}>
-            <h1 style={{ fontSize: 18, color: "#c9a84c", marginBottom: 8, textAlign: "center" }}>⚙️ Paramètres parrainage</h1>
+            <h1 style={{ fontSize: 18, color: ("" + ACC + ""), marginBottom: 8, textAlign: "center" }}>⚙️ Paramètres parrainage</h1>
             <p style={{ color: "#888", fontSize: 12, textAlign: "center", marginBottom: 24 }}>Configure les règles de ton programme de parrainage</p>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16 }}>
@@ -4315,7 +4323,7 @@ export default function Admin() {
 
               {/* Récompense parrain — Livres numériques */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
                   📚 Commission PARRAIN — Livres numériques
                 </label>
                 <div style={{ position: "relative" }}>
@@ -4326,7 +4334,7 @@ export default function Admin() {
                     min="0" max="100" step="0.5"
                     style={{ width: "100%", padding: "12px 38px 12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
                   />
-                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#c9a84c", fontWeight: "bold" }}>%</span>
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: ("" + ACC + ""), fontWeight: "bold" }}>%</span>
                 </div>
                 <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
                   💡 % du prix payé que reçoit le parrain quand un filleul achète un livre numérique (ex: 20)
@@ -4335,7 +4343,7 @@ export default function Admin() {
 
               {/* Récompense parrain — Articles physiques */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
                   📦 Commission PARRAIN — Articles physiques / Livres papier
                 </label>
                 <div style={{ position: "relative" }}>
@@ -4346,7 +4354,7 @@ export default function Admin() {
                     min="0" max="100" step="0.5"
                     style={{ width: "100%", padding: "12px 38px 12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
                   />
-                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#c9a84c", fontWeight: "bold" }}>%</span>
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: ("" + ACC + ""), fontWeight: "bold" }}>%</span>
                 </div>
                 <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
                   💡 % du prix payé pour les articles physiques (montres, parfums, livres papier) — généralement plus bas que digital (ex: 10)
@@ -4355,7 +4363,7 @@ export default function Admin() {
 
               {/* Réduction filleul */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
                   🎁 Réduction FILLEUL (1er achat)
                 </label>
                 <div style={{ position: "relative" }}>
@@ -4366,16 +4374,16 @@ export default function Admin() {
                     min="0" max="100"
                     style={{ width: "100%", padding: "12px 38px 12px 14px", background: "#0e0e0e", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e8e0d0", fontSize: 16, boxSizing: "border-box" }}
                   />
-                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#c9a84c", fontWeight: "bold" }}>%</span>
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: ("" + ACC + ""), fontWeight: "bold" }}>%</span>
                 </div>
                 <div style={{ fontSize: 10, color: "#666", marginTop: 4 }}>
-                  💡 Pourcentage de réduction sur le 1er achat du filleul (ex: 20). Mets <strong style={{ color: "#c9a84c" }}>0</strong> pour désactiver la réduction filleul.
+                  💡 Pourcentage de réduction sur le 1er achat du filleul (ex: 20). Mets <strong style={{ color: ("" + ACC + "") }}>0</strong> pour désactiver la réduction filleul.
                 </div>
               </div>
 
               {/* Minimum retrait */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
                   💸 Montant minimum pour RETIRER
                 </label>
                 <input
@@ -4391,7 +4399,7 @@ export default function Admin() {
 
               {/* Délai anti-fraude */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#c9a84c", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
+                <label style={{ display: "block", fontSize: 11, color: ("" + ACC + ""), letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>
                   ⏳ Délai anti-fraude (jours)
                 </label>
                 <input
@@ -4410,15 +4418,15 @@ export default function Admin() {
               <div style={{ background: "#0d1f2a", border: "1px solid #1976d2", borderRadius: 8, padding: 14, marginBottom: 16 }}>
                 <div style={{ fontSize: 11, color: "#64b5f6", marginBottom: 8, fontWeight: "bold" }}>📊 Aperçu du programme actuel :</div>
                 <div style={{ fontSize: 12, color: "#e8e0d0", lineHeight: 1.7 }}>
-                  📚 Sur livre numérique : parrain gagne <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.reward_pct_digital || 0}%</span> du prix payé
+                  📚 Sur livre numérique : parrain gagne <span style={{ color: ("" + ACC + ""), fontWeight: "bold" }}>{refSettingsForm.reward_pct_digital || 0}%</span> du prix payé
                   <br />
-                  📦 Sur article physique : parrain gagne <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.reward_pct_physical || 0}%</span> du prix payé
+                  📦 Sur article physique : parrain gagne <span style={{ color: ("" + ACC + ""), fontWeight: "bold" }}>{refSettingsForm.reward_pct_physical || 0}%</span> du prix payé
                   <br />
-                  🎁 Le filleul reçoit <span style={{ color: "#c9a84c", fontWeight: "bold" }}>-{refSettingsForm.referred_discount_pct || 0}%</span> sur son 1er achat
+                  🎁 Le filleul reçoit <span style={{ color: ("" + ACC + ""), fontWeight: "bold" }}>-{refSettingsForm.referred_discount_pct || 0}%</span> sur son 1er achat
                   <br />
-                  💸 Retrait possible à partir de <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{(parseInt(refSettingsForm.min_withdrawal) || 0).toLocaleString()} F</span>
+                  💸 Retrait possible à partir de <span style={{ color: ("" + ACC + ""), fontWeight: "bold" }}>{(parseInt(refSettingsForm.min_withdrawal) || 0).toLocaleString()} F</span>
                   <br />
-                  ⏳ Délai d'attente : <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{refSettingsForm.fraud_delay_days || 0} jours</span>
+                  ⏳ Délai d'attente : <span style={{ color: ("" + ACC + ""), fontWeight: "bold" }}>{refSettingsForm.fraud_delay_days || 0} jours</span>
                 </div>
                 <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1976d2", fontSize: 11, color: "#aaa" }}>
                   <strong style={{ color: "#64b5f6" }}>Exemple :</strong> Sur un livre numérique à 1000 F → le filleul paye {Math.round(1000 * (1 - (parseFloat(refSettingsForm.referred_discount_pct) || 0) / 100))} F · le parrain gagne {Math.round(1000 * (1 - (parseFloat(refSettingsForm.referred_discount_pct) || 0) / 100) * (parseFloat(refSettingsForm.reward_pct_digital) || 0) / 100)} F
@@ -4435,7 +4443,7 @@ export default function Admin() {
                 onClick={saveReferralSettings}
                 disabled={refSettingsSaving}
                 style={{
-                  width: "100%", padding: 14, background: refSettingsSaving ? "#666" : "#c9a84c", color: "#1a1a1a",
+                  width: "100%", padding: 14, background: refSettingsSaving ? "#666" : ("" + ACC + ""), color: "#1a1a1a",
                   border: "none", borderRadius: 8, fontSize: 14, fontWeight: "bold", cursor: refSettingsSaving ? "not-allowed" : "pointer",
                   letterSpacing: 1
                 }}
@@ -4445,7 +4453,7 @@ export default function Admin() {
             </div>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16 }}>
-              <div style={{ fontSize: 12, color: "#c9a84c", fontWeight: "bold", marginBottom: 8 }}>💡 Conseils stratégiques</div>
+              <div style={{ fontSize: 12, color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 8 }}>💡 Conseils stratégiques</div>
               <div style={{ fontSize: 11, color: "#aaa", lineHeight: 1.6 }}>
                 <div style={{ marginBottom: 6 }}>📚 <strong style={{ color: "#e8e0d0" }}>Commission digital</strong> : Tu peux te permettre 20-30% sur les livres numériques (marge ~100%, pas de coût de production).</div>
                 <div style={{ marginBottom: 6 }}>📦 <strong style={{ color: "#e8e0d0" }}>Commission physique</strong> : Reste prudente, 5-15% max. Tes marges sur les articles physiques sont plus serrées.</div>
@@ -4460,7 +4468,7 @@ export default function Admin() {
         {/* MODÉRATION AVIS */}
         {view === "reviews" && (
           <div>
-            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>💬 Modération des avis</h2>
+            <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 20 }}>💬 Modération des avis</h2>
 
             {/* Filtres */}
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
@@ -4486,7 +4494,7 @@ export default function Admin() {
               ))}
               <button
                 onClick={() => loadPendingReviews(reviewsFilter)}
-                style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#c9a84c", fontSize: 12, cursor: "pointer" }}
+                style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: ("" + ACC + ""), fontSize: 12, cursor: "pointer" }}
               >
                 🔄 Rafraîchir
               </button>
@@ -4515,7 +4523,7 @@ export default function Admin() {
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <div style={{
                             width: 32, height: 32, borderRadius: "50%",
-                            background: "#c9a84c", color: "#000",
+                            background: ("" + ACC + ""), color: "#000",
                             display: "flex", alignItems: "center", justifyContent: "center",
                             fontSize: 12, fontWeight: "bold"
                           }}>{userInitial}</div>
@@ -4583,10 +4591,10 @@ export default function Admin() {
         {/* RÉGLAGES — Taux de conversion FCFA -> CDF (RDC) */}
         {view === "espace_auteur" && (
           <div>
-            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
+            <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
               {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["vitrine","🏪 Publiés sans validation" + (eaVitrine.length ? " (" + eaVitrine.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["annonces","📢 Annonces" + ((() => { const n = eaAnnonces.filter(a => a.statut === "en_attente").length; return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
-                <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? "#c9a84c" : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
+                <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? ("" + ACC + "") : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
 
@@ -4606,17 +4614,17 @@ export default function Admin() {
                   }).sort((x, y) => y.gains - x.gains);
                   return (<>
                     <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                      <div style={{ flex: 1, minWidth: 100, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#c9a84c", fontSize: 19, fontWeight: "bold" }}>{eaAuteurs.length}</div><div style={{ color: "#aaa", fontSize: 11 }}>Auteurs</div></div>
-                      <div style={{ flex: 1, minWidth: 100, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#c9a84c", fontSize: 19, fontWeight: "bold" }}>{f(totGains)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Gains auteurs (total)</div></div>
+                      <div style={{ flex: 1, minWidth: 100, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: ("" + ACC + ""), fontSize: 19, fontWeight: "bold" }}>{eaAuteurs.length}</div><div style={{ color: "#aaa", fontSize: 11 }}>Auteurs</div></div>
+                      <div style={{ flex: 1, minWidth: 100, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: ("" + ACC + ""), fontSize: 19, fontWeight: "bold" }}>{f(totGains)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Gains auteurs (total)</div></div>
                       <div style={{ flex: 1, minWidth: 100, background: "#2a1a1a", border: "1px solid #4a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#ff8a80", fontSize: 19, fontWeight: "bold" }}>{f(totReste)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Reste à reverser</div></div>
                     </div>
                     {rows.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun auteur.</div> : rows.map(({ a, nbLivres, enLigne, nbVentes, gains, reste }) => {
-                      const st = a.banni ? { t: "🚫 Banni", c: "#ff8a80" } : a.kyc_status === "valide" ? { t: "✅ Vérifié", c: "#4caf50" } : a.kyc_status === "en_attente" ? { t: "⏳ En attente", c: "#c9a84c" } : a.kyc_status === "refuse" ? { t: "❌ Refusé", c: "#e57373" } : { t: "— Non soumis", c: "#888" };
+                      const st = a.banni ? { t: "🚫 Banni", c: "#ff8a80" } : a.kyc_status === "valide" ? { t: "✅ Vérifié", c: "#4caf50" } : a.kyc_status === "en_attente" ? { t: "⏳ En attente", c: ("" + ACC + "") } : a.kyc_status === "refuse" ? { t: "❌ Refusé", c: "#e57373" } : { t: "— Non soumis", c: "#888" };
                       return (
                         <div key={a.id} onClick={() => { setEaSelectedAuteur(a); setEaTab("livres"); }} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, marginBottom: 10, cursor: "pointer" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                              <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
+                              <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
                               {a.abonnement_actif && <span style={{ background: "#2a2340", color: "#b39ddb", fontSize: 10, fontWeight: "bold", borderRadius: 6, padding: "1px 6px", flexShrink: 0 }}>ABO</span>}
                             </div>
                             <div style={{ color: st.c, fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap", flexShrink: 0 }}>{st.t}</div>
@@ -4649,7 +4657,7 @@ export default function Admin() {
                           </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div style={{ marginBottom: 4 }}><span style={{ fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10, background: "#2a2410", color: bType.c, border: "1px solid " + bType.c + "55" }}>{bType.i} {bType.l}</span></div>
-                            <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
+                            <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
                             <div style={{ color: "#aaa", fontSize: 12, marginBottom: 2 }}>par {b.author || "—"}</div>
                             <div style={{ color: "#888", fontSize: 12 }}>{b.category || ""}{b.subcategory ? " · " + b.subcategory : ""}</div>
                             <div style={{ color: "#a5d6a7", fontSize: 13, fontWeight: "bold", marginTop: 4 }}>{(b.price || 0).toLocaleString()} F</div>
@@ -4671,8 +4679,8 @@ export default function Admin() {
                 )}
                 {refusLivre && (
                   <div onClick={() => { if (!refusEnvoi) setRefusLivre(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 120, display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
-                    <div onClick={e => e.stopPropagation()} style={{ background: "#141414", border: "1px solid #c9a84c55", borderRadius: 14, padding: 18, width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto" }}>
-                      <div style={{ color: "#c9a84c", fontSize: 16, fontWeight: "bold", marginBottom: 2 }}>❌ Refuser ce livre</div>
+                    <div onClick={e => e.stopPropagation()} style={{ background: "#141414", border: ("1px solid " + ACC + "55"), borderRadius: 14, padding: 18, width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto" }}>
+                      <div style={{ color: ("" + ACC + ""), fontSize: 16, fontWeight: "bold", marginBottom: 2 }}>❌ Refuser ce livre</div>
                       <div style={{ color: "#aaa", fontSize: 12.5, marginBottom: 14 }}>{refusLivre.title}</div>
                       <div style={{ color: "#888", fontSize: 11.5, marginBottom: 10 }}>Choisis un motif. L’auteur recevra ce motif dans son espace, dans son Support et par email.</div>
                       {MOTIFS_REFUS.map((mo, i) => {
@@ -4681,15 +4689,15 @@ export default function Admin() {
                         return (
                           <div key={i}>
                             {nouveauGroupe ? <div style={{ color: "#6f6f6f", fontSize: 10.5, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, margin: "12px 0 6px" }}>{mo.g}</div> : null}
-                            <div onClick={() => { setRefusChoix(i); setRefusTexte(""); }} style={{ border: "1px solid " + (choisi ? "#c9a84c" : "#2a2a2a"), background: choisi ? "#2a2410" : "#0f0f0f", borderRadius: 10, padding: "10px 12px", marginBottom: 6, cursor: "pointer" }}>
-                              <div style={{ color: choisi ? "#c9a84c" : "#ddd", fontSize: 13, fontWeight: "bold", marginBottom: choisi ? 6 : 0 }}>{choisi ? "◉ " : "○ "}{mo.t}</div>
+                            <div onClick={() => { setRefusChoix(i); setRefusTexte(""); }} style={{ border: "1px solid " + (choisi ? ("" + ACC + "") : "#2a2a2a"), background: choisi ? "#2a2410" : "#0f0f0f", borderRadius: 10, padding: "10px 12px", marginBottom: 6, cursor: "pointer" }}>
+                              <div style={{ color: choisi ? ("" + ACC + "") : "#ddd", fontSize: 13, fontWeight: "bold", marginBottom: choisi ? 6 : 0 }}>{choisi ? "◉ " : "○ "}{mo.t}</div>
                               {choisi ? <div style={{ color: "#bbb", fontSize: 12, lineHeight: 1.5 }}>{mo.m}</div> : null}
                             </div>
                           </div>
                         );
                       })}
                       <div style={{ color: "#6f6f6f", fontSize: 10.5, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 0.5, margin: "12px 0 6px" }}>Autre motif</div>
-                      <textarea value={refusTexte} onChange={e => { setRefusTexte(e.target.value); if (e.target.value) setRefusChoix(null); }} placeholder="Écris un motif si aucun de la liste ne convient…" style={{ width: "100%", minHeight: 70, boxSizing: "border-box", background: "#0f0f0f", border: "1px solid " + (refusChoix === null && refusTexte ? "#c9a84c" : "#2a2a2a"), borderRadius: 10, color: "#ddd", fontSize: 13, padding: 10, lineHeight: 1.5 }} />
+                      <textarea value={refusTexte} onChange={e => { setRefusTexte(e.target.value); if (e.target.value) setRefusChoix(null); }} placeholder="Écris un motif si aucun de la liste ne convient…" style={{ width: "100%", minHeight: 70, boxSizing: "border-box", background: "#0f0f0f", border: "1px solid " + (refusChoix === null && refusTexte ? ("" + ACC + "") : "#2a2a2a"), borderRadius: 10, color: "#ddd", fontSize: 13, padding: 10, lineHeight: 1.5 }} />
                       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
                         <button onClick={() => setRefusLivre(null)} disabled={refusEnvoi} style={{ flex: 1, padding: "12px 0", background: "#0f0f0f", color: "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, cursor: refusEnvoi ? "not-allowed" : "pointer" }}>Annuler</button>
                         <button onClick={confirmerRefus} disabled={refusEnvoi} style={{ flex: 1, padding: "12px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: refusEnvoi ? "not-allowed" : "pointer", opacity: refusEnvoi ? 0.6 : 1 }}>{refusEnvoi ? "Envoi…" : "❌ Refuser et prévenir l’auteur"}</button>
@@ -4713,7 +4721,7 @@ export default function Admin() {
 
             {eaTab === "vitrine" && (
               <div>
-                <div style={{ background: "#2a2410", border: "1px solid #c9a84c55", borderRadius: 10, padding: 12, marginBottom: 14, color: "#d8c89a", fontSize: 12.5, lineHeight: 1.6 }}>
+                <div style={{ background: "#2a2410", border: ("1px solid " + ACC + "55"), borderRadius: 10, padding: 12, marginBottom: 14, color: "#d8c89a", fontSize: 12.5, lineHeight: 1.6 }}>
                   Ces livres ont été mis en ligne <b>sans validation</b> par des auteurs vérifiés. Ils n'apparaissent <b>pas</b> sur carrybooks.com — uniquement sur la vitrine de leur auteur, qui touche 85 %. Vérifie-les de temps en temps : tu peux les retirer en un clic.
                 </div>
                 {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaVitrine.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun livre publié sans validation pour le moment.</div> : (
@@ -4731,7 +4739,7 @@ export default function Admin() {
                               <span style={{ fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10, background: "#2a2410", color: bType.c, border: "1px solid " + bType.c + "55" }}>{bType.i} {bType.l}</span>
                               <span style={{ fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10, background: "#14301a", color: "#a5d6a7", border: "1px solid #a5d6a755" }}>🏪 Vitrine seule · 85 %</span>
                             </div>
-                            <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
+                            <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{b.title}</div>
                             <div style={{ color: "#aaa", fontSize: 12, marginBottom: 2 }}>par {b.author || "—"}{aut && aut.email ? " · " + aut.email : ""}</div>
                             <div style={{ color: "#888", fontSize: 12 }}>{b.category || ""}{b.subcategory ? " · " + b.subcategory : ""}</div>
                             <div style={{ color: "#a5d6a7", fontSize: 13, fontWeight: "bold", marginTop: 4 }}>{(b.price || 0).toLocaleString()} F</div>
@@ -4746,7 +4754,7 @@ export default function Admin() {
                           {aut && aut.code_source ? <a href={"/auteur/" + aut.code_source} target="_blank" rel="noreferrer" style={{ color: "#4f9cf9", fontSize: 12, textDecoration: "none", alignSelf: "center" }}>🏪 Voir la vitrine</a> : null}
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
-                          <button onClick={() => passerSurCarryBooks(b)} disabled={eaVitrineBusy === b.id} style={{ flex: 1, padding: "10px 0", background: "#0f0f0f", color: "#c9a84c", border: "1px solid #c9a84c", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: eaVitrineBusy === b.id ? "wait" : "pointer" }}>🌍 Mettre aussi sur CarryBooks</button>
+                          <button onClick={() => passerSurCarryBooks(b)} disabled={eaVitrineBusy === b.id} style={{ flex: 1, padding: "10px 0", background: "#0f0f0f", color: ("" + ACC + ""), border: ("1px solid " + ACC + ""), borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: eaVitrineBusy === b.id ? "wait" : "pointer" }}>🌍 Mettre aussi sur CarryBooks</button>
                           <button onClick={() => retirerLivreVitrine(b)} disabled={eaVitrineBusy === b.id} style={{ flex: 1, padding: "10px 0", background: "#c62828", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: eaVitrineBusy === b.id ? "wait" : "pointer" }}>🚫 Retirer de la vente</button>
                         </div>
                       </div>
@@ -4774,8 +4782,8 @@ export default function Admin() {
                   const livres = eaBooks.filter(b => b.auteur_id === a.id);
                   return (
                     <div>
-                      <button onClick={() => setEaSelectedAuteur(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
-                      <div style={{ color: "#c9a84c", fontSize: 17, fontWeight: "bold", marginBottom: 2 }}>{a.nom_complet || "Auteur sans nom"}</div>
+                      <button onClick={() => setEaSelectedAuteur(null)} style={{ background: "none", border: "none", color: ("" + ACC + ""), fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
+                      <div style={{ color: ("" + ACC + ""), fontSize: 17, fontWeight: "bold", marginBottom: 2 }}>{a.nom_complet || "Auteur sans nom"}</div>
                       <div style={{ color: "#777", fontSize: 11, marginBottom: 14 }}>{a.telephone || ""}{a.email ? " · " + a.email : ""}</div>
                       {a.banni ? (
                         <div style={{ background: "#2a1414", border: "1px solid #5a2a2a", borderRadius: 10, padding: 12, marginBottom: 14 }}>
@@ -4787,7 +4795,7 @@ export default function Admin() {
                         <button onClick={() => bannirAuteur(a)} style={{ padding: "8px 16px", background: "#5a1a1a", color: "#ff8a80", border: "1px solid #6a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 14 }}>🚫 Bannir cet auteur</button>
                       )}
                       {livres.length === 0 ? <div style={{ color: "#666", fontSize: 13, fontStyle: "italic" }}>Aucun livre publié.</div> : livres.map(b => {
-                        const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:"#c9a84c" });
+                        const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:("" + ACC + "") });
                         return (
                           <div key={b.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 0", borderBottom: "1px solid #262626" }}>
                             <div style={{ minWidth: 0 }}>
@@ -4795,9 +4803,9 @@ export default function Admin() {
                               <div style={{ fontSize: 11, color: "#777" }}>{(b.price||0).toLocaleString()} F · <span style={{ color: st.c, fontWeight: "bold" }}>{st.t}</span>{b.masque ? " · masqué" : ""}</div>
                             </div>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                              <button onClick={() => toggleMasque(b)} style={{ padding: "7px 10px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : "#c9a84c", border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
+                              <button onClick={() => toggleMasque(b)} style={{ padding: "7px 10px", background: b.masque ? "#2e7d32" : "#3a3320", color: b.masque ? "#fff" : ("" + ACC + ""), border: "1px solid " + (b.masque ? "#2e7d32" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.masque ? "👁️ Afficher" : "🙈 Masquer"}</button>
                               {b.status === "actif" && <button onClick={() => desactiverLivre(b)} style={{ padding: "7px 10px", background: "#5a2020", color: "#ff8a80", border: "1px solid #7a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>⛔ Désactiver</button>}
-                              <button onClick={() => toggleCatalogue(b)} title="Exclure du catalogue Facebook (les pubs)" style={{ padding: "7px 10px", background: b.exclu_catalogue ? "#1e3a5a" : "#2a2410", color: b.exclu_catalogue ? "#90caf9" : "#c9a84c", border: "1px solid " + (b.exclu_catalogue ? "#2a5a8a" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.exclu_catalogue ? "📘 Remettre au catalogue" : "🚫 Exclure du catalogue"}</button>
+                              <button onClick={() => toggleCatalogue(b)} title="Exclure du catalogue Facebook (les pubs)" style={{ padding: "7px 10px", background: b.exclu_catalogue ? "#1e3a5a" : "#2a2410", color: b.exclu_catalogue ? "#90caf9" : ("" + ACC + ""), border: "1px solid " + (b.exclu_catalogue ? "#2a5a8a" : "#5a4a20"), borderRadius: 8, fontWeight: "bold", fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>{b.exclu_catalogue ? "📘 Remettre au catalogue" : "🚫 Exclure du catalogue"}</button>
                             </div>
                           </div>
                         );
@@ -4817,7 +4825,7 @@ export default function Admin() {
                       return (
                         <div key={a.id} onClick={() => setEaSelectedAuteur(a)} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px", marginBottom: 10, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                            <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
+                            <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom_complet || "Auteur sans nom"}</div>
                             {enAttente > 0 && <span style={{ background: "#e53935", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 10, padding: "1px 7px", flexShrink: 0 }}>{enAttente}</span>}
                             {a.banni && <span style={{ background: "#5a1a1a", color: "#ff8a80", fontSize: 10, fontWeight: "bold", borderRadius: 10, padding: "1px 7px", flexShrink: 0, border: "1px solid #6a2a2a" }}>banni</span>}
                           </div>
@@ -4835,10 +4843,10 @@ export default function Admin() {
               <div>
                 {eaLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : eaSelectedKyc ? (
                   <div>
-                    <button onClick={() => setEaSelectedKyc(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
+                    <button onClick={() => setEaSelectedKyc(null)} style={{ background: "none", border: "none", color: ("" + ACC + ""), fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour à la liste</button>
                     {[eaSelectedKyc].map(a => (
                       <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
-                        <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{a.kyc_prenom} {a.kyc_nom}</div>
+                        <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold", marginBottom: 2 }}>{a.kyc_prenom} {a.kyc_nom}</div>
                         <div style={{ color: "#777", fontSize: 11, marginBottom: 10 }}>Compte : {a.nom_complet || "?"} · {a.email || ""}</div>
                         <div style={{ color: "#c8c0b0", fontSize: 12.5, lineHeight: 1.9 }}>
                           <div>Né(e) le <b>{a.kyc_naissance || "?"}</b> à <b>{a.kyc_lieu_naissance || "?"}</b></div>
@@ -4848,9 +4856,9 @@ export default function Admin() {
                           <div>Pièce : <b>{a.kyc_piece_type || "?"}</b></div>
                         </div>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
-                          {a.kyc_piece_url ? <a href={a.kyc_piece_url} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#c9a84c", fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>🪪 Pièce recto</a> : null}
-                          {a.kyc_piece_url2 ? <a href={a.kyc_piece_url2} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#c9a84c", fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>🪪 Pièce verso</a> : null}
-                          {a.kyc_contrat_url ? <a href={a.kyc_contrat_url} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#c9a84c", fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>📄 Contrat signé</a> : null}
+                          {a.kyc_piece_url ? <a href={a.kyc_piece_url} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: ("" + ACC + ""), fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>🪪 Pièce recto</a> : null}
+                          {a.kyc_piece_url2 ? <a href={a.kyc_piece_url2} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: ("" + ACC + ""), fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>🪪 Pièce verso</a> : null}
+                          {a.kyc_contrat_url ? <a href={a.kyc_contrat_url} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: ("" + ACC + ""), fontSize: 12, fontWeight: "bold", textDecoration: "none" }}>📄 Contrat signé</a> : null}
                         </div>
                         <div style={{ display: "flex", gap: 10 }}>
                           <button onClick={() => kycValider(a.id)} style={{ flex: 1, padding: "10px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Valider</button>
@@ -4865,7 +4873,7 @@ export default function Admin() {
                       <div key={a.id} onClick={() => setEaSelectedKyc(a)} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px", marginBottom: 10, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                           <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#e53935", flexShrink: 0 }} />
-                          <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.kyc_prenom} {a.kyc_nom}</div>
+                          <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.kyc_prenom} {a.kyc_nom}</div>
                         </div>
                         <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }}>À vérifier ›</div>
                       </div>
@@ -4880,12 +4888,12 @@ export default function Admin() {
                 {supSel ? (() => {
                   const fil = (supAll[supSel.id] && supAll[supSel.id].msgs) || [];
                   return (<div>
-                    <button onClick={() => setSupSel(null)} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 10 }}>← Retour à la liste</button>
-                    <div style={{ color: "#c9a84c", fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>{supSel.nom_complet || ("Auteur #" + supSel.id)}</div>
+                    <button onClick={() => setSupSel(null)} style={{ background: "none", border: "none", color: ("" + ACC + ""), fontSize: 13, fontWeight: "bold", cursor: "pointer", padding: 0, marginBottom: 10 }}>← Retour à la liste</button>
+                    <div style={{ color: ("" + ACC + ""), fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>{supSel.nom_complet || ("Auteur #" + supSel.id)}</div>
                     <div style={{ maxHeight: 400, overflowY: "auto", background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                       {fil.length === 0 ? <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 16 }}>Aucun message. Écris le premier ci-dessous.</div> : fil.map(m => (
                         <div key={m.id} style={{ alignSelf: m.cote === "admin" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "admin" ? "#0e5a52" : "#1e1e1e", color: m.cote === "admin" ? "#fff" : "#e8e0d0", border: m.cote === "admin" ? "none" : "1px solid #333", borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                          {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: "#c9a84c", marginBottom: 3 }}>📢 Annonce</div> : null}
+                          {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: ("" + ACC + ""), marginBottom: 3 }}>📢 Annonce</div> : null}
                           {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                           {m.texte}
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 9, marginTop: 3 }}>
@@ -4900,17 +4908,17 @@ export default function Admin() {
                     <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
                       <label style={{ padding: "11px 12px", background: "#242424", border: "1px solid #333", borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
                       <textarea value={supInput} onChange={e => setSupInput(e.target.value)} placeholder="Ta réponse…" rows={2} style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 10, color: "#fff", fontSize: 14, resize: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
-                      <button onClick={envoyerSupAdmin} disabled={supSending || (!supInput.trim() && !supImg)} style={{ padding: "11px 16px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supSending || (!supInput.trim() && !supImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
+                      <button onClick={envoyerSupAdmin} disabled={supSending || (!supInput.trim() && !supImg)} style={{ padding: "11px 16px", background: ("" + ACC + ""), color: "#1a1a1a", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 16, cursor: "pointer", opacity: (supSending || (!supInput.trim() && !supImg)) ? 0.5 : 1, flexShrink: 0 }}>➤</button>
                     </div>
                   </div>);
                 })() : (<div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                     <input value={supSearch} onChange={e => setSupSearch(e.target.value)} placeholder="Rechercher un auteur…" style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 13, boxSizing: "border-box" }} />
-                    <button onClick={() => setAnnonceOpen(true)} style={{ padding: "10px 14px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>📢 Annonce à tous</button>
+                    <button onClick={() => setAnnonceOpen(true)} style={{ padding: "10px 14px", background: ("" + ACC + ""), color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>📢 Annonce à tous</button>
                   </div>
                   {annonceOpen && (
-                    <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c55", borderRadius: 10, padding: 14, marginBottom: 14 }}>
-                      <div style={{ color: "#c9a84c", fontWeight: "bold", fontSize: 14, marginBottom: 8 }}>Annonce à tous les auteurs</div>
+                    <div style={{ background: "#1a1a1a", border: ("1px solid " + ACC + "55"), borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                      <div style={{ color: ("" + ACC + ""), fontWeight: "bold", fontSize: 14, marginBottom: 8 }}>Annonce à tous les auteurs</div>
                       <textarea value={annonceTxt} onChange={e => { setAnnonceTxt(e.target.value); e.target.style.height = "auto"; e.target.style.height = (e.target.scrollHeight + 4) + "px"; }} ref={el => { if (el) { el.style.height = "auto"; el.style.height = (el.scrollHeight + 4) + "px"; } }} placeholder="Écris ton message à tous les auteurs…&#10;Appuie sur Entrée pour aller à la ligne." style={{ width: "100%", minHeight: 160, overflow: "hidden", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, resize: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 8, lineHeight: 1.55, whiteSpace: "pre-wrap" }} />
                       <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#aaa", fontSize: 12.5, marginBottom: 10, cursor: "pointer" }}><input type="checkbox" checked={annoncePerm} onChange={e => setAnnoncePerm(e.target.checked)} /> Envoyer aussi automatiquement aux nouveaux auteurs</label>
                       <div style={{ display: "flex", gap: 8 }}>
@@ -4921,7 +4929,7 @@ export default function Admin() {
                   )}
                   {supFils.filter(f => !supSearch || (f.auteur.nom_complet || "").toLowerCase().includes(supSearch.toLowerCase())).map(f => (
                     <div key={f.auteur.id} onClick={() => ouvrirFil(f.auteur)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 10px", borderBottom: "1px solid #262626", cursor: "pointer" }}>
-                      <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, flexShrink: 0 }}>{(f.auteur.nom_complet || "?").charAt(0).toUpperCase()}</div>
+                      <div style={{ width: 38, height: 38, borderRadius: "50%", background: ("linear-gradient(135deg," + ACC + ",#8a6d1f)"), color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, flexShrink: 0 }}>{(f.auteur.nom_complet || "?").charAt(0).toUpperCase()}</div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ color: "#e8e0d0", fontSize: 14, fontWeight: f.nonLus ? "bold" : "normal", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.auteur.nom_complet || ("Auteur #" + f.auteur.id)}</div>
                         <div style={{ color: "#888", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.last ? (f.last.cote === "admin" ? "Toi : " : "") + f.last.texte : "Aucun message"}</div>
@@ -4939,11 +4947,11 @@ export default function Admin() {
                 {eaAnnonces.length === 0 ? <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 20 }}>Aucune annonce pour l'instant.</div> : eaAnnonces.map(a => {
                   const aut = (eaAuteurs || []).find(x => x.id === a.auteur_id);
                   return (
-                    <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid " + (a.statut === "en_attente" ? "#c9a84c66" : "#2a4a2a"), borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                    <div key={a.id} style={{ background: "#1a1a1a", border: "1px solid " + (a.statut === "en_attente" ? ("" + ACC + "66") : "#2a4a2a"), borderRadius: 10, padding: 12, marginBottom: 12 }}>
                       <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
                       <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>Par <b style={{ color: "#e8e0d0" }}>{aut ? aut.nom_complet : ("Auteur #" + a.auteur_id)}</b></div>
                       <div style={{ fontSize: 11.5, color: "#7fb0e0", marginBottom: 8, wordBreak: "break-all" }}><a href={a.lien} target="_blank" rel="noreferrer" style={{ color: "#7fb0e0" }}>{a.lien}</a></div>
-                      <div style={{ fontSize: 11, fontWeight: "bold", marginBottom: 8, color: a.statut === "active" ? "#7fe39a" : "#c9a84c" }}>{a.statut === "active" ? "✅ En ligne (accueil)" : "⏳ En attente de validation"}</div>
+                      <div style={{ fontSize: 11, fontWeight: "bold", marginBottom: 8, color: a.statut === "active" ? "#7fe39a" : ("" + ACC + "") }}>{a.statut === "active" ? "✅ En ligne (accueil)" : "⏳ En attente de validation"}</div>
                       <div style={{ display: "flex", gap: 8 }}>
                         {a.statut === "en_attente" && <button onClick={() => validerAnnonce(a.id)} style={{ flex: 1, padding: "9px 0", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>✅ Valider</button>}
                         {a.statut === "en_attente" && <button onClick={() => refuserAnnonce(a.id)} style={{ flex: 1, padding: "9px 0", background: "#8a2a2a", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>❌ Refuser</button>}
@@ -4970,7 +4978,7 @@ export default function Admin() {
                     <div key={row.id} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 16, marginBottom: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                         <div>
-                          <div style={{ color: "#c9a84c", fontSize: 15, fontWeight: "bold" }}>{row.nom}</div>
+                          <div style={{ color: ("" + ACC + ""), fontSize: 15, fontWeight: "bold" }}>{row.nom}</div>
                           <div style={{ color: "#777", fontSize: 12 }}>📱 {row.phone || "Numéro manquant"}</div>
                           <div style={{ color: "#666", fontSize: 11 }}>Demandé le {new Date(row.created_at).toLocaleDateString("fr-FR")}</div>
                         </div>
@@ -4987,7 +4995,7 @@ export default function Admin() {
                     </div>
                   ))
                 )}
-                <button onClick={() => setEaHistoOuvert(v => !v)} style={{ marginTop: 18, width: "100%", padding: "10px 0", background: "#151515", color: "#c9a84c", border: "1px solid #333", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>{eaHistoOuvert ? "▲ Masquer l'historique des paiements" : "▼ Voir l'historique des paiements (" + eaHistorique.length + ")"}</button>
+                <button onClick={() => setEaHistoOuvert(v => !v)} style={{ marginTop: 18, width: "100%", padding: "10px 0", background: "#151515", color: ("" + ACC + ""), border: "1px solid #333", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>{eaHistoOuvert ? "▲ Masquer l'historique des paiements" : "▼ Voir l'historique des paiements (" + eaHistorique.length + ")"}</button>
                 {eaHistoOuvert && (
                   <div style={{ marginTop: 10 }}>
                     {eaHistorique.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucun paiement effectué pour le moment.</div> : eaHistorique.map(h => (
@@ -5004,17 +5012,17 @@ export default function Admin() {
 
             {eaTab === "params" && (
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
-                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Commission auteur par livre débloqué en abonnement</h3>
+                <h3 style={{ color: ("" + ACC + ""), fontSize: 15, marginBottom: 8 }}>Commission auteur par livre débloqué en abonnement</h3>
                 <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Montant fixe reversé à l'auteur (participant au programme) chaque fois qu'un abonné débloque un de ses romans. Ne concerne que les romans (liseuse).</p>
                 <label style={{ color: "#aaa", fontSize: 12, display: "block", marginBottom: 6 }}>Montant en FCFA</label>
                 <input type="text" inputMode="numeric" value={commAbo} onChange={e => setCommAbo(e.target.value)} placeholder="Ex : 250" style={{ width: "100%", padding: "12px 14px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 15, boxSizing: "border-box", marginBottom: 14 }} />
-                <button onClick={saveCommAbo} disabled={commAboSaving} style={{ padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: commAboSaving ? 0.6 : 1 }}>{commAboSaving ? "Enregistrement…" : "Enregistrer la commission"}</button>
+                <button onClick={saveCommAbo} disabled={commAboSaving} style={{ padding: "12px 24px", background: ("" + ACC + ""), color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: commAboSaving ? 0.6 : 1 }}>{commAboSaving ? "Enregistrement…" : "Enregistrer la commission"}</button>
                 {commAboMsg && <div style={{ marginTop: 14, fontSize: 13, color: commAboMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{commAboMsg}</div>}
               </div>
             )}
             {eaTab === "params" && (
               <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16, maxWidth: 460 }}>
-                <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → devises étrangères</h3>
+                <h3 style={{ color: ("" + ACC + ""), fontSize: 15, marginBottom: 8 }}>Taux de conversion FCFA → devises étrangères</h3>
                 <p style={{ color: "#888", fontSize: 12, marginBottom: 16, lineHeight: 1.6 }}>Le prix (fixé en FCFA) est multiplié par ce taux pour les lecteurs qui paient dans une autre devise. Exemples : Kenya 0.21 → 2000 FCFA = 420 KES ; USD 0.00165 → 2000 FCFA = 3,30 $. Ajuste selon les taux réels du jour.</p>
                 {[["cdf","RD Congo — Francs (CDF)"],["usd","RD Congo — Dollars (USD)"],["rwf","Rwanda (RWF)"],["kes","Kenya (KES)"],["mzn","Mozambique (MZN)"],["ugx","Ouganda (UGX)"],["sle","Sierra Leone (SLE)"],["zmw","Zambie (ZMW)"]].map(([k,lab]) => (
                   <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -5022,7 +5030,7 @@ export default function Admin() {
                     <input type="text" inputMode="decimal" value={devTaux[k]} onChange={e => setDevTaux({ ...devTaux, [k]: e.target.value })} placeholder="Taux" style={{ flex: 1, padding: "10px 12px", background: "#0f0f0f", border: "1px solid #333", borderRadius: 8, color: "#fff", fontSize: 14, boxSizing: "border-box", minWidth: 0 }} />
                   </div>
                 ))}
-                <button onClick={saveDevises} disabled={devSaving} style={{ marginTop: 6, padding: "12px 24px", background: "#c9a84c", color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: devSaving ? 0.6 : 1 }}>{devSaving ? "Enregistrement…" : "Enregistrer les taux"}</button>
+                <button onClick={saveDevises} disabled={devSaving} style={{ marginTop: 6, padding: "12px 24px", background: ("" + ACC + ""), color: "#1a1a1a", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer", opacity: devSaving ? 0.6 : 1 }}>{devSaving ? "Enregistrement…" : "Enregistrer les taux"}</button>
                 {devMsg && <div style={{ marginTop: 14, fontSize: 13, color: devMsg.startsWith("✅") ? "#4caf50" : "#e57373" }}>{devMsg}</div>}
               </div>
             )}
@@ -5037,12 +5045,12 @@ export default function Admin() {
           const maxCA = Math.max(1, ...vpData.map(r => r.ca));
           return (
             <div>
-              <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 6 }}>🌍 Ventes par pays</h2>
+              <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 6 }}>🌍 Ventes par pays</h2>
               <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>Répartition de tes ventes par pays. Le pays est enregistré depuis aujourd'hui — les ventes plus anciennes apparaissent en « Non renseigné ».</p>
               {vpLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : vpData.length === 0 ? <div style={{ color: "#888", fontSize: 13 }}>Aucune vente.</div> : (
                 <div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-                    <div style={{ flex: 1, minWidth: 120, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#c9a84c", fontSize: 19, fontWeight: "bold" }}>{totNb}</div><div style={{ color: "#aaa", fontSize: 11 }}>Ventes totales</div></div>
+                    <div style={{ flex: 1, minWidth: 120, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: ("" + ACC + ""), fontSize: 19, fontWeight: "bold" }}>{totNb}</div><div style={{ color: "#aaa", fontSize: 11 }}>Ventes totales</div></div>
                     <div style={{ flex: 1, minWidth: 120, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 12 }}><div style={{ color: "#a5d6a7", fontSize: 19, fontWeight: "bold" }}>{f(totCA)}</div><div style={{ color: "#aaa", fontSize: 11 }}>Chiffre d'affaires</div></div>
                   </div>
                   {vpData.map(r => {
@@ -5053,7 +5061,7 @@ export default function Admin() {
                           <div style={{ color: "#e8e0d0", fontSize: 14, fontWeight: "bold" }}>{NOMS[r.pays] || r.pays}</div>
                           <div style={{ color: "#a5d6a7", fontSize: 15, fontWeight: "bold", whiteSpace: "nowrap" }}>{f(r.ca)} <span style={{ color: "#888", fontSize: 11, fontWeight: "normal" }}>({pct}%)</span></div>
                         </div>
-                        <div style={{ height: 8, background: "#0f0f0f", borderRadius: 4, overflow: "hidden", marginBottom: 4 }}><div style={{ width: Math.round((r.ca / maxCA) * 100) + "%", height: "100%", background: "#c9a84c" }} /></div>
+                        <div style={{ height: 8, background: "#0f0f0f", borderRadius: 4, overflow: "hidden", marginBottom: 4 }}><div style={{ width: Math.round((r.ca / maxCA) * 100) + "%", height: "100%", background: ("" + ACC + "") }} /></div>
                         <div style={{ color: "#888", fontSize: 11 }}>{r.nb} vente{r.nb > 1 ? "s" : ""}</div>
                       </div>
                     );
@@ -5100,20 +5108,20 @@ export default function Admin() {
             return a;
           })();
           const f = n => (n || 0).toLocaleString("fr-FR") + " F";
-          const carte = (val, lab, col) => (<div style={{ flex: 1, minWidth: 130, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14 }}><div style={{ color: col || "#c9a84c", fontSize: 20, fontWeight: "bold" }}>{f(val)}</div><div style={{ color: "#aaa", fontSize: 11, marginTop: 2 }}>{lab}</div></div>);
+          const carte = (val, lab, col) => (<div style={{ flex: 1, minWidth: 130, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14 }}><div style={{ color: col || ("" + ACC + ""), fontSize: 20, fontWeight: "bold" }}>{f(val)}</div><div style={{ color: "#aaa", fontSize: 11, marginTop: 2 }}>{lab}</div></div>);
           return (
             <div>
-              <h1 style={{ fontSize: 22, color: "#c9a84c", marginBottom: 4 }}>💰 Mes Gains</h1>
+              <h1 style={{ fontSize: 22, color: ("" + ACC + ""), marginBottom: 4 }}>💰 Mes Gains</h1>
               <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>{EST_HOMOROMANCE ? "Ta commission HomoRomance sur les ventes de HomoRomance uniquement : 15% si l'auteur vend avec son lien (site ou livre), 50% si la vente vient de HomoRomance." : "Ta commission CarryBooks sur toutes les ventes des auteurs (le reste après la part auteur)."}</p>
               {gainsLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: 16 }}>
-                    <div style={{ background: "#242018", border: "1px solid #c9a84c66", borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbAuteur}</div><div style={{ color: "#c9a84c", fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par l'auteur (son lien)</div></div>
+                    <div style={{ background: "#242018", border: ("1px solid " + ACC + "66"), borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbAuteur}</div><div style={{ color: ("" + ACC + ""), fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par l'auteur (son lien)</div></div>
                     <div style={{ background: "#173a24", border: "1px solid #2e7d3288", borderRadius: 10, padding: 14, minWidth: 120, textAlign: "right" }}><div style={{ color: "#7fe39a", fontSize: 22, fontWeight: "bold" }}>{f(g.comAuteur)}</div><div style={{ color: "#a5d6a7", fontSize: 11.5, fontWeight: "bold" }}>Ma commission</div></div>
-                    <div style={{ background: "#242018", border: "1px solid #c9a84c66", borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbCb}</div><div style={{ color: "#c9a84c", fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par {SITE_NOM}</div></div>
+                    <div style={{ background: "#242018", border: ("1px solid " + ACC + "66"), borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbCb}</div><div style={{ color: ("" + ACC + ""), fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par {SITE_NOM}</div></div>
                     <div style={{ background: "#173a24", border: "1px solid #2e7d3288", borderRadius: 10, padding: 14, minWidth: 120, textAlign: "right" }}><div style={{ color: "#7fe39a", fontSize: 22, fontWeight: "bold" }}>{f(g.comCb)}</div><div style={{ color: "#a5d6a7", fontSize: 11.5, fontWeight: "bold" }}>Ma commission</div></div>
                   </div>
-                  <div style={{ background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", borderRadius: 12, padding: 18, marginBottom: 16 }}>
+                  <div style={{ background: ("linear-gradient(135deg," + ACC + ",#8a6d1f)"), borderRadius: 12, padding: 18, marginBottom: 16 }}>
                     <div style={{ color: "#1a1208", fontSize: 13, fontWeight: "bold", opacity: 0.8 }}>Mes gains — {libellePeriode}</div>
                     <div style={{ color: "#fff", fontSize: 30, fontWeight: "bold", lineHeight: 1.2 }}>{f(g.total)}</div>
                     <div style={{ color: "#1a1208", fontSize: 11, marginTop: 4 }}>sur {g.nb} vente{g.nb > 1 ? "s" : ""} · CA total {f(g.ca)}</div>
@@ -5122,21 +5130,21 @@ export default function Admin() {
                     {[["jour", "Aujourd'hui"], ["hier", "Hier"], ["semaine", "Cette semaine"], ["mois", "Ce mois"], ["tout", "Tout"]].map(([cle, lab]) => {
                       const actif = !gainsJour && gainsPeriode === cle;
                       return (
-                        <button key={cle} onClick={() => { setGainsPeriode(cle); setGainsJour(""); }} style={{ padding: "8px 14px", borderRadius: 20, border: "1px solid " + (actif ? "#c9a84c" : "#2a2a2a"), background: actif ? "#2a2410" : "#0f0f0f", color: actif ? "#c9a84c" : "#aaa", fontSize: 12.5, fontWeight: "bold", cursor: "pointer" }}>{lab}</button>
+                        <button key={cle} onClick={() => { setGainsPeriode(cle); setGainsJour(""); }} style={{ padding: "8px 14px", borderRadius: 20, border: "1px solid " + (actif ? ("" + ACC + "") : "#2a2a2a"), background: actif ? "#2a2410" : "#0f0f0f", color: actif ? ("" + ACC + "") : "#aaa", fontSize: 12.5, fontWeight: "bold", cursor: "pointer" }}>{lab}</button>
                       );
                     })}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
                     <span style={{ color: "#888", fontSize: 12 }}>Ou un jour precis :</span>
-                    <input type="date" value={gainsJour} onChange={e => setGainsJour(e.target.value)} style={{ background: "#0f0f0f", border: "1px solid " + (gainsJour ? "#c9a84c" : "#2a2a2a"), borderRadius: 8, color: "#ddd", fontSize: 13, padding: "8px 10px" }} />
-                    {gainsJour ? <button onClick={() => setGainsJour("")} style={{ background: "none", border: "none", color: "#c9a84c", fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>Effacer le jour</button> : null}
+                    <input type="date" value={gainsJour} onChange={e => setGainsJour(e.target.value)} style={{ background: "#0f0f0f", border: "1px solid " + (gainsJour ? ("" + ACC + "") : "#2a2a2a"), borderRadius: 8, color: "#ddd", fontSize: 13, padding: "8px 10px" }} />
+                    {gainsJour ? <button onClick={() => setGainsJour("")} style={{ background: "none", border: "none", color: ("" + ACC + ""), fontSize: 12.5, cursor: "pointer", textDecoration: "underline" }}>Effacer le jour</button> : null}
                   </div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                     {carte(g.ventes, "Sur les ventes directes", "#a5d6a7")}
                     {carte(g.abo, "Sur les abonnements", "#b39ddb")}
                   </div>
                   <div style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 10, padding: 14, fontSize: 12.5, color: "#aaa", lineHeight: 1.7 }}>
-                    <div style={{ color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>Répartition globale</div>
+                    <div style={{ color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 6 }}>Répartition globale</div>
                     <div>Chiffre d'affaires auteurs : <b style={{ color: "#fff" }}>{f(g.ca)}</b></div>
                     <div>Part reversée aux auteurs : <b style={{ color: "#ffb0b0" }}>{f(g.auteurs)}</b></div>
                     <div>Ma commission {SITE_NOM} : <b style={{ color: "#a5d6a7" }}>{f(g.total)}</b></div>
@@ -5149,10 +5157,10 @@ export default function Admin() {
 
         {view === "security" && (
           <div>
-            <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 20 }}>🔐 Sécurité</h2>
+            <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 20 }}>🔐 Sécurité</h2>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20, marginBottom: 16 }}>
-              <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>Changer le mot de passe admin</h3>
+              <h3 style={{ color: ("" + ACC + ""), fontSize: 15, marginBottom: 8 }}>Changer le mot de passe admin</h3>
               <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>
                 Le mot de passe admin protège l'accès à cette interface. Choisis un mot de passe fort.
               </p>
@@ -5211,7 +5219,7 @@ export default function Admin() {
                 disabled={pwdSaving}
                 style={{
                   width: "100%", padding: 13,
-                  background: pwdSaving ? "#555" : "#c9a84c",
+                  background: pwdSaving ? "#555" : ("" + ACC + ""),
                   border: "none", borderRadius: 6,
                   color: "#000", fontWeight: "bold",
                   cursor: pwdSaving ? "not-allowed" : "pointer",
@@ -5223,7 +5231,7 @@ export default function Admin() {
             </div>
 
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20 }}>
-              <h3 style={{ color: "#c9a84c", fontSize: 15, marginBottom: 8 }}>💡 Conseils de sécurité</h3>
+              <h3 style={{ color: ("" + ACC + ""), fontSize: 15, marginBottom: 8 }}>💡 Conseils de sécurité</h3>
               <ul style={{ color: "#aaa", fontSize: 13, lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
                 <li>Utilise un mot de passe d'au moins <strong style={{ color: "#e8e0d0" }}>12 caractères</strong></li>
                 <li>Mélange majuscules, minuscules, chiffres et symboles</li>
@@ -5241,7 +5249,7 @@ export default function Admin() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 1000 }}>
           <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "16px 16px 0 0", width: "100%", maxWidth: 600, maxHeight: "92vh", overflowY: "auto", padding: "24px 20px 40px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ color: "#c9a84c", fontSize: 17 }}>{editingBook ? "Modifier" : "Ajouter"}</h2>
+              <h2 style={{ color: ("" + ACC + ""), fontSize: 17 }}>{editingBook ? "Modifier" : "Ajouter"}</h2>
               <button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#888", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
 
@@ -5250,8 +5258,8 @@ export default function Admin() {
               {[{ id: "info", label: "📋 Infos" }, { id: "content", label: "📝 Contenu" }].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   style={{ padding: "8px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13,
-                    color: activeTab === tab.id ? "#c9a84c" : "#888",
-                    borderBottom: activeTab === tab.id ? "2px solid #c9a84c" : "2px solid transparent" }}>
+                    color: activeTab === tab.id ? ("" + ACC + "") : "#888",
+                    borderBottom: activeTab === tab.id ? ("2px solid " + ACC + "") : "2px solid transparent" }}>
                   {tab.label}
                 </button>
               ))}
@@ -5270,7 +5278,7 @@ export default function Admin() {
                   };
                   const currentType = types[form.product_type] || types.numerique;
                   return (
-                    <div style={{ background: "#1a1a1a", padding: 12, borderRadius: 10, border: "1px solid #c9a84c44" }}>
+                    <div style={{ background: "#1a1a1a", padding: 12, borderRadius: 10, border: ("1px solid " + ACC + "44") }}>
                       <div
                         onClick={() => setShowTypeSelector(s => !s)}
                         style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
@@ -5278,7 +5286,7 @@ export default function Admin() {
                         <div style={{ fontSize: 24 }}>{currentType.icon}</div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>Type de produit</div>
-                          <div style={{ color: "#c9a84c", fontSize: 14, fontWeight: "bold" }}>{currentType.label}</div>
+                          <div style={{ color: ("" + ACC + ""), fontSize: 14, fontWeight: "bold" }}>{currentType.label}</div>
                         </div>
                         <div style={{ fontSize: 11, color: "#888" }}>{showTypeSelector ? "▲ Replier" : "▼ Changer"}</div>
                       </div>
@@ -5294,15 +5302,15 @@ export default function Admin() {
                                 onClick={() => { setForm(f => ({ ...f, product_type: id })); setShowTypeSelector(false); }}
                                 style={{
                                   padding: "10px 8px",
-                                  background: form.product_type === id ? "#c9a84c22" : "#0a0a0a",
-                                  border: "2px solid " + (form.product_type === id ? "#c9a84c" : "#2a2a2a"),
+                                  background: form.product_type === id ? ("" + ACC + "22") : "#0a0a0a",
+                                  border: "2px solid " + (form.product_type === id ? ("" + ACC + "") : "#2a2a2a"),
                                   borderRadius: 8,
                                   cursor: "pointer",
                                   textAlign: "left"
                                 }}
                               >
                                 <div style={{ fontSize: 16, marginBottom: 3 }}>{t.icon}</div>
-                                <div style={{ color: form.product_type === id ? "#c9a84c" : "#fff", fontSize: 11, fontWeight: "bold" }}>{t.label}</div>
+                                <div style={{ color: form.product_type === id ? ("" + ACC + "") : "#fff", fontSize: 11, fontWeight: "bold" }}>{t.label}</div>
                                 <div style={{ color: "#888", fontSize: 9, marginTop: 2 }}>{t.desc}</div>
                               </button>
                             ))}
@@ -5364,14 +5372,14 @@ export default function Admin() {
                   </div>
                   {/* Aperçu du calcul */}
                   {form.original_price && parseInt(form.original_price) > parseInt(form.price || 0) && parseInt(form.price || 0) > 0 && (
-                    <div style={{ marginTop: 8, padding: "8px 12px", background: "#1f1810", border: "1px solid #c9a84c", borderRadius: 6 }}>
-                      <div style={{ fontSize: 11, color: "#c9a84c", fontWeight: "bold" }}>
+                    <div style={{ marginTop: 8, padding: "8px 12px", background: "#1f1810", border: ("1px solid " + ACC + ""), borderRadius: 6 }}>
+                      <div style={{ fontSize: 11, color: ("" + ACC + ""), fontWeight: "bold" }}>
                         🔥 Aperçu : -{Math.round((1 - parseInt(form.price) / parseInt(form.original_price)) * 100)}%
                       </div>
                       <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>
                         <span style={{ textDecoration: "line-through" }}>{parseInt(form.original_price).toLocaleString()} F</span>
                         {" → "}
-                        <span style={{ color: "#c9a84c", fontWeight: "bold" }}>{parseInt(form.price).toLocaleString()} F</span>
+                        <span style={{ color: ("" + ACC + ""), fontWeight: "bold" }}>{parseInt(form.price).toLocaleString()} F</span>
                       </div>
                     </div>
                   )}
@@ -5410,7 +5418,7 @@ export default function Admin() {
                           type="checkbox"
                           checked={!!form.allow_oversell}
                           onChange={e => setForm(f => ({ ...f, allow_oversell: e.target.checked }))}
-                          style={{ width: 18, height: 18, accentColor: "#c9a84c", marginTop: 2 }}
+                          style={{ width: 18, height: 18, accentColor: ("" + ACC + ""), marginTop: 2 }}
                         />
                         <div>
                           <div style={{ color: "#e8e0d0", fontSize: 13, fontWeight: "bold" }}>♻️ Autoriser la commande en rupture de stock</div>
@@ -5426,8 +5434,8 @@ export default function Admin() {
 
                 {/* DÉTAILS PAPIER : pour livres papier et mixte */}
                 {(form.product_type === "papier" || form.product_type === "mixte") && (
-                  <div style={{ background: "#1a1a1a", padding: 14, borderRadius: 10, border: "1px solid #c9a84c44" }}>
-                    <label style={{ ...labelStyle, color: "#c9a84c", fontSize: 12, marginBottom: 12, display: "block" }}>📦 DÉTAILS DU LIVRE PAPIER</label>
+                  <div style={{ background: "#1a1a1a", padding: 14, borderRadius: 10, border: ("1px solid " + ACC + "44") }}>
+                    <label style={{ ...labelStyle, color: ("" + ACC + ""), fontSize: 12, marginBottom: 12, display: "block" }}>📦 DÉTAILS DU LIVRE PAPIER</label>
 
                     {/* Prix papier (seulement pour mixte, car papier utilise déjà le champ Prix au-dessus) */}
                     {form.product_type === "mixte" && (
@@ -5506,7 +5514,7 @@ export default function Admin() {
                           type="checkbox"
                           checked={!!form.allow_oversell}
                           onChange={e => setForm(f => ({ ...f, allow_oversell: e.target.checked }))}
-                          style={{ width: 18, height: 18, accentColor: "#c9a84c", marginTop: 2 }}
+                          style={{ width: 18, height: 18, accentColor: ("" + ACC + ""), marginTop: 2 }}
                         />
                         <div>
                           <div style={{ color: "#e8e0d0", fontSize: 13, fontWeight: "bold" }}>♻️ Autoriser la commande en rupture de stock</div>
@@ -5525,8 +5533,8 @@ export default function Admin() {
                   <label style={labelStyle}>COUVERTURE</label>
                   <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} style={{ display: "none" }} />
                   <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} disabled={uploading}
-                    style={{ width: "100%", padding: "12px", borderRadius: 6, border: "2px dashed #c9a84c",
-                      background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : "#c9a84c",
+                    style={{ width: "100%", padding: "12px", borderRadius: 6, border: ("2px dashed " + ACC + ""),
+                      background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : ("" + ACC + ""),
                       cursor: uploading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: "bold",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 }}>
                     {uploading ? "⏳ Upload en cours..." : "📁 Uploader depuis mon PC"}
@@ -5575,21 +5583,21 @@ export default function Admin() {
               <div>
                 {/* Bandeau d'info selon le type de produit */}
                 {form.product_type === "article" && (
-                  <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                    <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>🎨 Article divers</div>
+                  <div style={{ background: "#1a1a1a", border: ("1px solid " + ACC + ""), borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 6 }}>🎨 Article divers</div>
                     <div style={{ fontSize: 12, color: "#aaa" }}>
                       Cet onglet n'est pas utilisé pour les articles divers.<br/>
                       Pas besoin d'extrait PDF ou de contenu numérique.<br/>
-                      Configure le <b style={{ color: "#c9a84c" }}>stock</b> et les <b style={{ color: "#c9a84c" }}>photos</b> dans l'onglet Infos.
+                      Configure le <b style={{ color: ("" + ACC + "") }}>stock</b> et les <b style={{ color: ("" + ACC + "") }}>photos</b> dans l'onglet Infos.
                     </div>
                   </div>
                 )}
 
                 {form.product_type === "papier" && (
-                  <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                    <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>📦 Livre papier uniquement</div>
+                  <div style={{ background: "#1a1a1a", border: ("1px solid " + ACC + ""), borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 6 }}>📦 Livre papier uniquement</div>
                     <div style={{ fontSize: 12, color: "#aaa" }}>
-                      <b style={{ color: "#c9a84c" }}>Extrait PDF obligatoire</b> ci-dessous.<br/>
+                      <b style={{ color: ("" + ACC + "") }}>Extrait PDF obligatoire</b> ci-dessous.<br/>
                       Pas besoin de remplir Contenu complet (PDF/Texte).<br/>
                       Le prix papier se configure dans la section "📦 Livres papier" de l'admin.
                     </div>
@@ -5606,11 +5614,11 @@ export default function Admin() {
                 )}
 
                 {form.product_type === "audio" && (
-                  <div style={{ background: "#1a1a1a", border: "1px solid #c9a84c", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-                    <div style={{ fontSize: 14, color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>🎧 Audio / Podcast</div>
+                  <div style={{ background: "#1a1a1a", border: ("1px solid " + ACC + ""), borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: ("" + ACC + ""), fontWeight: "bold", marginBottom: 6 }}>🎧 Audio / Podcast</div>
                     <div style={{ fontSize: 12, color: "#aaa" }}>
-                      Upload ton fichier <b style={{ color: "#c9a84c" }}>MP3 ou MP4</b> ci-dessous.<br/>
-                      Configure ensuite le <b style={{ color: "#c9a84c" }}>mode d'accès</b> (gratuit, vente, abonnement).
+                      Upload ton fichier <b style={{ color: ("" + ACC + "") }}>MP3 ou MP4</b> ci-dessous.<br/>
+                      Configure ensuite le <b style={{ color: ("" + ACC + "") }}>mode d'accès</b> (gratuit, vente, abonnement).
                     </div>
                   </div>
                 )}
@@ -5620,7 +5628,7 @@ export default function Admin() {
                   <>
                   {/* MODE D'ACC�S */}
                   <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
-                    <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 10, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                    <label style={{ fontSize: 11, color: ("" + ACC + ""), display: "block", marginBottom: 10, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                       🎯 Mode d'accès *
                     </label>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
@@ -5635,15 +5643,15 @@ export default function Admin() {
                           onClick={() => setForm(f => ({ ...f, audio_access_mode: m.id }))}
                           style={{
                             padding: "10px 8px",
-                            background: form.audio_access_mode === m.id ? "#c9a84c22" : "#0a0a0a",
-                            border: "2px solid " + (form.audio_access_mode === m.id ? "#c9a84c" : "#2a2a2a"),
+                            background: form.audio_access_mode === m.id ? ("" + ACC + "22") : "#0a0a0a",
+                            border: "2px solid " + (form.audio_access_mode === m.id ? ("" + ACC + "") : "#2a2a2a"),
                             borderRadius: 8,
                             cursor: "pointer",
                             textAlign: "center"
                           }}
                         >
                           <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
-                          <div style={{ color: form.audio_access_mode === m.id ? "#c9a84c" : "#fff", fontSize: 11, fontWeight: "bold" }}>{m.label}</div>
+                          <div style={{ color: form.audio_access_mode === m.id ? ("" + ACC + "") : "#fff", fontSize: 11, fontWeight: "bold" }}>{m.label}</div>
                           <div style={{ color: "#888", fontSize: 9, marginTop: 2 }}>{m.desc}</div>
                         </button>
                       ))}
@@ -5652,7 +5660,7 @@ export default function Admin() {
 
                   {/* UPLOAD FICHIER AUDIO/VID�O */}
                   <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
-                    <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                    <label style={{ fontSize: 11, color: ("" + ACC + ""), display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                       🎵 Fichier audio / vidéo *
                     </label>
                     <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>
@@ -5662,7 +5670,7 @@ export default function Admin() {
                     {form.audio_url ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                         <span style={{ color: "#4caf50", fontSize: 12 }}>✅ Fichier uploadé</span>
-                        <a href={form.audio_url} target="_blank" rel="noreferrer" style={{ color: "#c9a84c", fontSize: 11, textDecoration: "underline" }}>Écouter / Voir</a>
+                        <a href={form.audio_url} target="_blank" rel="noreferrer" style={{ color: ("" + ACC + ""), fontSize: 11, textDecoration: "underline" }}>Écouter / Voir</a>
                         <button onClick={() => setForm(f => ({ ...f, audio_url: "" }))}
                           style={{ background: "none", border: "1px solid #555", color: "#aaa", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: 11 }}>
                           Supprimer
@@ -5686,7 +5694,7 @@ export default function Admin() {
                         <button
                           type="button"
                           onClick={() => document.getElementById("audioFileInput").click()}
-                          style={{ width: "100%", padding: "12px 12px", border: "2px dashed #c9a84c66", borderRadius: 6, cursor: "pointer", color: "#c9a84c", fontSize: 13, textAlign: "center", background: "#0a0a0a", fontWeight: "bold" }}
+                          style={{ width: "100%", padding: "12px 12px", border: ("2px dashed " + ACC + "66"), borderRadius: 6, cursor: "pointer", color: ("" + ACC + ""), fontSize: 13, textAlign: "center", background: "#0a0a0a", fontWeight: "bold" }}
                         >
                           🎵 Choisir un fichier audio / vidéo
                         </button>
@@ -5702,12 +5710,12 @@ export default function Admin() {
                 {/* ============ EXTRAIT PDF (cach� pour articles ET audio) ============ */}
                 {form.product_type !== "article" && form.product_type !== "audio" && (
                 <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 14, marginBottom: 16, border: "1px solid #2a2a2a" }}>
-                  <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
+                  <label style={{ fontSize: 11, color: ("" + ACC + ""), display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                     📄 Extrait PDF (aperçu gratuit)
                   </label>
                   <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>
                     💡 Quelques pages que les clients peuvent consulter gratuitement avant d'acheter.<br/>
-                    📦 <b style={{ color: "#c9a84c" }}>Obligatoire pour les livres papier uniquement</b>
+                    📦 <b style={{ color: ("" + ACC + "") }}>Obligatoire pour les livres papier uniquement</b>
                   </div>
                   {form.excerpt_pdf_url ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -5735,7 +5743,7 @@ export default function Admin() {
                       <button
                         type="button"
                         onClick={() => document.getElementById("excerptPdfFileInput").click()}
-                        style={{ width: "100%", padding: "10px 12px", border: "2px dashed #c9a84c66", borderRadius: 6, cursor: "pointer", color: "#c9a84c", fontSize: 12, textAlign: "center", background: "#0a0a0a", fontWeight: "bold" }}
+                        style={{ width: "100%", padding: "10px 12px", border: ("2px dashed " + ACC + "66"), borderRadius: 6, cursor: "pointer", color: ("" + ACC + ""), fontSize: 12, textAlign: "center", background: "#0a0a0a", fontWeight: "bold" }}
                       >
                         📁 Choisir un fichier PDF extrait
                       </button>
@@ -5754,11 +5762,11 @@ export default function Admin() {
                 {/* Toggle PDF / Texte */}
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                   <button onClick={() => setForm(f => ({ ...f, pdf_url: "" }))}
-                    style={{ flex: 1, padding: "10px 0", border: "2px solid " + (!form.pdf_url ? "#c9a84c" : "#2a2a2a"), borderRadius: 6, background: !form.pdf_url ? "#c9a84c22" : "transparent", color: !form.pdf_url ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                    style={{ flex: 1, padding: "10px 0", border: "2px solid " + (!form.pdf_url ? ("" + ACC + "") : "#2a2a2a"), borderRadius: 6, background: !form.pdf_url ? ("" + ACC + "22") : "transparent", color: !form.pdf_url ? ("" + ACC + "") : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                     📝 Texte
                   </button>
                   <button onClick={() => setForm(f => ({ ...f, pdf_url: f.pdf_url || "pending" }))}
-                    style={{ flex: 1, padding: "10px 0", border: "2px solid " + (form.pdf_url ? "#c9a84c" : "#2a2a2a"), borderRadius: 6, background: form.pdf_url ? "#c9a84c22" : "transparent", color: form.pdf_url ? "#c9a84c" : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
+                    style={{ flex: 1, padding: "10px 0", border: "2px solid " + (form.pdf_url ? ("" + ACC + "") : "#2a2a2a"), borderRadius: 6, background: form.pdf_url ? ("" + ACC + "22") : "transparent", color: form.pdf_url ? ("" + ACC + "") : "#888", cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                     📄 PDF
                   </button>
                 </div>
@@ -5786,7 +5794,7 @@ export default function Admin() {
                         e.target.value = "";
                       }} />
                     <button onClick={() => document.getElementById("pdfFileInput").click()} disabled={uploading}
-                      style={{ width: "100%", padding: "12px", borderRadius: 6, border: "2px dashed #c9a84c", background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : "#c9a84c", cursor: uploading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: "bold", marginBottom: 10 }}>
+                      style={{ width: "100%", padding: "12px", borderRadius: 6, border: ("2px dashed " + ACC + ""), background: uploading ? "#1e1e1e" : "transparent", color: uploading ? "#888" : ("" + ACC + ""), cursor: uploading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: "bold", marginBottom: 10 }}>
                       {uploading ? "⏳ Upload en cours..." : "📄 Uploader le PDF"}
                     </button>
                     {form.pdf_url && form.pdf_url !== "pending" && (
@@ -5798,7 +5806,7 @@ export default function Admin() {
                     {/* Options extrait PDF */}
                     {form.pdf_url && form.pdf_url !== "pending" && (
                       <div style={{ background: "#1a1a1a", borderRadius: 8, padding: 12, marginTop: 8 }}>
-                        <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Extrait automatique du PDF</label>
+                        <label style={{ fontSize: 11, color: ("" + ACC + ""), display: "block", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Extrait automatique du PDF</label>
 
                         <div style={{ marginBottom: 4 }}>
                           <label style={{ fontSize: 11, color: "#aaa", display: "block", marginBottom: 4 }}>📄 Nombre de pages à offrir gratuitement :</label>
@@ -5870,7 +5878,7 @@ export default function Admin() {
                   }
                   if (current.length > 0) result.push(current.join(" "));
                   setForm(f => ({ ...f, content: result.filter(p => p.trim()).join("\n\n") }));
-                }} style={{ marginBottom: 10, padding: "10px 16px", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 13, width: "100%" }}>
+                }} style={{ marginBottom: 10, padding: "10px 16px", background: ("" + ACC + ""), border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: "pointer", fontSize: 13, width: "100%" }}>
                   🧹 Nettoyer le texte PDF
                 </button>
                 <textarea id="contentTextarea" value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
@@ -5886,7 +5894,7 @@ export default function Admin() {
               {/* Section Audio (ancien - synthèse vocale fallback) : seulement pour livres numeriques et mixtes */}
               {(form.product_type === "numerique" || form.product_type === "mixte") && (
               <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
-                <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🎧 Livre Audio (MP3)</label>
+                <label style={{ fontSize: 11, color: ("" + ACC + ""), display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>🎧 Livre Audio (MP3)</label>
                 {form.audio_url ? (
                   <div>
                     <audio controls src={form.audio_url} style={{ width: "100%", marginBottom: 8 }} />
@@ -5920,11 +5928,11 @@ export default function Admin() {
               {/* Options lecture / téléchargement : seulement pour livres numériques et mixtes (PAS papier, PAS article, PAS audio) */}
               {(form.product_type === "numerique" || form.product_type === "mixte") && (
               <div style={{ marginTop: 20, padding: "16px", background: "#111", borderRadius: 8, border: "1px solid #2a2a2a" }}>
-                <label style={{ fontSize: 11, color: "#c9a84c", display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>📖 Options d'accès</label>
+                <label style={{ fontSize: 11, color: ("" + ACC + ""), display: "block", marginBottom: 12, letterSpacing: 1, textTransform: "uppercase" }}>📖 Options d'accès</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                     <input type="checkbox" checked={form.featured === true} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))}
-                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                      style={{ width: 18, height: 18, accentColor: ("" + ACC + "") }} />
                     <div>
                       <div style={{ color: "#e8e0d0", fontSize: 14 }}>⭐ Mettre à la une (Hero)</div>
                       <div style={{ color: "#555", fontSize: 11 }}>Ce livre apparaîtra dans le carrousel hero de l'accueil</div>
@@ -5932,7 +5940,7 @@ export default function Admin() {
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                     <input type="checkbox" checked={form.exclude_from_subscription === true} onChange={e => setForm(f => ({ ...f, exclude_from_subscription: e.target.checked }))}
-                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                      style={{ width: 18, height: 18, accentColor: ("" + ACC + "") }} />
                     <div>
                       <div style={{ color: "#e8e0d0", fontSize: 14 }}>🚫 Exclure de l'abonnement mensuel</div>
                       <div style={{ color: "#555", fontSize: 11 }}>Les abonnés devront acheter ce livre individuellement (idéal pour les exclusivités)</div>
@@ -5940,7 +5948,7 @@ export default function Admin() {
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                     <input type="checkbox" checked={form.can_read !== false} onChange={e => setForm(f => ({ ...f, can_read: e.target.checked }))}
-                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                      style={{ width: 18, height: 18, accentColor: ("" + ACC + "") }} />
                     <div>
                       <div style={{ color: "#e8e0d0", fontSize: 14 }}>📖 Permettre la lecture (Liseuse)</div>
                       <div style={{ color: "#555", fontSize: 11 }}>Le lecteur peut lire dans la liseuse en ligne</div>
@@ -5948,7 +5956,7 @@ export default function Admin() {
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                     <input type="checkbox" checked={form.can_download === true} onChange={e => setForm(f => ({ ...f, can_download: e.target.checked }))}
-                      style={{ width: 18, height: 18, accentColor: "#c9a84c" }} />
+                      style={{ width: 18, height: 18, accentColor: ("" + ACC + "") }} />
                     <div>
                       <div style={{ color: "#e8e0d0", fontSize: 14 }}>⬇️ Permettre le téléchargement (PDF)</div>
                       <div style={{ color: "#555", fontSize: 11 }}>Le lecteur peut télécharger le PDF sur son appareil</div>
@@ -5964,7 +5972,7 @@ export default function Admin() {
                 Annuler
               </button>
               <button onClick={handleSave} disabled={saving}
-                style={{ flex: 2, padding: "12px 0", background: "#c9a84c", border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
+                style={{ flex: 2, padding: "12px 0", background: ("" + ACC + ""), border: "none", borderRadius: 6, color: "#000", fontWeight: "bold", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
                 {saving ? "Enregistrement..." : editingBook ? "Mettre à jour" : "Ajouter"}
               </button>
             </div>
@@ -5979,12 +5987,12 @@ export default function Admin() {
           { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0)) },
           { id: "gains", label: "Gains", icon: "💰", badge: 0 },
         ].map(t => (
-          <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? "#c9a84c" : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
+          <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? ("" + ACC + "") : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? ("" + ACC + "") : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
             <span style={{ fontSize: 19 }}>{t.icon}</span>{t.label}
             {t.badge > 0 && <span style={{ position: "absolute", top: 3, right: "26%", background: "#e53935", color: "#fff", fontSize: 9, fontWeight: "bold", borderRadius: 9, minWidth: 15, textAlign: "center", padding: "0 3px", lineHeight: "15px" }}>{t.badge}</span>}
           </button>
         ))}
-        <button onClick={() => setShowMenu(m => !m)} style={{ flex: 1, background: showMenu ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + (showMenu ? "#c9a84c" : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: showMenu ? "#c9a84c" : "#999", fontSize: 10, fontWeight: showMenu ? "bold" : "normal" }}>
+        <button onClick={() => setShowMenu(m => !m)} style={{ flex: 1, background: showMenu ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + (showMenu ? ("" + ACC + "") : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: showMenu ? ("" + ACC + "") : "#999", fontSize: 10, fontWeight: showMenu ? "bold" : "normal" }}>
           <span style={{ fontSize: 19 }}>{showMenu ? "✕" : "☰"}</span>Plus
         </button>
       </div>
@@ -6106,13 +6114,13 @@ function PwaStatsView() {
 
   return (
     <div>
-      <h2 style={{ color: "#c9a84c", fontSize: 18, marginBottom: 8 }}>📱 Statistiques PWA</h2>
+      <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 8 }}>📱 Statistiques PWA</h2>
       <p style={{ color: "#888", fontSize: 12, marginBottom: 20 }}>
         Suivi des installations de l'application mobile CarryBooks
       </p>
 
       <div style={{
-        background: "linear-gradient(135deg, #c9a84c 0%, #8b6914 100%)",
+        background: ("linear-gradient(135deg, " + ACC + " 0%, #8b6914 100%)"),
         color: "#000", borderRadius: 12, padding: 24, marginBottom: 16,
         boxShadow: "0 4px 12px rgba(201,168,76,0.2)"
       }}>
@@ -6134,7 +6142,7 @@ function PwaStatsView() {
       }}>
         <div style={card}>
           <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🆕 AUJOURD'HUI</div>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{stats.installsToday}</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: ("" + ACC + "") }}>{stats.installsToday}</div>
         </div>
         <div style={card}>
           <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>📅 7 JOURS</div>
@@ -6162,7 +6170,7 @@ function PwaStatsView() {
         </div>
         <div style={card}>
           <div style={{ fontSize: 10, color: "#888", marginBottom: 4, letterSpacing: 1 }}>🚀 TOTAL OUVERTURES</div>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{stats.totalLaunches}</div>
+          <div style={{ fontSize: 22, fontWeight: "bold", color: ("" + ACC + "") }}>{stats.totalLaunches}</div>
         </div>
       </div>
 
@@ -6205,7 +6213,7 @@ function PwaStatsView() {
                 <div style={{ height: 6, background: "#0a0a0a", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{
                     width: `${pct}%`, height: "100%",
-                    background: "#c9a84c", transition: "width 0.5s"
+                    background: ("" + ACC + ""), transition: "width 0.5s"
                   }} />
                 </div>
               </div>
@@ -6219,7 +6227,7 @@ function PwaStatsView() {
         border: "1px solid rgba(201,168,76,0.2)",
         borderRadius: 8, padding: 14, marginTop: 16
       }}>
-        <div style={{ fontSize: 12, color: "#c9a84c", marginBottom: 6, fontWeight: 600 }}>💡 Note</div>
+        <div style={{ fontSize: 12, color: ("" + ACC + ""), marginBottom: 6, fontWeight: 600 }}>💡 Note</div>
         <div style={{ fontSize: 12, color: "#aaa", lineHeight: 1.5 }}>
           Le tracking compte les installations depuis sa mise en place. Les anciens utilisateurs qui ont l'app installée sont récupérés automatiquement dès leur prochaine ouverture (backfill).
         </div>
