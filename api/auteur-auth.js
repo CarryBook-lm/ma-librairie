@@ -153,6 +153,24 @@ export default async function handler(req, res) {
       return res.status(200).json({ auteur: data });
     }
 
+    // ---------- PHOTO DE PROFIL PROPRE A HOMOROMANCE (15/10) ----------
+    // Le compte 8 sert les deux sites : la photo de HomoRomance ne doit JAMAIS
+    // remplacer celle de CarryBooks (colonne photo_url). Elle est rangee a part,
+    // dans la table reglages, sous la cle photo_hr_<id>.
+    if (action === "photo_hr_get") {
+      const id = Number(body.id) || 8;
+      const { data } = await supa.from("reglages").select("valeur").eq("cle", "photo_hr_" + id).limit(1);
+      return res.status(200).json({ url: (data && data[0] && data[0].valeur) || null });
+    }
+    if (action === "photo_hr_set") {
+      const id = Number(body.id);
+      if (!id) return res.status(400).json({ error: "id requis." });
+      const url = String(body.url || "").trim();
+      const { error } = await supa.from("reglages").upsert({ cle: "photo_hr_" + id, valeur: url, updated_at: new Date().toISOString() }, { onConflict: "cle" });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, url: url || null });
+    }
+
     // ---------- SOUMISSION DE LA VERIFICATION (KYC) ----------
     if (action === "submit_kyc") {
       const id = body.id;

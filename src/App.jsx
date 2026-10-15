@@ -34,18 +34,31 @@ const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres a
 // 13/10 : sur homoromance.com, le compte de Landrine (id 8) s'affiche sous le nom
 // Johanna Morisson PARTOUT a l'ecran. Le vrai nom reste dans la base (paiements)
 // et dans vrai_nom_cache, pour qu'un enregistrement du profil ne l'ecrase pas.
+// 15/10 : photo de Johanna sur HomoRomance, rangee a part (jamais dans photo_url,
+// qui est la photo de Landrine sur CarryBooks).
+let _photoHR;
+async function photoHR() {
+  if (!EST_HOMOROMANCE) return null;
+  if (_photoHR !== undefined) return _photoHR;
+  try {
+    const r = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "photo_hr_get", id: 8 }) });
+    const j = await r.json().catch(() => ({}));
+    _photoHR = (j && j.url) || null;
+  } catch (e) { _photoHR = null; }
+  return _photoHR;
+}
 function masquerNomHR(a0) {
   if (!EST_HOMOROMANCE || !a0) return a0;
   // 13/10 : plus de boutique perso sur HomoRomance : pas de lien /auteur/CODE ni de vitrine.
   const a = { ...a0, code_source: null };
   if (a.id !== 8) return a;
-  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, vrai_photo_cache: (a.vrai_photo_cache !== undefined ? a.vrai_photo_cache : (a.photo_url || null)), nom_complet: "Johanna Morisson", photo_url: null };
+  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, vrai_photo_cache: (a.vrai_photo_cache !== undefined ? a.vrai_photo_cache : (a.photo_url || null)), nom_complet: "Johanna Morisson", photo_url: _photoHR || null };
 }
 // Pareil pour les listes publiques (Nos auteurs, recherche, boutique) : le nom et le
 // pays du compte 8 ne sont jamais montres sur HomoRomance.
 function masquerPublicHR(a) {
   if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
-  return { ...a, nom_complet: "Johanna Morisson", pays: "France", photo_url: null };
+  return { ...a, nom_complet: "Johanna Morisson", pays: "France", photo_url: _photoHR || null };
 }
 function estModeTexte(b) {
   if (!b) return false;
@@ -15340,6 +15353,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
+        if (EST_HOMOROMANCE) await photoHR();
         const raw = localStorage.getItem("carrybooks_auteur");
         if (raw) {
           const a = JSON.parse(raw);
@@ -18565,7 +18579,8 @@ export default function App() {
         // paiement different : enregistrer sa bio ne doit pas deplacer leur argent.
         kyc_paiement_phone: (telComplet && telComplet !== ((auteurProfil && auteurProfil.telephone) || "")) ? telComplet : undefined,
         bio: auteurBio.trim(),
-        photo_url: auteurPhoto || ((EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? (auteurProfil.vrai_photo_cache || null) : null),
+        // 15/10 : sur HomoRomance on n'envoie JAMAIS photo_url (c'est la photo de Landrine sur CarryBooks).
+        photo_url: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurPhoto || null),
         pixel_meta: auteurPixel.trim(),
         pixel_tiktok: auteurPixelTiktok.trim(),
         facebook: auteurFb.trim() || null,
@@ -18588,6 +18603,13 @@ export default function App() {
         mode_vente: (!EST_HOMOROMANCE && auteurModeVente === "vitrine") ? "vitrine" : "les_deux",
       }) });
       const data = await res.json().catch(() => ({}));
+      if (data.auteur && EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) {
+        try {
+          const r2 = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "photo_hr_set", id: auteurSession.id, url: auteurPhoto || "" }) });
+          const j2 = await r2.json().catch(() => ({}));
+          if (j2 && j2.ok) _photoHR = j2.url || null;
+        } catch (e3) {}
+      }
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurMsg("✅ Profil mis à jour."); }
       else { setAuteurMsg("❌ " + (data.error || "Enregistrement impossible.")); }
     } catch (e) {
@@ -19180,7 +19202,7 @@ export default function App() {
     (async () => {
       setBoutiqueLoading(true);
       try {
-        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").neq("category", EST_HOMOROMANCE ? "__aucune__" : CAT_HOMOROMANCE).order("id", { ascending: false });
         if (!cancel) setBoutiqueBooks((livres || []).filter(b => !b.masque));
       } catch (e) { if (!cancel) setBoutiqueBooks([]); }
       if (!cancel) setBoutiqueLoading(false);
@@ -19194,6 +19216,7 @@ export default function App() {
     (async () => {
       setBoutiqueLoading(true);
       try {
+        await photoHR();
         const { data: aut } = await supabase.from("auteurs_public").select("*").eq("code_source", boutiqueCode).limit(1);
         const a = aut && aut[0] ? aut[0] : null;
         if (cancel) return;
@@ -19208,7 +19231,7 @@ export default function App() {
           if (tc && a && a.couleur) tc.setAttribute("content", a.couleur);
         } catch (e2) {}
         if (a) {
-          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").order("id", { ascending: false });
+          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").neq("category", EST_HOMOROMANCE ? "__aucune__" : CAT_HOMOROMANCE).order("id", { ascending: false });
           if (!cancel) setBoutiqueBooks(livres || []);
         } else if (!cancel) { setBoutiqueBooks([]); }
       } catch (e) { if (!cancel) { setBoutiqueAuteur(null); setBoutiqueBooks([]); } }
@@ -19316,6 +19339,7 @@ export default function App() {
     let cancel = false;
     (async () => {
       try {
+        await photoHR();
         const { data } = await supabase.from("auteurs_public").select("id,nom_complet,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
         if (!cancel) setAuteursAll((data || []).filter(a => !a.banni && auteurDuSite(a.id)).map(masquerPublicHR));
       } catch (e) {}
@@ -19331,6 +19355,7 @@ export default function App() {
       setAuteursListLoading(true);
       try {
         // Tous les auteurs sauf ceux refusés (même sans livre pour le moment)
+        await photoHR();
         const { data: auts } = await supabase.from("auteurs_public").select("id,nom_complet,bio,pays,code_source,photo_url,verifie,banni").order("nom_complet", { ascending: true });
         if (!cancel) setAuteursList((auts || []).filter(a => a.nom_complet && a.code_source && !a.banni && auteurDuSite(a.id)).map(masquerPublicHR));
       } catch (e) { if (!cancel) setAuteursList([]); }
