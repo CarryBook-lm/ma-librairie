@@ -67,6 +67,14 @@ function filtrerParAuteur(liste, champ) {
   return (liste || []).filter(x => x && ids.has(x[champ || "id"]));
 }
 
+// HomoRomance : on ne garde des ventes que celles des livres HomoRomance, depuis l'ouverture.
+async function ventesHR(rows, champDate) {
+  if (!EST_HOMOROMANCE) return rows || [];
+  let ids = new Set();
+  try { const { data } = await livres("id").limit(5000); ids = new Set((data || []).map(b => String(b.id))); } catch (e) {}
+  return (rows || []).filter(v => v && ids.has(String(v.book_id)) && new Date(v[champDate || "created_at"]).getTime() >= HR_DEBUT_MS);
+}
+
 // CATEGORIES est maintenant chargé dynamiquement depuis Supabase
 // Voir state CATEGORIES dans le composant Admin
 // Fallback minimal si Supabase n'a pas encore répondu
@@ -600,8 +608,8 @@ export default function Admin() {
           supabase.from("auteurs").select("id, nom_complet, telephone, email, code_source, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
           livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
-          supabase.from("ventes_auteurs").select("auteur_id, part_auteur"),
-          supabase.from("retraits").select("auteur_id, montant, statut").eq("statut", "paye"),
+          supabase.from("ventes_auteurs").select("auteur_id, part_auteur, book_id, created_at"),
+          supabase.from("retraits").select("auteur_id, montant, statut, created_at").eq("statut", "paye"),
         ]);
         memoriserAuteursDuSite(aut || []);
         setEaAuteurs(filtrerAuteursHR(aut));
@@ -614,8 +622,8 @@ export default function Admin() {
         setEaVitrine(vitr || []);
         const { data: anns } = await supabase.from("annonces_pub").select("id, auteur_id, image_url, lien, statut, ordre, created_at").in("statut", ["en_attente", "active"]).order("created_at", { ascending: false });
         setEaAnnonces(filtrerParAuteur(anns, "auteur_id"));
-        const vmap = {}; (va || []).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
-        const pmap = {}; (rp || []).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
+        const vmap = {}; (await ventesHR(va)).forEach(v => { const k = v.auteur_id; (vmap[k] = vmap[k] || { nb: 0, gains: 0 }); vmap[k].nb++; vmap[k].gains += v.part_auteur || 0; }); setEaVentesMap(vmap);
+        const pmap = {}; (EST_HOMOROMANCE ? (rp || []).filter(r => new Date(r.created_at).getTime() >= HR_DEBUT_MS) : (rp || [])).forEach(r => { pmap[r.auteur_id] = (pmap[r.auteur_id] || 0) + (r.montant || 0); }); setEaPayeMap(pmap);
         await chargerSoldes();
       } catch (e) {}
       setEaLoading(false);
@@ -626,8 +634,8 @@ export default function Admin() {
     (async () => {
       setGainsLoading(true);
       try {
-        const { data: brut } = await supabase.from("ventes_auteurs").select("part_carrybooks, part_auteur, montant_total, source, created_at, auteur_id");
-        const data = (brut || []).filter(v => v.auteur_id !== 8 && v.auteur_id !== 9);
+        const { data: brut } = await supabase.from("ventes_auteurs").select("part_carrybooks, part_auteur, montant_total, source, created_at, auteur_id, book_id");
+        const data = EST_HOMOROMANCE ? await ventesHR(brut) : (brut || []).filter(v => v.auteur_id !== 8 && v.auteur_id !== 9);
         const now = Date.now();
         const acc = { total: 0, auteurs: 0, ca: 0, nb: 0, ventes: 0, abo: 0, j1: 0, j7: 0, j30: 0, nbAuteur: 0, comAuteur: 0, nbCb: 0, comCb: 0 };
         (data || []).forEach(v => {
@@ -653,11 +661,12 @@ export default function Admin() {
       setVpLoading(true);
       try {
         const [{ data: p }, { data: g }] = await Promise.all([
-          supabase.from("purchases").select("pays, amount"),
-          supabase.from("guest_purchases").select("pays, amount"),
+          supabase.from("purchases").select("pays, amount, book_id, created_at"),
+          supabase.from("guest_purchases").select("pays, amount, book_id, created_at"),
         ]);
+        const pH = await ventesHR(p), gH = await ventesHR(g);
         const map = {};
-        [...(p || []), ...(g || [])].forEach(r => {
+        [...pH, ...gH].forEach(r => {
           const k = r.pays || "??";
           (map[k] = map[k] || { nb: 0, ca: 0 });
           map[k].nb++; map[k].ca += Number(r.amount) || 0;
@@ -811,9 +820,11 @@ export default function Admin() {
   useEffect(() => { chargerTodo(); }, []);
 
   const chargerSoldes = async () => {
-    const { data: rr } = await supabase.from("retraits").select("*").order("created_at", { ascending: false });
+    const { data: rr0 } = await supabase.from("retraits").select("*").order("created_at", { ascending: false });
+    const rr = EST_HOMOROMANCE ? (rr0 || []).filter(r => new Date(r.created_at).getTime() >= HR_DEBUT_MS) : rr0;
     const { data: auts } = await supabase.from("auteurs").select("id, nom_complet, kyc_paiement_phone, telephone");
-    const { data: va } = await supabase.from("ventes_auteurs").select("part_auteur");
+    const { data: va0 } = await supabase.from("ventes_auteurs").select("part_auteur, book_id, created_at");
+    const va = await ventesHR(va0);
     const nomOf = (id) => { const a = (auts || []).find(x => String(x.id) === String(id)); return a ? (a.nom_complet || ("Auteur #" + id)) : ("Auteur #" + id); };
     const phoneOf = (id, fb) => { const a = (auts || []).find(x => String(x.id) === String(id)) || {}; return fb || a.kyc_paiement_phone || a.telephone || ""; };
     const enAttente = (rr || []).filter(r => r.statut === "en_attente").map(r => ({ id: r.id, auteur_id: r.auteur_id, nom: nomOf(r.auteur_id), phone: phoneOf(r.auteur_id, r.phone), montant: r.montant, created_at: r.created_at })).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -5091,13 +5102,13 @@ export default function Admin() {
           return (
             <div>
               <h1 style={{ fontSize: 22, color: "#c9a84c", marginBottom: 4 }}>💰 Mes Gains</h1>
-              <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>Ta commission CarryBooks sur toutes les ventes des auteurs (le reste après la part auteur).</p>
+              <p style={{ color: "#888", fontSize: 12, marginBottom: 18, lineHeight: 1.6 }}>{EST_HOMOROMANCE ? "Ta commission HomoRomance sur les ventes de HomoRomance uniquement : 15% si l'auteur vend avec son lien (site ou livre), 50% si la vente vient de HomoRomance." : "Ta commission CarryBooks sur toutes les ventes des auteurs (le reste après la part auteur)."}</p>
               {gainsLoading ? <div style={{ color: "#888", fontSize: 13 }}>Chargement…</div> : (
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: 16 }}>
                     <div style={{ background: "#242018", border: "1px solid #c9a84c66", borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbAuteur}</div><div style={{ color: "#c9a84c", fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par l'auteur (son lien)</div></div>
                     <div style={{ background: "#173a24", border: "1px solid #2e7d3288", borderRadius: 10, padding: 14, minWidth: 120, textAlign: "right" }}><div style={{ color: "#7fe39a", fontSize: 22, fontWeight: "bold" }}>{f(g.comAuteur)}</div><div style={{ color: "#a5d6a7", fontSize: 11.5, fontWeight: "bold" }}>Ma commission</div></div>
-                    <div style={{ background: "#242018", border: "1px solid #c9a84c66", borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbCb}</div><div style={{ color: "#c9a84c", fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par CarryBooks</div></div>
+                    <div style={{ background: "#242018", border: "1px solid #c9a84c66", borderRadius: 10, padding: 14 }}><div style={{ color: "#fff", fontSize: 22, fontWeight: "bold" }}>{g.nbCb}</div><div style={{ color: "#c9a84c", fontSize: 11.5, fontWeight: "bold" }}>Livres vendus par {SITE_NOM}</div></div>
                     <div style={{ background: "#173a24", border: "1px solid #2e7d3288", borderRadius: 10, padding: 14, minWidth: 120, textAlign: "right" }}><div style={{ color: "#7fe39a", fontSize: 22, fontWeight: "bold" }}>{f(g.comCb)}</div><div style={{ color: "#a5d6a7", fontSize: 11.5, fontWeight: "bold" }}>Ma commission</div></div>
                   </div>
                   <div style={{ background: "linear-gradient(135deg,#c9a84c,#8a6d1f)", borderRadius: 12, padding: 18, marginBottom: 16 }}>
@@ -5126,7 +5137,7 @@ export default function Admin() {
                     <div style={{ color: "#c9a84c", fontWeight: "bold", marginBottom: 6 }}>Répartition globale</div>
                     <div>Chiffre d'affaires auteurs : <b style={{ color: "#fff" }}>{f(g.ca)}</b></div>
                     <div>Part reversée aux auteurs : <b style={{ color: "#ffb0b0" }}>{f(g.auteurs)}</b></div>
-                    <div>Ma commission CarryBooks : <b style={{ color: "#a5d6a7" }}>{f(g.total)}</b></div>
+                    <div>Ma commission {SITE_NOM} : <b style={{ color: "#a5d6a7" }}>{f(g.total)}</b></div>
                   </div>
                 </div>
               )}
