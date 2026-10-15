@@ -24415,15 +24415,15 @@ export default function App() {
                   const catHasBooks = k => books.some(b => isDigitalReco(b) && (champCategorie(b) === k || champCategorie(b).toLowerCase().startsWith(k.toLowerCase().replace(/s$/, ""))));
                   if (EST_HOMOROMANCE) {
                     // 15/10 : HomoRomance a peu de livres -> une seule liste, 2 cartes sur la largeur,
-                    // defilement horizontal, sous-categorie sous le titre.
+                    // defilement vertical, sous-categorie sous le titre.
                     const tous = melangerListe(books.filter(b => b.product_type !== "papier" && b.product_type !== "article" && surCarryBooks(b)));
                     if (tous.length === 0) return null;
                     return (
                       <div style={{ marginBottom: 28 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>📚 Tous nos romans</div>
-                        <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: "x proximity" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "18px 10px", padding: "0 16px" }}>
                           {tous.map(book => (
-                            <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc(50% - 5px)", cursor: "pointer", textAlign: "center", scrollSnapAlign: "start" }}>
+                            <div key={book.id} onClick={() => openBook(book)} style={{ minWidth: 0, cursor: "pointer", textAlign: "center" }}>
                               <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 8, position: "relative" }}>
                                 {book.cover
                                   ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
