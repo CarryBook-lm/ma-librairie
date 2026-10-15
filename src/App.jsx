@@ -22598,7 +22598,7 @@ export default function App() {
                 const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
                 return (
                   <div id="avis-hr" style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 12, padding: "12px 16px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12, color: G.textDim, fontFamily: "system-ui, sans-serif" }}>Ton avis</span>
+                    <span style={{ fontSize: 12, color: G.textDim, fontFamily: "system-ui, sans-serif" }}>Note sur 5</span>
                     <div style={{ display: "flex", gap: 4 }}>
                       {[1,2,3,4,5].map(s => (
                         <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border), padding: 0 }}>★</button>
@@ -22677,7 +22677,7 @@ export default function App() {
                   </div>
                   {owned || free ? (
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>Ton avis</div>
+                      <div style={{ fontSize: 10, color: G.textDim, marginBottom: 4 }}>Note sur 5</div>
                       <div style={{ display: "flex", gap: 4 }}>
                         {[1,2,3,4,5].map(s => (
                           <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border), padding: 0 }}>★</button>
@@ -22900,9 +22900,14 @@ export default function App() {
             </div>
 
             {/* Formulaire pour laisser un avis (pour les acheteurs) */}
-            {(owned || free) && user && (
+            {!((owned || free || estAdmin(user)) && user) && (
+              <div style={{ background: G.surface, border: "1px dashed " + G.border, borderRadius: 10, padding: 14, marginBottom: 20, textAlign: "center", fontSize: 13, color: G.textDim, lineHeight: 1.5 }}>
+                {user ? "Achète ce livre pour noter et écrire ton commentaire." : "Connecte-toi pour noter et écrire ton commentaire."}
+              </div>
+            )}
+            {(owned || free || estAdmin(user)) && user && (
               <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 20 }}>
-                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>💬 Laisse un commentaire</div>
+                <div style={{ fontSize: 13, color: G.text, fontWeight: "bold", marginBottom: 8 }}>💬 Écris ton commentaire</div>
                 <textarea
                   value={reviewComment}
                   onChange={e => setReviewComment(e.target.value)}
