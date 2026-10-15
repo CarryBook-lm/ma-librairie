@@ -17670,6 +17670,7 @@ export default function App() {
           user_id: user ? user.id : "",
           email: user ? (user.email || "") : "",
           referrer_code: referrerCode,
+          site: EST_HOMOROMANCE ? "hr" : "cb",
         }),
       });
       const data = await res.json();
@@ -17677,7 +17678,7 @@ export default function App() {
         window.location.href = data.url;
       } else {
         setPaydunyaLoading(false);
-        alert("Impossible de lancer le paiement international. Réessaie dans un instant.");
+        alert("Impossible de lancer le paiement international. Réessaie dans un instant." + (data && data.error ? "\n\nDétail : " + data.error : ""));
       }
     } catch (e) {
       setPaydunyaLoading(false);
