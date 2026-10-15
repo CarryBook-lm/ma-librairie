@@ -286,6 +286,85 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ---------- PROCHAINES SORTIES : MODIFIER LA DATE / SUPPRIMER L'ANNONCE (15/10) ----------
+    // Comme pour les annonces, tout passe par le serveur (service_role) : l'auteur
+    // n'est pas un compte Supabase, la table ne peut donc pas le reconnaitre.
+    // - cote AUTEUR : on ne touche QUE aux sorties dont auteur_id est le sien
+    //   (ou celui d'un compte lie, ex. Landrine 8 = Julia 9)
+    // - cote ADMIN : le serveur verifie le jeton Supabase et l'adresse e-mail
+    const ADMINS_SORTIES = ["carrybooks.com@gmail.com", "homoromancebook@gmail.com"];
+    async function emailDuJeton(token) {
+      try {
+        if (!token) return "";
+        const { data } = await supa.auth.getUser(String(token));
+        return String((data && data.user && data.user.email) || "").trim().toLowerCase();
+      } catch (e) { return ""; }
+    }
+    function dateIsoValide(d) {
+      return /^\d{4}-\d{2}-\d{2}$/.test(String(d || "")) && !isNaN(Date.parse(String(d)));
+    }
+    const SORTIE_CHAMPS = "id, cover, resume, date_sortie, site, auteur_id";
+    const aujourdhuiIso = () => new Date().toISOString().slice(0, 10);
+
+    if (action === "sorties_lister") {
+      const id = body.id;
+      if (!id) return res.status(400).json({ error: "id requis." });
+      const { data, error } = await supa.from("sorties_prevues")
+        .select(SORTIE_CHAMPS)
+        .in("auteur_id", idsComptesLies(id))
+        .gte("date_sortie", aujourdhuiIso())
+        .order("date_sortie", { ascending: true });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, sorties: data || [] });
+    }
+
+    if (action === "sortie_modifier") {
+      const id = body.id;
+      const sortie_id = body.sortie_id;
+      const date_sortie = String(body.date_sortie || "").trim();
+      if (!id || !sortie_id) return res.status(400).json({ error: "id et sortie_id requis." });
+      if (!dateIsoValide(date_sortie)) return res.status(400).json({ error: "Choisis une date valide." });
+      if (date_sortie < aujourdhuiIso()) return res.status(400).json({ error: "La date de sortie ne peut pas être dans le passé." });
+      const { data, error } = await supa.from("sorties_prevues").update({ date_sortie })
+        .eq("id", sortie_id).in("auteur_id", idsComptesLies(id))
+        .select(SORTIE_CHAMPS).maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      if (!data) return res.status(404).json({ error: "Cette annonce est introuvable. Recharge la page." });
+      return res.status(200).json({ ok: true, sortie: data });
+    }
+
+    if (action === "sortie_supprimer") {
+      const id = body.id;
+      const sortie_id = body.sortie_id;
+      if (!id || !sortie_id) return res.status(400).json({ error: "id et sortie_id requis." });
+      const { data, error } = await supa.from("sorties_prevues").delete()
+        .eq("id", sortie_id).in("auteur_id", idsComptesLies(id)).select("id");
+      if (error) return res.status(500).json({ error: error.message });
+      if (!data || !data.length) return res.status(404).json({ error: "Cette annonce est introuvable. Recharge la page." });
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === "sortie_admin_modifier" || action === "sortie_admin_supprimer") {
+      const email = await emailDuJeton(body.token);
+      if (!email || ADMINS_SORTIES.indexOf(email) === -1) return res.status(403).json({ error: "Réservé à l'administrateur." });
+      const sortie_id = body.sortie_id;
+      if (!sortie_id) return res.status(400).json({ error: "sortie_id requis." });
+      if (action === "sortie_admin_modifier") {
+        const date_sortie = String(body.date_sortie || "").trim();
+        if (!dateIsoValide(date_sortie)) return res.status(400).json({ error: "Choisis une date valide." });
+        if (date_sortie < aujourdhuiIso()) return res.status(400).json({ error: "La date de sortie ne peut pas être dans le passé." });
+        const { data, error } = await supa.from("sorties_prevues").update({ date_sortie })
+          .eq("id", sortie_id).select(SORTIE_CHAMPS).maybeSingle();
+        if (error) return res.status(500).json({ error: error.message });
+        if (!data) return res.status(404).json({ error: "Cette annonce est introuvable. Recharge la page." });
+        return res.status(200).json({ ok: true, sortie: data });
+      }
+      const { data, error } = await supa.from("sorties_prevues").delete().eq("id", sortie_id).select("id");
+      if (error) return res.status(500).json({ error: error.message });
+      if (!data || !data.length) return res.status(404).json({ error: "Cette annonce est introuvable. Recharge la page." });
+      return res.status(200).json({ ok: true });
+    }
+
     // ---------- SUPPRESSION D'UN LIVRE PAR SON AUTEUR ----------
     // 25/09 : les auteurs n'arrivaient pas a supprimer un livre. La suppression
     // partait du navigateur (delete from books), or la table n'autorise les

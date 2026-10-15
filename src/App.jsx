@@ -13946,6 +13946,12 @@ export default function App() {
   const [sortieMsg, setSortieMsg] = useState("");
   const [sortieEnvoi, setSortieEnvoi] = useState(false);
   const [sortieUploading, setSortieUploading] = useState(false);
+  // 15/10 : modifier la date / supprimer une sortie annoncee (auteur et admin)
+  const [mesSorties, setMesSorties] = useState([]);
+  const [mesSortiesLoading, setMesSortiesLoading] = useState(false);
+  const [sortieBusyId, setSortieBusyId] = useState(null);
+  const [sortieDatesEdit, setSortieDatesEdit] = useState({});
+  const [sortieAdminDate, setSortieAdminDate] = useState("");
   const siteCourant = EST_HOMOROMANCE ? "homoromance" : "carrybooks";
   const chargerSorties = async () => {
     try {
@@ -13995,6 +14001,7 @@ export default function App() {
       setSortieCover(""); setSortieResume(""); setSortieDate("");
       setSortieMsg("✅ Ton annonce est en ligne. La couverture restera sur l'accueil jusqu'au jour de la sortie.");
       chargerSorties();
+      try { chargerMesSorties(); } catch (e3) {}
     } catch (e) { setSortieMsg("❌ Envoi impossible. Réessaie."); }
     setSortieEnvoi(false);
   };
@@ -14801,6 +14808,64 @@ export default function App() {
       else { setAnnonceMsg((d && d.error) || "Impossible de supprimer l'annonce."); }
     } catch (e) { setAnnonceMsg("Erreur : " + (e && e.message)); }
     setAnnonceBusyId(null);
+  };
+  // 15/10 : PROCHAINES SORTIES - l'auteur peut changer la date ou supprimer son annonce.
+  // Meme principe que les annonces : tout passe par le serveur (api/auteur-auth),
+  // car l'auteur n'est pas un compte Supabase.
+  const chargerMesSorties = async () => {
+    if (!auteurProfil || !auteurProfil.id) return;
+    setMesSortiesLoading(true);
+    try {
+      const d = await appelAnnonce({ action: "sorties_lister" });
+      const l = (d && d.sorties) || [];
+      setMesSorties(l);
+      const m = {}; l.forEach(x => { m[x.id] = x.date_sortie; });
+      setSortieDatesEdit(m);
+    } catch (e) {}
+    setMesSortiesLoading(false);
+  };
+  useEffect(() => { if (pubTypeSelected === "sortie" && auteurProfil && auteurProfil.id) chargerMesSorties(); }, [pubTypeSelected, auteurProfil && auteurProfil.id]);
+  const aujourdhuiLocal = () => new Date().toISOString().slice(0, 10);
+  const changerDateMaSortie = async (sv) => {
+    const nouvelle = sortieDatesEdit[sv.id];
+    if (!nouvelle) { setSortieMsg("Choisis la nouvelle date."); return; }
+    if (nouvelle < aujourdhuiLocal()) { setSortieMsg("La date de sortie ne peut pas être dans le passé."); return; }
+    setSortieBusyId(sv.id); setSortieMsg("");
+    try {
+      const d = await appelAnnonce({ action: "sortie_modifier", sortie_id: sv.id, date_sortie: nouvelle });
+      if (d && d.ok) { setSortieMsg("✅ Date modifiée."); await chargerMesSorties(); await chargerSorties(); }
+      else { setSortieMsg((d && d.error) || "Impossible de modifier la date."); }
+    } catch (e) { setSortieMsg("Erreur : " + (e && e.message)); }
+    setSortieBusyId(null);
+  };
+  const supprimerMaSortie = async (sv) => {
+    if (!window.confirm("Supprimer cette annonce de sortie ? Elle disparaîtra de l'accueil.")) return;
+    setSortieBusyId(sv.id); setSortieMsg("");
+    try {
+      const d = await appelAnnonce({ action: "sortie_supprimer", sortie_id: sv.id });
+      if (d && d.ok) { setSortieMsg("✅ Annonce supprimée."); await chargerMesSorties(); await chargerSorties(); }
+      else { setSortieMsg((d && d.error) || "Impossible de supprimer l'annonce."); }
+    } catch (e) { setSortieMsg("Erreur : " + (e && e.message)); }
+    setSortieBusyId(null);
+  };
+  // Administrateur : depuis l'accueil, en ouvrant une couverture. Le serveur
+  // verifie le jeton de connexion ET l'adresse e-mail avant d'agir.
+  const adminSortie = async (action, sv) => {
+    if (action === "sortie_admin_supprimer" && !window.confirm("Supprimer cette annonce de sortie ? Elle disparaîtra de l'accueil.")) return;
+    if (action === "sortie_admin_modifier") {
+      if (!sortieAdminDate) { setSortieMsg("Choisis la nouvelle date."); return; }
+      if (sortieAdminDate < aujourdhuiLocal()) { setSortieMsg("La date de sortie ne peut pas être dans le passé."); return; }
+    }
+    setSortieBusyId(sv.id); setSortieMsg("");
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, token, sortie_id: sv.id, date_sortie: sortieAdminDate }) });
+      const d = await res.json().catch(() => ({}));
+      if (d && d.ok) { setSortieOuverte(null); await chargerSorties(); }
+      else { setSortieMsg((d && d.error) || "Action impossible."); }
+    } catch (e) { setSortieMsg("Erreur : " + (e && e.message)); }
+    setSortieBusyId(null);
   };
   const [mesLivres, setMesLivres] = useState([]);
   const [mesLivresLoading, setMesLivresLoading] = useState(true);
@@ -20094,6 +20159,29 @@ export default function App() {
                     {sortieEnvoi ? "Envoi…" : "📤 Annoncer cette sortie"}
                   </button>
                   {sortieMsg ? <div style={{ marginTop: 12, fontSize: 13, color: G.text, lineHeight: 1.5 }}>{sortieMsg}</div> : null}
+                  <div style={{ height: 22 }} />
+                  <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🗓️ Mes sorties annoncées</div>
+                  <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 10, lineHeight: 1.5 }}>Tu peux changer la date de sortie d’une annonce ou la supprimer. Une annonce disparaît toute seule le jour de sa sortie.</div>
+                  {mesSortiesLoading ? (
+                    <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>⏳ Chargement en cours…</div>
+                  ) : mesSorties.length === 0 ? (
+                    <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: "10px 0" }}>Tu n’as aucune sortie annoncée pour le moment.</div>
+                  ) : mesSorties.map(sv => {
+                    const occupe = sortieBusyId === sv.id;
+                    return (
+                      <div key={sv.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? G.carte : "#fff", display: "flex", gap: 12 }}>
+                        <img src={sv.cover} alt="" style={{ width: 80, aspectRatio: "110 / 155", objectFit: "cover", borderRadius: 6, flexShrink: 0, alignSelf: "flex-start" }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Sortie le {dateEnFrancais(sv.date_sortie)}</div>
+                          <input type="date" value={sortieDatesEdit[sv.id] || ""} min={aujourdhuiLocal()} onChange={ev => setSortieDatesEdit(m => ({ ...m, [sv.id]: ev.target.value }))} style={{ ...champ, marginBottom: 8 }} />
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button onClick={() => changerDateMaSortie(sv)} disabled={occupe} style={{ flex: 1, padding: 10, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>💾 Changer la date</button>
+                            <button onClick={() => supprimerMaSortie(sv)} disabled={occupe} style={{ flex: 1, padding: 10, background: "#e11d48", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: occupe ? "not-allowed" : "pointer", opacity: occupe ? 0.6 : 1 }}>🗑️ Supprimer</button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                   </>
                   ) : pubTypeSelected === "editeur" ? (<>
                   <button onClick={() => { setPubTypeSelected(null); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Choisir un autre type</button>
@@ -23867,7 +23955,7 @@ export default function App() {
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>🗓️ Prochaines sorties</div>
                     <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                       {sorties.map(sv => (
-                        <div key={sv.id} onClick={() => setSortieOuverte(sv)} style={{ flexShrink: 0, width: "27vw", maxWidth: 120, cursor: "pointer", textAlign: "left" }}>
+                        <div key={sv.id} onClick={() => { setSortieOuverte(sv); setSortieAdminDate(sv.date_sortie || ""); setSortieMsg(""); }} style={{ flexShrink: 0, width: "27vw", maxWidth: 120, cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6 }}>
                             <img src={sv.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
@@ -24014,6 +24102,17 @@ export default function App() {
                       <div style={{ color: G.boutonTexte, background: G.bouton, padding: "11px 14px", borderRadius: 10, fontWeight: "bold", fontSize: 14, textAlign: "center" }}>
                         Date de sortie le {dateEnFrancais(sortieOuverte.date_sortie)}
                       </div>
+                      {estAdmin(user) && (
+                        <div style={{ marginTop: 14, padding: 12, border: "1px dashed " + G.border, borderRadius: 10 }}>
+                          <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, marginBottom: 8 }}>⚙️ Administrateur</div>
+                          <input type="date" value={sortieAdminDate} min={aujourdhuiLocal()} onChange={ev => setSortieAdminDate(ev.target.value)} style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid " + G.border, background: G.surface, color: G.text, fontSize: 14, boxSizing: "border-box", marginBottom: 8 }} />
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button onClick={() => adminSortie("sortie_admin_modifier", sortieOuverte)} disabled={sortieBusyId === sortieOuverte.id} style={{ flex: 1, padding: 10, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", opacity: sortieBusyId === sortieOuverte.id ? 0.6 : 1 }}>💾 Changer la date</button>
+                            <button onClick={() => adminSortie("sortie_admin_supprimer", sortieOuverte)} disabled={sortieBusyId === sortieOuverte.id} style={{ flex: 1, padding: 10, background: "#e11d48", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", opacity: sortieBusyId === sortieOuverte.id ? 0.6 : 1 }}>🗑️ Supprimer</button>
+                          </div>
+                          {sortieMsg ? <div style={{ marginTop: 8, fontSize: 12, color: G.text, lineHeight: 1.5 }}>{sortieMsg}</div> : null}
+                        </div>
+                      )}
                       <button onClick={() => setSortieOuverte(null)} style={{ width: "100%", marginTop: 12, padding: 12, background: "none", border: "1px solid " + G.border, borderRadius: 10, color: G.textDim, fontSize: 13, cursor: "pointer" }}>Fermer</button>
                     </div>
                   </div>
