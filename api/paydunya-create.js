@@ -19,6 +19,10 @@ export default async function handler(req, res) {
     body = body || {};
 
     const { amount, book_id, book_title, user_id, phone, email, name, referrer_code } = body;
+    const _host = String((req.headers && (req.headers["x-forwarded-host"] || req.headers.host)) || "").toLowerCase();
+    const EST_HR = _host.indexOf("homoromance") !== -1 || (body && body.site === "hr");
+    const SITE_URL = EST_HR ? "https://www.homoromance.com" : "https://www.carrybooks.com";
+    const SITE_NOM = EST_HR ? "HomoRomance" : "CarryBooks";
     if (!amount || !book_id) {
       return res.status(400).json({ error: "amount et book_id requis" });
     }
@@ -48,20 +52,20 @@ export default async function handler(req, res) {
             quantity: 1,
             unit_price: String(amt),
             total_price: String(amt),
-            description: "Livre numérique CarryBooks",
+            description: "Livre numérique " + SITE_NOM,
           },
         },
         total_amount: amt,
-        description: "Achat " + title + " sur CarryBooks",
+        description: "Achat " + title + " sur " + SITE_NOM,
       },
       store: {
-        name: "CarryBooks",
-        tagline: "Lis. Apprends. Évolue.",
-        website_url: "https://www.carrybooks.com",
+        name: SITE_NOM,
+        tagline: EST_HR ? "Lis. Vibre. Recommence." : "Lis. Apprends. Évolue.",
+        website_url: SITE_URL,
       },
       actions: {
-        cancel_url: "https://www.carrybooks.com/",
-        return_url: "https://www.carrybooks.com/?paydunya_return=1",
+        cancel_url: SITE_URL + "/",
+        return_url: SITE_URL + "/?paydunya_return=1",
         callback_url: "https://www.carrybooks.com/api/paydunya-notify",
       },
       // Ces données nous reviennent à la confirmation → on sait quoi débloquer

@@ -103,6 +103,10 @@ export default async function handler(req, res) {
     }
 
     const depositId = uuidv4();
+    const _host = String((req.headers && (req.headers["x-forwarded-host"] || req.headers.host)) || "").toLowerCase();
+    const EST_HR = _host.indexOf("homoromance") !== -1 || (typeof body !== "undefined" && body && body.site === "hr");
+    const SITE_URL = EST_HR ? "https://www.homoromance.com" : "https://www.carrybooks.com";
+    const SITE_NOM = EST_HR ? "HomoRomance" : "CarryBooks";
     const title = estCarrycare
       ? ("Diagnostic " + (quiz_type || "CarryCare"))
       : (book_title || ("Livre #" + book_id));
@@ -115,8 +119,8 @@ export default async function handler(req, res) {
     // Au retour : pour un livre on rouvre le livre ; pour un diagnostic on
     // revient sur une page dédiée qui récupère et affiche le résultat.
     const returnUrl = estCarrycare
-      ? ("https://www.carrybooks.com/?pawapay=return&cc=" + encodeURIComponent(extRef))
-      : ("https://www.carrybooks.com/?pawapay=return&book=" + encodeURIComponent(book_id));
+      ? (SITE_URL + "/?pawapay=return&cc=" + encodeURIComponent(extRef))
+      : (SITE_URL + "/?pawapay=return&book=" + encodeURIComponent(book_id));
 
     // Diagnostic trop volumineux pour les métadonnées PawaPay : on le pré-enregistre
     // dans carrycare_pending. Le webhook le lira au retour confirmé.
