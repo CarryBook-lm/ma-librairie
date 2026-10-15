@@ -711,6 +711,21 @@ export default function Admin() {
     await rechargerEA();
     alert("🚫 Auteur banni et livres retirés du site.");
   };
+  const purgerAuteursSansLivre = async () => {
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess && sess.session ? sess.session.access_token : "";
+      const appel = (extra) => fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "admin_purger_auteurs", token, ...extra }) }).then(r => r.json().catch(() => ({})));
+      const ap = await appel({});
+      if (!ap.ok) { alert("❌ " + (ap.error || "Erreur inconnue")); return; }
+      if (!ap.total) { alert("Aucun auteur sans livre à supprimer."); return; }
+      const liste = ap.auteurs.slice(0, 40).map(x => "• " + (x.nom || "?") + " (" + (x.email || "sans e-mail") + ")").join("\n") + (ap.total > 40 ? "\n… et " + (ap.total - 40) + " autres" : "");
+      if (!window.confirm("SUPPRIMER DÉFINITIVEMENT " + ap.total + " auteur(s) qui n'ont aucun livre, aucune vente et aucun retrait ?\n\n" + liste + "\n\nCette action est irréversible.")) return;
+      const r = await appel({ confirmer: true, ids: ap.auteurs.map(x => x.id) });
+      if (r.ok) { alert("🧹 " + r.supprimes + " auteur(s) supprimé(s)." + (r.echecs && r.echecs.length ? "\n" + r.echecs.length + " n'ont pas pu être supprimés : " + r.echecs[0].erreur : "")); await rechargerEA(); }
+      else alert("❌ " + (r.error || "Erreur inconnue"));
+    } catch (e) { alert("❌ Erreur : " + (e && e.message)); }
+  };
   const nouveauMdpAuteur = async (a) => {
     if (!window.confirm("Générer un NOUVEAU mot de passe pour " + (a.nom_complet || "cette auteure") + " ?\nL'ancien ne marchera plus.")) return;
     try {
@@ -4845,6 +4860,7 @@ export default function Admin() {
                   );
                 })() : (
                   <div>
+                  {!EST_HOMOROMANCE && <button onClick={purgerAuteursSansLivre} style={{ padding: "8px 14px", background: "#1a1a1a", color: "#ff8a80", border: "1px solid #5a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 12, cursor: "pointer", marginBottom: 10 }}>🧹 Supprimer les auteurs sans livre</button>}
                   <input value={eaSearch} onChange={e => setEaSearch(e.target.value)} placeholder="🔍 Auteur (nom de plume, vrai nom, e-mail, tél.) ou livre…" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#e8e0d0", fontSize: 13, marginBottom: 12 }} />
                   {(() => {
                     const q = eaSearch.trim().toLowerCase();

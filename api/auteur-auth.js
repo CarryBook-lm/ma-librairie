@@ -381,6 +381,34 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ---------- 15/10 : purge des auteurs qui n'ont AUCUN livre (apercu puis suppression) ----------
+    if (action === "admin_purger_auteurs") {
+      const emailAdmin = await emailDuJeton(body.token);
+      if (!emailAdmin || ADMINS_SORTIES.indexOf(emailAdmin) === -1) return res.status(403).json({ error: "Réservé à l'administrateur." });
+      const PROTEGES = [8, 9];
+      const { data: auts, error: eA } = await supa.from("auteurs").select("id, nom_complet, email").limit(10000);
+      if (eA) return res.status(500).json({ error: eA.message });
+      const { data: bks } = await supa.from("books").select("auteur_id").not("auteur_id", "is", null).limit(50000);
+      const avecLivre = new Set((bks || []).map(b => String(b.auteur_id)));
+      const { data: vts } = await supa.from("ventes_auteurs").select("auteur_id").limit(50000);
+      (vts || []).forEach(v => avecLivre.add(String(v.auteur_id)));
+      const { data: rts } = await supa.from("retraits").select("auteur_id").limit(50000);
+      (rts || []).forEach(v => avecLivre.add(String(v.auteur_id)));
+      const cibles = (auts || []).filter(a => !avecLivre.has(String(a.id)) && PROTEGES.indexOf(Number(a.id)) === -1);
+      if (!body.confirmer) {
+        return res.status(200).json({ ok: true, apercu: true, total: cibles.length, auteurs: cibles.map(a => ({ id: a.id, nom: a.nom_complet, email: a.email })) });
+      }
+      const idsOk = new Set(cibles.map(a => String(a.id)));
+      const aSupprimer = (Array.isArray(body.ids) ? body.ids : []).filter(id => idsOk.has(String(id)));
+      let supprimes = 0; const echecs = [];
+      for (const id of aSupprimer) {
+        for (const t of ["support_messages", "annonces_pub", "sorties_prevues"]) { try { await supa.from(t).delete().eq("auteur_id", id); } catch (e) {} }
+        const { error } = await supa.from("auteurs").delete().eq("id", id);
+        if (error) echecs.push({ id, erreur: error.message }); else supprimes++;
+      }
+      return res.status(200).json({ ok: true, supprimes, echecs });
+    }
+
     // ---------- 15/10 : l'administrateur genere un nouveau mot de passe pour une auteure ----------
     if (action === "admin_reset_mdp") {
       const emailAdmin = await emailDuJeton(body.token);
