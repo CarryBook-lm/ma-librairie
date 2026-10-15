@@ -24094,6 +24094,55 @@ export default function App() {
                 )}
 
 
+                {EST_HOMOROMANCE && (() => {
+                  // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
+                  // 09/10 : surCarryBooks() manquait ici — la rangee montrait TOUS les livres,
+                  // y compris ceux qui n'appartiennent pas au site affiche.
+                  const digitalBooks = books.filter(b => 
+                    b.status === "actif" && surCarryBooks(b) && (
+                      b.product_type === 'numerique' || 
+                      b.product_type === 'mixte' || 
+                      !b.product_type
+                    )
+                  ).slice(0, 10);
+                  if (digitalBooks.length === 0) return null;
+                  return (
+                <div style={{ marginBottom: 28 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
+                    <div ref={nouvHRRef} onTouchStart={() => { nouvHRPause.current = Date.now(); }} onMouseDown={() => { nouvHRPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: EST_HOMOROMANCE ? "x mandatory" : undefined, scrollPaddingLeft: 16 }}>
+                      {digitalBooks.map(book => (
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: EST_HOMOROMANCE ? "calc((100% - 26px) / 1.5)" : "27vw", maxWidth: EST_HOMOROMANCE ? 300 : 120, scrollSnapAlign: EST_HOMOROMANCE ? "start" : undefined, cursor: "pointer", textAlign: "left" }}>
+                          <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
+                            {book.cover
+                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
+                            {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
+                            {isOutOfStock(book) && (
+                              <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "#dc3545", color: "#fff", fontSize: 9, fontWeight: "bold", textAlign: "center", padding: "4px 0", letterSpacing: 1 }}>
+                                🚫 RUPTURE
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{!EST_HOMOROMANCE && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
+                          <div style={{ fontSize: 9, color: G.textFaint, marginTop: 1 }}>
+                            {book.audio_url ? "🎧 Livre Audio" : (book.can_download ? "⬇️ Téléchargeable" : (EST_HOMOROMANCE ? "" : "📖 Liseuse"))}
+                            {(isMixte(book) || (book.has_paper_version && book.product_type !== "papier" && book.product_type !== "article")) && <span style={{ color: G.gold }}> · 📦 Aussi en papier</span>}
+                          </div>
+                          {!EST_HOMOROMANCE && (<>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 4, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, color: book.price === 0 ? G.green : G.prix, fontWeight: "bold", display: "inline-block", background: book.price === 0 ? "transparent" : G.prixFond, padding: book.price === 0 ? 0 : G.prixPad, borderRadius: G.prixRadius }}>{book.price === 0 ? "Gratuit" : book.price?.toLocaleString() + " F"}</span>
+                            {bookRatings[book.id] && bookRatings[book.id].count > 0 && (
+                              <span style={{ fontSize: 9, color: "#f5c518" }}>{"★ " + bookRatings[book.id].avg.toFixed(1)}</span>
+                            )}
+                          </div>
+                          </>)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  );
+                })()}
+
                 {/* HERO CAROUSEL - num�rique uniquement */}
                 {(() => {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
@@ -24258,7 +24307,7 @@ export default function App() {
                 )}
 
                 {/* NOUVEAUTÉS (PRODUITS NUMÉRIQUES) - numérique + mixte */}
-                {(() => {
+                                {!EST_HOMOROMANCE && (() => {
                   // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
                   // 09/10 : surCarryBooks() manquait ici — la rangee montrait TOUS les livres,
                   // y compris ceux qui n'appartiennent pas au site affiche.
