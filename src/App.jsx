@@ -14068,17 +14068,33 @@ export default function App() {
   const [tutosAccueil, setTutosAccueil] = useState([]);
   const [siteStats, setSiteStats] = useState({ visites: 0, lecteurs: 0, livres: 0, auteurs: 0 });
   useEffect(() => {
-    (async () => {
+    let arretStats = false;
+    const chargerStats = async () => {
       try {
         let visites = 0;
-        if (!sessionStorage.getItem("visiteComptee")) {
+        if (EST_HOMOROMANCE) {
+          // 15/10 : HomoRomance a son PROPRE compteur de visites (table visites_homoromance), separe de CarryBooks.
+          try {
+            if (!sessionStorage.getItem("visiteComptee")) {
+              sessionStorage.setItem("visiteComptee", "1");
+              const { data } = await supabase.rpc("incr_visite_hr"); visites = Number(data) || 0;
+            } else {
+              const { data } = await supabase.rpc("compter_visites_hr"); visites = Number(data) || 0;
+            }
+          } catch (e) {}
+        } else if (!sessionStorage.getItem("visiteComptee")) {
           sessionStorage.setItem("visiteComptee", "1");
           const { data } = await supabase.rpc("incr_visite"); visites = Number(data) || 0;
         } else {
           const { data } = await supabase.from("site_stats").select("valeur").eq("cle", "visites").limit(1); visites = (data && data[0]) ? Number(data[0].valeur) : 0;
         }
-        const { count: nbLivres } = await supabase.from("books").select("id", { count: "exact", head: true }).eq("status", "actif");
-        const { count: nbAuteurs } = await supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "valide");
+        // 15/10 : sur HomoRomance, seulement les livres de la categorie HomoRomance, et un seul auteur.
+        let qLivres = supabase.from("books").select("id", { count: "exact", head: true }).eq("status", "actif");
+        if (EST_HOMOROMANCE) qLivres = qLivres.eq("category", CAT_HOMOROMANCE);
+        const { count: nbLivres } = await qLivres;
+        let nbAuteurs = 0;
+        if (EST_HOMOROMANCE && AUTEUR_UNIQUE_HR) { nbAuteurs = 1; }
+        else { const r = await supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "valide"); nbAuteurs = r.count; }
         // 22/09 : le compteur de lecteurs affichait 0 pour TOUT LE MONDE. Les tables
         // d'achats sont protegees en lecture, donc un comptage direct renvoie 0 depuis
         // le navigateur. On passe par la fonction compter_lecteurs() (SQL, security
@@ -14086,9 +14102,12 @@ export default function App() {
         // personnes distinctes (un client qui achete 5 livres = 1 lecteur).
         let nbLecteurs = 0;
         try { const { data: nl } = await supabase.rpc("compter_lecteurs"); nbLecteurs = Number(nl) || 0; } catch (e) {}
-        setSiteStats({ visites, lecteurs: nbLecteurs, livres: nbLivres || 0, auteurs: nbAuteurs || 0 });
+        if (!arretStats) setSiteStats({ visites, lecteurs: nbLecteurs, livres: nbLivres || 0, auteurs: nbAuteurs || 0 });
       } catch (e) {}
-    })();
+    };
+    chargerStats();
+    const minuteurStats = setInterval(chargerStats, 30000);
+    return () => { arretStats = true; clearInterval(minuteurStats); };
   }, []);
   const [tutosOuverts, setTutosOuverts] = useState({});
   useEffect(() => { if (EST_HOMOROMANCE) return; /* 13/10 : les ateliers sont ceux de CarryBooks */ supabase.from("tutoriels").select("id, image_url, lien, texte_html").eq("actif", true).order("ordre", { ascending: true }).order("created_at", { ascending: false }).then(({ data }) => setTutosAccueil(data || [])); }, []);
