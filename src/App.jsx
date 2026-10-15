@@ -18,6 +18,8 @@ const CAT_HOMOROMANCE = "HomoRomance";
 // infos a droite, resume replie, bouton arrondi, suggestions en grille). Mettre false pour
 // revenir a l'ancienne fiche de CarryBooks.
 const FICHE_STYLE_HR = true;
+// 15/10 : HomoRomance a ouvert le 09/10/2026. Ses chiffres ne comptent que les ventes de ses livres depuis cette date.
+const HR_DEBUT_MS = new Date("2026-10-09T00:00:00").getTime();
 // 13/10 : extrait gratuit d'un roman = 7 pages au minimum (decision de Landrine). Avant, le lecteur
 // coupait en dur a 2 pages, quel que soit le reglage "Pages gratuites" du livre.
 const EXTRAIT_PAGES_ROMAN = 7;
@@ -14990,15 +14992,19 @@ export default function App() {
   const [retraitSaving, setRetraitSaving] = useState(false);
   useEffect(() => {
     if (!auteurProfil) { setVentesAuteur([]); return; }
-    (async () => {
+    let arret = false;
+    const charger = async () => {
       try {
         const idsLies = idsComptesLies(auteurProfil.id);
         const { data } = await supabase.from("ventes_auteurs").select("*").in("auteur_id", idsLies).order("created_at", { ascending: false });
-        setVentesAuteur(data || []);
+        if (!arret) setVentesAuteur(data || []);
         const { data: rr } = await supabase.from("retraits").select("*").in("auteur_id", idsLies).order("created_at", { ascending: false });
-        setRetraitsAuteur(rr || []);
+        if (!arret) setRetraitsAuteur(rr || []);
       } catch (e) {}
-    })();
+    };
+    charger();
+    const minuteur = setInterval(charger, 30000);
+    return () => { arret = true; clearInterval(minuteur); };
   }, [auteurProfil, auteurTab]);
   // Charge les catégories + les livres de l'auteur
   useEffect(() => {
@@ -18530,6 +18536,12 @@ export default function App() {
     setPubUploading(false);
     e.target.value = "";
   }
+  // Sur HomoRomance : seulement les ventes des livres de Johanna Morisson, depuis la creation du site.
+  function ventesSite(list) {
+    if (!EST_HOMOROMANCE) return list;
+    const ids = new Set((mesLivres || []).map(x => String(x.id)));
+    return (list || []).filter(v => ids.has(String(v.book_id)) && new Date(v.created_at).getTime() >= HR_DEBUT_MS);
+  }
   function filterVentesByPeriod(list, period, dateStr) {
     const now = new Date();
     const sod = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -20705,7 +20717,7 @@ export default function App() {
               {auteurTab === "ventes" && (() => {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
                 const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
-                const vv = filterVentesByPeriod(ventesAuteur, statsPeriod, statsDate);
+                const vv = filterVentesByPeriod(ventesSite(ventesAuteur), statsPeriod, statsDate);
                 const vd = vv.filter(v => v.source !== "abonnement");
                 const va = vv.filter(v => v.source === "abonnement");
                 const grpP = {}; vd.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
@@ -20715,6 +20727,21 @@ export default function App() {
                 const periods = [["today", "Aujourd'hui"], ["week", "Cette semaine"], ["month", "Ce mois"], ["year", "Cette année"]];
                 return (
                   <div>
+                    {EST_HOMOROMANCE && (() => {
+                      const hr = ventesSite(ventesAuteur);
+                      const hrV = hr.filter(v => v.source !== "abonnement");
+                      const hrG = hr.reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const j0 = new Date(); j0.setHours(0, 0, 0, 0);
+                      const hrAuj = hr.filter(v => new Date(v.created_at).getTime() >= j0.getTime()).reduce((s, v) => s + (v.part_auteur || 0), 0);
+                      const cel = (lab, val) => (<div style={{ flex: 1, background: G.bg, border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center", minWidth: 0 }}><div style={{ fontSize: 18, fontWeight: "bold", color: G.text }}>{val}</div><div style={{ fontSize: 10.5, color: G.textDim, marginTop: 2 }}>{lab}</div></div>);
+                      return (
+                        <div style={{ background: "#2a2c4d", border: "1px solid " + G.border, borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📊 HomoRomance depuis sa création</div>
+                          <div style={{ fontSize: 11, color: G.textDim, marginBottom: 10 }}>Chiffres réels de tes livres sur HomoRomance, mis à jour toutes les 30 secondes.</div>
+                          <div style={{ display: "flex", gap: 8 }}>{cel("Ventes", hrV.length)}{cel("Gains", (hrG).toLocaleString("fr-FR") + " F")}{cel("Gains aujourd'hui", hrAuj.toLocaleString("fr-FR") + " F")}</div>
+                        </div>
+                      );
+                    })()}
                     {(() => {
                       const vendu = ventesAuteur.reduce((s, v) => s + (v.part_auteur || 0), 0);
                       const percu = retraitsAuteur.filter(r => r.statut === "paye").reduce((s, r) => s + (r.montant || 0), 0);
@@ -20730,7 +20757,7 @@ export default function App() {
                       );
                       return (
                         <div style={{ background: "linear-gradient(135deg, #6a11cb, #8e2de2)", borderRadius: 12, padding: 14, marginBottom: 16, color: "#fff" }}>
-                          <div style={{ fontSize: 13, fontWeight: "bold", marginBottom: 10 }}>💼 Mon portefeuille</div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", marginBottom: 10 }}>{EST_HOMOROMANCE ? "💼 Mon portefeuille (tous mes sites)" : "💼 Mon portefeuille"}</div>
                           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>{box("Total déjà vendu", vendu, false)}{box("Total déjà perçu", percu, false)}</div>
                           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
                           {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
@@ -20780,7 +20807,7 @@ export default function App() {
               {auteurTab === "stats" && (() => {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
                 const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
-                const vv = filterVentesByPeriod(ventesAuteur, statsPeriod, statsDate);
+                const vv = filterVentesByPeriod(ventesSite(ventesAuteur), statsPeriod, statsDate);
                 const vitr = vv.filter(v => v.source === "vitrine");
                 const avec = vv.filter(v => v.source === "auteur");
                 const sans = vv.filter(v => v.source !== "auteur" && v.source !== "vitrine");
@@ -20790,11 +20817,11 @@ export default function App() {
                 // ventes groupées par livre (période) pour la liste
                 const grpP = {}; vv.forEach(v => { const k = v.book_id; (grpP[k] = grpP[k] || { n: 0, g: 0 }); grpP[k].n++; grpP[k].g += v.part_auteur || 0; });
                 // best-sellers (tout l'historique)
-                const grpAll = {}; ventesAuteur.forEach(v => { const k = v.book_id; (grpAll[k] = grpAll[k] || { n: 0, g: 0 }); grpAll[k].n++; grpAll[k].g += v.part_auteur || 0; });
+                const grpAll = {}; ventesSite(ventesAuteur).forEach(v => { const k = v.book_id; (grpAll[k] = grpAll[k] || { n: 0, g: 0 }); grpAll[k].n++; grpAll[k].g += v.part_auteur || 0; });
                 const best = Object.keys(grpAll).map(k => ({ id: k, ...grpAll[k] })).sort((a, b) => b.n - a.n).slice(0, 5);
                 // graphique 7 derniers jours
                 const days = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i); days.push(d); }
-                const dayGains = days.map(d => { const s = d.getTime(), e = s + 86400000; return ventesAuteur.filter(v => { const t = new Date(v.created_at).getTime(); return t >= s && t < e; }).reduce((a, v) => a + (v.part_auteur || 0), 0); });
+                const dayGains = days.map(d => { const s = d.getTime(), e = s + 86400000; return ventesSite(ventesAuteur).filter(v => { const t = new Date(v.created_at).getTime(); return t >= s && t < e; }).reduce((a, v) => a + (v.part_auteur || 0), 0); });
                 const maxG = Math.max(1, ...dayGains);
                 const compteur = (lab, n, g, col) => (
                   <div style={{ flex: 1, background: G.bg, border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}>
