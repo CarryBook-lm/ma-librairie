@@ -14,6 +14,10 @@ const PAYDUNYA_ENABLED = false;
 //   carrybooks.com  -> site historique, strictement inchange.
 // ============================================================
 const CAT_HOMOROMANCE = "HomoRomance";
+// 15/10 : la FICHE LIVRE de CarryBooks est EXACTEMENT celle de HomoRomance (couverture a gauche,
+// infos a droite, resume replie, bouton arrondi, suggestions en grille). Mettre false pour
+// revenir a l'ancienne fiche de CarryBooks.
+const FICHE_STYLE_HR = true;
 // 13/10 : extrait gratuit d'un roman = 7 pages au minimum (decision de Landrine). Avant, le lecteur
 // coupait en dur a 2 pages, quel que soit le reglage "Pages gratuites" du livre.
 const EXTRAIT_PAGES_ROMAN = 7;
@@ -22545,7 +22549,7 @@ export default function App() {
           return null;
         })()}
         <div style={{ padding: "24px 16px 40px" }}>
-          {EST_HOMOROMANCE ? (
+          {FICHE_STYLE_HR ? (
             <>
               {/* 13/10 : fiche livre HomoRomance. Couverture a gauche, infos a droite, resume replie. */}
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 22 }}>
@@ -22557,23 +22561,23 @@ export default function App() {
                 <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                   {(book.subcategory || book.category) ? <div style={{ fontSize: 9, letterSpacing: 1.2, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8, lineHeight: 1.4 }}>{book.subcategory || book.category}</div> : null}
                   <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: ((book.title || "").length > 28 ? 16 : ((book.title || "").length > 16 ? 18 : 21)), lineHeight: 1.15, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
-                  <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 10, fontFamily: "system-ui, sans-serif" }}>roman signé <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
+                  <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 10, fontFamily: "system-ui, sans-serif" }}>{EST_HOMOROMANCE ? "roman signé" : "par"} <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
                   {(() => {
                     const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
                     return (
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontFamily: "system-ui, sans-serif" }}>
-                        <span style={{ letterSpacing: 2, fontSize: 15, color: "#f5c518" }}>{[1,2,3,4,5].map(s => <span key={s} style={{ color: (r.count > 0 && s <= Math.round(r.avg)) ? "#f5c518" : "#55566f" }}>★</span>)}</span>
+                        <span style={{ letterSpacing: 2, fontSize: 15, color: "#f5c518" }}>{[1,2,3,4,5].map(s => <span key={s} style={{ color: (r.count > 0 && s <= Math.round(r.avg)) ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border) }}>★</span>)}</span>
                         {r.count > 0 ? <span style={{ fontSize: 13, fontWeight: 800, color: G.text }}>{r.avg.toFixed(1)}/5</span> : null}
                       </div>
                     );
                   })()}
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>
                     {(() => { const r = bookRatings[book.id] || { count: 0 }; return r.count > 0 ? (r.count + " avis") : "Pas encore d'avis"; })()}
-                    {(pagesReelles || book.nb_pages) ? <span> · 📖 {pagesReelles || book.nb_pages} pages</span> : null}
+                    {book.audio_url ? (book.duree_audio ? <span> · 🎧 {Math.floor(book.duree_audio / 60)} min d’écoute</span> : null) : ((pagesReelles || book.nb_pages) ? <span> · 📖 {pagesReelles || book.nb_pages} pages</span> : null)}
                     {(book.nb_ventes || 0) >= 1 ? <span> · 👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : null}
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <span style={{ display: "inline-block", background: G.prixFond, color: "#fff", fontWeight: 800, fontSize: 14, padding: "4px 12px", borderRadius: 8, border: "1px solid #ffffff33", fontFamily: "system-ui, sans-serif" }}>
+                    <span style={{ display: "inline-block", background: G.prixFond === "transparent" ? G.bouton : G.prixFond, color: G.prixFond === "transparent" ? G.boutonTexte : "#fff", fontWeight: 800, fontSize: 14, padding: "4px 12px", borderRadius: 8, border: "1px solid #ffffff33", fontFamily: "system-ui, sans-serif" }}>
                       {isPaperOnlyBook ? (getDisplayPrice(book).toLocaleString() + " FCFA") : (free ? "Gratuit" : (book.price?.toLocaleString() + " FCFA"))}
                     </span>
                     {isOnPromo(book) && !isPaperOnlyBook ? <span style={{ marginLeft: 8, fontSize: 13, color: G.textFaint, textDecoration: "line-through" }}>{book.original_price?.toLocaleString()} FCFA</span> : null}
@@ -22597,7 +22601,7 @@ export default function App() {
                     <span style={{ fontSize: 12, color: G.textDim, fontFamily: "system-ui, sans-serif" }}>Ton avis</span>
                     <div style={{ display: "flex", gap: 4 }}>
                       {[1,2,3,4,5].map(s => (
-                        <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : "#55566f", padding: 0 }}>★</button>
+                        <button key={s} onClick={() => submitRating(book.id, s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: s <= r.userRating ? "#f5c518" : (EST_HOMOROMANCE ? "#55566f" : G.border), padding: 0 }}>★</button>
                       ))}
                     </div>
                   </div>
@@ -22728,7 +22732,7 @@ export default function App() {
           {!isPaperOnlyBook && (
             <button
               onClick={() => startReading(book)}
-              style={EST_HOMOROMANCE ? { width: "100%", padding: "16px 15px", background: G.bouton, border: "2px solid #ffffff66", borderRadius: 999, color: "#fff", cursor: "pointer", fontSize: 16, fontWeight: 700, fontFamily: "system-ui, sans-serif", boxShadow: "0 8px 22px rgba(46,1,56,0.6)" } : { width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+              style={FICHE_STYLE_HR ? { width: "100%", padding: "16px 15px", background: G.bouton, border: "2px solid #ffffff66", borderRadius: 999, color: EST_HOMOROMANCE ? "#fff" : G.boutonTexte, cursor: "pointer", fontSize: 16, fontWeight: 700, fontFamily: "system-ui, sans-serif", boxShadow: EST_HOMOROMANCE ? "0 8px 22px rgba(46,1,56,0.6)" : "0 8px 22px rgba(0,0,0,0.25)" } : { width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
               {owned || free ? (book.audio_url ? "🎧 Écouter maintenant" : "📖 Lire maintenant") : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.audio_url ? "🎧 Écouter — " : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ")) + book.price?.toLocaleString() + " FCFA"}
             </button>
           )}
@@ -23018,13 +23022,13 @@ export default function App() {
 
             return (
               <div style={{ marginTop: 36, paddingTop: 24, borderTop: "1px solid " + G.border }}>
-                <div style={{ fontSize: EST_HOMOROMANCE ? 12 : 11, letterSpacing: 2, color: EST_HOMOROMANCE ? G.text : G.gold, textTransform: "uppercase", marginBottom: EST_HOMOROMANCE ? 16 : 4, textAlign: "center", fontFamily: EST_HOMOROMANCE ? "system-ui, sans-serif" : undefined }}>
-                  {EST_HOMOROMANCE ? "Ceci pourrait vous intéresser" : "🎯 Ceci pourrait vous intéresser"}
+                <div style={{ fontSize: FICHE_STYLE_HR ? 12 : 11, letterSpacing: 2, color: FICHE_STYLE_HR ? G.text : G.gold, textTransform: "uppercase", marginBottom: FICHE_STYLE_HR ? 16 : 4, textAlign: "center", fontFamily: FICHE_STYLE_HR ? "system-ui, sans-serif" : undefined }}>
+                  {FICHE_STYLE_HR ? "Ceci pourrait vous intéresser" : "🎯 Ceci pourrait vous intéresser"}
                 </div>
-                {EST_HOMOROMANCE ? null : (<div style={{ fontSize: 13, color: G.textDim, marginBottom: 18, textAlign: "center", fontStyle: "italic" }}>
+                {FICHE_STYLE_HR ? null : (<div style={{ fontSize: 13, color: G.textDim, marginBottom: 18, textAlign: "center", fontStyle: "italic" }}>
                   D'autres lecteurs ont aussi aimé...
                 </div>)}
-                <div style={EST_HOMOROMANCE ? { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 } : {
+                <div style={FICHE_STYLE_HR ? { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 } : {
                   display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12,
                   scrollbarWidth: "thin", WebkitOverflowScrolling: "touch"
                 }}>
@@ -23035,7 +23039,7 @@ export default function App() {
                         setSelectedBook(rec);
                         window.scrollTo(0, 0);
                       }}
-                      style={EST_HOMOROMANCE ? { cursor: "pointer", minWidth: 0 } : {
+                      style={FICHE_STYLE_HR ? { cursor: "pointer", minWidth: 0 } : {
                         flexShrink: 0, width: 130, cursor: "pointer",
                         background: G.surface, borderRadius: 8, padding: 8,
                         border: "1px solid " + G.border, transition: "transform 0.2s"
@@ -23044,7 +23048,7 @@ export default function App() {
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
                       {rec.cover
-                        ? <img src={rec.cover} alt={rec.title} style={{ width: "100%", height: EST_HOMOROMANCE ? "auto" : 170, aspectRatio: EST_HOMOROMANCE ? "2 / 3" : undefined, objectFit: "cover", borderRadius: EST_HOMOROMANCE ? 10 : 4, marginBottom: 6, display: "block" }} />
+                        ? <img src={rec.cover} alt={rec.title} style={{ width: "100%", height: FICHE_STYLE_HR ? "auto" : 170, aspectRatio: FICHE_STYLE_HR ? "2 / 3" : undefined, objectFit: "cover", borderRadius: FICHE_STYLE_HR ? 10 : 4, marginBottom: 6, display: "block" }} />
                         : <div style={{ width: "100%", height: 170, background: G.surface2, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, marginBottom: 6 }}>📖</div>}
                       <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {rec.title}
