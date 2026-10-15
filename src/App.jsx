@@ -22582,8 +22582,8 @@ export default function App() {
               {book.summary && (
                 <div style={{ borderLeft: "4px solid " + G.text, paddingLeft: 14, marginBottom: 22, textAlign: "left" }}>
                   <div style={{ fontSize: 17, color: G.text, fontWeight: 700, marginBottom: 6, fontFamily: "system-ui, sans-serif" }}>Résumé</div>
-                  <div style={{ color: G.text, fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-line", fontFamily: "system-ui, sans-serif", ...(resumeDeplie === book.id ? {} : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }) }}>{book.summary}</div>
-                  {book.summary.length > 160 ? (
+                  <div style={{ color: G.text, fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-line", fontFamily: "system-ui, sans-serif", ...(resumeDeplie === book.id ? {} : { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }) }}>{book.summary}</div>
+                  {book.summary.length > 150 ? (
                     <button type="button" onClick={() => setResumeDeplie(resumeDeplie === book.id ? null : book.id)} style={{ background: "none", border: "none", color: G.text, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "8px 0 2px", fontFamily: "system-ui, sans-serif" }}>{resumeDeplie === book.id ? "Voir moins ▲" : "Voir plus ▼"}</button>
                   ) : null}
                 </div>
@@ -22646,7 +22646,10 @@ export default function App() {
           {book.summary && (
             <div style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 16, marginBottom: 20 }}>
               <div style={{ fontSize: 10, color: G.gold, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Résumé</div>
-              <p style={{ color: G.text, lineHeight: 1.8, fontSize: 12, margin: 0, fontStyle: "italic", textAlign: "justify", whiteSpace: "pre-line" }}>{book.summary}</p>
+              <p style={{ color: G.text, lineHeight: 1.8, fontSize: 12, margin: 0, fontStyle: "italic", textAlign: "justify", whiteSpace: "pre-line", ...(resumeDeplie === book.id ? {} : { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }) }}>{book.summary}</p>
+              {book.summary.length > 150 ? (
+                <button type="button" onClick={() => setResumeDeplie(resumeDeplie === book.id ? null : book.id)} style={{ background: "none", border: "none", color: G.gold, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "8px 0 0" }}>{resumeDeplie === book.id ? "Voir moins ▲" : "Voir plus ▼"}</button>
+              ) : null}
             </div>
           )}
           {/* ⭐ Ratings */}
