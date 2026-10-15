@@ -20,7 +20,7 @@ const EST_HOMOROMANCE = (function () {
   } catch (e) { return false; }
 })();
 // HomoRomance a ouvert le 09/10/2026 : ses chiffres ne comptent rien d'avant.
-const HR_DEBUT_MS = new Date("2026-10-09T00:00:00").getTime();
+const HR_DEBUT_MS = new Date("2026-10-15T12:50:00+01:00").getTime(); // meme heure que App.jsx
 const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
 const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
 

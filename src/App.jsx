@@ -19,7 +19,8 @@ const CAT_HOMOROMANCE = "HomoRomance";
 // revenir a l'ancienne fiche de CarryBooks.
 const FICHE_STYLE_HR = true;
 // 15/10 : HomoRomance a ouvert le 09/10/2026. Ses chiffres ne comptent que les ventes de ses livres depuis cette date.
-const HR_DEBUT_MS = new Date("2026-10-09T00:00:00").getTime();
+// 15/10 : les ventes HomoRomance repartent de zero a cette heure (Cameroun, UTC+1). Avant, les memes livres se vendaient aussi sur CarryBooks et rien ne dit sur quel site.
+const HR_DEBUT_MS = new Date("2026-10-15T12:50:00+01:00").getTime();
 // 13/10 : extrait gratuit d'un roman = 7 pages au minimum (decision de Landrine). Avant, le lecteur
 // coupait en dur a 2 pages, quel que soit le reglage "Pages gratuites" du livre.
 const EXTRAIT_PAGES_ROMAN = 7;
@@ -2137,6 +2138,8 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
 // Il reste achetable par son lien direct, et reste visible dans Ma bibliotheque une fois achete.
 function surCarryBooks(b) {
   if (!b || b.masque || b.exclusif_vitrine) return false;
+  // 15/10 : les romans HomoRomance ne se montrent plus sur CarryBooks (accueil, catalogue, recherche).
+  if (!EST_HOMOROMANCE && (b.category || "") === CAT_HOMOROMANCE) return false;
   // Sur homoromance.com : on ne montre QUE les romans de la categorie HomoRomance.
   if (EST_HOMOROMANCE) {
     if ((b.category || "") !== CAT_HOMOROMANCE) return false;
