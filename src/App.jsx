@@ -14824,7 +14824,6 @@ export default function App() {
     } catch (e) {}
     setMesSortiesLoading(false);
   };
-  useEffect(() => { if (pubTypeSelected === "sortie" && auteurProfil && auteurProfil.id) chargerMesSorties(); }, [pubTypeSelected, auteurProfil && auteurProfil.id]);
   const aujourdhuiLocal = () => new Date().toISOString().slice(0, 10);
   const changerDateMaSortie = async (sv) => {
     const nouvelle = sortieDatesEdit[sv.id];
@@ -14910,6 +14909,9 @@ export default function App() {
   const [kycMsg, setKycMsg] = useState("");
   const [pubEditId, setPubEditId] = useState(null);
   const [pubTypeSelected, setPubTypeSelected] = useState(null); // type ouvert (null = ecran de choix)
+  // 15/10 : charge « Mes sorties annoncees » quand l'auteur ouvre l'ecran. DOIT rester
+  // APRES la declaration de pubTypeSelected (sinon : ecran blanc, variable pas encore initialisee).
+  useEffect(() => { if (pubTypeSelected === "sortie" && auteurProfil && auteurProfil.id) chargerMesSorties(); }, [pubTypeSelected, auteurProfil && auteurProfil.id]);
   // 21/09 : cet effet DOIT rester APRES la creation de pubTypeSelected. Place plus
   // haut, il lisait la variable avant son existence -> ecran blanc sur TOUT le site.
   useEffect(() => { if (pubTypeSelected === "annonce" && auteurProfil && auteurProfil.id) chargerMesAnnonces(); }, [pubTypeSelected, auteurProfil && auteurProfil.id]);
