@@ -15941,7 +15941,7 @@ export default function App() {
       setBookRatings(ratings);
     });
     // Charger les best-sellers (livres les plus achetés)
-    supabase.from("books").select("id, nb_ventes").eq("status", "actif").gt("nb_ventes", 0).order("nb_ventes", { ascending: false }).limit(30).then(({ data }) => {
+    (EST_HOMOROMANCE ? supabase.from("books").select("id, nb_ventes").eq("status", "actif").eq("category", CAT_HOMOROMANCE).order("nb_ventes", { ascending: false }).limit(60) : supabase.from("books").select("id, nb_ventes").eq("status", "actif").gt("nb_ventes", 0).order("nb_ventes", { ascending: false }).limit(30)).then(({ data }) => {
       if (!data) return;
       setTopPurchasedBooks(data.map(b => ({ book_id: b.id, count: b.nb_ventes || 0 })));
     });
@@ -24215,18 +24215,23 @@ export default function App() {
                   const bookSales = {};
                   // Filtrer pour ne garder que les livres num�riques
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
-                  const sortedBestSellers = topPurchasedBooks
+                  let sortedBestSellers = topPurchasedBooks
                     .map(p => books.find(b => b.id === p.book_id))
                     .filter(Boolean)
                     .filter(isDigitalBook)
-                    .filter(surCarryBooks)
-                    .slice(0, 5);
+                    .filter(surCarryBooks);
+                  if (EST_HOMOROMANCE) {
+                    // Top 10 : les plus vendus d'abord, puis les autres livres du site (les plus recents) pour remplir.
+                    const dejaTop = new Set(sortedBestSellers.map(b => b.id));
+                    const reste = books.filter(b => b.status === "actif" && isDigitalBook(b) && surCarryBooks(b) && !dejaTop.has(b.id)).sort((a, b) => (b.id || 0) - (a.id || 0));
+                    sortedBestSellers = [...sortedBestSellers, ...reste].slice(0, 10);
+                  } else { sortedBestSellers = sortedBestSellers.slice(0, 5); }
                   if (sortedBestSellers.length === 0) return null;
                   return (
                     <div style={{ marginBottom: 28 }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", marginBottom: 12 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>
-                          🔥 Best-sellers
+                          {EST_HOMOROMANCE ? "🔥 Top 10 des best-sellers" : "🔥 Best-sellers"}
                         </div>
                         <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, textTransform: "uppercase" }}>
                           Les + lus
@@ -24234,7 +24239,7 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                         {sortedBestSellers.map((book, idx) => (
-                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", position: "relative" }}>
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: EST_HOMOROMANCE ? "calc((100% - 14px) / 3.5)" : "40vw", maxWidth: EST_HOMOROMANCE ? 200 : 175, cursor: "pointer", position: "relative" }}>
                             {/* Badge classement */}
                             <div style={{
                               position: "absolute", top: 6, left: 6, zIndex: 2,
