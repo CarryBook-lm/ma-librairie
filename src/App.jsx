@@ -19967,7 +19967,7 @@ export default function App() {
         <div style={{ padding: eaLarge ? 24 : 16, maxWidth: eaMax, margin: "0 auto" }}>
           {retraitOpen && (
             <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-              <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
+              <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
                 <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 4 }}>💸 Retirer mes fonds</div>
                 <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Le montant sera envoyé par Mobile Money au numéro de ton profil, après validation par {SITE_NOM}. <b>Minimum : 2 000 FCFA.</b></div>
                 <label style={labelSt}>Montant à retirer (FCFA)</label>
@@ -20007,9 +20007,9 @@ export default function App() {
                     <div style={{ fontSize: 12, color: G.textDim }}>Voici ton tableau de bord auteur.</div>
                   </div>
                   <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{mesLivres.filter(b => b.status === "actif").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En ligne</div></div>
-                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
-                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
+                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.gold }}>{mesLivres.filter(b => b.status === "actif").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En ligne</div></div>
+                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
+                    <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
                   <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
@@ -20017,7 +20017,7 @@ export default function App() {
               {/* PUBLIER */}
               {auteurTab === "publier" && (
                 <div>
-                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   {kycOpen ? (
                     <>
                       <button onClick={() => { setKycOpen(false); setKycMsg(""); }} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: "bold", padding: 0, marginBottom: 12 }}>← Retour</button>
@@ -20088,7 +20088,7 @@ export default function App() {
                       )}
                       <div style={{ height: 16 }} />
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>✍️ Étape 4 — Lis et signe le contrat</div>
-                      <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 14, fontSize: 13, color: G.text, lineHeight: 1.6, marginBottom: 10 }}>
+                      <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 14, fontSize: 13, color: G.text, lineHeight: 1.6, marginBottom: 10 }}>
                         <div style={{ fontWeight: "bold", textAlign: "center", marginBottom: 10, fontSize: 14 }}>CONTRAT D'AUTEUR — {SITE_NOM}</div>
                         <div style={{ marginBottom: 10 }}>Je soussigné(e) <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{(kycPrenom || "____") + " " + (kycNom || "____")}</span>, né(e) le <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNaissance || "____"}</span> à <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycLieu || "____"}</span>, de nationalité <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycNationalite || "____"}</span>, résidant : <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycResidence || "____"}</span>, numéro Mobile Money <span style={{ color: "#1a3fb0", fontWeight: "bold" }}>{kycPhone || "____"}</span>, déclare accepter l'intégralité des clauses ci-dessous :</div>
                         {CONTRAT_ARTICLES.map(([t, b], i) => (
@@ -20142,7 +20142,7 @@ export default function App() {
                           { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere A4 paysage qui met ton livre en avant sur l'accueil" },
                           { t: "editeur", c: "#3a7bd5", ic: "📚", l: "Publier pour un auteur (Éditeurs)", s: "Vends le livre d'un autre auteur (tu certifies tes droits)" },
                         ].filter(o => !EST_HOMOROMANCE || o.t === "roman" || o.t === "sortie").map(o => (
-                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } if (o.t === "editeur") { setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubTypeSelected("editeur"); setPubMsg(""); return; } setPubEditeur(false); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: o.t === "editeur" ? "2px dashed #3a7bd5" : "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
+                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } if (o.t === "editeur") { setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubTypeSelected("editeur"); setPubMsg(""); return; } setPubEditeur(false); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: o.t === "editeur" ? "2px dashed #3a7bd5" : (EST_HOMOROMANCE ? "2px solid #8e2de2" : "2px solid transparent"), background: EST_HOMOROMANCE ? "#4b1470" : (o.c + "18"), color: EST_HOMOROMANCE ? "#fff" : o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
                             <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
                           </button>
@@ -20181,7 +20181,7 @@ export default function App() {
                   ) : mesSorties.map(sv => {
                     const occupe = sortieBusyId === sv.id;
                     return (
-                      <div key={sv.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? G.carte : "#fff", display: "flex", gap: 12 }}>
+                      <div key={sv.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", display: "flex", gap: 12 }}>
                         <img src={sv.cover} alt="" style={{ width: 80, aspectRatio: "110 / 155", objectFit: "cover", borderRadius: 6, flexShrink: 0, alignSelf: "flex-start" }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Sortie le {dateEnFrancais(sv.date_sortie)}</div>
@@ -20214,7 +20214,7 @@ export default function App() {
                       { t: "audio", c: "#1d9e75", ic: "🎧", l: "Livre Audio" },
                       { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Livre Gratuit" },
                     ].map(o => (
-                      <button key={o.t} onClick={() => { if (!pubEditeurAuteur.trim()) { alert("Entre le nom de l’auteur."); return; } if (!pubEditeurCertifie) { alert("Coche la case de certification des droits."); return; } setPubEditeur(true); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: o.c + "18", color: o.c, cursor: "pointer", textAlign: "left", fontWeight: "bold", fontSize: 15 }}>{o.ic} {o.l}</button>
+                      <button key={o.t} onClick={() => { if (!pubEditeurAuteur.trim()) { alert("Entre le nom de l’auteur."); return; } if (!pubEditeurCertifie) { alert("Coche la case de certification des droits."); return; } setPubEditeur(true); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: EST_HOMOROMANCE ? "#4b1470" : (o.c + "18"), color: EST_HOMOROMANCE ? "#fff" : o.c, cursor: "pointer", textAlign: "left", fontWeight: "bold", fontSize: 15 }}>{o.ic} {o.l}</button>
                     ))}
                   </div>
                   </>) : pubTypeSelected === "annonce" ? (<>
@@ -20243,7 +20243,7 @@ export default function App() {
                     const stA = a.statut === "active" ? { t: "✅ En ligne", c: G.green } : a.statut === "refusee" ? { t: "❌ Refusée", c: "#e11d48" } : { t: "⏳ En attente de validation", c: "#c9a84c" };
                     const occupe = annonceBusyId === a.id;
                     return (
-                      <div key={a.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? G.carte : "#fff" }}>
+                      <div key={a.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff" }}>
                         <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, display: "block", marginBottom: 8 }} />
                         <div style={{ fontSize: 12, fontWeight: "bold", color: stA.c, marginBottom: 4 }}>{stA.t}</div>
                         <div style={{ fontSize: 11, color: G.textDim, wordBreak: "break-all", marginBottom: 8 }}>{a.lien}</div>
@@ -20298,15 +20298,15 @@ export default function App() {
                   <label style={labelSt}>Présentation de la formation *</label>
                   <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => document.getElementById("fmImg916").click()} disabled={fmUploading}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                       <span style={{ display: "inline-block", width: 11, height: 19, border: "2px solid currentColor", borderRadius: 2, flexShrink: 0 }} />Image 9:16</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => document.getElementById("fmImg169").click()} disabled={fmUploading}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                       <span style={{ display: "inline-block", width: 21, height: 12, border: "2px solid currentColor", borderRadius: 2, flexShrink: 0 }} />Image 16:9</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmLienDansTexte(true); setFmLienTitre(""); setFmLienUrl(""); setFmLienOuvert(true); }}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>🔗 Un lien</button>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: G.text, fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>🔗 Un lien</button>
                     <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setFmYtUrl(""); setFmYtOuvert(true); }}
-                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid #FF0000", background: EST_HOMOROMANCE ? G.carte : "#fff", color: "#c4302b", fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>▶️ Vidéo YouTube</button>
+                      style={{ flex: 1, minWidth: 96, padding: "9px 6px", borderRadius: 8, border: "1px solid #FF0000", background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: "#c4302b", fontSize: 11.5, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>▶️ Vidéo YouTube</button>
                   </div>
                   <input id="fmImg916" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "916"); e.target.value = ""; }} style={{ display: "none" }} />
                   <input id="fmImg169" type="file" accept="image/*" onChange={e => { fmEnvoyerImage(e.target.files[0], "169"); e.target.value = ""; }} style={{ display: "none" }} />
@@ -20320,7 +20320,7 @@ export default function App() {
                   {fmLiens.length > 0 ? (
                     <div style={{ marginBottom: 10 }}>
                       {fmLiens.map((l, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? G.carte : "#fff", marginBottom: 6 }}>
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", border: "1px solid " + G.border, borderRadius: 8, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", marginBottom: 6 }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: "bold", color: G.text }}>{l.titre}</div>
                             <div style={{ fontSize: 10.5, color: G.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.url}</div>
@@ -20348,7 +20348,7 @@ export default function App() {
                           <span><b>🏪 Ma vitrine uniquement</b> — en ligne tout de suite, sans validation. <b>85 %</b></span>
                         </label>
                         {pubExclusif && kycOk ? (
-                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10, marginTop: 10 }}>
+                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10, marginTop: 10 }}>
                             <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
                             <span>Je certifie être l'auteur de cette formation ou détenir les droits de la vendre. Publiée sans validation, elle est retirée immédiatement en cas de réclamation.</span>
                           </label>
@@ -20366,7 +20366,7 @@ export default function App() {
 
                   {fmYtOuvert ? (
                     <div onClick={() => setFmYtOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
                         <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>▶️ Vidéo de présentation</div>
                         <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Colle l'adresse de ta vidéo YouTube. Elle se lira directement dans ta page de vente, sans quitter le site.</div>
                         <label style={labelSt}>Adresse de la vidéo *</label>
@@ -20377,7 +20377,7 @@ export default function App() {
                           </div>
                         ) : (fmYtUrl.trim() ? <div style={{ fontSize: 12, color: "#e53935", marginTop: 8 }}>Adresse non reconnue. Copie l'adresse complète depuis YouTube.</div> : null)}
                         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                          <button onClick={() => setFmYtOuvert(false)} style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+                          <button onClick={() => setFmYtOuvert(false)} style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
                           <button onClick={fmValiderVideo} style={{ flex: 1, padding: 12, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Insérer</button>
                         </div>
                       </div>
@@ -20386,7 +20386,7 @@ export default function App() {
 
                   {fmLienOuvert ? (
                     <div onClick={() => setFmLienOuvert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 420 }}>
                         <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>🔗 {fmLienDansTexte ? "Un lien dans la présentation" : "Un lien d'accès"}</div>
                         <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>{fmLienDansTexte ? "Ce lien apparaîtra dans le texte de ta page de vente, visible par tout le monde." : "Ce lien n'est donné qu'à l'acheteur, après son paiement."}</div>
                         <label style={labelSt}>Titre du lien *</label>
@@ -20395,7 +20395,7 @@ export default function App() {
                         <label style={labelSt}>Adresse du lien *</label>
                         <input value={fmLienUrl} onChange={e => setFmLienUrl(e.target.value)} placeholder="https://..." style={champ} />
                         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                          <button onClick={() => setFmLienOuvert(false)} style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
+                          <button onClick={() => setFmLienOuvert(false)} style={{ flex: 1, padding: 12, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: G.textDim, border: "1px solid " + G.border, borderRadius: 10, fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Annuler</button>
                           <button onClick={fmValiderLien} style={{ flex: 1, padding: 12, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 13.5, cursor: "pointer", fontFamily: "Georgia, serif" }}>Ajouter</button>
                         </div>
                       </div>
@@ -20413,14 +20413,14 @@ export default function App() {
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 8 }}>Coche l’auteur dont tu publies le livre.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                     {listeAuteursPub().map(a => (
-                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
+                      <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
                         {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
                         <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom}</div><div style={{ fontSize: 10, color: G.textDim }}>{a.ville || ""} {a.verifie ? "✅" : ""}</div></div>
                       </button>
                     ))}
                   </div>
                   {addAuteurOpen ? (
-                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
                       <label style={labelSt}>Nom du nouvel auteur</label>
                       <input value={addAuteurNom} onChange={e => setAddAuteurNom(e.target.value)} placeholder="Ex. Johanna Morisson" style={champ} />
                       <div style={{ height: 8 }} />
@@ -20516,8 +20516,8 @@ export default function App() {
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Que peut faire l’acheteur ?</label>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
-                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧 Écouter seul</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🎧⬇️ Écouter + Télécharger</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6 }}>{pubDownloadable ? "L’acheteur peut écouter ET télécharger le fichier audio." : "L’acheteur peut seulement écouter (audio protégé, non téléchargeable)."}</div>
                     </>
@@ -20541,8 +20541,8 @@ export default function App() {
                     <div style={{ marginTop: 14 }}>
                       <label style={labelSt}>Le PDF sera-t-il téléchargeable ?</label>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
-                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
+                        <button onClick={() => setPubDownloadable(true)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (pubDownloadable ? G.gold : G.border), background: pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>⬇️ Téléchargeable</button>
+                        <button onClick={() => setPubDownloadable(false)} style={{ flex: 1, padding: "10px 6px", borderRadius: 8, border: "1px solid " + (!pubDownloadable ? G.gold : G.border), background: !pubDownloadable ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: !pubDownloadable ? G.gold : G.textDim, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>🔒 Lecture seule</button>
                       </div>
                       <div style={{ fontSize: 11, color: G.textDim, marginTop: 6, lineHeight: 1.4 }}>{pubDownloadable ? "Le client pourra télécharger le PDF après achat." : "Le client pourra seulement lire le PDF (protégé, non téléchargeable)."}</div>
                     </div>
@@ -20552,9 +20552,9 @@ export default function App() {
                     const kycOk = !!(auteurProfil && auteurProfil.kyc_status === "valide");
                     const carte = (actif, onClick, dispo, titre, lignes, badge) => (
                       <button type="button" onClick={dispo ? onClick : undefined} disabled={!dispo}
-                        style={{ width: "100%", textAlign: "left", padding: 12, marginBottom: 10, borderRadius: 10, border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), cursor: dispo ? "pointer" : "not-allowed", opacity: dispo ? 1 : 0.55, fontFamily: "Georgia, serif" }}>
+                        style={{ width: "100%", textAlign: "left", padding: 12, marginBottom: 10, borderRadius: 10, border: "2px solid " + (actif ? G.gold : G.border), background: actif ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), cursor: dispo ? "pointer" : "not-allowed", opacity: dispo ? 1 : 0.55, fontFamily: "Georgia, serif" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.bouton : G.border), background: actif ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: G.boutonTexte, fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
+                          <span style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid " + (actif ? G.bouton : G.border), background: actif ? G.bouton : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: G.boutonTexte, fontSize: 11, fontWeight: "bold" }}>{actif ? "✓" : ""}</span>
                           <span style={{ fontSize: 13.5, fontWeight: "bold", color: G.text }}>{titre}</span>
                           <span style={{ marginLeft: "auto", background: G.bouton, color: "#fff", fontSize: 11, fontWeight: "bold", padding: "3px 9px", borderRadius: 12, whiteSpace: "nowrap" }}>{badge}</span>
                         </div>
@@ -20581,7 +20581,7 @@ export default function App() {
                           </div>
                         ) : null}
                         {pubExclusif && kycOk ? (
-                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10 }}>
+                          <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", fontSize: 12, color: G.text, lineHeight: 1.5, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 8, padding: 10 }}>
                             <input type="checkbox" checked={pubExclusifCertifie} onChange={e => setPubExclusifCertifie(e.target.checked)} style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0 }} />
                             <span>Je certifie être l'auteur de ce livre ou détenir les droits de le vendre. Comme il est publié sans validation, en cas de réclamation {SITE_NOM} le retire immédiatement et mon compte peut être suspendu.</span>
                           </label>
@@ -20598,7 +20598,7 @@ export default function App() {
                   <button onClick={() => { setPubOpen(false); setPubEditId(null); setPubTypeSelected(null); setPubMsg(""); setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubAuthorName(""); setPubAuthorVille(""); setPubAuthorPhoto(""); setAuteurTab("meslivres"); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 8 }}>Annuler</button>
                   {pubRomanPdfAlert && (
                     <div onClick={() => setPubRomanPdfAlert(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+                      <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 16, maxWidth: 380, width: "100%", padding: 24, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
                         <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#1a1208", marginBottom: 12 }}>Les romans se publient uniquement en format Texte</div>
                         <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.7, textAlign: "left", marginBottom: 20 }}>
@@ -20617,7 +20617,7 @@ export default function App() {
               {/* MES LIVRES */}
               {auteurTab === "meslivres" && (
                 <div>
-                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
                   {mesLivres.filter(b => b.moderation === "refuse").length > 0 && (
                     <div onClick={() => setMesLivresTab("refuse")} style={{ background: "#fdecea", border: "1px solid #e53935", borderRadius: 10, padding: 12, marginBottom: 12, cursor: "pointer" }}>
@@ -20627,12 +20627,12 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous mes livres" }, { t: "edition", l: "En cours d'édition" }, { t: "attente", l: "En attente" }, { t: "refuse", l: "❌ Refusés" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresTab(o.t)} style={{ flex: 1, padding: "8px 3px", borderRadius: 8, border: "1px solid " + (mesLivresTab === o.t ? G.gold : G.border), background: mesLivresTab === o.t ? G.bouton : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: mesLivresTab === o.t ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", lineHeight: 1.25 }}>{o.l}</button>
                     ))}
                   </div>
-                  <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
+                  <div style={{ display: EST_HOMOROMANCE ? "none" : "flex", gap: 5, marginBottom: 12 }}>
                     {[{ t: null, l: "Tous" }, { t: "roman", l: "Texte" }, { t: "guide", l: "PDF" }, { t: "audio", l: "Audio" }, { t: "gratuit", l: "Gratuit" }].map(o => (
-                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : (EST_HOMOROMANCE ? G.carte : "#fff"), color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
+                      <button key={o.l} onClick={() => setMesLivresType(o.t)} style={{ flex: 1, minWidth: 0, padding: "6px 2px", borderRadius: 14, border: "1px solid " + (mesLivresType === o.t ? G.gold : G.border), background: mesLivresType === o.t ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: mesLivresType === o.t ? G.gold : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", textAlign: "center" }}>{o.l}</button>
                     ))}
                   </div>
                   {(() => {
@@ -20668,7 +20668,7 @@ export default function App() {
                     const lien = SITE_URL + "/livre/" + slugify(b.title) + "?src=" + (auteurProfil.code_source || "");
                     return (
                       <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                        <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
+                        <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
                           <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
                             {b.cover ? <img src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
                             <div style={{ flex: 1, minWidth: 0 }}>
@@ -20735,34 +20735,34 @@ export default function App() {
                           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
                           {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
                           <div style={{ fontSize: 10.5, opacity: 0.85, marginBottom: 8, textAlign: "center" }}>🔒 Les fonds deviennent retirables {delaiRetrait} jour{delaiRetrait > 1 ? "s" : ""} après chaque vente.</div>
-                          <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? (EST_HOMOROMANCE ? G.carte : "#fff") : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
+                          <button onClick={() => { setRetraitMontant(""); setRetraitMsg(""); setRetraitOpen(true); }} disabled={dispo <= 0} style={{ width: "100%", padding: 12, background: dispo > 0 ? "#fff" : "rgba(255,255,255,0.3)", color: dispo > 0 ? "#6a11cb" : "#eee", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: dispo > 0 ? "pointer" : "not-allowed" }}>💸 Retirer les fonds</button>
                         </div>
                       );
                     })()}
                     <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 10 }}>💰 Mes ventes</div>
                     <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                       {periods.map(([id, lab]) => (
-                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                        <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                       ))}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <span style={{ fontSize: 12, color: G.textDim, whiteSpace: "nowrap" }}>Ou un jour :</span>
-                      <input type="date" value={statsDate} onChange={e => setStatsDate(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? G.carte : "#fff", color: G.text, fontSize: 13, minWidth: 0 }} />
+                      <input type="date" value={statsDate} onChange={e => setStatsDate(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", color: G.text, fontSize: 13, minWidth: 0 }} />
                       {statsDate && <button onClick={() => setStatsDate("")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 12, fontWeight: "bold", whiteSpace: "nowrap" }}>✕</button>}
                     </div>
                     <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
-                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{totalN}</div><div style={{ fontSize: 11, color: G.textDim }}>Ventes</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: G.gold }}>{fmt(totalG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Mes gains</div></div>
                     </div>
                     <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
-                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{aboN}</div><div style={{ fontSize: 11, color: G.textDim }}>Déblocages abonnement</div></div>
+                      <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 12, textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: "bold", color: "#8e2de2" }}>{fmt(aboG)}</div><div style={{ fontSize: 11, color: G.textDim }}>Gagné par abonnement</div></div>
                     </div>
                     <div style={{ background: G.bouton, borderRadius: 10, padding: 14, marginTop: 12, textAlign: "center", color: "#fff" }}>
                       <div style={{ fontSize: 12, opacity: 0.9 }}>Montant total (cette période)</div>
                       <div style={{ fontSize: 24, fontWeight: "bold" }}>{fmt(grandTotal)}</div>
                     </div>
-                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 12 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 12 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Détail par livre</div>
                       {Object.keys(grpP).length === 0 ? (
                         <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
@@ -20815,7 +20815,7 @@ export default function App() {
                       <div>
                         <div style={{ display: "flex", gap: 5, marginBottom: 10 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
                         <input type="date" value={statsDate} onChange={e => { setStatsDate(e.target.value); setStatsPeriod("date"); }} style={{ ...champ, marginBottom: 16 }} />
@@ -20829,7 +20829,7 @@ export default function App() {
                           <div style={{ fontSize: 24, fontWeight: "bold", color: G.gold }}>{fmt(gains(vv))}</div>
                           <div style={{ fontSize: 10, color: G.textDim }}>mes gains (montant moins commissions {SITE_NOM})</div>
                         </div>
-                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginTop: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>En ligne</span><span style={{ color: G.green, fontWeight: "bold" }}>{mesLivres.filter(b => b.status === "actif").length}</span></div>
                           <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>En attente</span><span style={{ color: "#c9a84c", fontWeight: "bold" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</span></div>
@@ -20843,10 +20843,10 @@ export default function App() {
                       <div>
                         <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
                           {periods.map(([id, lab]) => (
-                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
+                            <button key={id} onClick={() => { setStatsPeriod(id); setStatsDate(""); }} style={{ flex: 1, padding: "7px 2px", borderRadius: 16, border: "1px solid " + (statsPeriod === id ? G.gold : G.border), background: statsPeriod === id ? G.bouton : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: statsPeriod === id ? "#fff" : G.textDim, fontSize: 11, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>{lab}</button>
                           ))}
                         </div>
-                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                         <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Livres vendus (mes gains)</div>
                         {Object.keys(grpP).length === 0 ? (
                           <div style={{ fontSize: 13, color: G.textDim }}>Aucune vente sur cette période.</div>
@@ -20862,7 +20862,7 @@ export default function App() {
 
                     {statsSubTab === "charts" && (
                       <div>
-                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📈 Gains — 7 derniers jours</div>
                           <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120 }}>
                             {dayGains.map((g, i) => (
@@ -20873,7 +20873,7 @@ export default function App() {
                             ))}
                           </div>
                         </div>
-                        <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                        <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>🏆 Best-sellers</div>
                           {best.length === 0 ? (
                             <div style={{ fontSize: 13, color: G.textDim }}>Pas encore de ventes.</div>
@@ -20896,14 +20896,14 @@ export default function App() {
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 14 }}>Gère les tutoriels affichés sur l’accueil (au-dessus des Livres gratuits).</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                     {[{ t: "auteur", l: "Tuto Auteur" }, { t: "lecteur", l: "Tuto Lecteur" }].map(o => (
-                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.bouton : (EST_HOMOROMANCE ? G.carte : "#fff"), color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
+                      <button key={o.t} onClick={() => setTutoBookTab(o.t)} style={{ flex: 1, padding: "9px 4px", borderRadius: 8, border: "1px solid " + (tutoBookTab === o.t ? G.gold : G.border), background: tutoBookTab === o.t ? G.bouton : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), color: tutoBookTab === o.t ? "#fff" : G.textDim, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{o.l}</button>
                     ))}
                   </div>
                   {tutoBookTab === "lecteur" ? (
                     <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 24 }}>Tuto Lecteur — bientôt.</div>
                   ) : (
                   <div>
-                    <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                    <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>{tutoEditId ? "✏️ Modifier le tuto" : "➕ Nouveau tuto"}</div>
                       <label style={labelSt}>Image (16:9) *</label>
                       {tutoImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={tutoImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setTutoImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
@@ -20915,14 +20915,14 @@ export default function App() {
                       <div style={{ height: 10 }} />
                       <label style={labelSt}>Texte (sous la carte)</label>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("bold"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? G.carte : "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("italic"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? G.carte : "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
-                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("underline"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? G.carte : "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("bold"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", cursor: "pointer", fontWeight: "bold" }}>G</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("italic"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", cursor: "pointer", fontStyle: "italic" }}>I</button>
+                        <button onMouseDown={e => { e.preventDefault(); fmtTuto("underline"); }} style={{ width: 34, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", cursor: "pointer", textDecoration: "underline" }}>S</button>
                         {["#e11d48", "#2563eb", "#16a34a", "#9333ea", "#ea580c", "#1a1208"].map(col => (
                           <button key={col} onMouseDown={e => { e.preventDefault(); fmtTuto("foreColor", col); }} title="Couleur" style={{ width: 26, height: 32, border: "1px solid " + G.border, borderRadius: 6, background: col, cursor: "pointer" }} />
                         ))}
                       </div>
-                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } }} style={{ minHeight: 120, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: EST_HOMOROMANCE ? G.carte : "#fff", outline: "none", whiteSpace: "pre-wrap" }} />
+                      <div ref={tutoEditorRef} contentEditable suppressContentEditableWarning onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.execCommand("insertLineBreak"); } }} onPaste={e => { e.preventDefault(); const text = ((e.clipboardData || window.clipboardData).getData("text/plain") || ""); const sel = window.getSelection(); if (sel && sel.rangeCount) { const range = sel.getRangeAt(0); range.deleteContents(); const node = document.createTextNode(text); range.insertNode(node); range.setStartAfter(node); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); } }} style={{ minHeight: 120, border: "1px solid " + G.border, borderRadius: 8, padding: "10px 12px", fontSize: 14, lineHeight: 1.6, textAlign: "justify", background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", outline: "none", whiteSpace: "pre-wrap" }} />
                       {tutoMsg && <div style={{ fontSize: 13, marginTop: 8, fontWeight: "bold", color: tutoMsg === "OK_ENREGISTRE" ? G.green : "#e11d48" }}>{tutoMsg === "OK_ENREGISTRE" ? "✅ Tuto enregistré !" : tutoMsg}</div>}
                       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <button onClick={enregistrerTuto} style={{ flex: 1, padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{tutoEditId ? "Mettre à jour" : "Enregistrer"}</button>
@@ -20931,7 +20931,7 @@ export default function App() {
                     </div>
                     <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>Tutos publiés ({tutos.length})</div>
                     {tutos.map(t => (
-                      <div key={t.id} style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
+                      <div key={t.id} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
                         <img src={t.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />
                         {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", marginBottom: 8, whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
                         <div style={{ display: "flex", gap: 8 }}>
@@ -20946,7 +20946,7 @@ export default function App() {
               )}
 
               {auteurTab === "compte" && (
-                <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
+                <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 12 }}>👤 Mon compte</div>
                   {!compteEdit ? (
                     <div>
@@ -20959,7 +20959,7 @@ export default function App() {
                         <div style={{ marginTop: 12, padding: 12, background: G.goldDim, borderRadius: 8 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, marginBottom: 6 }}>🔗 Le lien de ta boutique (à partager sur tes réseaux sociaux)</div>
                           <div style={{ display: "flex", gap: 6 }}>
-                            <input readOnly value={SITE_URL + "/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: EST_HOMOROMANCE ? G.carte : "#fff", minWidth: 0 }} />
+                            <input readOnly value={SITE_URL + "/auteur/" + auteurProfil.code_source} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.text, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", minWidth: 0 }} />
                             <button onClick={() => { try { navigator.clipboard.writeText(SITE_URL + "/auteur/" + auteurProfil.code_source); setAuteurMsg("✅ Lien de boutique copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 12px", background: G.bouton, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}>Copier</button>
                           </div>
                         </div>
