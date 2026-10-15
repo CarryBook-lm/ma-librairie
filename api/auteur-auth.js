@@ -54,6 +54,8 @@ export default async function handler(req, res) {
   if (typeof body === "string") { try { body = JSON.parse(body); } catch (e) { body = {}; } }
   body = body || {};
   const action = body.action;
+  // 15/10 : le Support est separe par site (colonne site : 'cb' = CarryBooks, 'hr' = HomoRomance).
+  const siteSup = body.site === "hr" ? "hr" : "cb";
 
   const supa = createClient(
     process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
@@ -95,9 +97,9 @@ export default async function handler(req, res) {
       if (error) return res.status(500).json({ error: error.message });
       // Message d'accueil automatique : les annonces marquees "permanentes" arrivent dans son Support
       try {
-        const { data: anns } = await supa.from("support_annonces").select("id, texte").eq("permanente", true).order("created_at", { ascending: true });
+        const { data: anns } = await supa.from("support_annonces").select("id, texte").eq("permanente", true).eq("site", siteSup).order("created_at", { ascending: true });
         if (anns && anns.length && data) {
-          const rows = anns.map(a => ({ auteur_id: data.id, cote: "admin", texte: a.texte, annonce_id: a.id, lu_admin: true, lu_auteur: false }));
+          const rows = anns.map(a => ({ auteur_id: data.id, cote: "admin", texte: a.texte, annonce_id: a.id, lu_admin: true, lu_auteur: false, site: siteSup }));
           await supa.from("support_messages").insert(rows);
         }
       } catch (e) {}
@@ -135,7 +137,7 @@ export default async function handler(req, res) {
       const { data } = await supa.from("auteurs").select(SAFE).eq("id", id).limit(1);
       const delai = await lireDelaiRetrait();
       let supportNonLus = 0;
-      try { const { count } = await supa.from("support_messages").select("id", { count: "exact", head: true }).eq("auteur_id", id).eq("cote", "admin").eq("lu_auteur", false); supportNonLus = count || 0; } catch (e) {}
+      try { const { count } = await supa.from("support_messages").select("id", { count: "exact", head: true }).eq("auteur_id", id).eq("site", siteSup).eq("cote", "admin").eq("lu_auteur", false); supportNonLus = count || 0; } catch (e) {}
       return res.status(200).json({ auteur: (data && data[0]) || null, delai_retrait: delai, support_non_lus: supportNonLus });
     }
 
@@ -232,7 +234,7 @@ export default async function handler(req, res) {
     if (action === "support_lire") {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
-      const { data } = await supa.from("support_messages").select("id, cote, texte, image_url, annonce_id, created_at").eq("auteur_id", id).order("created_at", { ascending: true });
+      const { data } = await supa.from("support_messages").select("id, cote, texte, image_url, annonce_id, created_at").eq("auteur_id", id).eq("site", siteSup).order("created_at", { ascending: true });
       return res.status(200).json({ ok: true, messages: data || [] });
     }
 
@@ -243,7 +245,7 @@ export default async function handler(req, res) {
       const image_url = (body.image_url || "").trim() || null;
       if (!id) return res.status(400).json({ error: "id requis." });
       if (!texte && !image_url) return res.status(400).json({ error: "Message vide." });
-      const { data, error } = await supa.from("support_messages").insert([{ auteur_id: id, cote: "auteur", texte, image_url, lu_admin: false, lu_auteur: true }]).select("id, cote, texte, image_url, created_at").maybeSingle();
+      const { data, error } = await supa.from("support_messages").insert([{ auteur_id: id, cote: "auteur", texte, image_url, lu_admin: false, lu_auteur: true, site: siteSup }]).select("id, cote, texte, image_url, created_at").maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, message: data });
     }
@@ -252,7 +254,7 @@ export default async function handler(req, res) {
     if (action === "support_marquer_lu") {
       const id = body.id;
       if (!id) return res.status(400).json({ error: "id requis." });
-      await supa.from("support_messages").update({ lu_auteur: true }).eq("auteur_id", id).eq("cote", "admin").eq("lu_auteur", false);
+      await supa.from("support_messages").update({ lu_auteur: true }).eq("auteur_id", id).eq("site", siteSup).eq("cote", "admin").eq("lu_auteur", false);
       return res.status(200).json({ ok: true });
     }
 

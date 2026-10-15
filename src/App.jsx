@@ -15047,10 +15047,10 @@ export default function App() {
   const chargerSupport = async () => {
     if (!auteurProfil) return;
     try {
-      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_lire", id: auteurProfil.id }) });
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_lire", id: auteurProfil.id, site: EST_HOMOROMANCE ? "hr" : "cb" }) });
       const d = await res.json().catch(() => ({}));
       setSupportMsgs(d.messages || []);
-      fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_marquer_lu", id: auteurProfil.id }) });
+      fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_marquer_lu", id: auteurProfil.id, site: EST_HOMOROMANCE ? "hr" : "cb" }) });
       setSupportNonLus(0);
     } catch (e) {}
   };
@@ -15071,7 +15071,7 @@ export default function App() {
     if ((!t && !supportImg) || !auteurProfil) return;
     setSupportSending(true);
     try {
-      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_envoyer", id: auteurProfil.id, texte: t, image_url: supportImg || "" }) });
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "support_envoyer", id: auteurProfil.id, texte: t, image_url: supportImg || "", site: EST_HOMOROMANCE ? "hr" : "cb" }) });
       const d = await res.json().catch(() => ({}));
       if (d.ok) { setSupportInput(""); setSupportImg(""); await chargerSupport(); } else { alert(d.error || "Envoi impossible."); }
     } catch (e) {}
@@ -15366,7 +15366,7 @@ export default function App() {
             const aAff = masquerNomHR(a);
             setAuteurSession(aAff); setAuteurProfil(aAff); remplirProfilAuteur(aAff);
             try {
-              const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id }) });
+              const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "get", id: a.id, site: EST_HOMOROMANCE ? "hr" : "cb" }) });
               const data = await res.json().catch(() => ({}));
               if (data && typeof data.delai_retrait === "number") setDelaiRetrait(data.delai_retrait);
               if (data && typeof data.support_non_lus === "number") setSupportNonLus(data.support_non_lus);
@@ -15406,7 +15406,7 @@ export default function App() {
         const ind = CODES[auteurPays] || ""; const t = (auteurTel || "").trim();
         return t ? ((ind ? ind + " " : "") + t) : null;
       })();
-      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword, pays: auteurPays || null, telephone: telComplet, bio: auteurBio || null, photo_url: auteurPhoto || null, vitrine_nom: auteurVitrineNom.trim() || null, mode_vente: auteurModeVente === "vitrine" ? "vitrine" : "les_deux" }) });
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup", site: EST_HOMOROMANCE ? "hr" : "cb", nom_complet: auteurAuthNom, email: auteurAuthEmail, password: auteurAuthPassword, pays: auteurPays || null, telephone: telComplet, bio: auteurBio || null, photo_url: auteurPhoto || null, vitrine_nom: auteurVitrineNom.trim() || null, mode_vente: auteurModeVente === "vitrine" ? "vitrine" : "les_deux" }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur) { appliquerSessionAuteur(data.auteur); setAuteurAuthEmail(""); setAuteurAuthPassword(""); setAuteurAuthNom(""); }
       else { setAuteurAuthMsg(data.error || "Creation impossible."); }

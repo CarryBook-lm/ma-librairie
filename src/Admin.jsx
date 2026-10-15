@@ -21,6 +21,8 @@ const EST_HOMOROMANCE = (function () {
 })();
 // HomoRomance a ouvert le 09/10/2026 : ses chiffres ne comptent rien d'avant.
 const HR_DEBUT_MS = new Date("2026-10-15T12:50:00+01:00").getTime(); // meme heure que App.jsx
+// Support : un fil par site (colonne site de support_messages / support_annonces).
+const SITE_SUP = EST_HOMOROMANCE ? "hr" : "cb";
 const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
 const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
 
@@ -712,7 +714,7 @@ export default function Admin() {
     if (!auteurId) return;
     const { data } = await supabase.from("support_messages")
       .select("id, auteur_id, cote, texte, image_url, lu_admin, annonce_id, created_at")
-      .eq("auteur_id", auteurId).order("created_at", { ascending: true }).limit(2000);
+      .eq("auteur_id", auteurId).eq("site", SITE_SUP).order("created_at", { ascending: true }).limit(2000);
     setSupAll(prev => { const n = Object.assign({}, prev); n[auteurId] = { msgs: data || [] }; return n; });
   };
   useEffect(() => {
@@ -737,8 +739,8 @@ export default function Admin() {
     // Apercus : les 3000 messages les plus recents, du plus recent au plus ancien.
     // Non lus : seulement les lignes concernees, jamais toute la table.
     const [recents, nonlus] = await Promise.all([
-      supabase.from("support_messages").select("id, auteur_id, cote, texte, image_url, annonce_id, created_at").order("created_at", { ascending: false }).limit(3000),
-      supabase.from("support_messages").select("id, auteur_id").eq("cote", "auteur").eq("lu_admin", false).limit(5000),
+      supabase.from("support_messages").select("id, auteur_id, cote, texte, image_url, annonce_id, created_at").eq("site", SITE_SUP).order("created_at", { ascending: false }).limit(3000),
+      supabase.from("support_messages").select("id, auteur_id").eq("site", SITE_SUP).eq("cote", "auteur").eq("lu_admin", false).limit(5000),
     ]);
     const dernier = {};
     (recents.data || []).forEach(m => { if (!dernier[m.auteur_id]) dernier[m.auteur_id] = m; });
@@ -754,7 +756,7 @@ export default function Admin() {
   const ouvrirFil = async (a) => {
     setSupSel(a);
     await chargerFil(a.id);
-    await supabase.from("support_messages").update({ lu_admin: true }).eq("auteur_id", a.id).eq("cote", "auteur").eq("lu_admin", false);
+    await supabase.from("support_messages").update({ lu_admin: true }).eq("auteur_id", a.id).eq("site", SITE_SUP).eq("cote", "auteur").eq("lu_admin", false);
     await chargerSupportAdmin();
   };
   const uploadSupImg = async (file) => {
@@ -774,7 +776,7 @@ export default function Admin() {
     if ((!t && !supImg) || !supSel) return;
     setSupSending(true);
     try {
-      const { error } = await supabase.from("support_messages").insert([{ auteur_id: supSel.id, cote: "admin", texte: t, image_url: supImg || null, lu_admin: true, lu_auteur: false }]);
+      const { error } = await supabase.from("support_messages").insert([{ auteur_id: supSel.id, cote: "admin", texte: t, image_url: supImg || null, lu_admin: true, lu_auteur: false, site: SITE_SUP }]);
       if (error) { alert("Erreur : " + error.message); } else { setSupInput(""); setSupImg(""); await chargerFil(supSel.id); await chargerSupportAdmin(); }
     } catch (e) { alert("Erreur : " + (e && e.message)); }
     setSupSending(false);
@@ -795,9 +797,9 @@ export default function Admin() {
     if (!window.confirm("Envoyer cette annonce à TOUS les auteurs (" + (eaAuteurs || []).length + ") ?")) return;
     setAnnonceSending(true);
     try {
-      const { data: ann, error: e1 } = await supabase.from("support_annonces").insert([{ texte: t, permanente: annoncePerm }]).select("id").maybeSingle();
+      const { data: ann, error: e1 } = await supabase.from("support_annonces").insert([{ texte: t, permanente: annoncePerm, site: SITE_SUP }]).select("id").maybeSingle();
       if (e1) throw e1;
-      const rows = (eaAuteurs || []).map(a => ({ auteur_id: a.id, cote: "admin", texte: t, annonce_id: ann.id, lu_admin: true, lu_auteur: false }));
+      const rows = (eaAuteurs || []).map(a => ({ auteur_id: a.id, cote: "admin", texte: t, annonce_id: ann.id, lu_admin: true, lu_auteur: false, site: SITE_SUP }));
       if (rows.length) { const { error: e2 } = await supabase.from("support_messages").insert(rows); if (e2) throw e2; }
       setAnnonceTxt(""); setAnnonceOpen(false);
       if (supSel) await chargerFil(supSel.id);
@@ -812,7 +814,7 @@ export default function Admin() {
         livres("id", { count: "exact", head: true }).not("auteur_id", "is", null).eq("moderation", "en_attente"),
         supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "en_attente"),
         supabase.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
-        supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("cote", "auteur").eq("lu_admin", false),
+        supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("site", SITE_SUP).eq("cote", "auteur").eq("lu_admin", false),
       ]);
       setEaTodo({ livres: nbLivres || 0, kyc: nbKyc || 0, retraits: nbRetraits || 0, support: nbSupport || 0 });
     } catch (e) {}
@@ -915,7 +917,7 @@ export default function Admin() {
     if (error) { alert("Erreur : " + error.message); return; }
     if (b.auteur_id) {
       const texte = "🔴 Ton livre « " + b.title + " » a été désactivé.\n\nMotif : " + motif.trim() + "\n\nCorrige-le puis resoumets-le pour validation.";
-      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
+      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false, site: SITE_SUP }]); } catch (e) {}
     }
     setEaBooks(prev => prev.map(x => x.id === b.id ? { ...x, status: "en_attente", moderation: "refuse" } : x));
     alert("Livre désactivé. L'auteur a été prévenu dans son Support.");
@@ -939,7 +941,7 @@ export default function Admin() {
     if (error) { setEaVitrineBusy(null); alert("Erreur : " + error.message); return; }
     if (b.auteur_id) {
       const texte = "🔴 Ton livre « " + b.title + " » a été retiré de la vente.\n\nMotif : " + motif.trim() + "\n\nCorrige-le puis resoumets-le.";
-      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
+      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false, site: SITE_SUP }]); } catch (e) {}
     }
     await reloadVitrine(); setEaVitrineBusy(null);
     alert("Livre retiré. L'auteur a été prévenu dans son Support.");
@@ -1005,7 +1007,7 @@ export default function Admin() {
     // une desactivation, et par email. Aucun des deux ne doit bloquer le refus.
     if (b.auteur_id) {
       const texte = "❌ Ton livre « " + b.title + " » n'a pas été publié.\n\nMotif : " + motifFinal + "\n\nOuvre Mes livres > onglet Refusés, corrige ton livre puis renvoie ton livre à la validation.";
-      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false }]); } catch (e) {}
+      try { await supabase.from("support_messages").insert([{ auteur_id: b.auteur_id, cote: "admin", texte, lu_admin: true, lu_auteur: false, site: SITE_SUP }]); } catch (e) {}
     }
     let info = "";
     try {
