@@ -2573,7 +2573,7 @@ export default function Admin() {
 
       {/* MENU DROPDOWN MOBILE */}
       {showMenu && (
-        <div style={{ position: "fixed", bottom: 58, left: 0, right: 0, maxHeight: "62vh", overflowY: "auto", background: "#1a1a1a", borderTop: ("2px solid " + ACC + ""), zIndex: 49, boxShadow: "0 -6px 20px rgba(0,0,0,0.5)" }}>
+        <div style={{ position: "fixed", top: 84, bottom: 58, left: 0, right: 0, overflowY: "auto", background: "#141414", zIndex: 49 }}>
           {[
             { id: "dashboard", label: "Tableau de bord", icon: "📊" },
             { id: "books", label: "Produits", icon: "📚" },
