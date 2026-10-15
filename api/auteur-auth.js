@@ -159,8 +159,25 @@ export default async function handler(req, res) {
     // dans la table reglages, sous la cle photo_hr_<id>.
     if (action === "photo_hr_get") {
       const id = Number(body.id) || 8;
-      const { data } = await supa.from("reglages").select("valeur").eq("cle", "photo_hr_" + id).limit(1);
-      return res.status(200).json({ url: (data && data[0] && data[0].valeur) || null });
+      const { data } = await supa.from("reglages").select("cle, valeur").in("cle", ["photo_hr_" + id, "profil_hr_" + id]);
+      let url = null, profil = {};
+      (data || []).forEach(r => {
+        if (r.cle === "photo_hr_" + id) url = r.valeur || null;
+        if (r.cle === "profil_hr_" + id) { try { profil = JSON.parse(r.valeur || "{}") || {}; } catch (e) { profil = {}; } }
+      });
+      return res.status(200).json({ url, profil });
+    }
+    // Bio, reseaux sociaux et pixels propres a HomoRomance : jamais dans la ligne auteurs
+    // (qui est celle de CarryBooks pour le compte 8).
+    if (action === "profil_hr_set") {
+      const id = Number(body.id);
+      if (!id) return res.status(400).json({ error: "id requis." });
+      const CLES = ["bio", "facebook", "instagram", "tiktok", "linkedin", "youtube", "pixel_meta", "pixel_tiktok"];
+      const p = {};
+      CLES.forEach(k => { p[k] = String((body.profil || {})[k] || "").trim(); });
+      const { error } = await supa.from("reglages").upsert({ cle: "profil_hr_" + id, valeur: JSON.stringify(p), updated_at: new Date().toISOString() }, { onConflict: "cle" });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, profil: p });
     }
     if (action === "photo_hr_set") {
       const id = Number(body.id);

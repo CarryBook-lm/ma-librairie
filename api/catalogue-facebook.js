@@ -33,6 +33,7 @@ export default async function handler(req, res) {
       .from("books")
       .select("id, title, summary, price, cover, author, category, status, exclu_catalogue, masque, exclusif_vitrine")
       .eq("status", "actif")
+      .or("category.is.null,category.neq.HomoRomance") // 15/10 : les romans HomoRomance ont leur propre catalogue
       .neq("exclu_catalogue", true)
       .order("id", { ascending: false });
 

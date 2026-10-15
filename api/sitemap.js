@@ -47,6 +47,7 @@ export default async function handler(req, res) {
         .from("books")
         .select("title, product_type, created_at, masque, exclusif_vitrine")
         .eq("status", "actif")
+        .or("category.is.null,category.neq.HomoRomance")
         .limit(5000);
 
       if (error) {

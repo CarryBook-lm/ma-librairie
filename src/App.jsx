@@ -38,6 +38,7 @@ const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres a
 // 15/10 : photo de Johanna sur HomoRomance, rangee a part (jamais dans photo_url,
 // qui est la photo de Landrine sur CarryBooks).
 let _photoHR;
+let _profilHR; // bio, reseaux, pixels propres a HomoRomance
 async function photoHR() {
   if (!EST_HOMOROMANCE) return null;
   if (_photoHR !== undefined) return _photoHR;
@@ -45,7 +46,8 @@ async function photoHR() {
     const r = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "photo_hr_get", id: 8 }) });
     const j = await r.json().catch(() => ({}));
     _photoHR = (j && j.url) || null;
-  } catch (e) { _photoHR = null; }
+    _profilHR = (j && j.profil) || {};
+  } catch (e) { _photoHR = null; _profilHR = {}; }
   return _photoHR;
 }
 function masquerNomHR(a0) {
@@ -53,13 +55,13 @@ function masquerNomHR(a0) {
   // 13/10 : plus de boutique perso sur HomoRomance : pas de lien /auteur/CODE ni de vitrine.
   const a = { ...a0, code_source: null };
   if (a.id !== 8) return a;
-  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, vrai_photo_cache: (a.vrai_photo_cache !== undefined ? a.vrai_photo_cache : (a.photo_url || null)), nom_complet: "Johanna Morisson", photo_url: _photoHR || null };
+  return { ...a, vrai_nom_cache: a.vrai_nom_cache || a.nom_complet, vrai_photo_cache: (a.vrai_photo_cache !== undefined ? a.vrai_photo_cache : (a.photo_url || null)), nom_complet: "Johanna Morisson", photo_url: _photoHR || null, ...(_profilHR || {}), pixel_meta: (_profilHR && _profilHR.pixel_meta) || "", pixel_tiktok: (_profilHR && _profilHR.pixel_tiktok) || "", bio: (_profilHR && _profilHR.bio) || "", facebook: (_profilHR && _profilHR.facebook) || "", instagram: (_profilHR && _profilHR.instagram) || "", tiktok: (_profilHR && _profilHR.tiktok) || "", linkedin: (_profilHR && _profilHR.linkedin) || "", youtube: (_profilHR && _profilHR.youtube) || "" };
 }
 // Pareil pour les listes publiques (Nos auteurs, recherche, boutique) : le nom et le
 // pays du compte 8 ne sont jamais montres sur HomoRomance.
 function masquerPublicHR(a) {
   if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
-  return { ...a, nom_complet: "Johanna Morisson", pays: "France", photo_url: _photoHR || null };
+  return { ...a, nom_complet: "Johanna Morisson", pays: "France", photo_url: _photoHR || null, bio: (_profilHR && _profilHR.bio) || "" };
 }
 function estModeTexte(b) {
   if (!b) return false;
@@ -18438,11 +18440,11 @@ export default function App() {
     { id: "comment_publier", label: "❓ Comment publier sur " + SITE_NOM },
     { id: "home", label: "Accueil" },
     { id: "catalog", label: "Catalogue" },
-    { id: "subscription", label: "Abonnement" },
+    ...(EST_HOMOROMANCE ? [] : [{ id: "subscription", label: "Abonnement" }]),
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
     // 🎁 Parrainage : visible UNIQUEMENT si activé par l'admin (cache si active === false)
-    ...(appReferralSettings?.active !== false ? [{ id: "referral", label: "🎁 Mon parrainage" }] : []),
+    ...(!EST_HOMOROMANCE && appReferralSettings?.active !== false ? [{ id: "referral", label: "🎁 Mon parrainage" }] : []),
     // Quiz et resultats CarryCare : CarryBooks uniquement.
     ...(EST_HOMOROMANCE ? [] : [
       { id: "quiz", label: "🎯 Quiz" },
@@ -18581,16 +18583,16 @@ export default function App() {
         // changer son numero. Quelques auteurs ont volontairement un compte de
         // paiement different : enregistrer sa bio ne doit pas deplacer leur argent.
         kyc_paiement_phone: (telComplet && telComplet !== ((auteurProfil && auteurProfil.telephone) || "")) ? telComplet : undefined,
-        bio: auteurBio.trim(),
+        bio: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : auteurBio.trim(),
         // 15/10 : sur HomoRomance on n'envoie JAMAIS photo_url (c'est la photo de Landrine sur CarryBooks).
         photo_url: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurPhoto || null),
-        pixel_meta: auteurPixel.trim(),
-        pixel_tiktok: auteurPixelTiktok.trim(),
-        facebook: auteurFb.trim() || null,
-        instagram: auteurIg.trim() || null,
-        tiktok: auteurTk.trim() || null,
-        linkedin: auteurLi.trim() || null,
-        youtube: auteurYt.trim() || null,
+        pixel_meta: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : auteurPixel.trim(),
+        pixel_tiktok: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : auteurPixelTiktok.trim(),
+        facebook: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurFb.trim() || null),
+        instagram: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurIg.trim() || null),
+        tiktok: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurTk.trim() || null),
+        linkedin: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurLi.trim() || null),
+        youtube: (EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) ? undefined : (auteurYt.trim() || null),
         couleur: auteurCouleur || null,
         vitrine_nom: auteurVitrineNom.trim() || null,
         vitrine_logo: auteurVitrineLogo || null,
@@ -18607,6 +18609,12 @@ export default function App() {
       }) });
       const data = await res.json().catch(() => ({}));
       if (data.auteur && EST_HOMOROMANCE && auteurProfil && auteurProfil.vrai_nom_cache) {
+        try {
+          const pHR = { bio: auteurBio, facebook: auteurFb, instagram: auteurIg, tiktok: auteurTk, linkedin: auteurLi, youtube: auteurYt, pixel_meta: auteurPixel, pixel_tiktok: auteurPixelTiktok };
+          const r3 = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "profil_hr_set", id: auteurSession.id, profil: pHR }) });
+          const j3 = await r3.json().catch(() => ({}));
+          if (j3 && j3.ok) _profilHR = j3.profil || {};
+        } catch (e4) {}
         try {
           const r2 = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "photo_hr_set", id: auteurSession.id, url: auteurPhoto || "" }) });
           const j2 = await r2.json().catch(() => ({}));
@@ -19216,7 +19224,7 @@ export default function App() {
     (async () => {
       setBoutiqueLoading(true);
       try {
-        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").neq("category", EST_HOMOROMANCE ? "__aucune__" : CAT_HOMOROMANCE).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").or(EST_HOMOROMANCE ? "category.not.is.null,category.is.null" : "category.is.null,category.neq." + CAT_HOMOROMANCE).order("id", { ascending: false });
         if (!cancel) setBoutiqueBooks((livres || []).filter(b => !b.masque));
       } catch (e) { if (!cancel) setBoutiqueBooks([]); }
       if (!cancel) setBoutiqueLoading(false);
@@ -19245,7 +19253,7 @@ export default function App() {
           if (tc && a && a.couleur) tc.setAttribute("content", a.couleur);
         } catch (e2) {}
         if (a) {
-          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").neq("category", EST_HOMOROMANCE ? "__aucune__" : CAT_HOMOROMANCE).order("id", { ascending: false });
+          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").or(EST_HOMOROMANCE ? "category.not.is.null,category.is.null" : "category.is.null,category.neq." + CAT_HOMOROMANCE).order("id", { ascending: false });
           if (!cancel) setBoutiqueBooks(livres || []);
         } else if (!cancel) { setBoutiqueBooks([]); }
       } catch (e) { if (!cancel) { setBoutiqueAuteur(null); setBoutiqueBooks([]); } }

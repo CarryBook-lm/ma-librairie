@@ -22,11 +22,14 @@ async function sendAuthorSaleEmail(supabaseAdmin, { bookId, partAuteur }) {
     if (!au || !au[0] || !au[0].email) return;
     const nom = (au[0].nom_complet || "").split(" ")[0] || "";
     const part = Math.round(Number(partAuteur || 0));
-    const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff8ec;border-radius:12px;"><div style="text-align:center;font-size:34px;">🎉</div><h2 style="color:#1a1208;text-align:center;margin:8px 0;">Bingo !!!</h2><p style="color:#444;font-size:15px;line-height:1.6;text-align:center;">Bonne nouvelle${nom ? ", " + nom : ""} !<br/>Ton livre <b>${titre}</b> vient d\u2019\u00eatre vendu sur CarryBooks.</p><div style="background:#c9a84c;color:#1a1208;font-weight:bold;font-size:18px;text-align:center;padding:12px;border-radius:10px;margin:16px 0;">+ ${part.toLocaleString("fr-FR")} FCFA</div><p style="color:#666;font-size:13px;text-align:center;">Retrouve tes gains dans ton espace auteur.</p><p style="color:#999;font-size:12px;text-align:center;margin-top:18px;">CarryBooks \u2764\ufe0f</p></div>`;
+    let estHR = false;
+    try { const { data: bc } = await supabaseAdmin.from("books").select("category").eq("id", bookId).limit(1); estHR = !!(bc && bc[0] && bc[0].category === "HomoRomance"); } catch (e) {}
+    let html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff8ec;border-radius:12px;"><div style="text-align:center;font-size:34px;">🎉</div><h2 style="color:#1a1208;text-align:center;margin:8px 0;">Bingo !!!</h2><p style="color:#444;font-size:15px;line-height:1.6;text-align:center;">Bonne nouvelle${nom ? ", " + nom : ""} !<br/>Ton livre <b>${titre}</b> vient d\u2019\u00eatre vendu sur CarryBooks.</p><div style="background:#c9a84c;color:#1a1208;font-weight:bold;font-size:18px;text-align:center;padding:12px;border-radius:10px;margin:16px 0;">+ ${part.toLocaleString("fr-FR")} FCFA</div><p style="color:#666;font-size:13px;text-align:center;">Retrouve tes gains dans ton espace auteur.</p><p style="color:#999;font-size:12px;text-align:center;margin-top:18px;">CarryBooks \u2764\ufe0f</p></div>`;
+    if (estHR) html = html.replace(/CarryBooks/g, "HomoRomance").replace(/carrybooks\.com/g, "homoromance.com");
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Authorization": "Bearer " + RESEND_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: EMAIL_FROM, to: au[0].email, subject: "🎉 Ton livre \"" + titre + "\" a \u00e9t\u00e9 vendu !", html }),
+      body: JSON.stringify({ from: (estHR ? EMAIL_FROM.replace(/CarryBooks/g, "HomoRomance") : EMAIL_FROM), to: au[0].email, subject: "🎉 Ton livre \"" + titre + "\" a \u00e9t\u00e9 vendu !", html }),
     });
   } catch (e) { console.error("[PAYDUNYA-AUTEUR-EMAIL]", e.message); }
 }
