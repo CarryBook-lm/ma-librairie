@@ -18389,7 +18389,7 @@ export default function App() {
   // Apres un recalcul, ne pas rester bloque sur une page qui n existe plus.
   useEffect(() => {
     if (!pagesMesurees || !pagesMesurees.length) return;
-    const dernier = excerptMode ? Math.max(0, Math.min(pagesMesurees.length, nbPagesExtraitRoman(reading)) - 1) : pagesMesurees.length + 3;
+    const dernier = excerptMode ? Math.max(0, Math.min(pagesMesurees.length, nbPagesExtraitRoman(reading))) : pagesMesurees.length + 3; // + la page « Fin de l'extrait »
     setReadingPage(x => (x > dernier ? dernier : x));
   }, [pagesMesurees, excerptMode, reading]);
 
@@ -21625,12 +21625,12 @@ export default function App() {
       : getPages(translatedContent || reading.content);
     // Pages spéciales : ajoutées seulement en mode lecture complète (pas extrait)
     const fullPages = excerptMode 
-      ? allPages.slice(0, nbPagesExtraitRoman(reading))
+      ? [...allPages.slice(0, nbPagesExtraitRoman(reading)), "__SPECIAL_FIN_EXTRAIT__"]
       : ["__SPECIAL_INTRO__", "__SPECIAL_TITLE__", ...allPages, "__SPECIAL_COPYRIGHT__", "__SPECIAL_REFERRAL__"];
     const pages = fullPages;
     const total = pages.length;
     const currentPageContent = pages[readingPage] || "";
-    const isSpecialPage = currentPageContent === "__SPECIAL_INTRO__" || currentPageContent === "__SPECIAL_TITLE__" || currentPageContent === "__SPECIAL_COPYRIGHT__" || currentPageContent === "__SPECIAL_REFERRAL__";
+    const isSpecialPage = currentPageContent === "__SPECIAL_INTRO__" || currentPageContent === "__SPECIAL_TITLE__" || currentPageContent === "__SPECIAL_COPYRIGHT__" || currentPageContent === "__SPECIAL_REFERRAL__" || currentPageContent === "__SPECIAL_FIN_EXTRAIT__";
 
     // In scroll mode, show all paragraphs; in page mode show current page only
     // En scroll, on filtre les marqueurs spéciaux (qui ne sont pas du texte affichable)
@@ -22076,6 +22076,19 @@ export default function App() {
                     {SITE_NOM}
                   </p>
                 </div>
+              ) : currentPageContent === "__SPECIAL_FIN_EXTRAIT__" ? (
+                // ===== DERNIERE PAGE DE L'EXTRAIT : le bouton d'achat est ICI, sur la page, sans scroller =====
+                <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "20px 24px", textAlign: "center", color: readerDark ? "#e0e0e0" : "#1a1a1a", fontFamily: readerFont }}>
+                  <div style={{ fontSize: 28, color: "#c9a84c", marginBottom: 14 }}>❦</div>
+                  <h2 style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c", marginBottom: 12, letterSpacing: 3, textTransform: "uppercase" }}>Fin de l'extrait</h2>
+                  <p style={{ fontSize: 15, lineHeight: 1.6, maxWidth: 340, marginBottom: 26, color: readerDark ? "#bbb" : "#555" }}>
+                    Tu veux connaître la suite ? Achète le livre pour lire la suite.
+                  </p>
+                  <button onClick={(e) => { e.stopPropagation(); setPage("detail"); setReading(null); }}
+                    style={{ width: "100%", maxWidth: 340, padding: "16px 20px", background: G.bouton, border: "none", borderRadius: 10, color: G.boutonTexte, fontSize: 16, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}>
+                    Acheter ce livre
+                  </button>
+                </div>
               ) : currentPageContent === "__SPECIAL_COPYRIGHT__" ? (
                 // ===== AVANT-DERNIERE PAGE : FIN + Copyright + Abonnement =====
                 <div style={{
@@ -22164,16 +22177,6 @@ export default function App() {
                 <>
               {rendreParas(scrollAllParagraphs)}
 
-              {excerptMode && readingPage === total - 1 && (
-                <div style={{ marginTop: 24, padding: 20, background: "#fdf8ee", border: "1px solid #e8d5a3", borderRadius: 8, textAlign: "center" }}>
-                  <div style={{ color: accentLecture, fontSize: 14, marginBottom: 6, fontStyle: "italic" }}>Fin de l'extrait</div>
-                  <div style={{ color: "#888", fontSize: 13, marginBottom: 14 }}>Achetez le livre pour lire la suite</div>
-                  <button onClick={(e) => { e.stopPropagation(); setPage("detail"); setReading(null); }}
-                    style={{ padding: "10px 24px", background: G.bouton, border: "none", borderRadius: 4, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
-                    Acheter ce livre
-                  </button>
-                </div>
-              )}
                 </>
               )}
             </div>
