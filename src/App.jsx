@@ -2197,6 +2197,42 @@ const G_HOMOROMANCE = {
 
 const G = EST_HOMOROMANCE ? G_HOMOROMANCE : G_CARRYBOOKS;
 
+// 15/10 : guide « Comment publier » de HomoRomance. Le site ne publie que des romans texte
+// et des annonces de prochaine sortie : plus de PDF, d'audio, de formation ni de vitrine.
+function GuideHR() {
+  const T = { fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 14 };
+  return (
+    <div style={{ fontSize: 13.5, color: G.text, lineHeight: 1.7 }}>
+      <div style={T}>1. Ce que tu peux publier</div>
+      <p><b>📖 Un roman (texte)</b> : tu écris ou tu colles ton texte directement sur HomoRomance. Il se lit dans la liseuse du site et il n'est pas téléchargeable.</p>
+      <p><b>🗓️ Une prochaine sortie</b> : tu annonces un roman à venir avec sa couverture, son résumé et sa date. Il s'affiche sur l'accueil jusqu'au jour de sa sortie.</p>
+
+      <div style={T}>2. Avant de publier</div>
+      <p>Ton compte doit être <b>vérifié</b>. Si ce n'est pas encore fait, l'application t'ouvre le formulaire de vérification quand tu appuies sur <b>Publier</b>.</p>
+
+      <div style={T}>3. Publier un roman, pas à pas</div>
+      <p>Appuie sur <b>Publier</b> (le bouton « + » au centre), puis sur <b>« Publier un Roman (Texte) »</b>. Remplis dans l'ordre :</p>
+      <p>• <b>Titre</b>, <b>Catégorie</b> et <b>Sous-catégorie</b> (la sous-catégorie s'active après la catégorie).<br/>• <b>Prix</b> en FCFA.<br/>• <b>Couverture</b> au format A4 portrait, 1240 × 1754 pixels, bien nette.<br/>• <b>Résumé</b> : 2 à 3 phrases qui donnent envie. Les lecteurs en voient 3 lignes, puis « Voir plus ».<br/>• <b>Pages gratuites</b> : l'extrait que le lecteur peut lire avant d'acheter. Il est de <b>7 pages minimum</b>.<br/>• <b>Texte du roman</b> : tape-le dans la grande zone, ou colle-le depuis Word.</p>
+
+      <div style={T}>4. Écrire sur plusieurs jours</div>
+      <p>Tu n'as pas besoin de tout finir d'un coup. Appuie sur <b>« Enregistrer (continuer plus tard) »</b>. Ton texte s'enregistre aussi tout seul pendant que tu écris. Retrouve-le dans <b>Mes livres → En cours d'édition</b> et continue là où tu t'étais arrêtée.</p>
+
+      <div style={T}>5. Soumettre et validation</div>
+      <p>Quand le roman est terminé, appuie sur <b>« Soumettre pour validation »</b>. Il passe en <b>En attente</b> : l'équipe HomoRomance le vérifie. Une fois validé, il est <b>En ligne</b> et achetable. Si le roman est <b>Refusé</b>, le motif s'affiche dans Mes livres. Tu peux modifier un livre à tout moment : il repasse alors en validation.</p>
+
+      <div style={T}>6. Annoncer une prochaine sortie</div>
+      <p>Dans <b>Publier</b>, choisis <b>« Annoncer une prochaine sortie »</b>. Ajoute la <b>couverture</b>, le <b>résumé</b> et la <b>date de sortie</b>. L'annonce apparaît sur l'accueil et disparaît toute seule le jour de la sortie.</p>
+      <p>Pour changer la date ou supprimer une annonce, ouvre la même page : en bas, <b>« Mes sorties annoncées »</b> te permet de <b>Changer la date</b> ou de <b>Supprimer</b>.</p>
+
+      <div style={T}>7. Suivre tes chiffres et être payée</div>
+      <p>Dans <b>Ventes</b> et <b>Stats</b>, tu vois les ventes réelles de tes livres sur HomoRomance depuis la création du site, mises à jour automatiquement. Pour retirer ton argent, utilise <b>Retirer les fonds</b> dans <b>Ventes</b> : les fonds deviennent retirables quelques jours après chaque vente.</p>
+
+      <div style={T}>8. Règles à respecter</div>
+      <p>Publie uniquement tes propres textes. Sont refusés : le contenu volé ou copié, le contenu illégal ou haineux, et tout texte avec un personnage mineur dans une scène sexuelle. Tous les personnages doivent être majeurs.</p>
+    </div>
+  );
+}
+
 
 // ============================================================
 // QUIZ DATA — 12 quiz prêts à l'emploi
@@ -21274,6 +21310,7 @@ export default function App() {
                 <div style={{ background: EST_HOMOROMANCE ? G.carte : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, fontSize: 13, color: G.text, lineHeight: 1.7 }}>
                   <div style={{ fontSize: 16, fontWeight: "bold", marginBottom: 4 }}>❓ Comment publier sur {SITE_NOM}</div>
                   <div style={{ fontSize: 11, color: G.textDim, marginBottom: 14 }}>Tout ce que tu dois savoir de A à Z, pas à pas.</div>
+                  {EST_HOMOROMANCE ? <GuideHR /> : (<>
                   <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.bouton, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 18 }}>⬇️ Télécharger la formation en PDF</a>
 
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>1. Les 4 types de livres</div>
@@ -21332,6 +21369,7 @@ export default function App() {
                   <div style={{ fontSize: 14, fontWeight: "bold", color: G.gold, marginTop: 8 }}>15. Vendre une formation vidéo</div>
                   <p>Dans <b>Publier</b>, choisis <b>« 🎓 Publier une Formation »</b>. Ta formation reste hébergée où tu veux — YouTube, Google Drive, WhatsApp, Telegram. Ici tu la <b>présentes</b> et tu la <b>vends</b>.</p>
                   <p>Tu mets une <b>couverture A4 paysage</b>, tu écris ta présentation en y glissant des <b>images</b> et une <b>vidéo YouTube</b>, puis tu enregistres tes <b>liens d'accès</b> : lien de la formation, groupe WhatsApp, ton numéro. <b>Ces liens ne sont donnés qu'après le paiement</b> — personne ne peut y accéder sans avoir payé.</p>
+                  </>)}
                 </div>
               )}
               {/* SUPPORT (bientôt) */}
@@ -25206,6 +25244,7 @@ export default function App() {
             <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, fontWeight: "bold", fontSize: 14, cursor: "pointer", padding: 0, marginBottom: 12 }}>← Retour</button>
             <h1 style={{ color: G.gold, fontSize: 22, marginBottom: 6 }}>Comment publier sur {SITE_NOM}</h1>
             <p style={{ color: G.textDim, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>Le guide complet pour t’inscrire et publier tes livres, même sans aucune expérience.</p>
+            {EST_HOMOROMANCE ? <GuideHR /> : (<>
             <a href="/comment-publier.pdf" download target="_blank" rel="noreferrer" style={{ display: "inline-block", background: G.bouton, color: "#fff", fontWeight: "bold", fontSize: 14, padding: "12px 20px", borderRadius: 10, textDecoration: "none", marginBottom: 24 }}>⬇️ Télécharger le guide en PDF</a>
 
             {(() => {
@@ -25264,6 +25303,7 @@ export default function App() {
                 <div style={{ ...box, textAlign: "center" }}>Une question ? Écris-nous à <b>{SITE_EMAIL}</b>. Bienvenue dans la famille {SITE_NOM} !</div>
               </div>);
             })()}
+            </>)}
           </div>
         )}
 
