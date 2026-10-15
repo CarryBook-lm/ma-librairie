@@ -1755,6 +1755,7 @@ export default function Admin() {
       if (booksData) booksData.forEach(b => { titlesMap[b.id] = b.title; });
       const enriched = data
         .filter(r => r.comment && r.comment.trim().length > 0)
+        .filter(r => !EST_HOMOROMANCE || titlesMap[r.book_id])
         .map(r => ({ ...r, book_title: titlesMap[r.book_id] }));
       setPendingReviews(enriched);
     } else {
@@ -2591,7 +2592,7 @@ export default function Admin() {
             { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "ventes_pays", label: "Ventes par pays", icon: "🌍" },
-            { id: "pwa_stats", label: "Stats PWA", icon: "📱" },
+            ...(EST_HOMOROMANCE ? [] : [{ id: "pwa_stats", label: "Stats PWA", icon: "📱" }]),
             { id: "security", label: "Sécurité", icon: "🔐" },
           ].map(item => (
             <div key={item.id} onClick={() => { 
