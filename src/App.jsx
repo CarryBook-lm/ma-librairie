@@ -14125,9 +14125,15 @@ export default function App() {
           const { data } = await supabase.from("site_stats").select("valeur").eq("cle", "visites").limit(1); visites = (data && data[0]) ? Number(data[0].valeur) : 0;
         }
         // 15/10 : sur HomoRomance, seulement les livres de la categorie HomoRomance, et un seul auteur.
-        let qLivres = supabase.from("books").select("id", { count: "exact", head: true }).eq("status", "actif");
-        if (EST_HOMOROMANCE) qLivres = qLivres.eq("category", CAT_HOMOROMANCE);
-        const { count: nbLivres } = await qLivres;
+        let nbLivres = 0;
+        if (EST_HOMOROMANCE) {
+          // Memes filtres que le catalogue du site (surCarryBooks) : romans texte de Johanna Morisson seulement.
+          const { data: lv } = await supabase.from("books").select("id, category, author, pdf_url, audio_url, masque, exclusif_vitrine").eq("status", "actif").eq("category", CAT_HOMOROMANCE);
+          nbLivres = (lv || []).filter(surCarryBooks).length;
+        } else {
+          const r0 = await supabase.from("books").select("id", { count: "exact", head: true }).eq("status", "actif");
+          nbLivres = r0.count;
+        }
         let nbAuteurs = 0;
         if (EST_HOMOROMANCE && AUTEUR_UNIQUE_HR) { nbAuteurs = 1; }
         else { const r = await supabase.from("auteurs").select("id", { count: "exact", head: true }).eq("kyc_status", "valide"); nbAuteurs = r.count; }
