@@ -1825,6 +1825,12 @@ const PAYS_TEL = [
 // Ex : Landrine (8) voit aussi Julia ShiMen (9).
 const COMPTES_LIES = { 8: [9] };
 const idsComptesLies = (id) => [id].concat(COMPTES_LIES[id] || []);
+// 15/10 : sur HomoRomance, les livres signes Johanna Morisson (nom de plume du compte 8) doivent
+// apparaitre dans Mes livres meme s ils ne sont pas rattaches au compte (auteur_id vide ou autre).
+const filtreMesLivres = (p) => {
+  const ids = idsComptesLies(p.id).join(",");
+  return (EST_HOMOROMANCE && p.id === 8) ? ("auteur_id.in.(" + ids + "),author.ilike.%Johanna Morisson%") : ("auteur_id.in.(" + ids + ")");
+};
 const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
 const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
@@ -15005,7 +15011,7 @@ export default function App() {
         const obj = {};
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
-        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
         setMesLivres(livres || []);
       } catch (e) {} finally { setMesLivresLoading(false); }
     })();
@@ -18708,7 +18714,7 @@ export default function App() {
       if (!rj || !rj.ok) { alert((rj && rj.error) || "La suppression n'a pas abouti. Réessaie."); return; }
       setMesLivresDetail(null);
       setPubMsg("🗑️ Livre supprimé.");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { alert("Erreur lors de la suppression : " + (e.message || e)); }
   }
@@ -18850,7 +18856,7 @@ export default function App() {
       }
       setPubDraftMsg("💾 Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " — en cours d'édition");
       if (!silent) setPubMsg("✅ Enregistré. Tu le retrouveras dans « Mes livres » → « En cours d'édition » pour continuer plus tard.");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { if (!silent) setPubMsg("❌ " + (e.message || e)); }
     setPubSavingDraft(false);
@@ -18988,7 +18994,7 @@ export default function App() {
         : "✅ Ta formation a été envoyée ! Le traitement peut durer jusqu'à 24h.");
       setFmForm({ title: "", category: "", subcategory: "", price: "", cover: "", contenu: "" });
       setFmLiens([]); setPubEditId(null);
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setFmMsg("❌ " + (e.message || e)); }
     setFmSaving(false);
@@ -19074,7 +19080,7 @@ export default function App() {
       setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
       setPubOpen(false); setPubTypeSelected(null); setPubDraftMsg(""); setAuteurTab("meslivres");
-      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").eq("auteur_id", auteurProfil.id).order("id", { ascending: false });
+      const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
       setMesLivres(livres || []);
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
