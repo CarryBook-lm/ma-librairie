@@ -14088,6 +14088,21 @@ export default function App() {
   const [seedMelange] = useState(() => Math.floor(Math.random() * 1000000));
   const melangerListe = (arr) => { const a = [...(arr || [])]; let s = seedMelange; for (let i = a.length - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor((s / 233280) * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const annoncesRef = useRef(null);
+  // 15/10 HomoRomance : les Nouveautes defilent toutes seules, toutes les 3 secondes, en horizontal.
+  const nouvHRRef = useRef(null);
+  const nouvHRPause = useRef(0);
+  useEffect(() => {
+    if (!EST_HOMOROMANCE) return;
+    const id = setInterval(() => {
+      const c = nouvHRRef.current; if (!c) return;
+      if (Date.now() - nouvHRPause.current < 6000) return;
+      const premier = c.firstElementChild; if (!premier) return;
+      const pas = premier.getBoundingClientRect().width + 10;
+      if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
+      else { c.scrollBy({ left: pas, behavior: "smooth" }); }
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
   // Defilement automatique des Nouveautes sur la vitrine d'un auteur.
   // NB : boutiqueBooks et page sont declares plus haut dans le composant.
   const bqNouvRef = useRef(null);
@@ -24084,7 +24099,7 @@ export default function App() {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && surCarryBooks(b) && isDigitalBook(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
                   const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(b => isDigitalBook(b) && surCarryBooks(b)).slice(0, 5);
-                  if (heroBooks.length === 0) return null;
+                  if (heroBooks.length === 0 || EST_HOMOROMANCE) return null;
                   const featuredBook = heroBooks[heroIndex % heroBooks.length];
                   return (
                     <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", marginBottom: 24 }}>
@@ -24258,9 +24273,9 @@ export default function App() {
                   return (
                 <div style={{ marginBottom: 28 }}>
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
-                    <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                    <div ref={nouvHRRef} onTouchStart={() => { nouvHRPause.current = Date.now(); }} onMouseDown={() => { nouvHRPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: EST_HOMOROMANCE ? "x mandatory" : undefined, scrollPaddingLeft: 16 }}>
                       {digitalBooks.map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "27vw", maxWidth: 120, cursor: "pointer", textAlign: "left" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: EST_HOMOROMANCE ? "calc((100% - 26px) / 1.5)" : "27vw", maxWidth: EST_HOMOROMANCE ? 300 : 120, scrollSnapAlign: EST_HOMOROMANCE ? "start" : undefined, cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
                               ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
