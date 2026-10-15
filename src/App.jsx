@@ -18639,6 +18639,16 @@ export default function App() {
     const ids = new Set((mesLivres || []).map(x => String(x.id)));
     return (list || []).filter(v => ids.has(String(v.book_id)) && new Date(v.created_at).getTime() >= HR_DEBUT_MS);
   }
+  // Portefeuille de l'auteur. Sur HomoRomance : uniquement les ventes HomoRomance (et les retraits faits depuis l'ouverture).
+  function portefeuille() {
+    const ventes = EST_HOMOROMANCE ? ventesSite(ventesAuteur) : (ventesAuteur || []);
+    const retraits = EST_HOMOROMANCE ? (retraitsAuteur || []).filter(r => new Date(r.created_at).getTime() >= HR_DEBUT_MS) : (retraitsAuteur || []);
+    const vendu = ventes.reduce((s, v) => s + (v.part_auteur || 0), 0);
+    const percu = retraits.filter(r => r.statut === "paye").reduce((s, r) => s + (r.montant || 0), 0);
+    const enAttente = retraits.filter(r => r.statut === "en_attente").reduce((s, r) => s + (r.montant || 0), 0);
+    const mature = ventes.filter(v => new Date(v.created_at).getTime() <= Date.now() - delaiRetrait * 86400000).reduce((s, v) => s + (v.part_auteur || 0), 0);
+    return { vendu, percu, enAttente, pasPercu: vendu - percu, dispo: Math.max(0, mature - percu - enAttente) };
+  }
   function filterVentesByPeriod(list, period, dateStr) {
     const now = new Date();
     const sod = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -18710,6 +18720,7 @@ export default function App() {
     const montant = Math.round(Number(retraitMontant || 0));
     if (!montant || montant <= 0) { setRetraitMsg("Entre un montant valide."); return; }
     if (montant < 2000) { setRetraitMsg("Le montant minimum de retrait est de 2 000 FCFA."); return; }
+    if (EST_HOMOROMANCE && montant > portefeuille().dispo) { setRetraitMsg("Le montant dépasse ton disponible HomoRomance (" + portefeuille().dispo.toLocaleString("fr-FR") + " F)."); return; }
     setRetraitSaving(true); setRetraitMsg("");
     try {
       const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "request_retrait", id: auteurSession.id, montant }) });
@@ -20843,12 +20854,7 @@ export default function App() {
                       );
                     })()}
                     {(() => {
-                      const vendu = ventesAuteur.reduce((s, v) => s + (v.part_auteur || 0), 0);
-                      const percu = retraitsAuteur.filter(r => r.statut === "paye").reduce((s, r) => s + (r.montant || 0), 0);
-                      const enAttente = retraitsAuteur.filter(r => r.statut === "en_attente").reduce((s, r) => s + (r.montant || 0), 0);
-                      const pasPercu = vendu - percu;
-                      const mature = ventesAuteur.filter(v => new Date(v.created_at).getTime() <= Date.now() - delaiRetrait * 86400000).reduce((s, v) => s + (v.part_auteur || 0), 0);
-                      const dispo = Math.max(0, mature - percu - enAttente);
+                      const { vendu, percu, enAttente, pasPercu, dispo } = portefeuille();
                       const box = (label, val, fort) => (
                         <div style={{ flex: 1, background: fort ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.15)", borderRadius: 10, padding: 12, textAlign: "center", minWidth: 0 }}>
                           <div style={{ fontSize: 17, fontWeight: "bold" }}>{fmt(val)}</div>
@@ -20857,7 +20863,7 @@ export default function App() {
                       );
                       return (
                         <div style={{ background: "linear-gradient(135deg, #6a11cb, #8e2de2)", borderRadius: 12, padding: 14, marginBottom: 16, color: "#fff" }}>
-                          <div style={{ fontSize: 13, fontWeight: "bold", marginBottom: 10 }}>{EST_HOMOROMANCE ? "💼 Mon portefeuille (tous mes sites)" : "💼 Mon portefeuille"}</div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", marginBottom: 10 }}>{EST_HOMOROMANCE ? "💼 Mon portefeuille HomoRomance" : "💼 Mon portefeuille"}</div>
                           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>{box("Total déjà vendu", vendu, false)}{box("Total déjà perçu", percu, false)}</div>
                           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>{box("Pas encore perçu", pasPercu, false)}{box("Disponible au retrait", dispo, true)}</div>
                           {enAttente > 0 ? <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 8, textAlign: "center" }}>⏳ Demande(s) en attente : {fmt(enAttente)}</div> : null}
