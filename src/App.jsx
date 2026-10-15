@@ -16038,7 +16038,7 @@ export default function App() {
           user_id: user.id,
           last_seen: new Date().toISOString(),
           current_book_id: reading ? reading.id : null,
-          page: page || "home"
+          page: (EST_HOMOROMANCE ? "hr:" : "") + (page || "home")
         }, { onConflict: "user_id" });
       } catch (e) {
         console.error("Heartbeat error:", e);

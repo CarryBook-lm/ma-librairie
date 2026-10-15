@@ -19,6 +19,8 @@ const EST_HOMOROMANCE = (function () {
     return (window.location.search || "").indexOf("site=homoromance") !== -1;
   } catch (e) { return false; }
 })();
+// HomoRomance a ouvert le 09/10/2026 : ses chiffres ne comptent rien d'avant.
+const HR_DEBUT_MS = new Date("2026-10-09T00:00:00").getTime();
 const SITE_NOM = EST_HOMOROMANCE ? "HomoRomance" : "CarryBooks";
 const SITE_LOGO = EST_HOMOROMANCE ? "/logo-homoromance.png?v=4" : "/logo-carrybooks.png";
 
@@ -1515,14 +1517,14 @@ export default function Admin() {
   async function fetchQuizPayments() {
     try {
       const { data } = await supabase.from("quiz_payments").select("*").order("created_at", { ascending: false });
-      if (data) setQuizPayments(data);
+      if (data && !EST_HOMOROMANCE) setQuizPayments(data);
     } catch (e) { console.error("Erreur fetch quiz_payments:", e); }
   }
 
   async function fetchCarrycarePayments() {
     try {
       const { data } = await supabase.from("carrycare_results").select("amount, created_at, quiz_type, user_id").order("created_at", { ascending: false });
-      if (data) setCarrycarePayments(data);
+      if (data && !EST_HOMOROMANCE) setCarrycarePayments(data);
     } catch (e) { console.error("Erreur fetch carrycare:", e); }
   }
 
@@ -1539,7 +1541,7 @@ export default function Admin() {
         setCarryshopOrders([]);
         return;
       }
-      if (data) setCarryshopOrders(data);
+      if (data && !EST_HOMOROMANCE) setCarryshopOrders(data);
     } catch (e) { console.error("Erreur fetch carryshop_orders:", e); setCarryshopOrders([]); }
   }
 
@@ -1556,7 +1558,7 @@ export default function Admin() {
         setCarrycolorOrders([]);
         return;
       }
-      if (data) setCarrycolorOrders(data);
+      if (data && !EST_HOMOROMANCE) setCarrycolorOrders(data);
     } catch (e) { console.error("Erreur fetch carrycolor_orders:", e); setCarrycolorOrders([]); }
   }
 
@@ -1571,10 +1573,15 @@ export default function Admin() {
     try {
       // 1) Lecteurs en ligne (ping < 90 secondes = considéré en ligne)
       const cutoff = new Date(Date.now() - 90 * 1000).toISOString();
-      const { data: presenceData, error: presErr } = await supabase
+      let { data: presenceData, error: presErr } = await supabase
         .from("presence")
         .select("user_id, current_book_id, last_seen, page")
         .gte("last_seen", cutoff);
+      if (!presErr && presenceData) {
+        // Chaque site marque sa presence : « hr: » devant la page pour HomoRomance.
+        const estHR = (p) => String(p.page || "").indexOf("hr:") === 0;
+        presenceData = presenceData.filter(p => EST_HOMOROMANCE ? estHR(p) : !estHR(p));
+      }
 
       if (!presErr && presenceData) {
         setOnlineCount(presenceData.length);
@@ -1616,18 +1623,15 @@ export default function Admin() {
 
       // 2) Lectures dans les 10 dernières minutes (depuis book_views)
       const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { data: recentData, error: recentErr } = await supabase
-        .from("book_views")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", tenMinAgo);
+      let idsLecture = null;
+      if (EST_HOMOROMANCE) { const { data: lh2 } = await livres("id"); idsLecture = (lh2 || []).map(x => x.id); }
+      const qv = () => { let q = supabase.from("book_views").select("id", { count: "exact", head: true }).gte("created_at", tenMinAgo); if (idsLecture) q = q.in("book_id", idsLecture.length ? idsLecture : [-1]); return q; };
+      const { data: recentData, error: recentErr } = await qv();
 
       if (!recentErr) {
         // Quand on utilise head:true, le count est dans la réponse
         // Le client renvoie { count } directement
-        const { count } = await supabase
-          .from("book_views")
-          .select("id", { count: "exact", head: true })
-          .gte("created_at", tenMinAgo);
+        const { count } = await qv();
         setRecentReads(count || 0);
       }
     } catch (e) {
@@ -1689,7 +1693,7 @@ export default function Admin() {
 
   async function fetchSubscribers() {
     const { data } = await supabase.from("subscriptions").select("*").order("started_at", { ascending: false });
-    if (data) setSubscribers(data);
+    if (data && !EST_HOMOROMANCE) setSubscribers(data);
   }
 
   async function fetchPromoCodes() {
@@ -1730,22 +1734,32 @@ export default function Admin() {
 
   async function fetchStats() {
     // Ventes des utilisateurs connectés
-    const { data: purchases } = await supabase.from("purchases").select("amount, book_id, created_at");
-    const { data: users } = await supabase.from("purchases").select("user_id");
+    let { data: purchases } = await supabase.from("purchases").select("amount, book_id, created_at, user_id");
+    let users = purchases ? purchases.map(p => ({ user_id: p.user_id })) : [];
+    let idsHR = null;
+    if (EST_HOMOROMANCE) {
+      const { data: lh } = await livres("id");
+      idsHR = new Set((lh || []).map(x => String(x.id)));
+      purchases = (purchases || []).filter(p => idsHR.has(String(p.book_id)) && new Date(p.created_at).getTime() >= HR_DEBUT_MS);
+      users = purchases.map(p => ({ user_id: p.user_id }));
+    }
 
     // 🎯 Ventes invités (sans compte)
-    const { data: guestPurchases } = await supabase.from("guest_purchases").select("amount, book_id, phone, created_at");
+    let { data: guestPurchases } = await supabase.from("guest_purchases").select("amount, book_id, phone, created_at");
+    if (EST_HOMOROMANCE && guestPurchases) guestPurchases = guestPurchases.filter(g => idsHR.has(String(g.book_id)) && new Date(g.created_at).getTime() >= HR_DEBUT_MS);
 
     // 🛒 Ventes panier (commandes pay�es)
-    const { data: cartOrders } = await supabase
+    let { data: cartOrders } = await supabase
       .from("cart_orders")
       .select("id, total, customer_phone, created_at")
       .eq("payment_status", "paid");
+    if (EST_HOMOROMANCE) cartOrders = [];
 
     // 🛒 Items des commandes panier (pour Top livres)
-    const { data: cartItems } = await supabase
+    let { data: cartItems } = await supabase
       .from("cart_order_items")
       .select("book_id, quantity, order_id");
+    if (EST_HOMOROMANCE) cartItems = [];
 
     if (purchases) {
       // Combiner les revenus des 3 sources
@@ -2253,7 +2267,7 @@ export default function Admin() {
 
   // Calcul des stats par type d'achat
   // Filtrage des purchases : seulement celles avec un livre existant
-  const validPurchases = users.filter(u => books.find(b => b.id === u.book_id));
+  const validPurchases = users.filter(u => books.find(b => b.id === u.book_id) && (!EST_HOMOROMANCE || new Date(u.created_at).getTime() >= HR_DEBUT_MS));
   // Ventes réelles : type "sale" OU pas de type défini ET prix > 0 (rétrocompatibilité)
   const realSales = validPurchases.filter(u => {
     if (u.type === "sale") return true;
@@ -2585,7 +2599,7 @@ export default function Admin() {
             </div>
 
             {/* COMPTEUR YOLLI — clics sur le bouton « Inscrivez-vous » de l'accueil */}
-            <div style={{ background: "linear-gradient(135deg, #2a0d22 0%, #1d0d33 100%)", border: "1.5px solid #e0399a", borderRadius: 10, padding: 18, marginBottom: 16 }}>
+            <div style={{ display: EST_HOMOROMANCE ? "none" : "block", background: "linear-gradient(135deg, #2a0d22 0%, #1d0d33 100%)", border: "1.5px solid #e0399a", borderRadius: 10, padding: 18, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#f06bb4", letterSpacing: 2, marginBottom: 10, textTransform: "uppercase", textAlign: "center" }}>💞 Clics vers Yolli</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
                 {[["Aujourd'hui", clicsYolli.jour], ["7 jours", clicsYolli.sem], ["30 jours", clicsYolli.mois], ["Total", clicsYolli.total]].map(([lab, n]) => (
@@ -2599,7 +2613,7 @@ export default function Admin() {
             </div>
 
             {/* SECTION SOLDE CAMPAY A RETIRER */}
-            <div style={{ background: "linear-gradient(135deg, #101a2a 0%, #0d2540 100%)", border: "1.5px solid #2196f3", borderRadius: 10, padding: 18, marginBottom: 16 }}>
+            <div style={{ display: EST_HOMOROMANCE ? "none" : "block", background: "linear-gradient(135deg, #101a2a 0%, #0d2540 100%)", border: "1.5px solid #2196f3", borderRadius: 10, padding: 18, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#64b5f6", letterSpacing: 2, marginBottom: 6, textTransform: "uppercase", textAlign: "center" }}>🏦 Solde CamPay à retirer</div>
               <div style={{ fontSize: 30, fontWeight: "bold", color: "#64b5f6", marginBottom: 10, textAlign: "center" }}>{campaySoldeTotal.toLocaleString()} F</div>
               <div style={{ display: "flex", justifyContent: "center", gap: 18, fontSize: 12, color: "#9fb8d0", marginBottom: 14, flexWrap: "wrap" }}>
@@ -2653,7 +2667,7 @@ export default function Admin() {
                 </div>
 
                 {/* ⭐ ABONNEMENTS */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                <div style={{ display: EST_HOMOROMANCE ? "none" : "block", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 18 }}>⭐</span>
                     <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>Abonnements</span>
@@ -2673,7 +2687,7 @@ export default function Admin() {
                 </div>
 
                 {/* 🎯 CARRY'QUIZ */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                <div style={{ display: EST_HOMOROMANCE ? "none" : "block", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 18 }}>🎯</span>
                     <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>Carry'Quiz</span>
@@ -2693,7 +2707,7 @@ export default function Admin() {
                 </div>
 
                 {/* 💜 CARRYCARE */}
-                <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
+                <div style={{ display: EST_HOMOROMANCE ? "none" : "block", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 18 }}>💜</span>
                     <span style={{ fontSize: 13, color: "#e8e0d0", fontWeight: "bold" }}>CarryCare</span>
@@ -2715,7 +2729,7 @@ export default function Admin() {
             </div>
 
             {/* SECTION DÉTAIL PAR SOURCE — PRODUITS PHYSIQUES (CarryShop + CarryColor) */}
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 16, display: EST_HOMOROMANCE ? "none" : "block" }}>
               <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>📦 Produits physiques</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {/* 🛍️ CARRYSHOP */}
@@ -2799,7 +2813,7 @@ export default function Admin() {
                   { label: "💜 CarryCare", y: yCare, w: wCare, m: mCare },
                   { label: "🛍️ CarryShop", y: yShop, w: wShop, m: mShop },
                   { label: "💄 CarryColor", y: yColor, w: wColor, m: mColor },
-                ].map((row, i) => (
+                ].filter(r => !EST_HOMOROMANCE || r.label.indexOf("Livres") !== -1).map((row, i) => (
                   <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 6, fontSize: 11, padding: "6px 0", borderBottom: i < 5 ? "1px solid #1f1f1f" : "none" }}>
                     <div style={{ color: "#e8e0d0" }}>{row.label}</div>
                     <div style={{ textAlign: "right", color: row.y.revenue > 0 ? "#c9a84c" : "#555" }}>{row.y.revenue.toLocaleString()}</div>
