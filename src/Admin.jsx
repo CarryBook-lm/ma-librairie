@@ -108,6 +108,21 @@ const emptyForm = {
 // ════════════════════════════════════════════════════════════════
 // MODULE COMPTABILITÉ / RENTABILITÉ
 // ════════════════════════════════════════════════════════════════
+// HomoRomance : charges et budget pub stockes a part (table reglages, 1 JSON par cle).
+async function lireReglageJSON(cle) {
+  try {
+    const { data } = await supabase.from("reglages").select("valeur").eq("cle", cle).maybeSingle();
+    const arr = data && data.valeur ? JSON.parse(data.valeur) : [];
+    return { data: Array.isArray(arr) ? arr : [] };
+  } catch (e) { return { data: [] }; }
+}
+async function ecrireReglageJSON(cle, existant, champCle, ligne) {
+  const liste = (existant || []).filter(x => x[champCle] !== ligne[champCle]);
+  liste.push(ligne);
+  liste.sort((a, b) => String(a[champCle]).localeCompare(String(b[champCle])));
+  return await supabase.from("reglages").upsert({ cle, valeur: JSON.stringify(liste), updated_at: new Date().toISOString() }, { onConflict: "cle" });
+}
+
 function ComptabiliteView() {
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
@@ -145,15 +160,16 @@ function ComptabiliteView() {
     setLoading(true);
     try {
       const [p, g, c, cc, qp, wd, ex, ab] = await Promise.all([
-        supabase.from("purchases").select("amount, created_at"),
-        supabase.from("guest_purchases").select("amount, created_at"),
-        supabase.from("cart_orders").select("total, created_at, payment_status").eq("payment_status", "paid"),
-        supabase.from("carrycare_results").select("amount, created_at"),
-        supabase.from("quiz_payments").select("amount, created_at"),
-        supabase.from("referral_withdrawals").select("amount, created_at, status").eq("status", "approved"),
-        supabase.from("daily_expenses").select("expense_date, ad_spend, other_charges"),
-        supabase.from("ad_budget").select("effective_date, daily_amount").order("effective_date", { ascending: true }),
+        supabase.from("purchases").select("amount, created_at, book_id"),
+        supabase.from("guest_purchases").select("amount, created_at, book_id"),
+        EST_HOMOROMANCE ? Promise.resolve({ data: [] }) : supabase.from("cart_orders").select("total, created_at, payment_status").eq("payment_status", "paid"),
+        EST_HOMOROMANCE ? Promise.resolve({ data: [] }) : supabase.from("carrycare_results").select("amount, created_at"),
+        EST_HOMOROMANCE ? Promise.resolve({ data: [] }) : supabase.from("quiz_payments").select("amount, created_at"),
+        EST_HOMOROMANCE ? Promise.resolve({ data: [] }) : supabase.from("referral_withdrawals").select("amount, created_at, status").eq("status", "approved"),
+        EST_HOMOROMANCE ? lireReglageJSON("hr_expenses") : supabase.from("daily_expenses").select("expense_date, ad_spend, other_charges"),
+        EST_HOMOROMANCE ? lireReglageJSON("hr_ad_budget") : supabase.from("ad_budget").select("effective_date, daily_amount").order("effective_date", { ascending: true }),
       ]);
+      if (EST_HOMOROMANCE) { p.data = await ventesHR(p.data, "created_at"); g.data = await ventesHR(g.data, "created_at"); }
       setPurchases(p.data || []);
       setGuestPurchases(g.data || []);
       setCartOrders(c.data || []);
@@ -189,15 +205,10 @@ function ComptabiliteView() {
     setSaving(true);
     setSavedMsg("");
     try {
-      const { error } = await supabase.from("daily_expenses").upsert(
-        {
-          expense_date: selectedDate,
-          ad_spend: Number(adSpendInput) || 0,
-          other_charges: Number(otherInput) || 0,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "expense_date" }
-      );
+      const ligneCharges = { expense_date: selectedDate, ad_spend: Number(adSpendInput) || 0, other_charges: Number(otherInput) || 0, updated_at: new Date().toISOString() };
+      const { error } = EST_HOMOROMANCE
+        ? await ecrireReglageJSON("hr_expenses", expenses, "expense_date", ligneCharges)
+        : await supabase.from("daily_expenses").upsert(ligneCharges, { onConflict: "expense_date" });
       if (error) {
         setSavedMsg("❌ Erreur : " + error.message);
       } else {
@@ -216,10 +227,10 @@ function ComptabiliteView() {
     setBudgetSaving(true); setBudgetMsg("");
     try {
       const today = new Date().toLocaleDateString("fr-CA");
-      const { error } = await supabase.from("ad_budget").upsert(
-        { effective_date: today, daily_amount: val },
-        { onConflict: "effective_date" }
-      );
+      const ligneBudget = { effective_date: today, daily_amount: val };
+      const { error } = EST_HOMOROMANCE
+        ? await ecrireReglageJSON("hr_ad_budget", adBudgets, "effective_date", ligneBudget)
+        : await supabase.from("ad_budget").upsert(ligneBudget, { onConflict: "effective_date" });
       if (error) setBudgetMsg("❌ " + error.message);
       else { setBudgetMsg("✅ Budget pub : " + val.toLocaleString() + " F/jour"); await loadAll(); }
     } catch (e) { setBudgetMsg("❌ " + (e.message || e)); }
@@ -1102,16 +1113,21 @@ export default function Admin() {
   async function fetchCategories() {
     setCatLoading(true);
     try {
-      const { data: cats, error: e1 } = await supabase
+      let { data: cats, error: e1 } = await supabase
         .from('categories')
         .select('*')
         .order('display_order', { ascending: true });
       if (e1) throw e1;
-      const { data: subs, error: e2 } = await supabase
+      let { data: subs, error: e2 } = await supabase
         .from('subcategories')
         .select('*')
         .order('display_order', { ascending: true });
       if (e2) throw e2;
+      if (EST_HOMOROMANCE) {
+        cats = (cats || []).filter(c => c.name === CAT_HOMOROMANCE);
+        const idsC = new Set(cats.map(c => c.id));
+        subs = (subs || []).filter(x => idsC.has(x.category_id));
+      }
       setCategoriesRaw(cats || []);
       setSubcategoriesRaw(subs || []);
       // Reconstruction de l'objet CATEGORIES { "Nom cat": ["sous1", "sous2", ...] }
@@ -2113,9 +2129,11 @@ export default function Admin() {
     if (guestError) { console.error("Guest purchases error:", guestError); }
 
     // Combiner les 2 (marquer les invités avec phone au lieu de user_id)
+    const dataHR = EST_HOMOROMANCE ? await ventesHR(data, "created_at") : data;
+    const guestHR = EST_HOMOROMANCE ? await ventesHR(guestData, "created_at") : guestData;
     const combined = [
-      ...(data || []),
-      ...((guestData || []).map(g => ({
+      ...(dataHR || []),
+      ...((guestHR || []).map(g => ({
         user_id: "📱 " + g.phone + (g.recovered_by_user_id ? " (récupéré)" : " (invité)"),
         book_id: g.book_id,
         created_at: g.created_at,
@@ -3883,8 +3901,8 @@ export default function Admin() {
               <button onClick={() => { fetchUsers(); fetchUserStats(); }} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#aaa", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>🔄 Actualiser</button>
             </div>
 
-            {/* 👥 STATS COMPTES UTILISATEURS */}
-            <div style={{ background: "linear-gradient(135deg, #2a1f0a 0%, #1a1208 100%)", border: ("1px solid " + ACC + ""), borderRadius: 8, padding: 16, marginBottom: 16 }}>
+            {/* 👥 STATS COMPTES UTILISATEURS (comptes partagés : masqué sur HomoRomance) */}
+            {!EST_HOMOROMANCE && <div style={{ background: "linear-gradient(135deg, #2a1f0a 0%, #1a1208 100%)", border: ("1px solid " + ACC + ""), borderRadius: 8, padding: 16, marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: ("" + ACC + ""), textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: "bold" }}>👥 Comptes utilisateurs CarryBooks</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
                 <div style={{ textAlign: "center" }}>
@@ -3904,7 +3922,7 @@ export default function Admin() {
                   <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>30 derniers jours</div>
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* 🛒 STATS ACHETEURS */}
             <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: 16, marginBottom: 16 }}>
