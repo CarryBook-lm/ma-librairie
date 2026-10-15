@@ -14092,7 +14092,6 @@ export default function App() {
   const nouvHRRef = useRef(null);
   const nouvHRPause = useRef(0);
   useEffect(() => {
-    if (!EST_HOMOROMANCE) return;
     const id = setInterval(() => {
       const c = nouvHRRef.current; if (!c) return;
       if (Date.now() - nouvHRPause.current < 6000) return;
@@ -24094,7 +24093,7 @@ export default function App() {
                 )}
 
 
-                {EST_HOMOROMANCE && (() => {
+                {(() => {
                   // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
                   // 09/10 : surCarryBooks() manquait ici — la rangee montrait TOUS les livres,
                   // y compris ceux qui n'appartiennent pas au site affiche.
@@ -24109,9 +24108,9 @@ export default function App() {
                   return (
                 <div style={{ marginBottom: 28 }}>
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
-                    <div ref={nouvHRRef} onTouchStart={() => { nouvHRPause.current = Date.now(); }} onMouseDown={() => { nouvHRPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: EST_HOMOROMANCE ? "x mandatory" : undefined, scrollPaddingLeft: 16 }}>
+                    <div ref={nouvHRRef} onTouchStart={() => { nouvHRPause.current = Date.now(); }} onMouseDown={() => { nouvHRPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: "x mandatory", scrollPaddingLeft: 16 }}>
                       {digitalBooks.map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: EST_HOMOROMANCE ? "calc((100% - 26px) / 1.5)" : "27vw", maxWidth: EST_HOMOROMANCE ? 300 : 120, scrollSnapAlign: EST_HOMOROMANCE ? "start" : undefined, cursor: "pointer", textAlign: "left" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
                               ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
@@ -24148,7 +24147,7 @@ export default function App() {
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
                   const featuredBooks = (() => { const actifs = books.filter(b => b.status === "actif" && surCarryBooks(b) && isDigitalBook(b)); const feat = actifs.filter(b => b.featured); const recents = [...actifs].sort((a, b) => (b.id || 0) - (a.id || 0)).slice(0, 15); const ids = new Set(); const out = []; [...feat, ...recents].forEach(b => { if (!ids.has(b.id)) { ids.add(b.id); out.push(b); } }); return out.slice(0, 15); })();
                   const heroBooks = featuredBooks.length > 0 ? featuredBooks : books.filter(b => isDigitalBook(b) && surCarryBooks(b)).slice(0, 5);
-                  if (heroBooks.length === 0 || EST_HOMOROMANCE) return null;
+                  if (heroBooks.length === 0 || true) return null; // hero retire sur les deux sites
                   const featuredBook = heroBooks[heroIndex % heroBooks.length];
                   return (
                     <div style={{ position: "relative", width: "100%", height: 420, overflow: "hidden", marginBottom: 24 }}>
@@ -24220,18 +24219,18 @@ export default function App() {
                     .filter(Boolean)
                     .filter(isDigitalBook)
                     .filter(surCarryBooks);
-                  if (EST_HOMOROMANCE) {
+                  {
                     // Top 10 : les plus vendus d'abord, puis les autres livres du site (les plus recents) pour remplir.
                     const dejaTop = new Set(sortedBestSellers.map(b => b.id));
                     const reste = books.filter(b => b.status === "actif" && isDigitalBook(b) && surCarryBooks(b) && !dejaTop.has(b.id)).sort((a, b) => (b.id || 0) - (a.id || 0));
                     sortedBestSellers = [...sortedBestSellers, ...reste].slice(0, 10);
-                  } else { sortedBestSellers = sortedBestSellers.slice(0, 5); }
+                  }
                   if (sortedBestSellers.length === 0) return null;
                   return (
                     <div style={{ marginBottom: 28 }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", marginBottom: 12 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>
-                          {EST_HOMOROMANCE ? "🔥 Top 10 des best-sellers" : "🔥 Best-sellers"}
+                          🔥 Top 10 des best-sellers
                         </div>
                         <div style={{ fontSize: 11, color: G.gold, letterSpacing: 1, textTransform: "uppercase" }}>
                           Les + lus
@@ -24239,7 +24238,7 @@ export default function App() {
                       </div>
                       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
                         {sortedBestSellers.map((book, idx) => (
-                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: EST_HOMOROMANCE ? "calc((100% - 14px) / 3.5)" : "40vw", maxWidth: EST_HOMOROMANCE ? 200 : 175, cursor: "pointer", position: "relative" }}>
+                          <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 14px) / 3.5)", maxWidth: 200, cursor: "pointer", position: "relative" }}>
                             {/* Badge classement */}
                             <div style={{
                               position: "absolute", top: 6, left: 6, zIndex: 2,
@@ -24312,7 +24311,7 @@ export default function App() {
                 )}
 
                 {/* NOUVEAUTÉS (PRODUITS NUMÉRIQUES) - numérique + mixte */}
-                                {!EST_HOMOROMANCE && (() => {
+                                {false && (() => {
                   // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
                   // 09/10 : surCarryBooks() manquait ici — la rangee montrait TOUS les livres,
                   // y compris ceux qui n'appartiennent pas au site affiche.
@@ -24327,9 +24326,9 @@ export default function App() {
                   return (
                 <div style={{ marginBottom: 28 }}>
                     <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, padding: "0 16px", marginBottom: 12 }}>Nouveautés</div>
-                    <div ref={nouvHRRef} onTouchStart={() => { nouvHRPause.current = Date.now(); }} onMouseDown={() => { nouvHRPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: EST_HOMOROMANCE ? "x mandatory" : undefined, scrollPaddingLeft: 16 }}>
+                    <div ref={nouvHRRef} onTouchStart={() => { nouvHRPause.current = Date.now(); }} onMouseDown={() => { nouvHRPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollSnapType: "x mandatory", scrollPaddingLeft: 16 }}>
                       {digitalBooks.map(book => (
-                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: EST_HOMOROMANCE ? "calc((100% - 26px) / 1.5)" : "27vw", maxWidth: EST_HOMOROMANCE ? 300 : 120, scrollSnapAlign: EST_HOMOROMANCE ? "start" : undefined, cursor: "pointer", textAlign: "left" }}>
+                        <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
                               ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
