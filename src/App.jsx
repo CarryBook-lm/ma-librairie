@@ -43,7 +43,7 @@ function masquerNomHR(a0) {
 // pays du compte 8 ne sont jamais montres sur HomoRomance.
 function masquerPublicHR(a) {
   if (!EST_HOMOROMANCE || !a || a.id !== 8) return a;
-  return { ...a, nom_complet: "Johanna Morisson", pays: "", photo_url: null };
+  return { ...a, nom_complet: "Johanna Morisson", pays: "France", photo_url: null };
 }
 function estModeTexte(b) {
   if (!b) return false;
@@ -20952,7 +20952,7 @@ export default function App() {
                     <div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Nom</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.nom_complet}</span></div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>E-mail</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.email || "—"}</span></div>
-                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.pays || "—"}</span></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Pays</span><span style={{ color: G.text, fontWeight: "bold" }}>{(EST_HOMOROMANCE && auteurProfil.id === 8) ? "France" : (auteurProfil.pays || "—")}</span></div>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid " + G.border, fontSize: 13 }}><span style={{ color: G.textDim }}>Mobile Money</span><span style={{ color: G.text, fontWeight: "bold" }}>{auteurProfil.telephone ? telAffiche(auteurProfil.telephone) : "—"}</span></div>
                       {auteurProfil.bio ? <div style={{ padding: "8px 0", fontSize: 13, color: G.textDim }}>{auteurProfil.bio}</div> : null}
                       {auteurProfil.code_source ? (
