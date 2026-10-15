@@ -620,7 +620,7 @@ export default function Admin() {
       setEaLoading(true);
       try {
         const [{ data: aut }, { data: bks }, { data: kyc }, { data: va }, { data: rp }] = await Promise.all([
-          supabase.from("auteurs").select("id, nom_complet, telephone, email, code_source, banni, banni_motif, kyc_status, abonnement_actif").order("nom_complet", { ascending: true }),
+          supabase.from("auteurs").select("id, nom_complet, telephone, email, code_source, banni, banni_motif, kyc_status, abonnement_actif, kyc_nom, kyc_prenom").order("nom_complet", { ascending: true }),
           livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
           supabase.from("auteurs").select("id, nom_complet, email, kyc_status, kyc_nom, kyc_prenom, kyc_naissance, kyc_lieu_naissance, kyc_situation, kyc_nationalite, kyc_pays_residence, kyc_sexe, kyc_paiement_phone, kyc_piece_type, kyc_piece_url, kyc_piece_url2, kyc_contrat_url, kyc_submitted_at").eq("kyc_status", "en_attente").order("kyc_submitted_at", { ascending: true }),
           supabase.from("ventes_auteurs").select("auteur_id, part_auteur, book_id, created_at"),
@@ -694,7 +694,7 @@ export default function Admin() {
   }, [view]);
   const rechargerEA = async () => {
     const [{ data: aut }, { data: bks }] = await Promise.all([
-      supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif").order("nom_complet", { ascending: true }),
+      supabase.from("auteurs").select("id, nom_complet, telephone, email, banni, banni_motif, kyc_nom, kyc_prenom").order("nom_complet", { ascending: true }),
       livres("id, title, status, moderation, price, auteur_id, masque, exclu_catalogue").not("auteur_id", "is", null).neq("status", "brouillon").order("id", { ascending: false }),
     ]);
     memoriserAuteursDuSite(aut || []);
@@ -4845,10 +4845,10 @@ export default function Admin() {
                   );
                 })() : (
                   <div>
-                  <input value={eaSearch} onChange={e => setEaSearch(e.target.value)} placeholder="🔍 Rechercher un auteur ou un livre…" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#e8e0d0", fontSize: 13, marginBottom: 12 }} />
+                  <input value={eaSearch} onChange={e => setEaSearch(e.target.value)} placeholder="🔍 Auteur (nom de plume, vrai nom, e-mail, tél.) ou livre…" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, color: "#e8e0d0", fontSize: 13, marginBottom: 12 }} />
                   {(() => {
                     const q = eaSearch.trim().toLowerCase();
-                    const liste = q ? eaAuteurs.filter(a => (a.nom_complet || "").toLowerCase().includes(q) || eaBooks.some(b => b.auteur_id === a.id && (b.title || "").toLowerCase().includes(q))) : eaAuteurs;
+                    const liste = q ? eaAuteurs.filter(a => [a.nom_complet, a.email, a.telephone, a.kyc_nom, a.kyc_prenom, (a.kyc_prenom || "") + " " + (a.kyc_nom || ""), (a.kyc_nom || "") + " " + (a.kyc_prenom || "")].some(v => String(v || "").toLowerCase().includes(q)) || eaBooks.some(b => b.auteur_id === a.id && (b.title || "").toLowerCase().includes(q))) : eaAuteurs;
                     if (liste.length === 0) return <div style={{ color: "#888", fontSize: 13, textAlign: "center", padding: 16 }}>{q ? "Aucun résultat." : "Aucun auteur inscrit pour le moment."}</div>;
                     return liste.map(a => {
                       const livres = eaBooks.filter(b => b.auteur_id === a.id);
