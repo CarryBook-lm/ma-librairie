@@ -24430,7 +24430,6 @@ export default function App() {
                                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
-                              <div style={{ fontSize: 11, color: G.gold, marginTop: 3 }}>{book.subcategory || champCategorie(book)}</div>
                             </div>
                           ))}
                         </div>
