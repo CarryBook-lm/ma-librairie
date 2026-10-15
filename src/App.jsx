@@ -21135,7 +21135,7 @@ export default function App() {
                         <input value={auteurTel} onChange={e => setAuteurTel(e.target.value)} placeholder="Ton numéro" style={{ ...champ, flex: 1, marginBottom: 0 }} />
                       </div>
                       <div style={{ height: 14 }} />
-                      <label style={labelSt}>Ton email de connexion (visible par tes lecteurs)</label>
+                      <label style={labelSt}>Ton email de connexion (jamais montré à tes lecteurs)</label>
                       <input type="email" value={auteurEmail} readOnly style={{ ...champ, background: EST_HOMOROMANCE ? G.surface2 : "#f2f2f2", color: G.textDim }} />
                       <div style={{ height: 14 }} />
                       <label style={labelSt}>Photo de profil (facultatif)</label>
