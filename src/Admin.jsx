@@ -711,6 +711,17 @@ export default function Admin() {
     await rechargerEA();
     alert("🚫 Auteur banni et livres retirés du site.");
   };
+  const nouveauMdpAuteur = async (a) => {
+    if (!window.confirm("Générer un NOUVEAU mot de passe pour " + (a.nom_complet || "cette auteure") + " ?\nL'ancien ne marchera plus.")) return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess && sess.session ? sess.session.access_token : "";
+      const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "admin_reset_mdp", auteur_id: a.id, token }) });
+      const d = await res.json().catch(() => ({}));
+      if (d.ok) window.prompt("✅ Nouveau mot de passe de " + (d.nom || "l'auteure") + " (connexion avec l'e-mail : " + (d.email || "") + "). Copie-le puis envoie-le lui :", d.mot_de_passe);
+      else alert("❌ " + (d.error || "Erreur inconnue"));
+    } catch (e) { alert("❌ Erreur : " + (e && e.message)); }
+  };
   const reintegrerAuteur = async (a) => {
     if (!window.confirm("Réintégrer " + (a.nom_complet || "cet auteur") + " ? Ses livres redeviennent visibles.")) return;
     const { error: e1 } = await supabase.from("auteurs").update({ banni: false, banni_motif: null, banni_at: null }).eq("id", a.id);
@@ -4813,6 +4824,7 @@ export default function Admin() {
                       ) : (
                         <button onClick={() => bannirAuteur(a)} style={{ padding: "8px 16px", background: "#5a1a1a", color: "#ff8a80", border: "1px solid #6a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 14 }}>🚫 Bannir cet auteur</button>
                       )}
+                      <button onClick={() => nouveauMdpAuteur(a)} style={{ padding: "8px 16px", background: "#1a1a1a", color: ACC, border: "1px solid #2a2a2a", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 14, marginLeft: 8 }}>🔑 Nouveau mot de passe</button>
                       {livres.length === 0 ? <div style={{ color: "#666", fontSize: 13, fontStyle: "italic" }}>Aucun livre publié.</div> : livres.map(b => {
                         const st = b.status === "actif" ? { t:"✅ En ligne", c:"#4caf50" } : (b.moderation === "refuse" ? { t:"❌ Refusé", c:"#e57373" } : { t:"⏳ En attente", c:("" + ACC + "") });
                         return (

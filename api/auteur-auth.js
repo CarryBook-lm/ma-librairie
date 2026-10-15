@@ -381,6 +381,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // ---------- 15/10 : l'administrateur genere un nouveau mot de passe pour une auteure ----------
+    if (action === "admin_reset_mdp") {
+      const emailAdmin = await emailDuJeton(body.token);
+      if (!emailAdmin || ADMINS_SORTIES.indexOf(emailAdmin) === -1) return res.status(403).json({ error: "Réservé à l'administrateur." });
+      const auteurId = body.auteur_id;
+      if (!auteurId) return res.status(400).json({ error: "auteur_id requis." });
+      const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let nouveau = "";
+      for (let i = 0; i < 8; i++) nouveau += alphabet[crypto.randomInt(alphabet.length)];
+      const { data, error } = await supa.from("auteurs").update({ password_hash: hashPassword(nouveau) }).eq("id", auteurId).select("id, email, nom_complet");
+      if (error) return res.status(500).json({ error: error.message });
+      if (!data || !data.length) return res.status(404).json({ error: "Auteure introuvable." });
+      return res.status(200).json({ ok: true, mot_de_passe: nouveau, email: data[0].email, nom: data[0].nom_complet });
+    }
+
     if (action === "sortie_admin_modifier" || action === "sortie_admin_supprimer") {
       const email = await emailDuJeton(body.token);
       if (!email || ADMINS_SORTIES.indexOf(email) === -1) return res.status(403).json({ error: "Réservé à l'administrateur." });
