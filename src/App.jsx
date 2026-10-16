@@ -2135,6 +2135,31 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
 }
 
 
+// 17/10 : rangee horizontale qui defile toute seule, toutes les 3 secondes (CarryBooks : categories de l'accueil).
+// Le defilement s'arrete 6 secondes des que la personne touche la rangee.
+function RangeeAuto({ children }) {
+  const ref = useRef(null);
+  const pause = useRef(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const c = ref.current; if (!c) return;
+      if (Date.now() - pause.current < 6000) return;
+      const premier = c.firstElementChild; if (!premier) return;
+      if (c.scrollWidth <= c.clientWidth + 12) return;
+      const pas = premier.getBoundingClientRect().width + 10;
+      if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
+      else { c.scrollBy({ left: pas, behavior: "smooth" }); }
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div ref={ref} onTouchStart={() => { pause.current = Date.now(); }} onMouseDown={() => { pause.current = Date.now(); }} onWheel={() => { pause.current = Date.now(); }}
+      style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+      {children}
+    </div>
+  );
+}
+
 // Un livre "exclusif vitrine" ne s'affiche QUE dans la boutique de son auteur :
 // jamais sur l'accueil, le catalogue, la recherche, les categories ni les recommandations.
 // Il reste achetable par son lien direct, et reste visible dans Ma bibliotheque une fois achete.
@@ -24452,7 +24477,7 @@ export default function App() {
                         <button onClick={() => { setSelectedCategory(cat); setPage("catalog"); }}
                           style={{ fontSize: 12, color: G.gold, background: "none", border: "none", cursor: "pointer" }}>Tout voir →</button>
                       </div>
-                      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
+                      <RangeeAuto>
                         {catBooks.map(book => (
                           <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: book.product_type === "formation" ? "82vw" : (catBooks.length === 1 ? "86%" : catBooks.length === 2 ? "46%" : "40vw"), maxWidth: book.product_type === "formation" ? 340 : (catBooks.length === 1 ? 320 : catBooks.length === 2 ? 210 : 175), cursor: "pointer", textAlign: "center" }}>
                             {/* 04/10 : une formation a une affiche A4 PAYSAGE. Sans ce test elle
@@ -24489,7 +24514,7 @@ export default function App() {
                             </>)}
                           </div>
                         ))}
-                      </div>
+                      </RangeeAuto>
                     </div>
                     </Fragment>
                   );
