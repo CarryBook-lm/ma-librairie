@@ -24224,37 +24224,6 @@ export default function App() {
                   );
                 })()}
 
-                {/* PUB YOLLI — 07/10 : video de presentation + bouton d'inscription,
-                    juste sous le hero. youtube-nocookie evite de poser les cookies
-                    publicitaires de YouTube sur carrybooks.com.
-                    09/10 : absente de HomoRomance. */}
-                {!EST_HOMOROMANCE && (
-                <div style={{ margin: "0 16px 28px", borderRadius: 14, overflow: "hidden", border: "1px solid " + G.border, background: (EST_HOMOROMANCE ? G.carte : "#fff") }}>
-                  <div style={{ width: "100%", aspectRatio: "16 / 9", background: "#000" }}>
-                    <iframe
-                      src="https://www.youtube-nocookie.com/embed/qv3VXakEfsU?rel=0"
-                      title="Yolli"
-                      loading="lazy"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                      style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                    />
-                  </div>
-                  <div style={{ padding: 10 }}>
-                    <a href="https://yolli.net/?src=carrybooks" target="_blank" rel="noopener noreferrer"
-                      onClick={() => {
-                        try { trackPixelEvent("Lead", { content_name: "Yolli depuis " + SITE_NOM }); } catch (e) {}
-                        // On enregistre le clic sans attendre la reponse : le lien s'ouvre
-                        // dans un autre onglet, la page reste vivante et l'insertion finit.
-                        try { supabase.from("clics_pub").insert([{ cible: "yolli", page: "accueil" }]); } catch (e) {}
-                      }}
-                      style={{ display: "block", textAlign: "center", padding: "9px 14px", borderRadius: 9, background: "linear-gradient(135deg, #e0399a, #8e2de2)", color: "#fff", fontWeight: "bold", fontSize: 14, textDecoration: "none", fontFamily: "Georgia, serif" }}>
-                      Inscrivez-vous
-                    </a>
-                  </div>
-                </div>
-                )}
-
                 {/* BEST-SELLERS — Top 5 livres les plus achetés (num�riques uniquement sur la home) */}
                 {(() => {
                   const bookSales = {};
