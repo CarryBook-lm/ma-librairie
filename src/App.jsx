@@ -15271,8 +15271,6 @@ export default function App() {
             (obj[CAT_HOMOROMANCE] || []).forEach(s => { objHR[s] = []; });
             setCATEGORIES(objHR);
           } else {
-            // 17/10 : la categorie HomoRomance appartient a l'autre site, elle n'apparait pas ici.
-            delete obj[CAT_HOMOROMANCE];
             setCATEGORIES(obj);
           }
         }
