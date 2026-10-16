@@ -2140,8 +2140,8 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
 // Il reste achetable par son lien direct, et reste visible dans Ma bibliotheque une fois achete.
 function surCarryBooks(b) {
   if (!b || b.masque || b.exclusif_vitrine) return false;
-  // 15/10 : les romans HomoRomance ne se montrent plus sur CarryBooks (accueil, catalogue, recherche).
-  if (!EST_HOMOROMANCE && (b.category || "") === CAT_HOMOROMANCE) return false;
+  // 17/10 : les romans HomoRomance s'affichent aussi sur CarryBooks (categorie HomoRomance).
+  // Ils restent absents de la boutique de l'auteur (requetes de la page auteur).
   // Sur homoromance.com : on ne montre QUE les romans de la categorie HomoRomance.
   if (EST_HOMOROMANCE) {
     if ((b.category || "") !== CAT_HOMOROMANCE) return false;
@@ -15271,8 +15271,6 @@ export default function App() {
             (obj[CAT_HOMOROMANCE] || []).forEach(s => { objHR[s] = []; });
             setCATEGORIES(objHR);
           } else {
-            // 17/10 : la categorie HomoRomance appartient a l'autre site, elle n'apparait pas ici.
-            delete obj[CAT_HOMOROMANCE];
             setCATEGORIES(obj);
           }
         }
