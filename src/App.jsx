@@ -23828,7 +23828,7 @@ export default function App() {
             <div style={{ fontSize: 46, marginBottom: 6 }}>📲</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Installe l’application {SITE_NOM}</div>
             <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6, marginBottom: 18 }}>Accède à tes livres plus vite, même hors connexion, directement depuis ton écran d’accueil.</div>
-            {installPlatform === "ios" && isInAppBrowser() ? (
+            {installPlatform === "ios" ? (
               <button onClick={() => { fermerDailyInstall(); setShowIosInstructions(true); }} style={{ width: "100%", padding: 15, background: "linear-gradient(135deg, #6a11cb, #2575fc)", color: "#fff", border: "none", borderRadius: 12, fontWeight: "bold", fontSize: 16, cursor: "pointer", marginBottom: 12, boxShadow: "0 6px 18px rgba(106,17,203,0.4)" }}>📥 Comment installer</button>
             ) : installPlatform === "ios" ? (
               <div style={{ textAlign: "left", background: "#f7f4ee", borderRadius: 12, padding: 14, marginBottom: 16 }}>
@@ -23859,7 +23859,35 @@ export default function App() {
             <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
               Installer {SITE_NOM}
             </h2>
-            {isInAppBrowser() ? (<>
+            {installPlatform === "ios" ? (<>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: "#1a1a1a", marginBottom: 4 }}>🍎 Sur iPhone</div>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 14, lineHeight: 1.5 }}>Voici les étapes pour installer {SITE_NOM} sur ton iPhone</p>
+              <div style={{ textAlign: "left", marginBottom: 16 }}>
+                {(isInAppBrowser() ? [
+                  "En haut de l’écran, appuie sur les trois points, puis sur « Ouvrir dans le navigateur ».",
+                  SITE_NOM + " se rouvre dans ton navigateur. En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
+                  "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
+                  "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
+                  "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
+                ] : [
+                  "En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
+                  "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
+                  "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
+                  "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
+                ]).map((t, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "flex-start" }}>
+                    <div style={{ background: "#6a11cb", color: "#fff", width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: "bold", flexShrink: 0 }}>{i + 1}</div>
+                    <div style={{ fontSize: 13, color: "#333", paddingTop: 3, lineHeight: 1.5 }}>{t}</div>
+                  </div>
+                ))}
+              </div>
+              {isInAppBrowser() && (
+                <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin); alert("Lien copié ! Colle-le dans Safari."); } catch (e) {} }}
+                  style={{ width: "100%", padding: 11, background: "#f3eefb", border: "1px solid #d9c8f3", color: "#6a11cb", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
+                  📋 Copier le lien du site
+                </button>
+              )}
+            </>) : isInAppBrowser() ? (<>
               <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>
                 Tu es dans le navigateur de Facebook / TikTok : l'installation y est impossible. Ouvre le site dans {installPlatform === "ios" ? "Safari" : "Chrome"} :
               </p>
@@ -23886,7 +23914,7 @@ export default function App() {
             </p>
             ))}
 
-            <div style={{ textAlign: "left", marginBottom: 20, display: (isInAppBrowser() || installPlatform === "android") ? "none" : "block" }}>
+            <div style={{ textAlign: "left", marginBottom: 20, display: (isInAppBrowser() || installPlatform === "android" || installPlatform === "ios") ? "none" : "block" }}>
               <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
                 <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>1</div>
                 <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
