@@ -14360,14 +14360,14 @@ export default function App() {
     // (le navigateur de Facebook n'envoie jamais la proposition d'installation).
     // Un bandeau qui ne peut pas tenir sa promesse vaut moins que rien : il mange
     // le haut de l'ecran et cache l'en-tete et le bouton Retour. (22/09)
-    if (!refuse && !isInAppBrowser()) setShowInstallBanner(true);
+    if (!refuse) setShowInstallBanner(true);
 
     // Écouter l'event d'install (Android, Desktop Chrome/Edge) : on garde
     // l'événement pour l'installation directe et on LAISSE le bandeau.
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
-      if (!refuse && !isInAppBrowser()) setShowInstallBanner(true);
+      if (!refuse) setShowInstallBanner(true);
     };
 
     // Cacher le bandeau dès l'installation (et ne plus le reproposer)
@@ -14475,13 +14475,6 @@ export default function App() {
         <button onClick={() => { setInvitInstall(false); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📲 Installer {SITE_NOM}</button>
         <button onClick={fermerInvitInstall} style={{ width: "100%", padding: 11, background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer", marginTop: 6 }}>Plus tard</button>
       </div>
-    </div>
-  ) : showInstallBanner ? (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, background: "rgba(106,17,203,0.88)", color: "#fff", padding: "7px 12px", display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.15)", backdropFilter: "blur(2px)" }}>
-      <span style={{ fontSize: 16 }}>📱</span>
-      <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Installer l'application {SITE_NOM}</span>
-      <button onClick={triggerInstall} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), color: "#6a11cb", border: "none", borderRadius: 6, padding: "5px 14px", fontSize: 12, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap" }}>Installer</button>
-      <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", fontSize: 18, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>✕</button>
     </div>
   ) : null;
 
@@ -19471,7 +19464,7 @@ export default function App() {
   // ================= LISTE DES AUTEUR(ES) =================
   if (page === "auteurs") {
     return (
-      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
         <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, zIndex: 10 }}>
           <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer" }}>←</button>
@@ -19678,7 +19671,7 @@ export default function App() {
     const fond = normaliserCoul(aut && aut.coul_fond, G.bg);
     const retourVitrine = previousPage === "auteur_boutique";
     return (
-      <div style={{ minHeight: "100vh", background: fond, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+      <div style={{ minHeight: "100vh", background: fond, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
         <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, zIndex: 10 }}>
           <button onClick={() => {
@@ -19818,7 +19811,7 @@ export default function App() {
       );
     };
     return (
-      <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+      <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
         <div style={{ position: "sticky", top: 0, background: cFond, zIndex: 10 }}>
@@ -22705,7 +22698,7 @@ export default function App() {
     const owned = hasAccess(book);
     const isFav = favoriteBooks.includes(book.id);
     return (
-      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: showInstallBanner ? 38 : 0 }}>
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
         {/* 🍞 TOAST DE NOTIFICATION sur la page d�tail (sinon il appara�t derri�re) */}
         {toast && (
@@ -23950,14 +23943,14 @@ export default function App() {
 
       {/* BANNIÈRE OFFLINE */}
       {!isOnline && (
-        <div style={{ position: "fixed", top: showInstallBanner ? 44 : 0, left: 0, right: 0, zIndex: 200, background: "#c9952a", color: "#000", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13, fontWeight: "bold", borderBottom: "1px solid #8b6f3a" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, background: "#c9952a", color: "#000", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13, fontWeight: "bold", borderBottom: "1px solid #8b6f3a" }}>
           <span style={{ fontSize: 16 }}>🔌</span>
           <span>Mode hors ligne — Tu peux lire tes livres téléchargés</span>
         </div>
       )}
 
       {/* NAVBAR */}
-      <nav style={{ position: "fixed", top: showInstallBanner ? (!isOnline ? 80 : 44) : (!isOnline ? 36 : 0), left: 0, right: 0, zIndex: 100, background: G.entete, borderBottom: "1px solid " + G.enteteBordure, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
+      <nav style={{ position: "fixed", top: (!isOnline ? 36 : 0), left: 0, right: 0, zIndex: 100, background: G.entete, borderBottom: "1px solid " + G.enteteBordure, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
         <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
           <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
         </div>
@@ -24079,7 +24072,17 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ paddingTop: showInstallBanner ? (!isOnline ? 136 : 100) : 56 }}>
+      <div style={{ paddingTop: !isOnline ? 92 : 56 }}>
+        {/* 18/10 : BANDE D'INSTALLATION STATIQUE, sous l'en-tete. Dans le flux de la page : elle ne se pose sur rien
+            et ne cache rien ; elle remonte avec le defilement. */}
+        {page === "home" && showInstallBanner && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: EST_HOMOROMANCE ? G.carte : "#f6efdc", borderBottom: "1px solid " + G.border }}>
+            <span style={{ fontSize: 26, flexShrink: 0 }}>📲</span>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: "bold", lineHeight: 1.25, color: G.text }}>Installe {SITE_NOM} sur ton téléphone</span>
+            <button onClick={triggerInstall} style={{ background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 20, padding: "9px 18px", fontSize: 14, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Installer</button>
+            <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: G.textFaint, fontSize: 20, cursor: "pointer", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}>✕</button>
+          </div>
+        )}
         {/* HERO */}
         {/* SEARCH + CATEGORIES - visible aussi sur la page d'accueil */}
         {(page === "home" || page === "catalog" || searchQuery || selectedCategory !== "Tous") && (
