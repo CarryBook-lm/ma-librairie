@@ -14398,8 +14398,7 @@ export default function App() {
       if (isAndroid && isInAppBrowser() && !dejaDansChrome && sessionStorage.getItem("cb_sortie_fb") !== "1") {
         sortie = setTimeout(() => {
           try { sessionStorage.setItem("cb_sortie_fb", "1"); } catch (e) {}
-          ouvrirDansChrome();
-          setTimeout(() => { try { if (document.visibilityState === "visible") setShowIosInstructions(true); } catch (e) {} }, 1800);
+          ouvrirDansChrome(); // Facebook affiche alors SA fenetre « Vous quittez notre application » : on n'ajoute rien par-dessus
         }, 2500);
       }
     } catch (e) {}
@@ -14439,6 +14438,7 @@ export default function App() {
 
   // Fonction pour déclencher l'installation
   const triggerInstall = async () => {
+    try { if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true) return; } catch (e) {}
     // 18/10 : depuis Facebook / TikTok / Instagram, l'installation est impossible sur place.
     // Android : on saute directement dans Chrome (la fenetre d'installation s'y ouvre seule).
     // Si le saut est refuse (TikTok le bloque parfois), le guide s'affiche 1,5 s plus tard.
@@ -23883,12 +23883,20 @@ export default function App() {
                 📋 Copier le lien du site
               </button>
             </>) : (
+            installPlatform === "android" ? (
+            <>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>Pour ajouter l'app à ton téléphone, dans Chrome :</p>
+              <div style={{ textAlign: "left", marginBottom: 16, background: "#f7f4ee", borderRadius: 12, padding: 14, fontSize: 13, color: "#333", lineHeight: 1.9 }}>
+                1️⃣ Appuie sur les <b>3 points (⋮)</b> en haut à droite<br/>2️⃣ Choisis <b>« Installer l'application »</b> (ou « Ajouter à l'écran d'accueil »)<br/>3️⃣ Appuie sur <b>Installer</b> ✅<br/><span style={{ fontSize: 12, color: "#888" }}>Si tu vois « Ouvrir CarryBooks », l'application est déjà installée sur ce téléphone.</span>
+              </div>
+            </>
+            ) : (
             <p style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>
               Pour ajouter l'app à ton iPhone :
             </p>
-            )}
+            ))}
 
-            <div style={{ textAlign: "left", marginBottom: 20, display: isInAppBrowser() ? "none" : "block" }}>
+            <div style={{ textAlign: "left", marginBottom: 20, display: (isInAppBrowser() || installPlatform === "android") ? "none" : "block" }}>
               <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
                 <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>1</div>
                 <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
