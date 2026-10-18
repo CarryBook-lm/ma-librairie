@@ -13584,6 +13584,21 @@ function isInAppBrowser() {
   return /FBAN|FBAV|FB_IAB|Instagram|musical_ly|BytedanceWebview|Snapchat|LinkedInApp/i.test(ua);
 }
 
+// 18/10 : sortir du navigateur integre de Facebook / TikTok / Instagram vers Chrome (Android).
+// L'installation de l'app n'y est pas possible. On force Chrome (package) et on ajoute
+// ?installer=1 : a l'arrivee, la fenetre d'installation s'ouvre toute seule.
+// Retourne true si on a tente le saut (le navigateur integre peut le refuser : voir le minuteur).
+function ouvrirDansChrome() {
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set("installer", "1");
+    const complet = u.toString();
+    const bare = complet.replace(/^https?:\/\//, "");
+    window.location.href = "intent://" + bare + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(complet) + ";end";
+    return true;
+  } catch (e) { return false; }
+}
+
 // Helper pour calculer le pourcentage de promo
 function getDiscountPct(book) {
   if (!book) return 0;
@@ -14408,6 +14423,18 @@ export default function App() {
 
   // Fonction pour déclencher l'installation
   const triggerInstall = async () => {
+    // 18/10 : depuis Facebook / TikTok / Instagram, l'installation est impossible sur place.
+    // Android : on saute directement dans Chrome (la fenetre d'installation s'y ouvre seule).
+    // Si le saut est refuse (TikTok le bloque parfois), le guide s'affiche 1,5 s plus tard.
+    if (isInAppBrowser()) {
+      if (installPlatform === "android") {
+        ouvrirDansChrome();
+        setTimeout(() => { try { if (document.visibilityState === "visible") setShowIosInstructions(true); } catch (e) {} }, 1500);
+      } else {
+        setShowIosInstructions(true);
+      }
+      return;
+    }
     if (installPlatform === "ios") {
       setShowIosInstructions(true);
       return;
@@ -23795,7 +23822,9 @@ export default function App() {
             <div style={{ fontSize: 46, marginBottom: 6 }}>📲</div>
             <div style={{ fontSize: 18, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Installe l’application {SITE_NOM}</div>
             <div style={{ fontSize: 13.5, color: "#555", lineHeight: 1.6, marginBottom: 18 }}>Accède à tes livres plus vite, même hors connexion, directement depuis ton écran d’accueil.</div>
-            {installPlatform === "ios" ? (
+            {installPlatform === "ios" && isInAppBrowser() ? (
+              <button onClick={() => { fermerDailyInstall(); setShowIosInstructions(true); }} style={{ width: "100%", padding: 15, background: "linear-gradient(135deg, #6a11cb, #2575fc)", color: "#fff", border: "none", borderRadius: 12, fontWeight: "bold", fontSize: 16, cursor: "pointer", marginBottom: 12, boxShadow: "0 6px 18px rgba(106,17,203,0.4)" }}>📥 Comment installer</button>
+            ) : installPlatform === "ios" ? (
               <div style={{ textAlign: "left", background: "#f7f4ee", borderRadius: 12, padding: 14, marginBottom: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a1208", marginBottom: 8 }}>Sur iPhone, en 3 étapes :</div>
                 <div style={{ fontSize: 13, color: "#444", lineHeight: 1.9 }}>1️⃣ Appuie sur le bouton <b>Partager</b> <span style={{ fontSize: 16 }}>⬆️</span> (en bas de Safari)<br/>2️⃣ Choisis <b>« Sur l’écran d’accueil »</b> <span style={{ fontSize: 15 }}>➕</span><br/>3️⃣ Appuie sur <b>Ajouter</b></div>
@@ -23824,11 +23853,26 @@ export default function App() {
             <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
               Installer {SITE_NOM}
             </h2>
+            {isInAppBrowser() ? (<>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>
+                Tu es dans le navigateur de Facebook / TikTok : l'installation y est impossible. Ouvre le site dans {installPlatform === "ios" ? "Safari" : "Chrome"} :
+              </p>
+              <div style={{ textAlign: "left", marginBottom: 16, background: "#f7f4ee", borderRadius: 12, padding: 14, fontSize: 13, color: "#333", lineHeight: 1.9 }}>
+                {installPlatform === "ios"
+                  ? (<>1️⃣ Appuie sur les <b>3 points (⋯)</b> ou sur l'icône <b>boussole</b> en bas ou en haut à droite<br/>2️⃣ Choisis <b>« Ouvrir dans Safari »</b><br/>3️⃣ Dans Safari : <b>Partager ⬆️ → Sur l'écran d'accueil</b></>)
+                  : (<>1️⃣ Appuie sur les <b>3 points (⋮)</b> en haut à droite<br/>2️⃣ Choisis <b>« Ouvrir dans Chrome »</b> (ou « Ouvrir dans le navigateur »)<br/>3️⃣ La fenêtre d'installation s'ouvre toute seule ✅</>)}
+              </div>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin); alert("Lien copié ! Colle-le dans " + (installPlatform === "ios" ? "Safari" : "Chrome") + "."); } catch (e) {} }}
+                style={{ width: "100%", padding: 11, background: "#f3eefb", border: "1px solid #d9c8f3", color: "#6a11cb", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
+                📋 Copier le lien du site
+              </button>
+            </>) : (
             <p style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>
               Pour ajouter l'app à ton iPhone :
             </p>
+            )}
 
-            <div style={{ textAlign: "left", marginBottom: 20 }}>
+            <div style={{ textAlign: "left", marginBottom: 20, display: isInAppBrowser() ? "none" : "block" }}>
               <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
                 <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>1</div>
                 <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
@@ -24071,10 +24115,7 @@ export default function App() {
                         if (/android/.test(ua)) {
                           // ?installer=1 : a l'arrivee dans le vrai navigateur, la fenetre
                           // d'installation s'ouvre toute seule (voir l'effet plus haut).
-                          const u = new URL(window.location.href);
-                          u.searchParams.set("installer", "1");
-                          const bare = u.toString().replace(/^https?:\/\//, "");
-                          window.location.href = "intent://" + bare + "#Intent;scheme=https;end";
+                          ouvrirDansChrome();
                         } else { setShowInstallModal(true); }
                         return;
                       }
