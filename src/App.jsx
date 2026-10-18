@@ -24360,6 +24360,8 @@ export default function App() {
 
                 {/* BEST-SELLERS — Top 5 livres les plus achetés (num�riques uniquement sur la home) */}
                 {(() => {
+                  // 18/10 : la ligne « Top 10 des best-sellers » est retiree de l'accueil de CarryBooks (elle reste sur HomoRomance).
+                  if (!EST_HOMOROMANCE) return null;
                   const bookSales = {};
                   // Filtrer pour ne garder que les livres num�riques
                   const isDigitalBook = b => b.product_type !== 'papier' && b.product_type !== 'article';
