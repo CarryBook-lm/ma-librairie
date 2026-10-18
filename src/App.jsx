@@ -13595,7 +13595,7 @@ function ecranSortieFacebook() {
     if (typeof document === "undefined" || document.getElementById("cb-sortie-fb")) return;
     const d = document.createElement("div");
     d.id = "cb-sortie-fb";
-    d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:22vh 28px 0;text-align:center;font-family:Georgia,serif";
+    d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4vh 24px 0;text-align:center;font-family:Georgia,serif";
     const nom = (typeof SITE_NOM !== "undefined" && SITE_NOM) ? SITE_NOM : "l'application";
     d.innerHTML = '<div style="font-size:44px;margin-bottom:14px">\uD83D\uDCF2</div>'
       + '<div style="color:#fff;font-size:19px;font-weight:bold;line-height:1.5;max-width:320px">Pour installer ' + nom + ', clique sur \u00AB Continuer \u00BB ci-dessous pour quitter l\u2019application.</div>'
