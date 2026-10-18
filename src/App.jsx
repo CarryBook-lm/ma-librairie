@@ -13588,8 +13588,30 @@ function isInAppBrowser() {
 // L'installation de l'app n'y est pas possible. On force Chrome (package) et on ajoute
 // ?installer=1 : a l'arrivee, la fenetre d'installation s'ouvre toute seule.
 // Retourne true si on a tente le saut (le navigateur integre peut le refuser : voir le minuteur).
+// Ecran noir affiche DERRIERE la fenetre « Vous quittez notre application » de Facebook :
+// il dit a la personne quoi faire (appuyer sur Continuer), au lieu de lui laisser voir le site.
+function ecranSortieFacebook() {
+  try {
+    if (typeof document === "undefined" || document.getElementById("cb-sortie-fb")) return;
+    const d = document.createElement("div");
+    d.id = "cb-sortie-fb";
+    d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:22vh 28px 0;text-align:center;font-family:Georgia,serif";
+    const nom = (typeof SITE_NOM !== "undefined" && SITE_NOM) ? SITE_NOM : "l'application";
+    d.innerHTML = '<div style="font-size:44px;margin-bottom:14px">\uD83D\uDCF2</div>'
+      + '<div style="color:#fff;font-size:19px;font-weight:bold;line-height:1.5;max-width:320px">Pour installer ' + nom + ', clique sur \u00AB Continuer \u00BB ci-dessous pour quitter l\u2019application.</div>'
+      + '<button id="cb-sortie-fb-x" style="position:absolute;bottom:34px;background:none;border:1px solid #555;color:#aaa;border-radius:20px;padding:10px 26px;font-size:14px;cursor:pointer">Annuler</button>';
+    document.body.appendChild(d);
+    const retirer = () => { try { d.remove(); } catch (e) {} document.removeEventListener("visibilitychange", surVisible); };
+    const surVisible = () => { if (document.visibilityState === "visible") retirer(); };
+    document.addEventListener("visibilitychange", surVisible);
+    const x = document.getElementById("cb-sortie-fb-x");
+    if (x) x.onclick = retirer;
+  } catch (e) {}
+}
+
 function ouvrirDansChrome() {
   try {
+    ecranSortieFacebook();
     const u = new URL(window.location.href);
     u.searchParams.set("installer", "1");
     const complet = u.toString();
