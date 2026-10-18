@@ -14434,8 +14434,9 @@ export default function App() {
     // Si le saut est refuse (TikTok le bloque parfois), le guide s'affiche 1,5 s plus tard.
     if (isInAppBrowser()) {
       if (installPlatform === "android") {
+        // Facebook affiche SA fenetre de confirmation : on n'affiche rien derriere, sinon la personne
+        // appuie sur RETOUR pour lire ce qu'il y a derriere.
         ouvrirDansChrome();
-        setTimeout(() => { try { if (document.visibilityState === "visible") setShowIosInstructions(true); } catch (e) {} }, 1500);
       } else {
         setShowIosInstructions(true);
       }
@@ -24076,11 +24077,11 @@ export default function App() {
         {/* 18/10 : BANDE D'INSTALLATION STATIQUE, sous l'en-tete. Dans le flux de la page : elle ne se pose sur rien
             et ne cache rien ; elle remonte avec le defilement. */}
         {page === "home" && showInstallBanner && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: EST_HOMOROMANCE ? G.carte : "#f6efdc", borderBottom: "1px solid " + G.border }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "linear-gradient(90deg, #ece7fa 0%, #f9e8f1 100%)", borderBottom: "1px solid #e4dcf3" }}>
             <span style={{ fontSize: 26, flexShrink: 0 }}>📲</span>
-            <span style={{ flex: 1, fontSize: 14, fontWeight: "bold", lineHeight: 1.25, color: G.text }}>Installe {SITE_NOM} sur ton téléphone</span>
-            <button onClick={triggerInstall} style={{ background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 20, padding: "9px 18px", fontSize: 14, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Installer</button>
-            <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: G.textFaint, fontSize: 20, cursor: "pointer", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}>✕</button>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: "bold", lineHeight: 1.25, color: "#1f1b3a" }}>Installe {SITE_NOM} sur ton téléphone</span>
+            <button onClick={triggerInstall} style={{ background: "linear-gradient(90deg, #6a11cb 0%, #e91e63 100%)", color: "#fff", border: "none", borderRadius: 20, padding: "9px 18px", fontSize: 14, fontWeight: "bold", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Installer</button>
+            <button onClick={fermerBandeauInstall} aria-label="Fermer" style={{ background: "none", border: "none", color: "#8a869c", fontSize: 20, cursor: "pointer", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}>✕</button>
           </div>
         )}
         {/* HERO */}
