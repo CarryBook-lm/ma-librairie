@@ -66,6 +66,31 @@
     <script>
       window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__pwaPrompt = e; });
       window.addEventListener("appinstalled", function () { window.__pwaPrompt = null; });
+      window.addEventListener("beforeinstallprompt", function () { window.__pwaPromptAt = Date.now(); });
+    </script>
+    <!-- 18/10 : ecran de diagnostic de l'installation. Visible UNIQUEMENT avec ?diag=1 dans l'adresse. -->
+    <script>
+      (function () {
+        if ((location.search || "").indexOf("diag=1") === -1) return;
+        var t0 = Date.now();
+        function ligne(k, v) { return "<div><b>" + k + " :</b> " + v + "</div>"; }
+        function montrer() {
+          var d = document.getElementById("cb-diag");
+          if (!d) { d = document.createElement("div"); d.id = "cb-diag"; d.style.cssText = "position:fixed;left:6px;right:6px;bottom:6px;z-index:2147483647;background:#fff;color:#111;font:12px/1.5 monospace;padding:10px;border:3px solid #6a11cb;border-radius:10px;max-height:60vh;overflow:auto"; document.body.appendChild(d); }
+          var ua = navigator.userAgent || "";
+          var mm = function (q) { try { return window.matchMedia(q).matches; } catch (e) { return "?"; } };
+          var ctl = "non"; try { ctl = navigator.serviceWorker && navigator.serviceWorker.controller ? "oui" : "non"; } catch (e) {}
+          d.innerHTML = "<b>DIAGNOSTIC INSTALLATION</b> (" + Math.round((Date.now() - t0) / 1000) + " s)"
+            + ligne("proposition recue (beforeinstallprompt)", window.__pwaPrompt ? "OUI" : (window.__pwaPromptAt ? "recue puis utilisee" : "NON"))
+            + ligne("mode app (standalone)", mm("(display-mode: standalone)") + " / ios:" + (navigator.standalone === true))
+            + ligne("referrer", (document.referrer || "(vide)").slice(0, 60))
+            + ligne("service worker actif", ctl)
+            + ligne("navigateur", /FBAN|FBAV|Instagram|musical_ly|Bytedance/i.test(ua) ? "INTEGRE (Facebook/TikTok)" : (/Chrome\//.test(ua) ? "Chrome" : "autre"))
+            + ligne("UA", ua.slice(0, 110))
+            + ligne("adresse", location.href.slice(0, 80));
+        }
+        window.addEventListener("load", function () { setTimeout(montrer, 500); setInterval(montrer, 1500); });
+      })();
     </script>
 
     <!-- Meta Pixel Code (CarryBooks) -->
