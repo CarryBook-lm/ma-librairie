@@ -60,6 +60,14 @@
       })();
     </script>
 
+    <!-- 18/10 : capture IMMEDIATE de la proposition d'installation (Android / Chrome).
+         Chrome l'envoie tres tot ; si on attend que le gros fichier de l'app soit charge,
+         elle est deja passee et le bouton « Installer » n'a plus rien a declencher. -->
+    <script>
+      window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__pwaPrompt = e; });
+      window.addEventListener("appinstalled", function () { window.__pwaPrompt = null; });
+    </script>
+
     <!-- Meta Pixel Code (CarryBooks) -->
     <script>
       !function(f,b,e,v,n,t,s)
