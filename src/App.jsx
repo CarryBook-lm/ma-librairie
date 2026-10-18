@@ -14388,6 +14388,21 @@ export default function App() {
     // la personne n'a plus rien a rechercher. Chrome n'envoie sa proposition que
     // quelques instants apres le chargement, d'ou la petite attente.
     let minuteur = null, essais = 0;
+    // 18/10 — SORTIE AUTOMATIQUE DE FACEBOOK / TIKTOK (Android) : quelques instants apres
+    // l'arrivee (le temps que le pixel enregistre la visite), on ouvre le site dans Chrome,
+    // ou la fenetre d'installation s'ouvre seule. Une seule tentative par session
+    // (garde-fou contre les boucles) ; si le navigateur integre refuse le saut, le guide s'affiche.
+    let sortie = null;
+    try {
+      const dejaDansChrome = new URLSearchParams(window.location.search).get("installer") === "1";
+      if (isAndroid && isInAppBrowser() && !dejaDansChrome && sessionStorage.getItem("cb_sortie_fb") !== "1") {
+        sortie = setTimeout(() => {
+          try { sessionStorage.setItem("cb_sortie_fb", "1"); } catch (e) {}
+          ouvrirDansChrome();
+          setTimeout(() => { try { if (document.visibilityState === "visible") setShowIosInstructions(true); } catch (e) {} }, 1800);
+        }, 2500);
+      }
+    } catch (e) {}
     let veutInstaller = false;
     try { veutInstaller = new URLSearchParams(window.location.search).get("installer") === "1"; } catch (e) {}
     if (veutInstaller && !isInAppBrowser()) {
@@ -14415,6 +14430,7 @@ export default function App() {
     }
 
     return () => {
+      if (sortie) clearTimeout(sortie);
       if (minuteur) clearTimeout(minuteur);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalledBanner);
