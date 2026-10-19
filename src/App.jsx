@@ -2140,34 +2140,32 @@ function Palette({ titre, couleur, perso, onValider, onFermer }) {
 function RangeeAuto({ children }) {
   const ref = useRef(null);
   const touche = useRef(0);     // derniere fois que la personne a touche la rangee
-  const entree = useRef(0);     // moment ou la rangee est devenue visible
-  const visible = useRef(false);
   useEffect(() => {
-    // 19/10 : la rangee ne defile QUE lorsqu'elle est visible a l'ecran. Quand elle entre dans l'ecran
-    // elle est au premier livre et attend 3 s avant de bouger ; quand elle en sort elle revient au debut,
-    // pour que la personne qui descend voie toujours les premiers livres de la categorie.
+    // 19/10 : la rangee ne defile QUE lorsqu'elle est visible a l'ecran, et DES QU'ELLE APPARAIT :
+    // premier pas immediat, puis un pas toutes les 3 secondes. Quand elle sort de l'ecran elle s'arrete
+    // et revient au debut, pour que la personne qui descend voie toujours les premiers livres.
     const c0 = ref.current;
+    if (!c0) return;
+    let timer = null;
+    const pas = () => {
+      if (Date.now() - touche.current < 6000) return;     // la personne est en train de la manipuler
+      const premier = c0.firstElementChild; if (!premier) return;
+      if (c0.scrollWidth <= c0.clientWidth + 12) return;
+      const largeur = premier.getBoundingClientRect().width + 10;
+      if (c0.scrollLeft + c0.clientWidth >= c0.scrollWidth - 12) { c0.scrollTo({ left: 0, behavior: "smooth" }); }
+      else { c0.scrollBy({ left: largeur, behavior: "smooth" }); }
+    };
+    const demarrer = () => { if (timer) return; pas(); timer = setInterval(pas, 3000); };
+    const arreter = () => { if (timer) { clearInterval(timer); timer = null; } c0.scrollLeft = 0; };
     let obs = null;
-    if (c0 && typeof IntersectionObserver !== "undefined") {
+    if (typeof IntersectionObserver !== "undefined") {
       obs = new IntersectionObserver((entrees) => {
         const e = entrees[0]; if (!e) return;
-        if (e.isIntersecting) { visible.current = true; entree.current = Date.now(); }
-        else { visible.current = false; c0.scrollLeft = 0; }
-      }, { threshold: 0.4 });
+        if (e.isIntersecting) demarrer(); else arreter();
+      }, { threshold: 0.15 });
       obs.observe(c0);
-    } else { visible.current = true; }
-    const id = setInterval(() => {
-      const c = ref.current; if (!c) return;
-      if (!visible.current) return;
-      if (Date.now() - entree.current < 2500) return;     // laisse voir le debut avant de bouger
-      if (Date.now() - touche.current < 6000) return;     // la personne est en train de la manipuler
-      const premier = c.firstElementChild; if (!premier) return;
-      if (c.scrollWidth <= c.clientWidth + 12) return;
-      const pas = premier.getBoundingClientRect().width + 10;
-      if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
-      else { c.scrollBy({ left: pas, behavior: "smooth" }); }
-    }, 3000);
-    return () => { clearInterval(id); if (obs) obs.disconnect(); };
+    } else { demarrer(); }
+    return () => { if (timer) clearInterval(timer); if (obs) obs.disconnect(); };
   }, []);
   return (
     <div ref={ref} onTouchStart={() => { touche.current = Date.now(); }} onMouseDown={() => { touche.current = Date.now(); }} onWheel={() => { touche.current = Date.now(); }}
