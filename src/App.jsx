@@ -15975,6 +15975,18 @@ export default function App() {
     }
   }, [page, selectedBook, selectedCategory, vitrineCode]);
 
+  // RETOUR ANDROID / GLISSEMENT DU BORD : choisir une categorie depuis l'accueil ne changeait pas
+  // l'adresse, donc aucune entree d'historique : le retour ne faisait rien. On en empile une.
+  useEffect(() => {
+    if (vitrineCode || selectedCategory === "Tous") return;
+    try {
+      const st = window.history.state;
+      if (window.location.pathname.startsWith("/categorie/")) return;
+      if (st && st.cat === selectedCategory) return;
+      window.history.pushState({ page, cat: selectedCategory }, "", window.location.pathname + window.location.search);
+    } catch (e) {}
+  }, [selectedCategory, vitrineCode]);
+
   // Gérer le bouton "Retour" du navigateur
   useEffect(() => {
     const handlePopState = () => {
@@ -15988,6 +16000,21 @@ export default function App() {
       }
       const urlPage = getPageFromURL();
       const slug = getSlugFromURL();
+      // La categorie suit l'historique : retour = on quitte la categorie.
+      try {
+        const urlCat = getCategorieFromURL();
+        const stCat = window.history.state && window.history.state.cat;
+        if (urlCat) {
+          const noms = Object.keys(CATEGORIES || {});
+          const t = noms.find(n => slugify(n) === slugify(urlCat));
+          if (t) setSelectedCategory(t);
+        } else if (stCat) {
+          setSelectedCategory(stCat);
+        } else {
+          setSelectedCategory("Tous");
+        }
+        setSelectedSubCategory("Tous");
+      } catch (e) {}
 
       if (slug && books.length > 0) {
         const targetBook = books.find(b => slugify(b.title || b.id) === slug);
@@ -15999,7 +16026,7 @@ export default function App() {
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [books, vitrineCode]);
+  }, [books, vitrineCode, CATEGORIES]);
 
   // Fonction pour recharger les prix depuis Supabase (réutilisable)
   const fetchPrices = async () => {
@@ -24046,7 +24073,7 @@ export default function App() {
       )}
 
       {/* BOUTON RETOUR GLOBAL (sur toutes les pages sauf accueil) */}
-      {page !== "home" && !showMenu && (
+      {(page !== "home" || selectedCategory !== "Tous") && !showMenu && (
         <div style={{ position: "sticky", top: 56, zIndex: 49, background: G.surface, borderBottom: "1px solid " + G.border, padding: "10px 16px" }}>
           <button onClick={() => { setPage("home"); setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); setSearchQuery(""); }} style={{
             background: "none", border: "none", color: G.gold, fontSize: 14, fontWeight: "bold",
