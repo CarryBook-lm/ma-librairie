@@ -2142,7 +2142,7 @@ function RangeeAuto({ children }) {
   const touche = useRef(0);     // derniere fois que la personne a touche la rangee
   useEffect(() => {
     // 19/10 : la rangee ne defile QUE lorsqu'elle est visible a l'ecran, et DES QU'ELLE APPARAIT :
-    // premier pas immediat, puis un pas toutes les 3 secondes. Quand elle sort de l'ecran elle s'arrete
+    // premier pas 1 seconde apres l'apparition, puis un pas toutes les 3 secondes. Quand elle sort de l'ecran elle s'arrete
     // et revient au debut, pour que la personne qui descend voie toujours les premiers livres.
     const c0 = ref.current;
     if (!c0) return;
@@ -2155,8 +2155,10 @@ function RangeeAuto({ children }) {
       if (c0.scrollLeft + c0.clientWidth >= c0.scrollWidth - 12) { c0.scrollTo({ left: 0, behavior: "smooth" }); }
       else { c0.scrollBy({ left: largeur, behavior: "smooth" }); }
     };
-    const demarrer = () => { if (timer) return; pas(); timer = setInterval(pas, 3000); };
-    const arreter = () => { if (timer) { clearInterval(timer); timer = null; } c0.scrollLeft = 0; };
+    // 1 seconde pour voir le premier livre, puis un pas toutes les 3 secondes.
+    let delai = null;
+    const demarrer = () => { if (timer || delai) return; delai = setTimeout(() => { delai = null; pas(); timer = setInterval(pas, 3000); }, 1000); };
+    const arreter = () => { if (delai) { clearTimeout(delai); delai = null; } if (timer) { clearInterval(timer); timer = null; } c0.scrollLeft = 0; };
     let obs = null;
     if (typeof IntersectionObserver !== "undefined") {
       obs = new IntersectionObserver((entrees) => {
@@ -2165,7 +2167,7 @@ function RangeeAuto({ children }) {
       }, { threshold: 0.15 });
       obs.observe(c0);
     } else { demarrer(); }
-    return () => { if (timer) clearInterval(timer); if (obs) obs.disconnect(); };
+    return () => { if (delai) clearTimeout(delai); if (timer) clearInterval(timer); if (obs) obs.disconnect(); };
   }, []);
   return (
     <div ref={ref} onTouchStart={() => { touche.current = Date.now(); }} onMouseDown={() => { touche.current = Date.now(); }} onWheel={() => { touche.current = Date.now(); }}
