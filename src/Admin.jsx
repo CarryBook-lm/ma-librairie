@@ -855,7 +855,19 @@ export default function Admin() {
         supabase.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
         supabase.from("support_messages").select("id", { count: "exact", head: true }).eq("site", SITE_SUP).eq("cote", "auteur").eq("lu_admin", false),
       ]);
-      setEaTodo({ livres: nbLivres || 0, kyc: nbKyc || 0, retraits: nbRetraits || 0, support: nbSupport || 0 });
+      // 20/10 : avis clients en attente de moderation (pastille de l'onglet Auteurs)
+      let nbAvis = 0;
+      try {
+        const { data: rv } = await supabase.from("book_reviews").select("book_id, comment").eq("approved", false).not("comment", "is", null);
+        const att = (rv || []).filter(r => r.comment && r.comment.trim().length > 0);
+        if (att.length) {
+          const ids = [...new Set(att.map(r => r.book_id))];
+          const { data: bk } = await livres("id").in("id", ids);
+          const ok = new Set((bk || []).map(x => String(x.id)));
+          nbAvis = att.filter(r => ok.has(String(r.book_id))).length;
+        }
+      } catch (e) {}
+      setEaTodo({ livres: nbLivres || 0, kyc: nbKyc || 0, retraits: nbRetraits || 0, support: nbSupport || 0, avis: nbAvis });
     } catch (e) {}
   };
   useEffect(() => { chargerTodo(); }, []);
@@ -1788,6 +1800,7 @@ export default function Admin() {
       setPendingReviews([]);
     }
     setReviewsLoading(false);
+    try { chargerTodo(); } catch (e) {}
   }
 
   async function fetchStats() {
@@ -2614,7 +2627,6 @@ export default function Admin() {
               { id: "referral_settings", label: "Paramètres parrainage", icon: "⚙️" },
             ]),
 
-            { id: "reviews", label: "Modération avis", icon: "💬" },
             { id: "comptabilite", label: "Comptabilité", icon: "💰" },
             { id: "stats", label: "Statistiques", icon: "📈" },
             { id: "ventes_pays", label: "Ventes par pays", icon: "🌍" },
@@ -2632,8 +2644,8 @@ export default function Admin() {
                 borderLeft: "3px solid " + (view === item.id ? ("" + ACC + "") : "transparent"),
                 borderBottom: "1px solid #2a2a2a" }}>
               <span>{item.icon}</span><span style={{ fontSize: 14 }}>{item.label}</span>
-              {item.id === "espace_auteur" && ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0)) > 0 && (
-                <span style={{ marginLeft: "auto", background: "#e53935", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 8px", minWidth: 18, textAlign: "center" }}>{eaTodo.livres + eaTodo.kyc + eaTodo.retraits}</span>
+              {item.id === "espace_auteur" && ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0) + (eaTodo?.avis || 0)) > 0 && (
+                <span style={{ marginLeft: "auto", background: "#e53935", color: "#fff", fontSize: 11, fontWeight: "bold", borderRadius: 10, padding: "1px 8px", minWidth: 18, textAlign: "center" }}>{(eaTodo.livres || 0) + (eaTodo.kyc || 0) + (eaTodo.retraits || 0) + (eaTodo.support || 0) + (eaTodo.avis || 0)}</span>
               )}
             </div>
           ))}
@@ -4510,124 +4522,6 @@ export default function Admin() {
           </div>
         )}
 
-        {/* MODÉRATION AVIS */}
-        {view === "reviews" && (
-          <div>
-            <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 20 }}>💬 Modération des avis</h2>
-
-            {/* Filtres */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[
-                { id: "pending", label: "⏳ En attente", color: "#f5a623" },
-                { id: "approved", label: "✅ Approuvés", color: "#4CAF50" },
-                { id: "all", label: "📋 Tous", color: "#888" },
-              ].map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => { setReviewsFilter(f.id); loadPendingReviews(f.id); }}
-                  style={{
-                    padding: "8px 14px",
-                    background: reviewsFilter === f.id ? f.color : "transparent",
-                    border: "1px solid " + (reviewsFilter === f.id ? f.color : "#2a2a2a"),
-                    borderRadius: 6,
-                    color: reviewsFilter === f.id ? "#000" : "#aaa",
-                    fontSize: 12, fontWeight: "bold", cursor: "pointer"
-                  }}
-                >
-                  {f.label}
-                </button>
-              ))}
-              <button
-                onClick={() => loadPendingReviews(reviewsFilter)}
-                style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: ("" + ACC + ""), fontSize: 12, cursor: "pointer" }}
-              >
-                🔄 Rafraîchir
-              </button>
-            </div>
-
-            {reviewsLoading ? (
-              <p style={{ color: "#888", textAlign: "center", padding: 30 }}>⏳ Chargement...</p>
-            ) : pendingReviews.length === 0 ? (
-              <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 30, textAlign: "center" }}>
-                <p style={{ color: "#888", fontSize: 14, margin: 0 }}>
-                  {reviewsFilter === "pending" ? "✨ Aucun avis en attente de modération !" : "Aucun avis dans cette catégorie."}
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {pendingReviews.map(review => {
-                  const date = review.created_at ? new Date(review.created_at).toLocaleString("fr-FR") : "";
-                  const userInitial = review.user_id ? review.user_id.substring(0, 2).toUpperCase() : "??";
-                  return (
-                    <div key={review.id} style={{
-                      background: "#1a1a1a",
-                      border: "1px solid " + (review.approved ? "#4CAF50" : "#f5a623"),
-                      borderRadius: 10, padding: 16
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            background: ("" + ACC + ""), color: "#000",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 12, fontWeight: "bold"
-                          }}>{userInitial}</div>
-                          <div>
-                            <div style={{ fontSize: 12, color: "#e8e0d0" }}>📕 {review.book_title || "Livre #" + review.book_id}</div>
-                            <div style={{ fontSize: 10, color: "#888" }}>{date}</div>
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", gap: 1 }}>
-                          {[1,2,3,4,5].map(s => (
-                            <span key={s} style={{ fontSize: 14, color: s <= review.rating ? "#f5c518" : "#444" }}>★</span>
-                          ))}
-                        </div>
-                      </div>
-                      <p style={{ color: "#aaa", fontSize: 13, lineHeight: 1.6, margin: "0 0 12px 0", fontStyle: "italic", padding: 12, background: "#111", borderRadius: 6 }}>
-                        « {review.comment} »
-                      </p>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                        {!review.approved && (
-                          <button
-                            onClick={async () => {
-                              await supabase.from("book_reviews").update({ approved: true }).eq("id", review.id);
-                              loadPendingReviews(reviewsFilter);
-                            }}
-                            style={{ padding: "8px 16px", background: "#4CAF50", border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
-                          >
-                            ✅ Approuver
-                          </button>
-                        )}
-                        {review.approved && (
-                          <button
-                            onClick={async () => {
-                              await supabase.from("book_reviews").update({ approved: false }).eq("id", review.id);
-                              loadPendingReviews(reviewsFilter);
-                            }}
-                            style={{ padding: "8px 16px", background: "transparent", border: "1px solid #f5a623", borderRadius: 6, color: "#f5a623", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
-                          >
-                            ⏸️ Désapprouver
-                          </button>
-                        )}
-                        <button
-                          onClick={async () => {
-                            if (!confirm("Supprimer définitivement cet avis ?")) return;
-                            await supabase.from("book_reviews").delete().eq("id", review.id);
-                            loadPendingReviews(reviewsFilter);
-                          }}
-                          style={{ padding: "8px 16px", background: "transparent", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
-                        >
-                          🗑️ Supprimer
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* STATS PWA - INSTALLATIONS MOBILE */}
         {view === "pwa_stats" && <PwaStatsView />}
 
@@ -4638,10 +4532,128 @@ export default function Admin() {
           <div>
             <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 16 }}>✍️ Espace auteur</h2>
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["vitrine","🏪 Publiés sans validation" + (eaVitrine.length ? " (" + eaVitrine.length + ")" : "")],["livres","📚 Livres publiés"],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["annonces","📢 Annonces" + ((() => { const n = eaAnnonces.filter(a => a.statut === "en_attente").length; return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
-                <button key={id} onClick={() => setEaTab(id)} style={{ padding: "8px 16px", background: eaTab===id ? ("" + ACC + "") : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
+              {[["vue","📊 Vue d'ensemble"],["avalider","📥 Livres à valider" + (eaAValider.length ? " (" + eaAValider.length + ")" : "")],["vitrine","🏪 Publiés sans validation" + (eaVitrine.length ? " (" + eaVitrine.length + ")" : "")],["livres","📚 Livres publiés"],["avis","⭐ Avis" + ((eaTodo?.avis || 0) ? " (" + eaTodo.avis + ")" : "")],["kyc","🔒 Vérifications" + (eaKyc.length ? " (" + eaKyc.length + ")" : "")],["support","💬 Support" + ((() => { const n = supFils.reduce((s, f) => s + f.nonLus, 0); return n ? " (" + n + ")" : ""; })())],["annonces","📢 Annonces" + ((() => { const n = eaAnnonces.filter(a => a.statut === "en_attente").length; return n ? " (" + n + ")" : ""; })())],["reversements","💸 Reversements" + (eaSoldes.length ? " (" + eaSoldes.length + ")" : "")],["params","⚙️ Paramètres"]].map(([id,label]) => (
+                <button key={id} onClick={() => { setEaTab(id); if (id === "avis") loadPendingReviews(reviewsFilter); }} style={{ padding: "8px 16px", background: eaTab===id ? ("" + ACC + "") : "#1a1a1a", color: eaTab===id ? "#1a1a1a" : "#aaa", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>{label}</button>
               ))}
             </div>
+
+        {/* AVIS (deplace dans l'onglet Auteurs le 20/10) */}
+                {eaTab === "avis" && (
+              <div>
+                <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 20 }}>💬 Modération des avis</h2>
+
+                {/* Filtres */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                  {[
+                    { id: "pending", label: "⏳ En attente", color: "#f5a623" },
+                    { id: "approved", label: "✅ Approuvés", color: "#4CAF50" },
+                    { id: "all", label: "📋 Tous", color: "#888" },
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => { setReviewsFilter(f.id); loadPendingReviews(f.id); }}
+                      style={{
+                        padding: "8px 14px",
+                        background: reviewsFilter === f.id ? f.color : "transparent",
+                        border: "1px solid " + (reviewsFilter === f.id ? f.color : "#2a2a2a"),
+                        borderRadius: 6,
+                        color: reviewsFilter === f.id ? "#000" : "#aaa",
+                        fontSize: 12, fontWeight: "bold", cursor: "pointer"
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => loadPendingReviews(reviewsFilter)}
+                    style={{ padding: "8px 14px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: ("" + ACC + ""), fontSize: 12, cursor: "pointer" }}
+                  >
+                    🔄 Rafraîchir
+                  </button>
+                </div>
+
+                {reviewsLoading ? (
+                  <p style={{ color: "#888", textAlign: "center", padding: 30 }}>⏳ Chargement...</p>
+                ) : pendingReviews.length === 0 ? (
+                  <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 30, textAlign: "center" }}>
+                    <p style={{ color: "#888", fontSize: 14, margin: 0 }}>
+                      {reviewsFilter === "pending" ? "✨ Aucun avis en attente de modération !" : "Aucun avis dans cette catégorie."}
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {pendingReviews.map(review => {
+                      const date = review.created_at ? new Date(review.created_at).toLocaleString("fr-FR") : "";
+                      const userInitial = review.user_id ? review.user_id.substring(0, 2).toUpperCase() : "??";
+                      return (
+                        <div key={review.id} style={{
+                          background: "#1a1a1a",
+                          border: "1px solid " + (review.approved ? "#4CAF50" : "#f5a623"),
+                          borderRadius: 10, padding: 16
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{
+                                width: 32, height: 32, borderRadius: "50%",
+                                background: ("" + ACC + ""), color: "#000",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 12, fontWeight: "bold"
+                              }}>{userInitial}</div>
+                              <div>
+                                <div style={{ fontSize: 12, color: "#e8e0d0" }}>📕 {review.book_title || "Livre #" + review.book_id}</div>
+                                <div style={{ fontSize: 10, color: "#888" }}>{date}</div>
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", gap: 1 }}>
+                              {[1,2,3,4,5].map(s => (
+                                <span key={s} style={{ fontSize: 14, color: s <= review.rating ? "#f5c518" : "#444" }}>★</span>
+                              ))}
+                            </div>
+                          </div>
+                          <p style={{ color: "#aaa", fontSize: 13, lineHeight: 1.6, margin: "0 0 12px 0", fontStyle: "italic", padding: 12, background: "#111", borderRadius: 6 }}>
+                            « {review.comment} »
+                          </p>
+                          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                            {!review.approved && (
+                              <button
+                                onClick={async () => {
+                                  await supabase.from("book_reviews").update({ approved: true }).eq("id", review.id);
+                                  loadPendingReviews(reviewsFilter);
+                                }}
+                                style={{ padding: "8px 16px", background: "#4CAF50", border: "none", borderRadius: 6, color: "#000", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
+                              >
+                                ✅ Approuver
+                              </button>
+                            )}
+                            {review.approved && (
+                              <button
+                                onClick={async () => {
+                                  await supabase.from("book_reviews").update({ approved: false }).eq("id", review.id);
+                                  loadPendingReviews(reviewsFilter);
+                                }}
+                                style={{ padding: "8px 16px", background: "transparent", border: "1px solid #f5a623", borderRadius: 6, color: "#f5a623", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
+                              >
+                                ⏸️ Désapprouver
+                              </button>
+                            )}
+                            <button
+                              onClick={async () => {
+                                if (!confirm("Supprimer définitivement cet avis ?")) return;
+                                await supabase.from("book_reviews").delete().eq("id", review.id);
+                                loadPendingReviews(reviewsFilter);
+                              }}
+                              style={{ padding: "8px 16px", background: "transparent", border: "1px solid #f44336", borderRadius: 6, color: "#f44336", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              🗑️ Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {eaTab === "vue" && (
               <div>
@@ -6031,7 +6043,7 @@ export default function Admin() {
         {[
           { id: "dashboard", label: "Accueil", icon: "📊", badge: 0 },
           { id: "users", label: "Users", icon: "👥", badge: 0 },
-          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0)) },
+          { id: "espace_auteur", label: "Auteurs", icon: "✍️", badge: ((eaTodo?.livres || 0) + (eaTodo?.kyc || 0) + (eaTodo?.retraits || 0) + (eaTodo?.support || 0) + (eaTodo?.avis || 0)) },
           { id: "gains", label: "Gains", icon: "💰", badge: 0 },
         ].map(t => (
           <button key={t.id} onClick={() => { setView(t.id); setShowMenu(false); }} style={{ flex: 1, background: (view === t.id && !showMenu) ? "#2a2410" : "none", border: "none", borderTop: "3px solid " + ((view === t.id && !showMenu) ? ("" + ACC + "") : "transparent"), padding: "5px 0 3px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, color: (view === t.id && !showMenu) ? ("" + ACC + "") : "#999", fontSize: 10, fontWeight: (view === t.id && !showMenu) ? "bold" : "normal", position: "relative" }}>
