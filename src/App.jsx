@@ -13704,6 +13704,16 @@ function getDisplayPrice(book) {
 // Helper : retourne le badge à afficher sous le titre pour un produit physique
 // - Livres papier → toujours "📦 Livre papier"
 // - Articles → adaptatif selon la catégorie
+// 20/10 : TITRES DES LIVRES — premiere lettre en majuscule, le reste en minuscule,
+// quelle que soit la facon dont l'auteur l'a saisi.
+function titreNormal(t) {
+  if (typeof t !== "string") return t;
+  const x = t.trim().replace(/\s+/g, " ");
+  if (!x) return x;
+  return x.charAt(0).toLocaleUpperCase("fr") + x.slice(1).toLocaleLowerCase("fr");
+}
+const titresLivres = (arr) => (arr || []).map(b => (b && b.product_type !== "article" && typeof b.title === "string") ? { ...b, title: titreNormal(b.title) } : b);
+
 // 20/10 : type de lecture affiche sous le titre dans la fiche livre CarryBooks.
 // Roman : "Roman texte à lire" (texte dans la liseuse) ou "Roman PDF à lire".
 // Autre livre : "Livre PDF à lire" (non telechargeable) ou "Livre PDF à télécharger".
@@ -16671,7 +16681,7 @@ export default function App() {
         .range(0, 999);
       const { data: booksData } = await Promise.race([booksPromise, timeoutBooks]);
       if (booksData && booksData.length > 0) {
-        setBooks(booksData);
+        setBooks(titresLivres(booksData));
         setLoading(false);
       }
     } catch (e) {
@@ -16680,7 +16690,7 @@ export default function App() {
       if (cached) {
         try {
           const all = JSON.parse(cached);
-          setBooks(all.filter(b => b.product_type !== "article"));
+          setBooks(titresLivres(all.filter(b => b.product_type !== "article")));
         } catch (err) {}
       }
       setLoading(false);
@@ -19116,7 +19126,7 @@ export default function App() {
     setPubSavingDraft(true);
     try {
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null,
+        title: titreNormal(f.title), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null,
         price: (f.type === "gratuit") ? 0 : (parseInt(f.price) || 0),
         cover: f.cover || null, category: f.category || null, subcategory: f.subcategory || null,
         summary: f.summary ? f.summary.trim() : null,
@@ -19224,7 +19234,7 @@ export default function App() {
     try {
       const resume = f.contenu.replace(/\[(IMG916|IMG169|YT):[^\]]*\]/g, " ").replace(/\[LIEN:([^|\]]*)\|[^\]]*\]/g, "$1").replace(/\s+/g, " ").trim().slice(0, 300);
       const payload = {
-        title: f.title.trim(),
+        title: titreNormal(f.title),
         author: auteurProfil.nom_complet,
         price: parseInt(f.price) || 0,
         cover: f.cover,
@@ -19326,7 +19336,7 @@ export default function App() {
         excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
       }
       const payload = {
-        title: f.title.trim(), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
+        title: titreNormal(f.title), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
         cover: f.cover, category: f.category, subcategory: f.subcategory,
         summary: f.summary.trim(), extract_pages: needsExtract ? (parseInt(f.extract_pages) || 1) : 1,
         content: f.type === "roman" ? f.content : "",
