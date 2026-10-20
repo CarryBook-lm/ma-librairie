@@ -17131,6 +17131,19 @@ export default function App() {
       return <div key={i} style={{ whiteSpace: "pre-wrap", lineHeight: 1.75, fontSize: 15, color: "#1a1208" }}>{txtNet}</div>;
     });
   };
+  // 20/10 : RETOUR A LA MEME PLACE. On memorise la hauteur de defilement de l'accueil
+  // (ou du catalogue) avant d'ouvrir une fiche, puis on la restaure au retour.
+  const scrollAvantFiche = useRef({ page: null, y: 0 });
+  const pageAvant = useRef(null);
+  useEffect(() => {
+    const av = pageAvant.current;
+    pageAvant.current = page;
+    if (av !== "detail" || (page !== "home" && page !== "catalog")) return;
+    const m = scrollAvantFiche.current;
+    if (!m || m.page !== page || !(m.y > 0)) return;
+    const t = [0, 80, 250, 600].map(d => setTimeout(() => { try { window.scrollTo({ top: m.y, behavior: "instant" }); } catch (e) { window.scrollTo(0, m.y); } }, d));
+    return () => t.forEach(clearTimeout);
+  }, [page]);
   function openBook(book) {
     // Une formation a sa propre page de vente (couverture A4 paysage, presentation, achat).
     if (book && book.product_type === "formation") { ouvrirFormation(book); return; }
@@ -17139,9 +17152,12 @@ export default function App() {
       setPreviousPage("auteur_boutique");
     } else if (page === "carrycolor") {
       setPreviousPage(page);
+    } else if (page === "catalog") {
+      setPreviousPage("catalog");
     } else {
       setPreviousPage("home");
     }
+    try { if (page === "home" || page === "catalog") scrollAvantFiche.current = { page: page, y: window.scrollY || window.pageYOffset || 0 }; } catch (e) {}
     // 📊 Pixel Facebook : signaler la CONSULTATION du livre (pour le reciblage catalogue)
     try { if (window.fbq && book) window.fbq("track", "ViewContent", { value: Number(book.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(book.id)], content_name: book.title || "" }); } catch (e) {}
     // Afficher immédiatement avec les données légères (UX rapide)
@@ -22848,6 +22864,7 @@ export default function App() {
                 <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                   {(book.subcategory || book.category) ? <div style={{ fontSize: 9, letterSpacing: 1.2, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8, lineHeight: 1.4 }}>{book.subcategory || book.category}</div> : null}
                   <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: ((book.title || "").length > 28 ? 16 : ((book.title || "").length > 16 ? 18 : 21)), lineHeight: 1.15, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
+                  {!EST_HOMOROMANCE && libelleTypeLivre(book) ? <div style={{ fontSize: 12.5, color: G.gold, fontWeight: 700, margin: "-4px 0 10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "system-ui, sans-serif" }}>{libelleTypeLivre(book)}</div> : null}
                   <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 10, fontFamily: "system-ui, sans-serif" }}>{EST_HOMOROMANCE ? "roman signé" : "par"} <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
                   {(() => {
                     const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
