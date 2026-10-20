@@ -13706,26 +13706,6 @@ function getDisplayPrice(book) {
 // - Articles → adaptatif selon la catégorie
 // 20/10 : TITRES DES LIVRES — premiere lettre en majuscule, le reste en minuscule,
 // quelle que soit la facon dont l'auteur l'a saisi.
-// 20/10 : le cadre de la couverture prend le format REEL de l'image (A4, 2/3, etc.)
-// au lieu de rogner. Valeurs extremes ignorees (cadre par defaut conserve).
-function cadrerCouverture(e) {
-  try {
-    const im = e.currentTarget; const w = im.naturalWidth, h = im.naturalHeight;
-    if (!w || !h) return;
-    const r = w / h;
-    if (r < 0.5 || r > 1.5) return;
-    if (im.parentElement) im.parentElement.style.aspectRatio = w + " / " + h;
-  } catch (err) {}
-}
-function cadrerCouvertureGrille(e) {
-  try {
-    const im = e.currentTarget; const w = im.naturalWidth, h = im.naturalHeight;
-    if (!w || !h) return;
-    const r = w / h;
-    if (r < 0.5 || r > 1.5) return;
-    if (im.parentElement) im.parentElement.style.paddingBottom = (h / w * 100).toFixed(2) + "%";
-  } catch (err) {}
-}
 const MOTS_MAJUSCULES = [["centrafrique","Centrafrique"],["pointe-noire","Pointe-Noire"],["yamoussoukro","Yamoussoukro"],["burkina faso","Burkina Faso"],["saint-esprit","Saint-Esprit"],["addis-abeba","Addis-Abeba"],["brazzaville","Brazzaville"],["ouagadougou","Ouagadougou"],["angleterre","Angleterre"],["bernadette","Bernadette"],["casablanca","Casablanca"],["chimamanda","Chimamanda"],["christelle","Christelle"],["christiane","Christiane"],["christophe","Christophe"],["guadeloupe","Guadeloupe"],["jacqueline","Jacqueline"],["libreville","Libreville"],["lubumbashi","Lubumbashi"],["madagascar","Madagascar"],["martinique","Martinique"],["mauritanie","Mauritanie"],["mozambique","Mozambique"],["ngaoundéré","Ngaoundéré"],["washington","Washington"],["allemagne","Allemagne"],["angélique","Angélique"],["bafoussam","Bafoussam"],["bruxelles","Bruxelles"],["charlotte","Charlotte"],["célestine","Célestine"],["ferdinand","Ferdinand"],["françoise","Françoise"],["gabrielle","Gabrielle"],["géraldine","Géraldine"],["henriette","Henriette"],["instagram","Instagram"],["jérusalem","Jérusalem"],["madeleine","Madeleine"],["marseille","Marseille"],["philomène","Philomène"],["stéphanie","Stéphanie"],["véronique","Véronique"],["alistair","Alistair"],["amérique","Amérique"],["antilles","Antilles"],["aristide","Aristide"],["aïssatou","Aïssatou"],["belgique","Belgique"],["bertrand","Bertrand"],["bethléem","Bethléem"],["béatrice","Béatrice"],["cameroun","Cameroun"],["caroline","Caroline"],["charlène","Charlène"],["clarisse","Clarisse"],["claudine","Claudine"],["danielle","Danielle"],["delphine","Delphine"],["djibouti","Djibouti"],["dorothée","Dorothée"],["facebook","Facebook"],["florence","Florence"],["françois","François"],["frédéric","Frédéric"],["huguette","Huguette"],["isabelle","Isabelle"],["jonathan","Jonathan"],["kinshasa","Kinshasa"],["laetitia","Laetitia"],["landrine","Landrine"],["laurence","Laurence"],["le caire","Le Caire"],["lucienne","Lucienne"],["marianne","Marianne"],["mariette","Mariette"],["mireille","Mireille"],["montréal","Montréal"],["nathalie","Nathalie"],["nazareth","Nazareth"],["ndjamena","Ndjamena"],["patricia","Patricia"],["philippe","Philippe"],["portugal","Portugal"],["rodrigue","Rodrigue"],["sandrine","Sandrine"],["tanzanie","Tanzanie"],["timothée","Timothée"],["virginie","Virginie"],["whatsapp","WhatsApp"],["zacharie","Zacharie"],["zimbabwe","Zimbabwe"],["éthiopie","Éthiopie"],["abidjan","Abidjan"],["afrique","Afrique"],["algérie","Algérie"],["aurélie","Aurélie"],["bamenda","Bamenda"],["barbara","Barbara"],["barnabé","Barnabé"],["bertoua","Bertoua"],["burundi","Burundi"],["chantal","Chantal"],["chatgpt","ChatGPT"],["colette","Colette"],["comores","Comores"],["conakry","Conakry"],["corinne","Corinne"],["cotonou","Cotonou"],["dschang","Dschang"],["ebolowa","Ebolowa"],["espagne","Espagne"],["estelle","Estelle"],["eugénie","Eugénie"],["gabriel","Gabriel"],["johanna","Johanna"],["josiane","Josiane"],["jérémie","Jérémie"],["larissa","Larissa"],["libéria","Libéria"],["londres","Londres"],["marlène","Marlène"],["martine","Martine"],["mohamed","Mohamed"],["monique","Monique"],["nairobi","Nairobi"],["nawelle","Nawelle"],["nicolas","Nicolas"],["nigeria","Nigeria"],["ouganda","Ouganda"],["ousmane","Ousmane"],["pauline","Pauline"],["rebecca","Rebecca"],["rosalie","Rosalie"],["solange","Solange"],["somalie","Somalie"],["suzanne","Suzanne"],["sénégal","Sénégal"],["thérèse","Thérèse"],["tunisie","Tunisie"],["turquie","Turquie"],["valérie","Valérie"],["venette","Venette"],["viviane","Viviane"],["yannick","Yannick"],["yaoundé","Yaoundé"],["yolande","Yolande"],["youtube","YouTube"],["alexis","Alexis"],["amadou","Amadou"],["amélie","Amélie"],["andréa","Andréa"],["angola","Angola"],["audrey","Audrey"],["bamako","Bamako"],["bangui","Bangui"],["bouaké","Bouaké"],["brenda","Brenda"],["brésil","Brésil"],["canada","Canada"],["carine","Carine"],["cécile","Cécile"],["cédric","Cédric"],["douala","Douala"],["edwige","Edwige"],["eugène","Eugène"],["europe","Europe"],["fatima","Fatima"],["france","France"],["gambie","Gambie"],["garoua","Garoua"],["genève","Genève"],["gisèle","Gisèle"],["google","Google"],["guinée","Guinée"],["gérard","Gérard"],["hugues","Hugues"],["hélène","Hélène"],["idriss","Idriss"],["iphone","iPhone"],["israël","Israël"],["italie","Italie"],["jeanne","Jeanne"],["joëlle","Joëlle"],["judith","Judith"],["jérôme","Jérôme"],["kigali","Kigali"],["luanda","Luanda"],["léonie","Léonie"],["malabo","Malabo"],["mariam","Mariam"],["maroua","Maroua"],["maxine","Maxine"],["moussa","Moussa"],["myriam","Myriam"],["nadège","Nadège"],["niamey","Niamey"],["nicole","Nicole"],["odette","Odette"],["pamela","Pamela"],["paypal","PayPal"],["québec","Québec"],["raïssa","Raïssa"],["rosine","Rosine"],["rwanda","Rwanda"],["seydou","Seydou"],["sienna","Sienna"],["sophie","Sophie"],["soudan","Soudan"],["spirou","Spirou"],["suisse","Suisse"],["sylvia","Sylvia"],["thalia","Thalia"],["tiktok","TikTok"],["yvette","Yvette"],["yvonne","Yvonne"],["zambie","Zambie"],["égypte","Égypte"],["élodie","Élodie"],["abuja","Abuja"],["accra","Accra"],["adama","Adama"],["alger","Alger"],["allah","Allah"],["amina","Amina"],["anaïs","Anaïs"],["anita","Anita"],["annie","Annie"],["aïcha","Aïcha"],["boris","Boris"],["bénin","Bénin"],["chine","Chine"],["congo","Congo"],["corée","Corée"],["dakar","Dakar"],["dubaï","Dubaï"],["fanta","Fanta"],["fatou","Fatou"],["gabon","Gabon"],["ghana","Ghana"],["haïti","Haïti"],["irène","Irène"],["japon","Japon"],["jésus","Jésus"],["kenya","Kenya"],["kribi","Kribi"],["kwame","Kwame"],["kévin","Kévin"],["lagos","Lagos"],["lexie","Lexie"],["libye","Libye"],["limbé","Limbé"],["lucas","Lucas"],["lydia","Lydia"],["maroc","Maroc"],["nadia","Nadia"],["ngozi","Ngozi"],["niger","Niger"],["odile","Odile"],["paris","Paris"],["rabat","Rabat"],["siloé","Siloé"],["tchad","Tchad"],["tunis","Tunis"],["wendy","Wendy"],["élise","Élise"],["asie","Asie"],["buea","Buea"],["inde","Inde"],["inès","Inès"],["joël","Joël"],["kofi","Kofi"],["lomé","Lomé"],["lyon","Lyon"],["mali","Mali"],["naya","Naya"],["sida","SIDA"],["togo","Togo"],["wifi","WiFi"],["éric","Éric"],["dieu","Dieu"],["eric","Eric"],["avc","AVC"],["awa","Awa"],["cfa","CFA"],["ong","ONG"],["pdf","PDF"],["sms","SMS"],["tva","TVA"],["usa","USA"],["vih","VIH"],["zoé","Zoé"],["ia","IA"]];
 function titreNormal(t) {
   if (typeof t !== "string") return t;
@@ -24405,7 +24385,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -24447,7 +24427,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)}
                           style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % heroBooks.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
                           {book.cover
-                            ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
                           {/* Couverture seule, sans dégradé */}
                         </div>
@@ -24514,7 +24494,7 @@ export default function App() {
                             </div>
                             <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
                               {book.cover
-                                ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
@@ -24594,7 +24574,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -24643,7 +24623,7 @@ export default function App() {
                             <div key={book.id} onClick={() => openBook(book)} style={{ minWidth: 0, cursor: "pointer", textAlign: "center" }}>
                               <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 8, position: "relative" }}>
                                 {book.cover
-                                  ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
@@ -24675,7 +24655,7 @@ export default function App() {
                               <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                                 <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                                   {book.cover
-                                    ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                                 </div>
                                 <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{false && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -24707,7 +24687,7 @@ export default function App() {
                                 tombait dans le gabarit portrait commun et se faisait rogner. */}
                             <div style={{ width: "100%", aspectRatio: book.product_type === "formation" ? "297 / 210" : "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
-                                ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                               {isOutOfStock(book) && (
@@ -24833,7 +24813,7 @@ export default function App() {
                       {books.filter(b => favoriteBooks.includes(b.id) && surCarryBooks(b)).map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
-                            {book.cover && <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                            {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                             <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{false && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -24886,7 +24866,7 @@ export default function App() {
                       <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                         <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
                           {book.cover
-                            ? <img src={book.cover} onLoad={cadrerCouvertureGrille} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
