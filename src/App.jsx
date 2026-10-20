@@ -13726,11 +13726,17 @@ function cadrerCouvertureGrille(e) {
     if (im.parentElement) im.parentElement.style.paddingBottom = (h / w * 100).toFixed(2) + "%";
   } catch (err) {}
 }
+const MOTS_MAJUSCULES = [["ia","IA"],["chatgpt","ChatGPT"],["paypal","PayPal"],["afrique","Afrique"],["dieu","Dieu"],["avc","AVC"],["sms","SMS"],["whatsapp","WhatsApp"],["facebook","Facebook"],["cfa","CFA"],["lydia","Lydia"],["alistair","Alistair"],["spirou","Spirou"],["eric","Eric"],["venette","Venette"],["nawelle","Nawelle"]];
 function titreNormal(t) {
   if (typeof t !== "string") return t;
   const x = t.trim().replace(/\s+/g, " ");
   if (!x) return x;
-  return x.charAt(0).toLocaleUpperCase("fr") + x.slice(1).toLocaleLowerCase("fr");
+  let r = x.charAt(0).toLocaleUpperCase("fr") + x.slice(1).toLocaleLowerCase("fr");
+  // Mots qui gardent leurs majuscules (sigles, marques, noms propres).
+  for (const [m, bon] of MOTS_MAJUSCULES) {
+    r = r.replace(new RegExp("(^|[^\\p{L}\\p{N}])" + m + "(?=[^\\p{L}\\p{N}]|$)", "giu"), (_, av) => av + bon);
+  }
+  return r;
 }
 const titresLivres = (arr) => (arr || []).map(b => (b && b.product_type !== "article" && typeof b.title === "string") ? { ...b, title: titreNormal(b.title) } : b);
 
