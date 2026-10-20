@@ -13706,6 +13706,26 @@ function getDisplayPrice(book) {
 // - Articles → adaptatif selon la catégorie
 // 20/10 : TITRES DES LIVRES — premiere lettre en majuscule, le reste en minuscule,
 // quelle que soit la facon dont l'auteur l'a saisi.
+// 20/10 : le cadre de la couverture prend le format REEL de l'image (A4, 2/3, etc.)
+// au lieu de rogner. Valeurs extremes ignorees (cadre par defaut conserve).
+function cadrerCouverture(e) {
+  try {
+    const im = e.currentTarget; const w = im.naturalWidth, h = im.naturalHeight;
+    if (!w || !h) return;
+    const r = w / h;
+    if (r < 0.5 || r > 1.5) return;
+    if (im.parentElement) im.parentElement.style.aspectRatio = w + " / " + h;
+  } catch (err) {}
+}
+function cadrerCouvertureGrille(e) {
+  try {
+    const im = e.currentTarget; const w = im.naturalWidth, h = im.naturalHeight;
+    if (!w || !h) return;
+    const r = w / h;
+    if (r < 0.5 || r > 1.5) return;
+    if (im.parentElement) im.parentElement.style.paddingBottom = (h / w * 100).toFixed(2) + "%";
+  } catch (err) {}
+}
 function titreNormal(t) {
   if (typeof t !== "string") return t;
   const x = t.trim().replace(/\s+/g, " ");
@@ -24379,7 +24399,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -24421,7 +24441,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)}
                           style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % heroBooks.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
                           {book.cover
-                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
                           {/* Couverture seule, sans dégradé */}
                         </div>
@@ -24488,7 +24508,7 @@ export default function App() {
                             </div>
                             <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
                               {book.cover
-                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
@@ -24568,7 +24588,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -24617,7 +24637,7 @@ export default function App() {
                             <div key={book.id} onClick={() => openBook(book)} style={{ minWidth: 0, cursor: "pointer", textAlign: "center" }}>
                               <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 8, position: "relative" }}>
                                 {book.cover
-                                  ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
@@ -24649,7 +24669,7 @@ export default function App() {
                               <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                                 <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                                   {book.cover
-                                    ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                                 </div>
                                 <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{false && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -24681,7 +24701,7 @@ export default function App() {
                                 tombait dans le gabarit portrait commun et se faisait rogner. */}
                             <div style={{ width: "100%", aspectRatio: book.product_type === "formation" ? "297 / 210" : "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
-                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                                ? <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                               {isOutOfStock(book) && (
@@ -24807,7 +24827,7 @@ export default function App() {
                       {books.filter(b => favoriteBooks.includes(b.id) && surCarryBooks(b)).map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
-                            {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                            {book.cover && <img src={book.cover} onLoad={cadrerCouverture} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                             <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{false && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -24860,7 +24880,7 @@ export default function App() {
                       <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                         <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
                           {book.cover
-                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                            ? <img src={book.cover} onLoad={cadrerCouvertureGrille} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
