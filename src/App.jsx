@@ -13709,6 +13709,7 @@ function getDisplayPrice(book) {
 // Autre livre : "Livre PDF à lire" (non telechargeable) ou "Livre PDF à télécharger".
 // Audio, papier, formation : aucun libelle (non demande).
 function libelleTypeLivre(book) {
+  if (EST_HOMOROMANCE) return "Roman texte à lire"; // tout HomoRomance = romans texte
   if (!book || book.audio_url) return "";
   if (book.product_type === "papier" || book.product_type === "article" || book.product_type === "formation") return "";
   const roman = /^roman/i.test(book.category || "") || book.category === "Saga";
@@ -22864,7 +22865,7 @@ export default function App() {
                 <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                   {(book.subcategory || book.category) ? <div style={{ fontSize: 9, letterSpacing: 1.2, fontWeight: 800, textTransform: "uppercase", color: G.text, marginBottom: 8, lineHeight: 1.4 }}>{book.subcategory || book.category}</div> : null}
                   <h1 style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontSize: ((book.title || "").length > 28 ? 16 : ((book.title || "").length > 16 ? 18 : 21)), lineHeight: 1.15, margin: "0 0 10px", color: G.text, fontWeight: 800, textAlign: "left", wordBreak: "break-word" }}>{book.title}</h1>
-                  {!EST_HOMOROMANCE && libelleTypeLivre(book) ? <div style={{ fontSize: 12.5, color: G.gold, fontWeight: 700, margin: "-4px 0 10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "system-ui, sans-serif" }}>{libelleTypeLivre(book)}</div> : null}
+                  {libelleTypeLivre(book) ? <div style={{ fontSize: 12.5, color: G.gold, fontWeight: 700, margin: "-4px 0 10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "system-ui, sans-serif" }}>{libelleTypeLivre(book)}</div> : null}
                   <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 10, fontFamily: "system-ui, sans-serif" }}>{EST_HOMOROMANCE ? "roman signé" : "par"} <span style={{ color: G.text, textDecoration: "underline", textUnderlineOffset: 3 }}>{book.author}</span></div>
                   {(() => {
                     const r = bookRatings[book.id] || { avg: 0, count: 0, userRating: 0 };
