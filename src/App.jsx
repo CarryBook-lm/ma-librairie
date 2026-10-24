@@ -31,6 +31,34 @@ function nbPagesExtraitRoman(b) {
   const n = parseInt(b && b.extract_pages);
   return Math.max(EXTRAIT_PAGES_ROMAN, isNaN(n) ? 0 : n);
 }
+// 24/10 : l'extrait d'un roman est une QUANTITE DE TEXTE, la meme sur telephone, tablette et ordinateur.
+// Avant, les « 12 pages » etaient decoupees selon l'ecran : une tablette ou un ordinateur affichait 3 a 4 fois plus de texte
+// qu'un telephone (et un lecteur qui reduit la taille du texte en lisait davantage). Une page d'extrait = environ
+// CARS_PAR_PAGE_EXTRAIT caracteres (une page de telephone avec la taille de texte par defaut).
+const CARS_PAR_PAGE_EXTRAIT = 700;
+function extraitRoman(contenu, nbPages) {
+  try {
+    const txt = String(contenu || "");
+    const budget = Math.max(1, nbPages || EXTRAIT_PAGES_ROMAN) * CARS_PAR_PAGE_EXTRAIT;
+    if (txt.length <= budget) return txt;
+    const paras = txt.split(/\n+/).filter(x => x.trim());
+    const sortie = [];
+    let total = 0;
+    for (const para of paras) {
+      if (total + para.length <= budget) { sortie.push(para); total += para.length; continue; }
+      // Le paragraphe qui depasse : on le coupe a la fin de la derniere phrase qui tient dans le budget.
+      const reste = budget - total;
+      if (reste > 80) {
+        const coupe = para.slice(0, reste);
+        const m = Math.max(coupe.lastIndexOf(". "), coupe.lastIndexOf("! "), coupe.lastIndexOf("? "), coupe.lastIndexOf("… "), coupe.lastIndexOf(".\u00bb"), coupe.lastIndexOf("» "));
+        if (m > 40) sortie.push(coupe.slice(0, m + 1).trim());
+        else sortie.push(coupe.replace(/\s+\S*$/, "").trim() + "…");
+      }
+      break;
+    }
+    return sortie.join("\n\n");
+  } catch (e) { return String(contenu || ""); }
+}
 // 09/10 : AU LANCEMENT, homoromance.com ne montre QUE les livres de Johanna Morisson.
 // Pour ouvrir le site a d'autres auteurs plus tard : mettre AUTEUR_UNIQUE_HR a "".
 const AUTEUR_UNIQUE_HR = "johanna morisson"; // 13/10 : reste ferme aux autres auteurs (decision de Landrine). Texte uniquement.
@@ -18785,8 +18813,10 @@ export default function App() {
   useEffect(() => {
     if (page !== "reader" || !reading || readerScrollMode) { setPagesMesurees(null); return; }
     if (!boitePage.l || !boitePage.h) return;
-    const contenu = translatedContent || reading.content;
-    if (!contenu) { setPagesMesurees(null); return; }
+    const contenuComplet = translatedContent || reading.content;
+    if (!contenuComplet) { setPagesMesurees(null); return; }
+    // 24/10 : extrait = quantite de texte fixe (pas un nombre de pages d'ecran), puis decoupe aux dimensions de l'ecran.
+    const contenu = excerptMode ? extraitRoman(contenuComplet, nbPagesExtraitRoman(reading)) : contenuComplet;
 
     // 09/10 : si la lectrice change la taille du texte, le livre est redecoupe
     // et le nombre de pages change. Sans rien faire, elle resterait sur le MEME
@@ -18815,12 +18845,12 @@ export default function App() {
       }
       if (trouve >= 0) setReadingPage(trouve + decalage);
     }
-  }, [page, reading, readerScrollMode, translatedContent, boitePage.l, boitePage.h, readerSize, readerFont, policesTick]);
+  }, [page, reading, readerScrollMode, excerptMode, translatedContent, boitePage.l, boitePage.h, readerSize, readerFont, policesTick]);
 
   // Apres un recalcul, ne pas rester bloque sur une page qui n existe plus.
   useEffect(() => {
     if (!pagesMesurees || !pagesMesurees.length) return;
-    const dernier = excerptMode ? Math.max(0, Math.min(pagesMesurees.length, nbPagesExtraitRoman(reading))) : pagesMesurees.length + 3; // + la page « Fin de l'extrait »
+    const dernier = excerptMode ? pagesMesurees.length : pagesMesurees.length + 3; // + la page « Fin de l'extrait »
     setReadingPage(x => (x > dernier ? dernier : x));
   }, [pagesMesurees, excerptMode, reading]);
 
@@ -22146,10 +22176,10 @@ export default function App() {
 
     const allPages = (!readerScrollMode && pagesMesurees && pagesMesurees.length)
       ? pagesMesurees
-      : getPages(translatedContent || reading.content);
+      : getPages(excerptMode ? extraitRoman(translatedContent || reading.content, nbPagesExtraitRoman(reading)) : (translatedContent || reading.content));
     // Pages spéciales : ajoutées seulement en mode lecture complète (pas extrait)
     const fullPages = excerptMode 
-      ? [...allPages.slice(0, nbPagesExtraitRoman(reading)), "__SPECIAL_FIN_EXTRAIT__"]
+      ? [...allPages, "__SPECIAL_FIN_EXTRAIT__"]
       : ["__SPECIAL_INTRO__", "__SPECIAL_TITLE__", ...allPages, "__SPECIAL_COPYRIGHT__", "__SPECIAL_REFERRAL__"];
     const pages = fullPages;
     const total = pages.length;
