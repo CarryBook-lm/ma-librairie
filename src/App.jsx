@@ -20014,7 +20014,7 @@ export default function App() {
     const logoEntete = (boutiqueAuteur && (boutiqueAuteur.vitrine_logo || boutiqueAuteur.photo_url)) || "";
     const sousEntete = [];
     // Le nom de l'auteur ne figure plus dans l'en-tete : il est en pied de page.
-    sousEntete.push("Librairie officielle");
+    sousEntete.push("Ma vitrine");
     const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
     // 24/10 : le pays de l'auteur n'est plus affiche ; a la place, son nombre de livres puis son nombre de followers.
     if (bqBooks.length > 0) sousEntete.push(bqBooks.length + " livre" + (bqBooks.length > 1 ? "s" : ""));
@@ -21617,7 +21617,7 @@ export default function App() {
                     const cFond = normaliserCoul(auteurCoulFond, "#f5f0e8");
                     const cPrix = normaliserCoul(auteurCoulPrix, cAcc);
                     const bouts = [];
-                    bouts.push("Librairie officielle");
+                    bouts.push("Ma vitrine");
                     bouts.push("12 livres");
                     if (enteteCoche("abonnes")) bouts.push("128 followers");
                     return (
