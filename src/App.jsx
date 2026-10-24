@@ -18734,8 +18734,9 @@ export default function App() {
     if (!surCarryBooks(b)) return false;
     // Hors ligne : cacher les livres PDF (ils ne fonctionnent pas hors connexion)
     if (!isOnline && b.pdf_url) return false;
-    const matchSearch = b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.author?.toLowerCase().includes(searchQuery.toLowerCase());
+    // 24/10 : recherche sans accents ni majuscules (Aicha = AICHA = Aïcha)
+    const matchSearch = !normNom(searchQuery) || normNom(b.title).includes(normNom(searchQuery)) ||
+      normNom(b.author).includes(normNom(searchQuery));
     let matchCat = selectedCategory === "Tous" ||
       champCategorie(b) === selectedCategory ||
       champCategorie(b).toLowerCase().startsWith(selectedCategory.toLowerCase().replace(/s$/, ""));
@@ -20103,10 +20104,10 @@ export default function App() {
     if (bqBooks.length > 0) sousEntete.push(bqBooks.length + " livre" + (bqBooks.length > 1 ? "s" : ""));
     if (aff("abonnes") && boutiqueLecteurs !== null) sousEntete.push(boutiqueLecteurs + " lecteur" + (boutiqueLecteurs > 1 ? "s" : ""));
     const bqCats = Array.from(new Set(bqBooks.map(b => b.category || "Autres"))).sort();
-    const bqQ = boutiqueSearch.trim().toLowerCase();
+    const bqQ = normNom(boutiqueSearch); // 24/10 : sans accents ni majuscules (Aicha = AICHA = Aïcha)
     const bqFiltres = bqBooks.filter(b =>
       (boutiqueCat === "Tous" || (b.category || "Autres") === boutiqueCat) &&
-      (!bqQ || (b.title || "").toLowerCase().includes(bqQ) || (b.summary || "").toLowerCase().includes(bqQ) || (b.category || "").toLowerCase().includes(bqQ) || (b.subcategory || "").toLowerCase().includes(bqQ))
+      (!bqQ || normNom(b.title).includes(bqQ) || normNom(b.summary).includes(bqQ) || normNom(b.category).includes(bqQ) || normNom(b.subcategory).includes(bqQ) || normNom(b.author).includes(bqQ))
     );
     const bqTri = [...bqBooks].sort((a, b) => (b.id || 0) - (a.id || 0));
     const bqRecents = bqTri.slice(0, 12);
@@ -25094,8 +25095,8 @@ export default function App() {
                   {!loading && <span style={{ color: G.textFaint, marginLeft: 8, fontSize: 11, letterSpacing: 0 }}>({filteredBooks.length})</span>}
                 </div>
                 {searchQuery && (() => {
-                  const q = searchQuery.toLowerCase().trim();
-                  const matches = EST_HOMOROMANCE ? [] : auteursAll.filter(a => (a.nom_complet || "").toLowerCase().includes(q));
+                  const q = normNom(searchQuery);
+                  const matches = EST_HOMOROMANCE ? [] : auteursAll.filter(a => normNom(a.nom_complet).includes(q));
                   if (matches.length === 0) return null;
                   return (
                     <div style={{ marginBottom: 20 }}>
@@ -25295,12 +25296,12 @@ export default function App() {
             ? paperBooks 
             : paperBooks.filter(b => b.category === selectedColorCategory);
           // Filtre par recherche
-          const paperSearch = searchQuery.toLowerCase().trim();
+          const paperSearch = normNom(searchQuery);
           const finalPaper = paperSearch 
             ? filteredPaper.filter(b => 
-                b.title?.toLowerCase().includes(paperSearch) ||
-                b.author?.toLowerCase().includes(paperSearch) ||
-                b.summary?.toLowerCase().includes(paperSearch)
+                normNom(b.title).includes(paperSearch) ||
+                normNom(b.author).includes(paperSearch) ||
+                normNom(b.summary).includes(paperSearch)
               )
             : filteredPaper;
 
