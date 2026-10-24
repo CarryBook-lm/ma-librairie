@@ -3702,7 +3702,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
 
 
 // ─── PDF READER WITH LOADING SCREEN ───
-function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack, onShare }) {
+function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack, onShare, onBuy }) {
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [dots, setDots] = useState(".");
   const [elapsed, setElapsed] = useState(0);
@@ -3792,13 +3792,22 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack, onSh
         <iframe
           key={key}
           src={"https://docs.google.com/viewer?url=" + encodeURIComponent(activePdfUrl) + "&embedded=true"}
-          style={{ width: "100%", height: pdfLoaded ? "calc(100vh - 96px)" : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
+          style={{ width: "100%", height: pdfLoaded ? (excerptMode && onBuy ? "calc(100vh - 150px)" : "calc(100vh - 96px)") : "calc(100vh - 56px)", border: "none", opacity: pdfLoaded ? 1 : 0 }}
           title={reading.title}
           onLoad={() => { setPdfLoaded(true); setElapsed(0); }}
         />
       </div>
+      {/* Fin de l'extrait : bouton pour acheter la suite */}
+      {excerptMode && onBuy && pdfLoaded && (
+        <div style={{ position: "sticky", bottom: 0, zIndex: 10, background: "#111", borderTop: "1px solid #c9a84c55", padding: "10px 14px", textAlign: "center" }}>
+          <div style={{ color: "#aaa", fontSize: 12, marginBottom: 8 }}>Fin de l'extrait ? Achète le livre pour lire la suite</div>
+          <button onClick={onBuy} style={{ width: "100%", maxWidth: 420, padding: "12px 20px", background: "#c9a84c", border: "none", borderRadius: 8, color: "#1a1208", fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
+            🛒 Acheter ce livre{reading.price > 0 ? " — " + Number(reading.price).toLocaleString("fr-FR") + " FCFA" : ""}
+          </button>
+        </div>
+      )}
 
-      {excerptMode && (
+      {excerptMode && !onBuy && (
         <div style={{ background: "#111", padding: "12px 16px", textAlign: "center" }}>
           <span style={{ color: "#aaa", fontSize: 12 }}>Extrait limité — Achetez pour lire la suite</span>
         </div>
@@ -21849,6 +21858,7 @@ export default function App() {
           startPage={startPage}
           activePdfUrl={activePdfUrl}
           onShare={() => shareExtrait(reading)}
+          onBuy={() => { setPage("detail"); setReading(null); }}
           onBack={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
         />
       );
