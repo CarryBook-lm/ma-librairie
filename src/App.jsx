@@ -19619,23 +19619,41 @@ export default function App() {
     return () => clearInterval(id);
   }, [page, boutiqueBooks]);
 
-  const basculerSuivreBoutique = async () => {
+  // Suivre un auteur. Si le lecteur n'est pas encore connecte, on affiche la fenetre de connexion
+  // puis on le suit automatiquement des qu'il est connecte (avant : la fenetre n'existait pas sur cette page).
+  const suivreEnAttente = useRef(false);
+  const basculerSuivreBoutique = async (forcer) => {
     const aid = boutiqueAuteur && boutiqueAuteur.id;
     if (!aid) return;
     const tel = lecteur && lecteur.telephone ? lecteur.telephone : null;
-    if (!tel) { setShowLecteurModal(true); return; }
+    if (!tel) { suivreEnAttente.current = true; setShowLecteurModal(true); return; }
     setBoutiqueSuivreBusy(true);
     try {
-      if (boutiqueEstAbonne) {
-        await supabase.from("abonnes_auteur").delete().eq("auteur_id", aid).eq("phone", tel);
-        setBoutiqueEstAbonne(false); setBoutiqueAbonnes(n => Math.max(0, n - 1));
+      const { data: ex } = await supabase.from("abonnes_auteur").select("id").eq("auteur_id", aid).eq("phone", tel).limit(1);
+      const dejaSuivi = !!(ex && ex.length);
+      if (forcer === true ? dejaSuivi : (boutiqueEstAbonne || dejaSuivi)) {
+        if (forcer === true) { setBoutiqueEstAbonne(true); }
+        else {
+          const { error } = await supabase.from("abonnes_auteur").delete().eq("auteur_id", aid).eq("phone", tel);
+          if (error) throw error;
+          setBoutiqueEstAbonne(false); setBoutiqueAbonnes(n => Math.max(0, n - 1));
+        }
       } else {
-        await supabase.from("abonnes_auteur").insert({ auteur_id: aid, phone: tel });
+        const { error } = await supabase.from("abonnes_auteur").insert({ auteur_id: aid, phone: tel });
+        if (error) throw error;
         setBoutiqueEstAbonne(true); setBoutiqueAbonnes(n => n + 1);
       }
-    } catch (e) {}
+    } catch (e) {
+      try { alert("Impossible de suivre cet auteur pour le moment. Réessaie dans un instant."); } catch (e2) {}
+    }
     setBoutiqueSuivreBusy(false);
   };
+  useEffect(() => {
+    if (suivreEnAttente.current && lecteur && lecteur.telephone && boutiqueAuteur && boutiqueAuteur.id && page === "auteur_boutique") {
+      suivreEnAttente.current = false;
+      basculerSuivreBoutique(true);
+    }
+  }, [lecteur, boutiqueAuteur, page]);
 
   // 👤 Charger tous les auteurs une fois (pour la recherche par nom)
   useEffect(() => {
@@ -19997,9 +20015,10 @@ export default function App() {
     const sousEntete = [];
     // Le nom de l'auteur ne figure plus dans l'en-tete : il est en pied de page.
     sousEntete.push("Librairie officielle");
-    if (aff("pays") && boutiqueAuteur && boutiqueAuteur.pays) sousEntete.push(boutiqueAuteur.pays);
-    if (aff("abonnes") && boutiqueAbonnes > 0) sousEntete.push("Followers " + boutiqueAbonnes);
     const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
+    // 24/10 : le pays de l'auteur n'est plus affiche ; a la place, son nombre de livres puis son nombre de followers.
+    if (bqBooks.length > 0) sousEntete.push(bqBooks.length + " livre" + (bqBooks.length > 1 ? "s" : ""));
+    if (aff("abonnes")) sousEntete.push(boutiqueAbonnes + " follower" + (boutiqueAbonnes > 1 ? "s" : ""));
     const bqCats = Array.from(new Set(bqBooks.map(b => b.category || "Autres"))).sort();
     const bqQ = boutiqueSearch.trim().toLowerCase();
     const bqFiltres = bqBooks.filter(b =>
@@ -20042,6 +20061,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
+        {showLecteurModal && lecteurModalNode}
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
         <div style={{ position: "sticky", top: 0, background: cFond, zIndex: 10 }}>
           <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: cEnt, borderBottom: "2px solid " + AC }}>
@@ -20234,7 +20254,7 @@ export default function App() {
                     </button>
                   ) : <span />}
                   {boutiqueAuteur.id ? (
-                    <button onClick={basculerSuivreBoutique} disabled={boutiqueSuivreBusy}
+                    <button onClick={() => basculerSuivreBoutique()} disabled={boutiqueSuivreBusy}
                       style={{ background: "none", border: "none", padding: 0, cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontSize: 13.5, fontWeight: "bold", color: cEntTxt, textDecoration: "underline", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
                       {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "Suivre cet auteur"}
                     </button>
@@ -21526,7 +21546,7 @@ export default function App() {
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
-                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur (en pied de page)"], ["pays", "Mon pays"], ["abonnes", "Mes followers (le nombre)"]].map(([cle, lab]) => (
+                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur (en pied de page)"], ["abonnes", "Mes followers (le nombre)"]].map(([cle, lab]) => (
                       <label key={cle} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: G.text, padding: "7px 0" }}>
                         <input type="checkbox" checked={enteteCoche(cle)} onChange={() => basculerEntete(cle)} style={{ width: 17, height: 17 }} />
                         <span>{lab}</span>
@@ -21598,8 +21618,8 @@ export default function App() {
                     const cPrix = normaliserCoul(auteurCoulPrix, cAcc);
                     const bouts = [];
                     bouts.push("Librairie officielle");
-                    if (enteteCoche("pays") && auteurPays) bouts.push(auteurPays);
-                    if (enteteCoche("abonnes")) bouts.push("Followers 128");
+                    bouts.push("12 livres");
+                    if (enteteCoche("abonnes")) bouts.push("128 followers");
                     return (
                       <div style={{ border: "1px solid " + G.border, borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
                         <div style={{ fontSize: 11, color: G.textDim, padding: "8px 10px", background: G.bg }}>Aperçu de ta vitrine</div>
