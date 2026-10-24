@@ -3021,12 +3021,14 @@ function QuizPayment({ quiz, quizResult, quizPaymentStep, setQuizPaymentStep, qu
               // 📊 Pixel Meta : Lead (paiement quiz validé = lead converti)
               try {
                 if (typeof window !== "undefined" && typeof window.fbq === "function") {
-                  window.fbq("track", "Lead", {
+                  const _leadP = {
                     content_name: quiz?.title || "Carry'Quiz",
                     content_category: "Quiz",
                     value: quizPrice || 0,
                     currency: "XAF",
-                  });
+                  };
+                  if (Object.keys(PIXELS_AUTEUR_INIT).length) window.fbq("trackSingle", META_PIXEL_ID, "Lead", _leadP);
+                  else window.fbq("track", "Lead", _leadP);
                 }
               } catch (e) {}
               // 🔥 API Conversions Meta (serveur - capte ce que le Pixel JS rate)
@@ -13782,24 +13784,47 @@ function generateSuggestedReferralCode(name) {
 
 // Helper pour tracker les événements Meta Pixel (Facebook)
 // Vérifie que fbq existe (le Pixel peut être bloqué par AdBlock ou indisponible)
-function trackPixelEvent(eventName, params = {}, eventID = null) {
+// 24/10 : pixel propre a chaque auteur (Meta). Le pixel de CarryBooks reste actif partout ;
+// celui de l'auteur ne recoit les evenements que pour SES livres et sa vitrine.
+// Un fbq("track") partirait vers TOUS les pixels initialises : des qu'un pixel d'auteur est
+// charge, on envoie donc chaque evenement avec "trackSingle", pixel par pixel.
+const PIXELS_AUTEUR_INIT = {};
+let PIXEL_AUTEUR_COURANT = "";
+const PIXELS_AUTEUR_CACHE = {};
+function activerPixelAuteur(pixelId) {
   try {
-    if (typeof window !== "undefined" && typeof window.fbq === "function") {
-      // 4e argument fbq = { eventID } : c'est LUI qui permet a Meta de recoller
-      // l'evenement navigateur avec le meme evenement envoye par l'API Conversions
-      // (Edge Function meta-conversion). Sans lui, Meta compte la vente 2 fois.
-      const opts = eventID ? { eventID: String(eventID) } : undefined;
-      if (Object.keys(params).length > 0) {
-        if (opts) window.fbq("track", eventName, params, opts);
-        else window.fbq("track", eventName, params);
-      } else {
-        if (opts) window.fbq("track", eventName, {}, opts);
-        else window.fbq("track", eventName);
-      }
+    if (typeof window === "undefined" || typeof window.fbq !== "function") return false;
+    const id = String(pixelId || "").replace(/\s+/g, "");
+    if (!/^\d{10,20}$/.test(id) || id === META_PIXEL_ID) return false;
+    if (!PIXELS_AUTEUR_INIT[id]) {
+      window.fbq("init", id);
+      PIXELS_AUTEUR_INIT[id] = true;
+      window.fbq("trackSingle", id, "PageView");
     }
-  } catch (e) {
-    // Silent fail si Pixel pas disponible
-  }
+    return true;
+  } catch (e) { return false; }
+}
+function pixelPourLivre(livre) {
+  try { return (livre && livre.auteur_id && PIXELS_AUTEUR_CACHE["id:" + livre.auteur_id]) || ""; } catch (e) { return ""; }
+}
+function fbEnvoyer(eventName, params, opts, livre) {
+  try {
+    const f = typeof window !== "undefined" ? window.fbq : null;
+    if (typeof f !== "function") return;
+    const aP = params && Object.keys(params).length > 0;
+    const args = opts ? [params || {}, opts] : (aP ? [params] : []);
+    if (Object.keys(PIXELS_AUTEUR_INIT).length === 0) { f("track", eventName, ...args); return; }
+    f("trackSingle", META_PIXEL_ID, eventName, ...args);
+    // Si on connait le livre, on vise le pixel de SON auteur (et pas celui du livre vu juste avant).
+    const cible = livre !== undefined ? pixelPourLivre(livre) : PIXEL_AUTEUR_COURANT;
+    if (cible && PIXELS_AUTEUR_INIT[cible]) f("trackSingle", cible, eventName, ...args);
+  } catch (e) {}
+}
+function trackPixelEvent(eventName, params = {}, eventID = null, livre) {
+  // 4e argument fbq = { eventID } : c'est LUI qui permet a Meta de recoller
+  // l'evenement navigateur avec le meme evenement envoye par l'API Conversions
+  // (Edge Function meta-conversion). Sans lui, Meta compte la vente 2 fois.
+  fbEnvoyer(eventName, params, eventID ? { eventID: String(eventID) } : undefined, livre);
 }
 
 // 📊 Correspondance avancée Meta (advanced matching) : on transmet email/téléphone
@@ -17159,7 +17184,7 @@ export default function App() {
     setPaymentStep(1);
     setPaymentMethod(null);
     setPhoneNumber("");
-    try { trackPixelEvent("AddToCart", { content_ids: [String(book.id)], content_name: book.title || "", value: Number(book.price) || 0, currency: "XAF" }); } catch (e) {}
+    try { trackPixelEvent("AddToCart", { content_ids: [String(book.id)], content_name: book.title || "", value: Number(book.price) || 0, currency: "XAF" }, null, book); } catch (e) {}
   };
   // La presentation est un texte ou l'auteur a insere des reperes :
   //   [IMG916:url]  [IMG169:url]  [LIEN:Titre|url]
@@ -17234,7 +17259,7 @@ export default function App() {
     }
     try { if (page === "home" || page === "catalog") scrollAvantFiche.current = { page: page, y: window.scrollY || window.pageYOffset || 0 }; } catch (e) {}
     // 📊 Pixel Facebook : signaler la CONSULTATION du livre (pour le reciblage catalogue)
-    try { if (window.fbq && book) window.fbq("track", "ViewContent", { value: Number(book.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(book.id)], content_name: book.title || "" }); } catch (e) {}
+    try { if (book) fbEnvoyer("ViewContent", { value: Number(book.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(book.id)], content_name: book.title || "" }, undefined, book); } catch (e) {}
     // Afficher immédiatement avec les données légères (UX rapide)
     setSelectedBook(book);
     setPage("detail");
@@ -17261,7 +17286,7 @@ export default function App() {
       content_category: book.category || "Livre",
       value: book.price || 0,
       currency: "XAF",
-    });
+    }, null, book);
   }
 
   // ===== MODULE POD : Fonctions de commande papier =====
@@ -17684,7 +17709,7 @@ export default function App() {
         content_type: "product",
         value: book.price || 0,
         currency: "XAF",
-      });
+      }, null, book);
       return;
     }
     // 🔧 FIX BUG : Si pas de pdf_url ET pas de content (chargement light) → fetch le content avant
@@ -18045,7 +18070,7 @@ export default function App() {
             try {
               const evId = "pur_" + payData.reference;
               const getCk = (n) => { const m = document.cookie.match("(^|;)\\s*" + n + "\\s*=\\s*([^;]+)"); return m ? m.pop() : ""; };
-              if (window.fbq && paymentBook) window.fbq("track", "Purchase", { value: Number(paymentBook.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(paymentBook.id)], content_name: paymentBook.title || "" }, { eventID: evId });
+              if (paymentBook) fbEnvoyer("Purchase", { value: Number(paymentBook.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(paymentBook.id)], content_name: paymentBook.title || "" }, { eventID: evId }, paymentBook);
               fetch("/api/track-achat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reference: payData.reference, book_id: paymentBook.id, phone: (lecteur && lecteur.telephone) || "", fbp: getCk("_fbp"), fbc: getCk("_fbc") }) }).catch(() => {});
             } catch (e) {}
 
@@ -18102,7 +18127,7 @@ export default function App() {
               value: finalPrice || 0,
               currency: "XAF",
               num_items: 1,
-            }, "carrybooks_purchase_" + payData.reference);
+            }, "carrybooks_purchase_" + payData.reference, paymentBook);
             // 🔥 API Conversions Meta (serveur)
             trackMetaConversion({
               reference: payData.reference,
@@ -19485,6 +19510,38 @@ export default function App() {
     })();
     return () => { cancel = true; };
   }, [page, boutiqueCode]);
+
+  // 📊 Pixel Meta de l'auteur (24/10) : actif sur SA vitrine et sur SES livres uniquement.
+  // On repere l'auteur du livre en cours (paiement > lecture > fiche) ou de la vitrine ouverte.
+  const _auteurPixelId = EST_HOMOROMANCE ? null
+    : ((paymentBook && paymentBook.auteur_id) || (reading && reading.auteur_id) || (selectedBook && selectedBook.auteur_id)
+      || (page === "auteur_boutique" && boutiqueAuteur && boutiqueAuteur.id) || null);
+  const _auteurPixelCode = (!_auteurPixelId && !EST_HOMOROMANCE && page === "auteur_boutique" && boutiqueCode) ? boutiqueCode : "";
+  useEffect(() => {
+    let annule = false;
+    const cle = _auteurPixelId ? "id:" + _auteurPixelId : (_auteurPixelCode ? "code:" + _auteurPixelCode : "");
+    if (!cle) { PIXEL_AUTEUR_COURANT = ""; return; }
+    const appliquer = (px) => {
+      if (annule) return;
+      if (px && activerPixelAuteur(px)) PIXEL_AUTEUR_COURANT = px; else PIXEL_AUTEUR_COURANT = "";
+    };
+    if (Object.prototype.hasOwnProperty.call(PIXELS_AUTEUR_CACHE, cle)) { appliquer(PIXELS_AUTEUR_CACHE[cle]); return () => { annule = true; }; }
+    PIXEL_AUTEUR_COURANT = "";
+    fetch("/api/pixel-auteur?" + (_auteurPixelId ? "id=" + encodeURIComponent(_auteurPixelId) : "code=" + encodeURIComponent(_auteurPixelCode)))
+      .then(r => r.json())
+      .then(d => {
+        const px = (d && d.pixel) || ""; PIXELS_AUTEUR_CACHE[cle] = px; appliquer(px);
+        // Premier chargement : la vue du livre est partie avant que le pixel soit connu. On l'envoie maintenant, a ce seul pixel.
+        try {
+          const lv = selectedBook;
+          if (!annule && px && PIXELS_AUTEUR_INIT[px] && lv && _auteurPixelId && String(lv.auteur_id) === String(_auteurPixelId) && !paymentBook && typeof window.fbq === "function") {
+            window.fbq("trackSingle", px, "ViewContent", { value: Number(lv.price) || 0, currency: "XAF", content_type: "product", content_ids: [String(lv.id)], content_name: lv.title || "" });
+          }
+        } catch (e2) {}
+      })
+      .catch(() => {});
+    return () => { annule = true; };
+  }, [_auteurPixelId, _auteurPixelCode]);
 
   // 👤 Abonnes de la boutique (bouton Suivre)
   // NB : toutes les variables ci-dessous (boutiqueAuteur, lecteur) sont declarees plus haut.
@@ -21586,10 +21643,12 @@ export default function App() {
                   <div style={{ fontSize: 12, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Ajoute tes pixels pour suivre tes publicités. Ils se déclenchent uniquement sur les pages de TES livres.</div>
                   <label style={labelSt}>Pixel Facebook (ID)</label>
                   <input value={auteurPixel} onChange={e => setAuteurPixel(e.target.value)} placeholder="Ex : 1234567890123456" style={champ} />
+                  <div style={{ fontSize: 11, color: G.textDim, margin: "4px 0 8px", lineHeight: 1.5 }}>✅ Actif. Ton pixel reçoit : la visite de ta vitrine, la vue d'un de tes livres, l'ajout au panier, le début de paiement et l'achat.</div>
                   <a onClick={() => { setPixelGuideTab("facebook"); setPage("guide_pixel"); }} style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6, cursor: "pointer" }}>❓ Comment créer un pixel Facebook ?</a>
                   <div style={{ height: 14 }} />
                   <label style={labelSt}>Pixel TikTok (ID)</label>
                   <input value={auteurPixelTiktok} onChange={e => setAuteurPixelTiktok(e.target.value)} placeholder="Ex : C1A2B3..." style={champ} />
+                  <div style={{ fontSize: 11, color: G.textDim, margin: "4px 0 8px", lineHeight: 1.5 }}>⏳ Bientôt actif : l'ID est enregistré, mais TikTok ne reçoit pas encore d'évènements.</div>
                   <a onClick={() => { setPixelGuideTab("tiktok"); setPage("guide_pixel"); }} style={{ display: "inline-block", color: G.gold, fontSize: 12, fontWeight: "bold", textDecoration: "underline", marginTop: -6, cursor: "pointer" }}>❓ Comment créer un pixel TikTok ?</a>
                   <div style={{ height: 18 }} />
                   <button onClick={saveAuteur} disabled={auteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: auteurSaving ? 0.6 : 1 }}>{auteurSaving ? "Enregistrement…" : "Enregistrer mes pixels"}</button>
@@ -23626,7 +23685,7 @@ export default function App() {
                       value: paymentBook.price || 0,
                       currency: "XAF",
                       num_items: 1,
-                    });
+                    }, null, paymentBook);
                     // Lecteur hors Cameroun (pays PawaPay activé) → paiement direct, sans écran de choix
                     const iso = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
                     if (lecteur && lecteur.pays !== "Cameroun" && iso) {
