@@ -17150,8 +17150,47 @@ export default function App() {
     if (navigator.share) {
       navigator.share({ title: book.title, text: texteCourt, url }).catch(() => {});
     } else {
-      const waUrl = "https://wa.me/?text=" + encodeURIComponent(texteCourt + "\n" + url);
-      window.open(waUrl, "_blank");
+      choisirPartage(url, texteCourt);
+    }
+  }
+
+  // Navigateur sans feuille de partage (ex : navigateur integre de Facebook) : on laisse le choix
+  // au lieu d'ouvrir WhatsApp directement. Fenetre construite a la main : marche sur toutes les pages, y compris la vitrine.
+  function choisirPartage(url, texte) {
+    try {
+      const ancien = document.getElementById("choix-partage"); if (ancien) ancien.remove();
+      const fond = document.createElement("div");
+      fond.id = "choix-partage";
+      fond.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:flex-end;justify-content:center;";
+      const boite = document.createElement("div");
+      boite.style.cssText = "background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:18px 16px 22px;box-sizing:border-box;font-family:Georgia,serif;";
+      const titre = document.createElement("div");
+      titre.textContent = "Partager ce livre";
+      titre.style.cssText = "font-weight:bold;font-size:16px;color:#222;margin-bottom:12px;text-align:center;";
+      boite.appendChild(titre);
+      const fermer = () => { try { fond.remove(); } catch (e) {} };
+      const bouton = (libelle, action) => {
+        const b = document.createElement("button");
+        b.textContent = libelle;
+        b.style.cssText = "display:block;width:100%;padding:13px;margin-bottom:8px;border-radius:10px;border:1.5px solid #ddd;background:#f8f8f8;color:#222;font-size:15px;font-weight:bold;cursor:pointer;";
+        b.onclick = () => { try { action(); } catch (e) {} if (libelle.indexOf("Annuler") === -1 && libelle.indexOf("Copier") === -1) fermer(); };
+        boite.appendChild(b);
+        return b;
+      };
+      bouton("💬 WhatsApp", () => window.open("https://wa.me/?text=" + encodeURIComponent(texte + "\n" + url), "_blank"));
+      bouton("📘 Facebook", () => window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank"));
+      bouton("✈️ Telegram", () => window.open("https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(texte), "_blank"));
+      const bCopie = bouton("🔗 Copier le lien", () => {
+        const fin = () => { bCopie.textContent = "✅ Lien copié"; };
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).then(fin).catch(() => { window.prompt("Copie ce lien :", url); }); }
+        else { window.prompt("Copie ce lien :", url); }
+      });
+      bouton("Annuler", fermer);
+      fond.onclick = (e) => { if (e.target === fond) fermer(); };
+      fond.appendChild(boite);
+      document.body.appendChild(fond);
+    } catch (e) {
+      window.open("https://wa.me/?text=" + encodeURIComponent(texte + "\n" + url), "_blank");
     }
   }
 
