@@ -21,9 +21,10 @@ const FICHE_STYLE_HR = true;
 // 15/10 : HomoRomance a ouvert le 09/10/2026. Ses chiffres ne comptent que les ventes de ses livres depuis cette date.
 // 15/10 : les ventes HomoRomance repartent de zero a cette heure (Cameroun, UTC+1). Avant, les memes livres se vendaient aussi sur CarryBooks et rien ne dit sur quel site.
 const HR_DEBUT_MS = new Date("2026-10-15T12:50:00+01:00").getTime();
-// 13/10 : extrait gratuit d'un roman = 7 pages au minimum (decision de Landrine). Avant, le lecteur
+// 13/10 : extrait gratuit d'un roman = 7 pages au minimum (porte a 12 le 24/10) (decision de Landrine). Avant, le lecteur
 // coupait en dur a 2 pages, quel que soit le reglage "Pages gratuites" du livre.
-const EXTRAIT_PAGES_ROMAN = 7;
+// 24/10 : passe de 7 a 12 pages minimum, pour TOUS les livres et romans (decision de Landrine).
+const EXTRAIT_PAGES_ROMAN = 12;
 function nbPagesExtraitRoman(b) {
   const n = parseInt(b && b.extract_pages);
   return Math.max(EXTRAIT_PAGES_ROMAN, isNaN(n) ? 0 : n);
@@ -2008,7 +2009,8 @@ function idYoutube(url) {
 //  - les livres GRATUITS (type "gratuit", prix 0), produits d'appel assumes ;
 //  - les livres vendus UNIQUEMENT dans la vitrine de l'auteur : CarryBooks ne
 //    paie aucune publicite pour eux, l'auteur fixe donc son prix librement.
-const PRIX_MINI = 2000;
+// 24/10 : le prix minimum passe de 2 000 a 1 000 FCFA (decision de Landrine).
+const PRIX_MINI = 1000;
 const CAT_FORMATION = "Formation Vidéo";
 const SOUS_CATS_FORMATION = ["IA", "Application", "Site Web", "Réseaux Sociaux", "Logiciel", "Gagner de l'argent", "BRVM", "Crypto", "Trading", "Vente"];
 const CATEGORIES_FALLBACK = {
@@ -14806,7 +14808,7 @@ export default function App() {
   const [auteurSaving, setAuteurSaving] = useState(false);
   const [auteurMsg, setAuteurMsg] = useState("");
   const [pubOpen, setPubOpen] = useState(false);
-  const [pubForm, setPubForm] = useState({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
+  const [pubForm, setPubForm] = useState({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "12", content: "", type: "roman", pdf_url: "", audio_url: "" });
   const [pubCats, setPubCats] = useState({});
   const [pubUploading, setPubUploading] = useState(false);
   const [pubSaving, setPubSaving] = useState(false);
@@ -19087,7 +19089,7 @@ export default function App() {
     setPubForm({
       title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
       price: b.price != null ? String(b.price) : "", cover: b.cover || "", summary: b.summary || "",
-      extract_pages: b.extract_pages != null ? String(b.extract_pages) : "7",
+      extract_pages: b.audio_url ? (b.extract_pages != null ? String(b.extract_pages) : "3") : String(Math.max(EXTRAIT_PAGES_ROMAN, parseInt(b.extract_pages) || 0)),
       content: b.content || "", type: b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"), pdf_url: b.pdf_url || "", audio_url: b.audio_url || "",
     });
     setPubTypeSelected(b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"));
@@ -19373,7 +19375,7 @@ export default function App() {
     const enVitrineSeule = !!pubExclusif && kycValide;
     if (pubExclusif && !kycValide) { setPubMsg("🔒 La vente en vitrine seule est réservée aux auteurs vérifiés. Termine ta vérification d'identité dans « Mon compte », ou choisis « Ma vitrine + " + SITE_NOM + " »."); return; }
     if (enVitrineSeule && !pubExclusifCertifie) { setPubMsg("☑️ Coche la case de certification des droits avant de publier dans ta vitrine."); return; }
-    if (needsExtract && (parseInt(f.extract_pages) || 0) < 1) { setPubMsg("Le nombre de pages gratuites doit être au moins 1."); return; }
+    if (needsExtract && (parseInt(f.extract_pages) || 0) < EXTRAIT_PAGES_ROMAN) { setPubMsg("Le nombre de pages gratuites doit être au moins " + EXTRAIT_PAGES_ROMAN + "."); return; }
     // Minimum 30 pages (~7500 mots à 250 mots/page) pour les romans texte — sauf admin (id 8)
     if (f.type === "roman" && !(auteurProfil && auteurProfil.id === 8)) {
       const nbMots = (f.content || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
@@ -19384,12 +19386,12 @@ export default function App() {
       let excerptUrl = "";
       if (f.type === "guide" && f.pdf_url) {
         setPubMsg("⏳ Préparation de l'extrait…");
-        excerptUrl = await pubMakeExcerpt(f.pdf_url, parseInt(f.extract_pages) || 1);
+        excerptUrl = await pubMakeExcerpt(f.pdf_url, Math.max(EXTRAIT_PAGES_ROMAN, parseInt(f.extract_pages) || 0));
       }
       const payload = {
         title: titreNormal(f.title), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
         cover: f.cover, category: f.category, subcategory: f.subcategory,
-        summary: f.summary.trim(), extract_pages: needsExtract ? (parseInt(f.extract_pages) || 1) : 1,
+        summary: f.summary.trim(), extract_pages: needsExtract ? Math.max(EXTRAIT_PAGES_ROMAN, parseInt(f.extract_pages) || 0) : 1,
         content: f.type === "roman" ? f.content : "",
         pdf_url: isPdf ? f.pdf_url : "",
         excerpt_pdf_url: f.type === "guide" ? excerptUrl : "",
@@ -19418,7 +19420,7 @@ export default function App() {
         if (error) throw error;
         setPubMsg("✅ Ton livre a été envoyé ! Le traitement peut durer jusqu'à 24h. Il sera visible une fois validé par " + SITE_NOM + ".");
       }
-      setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" });
+      setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "12", content: "", type: "roman", pdf_url: "", audio_url: "" });
       setPubEditId(null);
       setPubOpen(false); setPubTypeSelected(null); setPubDraftMsg(""); setAuteurTab("meslivres");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
@@ -20362,7 +20364,7 @@ export default function App() {
                     <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: "#c9a84c" }}>{mesLivres.filter(b => b.status !== "actif" && b.moderation !== "refuse").length}</div><div style={{ fontSize: 11, color: G.textDim }}>En attente</div></div>
                     <div style={{ flex: 1, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, textAlign: "center" }}><div style={{ fontSize: 22, fontWeight: "bold", color: G.text }}>{mesLivres.length}</div><div style={{ fontSize: 11, color: G.textDim }}>Total</div></div>
                   </div>
-                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
+                  <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "12", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Publier un livre</button>
                 </div>
               )}
               {/* PUBLIER */}
@@ -20831,7 +20833,8 @@ export default function App() {
                   <div style={{ height: 14 }} />
                   {(pubForm.type === "roman" || pubForm.type === "guide") && (<>
                   <label style={labelSt}>Pages gratuites (extrait) *</label>
-                  <input type="number" min="1" value={pubForm.extract_pages} onChange={e => { setPubForm(f => ({ ...f, extract_pages: e.target.value })); setPubErrors(p => ({ ...p, extract_pages: false })); }} placeholder="Ex : 10" style={{ ...champ, ...(pubErrors.extract_pages ? { border: "2px solid #e53935" } : {}) }} />
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, lineHeight: 1.4 }}>Minimum <b>12 pages</b> gratuites : c'est ce que le lecteur lit avant d'acheter.</div>
+                  <input type="number" min="12" value={pubForm.extract_pages} onChange={e => { setPubForm(f => ({ ...f, extract_pages: e.target.value })); setPubErrors(p => ({ ...p, extract_pages: false })); }} placeholder="Ex : 12" style={{ ...champ, ...(pubErrors.extract_pages ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   </>)}
                   {pubForm.type === "roman" ? (
@@ -21747,7 +21750,7 @@ export default function App() {
             <button onClick={() => setAuteurTab("compte")} style={{ flex: 1, background: auteurTab === "compte" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "compte" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "compte" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "compte" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>👤</span>Profil</button>
             )}
             <button onClick={() => setAuteurTab("meslivres")} style={{ flex: 1, background: auteurTab === "meslivres" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "meslivres" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "meslivres" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "meslivres" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📚</span>Mes livres</button>
-            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "7", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.bouton, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
+            <button onClick={() => { setPubEditId(null); setPubTypeSelected(null); setPubDraftMode(true); setPubDraftMsg(""); setPubForm({ title: "", category: "", subcategory: "", price: "", cover: "", summary: "", extract_pages: "12", content: "", type: "roman", pdf_url: "", audio_url: "" }); setPubOpen(true); setAuteurTab("publier"); setPubMsg(""); setPubExclusif(auteurModeVente === "vitrine" && !!(auteurProfil && auteurProfil.kyc_status === "valide")); setPubExclusifCertifie(false); }} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "publier" ? G.gold : G.text, fontSize: 10, fontWeight: "bold" }}><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 22, background: G.bouton, color: "#fff", fontSize: 26, marginTop: -22, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>+</span>Publier</button>
             <button onClick={() => setAuteurTab("ventes")} style={{ flex: 1, background: auteurTab === "ventes" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "ventes" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "ventes" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "ventes" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>💰</span>Ventes</button>
             <button onClick={() => setAuteurTab("stats")} style={{ flex: 1, background: auteurTab === "stats" ? G.goldDim : "none", borderTop: "3px solid " + (auteurTab === "stats" ? G.gold : "transparent"), borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: "0 0 10px 10px", padding: "6px 0 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, color: auteurTab === "stats" ? G.gold : G.textDim, fontSize: 10, fontWeight: auteurTab === "stats" ? "bold" : "normal" }}><span style={{ fontSize: 20 }}>📊</span>Stats</button>
           </div>
