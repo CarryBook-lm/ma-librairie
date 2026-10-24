@@ -16948,39 +16948,32 @@ export default function App() {
 
   // 24/10 : lien qui ouvre DIRECTEMENT l'extrait du livre (partage Facebook / WhatsApp).
   // Si le lecteur qui partage est l'auteur du livre, son code ?src= est ajoute (85 %).
+  // 24/10 : code ?src= a mettre sur un lien de partage (commission 85 % de l'auteur) :
+  //  - si la personne qui partage EST l'auteur du livre : son propre code ;
+  //  - si elle partage depuis la vitrine de l'auteur du livre : le code de cette vitrine.
+  // Le parrainage n'existe plus : plus aucun ?ref= n'est ajoute.
+  function srcPourLivre(book) {
+    try {
+      if (!book) return "";
+      if (book.auteur_id && auteurProfil && auteurProfil.code_source && String(book.auteur_id) === String(auteurProfil.id)) return auteurProfil.code_source;
+      // Dans une vitrine, tous les livres affiches sont ceux de l'auteur (la liste de la vitrine ne porte pas toujours auteur_id).
+      if (vitrineCode && boutiqueAuteur && boutiqueAuteur.code_source && (!book.auteur_id || String(book.auteur_id) === String(boutiqueAuteur.id))) return boutiqueAuteur.code_source;
+    } catch (e) {}
+    return "";
+  }
   function lienExtrait(book, srcCode) {
     let url = window.location.origin + "/livre/" + slugify(book.title) + "?extrait=1";
     if (srcCode) url += "&src=" + encodeURIComponent(srcCode);
-    else if (referralCode) url += "&ref=" + referralCode;
     return url;
   }
   function shareExtrait(book) {
     if (!book) return;
-    const estAuteur = !!(auteurProfil && book.auteur_id && String(book.auteur_id) === String(auteurProfil.id));
-    const url = lienExtrait(book, estAuteur ? auteurProfil.code_source : "");
-    const text = "📖 Lis un extrait gratuit de \"" + book.title + "\" par " + book.author + " sur " + SITE_NOM + " !";
+    const url = lienExtrait(book, srcPourLivre(book));
+    const text = "📖 Lis un extrait gratuit de \"" + book.title + "\" par " + book.author + (enVitrine ? " !" : " sur " + SITE_NOM + " !");
     if (navigator.share) {
       navigator.share({ title: book.title, text, url }).catch(() => {});
     } else {
       navigator.clipboard?.writeText(url).then(() => alert("Lien de l'extrait copié ! Partage-le où tu veux.")).catch(() => {
-        window.open("https://wa.me/?text=" + encodeURIComponent(text + "\n" + url), "_blank");
-      });
-    }
-  }
-
-  function shareBook(book) {
-    let url = window.location.origin + "/livre/" + slugify(book.title);
-    // 🎁 Ajouter le code parrainage si le user en a un
-    if (referralCode) {
-      url += "?ref=" + referralCode;
-    }
-    const text = "📚 Découvrez \"" + book.title + "\" par " + book.author + " sur " + SITE_NOM + " !";
-    if (navigator.share) {
-      navigator.share({ title: book.title, text, url }).catch(() => {});
-    } else {
-      // Fallback: copier le lien
-      navigator.clipboard?.writeText(url).then(() => alert("Lien copié ! Partagez-le où vous voulez.")).catch(() => {
-        // Fallback: WhatsApp
         window.open("https://wa.me/?text=" + encodeURIComponent(text + "\n" + url), "_blank");
       });
     }
@@ -17150,16 +17143,14 @@ export default function App() {
   }
 
   function shareBook(book) {
-    let url = window.location.origin + "/livre/" + slugify(book.title);
-    // 🎁 Ajouter le code parrainage si le user en a un
-    if (referralCode) {
-      url += "?ref=" + referralCode;
-    }
-    const text = "📚 Découvre « " + book.title + " » de " + book.author + " sur " + SITE_NOM + " !\n" + url;
+    // Lien du livre avec le code ?src= de son auteur quand c'est lui (ou sa vitrine) qui partage : 85 %.
+    const src = srcPourLivre(book);
+    const url = window.location.origin + "/livre/" + slugify(book.title) + (src ? "?src=" + encodeURIComponent(src) : "");
+    const texteCourt = enVitrine ? ("📚 Découvre « " + book.title + " » de " + book.author + " !") : ("📚 Découvre « " + book.title + " » de " + book.author + " sur " + SITE_NOM + " !");
     if (navigator.share) {
-      navigator.share({ title: book.title, text: "Découvre ce livre sur " + SITE_NOM + " !", url });
+      navigator.share({ title: book.title, text: texteCourt, url }).catch(() => {});
     } else {
-      const waUrl = "https://wa.me/?text=" + encodeURIComponent(text);
+      const waUrl = "https://wa.me/?text=" + encodeURIComponent(texteCourt + "\n" + url);
       window.open(waUrl, "_blank");
     }
   }
