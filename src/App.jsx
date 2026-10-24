@@ -24351,7 +24351,7 @@ export default function App() {
       )}
 
       {/* BOUTON RETOUR GLOBAL (sur toutes les pages sauf accueil) */}
-      {(page !== "home" || selectedCategory !== "Tous") && !showMenu && (
+      {(page !== "home" || selectedCategory !== "Tous") && page !== "library" && !showMenu && (
         <div style={{ position: "sticky", top: 56, zIndex: 49, background: G.surface, borderBottom: "1px solid " + G.border, padding: "10px 16px" }}>
           <button onClick={() => { if (enVitrine) { allerVitrine(); return; } setPage("home"); setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); setSearchQuery(""); }} style={{
             background: "none", border: "none", color: G.gold, fontSize: 14, fontWeight: "bold",
