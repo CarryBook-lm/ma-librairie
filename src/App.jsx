@@ -14595,13 +14595,16 @@ export default function App() {
     try { localStorage.setItem("carrybooks_install_refuse", "1"); } catch (e) {}
   };
   const fermerInvitInstall = () => { setInvitInstall(false); };
+  // 24/10 : dans une vitrine, l'installation propose LA VITRINE (son nom, son logo), jamais CarryBooks.
+  const nomInstall = enVitrine ? vitrineNomAff : SITE_NOM;
+  const logoInstall = (enVitrine && vitrineLogoAff) ? vitrineLogoAff : "/icon-192.png";
   const bandeauInstallNode = invitInstall ? (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 24, maxWidth: 340, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}>
-        <img src="/icon-192.png" alt={SITE_NOM} style={{ width: 84, height: 84, borderRadius: 18, marginBottom: 14 }} />
-        <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginBottom: 6 }}>Installer {SITE_NOM}</div>
+        <img src={logoInstall} alt={nomInstall} style={{ width: 84, height: 84, borderRadius: 18, marginBottom: 14 }} />
+        <div style={{ fontSize: 17, fontWeight: "bold", color: "#1a1208", marginBottom: 6 }}>Installer {nomInstall}</div>
         <div style={{ fontSize: 13, color: "#6a6252", lineHeight: 1.55, marginBottom: 18 }}>Tes livres toujours à portée de main, sans repasser par Facebook.</div>
-        <button onClick={() => { setInvitInstall(false); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📲 Installer {SITE_NOM}</button>
+        <button onClick={() => { setInvitInstall(false); triggerInstall(); }} style={{ width: "100%", padding: 15, background: "#6a11cb", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>📲 Installer {nomInstall}</button>
         <button onClick={fermerInvitInstall} style={{ width: "100%", padding: 11, background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer", marginTop: 6 }}>Plus tard</button>
       </div>
     </div>
@@ -14621,15 +14624,15 @@ export default function App() {
             }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
             <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
-              Installer {SITE_NOM}
+              Installer {nomInstall}
             </h2>
             {installPlatform === "ios" ? (<>
               <div style={{ fontSize: 15, fontWeight: "bold", color: "#1a1a1a", marginBottom: 4 }}>🍎 Sur iPhone</div>
-              <p style={{ fontSize: 13, color: "#666", marginBottom: 14, lineHeight: 1.5 }}>Voici les étapes pour installer {SITE_NOM} sur ton iPhone</p>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 14, lineHeight: 1.5 }}>Voici les étapes pour installer {nomInstall} sur ton iPhone</p>
               <div style={{ textAlign: "left", marginBottom: 16 }}>
                 {(isInAppBrowser() ? [
                   "En haut de l’écran, appuie sur les trois points, puis sur « Ouvrir dans le navigateur ».",
-                  SITE_NOM + " se rouvre dans ton navigateur. En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
+                  nomInstall + " se rouvre dans ton navigateur. En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
                   "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
                   "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
                   "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
