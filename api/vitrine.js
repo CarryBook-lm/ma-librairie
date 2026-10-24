@@ -107,7 +107,7 @@ export default async function handler(req, res) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtml(nom)} | CarryBooks</title>
+<title>${escapeHtml(nom)}</title>
 <meta name="description" content="${escapeHtml(desc)}">
 <meta property="og:type" content="profile">
 <meta property="og:title" content="${escapeHtml(nom)}">
@@ -116,7 +116,7 @@ export default async function handler(req, res) {
 <meta property="og:image:secure_url" content="${escapeHtml(image)}">
 <meta property="og:image:alt" content="${escapeHtml(nom)}">
 <meta property="og:url" content="${escapeHtml(lien)}">
-<meta property="og:site_name" content="CarryBooks">
+<meta property="og:site_name" content="${escapeHtml(nom)}">
 <meta property="og:locale" content="fr_FR">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escapeHtml(nom)}">
@@ -127,7 +127,7 @@ export default async function handler(req, res) {
 <h1>${escapeHtml(nom)}</h1>
 <p>${escapeHtml(desc)}</p>
 <p><img src="${escapeHtml(image)}" alt="${escapeHtml(nom)}" style="max-width:300px"></p>
-<p><a href="${escapeHtml(lien)}">Voir la vitrine sur CarryBooks</a></p>
+<p><a href="${escapeHtml(lien)}">Voir la vitrine</a></p>
 </body>
 </html>`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -161,7 +161,7 @@ export default async function handler(req, res) {
     .replace(/<title>[\s\S]*?<\/title>/i, "");
 
   const injection = `
-<title>${escapeHtml(nom)} | CarryBooks</title>
+<title>${escapeHtml(nom)}</title>
 <link rel="manifest" href="/api/manifest-auteur?code=${encodeURIComponent(code)}">
 <meta name="theme-color" content="${escapeHtml(couleur)}">
 <link rel="apple-touch-icon" href="${escapeHtml(icone192)}">
@@ -173,7 +173,7 @@ export default async function handler(req, res) {
 <meta property="og:description" content="${escapeHtml(desc)}">
 <meta property="og:image" content="${escapeHtml(image)}">
 <meta property="og:url" content="${escapeHtml(lien)}">
-<meta property="og:site_name" content="CarryBooks">
+<meta property="og:site_name" content="${escapeHtml(nom)}">
 </head>`;
 
   page = page.replace("</head>", injection);

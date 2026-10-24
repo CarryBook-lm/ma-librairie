@@ -14361,6 +14361,14 @@ export default function App() {
   const [boutiqueAbonnes, setBoutiqueAbonnes] = useState(0);
   const [boutiqueEstAbonne, setBoutiqueEstAbonne] = useState(false);
   const [boutiqueSuivreBusy, setBoutiqueSuivreBusy] = useState(false);
+  // 24/10 : dans une vitrine (lien /auteur/...), le lecteur ne voit jamais la marque CarryBooks :
+  // en-tete, menu, pied de page et fenetres portent le nom et le logo de l'auteur.
+  const enVitrine = !!vitrineCode;
+  const vitrineNomAff = (boutiqueAuteur && ((boutiqueAuteur.vitrine_nom && String(boutiqueAuteur.vitrine_nom).trim()) || boutiqueAuteur.nom_complet)) || "Ma vitrine";
+  const vitrineLogoAff = (boutiqueAuteur && (boutiqueAuteur.vitrine_logo || boutiqueAuteur.photo_url)) || "";
+  const allerVitrine = () => {
+    try { setBoutiqueNom(null); setBoutiqueCode(vitrineCode); setPage("auteur_boutique"); setShowMenu(false); window.history.pushState({}, "", "/auteur/" + encodeURIComponent(vitrineCode)); window.scrollTo(0, 0); } catch (e) {}
+  };
   const [bqMenuCats, setBqMenuCats] = useState(false);
   // ===== PAGE D'UNE FORMATION =====
   const [fvBook, setFvBook] = useState(null);
@@ -15641,8 +15649,10 @@ export default function App() {
       <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 26, width: "100%", maxWidth: 360, border: "1px solid #e0d8c8", boxShadow: "0 20px 60px rgba(0,0,0,0.4)", position: "relative" }}>
         <button onClick={() => { setShowLecteurModal(false); setPendingBuyBook(null); setPendingEspaceAuteur(false); if (page === "library") setPage("home"); }} aria-label="Fermer" style={{ position: "absolute", top: 12, right: 12, background: "#f0ece2", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", color: "#666", fontWeight: "bold", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
-          <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />
-          <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur {SITE_NOM} 📚</h2>
+          {enVitrine
+            ? (vitrineLogoAff ? <img src={vitrineLogoAff} alt={vitrineNomAff} style={{ height: 56, width: 56, objectFit: "cover", borderRadius: "50%", marginBottom: 12 }} /> : null)
+            : <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />}
+          <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur {enVitrine ? vitrineNomAff : SITE_NOM} 📚</h2>
           <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
         </div>
         <label style={LEC_LABEL}>Ton prénom *</label>
@@ -20285,7 +20295,7 @@ export default function App() {
 
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                   <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé</div>
-                  <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>
+                  {!enVitrine && <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>}
                 </div>
 
               </div>
@@ -24254,8 +24264,15 @@ export default function App() {
 
       {/* NAVBAR */}
       <nav style={{ position: "fixed", top: (!isOnline ? 36 : 0), left: 0, right: 0, zIndex: 100, background: G.entete, borderBottom: "1px solid " + G.enteteBordure, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
-        <div onClick={() => { setPage("home"); setShowMenu(false); }} style={{ cursor: "pointer" }}>
-          <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
+        <div onClick={() => { if (enVitrine) allerVitrine(); else { setPage("home"); setShowMenu(false); } }} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          {enVitrine ? (
+            <>
+              {vitrineLogoAff ? <img src={vitrineLogoAff} alt="" style={{ height: 36, width: 36, objectFit: "cover", borderRadius: "50%" }} /> : null}
+              <span style={{ color: G.enteteTexte, fontSize: 15, fontWeight: "bold", fontFamily: "Georgia, serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 190 }}>{vitrineNomAff}</span>
+            </>
+          ) : (
+            <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
           {user
@@ -24311,11 +24328,11 @@ export default function App() {
       {/* BOUTON RETOUR GLOBAL (sur toutes les pages sauf accueil) */}
       {(page !== "home" || selectedCategory !== "Tous") && !showMenu && (
         <div style={{ position: "sticky", top: 56, zIndex: 49, background: G.surface, borderBottom: "1px solid " + G.border, padding: "10px 16px" }}>
-          <button onClick={() => { setPage("home"); setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); setSearchQuery(""); }} style={{
+          <button onClick={() => { if (enVitrine) { allerVitrine(); return; } setPage("home"); setSelectedCategory("Tous"); setSelectedSubCategory("Tous"); setSearchQuery(""); }} style={{
             background: "none", border: "none", color: G.gold, fontSize: 14, fontWeight: "bold",
             cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: 6
           }}>
-            ← Retour à l'accueil
+            {enVitrine ? "← Retour à la vitrine" : "← Retour à l'accueil"}
           </button>
         </div>
       )}
@@ -24333,16 +24350,19 @@ export default function App() {
                 </div>
               </div>
             )}
-            {navItems.map(item => (
+            {enVitrine && (
+              <div onClick={() => allerVitrine()} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.navText }}>🏠 Ma vitrine</div>
+            )}
+            {navItems.filter(item => !enVitrine || ["library", "favorites"].indexOf(item.id) !== -1).map(item => (
               <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
                 style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === item.id ? G.gold : G.navText, borderLeft: "3px solid " + (page === item.id ? G.gold : "transparent"), background: page === item.id ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
                 {item.label}
               </div>
             ))}
-            <div onClick={() => { setShowMenu(false); if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }}
+            {!enVitrine && <div onClick={() => { setShowMenu(false); if (!lecteur && !user) { setPendingEspaceAuteur(true); setShowLecteurModal(true); } else { setPage("espace_auteur"); } }}
               style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: page === "espace_auteur" ? G.gold : G.navText, borderLeft: "3px solid " + (page === "espace_auteur" ? G.gold : "transparent"), background: page === "espace_auteur" ? G.goldDim : "transparent", borderBottom: "1px solid " + G.navBorder }}>
               📖 Publie ton livre
-            </div>
+            </div>}
             {user
               ? <div onClick={() => { signOut(); setShowMenu(false); }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: "#e53935", borderBottom: "1px solid " + G.navBorder }}>🚪 Se déconnecter</div>
               : lecteur
@@ -27332,14 +27352,21 @@ export default function App() {
           <div style={{ background: G.pied, borderTop: "1px solid " + G.piedBordure, padding: "28px 16px 40px" }}>
             {/* Logo */}
             <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
+              {enVitrine ? (
+                <>
+                  {vitrineLogoAff ? <img src={vitrineLogoAff} alt="" style={{ height: 48, width: 48, objectFit: "cover", borderRadius: "50%" }} /> : null}
+                  <div style={{ color: G.piedTexte, fontSize: 15, fontWeight: "bold", fontFamily: "Georgia, serif", marginTop: 8 }}>{vitrineNomAff}</div>
+                </>
+              ) : (
+                <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 40, borderRadius: 6 }} />
+              )}
             </div>
             {/* Liens */}
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 24px", marginBottom: 20 }}>
+            {!enVitrine && <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 24px", marginBottom: 20 }}>
               <button onClick={() => setPage("faq")} style={{ background: "none", border: "none", color: G.piedTexte, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>FAQ</button>
               <button onClick={() => setPage("about")} style={{ background: "none", border: "none", color: G.piedTexte, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>À propos de nous</button>
               <a href={"mailto:" + SITE_EMAIL} style={{ color: G.piedTexte, fontSize: 13, textDecoration: "underline" }}>Nous contacter</a>
-            </div>
+            </div>}
             {/* Liens légaux */}
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 16px", marginBottom: 20 }}>
               <button onClick={() => setPage("cgu")} style={{ background: "none", border: "none", color: G.piedFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Conditions d'utilisation</button>
@@ -27347,14 +27374,14 @@ export default function App() {
               <button onClick={() => setPage("confidentialite")} style={{ background: "none", border: "none", color: G.piedFaint, fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>Politique de confidentialité</button>
             </div>
             {/* Réseaux sociaux */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
+            {!enVitrine && <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
               <a href="https://www.facebook.com/mycarrybooks" target="_blank" rel="noreferrer"
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
                 <span style={{ fontSize: 24 }}>📘</span>
                 <span style={{ fontSize: 10, color: G.piedFaint }}>Facebook</span>
               </a>
-            </div>
-            <div style={{ color: G.piedFaint, fontSize: 11, textAlign: "center" }}>© 2026 {SITE_NOM}. Tous droits réservés.</div>
+            </div>}
+            <div style={{ color: G.piedFaint, fontSize: 11, textAlign: "center" }}>© 2026 {enVitrine ? vitrineNomAff : SITE_NOM}. Tous droits réservés.</div>
           </div>
         )}
       {/* MODAL DÉBLOQUER VIA ABONNEMENT */}
