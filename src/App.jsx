@@ -3698,7 +3698,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
 
 
 // ─── PDF READER WITH LOADING SCREEN ───
-function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
+function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack, onShare }) {
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [dots, setDots] = useState(".");
   const [elapsed, setElapsed] = useState(0);
@@ -3734,7 +3734,9 @@ function PdfReader({ reading, excerptMode, startPage, activePdfUrl, onBack }) {
         <span style={{ color: "#ccc", fontSize: 13, fontStyle: "italic", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {reading.title}{excerptMode ? " — Extrait" : ""}
         </span>
-        <span style={{ opacity: 0, width: 48 }}>x</span>
+        {excerptMode && onShare ? (
+          <button onClick={onShare} style={{ background: "none", border: "none", color: "#c9a84c", cursor: "pointer", fontSize: 13, fontWeight: "bold", width: 48, padding: 0 }}>📤</button>
+        ) : (<span style={{ opacity: 0, width: 48 }}>x</span>)}
       </div>
 
       {/* Loading overlay */}
@@ -15973,6 +15975,22 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  // 24/10 : lien d'extrait (?extrait=1) -> on ouvre l'extrait directement une fois le livre charge.
+  const extraitAutoRef = useRef(false);
+  useEffect(() => {
+    if (extraitAutoRef.current || !selectedBook) return;
+    let veut = false;
+    try { veut = new URLSearchParams(window.location.search).get("extrait") === "1"; } catch (e) {}
+    if (!veut) return;
+    extraitAutoRef.current = true;
+    try {
+      const q = new URLSearchParams(window.location.search); q.delete("extrait");
+      const reste = q.toString();
+      window.history.replaceState({}, "", window.location.pathname + (reste ? "?" + reste : ""));
+    } catch (e) {}
+    setTimeout(() => { try { startReading(selectedBook, true); } catch (e) {} }, 60);
+  }, [selectedBook]);
+
   // Synchroniser l'URL à chaque changement de page (pour partage et tracking)
   useEffect(() => {
     // 🎯 PRÉSERVER les URLs de diagnostic CarryCare (pour pubs Facebook)
@@ -16844,6 +16862,28 @@ export default function App() {
       setMyResults([]);
     }
     setLoadingMyResults(false);
+  }
+
+  // 24/10 : lien qui ouvre DIRECTEMENT l'extrait du livre (partage Facebook / WhatsApp).
+  // Si le lecteur qui partage est l'auteur du livre, son code ?src= est ajoute (85 %).
+  function lienExtrait(book, srcCode) {
+    let url = window.location.origin + "/livre/" + slugify(book.title) + "?extrait=1";
+    if (srcCode) url += "&src=" + encodeURIComponent(srcCode);
+    else if (referralCode) url += "&ref=" + referralCode;
+    return url;
+  }
+  function shareExtrait(book) {
+    if (!book) return;
+    const estAuteur = !!(auteurProfil && book.auteur_id && String(book.auteur_id) === String(auteurProfil.id));
+    const url = lienExtrait(book, estAuteur ? auteurProfil.code_source : "");
+    const text = "📖 Lis un extrait gratuit de \"" + book.title + "\" par " + book.author + " sur " + SITE_NOM + " !";
+    if (navigator.share) {
+      navigator.share({ title: book.title, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url).then(() => alert("Lien de l'extrait copié ! Partage-le où tu veux.")).catch(() => {
+        window.open("https://wa.me/?text=" + encodeURIComponent(text + "\n" + url), "_blank");
+      });
+    }
   }
 
   function shareBook(book) {
@@ -20997,6 +21037,15 @@ export default function App() {
                               </div>
                             </div>
                           ) : null}
+                          {b.status === "actif" && auteurProfil.code_source && b.product_type !== "article" && b.product_type !== "formation" ? (
+                            <div style={{ marginBottom: 14 }}>
+                              <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>📖 Lien de l'extrait (le lecteur lit l'extrait, puis peut acheter) :</div>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <input readOnly value={lienExtrait(b, auteurProfil.code_source)} onFocus={e => e.target.select()} style={{ flex: 1, fontSize: 11, padding: "6px 8px", border: "1px solid " + G.border, borderRadius: 6, color: G.textDim, background: G.bg, minWidth: 0 }} />
+                                <button onClick={() => { try { navigator.clipboard.writeText(lienExtrait(b, auteurProfil.code_source)); setPubMsg("✅ Lien de l'extrait copié !"); } catch (e) {} }} style={{ fontSize: 11, padding: "6px 10px", border: "1px solid " + G.gold, color: G.gold, background: "none", borderRadius: 6, cursor: "pointer" }}>Copier</button>
+                              </div>
+                            </div>
+                          ) : null}
                           <div style={{ display: "flex", gap: 10 }}>
                             <button onClick={() => supprimerMonLivre(b)} style={{ flex: 1, padding: 12, background: "#e53935", color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>🗑️ Supprimer</button>
                             <button onClick={() => { setMesLivresDetail(null); editLivre(b); }} style={{ flex: 1, padding: 12, background: G.green, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>{b.status === "brouillon" ? "▶️ Continuer" : "✏️ Modifier"}</button>
@@ -21762,6 +21811,7 @@ export default function App() {
           {excerptMode ? (
             <div style={{ marginTop: 22, textAlign: "center", width: "100%" }}>
               <div style={{ fontSize: 12.5, color: "#c9a84c", marginBottom: 10 }}>🎧 Ceci est un extrait gratuit</div>
+              <button onClick={() => shareExtrait(reading)} style={{ background: "none", border: "1.5px solid #c9a84c", color: "#c9a84c", borderRadius: 24, padding: "8px 18px", fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 12 }}>📤 Partager cet extrait</button>
               <button onClick={() => { try { if (audioRef.current) audioRef.current.pause(); } catch (e) {} setAudioPlaying(false); setExcerptMode(false); startReading(reading, false); }} style={{ background: "#c9a84c", color: "#1a1208", border: "none", borderRadius: 24, padding: "12px 28px", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>Écouter le livre complet — {(reading.price || 0).toLocaleString("fr-FR")} FCFA</button>
             </div>
           ) : (reading.can_download !== false && reading.audio_url ? (
@@ -21789,6 +21839,7 @@ export default function App() {
           excerptMode={excerptMode}
           startPage={startPage}
           activePdfUrl={activePdfUrl}
+          onShare={() => shareExtrait(reading)}
           onBack={() => { setPage(selectedBook ? "detail" : "home"); setReading(null); }}
         />
       );
@@ -22127,6 +22178,10 @@ export default function App() {
                   style={{ padding: "11px 28px", background: G.bouton, border: "none", borderRadius: 4, color: G.boutonTexte, fontSize: 13, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase" }}>
                   Acheter ce livre
                 </button>
+                <button onClick={() => shareExtrait(reading)}
+                  style={{ display: "block", margin: "12px auto 0", padding: "9px 22px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 4, color: G.gold, fontSize: 12.5, fontWeight: "bold", cursor: "pointer" }}>
+                  📤 Partager cet extrait
+                </button>
               </div>
             )}
           </div>
@@ -22261,6 +22316,10 @@ export default function App() {
                   <button onClick={(e) => { e.stopPropagation(); setPage("detail"); setReading(null); }}
                     style={{ width: "100%", maxWidth: 340, padding: "16px 20px", background: G.bouton, border: "none", borderRadius: 10, color: G.boutonTexte, fontSize: 16, fontWeight: "bold", cursor: "pointer", letterSpacing: 1, textTransform: "uppercase", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}>
                     Acheter ce livre
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); shareExtrait(reading); }}
+                    style={{ width: "100%", maxWidth: 340, marginTop: 12, padding: "12px 20px", background: "none", border: "1.5px solid #c9a84c", borderRadius: 10, color: "#c9a84c", fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>
+                    📤 Partager cet extrait
                   </button>
                 </div>
               ) : currentPageContent === "__SPECIAL_COPYRIGHT__" ? (
