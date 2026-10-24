@@ -15,7 +15,8 @@ export default async function handler(req, res) {
     const supa = createClient(url, key);
     const { data: a } = await supa.from("auteurs").select("id, banni").eq("code_source", code).limit(1);
     if (!a || !a[0] || a[0].banni) return res.status(200).json({ lecteurs: null });
-    const { data: livres } = await supa.from("books").select("id").eq("auteur_id", a[0].id).limit(5000);
+    // 24/10 : meme perimetre que la vitrine : pour le compte 8, on compte aussi les romans signes Johanna Morisson.
+    const { data: livres } = await supa.from("books").select("id").or(a[0].id === 8 ? "auteur_id.eq.8,author.ilike.%Johanna Morisson%" : "auteur_id.eq." + a[0].id).limit(5000);
     const ids = (livres || []).map(b => b.id);
     let total = 0;
     for (let i = 0; i < ids.length; i += 150) {
