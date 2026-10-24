@@ -20258,6 +20258,11 @@ export default function App() {
                 {aff("nom_auteur") ? (
                   <div style={{ fontSize: 17, fontWeight: "bold", color: cEntTxt, textAlign: "center", marginBottom: 12, lineHeight: 1.3 }}>
                     {renderBadgeVerifie(boutiqueAuteur.verifie)}{nomAuteur}
+                    {(() => {
+                      const sx = String(boutiqueAuteur.kyc_sexe || boutiqueAuteur.sexe || "").trim().toLowerCase();
+                      const lib = sx.charAt(0) === "f" ? "Auteure" : ((sx.charAt(0) === "m" || sx.charAt(0) === "h") ? "Auteur" : "Auteur(e)");
+                      return <div style={{ fontSize: 12.5, fontWeight: "normal", fontStyle: "italic", opacity: 0.8, marginTop: 2 }}>{lib}</div>;
+                    })()}
                   </div>
                 ) : null}
 
@@ -20308,19 +20313,12 @@ export default function App() {
                       Qui suis-je ? {bioExpanded ? "▲" : "▼"}
                     </button>
                   ) : <span />}
-                  {boutiqueAuteur.id ? (
-                    <button onClick={() => basculerSuivreBoutique()} disabled={boutiqueSuivreBusy}
-                      style={{ background: "none", border: "none", padding: 0, cursor: boutiqueSuivreBusy ? "wait" : "pointer", fontSize: 13.5, fontWeight: "bold", color: cEntTxt, textDecoration: "underline", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
-                      {boutiqueEstAbonne ? "✓ Tu suis cet auteur" : "Suivre cet auteur"}
-                    </button>
-                  ) : <span />}
+
                 </div>
 
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                   <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé</div>
-                  {enVitrine
-                    ? <button onClick={() => { try { window.location.reload(); } catch (e) {} }} style={{ background: "none", border: "1px solid " + AC, borderRadius: 14, padding: "4px 12px", fontSize: 11.5, fontWeight: "bold", color: cEntTxt, cursor: "pointer", whiteSpace: "nowrap" }}>🔄 Actualiser</button>
-                    : <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>}
+                  <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>
                 </div>
 
               </div>
