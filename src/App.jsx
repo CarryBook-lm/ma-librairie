@@ -19505,7 +19505,7 @@ export default function App() {
     (async () => {
       setBoutiqueLoading(true);
       try {
-        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").or(EST_HOMOROMANCE ? "category.not.is.null,category.is.null" : "category.is.null,category.neq." + CAT_HOMOROMANCE).order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").order("id", { ascending: false });
         if (!cancel) setBoutiqueBooks((livres || []).filter(b => !b.masque));
       } catch (e) { if (!cancel) setBoutiqueBooks([]); }
       if (!cancel) setBoutiqueLoading(false);
@@ -19534,7 +19534,8 @@ export default function App() {
           if (tc && a && a.couleur) tc.setAttribute("content", a.couleur);
         } catch (e2) {}
         if (a) {
-          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("auteur_id", a.id).eq("status", "actif").or(EST_HOMOROMANCE ? "category.not.is.null,category.is.null" : "category.is.null,category.neq." + CAT_HOMOROMANCE).order("id", { ascending: false });
+          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("status", "actif").or(a.id === 8 ? "auteur_id.eq.8,author.ilike.%Johanna Morisson%" : "auteur_id.eq." + a.id).order("id", { ascending: false });
+          // 24/10 : la vitrine de Landrine montre AUSSI les romans Johanna Morisson (categorie HomoRomance), memes liens /livre/<titre>?src=<code>.
           if (!cancel) setBoutiqueBooks(livres || []);
         } else if (!cancel) { setBoutiqueBooks([]); }
       } catch (e) { if (!cancel) { setBoutiqueAuteur(null); setBoutiqueBooks([]); } }
