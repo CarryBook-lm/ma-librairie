@@ -2777,7 +2777,7 @@ function QuizHome({ setActiveQuiz, setQuizPage, setQuizAnswers, setCurrentQuesti
 function ShareButtons({ quizName, quizType }) {
   const baseUrl = SITE_URL;
   // 🎁 Récupérer le code parrainage de l'utilisateur connecté depuis localStorage
-  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const myRefCode = null; // 24/10 : le parrainage n'existe plus, plus de ?ref= dans les liens partages
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   // 🎯 Image de partage par diagnostic (chaque page a sa propre image OG via /partage/)
   const ccPageMap = {
@@ -2821,7 +2821,7 @@ function ShareButtons({ quizName, quizType }) {
 // ═══════════════════════════════════════════════
 function ShareCarryQuiz() {
   // 🎁 Code parrainage utilisateur
-  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const myRefCode = null; // 24/10 : le parrainage n'existe plus, plus de ?ref= dans les liens partages
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   const quizUrl = SITE_URL + "/carry-quiz" + refSuffix;
   const carryCareUrl = SITE_URL + "/partage/carrycare" + refSuffix;
@@ -2854,7 +2854,7 @@ function ShareCarryQuiz() {
 // ═══════════════════════════════════════════════
 function ShareCarryCare() {
   // 🎁 Code parrainage utilisateur
-  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const myRefCode = null; // 24/10 : le parrainage n'existe plus, plus de ?ref= dans les liens partages
   const refSuffix = myRefCode ? "?ref=" + myRefCode : "";
   const carryCareUrl = SITE_URL + "/partage/carrycare" + refSuffix;
   const text = "💜 Découvre ton test beauté personnalisé sur CarryCare 👇\n" + carryCareUrl;
@@ -3850,7 +3850,7 @@ function DiagnosticShareButtons({ url, title, message }) {
     : url;
 
   // 🎁 Récupérer le code parrainage de l'utilisateur connecté + l'ajouter à l'URL de partage
-  const myRefCode = (() => { try { return localStorage.getItem("carrybooks_my_ref_code"); } catch (e) { return null; } })();
+  const myRefCode = null; // 24/10 : le parrainage n'existe plus, plus de ?ref= dans les liens partages
   const finalUrl = myRefCode && shareUrl && !shareUrl.includes("?ref=") && !shareUrl.includes("&ref=")
     ? shareUrl + (shareUrl.includes("?") ? "&" : "?") + "ref=" + myRefCode
     : shareUrl;
@@ -18872,7 +18872,7 @@ export default function App() {
     { id: "library", label: "Ma bibliothèque" },
     { id: "favorites", label: `Favoris${favoriteBooks.length > 0 ? " (" + favoriteBooks.length + ")" : ""}` },
     // 🎁 Parrainage : visible UNIQUEMENT si activé par l'admin (cache si active === false)
-    ...(!EST_HOMOROMANCE && appReferralSettings?.active !== false ? [{ id: "referral", label: "🎁 Mon parrainage" }] : []),
+    // 24/10 : entree « Mon parrainage » retiree (le parrainage n'existe plus).
     // Quiz et resultats CarryCare : CarryBooks uniquement.
     ...(EST_HOMOROMANCE ? [] : [
       { id: "quiz", label: "🎯 Quiz" },
