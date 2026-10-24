@@ -20284,24 +20284,6 @@ export default function App() {
                   </div>
                 ) : null}
 
-                {(() => {
-                  let deja = false;
-                  try { deja = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; } catch (e) {}
-                  // Dans le navigateur integre de Facebook / TikTok, l'application n'est jamais installee :
-                  // le bouton reste visible et envoie vers Chrome (24/10 : il manquait sur telephone).
-                  let integre = false;
-                  try { integre = isInAppBrowser(); } catch (e) {}
-                  if (deja && !integre) return null;
-                  return (
-                    <div style={{ textAlign: "center", marginBottom: 16 }}>
-                      <button onClick={triggerInstall}
-                        style={{ padding: "11px 20px", borderRadius: 24, border: "1.5px solid " + AC, background: "transparent", color: cEntTxt, fontSize: 13, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif" }}>
-                        📲 Comment télécharger l'application
-                      </button>
-                    </div>
-                  );
-                })()}
-
                 <div style={{ borderTop: "1px solid " + AC, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                   {boutiqueAuteur.bio && String(boutiqueAuteur.bio).trim() ? (
                     <button onClick={() => setBioExpanded(v => !v)}
@@ -20309,7 +20291,20 @@ export default function App() {
                       Qui suis-je ? {bioExpanded ? "▲" : "▼"}
                     </button>
                   ) : <span />}
-
+                  {(() => {
+                    let deja = false;
+                    try { deja = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; } catch (e) {}
+                    // Navigateur integre de Facebook / TikTok : l'application n'est jamais installee, le bouton reste visible.
+                    let integre = false;
+                    try { integre = isInAppBrowser(); } catch (e) {}
+                    if (deja && !integre) return null;
+                    return (
+                      <button onClick={triggerInstall}
+                        style={{ padding: "8px 12px", borderRadius: 20, border: "1.5px solid " + AC, background: "transparent", color: cEntTxt, fontSize: 12, fontWeight: "bold", cursor: "pointer", fontFamily: "Georgia, serif", whiteSpace: "nowrap" }}>
+                        📲 Comment installer l'app
+                      </button>
+                    );
+                  })()}
                 </div>
 
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
