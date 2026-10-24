@@ -13791,6 +13791,8 @@ function trackPixelEvent(eventName, params = {}, eventID = null) {
 // au pixel (qui les hache en SHA-256 automatiquement) pour mieux relier les
 // conversions aux comptes Facebook → meilleur ciblage et suivi des ventes.
 // ⚠️ Vérifie que cet ID correspond bien à celui de ton index.html / Events Manager.
+// 24/10 : groupe Facebook "CarryBooks : Auteurs et Lecteurs" (CarryBooks uniquement)
+const LIEN_GROUPE_FB = "https://www.facebook.com/share/g/18hDA9aWgQ/";
 const META_PIXEL_ID = EST_HOMOROMANCE ? "926061127027460" : "1482084486156586"; // 13/10 : un pixel par site
 function setPixelAdvancedMatching({ email, phone } = {}) {
   try {
@@ -20264,6 +20266,13 @@ export default function App() {
           {auteurProfil && (<div style={{ display: "flex", alignItems: "center", gap: 14 }}><button onClick={() => { setAuteurTab("support"); setAuteurMsg(""); setPubMsg(""); }} style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20, position: "relative", lineHeight: 1 }}>🔔{supportNonLus > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "#e11d48", color: "#fff", fontSize: 10, fontWeight: "bold", borderRadius: 9, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px", border: "2px solid " + G.bg }}>{supportNonLus}</span>}</button><button onClick={() => setPage("home")} title="Sortir vers la boutique" style={{ background: "none", border: "none", color: G.text, cursor: "pointer", fontSize: 20, lineHeight: 1 }}>🚪</button></div>)}
         </div>
         <div style={{ padding: eaLarge ? 24 : 16, maxWidth: eaMax, margin: "0 auto" }}>
+          {!EST_HOMOROMANCE && auteurProfil && (
+            <a href={LIEN_GROUPE_FB} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", background: G.goldDim, border: "1px solid " + G.gold, borderRadius: 10, padding: "10px 12px", marginBottom: 14 }}>
+              <span style={{ fontSize: 22 }}>👥</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: G.text, lineHeight: 1.4 }}><b>Rejoins le groupe des auteurs et lecteurs</b><br />Publie tes extraits avec ton lien d'achat</span>
+              <span style={{ fontSize: 13, fontWeight: "bold", color: G.gold, whiteSpace: "nowrap" }}>Rejoindre ›</span>
+            </a>
+          )}
           {retraitOpen && (
             <div onClick={() => setRetraitOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
               <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 14, padding: 20, maxWidth: 380, width: "100%" }}>
@@ -27038,6 +27047,18 @@ export default function App() {
 
 
         {/* CARRY'QUIZ WIDGET — compact 3 lines. Absent de HomoRomance. */}
+        {page === "home" && !EST_HOMOROMANCE && (
+          <div style={{ padding: "12px 16px 0", background: G.bg }}>
+            <a href={LIEN_GROUPE_FB} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none", background: G.carte, border: "1px solid " + G.gold, borderRadius: 12, padding: "12px 14px" }}>
+              <span style={{ fontSize: 26 }}>👥</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14.5, fontWeight: "bold", color: G.gold, fontFamily: "Georgia, serif" }}>Rejoins notre groupe Facebook</span>
+                <span style={{ display: "block", fontSize: 12, color: G.textDim, marginTop: 2, lineHeight: 1.4 }}>Extraits, nouveautés et rencontres avec les auteurs</span>
+              </span>
+              <span style={{ fontSize: 13, fontWeight: "bold", color: G.gold, whiteSpace: "nowrap" }}>Rejoindre ›</span>
+            </a>
+          </div>
+        )}
         {page === "home" && !EST_HOMOROMANCE && (
           <div style={{ padding: "12px 16px 0", background: G.bg }}>
             <div style={{ background: "linear-gradient(135deg, #1a1208 0%, #3d2b0a 100%)", borderRadius: 12, padding: "12px 14px", border: "1px solid " + G.gold, textAlign: "center" }}>
