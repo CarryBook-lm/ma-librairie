@@ -14360,6 +14360,7 @@ export default function App() {
   const [boutiqueCat, setBoutiqueCat] = useState("Tous");
   const [boutiqueAbonnes, setBoutiqueAbonnes] = useState(0);
   const [boutiqueEstAbonne, setBoutiqueEstAbonne] = useState(false);
+  const [boutiqueLecteurs, setBoutiqueLecteurs] = useState(null); // nombre d'achats = nombre de lecteurs de la vitrine
   const [boutiqueSuivreBusy, setBoutiqueSuivreBusy] = useState(false);
   // 24/10 : dans une vitrine (lien /auteur/...), le lecteur ne voit jamais la marque CarryBooks :
   // en-tete, menu, pied de page et fenetres portent le nom et le logo de l'auteur.
@@ -19583,6 +19584,17 @@ export default function App() {
     return () => { annule = true; };
   }, [_auteurPixelId, _auteurPixelCode]);
 
+  // 👤 Nombre de lecteurs de la vitrine (= nombre d'achats des livres de l'auteur)
+  useEffect(() => {
+    if (page !== "auteur_boutique" || !boutiqueCode) return;
+    let annule = false;
+    fetch("/api/stats-vitrine?code=" + encodeURIComponent(boutiqueCode))
+      .then(r => r.json())
+      .then(d => { if (!annule) setBoutiqueLecteurs((d && typeof d.lecteurs === "number") ? d.lecteurs : null); })
+      .catch(() => {});
+    return () => { annule = true; };
+  }, [page, boutiqueCode]);
+
   // 👤 Abonnes de la boutique (bouton Suivre)
   // NB : toutes les variables ci-dessous (boutiqueAuteur, lecteur) sont declarees plus haut.
   useEffect(() => {
@@ -20058,7 +20070,7 @@ export default function App() {
     const bqBooks = (boutiqueBooks || []).filter(b => !b.masque);
     // 24/10 : le pays de l'auteur n'est plus affiche ; a la place, son nombre de livres puis son nombre de followers.
     if (bqBooks.length > 0) sousEntete.push(bqBooks.length + " livre" + (bqBooks.length > 1 ? "s" : ""));
-    if (aff("abonnes")) sousEntete.push(boutiqueAbonnes + " follower" + (boutiqueAbonnes > 1 ? "s" : ""));
+    if (aff("abonnes") && boutiqueLecteurs !== null) sousEntete.push(boutiqueLecteurs + " lecteur" + (boutiqueLecteurs > 1 ? "s" : ""));
     const bqCats = Array.from(new Set(bqBooks.map(b => b.category || "Autres"))).sort();
     const bqQ = boutiqueSearch.trim().toLowerCase();
     const bqFiltres = bqBooks.filter(b =>
@@ -21591,7 +21603,7 @@ export default function App() {
 
                   <label style={labelSt}>Ce qui s'affiche tout en haut de ma vitrine</label>
                   <div style={{ marginBottom: 16 }}>
-                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur (en pied de page)"], ["abonnes", "Mes followers (le nombre)"]].map(([cle, lab]) => (
+                    {[["logo", "Le logo (ou ma photo)"], ["nom_auteur", "Mon nom d'auteur (en pied de page)"], ["abonnes", "Mon nombre de lecteurs"]].map(([cle, lab]) => (
                       <label key={cle} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: G.text, padding: "7px 0" }}>
                         <input type="checkbox" checked={enteteCoche(cle)} onChange={() => basculerEntete(cle)} style={{ width: 17, height: 17 }} />
                         <span>{lab}</span>
@@ -21664,7 +21676,7 @@ export default function App() {
                     const bouts = [];
                     bouts.push("Ma vitrine");
                     bouts.push("12 livres");
-                    if (enteteCoche("abonnes")) bouts.push("128 followers");
+                    if (enteteCoche("abonnes")) bouts.push("128 lecteurs");
                     return (
                       <div style={{ border: "1px solid " + G.border, borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
                         <div style={{ fontSize: 11, color: G.textDim, padding: "8px 10px", background: G.bg }}>Aperçu de ta vitrine</div>
