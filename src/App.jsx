@@ -3350,7 +3350,7 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 // ─── LIBRARY PAGE COMPONENT ───
 function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, lecteur, onRecoverLecteur, onPurchasesRecovered, onDownload, retour }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
-  const myBooks = books.filter(b => purchasedBooks.includes(b.id));
+  const myBooks = books.filter(b => purchasedBooks.some(id => String(id) === String(b.id)));
 
   // 🆕 État pour le modal de récupération des achats invités
   const [showRecoverModal, setShowRecoverModal] = useState(false);
@@ -15591,6 +15591,10 @@ export default function App() {
   useEffect(() => {
     if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
   }, [lecteur]);
+  // A chaque ouverture de la bibliotheque, on la remet a jour (compte + numero, CarryBooks + vitrines).
+  useEffect(() => {
+    if (page === "library") loadLecteurPurchases((lecteur && lecteur.telephone) || "");
+  }, [page]);
   async function saveLecteur() {
     const prenom = lecteurPrenom.trim();
     const pays = lecteurPays;
@@ -16558,22 +16562,38 @@ export default function App() {
     setLecteur(null);
     setLecteurPrenom(""); setLecteurPays(""); setLecteurTel("");
   }
+  // Bibliotheque unique : achats du compte + achats faits avec le numero du lecteur (CarryBooks ET vitrines).
+  // Les identifiants de livres sont ramenes a des nombres : sinon "1463" et 1463 ne se reconnaissent pas.
   async function loadLecteurPurchases(phone) {
-    if (!phone) return [];
+    if (!phone) phone = "";
     try {
-      const res = await fetch("/api/recuperer-achats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone }) });
-      const d = await res.json().catch(() => ({}));
-      const data = (d && d.purchases) ? d.purchases : [];
-      if (data && data.length) {
-        const ids = [...new Set(data.map(p => p.book_id).filter(Boolean))];
+      let token = "";
+      try { const { data: sess } = await supabase.auth.getSession(); token = (sess && sess.session && sess.session.access_token) || ""; } catch (e) {}
+      if (!phone && !token) return [];
+      let data = null;
+      try {
+        const res = await fetch("/api/ma-bibliotheque", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, token }) });
+        if (res.ok) { const d = await res.json().catch(() => ({})); if (d && d.purchases) data = d.purchases; }
+      } catch (e) {}
+      if (data === null && phone) {
+        // Secours : ancien guichet par numero
+        const res = await fetch("/api/recuperer-achats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone }) });
+        const d = await res.json().catch(() => ({}));
+        data = (d && d.purchases) ? d.purchases : [];
+      }
+      data = data || [];
+      if (data.length) {
+        const nid = (x) => { const n = Number(x); return (Number.isFinite(n) && String(n) === String(x).trim()) ? n : x; };
+        const ids = [...new Set(data.map(p => nid(p.book_id)).filter(v => v !== null && v !== undefined && v !== ""))];
         setPurchasedBooks(prev => {
-          const merged = [...new Set([...(prev || []), ...ids])];
+          const vus = new Set((prev || []).map(x => String(x)));
+          const merged = [...(prev || []), ...ids.filter(i => !vus.has(String(i)))];
           try { localStorage.setItem("purchasedBooks", JSON.stringify(merged)); } catch (e) {}
           return merged;
         });
         setPurchaseHistory(prev => {
-          const seen = new Set((prev || []).map(x => x.book_id));
-          return [...(prev || []), ...data.filter(d => !seen.has(d.book_id))];
+          const seen = new Set((prev || []).map(x => String(x.book_id)));
+          return [...(prev || []), ...data.filter(d => !seen.has(String(d.book_id)))];
         });
         return ids;
       }
@@ -16607,6 +16627,8 @@ export default function App() {
       localStorage.setItem("purchasedBooks", JSON.stringify(merged));
       setPurchaseHistory(data);
     }
+    // Bibliotheque unique : on ajoute aussi les livres achetes avec le numero (CarryBooks ou vitrine, sans compte)
+    try { loadLecteurPurchases((lecteur && lecteur.telephone) || ""); } catch (e) {}
     // PARRAINAGE : DÉSACTIVÉ TEMPORAIREMENT (refonte sécurisée en cours)
     // Le système actuel a 5 failles critiques (auto-parrainage, manipulation frontend, etc.)
     // Sera réactivé après refonte serveur sécurisée
@@ -16951,14 +16973,14 @@ export default function App() {
     // L'auteur peut lire gratuitement SES propres livres
     if (auteurProfil && book.auteur_id && String(book.auteur_id) === String(auteurProfil.id)) return true;
     if (book.price === 0) return true;
-    if (purchasedBooks.includes(book.id)) return true;
+    if (purchasedBooks.some(x => String(x) === String(book.id))) return true;
     return false;
   }
 
   // L'abonné peut-il utiliser son abonnement pour débloquer ce livre ?
   function canUseSubscriptionFor(book) {
     if (!subscription || subscription.status !== "actif") return false;
-    if (book.price === 0 || purchasedBooks.includes(book.id)) return false;
+    if (book.price === 0 || purchasedBooks.some(x => String(x) === String(book.id))) return false;
     if (book.exclude_from_subscription === true) return false; // Livre exclu de l'abonnement
     if (book.pdf_url || book.audio_url) return false; // abonnement = romans (liseuse) uniquement
     if (book.auteur_id) { const a = auteursAll.find(x => String(x.id) === String(book.auteur_id)); if (!(a && a.abonnement_actif)) return false; }
@@ -17689,7 +17711,7 @@ export default function App() {
         return;
       }
       // Si abonné mais quota atteint → modal limite
-      if (subscription && subscription.status === "actif" && booksLeftThisMonth() === 0 && !purchasedBooks.includes(book.id) && book.price > 0) {
+      if (subscription && subscription.status === "actif" && booksLeftThisMonth() === 0 && !purchasedBooks.some(x => String(x) === String(book.id)) && book.price > 0) {
         setShowSubLimitModal(book);
         return;
       }
