@@ -15951,6 +15951,23 @@ export default function App() {
     try { localStorage.removeItem("pendingReferralCode"); } catch (e) {}
   }, [books]);
 
+  // 24/10 : lien d'extrait (?extrait=1). On lit le parametre UNE fois, des le premier rendu
+  // (l'adresse est nettoyee ensuite), puis on ouvre l'extrait quand le livre est charge.
+  // extraitAutoRef = "deja ouvert" : empeche l'autre chargement du livre de ramener a la fiche.
+  const extraitVoulu = useRef((() => { try { return new URLSearchParams(window.location.search).get("extrait") === "1"; } catch (e) { return false; } })());
+  const extraitAutoRef = useRef(false);
+  function ouvrirExtraitSiVoulu(livre) {
+    if (!extraitVoulu.current || extraitAutoRef.current || !livre) return;
+    extraitAutoRef.current = true;
+    try {
+      const q = new URLSearchParams(window.location.search); q.delete("extrait");
+      const reste = q.toString();
+      window.history.replaceState({}, "", window.location.pathname + (reste ? "?" + reste : ""));
+    } catch (e) {}
+    setTimeout(() => { try { startReading(livre, true); } catch (e) {} }, 120);
+  }
+  useEffect(() => { if (selectedBook) ouvrirExtraitSiVoulu(selectedBook); }, [selectedBook]);
+
   // ⚡ AFFICHAGE INSTANTANÉ du livre cliqué : on récupère CE seul livre via /api/book
   // sans attendre le chargement complet du catalogue (qui continue en arrière-plan).
   // → l'acheteur voit le produit en ~0,2 s au lieu d'attendre toute la liste.
@@ -15968,28 +15985,14 @@ export default function App() {
         const resp = await fetch("/api/book?slug=" + encodeURIComponent(slug));
         const data = await resp.json().catch(() => ({}));
         if (!cancelled && data && data.book && data.book.id) {
+          if (extraitAutoRef.current) return; // l'extrait est deja ouvert : ne pas ramener a la fiche
           openBook(data.book);
+          ouvrirExtraitSiVoulu(data.book);
         }
       } catch (e) { /* le catalogue prendra le relais */ }
     })();
     return () => { cancelled = true; };
   }, []);
-
-  // 24/10 : lien d'extrait (?extrait=1) -> on ouvre l'extrait directement une fois le livre charge.
-  const extraitAutoRef = useRef(false);
-  useEffect(() => {
-    if (extraitAutoRef.current || !selectedBook) return;
-    let veut = false;
-    try { veut = new URLSearchParams(window.location.search).get("extrait") === "1"; } catch (e) {}
-    if (!veut) return;
-    extraitAutoRef.current = true;
-    try {
-      const q = new URLSearchParams(window.location.search); q.delete("extrait");
-      const reste = q.toString();
-      window.history.replaceState({}, "", window.location.pathname + (reste ? "?" + reste : ""));
-    } catch (e) {}
-    setTimeout(() => { try { startReading(selectedBook, true); } catch (e) {} }, 60);
-  }, [selectedBook]);
 
   // Synchroniser l'URL à chaque changement de page (pour partage et tracking)
   useEffect(() => {
