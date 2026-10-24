@@ -20294,8 +20294,12 @@ export default function App() {
 
                 {(() => {
                   let deja = false;
-                  try { deja = window.matchMedia("(display-mode: standalone)").matches; } catch (e) {}
-                  if (deja) return null;
+                  try { deja = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; } catch (e) {}
+                  // Dans le navigateur integre de Facebook / TikTok, l'application n'est jamais installee :
+                  // le bouton reste visible et envoie vers Chrome (24/10 : il manquait sur telephone).
+                  let integre = false;
+                  try { integre = isInAppBrowser(); } catch (e) {}
+                  if (deja && !integre) return null;
                   return (
                     <div style={{ textAlign: "center", marginBottom: 16 }}>
                       <button onClick={triggerInstall}
