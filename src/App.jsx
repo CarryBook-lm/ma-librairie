@@ -14606,6 +14606,111 @@ export default function App() {
       </div>
     </div>
   ) : null;
+  // 24/10 : fenetre d'instructions d'installation (Chrome / Safari / navigateur integre). Definie ici pour s'afficher AUSSI dans la vitrine
+  // (page a retour anticipe) : avant, le bouton « Comment installer l'app » de la vitrine ne reagissait plus quand aucune invite native n'etait disponible.
+  const iosModalNode = showIosInstructions && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 9999, padding: 20
+        }} onClick={() => setShowIosInstructions(false)}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{
+              background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 28, maxWidth: 360, width: "100%",
+              textAlign: "center"
+            }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+            <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
+              Installer {SITE_NOM}
+            </h2>
+            {installPlatform === "ios" ? (<>
+              <div style={{ fontSize: 15, fontWeight: "bold", color: "#1a1a1a", marginBottom: 4 }}>🍎 Sur iPhone</div>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 14, lineHeight: 1.5 }}>Voici les étapes pour installer {SITE_NOM} sur ton iPhone</p>
+              <div style={{ textAlign: "left", marginBottom: 16 }}>
+                {(isInAppBrowser() ? [
+                  "En haut de l’écran, appuie sur les trois points, puis sur « Ouvrir dans le navigateur ».",
+                  SITE_NOM + " se rouvre dans ton navigateur. En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
+                  "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
+                  "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
+                  "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
+                ] : [
+                  "En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
+                  "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
+                  "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
+                  "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
+                ]).map((t, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "flex-start" }}>
+                    <div style={{ background: "#6a11cb", color: "#fff", width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: "bold", flexShrink: 0 }}>{i + 1}</div>
+                    <div style={{ fontSize: 13, color: "#333", paddingTop: 3, lineHeight: 1.5 }}>{t}</div>
+                  </div>
+                ))}
+              </div>
+              {isInAppBrowser() && (
+                <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin); alert("Lien copié ! Colle-le dans Safari."); } catch (e) {} }}
+                  style={{ width: "100%", padding: 11, background: "#f3eefb", border: "1px solid #d9c8f3", color: "#6a11cb", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
+                  📋 Copier le lien du site
+                </button>
+              )}
+            </>) : isInAppBrowser() ? (<>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>
+                Tu es dans le navigateur de Facebook / TikTok : l'installation y est impossible. Ouvre le site dans {installPlatform === "ios" ? "Safari" : "Chrome"} :
+              </p>
+              <div style={{ textAlign: "left", marginBottom: 16, background: "#f7f4ee", borderRadius: 12, padding: 14, fontSize: 13, color: "#333", lineHeight: 1.9 }}>
+                {installPlatform === "ios"
+                  ? (<>1️⃣ Appuie sur les <b>3 points (⋯)</b> ou sur l'icône <b>boussole</b> en bas ou en haut à droite<br/>2️⃣ Choisis <b>« Ouvrir dans Safari »</b><br/>3️⃣ Dans Safari : <b>Partager ⬆️ → Sur l'écran d'accueil</b></>)
+                  : (<>1️⃣ Appuie sur les <b>3 points (⋮)</b> en haut à droite<br/>2️⃣ Choisis <b>« Ouvrir dans Chrome »</b> (ou « Ouvrir dans le navigateur »)<br/>3️⃣ La fenêtre d'installation s'ouvre toute seule ✅</>)}
+              </div>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin); alert("Lien copié ! Colle-le dans " + (installPlatform === "ios" ? "Safari" : "Chrome") + "."); } catch (e) {} }}
+                style={{ width: "100%", padding: 11, background: "#f3eefb", border: "1px solid #d9c8f3", color: "#6a11cb", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
+                📋 Copier le lien du site
+              </button>
+            </>) : (
+            installPlatform === "android" ? (
+            <>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>Pour ajouter l'app à ton téléphone, dans Chrome :</p>
+              <div style={{ textAlign: "left", marginBottom: 16, background: "#f7f4ee", borderRadius: 12, padding: 14, fontSize: 13, color: "#333", lineHeight: 1.9 }}>
+                1️⃣ Appuie sur les <b>3 points (⋮)</b> en haut à droite<br/>2️⃣ Choisis <b>« Installer l'application »</b> (ou « Ajouter à l'écran d'accueil »)<br/>3️⃣ Appuie sur <b>Installer</b> ✅<br/><span style={{ fontSize: 12, color: "#888" }}>Si tu vois « Ouvrir CarryBooks », l'application est déjà installée sur ce téléphone.</span>
+              </div>
+            </>
+            ) : (
+            <p style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>
+              Pour ajouter l'app à ton iPhone :
+            </p>
+            ))}
+
+            <div style={{ textAlign: "left", marginBottom: 20, display: (isInAppBrowser() || installPlatform === "android" || installPlatform === "ios") ? "none" : "block" }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
+                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>1</div>
+                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
+                  Appuie sur le bouton <strong style={{ fontSize: 18 }}>⎙</strong> en bas de Safari (le carré avec une flèche vers le haut)
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
+                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>2</div>
+                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
+                  Fais défiler et sélectionne <strong>"Sur l'écran d'accueil"</strong>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>3</div>
+                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
+                  Appuie sur <strong>"Ajouter"</strong> en haut à droite
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => setShowIosInstructions(false)}
+              style={{
+                background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+                color: "#fff", border: "none", borderRadius: 8,
+                padding: "12px 32px", fontSize: 14, fontWeight: "bold",
+                cursor: "pointer", width: "100%"
+              }}>
+              J'ai compris 👍
+            </button>
+          </div>
+        </div>
+  );
 
   // ============================================
   // PWA TRACKER — Compteur d'installations
@@ -19797,6 +19902,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
+        {iosModalNode}
         <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, zIndex: 10 }}>
           <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer" }}>←</button>
           <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold }}>👤 Nos auteur(es)</div>
@@ -20004,6 +20110,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: fond, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
+        {iosModalNode}
         <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, zIndex: 10 }}>
           <button onClick={() => {
             if (retourVitrine) { setPage("auteur_boutique"); try { window.scrollTo(0, 0); } catch (e) {} }
@@ -20145,6 +20252,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: cFond, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
+        {iosModalNode}
         {showLecteurModal && lecteurModalNode}
         {/* ===== EN-TETE AU NOM DE L'AUTEUR ===== */}
         <div style={{ position: "sticky", top: 0, background: cFond, zIndex: 10 }}>
@@ -23065,6 +23173,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
         {bandeauInstallNode}
+        {iosModalNode}
         {/* 🍞 TOAST DE NOTIFICATION sur la page d�tail (sinon il appara�t derri�re) */}
         {toast && (
           <div 
@@ -24203,110 +24312,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 🍎 POPUP INSTRUCTIONS iOS */}
-      {showIosInstructions && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 9999, padding: 20
-        }} onClick={() => setShowIosInstructions(false)}>
-          <div onClick={(e) => e.stopPropagation()}
-            style={{
-              background: (EST_HOMOROMANCE ? G.carte : "#fff"), borderRadius: 16, padding: 28, maxWidth: 360, width: "100%",
-              textAlign: "center"
-            }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
-            <h2 style={{ fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>
-              Installer {SITE_NOM}
-            </h2>
-            {installPlatform === "ios" ? (<>
-              <div style={{ fontSize: 15, fontWeight: "bold", color: "#1a1a1a", marginBottom: 4 }}>🍎 Sur iPhone</div>
-              <p style={{ fontSize: 13, color: "#666", marginBottom: 14, lineHeight: 1.5 }}>Voici les étapes pour installer {SITE_NOM} sur ton iPhone</p>
-              <div style={{ textAlign: "left", marginBottom: 16 }}>
-                {(isInAppBrowser() ? [
-                  "En haut de l’écran, appuie sur les trois points, puis sur « Ouvrir dans le navigateur ».",
-                  SITE_NOM + " se rouvre dans ton navigateur. En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
-                  "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
-                  "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
-                  "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
-                ] : [
-                  "En bas de l’écran, appuie sur Partager — le carré avec une flèche qui monte.",
-                  "Si tu ne vois pas Partager : appuie sur les trois points en bas, puis choisis « Partager ».",
-                  "Fais défiler la liste vers le bas et cherche « Ajouter à l’écran d’accueil ».",
-                  "Appuie sur « Sur l’écran d’accueil » — parfois écrit « Ajouter à l’écran d’accueil » — puis sur « Ajouter ».",
-                ]).map((t, i) => (
-                  <div key={i} style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "flex-start" }}>
-                    <div style={{ background: "#6a11cb", color: "#fff", width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: "bold", flexShrink: 0 }}>{i + 1}</div>
-                    <div style={{ fontSize: 13, color: "#333", paddingTop: 3, lineHeight: 1.5 }}>{t}</div>
-                  </div>
-                ))}
-              </div>
-              {isInAppBrowser() && (
-                <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin); alert("Lien copié ! Colle-le dans Safari."); } catch (e) {} }}
-                  style={{ width: "100%", padding: 11, background: "#f3eefb", border: "1px solid #d9c8f3", color: "#6a11cb", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
-                  📋 Copier le lien du site
-                </button>
-              )}
-            </>) : isInAppBrowser() ? (<>
-              <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>
-                Tu es dans le navigateur de Facebook / TikTok : l'installation y est impossible. Ouvre le site dans {installPlatform === "ios" ? "Safari" : "Chrome"} :
-              </p>
-              <div style={{ textAlign: "left", marginBottom: 16, background: "#f7f4ee", borderRadius: 12, padding: 14, fontSize: 13, color: "#333", lineHeight: 1.9 }}>
-                {installPlatform === "ios"
-                  ? (<>1️⃣ Appuie sur les <b>3 points (⋯)</b> ou sur l'icône <b>boussole</b> en bas ou en haut à droite<br/>2️⃣ Choisis <b>« Ouvrir dans Safari »</b><br/>3️⃣ Dans Safari : <b>Partager ⬆️ → Sur l'écran d'accueil</b></>)
-                  : (<>1️⃣ Appuie sur les <b>3 points (⋮)</b> en haut à droite<br/>2️⃣ Choisis <b>« Ouvrir dans Chrome »</b> (ou « Ouvrir dans le navigateur »)<br/>3️⃣ La fenêtre d'installation s'ouvre toute seule ✅</>)}
-              </div>
-              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.origin); alert("Lien copié ! Colle-le dans " + (installPlatform === "ios" ? "Safari" : "Chrome") + "."); } catch (e) {} }}
-                style={{ width: "100%", padding: 11, background: "#f3eefb", border: "1px solid #d9c8f3", color: "#6a11cb", borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: "pointer", marginBottom: 12 }}>
-                📋 Copier le lien du site
-              </button>
-            </>) : (
-            installPlatform === "android" ? (
-            <>
-              <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>Pour ajouter l'app à ton téléphone, dans Chrome :</p>
-              <div style={{ textAlign: "left", marginBottom: 16, background: "#f7f4ee", borderRadius: 12, padding: 14, fontSize: 13, color: "#333", lineHeight: 1.9 }}>
-                1️⃣ Appuie sur les <b>3 points (⋮)</b> en haut à droite<br/>2️⃣ Choisis <b>« Installer l'application »</b> (ou « Ajouter à l'écran d'accueil »)<br/>3️⃣ Appuie sur <b>Installer</b> ✅<br/><span style={{ fontSize: 12, color: "#888" }}>Si tu vois « Ouvrir CarryBooks », l'application est déjà installée sur ce téléphone.</span>
-              </div>
-            </>
-            ) : (
-            <p style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>
-              Pour ajouter l'app à ton iPhone :
-            </p>
-            ))}
-
-            <div style={{ textAlign: "left", marginBottom: 20, display: (isInAppBrowser() || installPlatform === "android" || installPlatform === "ios") ? "none" : "block" }}>
-              <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
-                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>1</div>
-                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
-                  Appuie sur le bouton <strong style={{ fontSize: 18 }}>⎙</strong> en bas de Safari (le carré avec une flèche vers le haut)
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
-                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>2</div>
-                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
-                  Fais défiler et sélectionne <strong>"Sur l'écran d'accueil"</strong>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div style={{ background: "#6a11cb", color: "#fff", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>3</div>
-                <div style={{ fontSize: 13, color: "#333", paddingTop: 4 }}>
-                  Appuie sur <strong>"Ajouter"</strong> en haut à droite
-                </div>
-              </div>
-            </div>
-
-            <button onClick={() => setShowIosInstructions(false)}
-              style={{
-                background: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
-                color: "#fff", border: "none", borderRadius: 8,
-                padding: "12px 32px", fontSize: 14, fontWeight: "bold",
-                cursor: "pointer", width: "100%"
-              }}>
-              J'ai compris 👍
-            </button>
-          </div>
-        </div>
-      )}
+      {iosModalNode}
 
       {/* BANNIÈRE OFFLINE */}
       {!isOnline && (
