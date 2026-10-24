@@ -29,6 +29,27 @@ function slugifyAlt(str) {
     .substring(0, 80);
 }
 
+
+// 24/10 : un lien dont le titre a change depuis (ex. "comprenez-enfin-votre-plaisir"
+// alors que le livre s'appelle maintenant "Comprenez enfin votre plaisir sexuel")
+// ne doit plus renvoyer vers l'accueil. On retrouve le livre le plus proche.
+function livreLePlusProche(slug, liste) {
+  const mots = String(slug || "").split("-").filter(Boolean);
+  if (mots.length < 2) return null;
+  let meilleur = null, scoreMax = 0, egalite = false;
+  for (const b of liste) {
+    const mb = slugify(b.title).split("-").filter(Boolean);
+    if (!mb.length) continue;
+    const commun = mots.filter(m => mb.includes(m)).length;
+    const score = commun / Math.max(mots.length, mb.length);
+    // au moins 75 % des mots du lien doivent se retrouver dans le titre
+    if (commun / mots.length < 0.75) continue;
+    if (score > scoreMax) { scoreMax = score; meilleur = b; egalite = false; }
+    else if (score === scoreMax) egalite = true;
+  }
+  return (meilleur && !egalite && scoreMax >= 0.6) ? meilleur : null;
+}
+
 // Mêmes colonnes légères que fetchBooks() côté app (sans content/images)
 const LIGHT_COLUMNS = "id, title, author, auteur_id, price, original_price, cover, category, subcategory, summary, status, product_type, stock, can_read, can_download, featured, exclude_from_subscription, audio_access_mode, audio_url, paper_pages, paper_description, paper_stock, paper_price, allow_oversell, extract_pages, pdf_url, excerpt_pdf_url, audio_extrait_url, author_ville, author_photo, nb_pages, duree_audio, nb_ventes, masque, created_at";
 
@@ -79,6 +100,7 @@ export default async function handler(req, res) {
     let match = null;
     if (idx && idx.length > 0) {
       match = idx.find((b) => slugify(b.title) === slug || slugifyAlt(b.title) === slug);
+      if (!match) match = livreLePlusProche(slug, idx);
     }
 
     if (!match) {
