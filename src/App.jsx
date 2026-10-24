@@ -26,7 +26,7 @@ const HR_DEBUT_MS = new Date("2026-10-15T12:50:00+01:00").getTime();
 // 24/10 : passe de 7 a 12 pages minimum, pour TOUS les livres et romans (decision de Landrine).
 const EXTRAIT_PAGES_ROMAN = 12;
 // 24/10 : les guides PDF ont 10 pages gratuites au minimum (decision de Landrine).
-const EXTRAIT_PAGES_GUIDE = 10;
+const EXTRAIT_PAGES_GUIDE = 8; // valeur par defaut proposee pour un guide PDF (l'auteur peut la modifier)
 function nbPagesExtraitRoman(b) {
   const n = parseInt(b && b.extract_pages);
   return Math.max(EXTRAIT_PAGES_ROMAN, isNaN(n) ? 0 : n);
@@ -19091,7 +19091,7 @@ export default function App() {
     setPubForm({
       title: b.title || "", category: b.category || "", subcategory: b.subcategory || "",
       price: b.price != null ? String(b.price) : "", cover: b.cover || "", summary: b.summary || "",
-      extract_pages: b.audio_url ? (b.extract_pages != null ? String(b.extract_pages) : "3") : String(Math.max(EXTRAIT_PAGES_GUIDE, parseInt(b.extract_pages) || 0)),
+      extract_pages: b.audio_url ? (b.extract_pages != null ? String(b.extract_pages) : "3") : String(b.pdf_url ? (parseInt(b.extract_pages) > 0 ? parseInt(b.extract_pages) : EXTRAIT_PAGES_GUIDE) : Math.max(EXTRAIT_PAGES_ROMAN, parseInt(b.extract_pages) || 0)),
       content: b.content || "", type: b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"), pdf_url: b.pdf_url || "", audio_url: b.audio_url || "",
     });
     setPubTypeSelected(b.audio_url ? "audio" : (b.pdf_url ? "guide" : "roman"));
@@ -19377,7 +19377,7 @@ export default function App() {
     const enVitrineSeule = !!pubExclusif && kycValide;
     if (pubExclusif && !kycValide) { setPubMsg("🔒 La vente en vitrine seule est réservée aux auteurs vérifiés. Termine ta vérification d'identité dans « Mon compte », ou choisis « Ma vitrine + " + SITE_NOM + " »."); return; }
     if (enVitrineSeule && !pubExclusifCertifie) { setPubMsg("☑️ Coche la case de certification des droits avant de publier dans ta vitrine."); return; }
-    const minExtrait = f.type === "guide" ? EXTRAIT_PAGES_GUIDE : EXTRAIT_PAGES_ROMAN;
+    const minExtrait = f.type === "guide" ? 1 : EXTRAIT_PAGES_ROMAN;
     if (needsExtract && (parseInt(f.extract_pages) || 0) < minExtrait) { setPubMsg("Le nombre de pages gratuites doit être au moins " + minExtrait + "."); return; }
     // Minimum 30 pages (~7500 mots à 250 mots/page) pour les romans texte — sauf admin (id 8)
     if (f.type === "roman" && !(auteurProfil && auteurProfil.id === 8)) {
@@ -19389,7 +19389,7 @@ export default function App() {
       let excerptUrl = "";
       if (f.type === "guide" && f.pdf_url) {
         setPubMsg("⏳ Préparation de l'extrait…");
-        excerptUrl = await pubMakeExcerpt(f.pdf_url, Math.max(EXTRAIT_PAGES_GUIDE, parseInt(f.extract_pages) || 0));
+        excerptUrl = await pubMakeExcerpt(f.pdf_url, Math.max(1, parseInt(f.extract_pages) || EXTRAIT_PAGES_GUIDE));
       }
       const payload = {
         title: titreNormal(f.title), author: pubEditeur ? pubEditeurAuteur.trim() : ((auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? profilCoche().nom : auteurProfil.nom_complet), author_ville: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().ville || null) : null, author_photo: (auteurProfil.id === 8 && profilCoche() && profilCoche().id !== 0) ? (profilCoche().photo_url || null) : null, price: isGratuit ? 0 : (parseInt(f.price) || 0),
@@ -20498,7 +20498,7 @@ export default function App() {
                           { t: "annonce", c: "#e11d48", ic: "📢", l: "Publier une annonce", s: "Une banniere A4 paysage qui met ton livre en avant sur l'accueil" },
                           { t: "editeur", c: "#3a7bd5", ic: "📚", l: "Publier pour un auteur (Éditeurs)", s: "Vends le livre d'un autre auteur (tu certifies tes droits)" },
                         ].filter(o => !EST_HOMOROMANCE || o.t === "roman" || o.t === "sortie").map(o => (
-                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } if (o.t === "editeur") { setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubTypeSelected("editeur"); setPubMsg(""); return; } setPubEditeur(false); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: o.t === "editeur" ? "2px dashed #3a7bd5" : (EST_HOMOROMANCE ? "2px solid #8e2de2" : "2px solid transparent"), background: EST_HOMOROMANCE ? "#4b1470" : (o.c + "18"), color: EST_HOMOROMANCE ? "#fff" : o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
+                          <button key={o.t} onClick={() => { if ((auteurProfil || {}).banni) { alert("Ton compte est suspendu, tu ne peux plus publier."); return; } if ((auteurProfil || {}).kyc_status !== "valide") { openKyc(); return; } if (o.t === "editeur") { setPubEditeur(false); setPubEditeurAuteur(""); setPubEditeurCertifie(false); setPubTypeSelected("editeur"); setPubMsg(""); return; } setPubEditeur(false); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (o.t === "guide" ? String(EXTRAIT_PAGES_GUIDE) : String(EXTRAIT_PAGES_ROMAN)) })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: o.t === "editeur" ? "2px dashed #3a7bd5" : (EST_HOMOROMANCE ? "2px solid #8e2de2" : "2px solid transparent"), background: EST_HOMOROMANCE ? "#4b1470" : (o.c + "18"), color: EST_HOMOROMANCE ? "#fff" : o.c, cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 2, opacity: (auteurProfil || {}).kyc_status === "valide" ? 1 : 0.45 }}>
                             <span style={{ fontSize: 15, fontWeight: "bold" }}>{o.ic} {o.l}</span>
                             <span style={{ fontSize: 12, opacity: 0.9 }}>{o.s}</span>
                           </button>
@@ -20570,7 +20570,7 @@ export default function App() {
                       { t: "audio", c: "#1d9e75", ic: "🎧", l: "Livre Audio" },
                       { t: "gratuit", c: "#d4537e", ic: "🎁", l: "Livre Gratuit" },
                     ].map(o => (
-                      <button key={o.t} onClick={() => { if (!pubEditeurAuteur.trim()) { alert("Entre le nom de l’auteur."); return; } if (!pubEditeurCertifie) { alert("Coche la case de certification des droits."); return; } setPubEditeur(true); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (f.extract_pages || "7") })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: EST_HOMOROMANCE ? "#4b1470" : (o.c + "18"), color: EST_HOMOROMANCE ? "#fff" : o.c, cursor: "pointer", textAlign: "left", fontWeight: "bold", fontSize: 15 }}>{o.ic} {o.l}</button>
+                      <button key={o.t} onClick={() => { if (!pubEditeurAuteur.trim()) { alert("Entre le nom de l’auteur."); return; } if (!pubEditeurCertifie) { alert("Coche la case de certification des droits."); return; } setPubEditeur(true); setPubForm(f => ({ ...f, type: o.t, extract_pages: o.t === "audio" ? "3" : (o.t === "guide" ? String(EXTRAIT_PAGES_GUIDE) : String(EXTRAIT_PAGES_ROMAN)) })); setPubTypeSelected(o.t); setPubMsg(""); if (o.t === "audio") setPubDownloadable(false); else if (o.t === "guide") setPubDownloadable(true); }} style={{ width: "100%", padding: "14px 16px", borderRadius: 10, border: "2px solid transparent", background: EST_HOMOROMANCE ? "#4b1470" : (o.c + "18"), color: EST_HOMOROMANCE ? "#fff" : o.c, cursor: "pointer", textAlign: "left", fontWeight: "bold", fontSize: 15 }}>{o.ic} {o.l}</button>
                     ))}
                   </div>
                   </>) : pubTypeSelected === "annonce" ? (<>
@@ -20836,8 +20836,8 @@ export default function App() {
                   <div style={{ height: 14 }} />
                   {(pubForm.type === "roman" || pubForm.type === "guide") && (<>
                   <label style={labelSt}>Pages gratuites (extrait) *</label>
-                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, lineHeight: 1.4 }}>Minimum <b>{pubForm.type === "guide" ? EXTRAIT_PAGES_GUIDE : EXTRAIT_PAGES_ROMAN} pages</b> gratuites : c'est ce que le lecteur lit avant d'acheter.</div>
-                  <input type="number" min={pubForm.type === "guide" ? EXTRAIT_PAGES_GUIDE : EXTRAIT_PAGES_ROMAN} value={pubForm.extract_pages} onChange={e => { setPubForm(f => ({ ...f, extract_pages: e.target.value })); setPubErrors(p => ({ ...p, extract_pages: false })); }} placeholder={pubForm.type === "guide" ? "Ex : 10" : "Ex : 12"} style={{ ...champ, ...(pubErrors.extract_pages ? { border: "2px solid #e53935" } : {}) }} />
+                  <div style={{ fontSize: 11, color: G.textDim, marginBottom: 6, lineHeight: 1.4 }}>{pubForm.type === "guide" ? <>Tu choisis le nombre de pages gratuites (<b>{EXTRAIT_PAGES_GUIDE} pages</b> proposées, tu peux changer) : c'est ce que le lecteur voit avant d'acheter.</> : <>Minimum <b>{EXTRAIT_PAGES_ROMAN} pages</b> gratuites : c'est ce que le lecteur lit avant d'acheter.</>}</div>
+                  <input type="number" min={pubForm.type === "guide" ? 1 : EXTRAIT_PAGES_ROMAN} value={pubForm.extract_pages} onChange={e => { setPubForm(f => ({ ...f, extract_pages: e.target.value })); setPubErrors(p => ({ ...p, extract_pages: false })); }} placeholder={pubForm.type === "guide" ? "Ex : 8" : "Ex : 12"} style={{ ...champ, ...(pubErrors.extract_pages ? { border: "2px solid #e53935" } : {}) }} />
                   <div style={{ height: 14 }} />
                   </>)}
                   {pubForm.type === "roman" ? (
