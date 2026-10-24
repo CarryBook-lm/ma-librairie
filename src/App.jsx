@@ -14366,6 +14366,14 @@ export default function App() {
   const enVitrine = !!vitrineCode;
   const vitrineNomAff = (boutiqueAuteur && ((boutiqueAuteur.vitrine_nom && String(boutiqueAuteur.vitrine_nom).trim()) || boutiqueAuteur.nom_complet)) || "Ma vitrine";
   const vitrineLogoAff = (boutiqueAuteur && (boutiqueAuteur.vitrine_logo || boutiqueAuteur.photo_url)) || "";
+  // Aide "Achats introuvables" : affichee au pied de chaque vitrine et dans le pied de page en vitrine.
+  const blocAideAchats = (couleurTexte, couleurAccent) => (
+    <div style={{ margin: "28px 16px 24px", padding: "16px 16px", border: "1px dashed " + couleurAccent, borderRadius: 12, color: couleurTexte, fontSize: 13, lineHeight: 1.7, fontFamily: "Georgia, serif", textAlign: "left" }}>
+      <div style={{ fontWeight: "bold", fontSize: 14, marginBottom: 6 }}>❓ Achats introuvables ?</div>
+      <div style={{ opacity: 0.9 }}>Ouvrez « Ma bibliothèque » : juste sous l'en-tête, vous verrez le message « 💡 As-tu perdu tes livres ? ». Cliquez sur « Récupère-les ici », puis saisissez le numéro de téléphone utilisé lors de l'achat — vos livres réapparaîtront aussitôt dans votre bibliothèque, à vie.</div>
+      <div style={{ marginTop: 8, fontWeight: "bold" }}>Désormais, tous vos achats se retrouveront automatiquement dans « Ma bibliothèque ».</div>
+    </div>
+  );
   const allerVitrine = () => {
     try { setBoutiqueNom(null); setBoutiqueCode(vitrineCode); setPage("auteur_boutique"); setShowMenu(false); window.history.pushState({}, "", "/auteur/" + encodeURIComponent(vitrineCode)); window.scrollTo(0, 0); } catch (e) {}
   };
@@ -20302,6 +20310,7 @@ export default function App() {
             </div>
           </div>
         )}
+        {blocAideAchats(cEntTxt, AC)}
       </div>
     );
   }
@@ -27348,6 +27357,7 @@ export default function App() {
         )}
 
         {/* FOOTER */}
+        {page !== "reader" && enVitrine && page !== "library" && blocAideAchats(G.text, G.gold)}
         {page !== "reader" && (
           <div style={{ background: G.pied, borderTop: "1px solid " + G.piedBordure, padding: "28px 16px 40px" }}>
             {/* Logo */}
