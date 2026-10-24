@@ -17065,7 +17065,11 @@ export default function App() {
       if (!book) return "";
       if (book.auteur_id && auteurProfil && auteurProfil.code_source && String(book.auteur_id) === String(auteurProfil.id)) return auteurProfil.code_source;
       // Dans une vitrine, tous les livres affiches sont ceux de l'auteur (la liste de la vitrine ne porte pas toujours auteur_id).
-      if (vitrineCode && boutiqueAuteur && boutiqueAuteur.code_source && (!book.auteur_id || String(book.auteur_id) === String(boutiqueAuteur.id))) return boutiqueAuteur.code_source;
+      // 24/10 : vitrineCode EST le code de l'auteur (celui de l'adresse /auteur/CODE). On ne depend plus de boutiqueAuteur (parfois pas charge) ni de book.auteur_id.
+      if (vitrineCode) return (boutiqueAuteur && boutiqueAuteur.code_source) ? boutiqueAuteur.code_source : vitrineCode;
+      // 24/10 : vitrine ouverte depuis le site (espace auteur, page Auteur(es)...) sans passer par /auteur/CODE : pas de verrou vitrineCode.
+      // Le livre fait partie de la vitrine affichee en dernier -> on utilise le code de cet auteur.
+      if (boutiqueAuteur && boutiqueAuteur.code_source && (boutiqueBooks || []).some(x => String(x.id) === String(book.id))) return boutiqueAuteur.code_source;
     } catch (e) {}
     return "";
   }
