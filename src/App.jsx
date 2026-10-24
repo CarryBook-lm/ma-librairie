@@ -34,8 +34,8 @@ function nbPagesExtraitRoman(b) {
 // 24/10 : l'extrait d'un roman est une QUANTITE DE TEXTE, la meme sur telephone, tablette et ordinateur.
 // Avant, les « 12 pages » etaient decoupees selon l'ecran : une tablette ou un ordinateur affichait 3 a 4 fois plus de texte
 // qu'un telephone (et un lecteur qui reduit la taille du texte en lisait davantage). Une page d'extrait = environ
-// CARS_PAR_PAGE_EXTRAIT caracteres (une page de telephone avec la taille de texte par defaut).
-const CARS_PAR_PAGE_EXTRAIT = 700;
+// CARS_PAR_PAGE_EXTRAIT caracteres (une page de telephone avec la taille de texte par defaut : environ 1 150 caracteres, mesure sur une capture le 24/10).
+const CARS_PAR_PAGE_EXTRAIT = 1150;
 function extraitRoman(contenu, nbPages) {
   try {
     const txt = String(contenu || "");
