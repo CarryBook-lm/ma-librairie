@@ -20236,6 +20236,9 @@ export default function App() {
 
             </div>
 
+            {/* Aide "Achats introuvables", juste AVANT le pied de page de l'auteur */}
+            {blocAideAchats(G.text, AC)}
+
             {/* ===== PIED DE PAGE DE L'AUTEUR ===== */}
             <div style={{ background: cEnt, color: cEntTxt, borderTop: "2px solid " + AC, marginTop: 24, padding: "22px 16px 18px" }}>
               <div style={{ maxWidth: 900, margin: "0 auto" }}>
@@ -20303,14 +20306,15 @@ export default function App() {
 
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                   <div style={{ fontSize: 10.5, color: cEntTxt, opacity: 0.7 }}>Paiement sécurisé</div>
-                  {!enVitrine && <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>}
+                  {enVitrine
+                    ? <button onClick={() => { try { window.location.reload(); } catch (e) {} }} style={{ background: "none", border: "1px solid " + AC, borderRadius: 14, padding: "4px 12px", fontSize: 11.5, fontWeight: "bold", color: cEntTxt, cursor: "pointer", whiteSpace: "nowrap" }}>🔄 Actualiser</button>
+                    : <div style={{ fontSize: 11.5, color: cEntTxt, opacity: 0.8, whiteSpace: "nowrap" }}>Propulsé par <b>{SITE_NOM}</b></div>}
                 </div>
 
               </div>
             </div>
           </div>
         )}
-        {blocAideAchats(cEntTxt, AC)}
       </div>
     );
   }
@@ -24361,6 +24365,9 @@ export default function App() {
             )}
             {enVitrine && (
               <div onClick={() => allerVitrine()} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.navText }}>🏠 Ma vitrine</div>
+            )}
+            {enVitrine && (
+              <div onClick={() => { try { window.location.reload(); } catch (e) {} }} style={{ padding: "18px 24px", cursor: "pointer", fontSize: 15, color: G.navText }}>🔄 Actualiser la page</div>
             )}
             {navItems.filter(item => !enVitrine || ["library", "favorites"].indexOf(item.id) !== -1).map(item => (
               <div key={item.id} onClick={() => { setPage(item.id); setShowMenu(false); }}
