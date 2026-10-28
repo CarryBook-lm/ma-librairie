@@ -317,6 +317,29 @@ const supabase = createClient(
           try {
             const { value } = await Preferences.get({ key });
 
+            return value ?? localStorage.getItem(key);
+          } catch { return localStorage.getItem(key); }
+        },
+        setItem: async (key, value) => {
+          try {
+            await Preferences.set({ key, value });
+            localStorage.setItem(key, value);
+          } catch { localStorage.setItem(key, value); }
+        },
+        removeItem: async (key) => {
+          try {
+            await Preferences.remove({ key });
+            localStorage.removeItem(key);
+          } catch { localStorage.removeItem(key); }
+        },
+      },
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: "implicit",
+    }
+  }
+);
+
 // 28/10 : les images (couvertures, logos, annonces, ateliers, support) vont dans le stockage Supabase
 // (dossier public « images »), et non plus chez imgbb : le 28/10, une panne d'imgbb a fait disparaitre
 // les couvertures du site. Renvoie un objet qui imite la reponse d'imgbb ({ success, data: { url } })
@@ -364,28 +387,6 @@ async function envoyerImageStockage(fd) {
     return { json: async () => (url ? { success: true, data: { url: url, display_url: url } } : { success: false }) };
   } catch (e) { console.error("[images] erreur :", e && e.message); return echec; }
 }
-            return value ?? localStorage.getItem(key);
-          } catch { return localStorage.getItem(key); }
-        },
-        setItem: async (key, value) => {
-          try {
-            await Preferences.set({ key, value });
-            localStorage.setItem(key, value);
-          } catch { localStorage.setItem(key, value); }
-        },
-        removeItem: async (key) => {
-          try {
-            await Preferences.remove({ key });
-            localStorage.removeItem(key);
-          } catch { localStorage.removeItem(key); }
-        },
-      },
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      flowType: "implicit",
-    }
-  }
-);
 
 // ============================================================
 // SAUVEGARDE ROBUSTE — CarryCare Results
