@@ -321,11 +321,34 @@ const supabase = createClient(
 // (dossier public « images »), et non plus chez imgbb : le 28/10, une panne d'imgbb a fait disparaitre
 // les couvertures du site. Renvoie un objet qui imite la reponse d'imgbb ({ success, data: { url } })
 // pour que les ecrans d'envoi existants restent inchanges.
+// 28/10 : si une image ne se charge pas, on affiche une couverture neutre au lieu d'un carre vide
+// (aucun nom de service tiers ni de marque : elle sert aussi dans les vitrines d'auteur).
+function imageSecours(e) {
+  try { const im = e.currentTarget; if (im.dataset.secours) return; im.dataset.secours = "1"; im.src = "/couverture-indisponible.svg"; } catch (x) {}
+}
+
 async function envoyerImageStockage(fd) {
   const echec = { json: async () => ({ success: false }) };
   try {
-    const f = fd && fd.get ? fd.get("image") : null;
+    let f = fd && fd.get ? fd.get("image") : null;
     if (!f) return echec;
+    // 28/10 : on n'envoie jamais l'original en pleine resolution. Couverture (portrait) : 600 px de large ;
+    // banniere ou affiche (paysage) : 1000 px. WebP qualite 80. Les logos de vitrine (logo-512.png / logo-192.png)
+    // gardent leur taille exacte, exigee par Chrome pour installer l'application.
+    try {
+      const estLogo = /^logo-/.test(f.name || "");
+      const anime = (f.type || "") === "image/gif";
+      if (!estLogo && !anime && typeof createImageBitmap === "function") {
+        const bmp = await createImageBitmap(f);
+        const maxL = bmp.width > bmp.height ? 1000 : 600;
+        const ratio = Math.min(1, maxL / bmp.width);
+        const c = document.createElement("canvas");
+        c.width = Math.round(bmp.width * ratio); c.height = Math.round(bmp.height * ratio);
+        c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+        const webp = await new Promise(r => c.toBlob(r, "image/webp", 0.8));
+        if (webp && webp.type === "image/webp" && (webp.size < f.size || ratio < 1)) f = new File([webp], "image.webp", { type: "image/webp" });
+      }
+    } catch (eRed) { /* reduction impossible : on envoie le fichier tel quel */ }
     const nomOrig = (f.name || "image").toLowerCase();
     let ext = (nomOrig.match(/\.(png|jpe?g|webp|gif)$/) || [])[1] || "";
     let type = f.type || "";
@@ -3656,7 +3679,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                 return (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => startReading(book)}>
                     <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
-                      {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      {book.cover && <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "12px 8px 8px", textAlign: "center" }}>
                         <span style={{ fontSize: 9, color: G.green, letterSpacing: 1 }}>✓ ACHETÉ</span>
                       </div>
@@ -3732,7 +3755,7 @@ function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, set
                 const date = purchase.created_at ? new Date(purchase.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "—";
                 return (
                   <div key={i} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 10, padding: "12px 14px", display: "flex", gap: 12, alignItems: "center" }}>
-                    {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 44, height: 60, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />}
+                    {book.cover && <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 44, height: 60, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 3 }}>{book.title}</div>
                       <div style={{ fontSize: 11, color: G.textDim, marginBottom: 4 }}>{book.author}</div>
@@ -6333,7 +6356,7 @@ function KitExfoliaCard({ skinTone }) {
     <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fff5f0 0%, #ffe8d6 100%)", border: "2px solid #c9952a", borderRadius: 14, padding: 16, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 8, right: 8, background: "#c9952a", color: "#fff", fontSize: 9, fontWeight: "bold", padding: "3px 8px", borderRadius: 4, letterSpacing: 0.5 }}>⭐ COUP DE CŒUR</div>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
-        <img src="https://i.ibb.co/LLMS3vG/kit-1.webp" alt="Kit Visage Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
+        <img loading="lazy" decoding="async" src="https://i.ibb.co/LLMS3vG/kit-1.webp" alt="Kit Visage Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: "#c9952a", fontWeight: "bold", letterSpacing: 0.5, marginBottom: 4 }}>RECOMMANDÉ PAR CARRYBOOKS</div>
           <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Kit Visage Exfolia</div>
@@ -8993,7 +9016,7 @@ function BodyDiagnosticResult({ result, onBack, setCarryCarePage }) {
                         <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fff5f0 0%, #ffe8d6 100%)", border: "2px solid #c9952a", borderRadius: 14, padding: 16, position: "relative", overflow: "hidden" }}>
                           <div style={{ position: "absolute", top: 8, right: 8, background: "#c9952a", color: "#fff", fontSize: 9, fontWeight: "bold", padding: "3px 8px", borderRadius: 4, letterSpacing: 0.5 }}>⭐ COUP DE CŒUR</div>
                           <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
-                            <img src="https://i.ibb.co/LX5tyN4H/DSC-1355-copie-2-065616-1-Photoroom-1.webp" alt="Crème Bio Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
+                            <img loading="lazy" decoding="async" src="https://huikxujxsklboejkbnda.supabase.co/storage/v1/object/public/images/produits/creme-bio-exfolia.webp" alt="Crème Bio Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
                             <div style={{ flex: 1 }}>
                               <div style={{ fontSize: 11, color: "#c9952a", fontWeight: "bold", letterSpacing: 0.5, marginBottom: 4 }}>RECOMMANDÉ PAR CARRYBOOKS</div>
                               <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Crème Bio Exfolia</div>
@@ -15820,7 +15843,7 @@ export default function App() {
         <button onClick={() => { setShowLecteurModal(false); setPendingBuyBook(null); setPendingEspaceAuteur(false); if (page === "library") setPage("home"); }} aria-label="Fermer" style={{ position: "absolute", top: 12, right: 12, background: "#f0ece2", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, cursor: "pointer", color: "#666", fontWeight: "bold", lineHeight: 1 }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
           {enVitrine
-            ? (vitrineLogoAff ? <img src={vitrineLogoAff} alt={vitrineNomAff} style={{ height: 56, width: 56, objectFit: "cover", borderRadius: "50%", marginBottom: 12 }} /> : null)
+            ? (vitrineLogoAff ? <img loading="lazy" decoding="async" onError={imageSecours} src={vitrineLogoAff} alt={vitrineNomAff} style={{ height: 56, width: 56, objectFit: "cover", borderRadius: "50%", marginBottom: 12 }} /> : null)
             : <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />}
           <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur {enVitrine ? vitrineNomAff : SITE_NOM} 📚</h2>
           <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
@@ -15843,7 +15866,7 @@ export default function App() {
         <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
         <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
           <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Déjà un compte Google ?</div>
-          <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
+          <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img loading="lazy" decoding="async" src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
         </div>
       </div>
     </div>
@@ -19984,7 +20007,7 @@ export default function App() {
                   return tous.map(a => (
                     <div key={a.key} onClick={a.onClick} style={{ background: G.carte, border: "1px solid " + G.border, borderRadius: 12, padding: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
                       <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                        {a.photo ? <img src={a.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom || "?").charAt(0).toUpperCase()}
+                        {a.photo ? <img loading="lazy" decoding="async" onError={imageSecours} src={a.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom || "?").charAt(0).toUpperCase()}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(true)}{a.nom}</div>
@@ -20016,7 +20039,7 @@ export default function App() {
                   <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
                   {paymentBook.coverUrl && (
                     <div style={{ textAlign: "center", marginBottom: 14 }}>
-                      <img src={paymentBook.coverUrl} alt={paymentBook.title} style={{ height: 110, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                      <img loading="lazy" decoding="async" onError={imageSecours} src={paymentBook.coverUrl} alt={paymentBook.title} style={{ height: 110, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
                     </div>
                   )}
                   <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17, textAlign: "center" }}>{paymentBook.title}</h3>
@@ -20183,7 +20206,7 @@ export default function App() {
 
         <div style={{ maxWidth: 780, margin: "0 auto", padding: "16px 16px 40px" }}>
           {b.cover ? (
-            <img src={b.cover} alt={b.title} style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 12, display: "block", marginBottom: 16 }} />
+            <img loading="lazy" decoding="async" onError={imageSecours} src={b.cover} alt={b.title} style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 12, display: "block", marginBottom: 16 }} />
           ) : null}
 
           <div style={{ fontSize: 21, fontWeight: "bold", color: "#1a1208", lineHeight: 1.3, marginBottom: 4 }}>{b.title}</div>
@@ -20286,7 +20309,7 @@ export default function App() {
         style={{ flexShrink: 0, width: book.product_type === "formation" ? "82vw" : "40vw", maxWidth: book.product_type === "formation" ? 340 : 175, cursor: "pointer" }}>
         <div style={{ width: "100%", aspectRatio: book.product_type === "formation" ? "297 / 210" : "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: 8, overflow: "hidden" }}>
           {book.cover
-            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
       </div>
@@ -20301,7 +20324,7 @@ export default function App() {
         {estFormation ? <div style={{ fontSize: 10, fontWeight: "bold", color: "#fff", background: "#7b3fa0", display: "inline-block", padding: "2px 8px", borderRadius: 10, marginBottom: 5 }}>🎓 FORMATION</div> : null}
         <div style={{ width: "100%", aspectRatio: estFormation ? "297 / 210" : "130 / 180", background: G.surface, border: "1px solid " + G.border, borderRadius: estFormation ? 10 : 6, overflow: "hidden", marginBottom: 6 }}>
           {book.cover
-            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
         </div>
         <div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
@@ -20597,7 +20620,7 @@ export default function App() {
               <label style={labelSt}>Photo de profil (tu peux sauter pour plus tard)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                  {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurAuthNom ? auteurAuthNom.charAt(0).toUpperCase() : "?")}
+                  {auteurPhoto ? <img loading="lazy" decoding="async" onError={imageSecours} src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurAuthNom ? auteurAuthNom.charAt(0).toUpperCase() : "?")}
                 </div>
                 <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.bouton, color: G.boutonTexte, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                   {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Ajouter une photo")}
@@ -20648,7 +20671,7 @@ export default function App() {
               : <button onClick={() => setPage("home")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 20 }}>←</button>}
             {auteurProfil && (
               <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", flexShrink: 0 }}>
-                {auteurProfil.photo_url ? <img src={auteurProfil.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurProfil.nom_complet || "?").charAt(0).toUpperCase()}
+                {auteurProfil.photo_url ? <img loading="lazy" decoding="async" onError={imageSecours} src={auteurProfil.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurProfil.nom_complet || "?").charAt(0).toUpperCase()}
               </div>
             )}
             <div style={{ fontSize: 15, fontWeight: "bold", color: G.text }}>{auteurProfil && renderBadgeVerifie(auteurProfil.kyc_status === "valide")}{auteurProfil ? auteurProfil.nom_complet : "📖 Publie ton livre"}</div>
@@ -20857,7 +20880,7 @@ export default function App() {
                     style={{ width: "100%", padding: 12, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", marginBottom: 10 }}>
                     {sortieUploading ? "Envoi…" : (sortieCover ? "Changer la couverture" : "Choisir la couverture")}
                   </button>
-                  {sortieCover ? <img src={sortieCover} alt="" style={{ width: 110, borderRadius: 8, display: "block", marginBottom: 12 }} /> : null}
+                  {sortieCover ? <img loading="lazy" decoding="async" src={sortieCover} alt="" style={{ width: 110, borderRadius: 8, display: "block", marginBottom: 12 }} /> : null}
                   <label style={labelSt}>Résumé</label>
                   <textarea value={sortieResume} onChange={ev => setSortieResume(ev.target.value)} rows={6} style={{ ...champ, resize: "vertical" }} />
                   <div style={{ height: 10 }} />
@@ -20880,7 +20903,7 @@ export default function App() {
                     const occupe = sortieBusyId === sv.id;
                     return (
                       <div key={sv.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", display: "flex", gap: 12 }}>
-                        <img src={sv.cover} alt="" style={{ width: 80, aspectRatio: "110 / 155", objectFit: "cover", borderRadius: 6, flexShrink: 0, alignSelf: "flex-start" }} />
+                        <img loading="lazy" decoding="async" onError={imageSecours} src={sv.cover} alt="" style={{ width: 80, aspectRatio: "110 / 155", objectFit: "cover", borderRadius: 6, flexShrink: 0, alignSelf: "flex-start" }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, marginBottom: 6 }}>Sortie le {dateEnFrancais(sv.date_sortie)}</div>
                           <input type="date" value={sortieDatesEdit[sv.id] || ""} min={aujourdhuiLocal()} onChange={ev => setSortieDatesEdit(m => ({ ...m, [sv.id]: ev.target.value }))} style={{ ...champ, marginBottom: 8 }} />
@@ -20920,7 +20943,7 @@ export default function App() {
                   <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 4 }}>📢 Publier une annonce</div>
                   <div style={{ fontSize: 11.5, color: G.textDim, marginBottom: 16, lineHeight: 1.5 }}>Cree une banniere au format <b>A4 paysage</b> (large, horizontale). Elle apparaitra sur l’accueil apres validation, et menera au lien que tu indiques.</div>
                   <label style={labelSt}>Banniere (A4 paysage) *</label>
-                  {annonceImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={annonceImg} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 10, border: "1px solid " + G.border }} /><button onClick={() => setAnnonceImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 26, height: 26, fontSize: 14, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
+                  {annonceImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img loading="lazy" decoding="async" onError={imageSecours} src={annonceImg} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 10, border: "1px solid " + G.border }} /><button onClick={() => setAnnonceImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 26, height: 26, fontSize: 14, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
                     <button onClick={() => document.getElementById("annonceImgInput").click()} disabled={annonceUploading} style={{ width: "100%", aspectRatio: "297 / 210", border: "2px dashed " + G.gold + "66", borderRadius: 10, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", marginBottom: 10 }}>{annonceUploading ? "Envoi…" : "🖼️ Choisir la banniere (A4 paysage)"}</button>
                   )}
                   <input id="annonceImgInput" type="file" accept="image/*" onChange={e => { uploadAnnonceImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
@@ -20942,7 +20965,7 @@ export default function App() {
                     const occupe = annonceBusyId === a.id;
                     return (
                       <div key={a.id} style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 12, background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff" }}>
-                        <img src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, display: "block", marginBottom: 8 }} />
+                        <img loading="lazy" decoding="async" onError={imageSecours} src={a.image_url} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 8, display: "block", marginBottom: 8 }} />
                         <div style={{ fontSize: 12, fontWeight: "bold", color: stA.c, marginBottom: 4 }}>{stA.t}</div>
                         <div style={{ fontSize: 11, color: G.textDim, wordBreak: "break-all", marginBottom: 8 }}>{a.lien}</div>
                         {a.statut === "refusee" && a.motif_refus ? <div style={{ fontSize: 12, color: "#c62828", background: "#fdecea", border: "1px solid #f5b5b0", borderRadius: 8, padding: "8px 10px", marginBottom: 8, lineHeight: 1.5 }}><b>Motif du refus :</b> {a.motif_refus}</div> : null}
@@ -20962,7 +20985,7 @@ export default function App() {
                   <label style={labelSt}>Couverture de la formation (A4 paysage) *</label>
                   {fmForm.cover ? (
                     <div style={{ position: "relative", marginBottom: 10 }}>
-                      <img src={fmForm.cover} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 10, display: "block" }} />
+                      <img loading="lazy" decoding="async" onError={imageSecours} src={fmForm.cover} alt="" style={{ width: "100%", aspectRatio: "297 / 210", objectFit: "cover", borderRadius: 10, display: "block" }} />
                       <button onClick={() => setFmForm(f => ({ ...f, cover: "" }))} style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 15, cursor: "pointer" }}>✕</button>
                     </div>
                   ) : (
@@ -21112,7 +21135,7 @@ export default function App() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                     {listeAuteursPub().map(a => (
                       <button key={a.id} onClick={() => setSelAuteurId(a.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, border: "2px solid " + (selAuteurId === a.id ? G.gold : G.border), background: selAuteurId === a.id ? G.goldDim : (EST_HOMOROMANCE ? "#2a2c4d" : "#fff"), cursor: "pointer", textAlign: "left", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
-                        {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
+                        {a.photo_url ? <img loading="lazy" decoding="async" onError={imageSecours} src={a.photo_url} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>}
                         <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: "bold", color: G.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nom}</div><div style={{ fontSize: 10, color: G.textDim }}>{a.ville || ""} {a.verifie ? "✅" : ""}</div></div>
                       </button>
                     ))}
@@ -21127,7 +21150,7 @@ export default function App() {
                       <div style={{ height: 8 }} />
                       <label style={labelSt}>Photo</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                        {pubAuthorPhoto ? <img src={pubAuthorPhoto} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold }} /> : <div style={{ width: 48, height: 48, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>👤</div>}
+                        {pubAuthorPhoto ? <img loading="lazy" decoding="async" src={pubAuthorPhoto} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold }} /> : <div style={{ width: 48, height: 48, borderRadius: "50%", background: G.goldDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>👤</div>}
                         <input type="file" accept="image/*" id="pubAuthorPhotoInput" style={{ display: "none" }} onChange={e => { uploadAuthorPhoto(e.target.files[0]); e.target.value = ""; }} />
                         <button onClick={() => document.getElementById("pubAuthorPhotoInput").click()} disabled={pubAuthorPhotoUp} style={{ padding: "8px 14px", border: "1px solid " + G.gold, borderRadius: 8, background: G.goldDim, color: G.gold, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>{pubAuthorPhotoUp ? "Envoi…" : "📷 Photo"}</button>
                       </div>
@@ -21163,7 +21186,7 @@ export default function App() {
                   <label style={labelSt}>Couverture * (A4 portrait, ex : 1240 × 1754 px)</label>
                   {pubForm.cover ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                      <img src={pubForm.cover} alt="" style={{ width: 66, height: 93, objectFit: "cover", borderRadius: 6, border: "1px solid " + G.border }} />
+                      <img loading="lazy" decoding="async" onError={imageSecours} src={pubForm.cover} alt="" style={{ width: 66, height: 93, objectFit: "cover", borderRadius: 6, border: "1px solid " + G.border }} />
                       <button onClick={() => setPubForm(f => ({ ...f, cover: "" }))} style={{ background: "none", border: "1px solid " + G.border, color: G.textDim, borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Changer</button>
                     </div>
                   ) : (
@@ -21346,7 +21369,7 @@ export default function App() {
                       return (
                         <div key={b.id} onClick={() => setMesLivresDetail(b)} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid " + G.border, cursor: "pointer" }}>
                           <div style={{ flexShrink: 0 }}>
-                            {b.cover ? <img src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
+                            {b.cover ? <img onError={imageSecours} src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 64, height: 90, objectFit: "cover", borderRadius: 6, display: "block" }} /> : <div style={{ width: 64, height: 90, background: G.bg, borderRadius: 6 }} />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, marginBottom: 8 }}><span style={{ color: G.gold }}>{i + 1}.</span> {b.title}</div>
@@ -21369,7 +21392,7 @@ export default function App() {
                       <div onClick={() => setMesLivresDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
                         <div onClick={e => e.stopPropagation()} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", borderRadius: 14, padding: 18, maxWidth: 420, width: "100%", maxHeight: "88vh", overflowY: "auto" }}>
                           <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
-                            {b.cover ? <img src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
+                            {b.cover ? <img onError={imageSecours} src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 90, height: 126, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} /> : null}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>{b.title}</div>
                               <div style={{ fontSize: 13, color: stx.c, marginTop: 4 }}>{stx.t}</div>
@@ -21624,7 +21647,7 @@ export default function App() {
                     <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 14, marginBottom: 16 }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>{tutoEditId ? "✏️ Modifier le tuto" : "➕ Nouveau tuto"}</div>
                       <label style={labelSt}>Image (16:9) *</label>
-                      {tutoImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img src={tutoImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setTutoImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
+                      {tutoImg ? (<div style={{ position: "relative", marginBottom: 10 }}><img loading="lazy" decoding="async" onError={imageSecours} src={tutoImg} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setTutoImg("")} style={{ position: "absolute", top: 6, right: 6, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : (
                         <button onClick={() => document.getElementById("tutoImgInput").click()} disabled={tutoUploading} style={{ width: "100%", aspectRatio: "16 / 9", border: "2px dashed " + G.gold + "66", borderRadius: 8, cursor: "pointer", color: G.gold, fontSize: 13, background: G.bg, fontWeight: "bold", marginBottom: 10 }}>{tutoUploading ? "Envoi…" : "🖼️ Choisir l’image (16:9)"}</button>
                       )}
                       <input id="tutoImgInput" type="file" accept="image/*" onChange={e => { uploadTutoImg(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} />
@@ -21650,7 +21673,7 @@ export default function App() {
                     <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 8 }}>Tutos publiés ({tutos.length})</div>
                     {tutos.map(t => (
                       <div key={t.id} style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 10, marginBottom: 10 }}>
-                        <img src={t.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />
+                        <img loading="lazy" decoding="async" onError={imageSecours} src={t.image_url} alt="" style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />
                         {t.texte_html ? <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", marginBottom: 8, whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} /> : null}
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => editerTuto(t)} style={{ flex: 1, padding: "8px 0", background: G.goldDim, color: G.gold, border: "1px solid " + G.gold + "66", borderRadius: 6, fontWeight: "bold", fontSize: 12.5, cursor: "pointer" }}>✏️ Modifier</button>
@@ -21715,7 +21738,7 @@ export default function App() {
                       <label style={labelSt}>Photo de profil (facultatif)</label>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                         <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
-                          {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
+                          {auteurPhoto ? <img loading="lazy" decoding="async" onError={imageSecours} src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
                         </div>
                         <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.bouton, color: G.boutonTexte, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                           {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Choisir une photo")}
@@ -21790,7 +21813,7 @@ export default function App() {
                   <label style={labelSt}>Logo de ma vitrine</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
                     <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", background: auteurCouleur || G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: "bold", flexShrink: 0 }}>
-                      {auteurVitrineLogo ? <img src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
+                      {auteurVitrineLogo ? <img loading="lazy" decoding="async" onError={imageSecours} src={auteurVitrineLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (auteurVitrineNom || auteurNom || "A").charAt(0).toUpperCase()}
                     </div>
                     <label style={{ padding: "10px 16px", background: EST_HOMOROMANCE ? G.bouton : "#fff", color: EST_HOMOROMANCE ? G.boutonTexte : (auteurCouleur || G.bouton), border: "2px solid " + (auteurCouleur || G.bouton), borderRadius: 8, fontSize: 13, fontWeight: "bold", cursor: auteurLogoUploading ? "wait" : "pointer", fontFamily: "Georgia, serif" }}>
                       {auteurLogoUploading ? "Envoi…" : (auteurVitrineLogo ? "Changer le logo" : "📷 Choisir un logo")}
@@ -21882,7 +21905,7 @@ export default function App() {
                         <div style={{ background: cEnt, borderBottom: "2px solid " + cAcc, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                           {enteteCoche("logo") ? (
                             <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", background: cAcc, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: "bold", flexShrink: 0 }}>
-                              {(auteurVitrineLogo || auteurPhoto) ? <img src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : titre.charAt(0).toUpperCase()}
+                              {(auteurVitrineLogo || auteurPhoto) ? <img loading="lazy" decoding="async" onError={imageSecours} src={auteurVitrineLogo || auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : titre.charAt(0).toUpperCase()}
                             </div>
                           ) : null}
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -22018,13 +22041,13 @@ export default function App() {
                     {supportMsgs.length === 0 ? <div style={{ color: G.textDim, fontSize: 13, textAlign: "center", padding: 20 }}>Aucun message pour l’instant. Écris-nous ci-dessous 👇</div> : supportMsgs.map(m => (
                       <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : (EST_HOMOROMANCE ? G.carte : "#fff"), color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                         {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce {SITE_NOM}</div> : null}
-                        {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
+                        {m.image_url ? <img loading="lazy" decoding="async" onError={imageSecours} src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
                         {m.texte}
                         <div style={{ fontSize: 9, opacity: 0.6, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
                       </div>
                     ))}
                   </div>
-                  {supportImg ? (<div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}><img src={supportImg} alt="" style={{ maxHeight: 90, borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setSupportImg("")} style={{ position: "absolute", top: -8, right: -8, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : null}
+                  {supportImg ? (<div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}><img loading="lazy" decoding="async" src={supportImg} alt="" style={{ maxHeight: 90, borderRadius: 8, border: "1px solid " + G.border }} /><button onClick={() => setSupportImg("")} style={{ position: "absolute", top: -8, right: -8, background: "#e11d48", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, fontSize: 13, cursor: "pointer", fontWeight: "bold" }}>✕</button></div>) : null}
                   {supportImgUploading ? <div style={{ fontSize: 12, color: G.textDim, marginBottom: 8 }}>⏳ Envoi de l'image…</div> : null}
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
                     <label style={{ padding: "11px 12px", background: EST_HOMOROMANCE ? G.surface2 : "#f0ece2", border: "1px solid " + G.border, borderRadius: 10, cursor: "pointer", fontSize: 17, flexShrink: 0, lineHeight: 1 }}>📎<input type="file" accept="image/*" onChange={e => { uploadSupportImage(e.target.files[0]); e.target.value = ""; }} style={{ display: "none" }} /></label>
@@ -22070,7 +22093,7 @@ export default function App() {
               <label style={labelSt}>Photo de profil (facultatif)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                 <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: "bold", flexShrink: 0 }}>
-                  {auteurPhoto ? <img src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
+                  {auteurPhoto ? <img loading="lazy" decoding="async" onError={imageSecours} src={auteurPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (auteurNom ? auteurNom.charAt(0).toUpperCase() : "?")}
                 </div>
                 <label style={{ padding: "8px 14px", background: auteurPhotoUploading ? "#aaa" : G.bouton, color: G.boutonTexte, borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: "bold" }}>
                   {auteurPhotoUploading ? "Envoi…" : (auteurPhoto ? "📷 Changer la photo" : "📷 Choisir une photo")}
@@ -22149,7 +22172,7 @@ export default function App() {
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", width: "100%", maxWidth: 460, paddingBottom: 40 }}>
           <div style={{ width: "70%", maxWidth: 280, aspectRatio: "110 / 155", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", marginBottom: 28, background: "#000" }}>
-            {reading.cover ? <img src={reading.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>🎧</div>}
+            {reading.cover ? <img loading="lazy" decoding="async" onError={imageSecours} src={reading.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>🎧</div>}
           </div>
           <div style={{ fontSize: 20, fontWeight: "bold", textAlign: "center", marginBottom: 4, lineHeight: 1.3 }}>{reading.title}</div>
           <div style={{ fontSize: 14, color: "#c9a84c", marginBottom: 28 }}>{reading.author || ""}</div>
@@ -22839,7 +22862,7 @@ export default function App() {
           {/* Livre commandé */}
           <div style={{ display: "flex", gap: 12, padding: 14, background: G.surface, border: "1px solid " + G.border, borderRadius: 10, marginBottom: 20 }}>
             {paperOrderBook.cover && (
-              <img src={paperOrderBook.cover} alt="" style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
+              <img loading="lazy" decoding="async" onError={imageSecours} src={paperOrderBook.cover} alt="" style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: G.text, fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{paperOrderBook.title}</div>
@@ -23298,7 +23321,7 @@ export default function App() {
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 22 }}>
                 <div style={{ flex: "0 0 40%", maxWidth: 200 }}>
                   {book.cover
-                    ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", display: "block", borderRadius: 14, boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }} />
+                    ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", display: "block", borderRadius: 14, boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }} />
                     : <div style={{ width: "100%", aspectRatio: "2 / 3", background: G.surface2, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
@@ -23356,7 +23379,7 @@ export default function App() {
             <>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             {book.cover
-              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
+              ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
               : <div style={{ width: 160, height: 226, background: G.surface2, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12, flexWrap: "wrap" }}>
@@ -23366,7 +23389,7 @@ export default function App() {
           <h1 style={{ fontSize: 22, color: G.text, textAlign: "center", marginBottom: 6, lineHeight: 1.3, fontWeight: "bold" }}>{book.title}</h1>
           {libelleTypeLivre(book) ? <div style={{ textAlign: "center", fontSize: 12.5, color: G.gold, fontWeight: "bold", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{libelleTypeLivre(book)}</div> : null}
           {book.audio_url ? (book.duree_audio ? <div style={{ textAlign: "center", fontSize: 13, color: G.gold, fontWeight: "bold", marginBottom: 6 }}>🎧 {Math.floor(book.duree_audio / 60)} min d’écoute</div> : null) : ((pagesReelles || book.nb_pages) ? <div style={{ textAlign: "center", fontSize: 13, color: G.gold, fontWeight: "bold", marginBottom: 6 }}>📄 {pagesReelles || book.nb_pages} pages</div> : null)}
-          {book.author_photo ? <img src={book.author_photo} alt="" style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold, display: "block", margin: "0 auto 6px" }} /> : null}
+          {book.author_photo ? <img loading="lazy" decoding="async" onError={imageSecours} src={book.author_photo} alt="" style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", border: "2px solid " + G.gold, display: "block", margin: "0 auto 6px" }} /> : null}
           <p style={{ color: G.textDim, textAlign: "center", fontSize: 13, marginBottom: 6 }}>par <span style={{ color: G.gold }}>{book.author}</span>{book.author_ville ? <span style={{ color: G.textDim }}> · {book.author_ville}</span> : null}</p>
           <div style={{ textAlign: "center", marginBottom: 16 }}>{(book.nb_ventes || 0) >= 1 ? <span style={{ display: "inline-block", background: G.goldDim, color: G.gold, fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14, border: "1px solid " + G.gold + "44" }}>👥 {(book.nb_ventes).toLocaleString("fr-FR")} lecteur{(book.nb_ventes) > 1 ? "s" : ""}</span> : <span style={{ display: "inline-block", background: "#eef7ee", color: "#2e7d32", fontSize: 12.5, fontWeight: "bold", padding: "4px 12px", borderRadius: 14 }}>🆕 Nouveau</span>}</div>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
@@ -23798,7 +23821,7 @@ export default function App() {
                       onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
                       {rec.cover
-                        ? <img src={rec.cover} alt={rec.title} style={{ width: "100%", height: FICHE_STYLE_HR ? "auto" : 170, aspectRatio: FICHE_STYLE_HR ? "2 / 3" : undefined, objectFit: "cover", borderRadius: FICHE_STYLE_HR ? 10 : 4, marginBottom: 6, display: "block" }} />
+                        ? <img loading="lazy" decoding="async" onError={imageSecours} src={rec.cover} alt={rec.title} style={{ width: "100%", height: FICHE_STYLE_HR ? "auto" : 170, aspectRatio: FICHE_STYLE_HR ? "2 / 3" : undefined, objectFit: "cover", borderRadius: FICHE_STYLE_HR ? 10 : 4, marginBottom: 6, display: "block" }} />
                         : <div style={{ width: "100%", height: 170, background: G.surface2, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, marginBottom: 6 }}>📖</div>}
                       <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {rec.title}
@@ -23864,7 +23887,7 @@ export default function App() {
                   <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
                   {paymentBook.coverUrl && (
                     <div style={{ textAlign: "center", marginBottom: 14 }}>
-                      <img src={paymentBook.coverUrl} alt={paymentBook.title} style={{ height: 110, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                      <img loading="lazy" decoding="async" onError={imageSecours} src={paymentBook.coverUrl} alt={paymentBook.title} style={{ height: 110, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
                     </div>
                   )}
                   <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17, textAlign: "center" }}>{paymentBook.title}</h3>
@@ -24181,7 +24204,7 @@ export default function App() {
               <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
               <div style={{ textAlign: "center", marginBottom: 16 }}>
                 {showSubUnlockModal.coverUrl && (
-                  <img src={showSubUnlockModal.coverUrl} alt={showSubUnlockModal.title} style={{ height: 100, borderRadius: 6, marginBottom: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                  <img loading="lazy" decoding="async" onError={imageSecours} src={showSubUnlockModal.coverUrl} alt={showSubUnlockModal.title} style={{ height: 100, borderRadius: 6, marginBottom: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
                 )}
                 <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17 }}>{showSubUnlockModal.title}</h3>
                 <p style={{ color: "#888", fontSize: 13 }}>par {showSubUnlockModal.author || "Auteur"}</p>
@@ -24269,7 +24292,7 @@ export default function App() {
               </div>
               <button onClick={signInWithGoogle}
                 style={{ width: "100%", padding: "14px 0", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid " + G.bouton, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-                <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
+                <img loading="lazy" decoding="async" src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
                 Continuer avec Google
               </button>
               <button onClick={() => setShowAuthModal(false)} style={{ background: "none", border: "none", color: G.textFaint, cursor: "pointer", fontSize: 12 }}>Continuer sans compte →</button>
@@ -24389,7 +24412,7 @@ export default function App() {
         <div onClick={() => { if (enVitrine) allerVitrine(); else { setPage("home"); setShowMenu(false); } }} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           {enVitrine ? (
             <>
-              {vitrineLogoAff ? <img src={vitrineLogoAff} alt="" style={{ height: 36, width: 36, objectFit: "cover", borderRadius: "50%" }} /> : null}
+              {vitrineLogoAff ? <img loading="lazy" decoding="async" onError={imageSecours} src={vitrineLogoAff} alt="" style={{ height: 36, width: 36, objectFit: "cover", borderRadius: "50%" }} /> : null}
               <span style={{ color: G.enteteTexte, fontSize: 15, fontWeight: "bold", fontFamily: "Georgia, serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 190 }}>{vitrineNomAff}</span>
             </>
           ) : (
@@ -24398,7 +24421,7 @@ export default function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
           {user
-            ? <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
+            ? <img loading="lazy" decoding="async" src={user.user_metadata?.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid " + G.gold, cursor: "pointer" }} onClick={() => setShowMenu(m => !m)} />
             : lecteur
               ? <div onClick={() => setShowMenu(m => !m)} style={{ width: 32, height: 32, borderRadius: "50%", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 15, cursor: "pointer", textTransform: "uppercase" }}>{(lecteur.prenom || "?").charAt(0)}</div>
               : <button onClick={() => setShowLecteurModal(true)} style={{ background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, fontSize: 12, fontWeight: "bold", padding: "6px 12px", cursor: "pointer" }}>Connexion</button>
@@ -24465,7 +24488,7 @@ export default function App() {
           <div style={{ background: G.navSurface, borderBottom: "1px solid " + G.navBorder, maxHeight: "calc(100vh - 56px)", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
             {user && (
               <div style={{ padding: "16px 24px", borderBottom: "1px solid " + G.navBorder, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                <img src={user.user_metadata?.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%" }} />
+                <img loading="lazy" decoding="async" src={user.user_metadata?.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%" }} />
                 <div>
                   <div style={{ fontSize: 14, color: G.navText, fontWeight: "bold" }}>{user.user_metadata?.full_name || user.email}</div>
                   <div style={{ fontSize: 11, color: G.textDim }}>{user.email}</div>
@@ -24512,7 +24535,7 @@ export default function App() {
             </div>
             <button onClick={signInWithGoogle}
               style={{ width: "100%", padding: "14px 0", background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "2px solid " + G.bouton, borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: EST_HOMOROMANCE ? G.text : "#333", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-              <img src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
+              <img loading="lazy" decoding="async" src="https://www.google.com/favicon.ico" alt="" style={{ width: 18 }} />
               Continuer avec Google
             </button>
             <button onClick={() => setShowAuthModal(false)} style={{ background: "none", border: "none", color: G.textFaint, cursor: "pointer", fontSize: 12 }}>Continuer sans compte →</button>
@@ -24651,7 +24674,7 @@ export default function App() {
 
                   {/* Carte CARRYCARE - banniere pleine largeur. Absente de HomoRomance. */}
                   {!EST_HOMOROMANCE && (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src="/carrycare-banner.png?v=2"
                     alt="CarryCare"
                     onClick={() => {
@@ -24686,7 +24709,7 @@ export default function App() {
                       {sorties.map(sv => (
                         <div key={sv.id} onClick={() => { setSortieOuverte(sv); setSortieAdminDate(sv.date_sortie || ""); setSortieMsg(""); }} style={{ flexShrink: 0, width: "27vw", maxWidth: 120, cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6 }}>
-                            <img src={sv.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img onError={imageSecours} src={sv.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
                           <div style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>
                             {dateEnFrancais(sv.date_sortie)}
@@ -24718,7 +24741,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -24760,7 +24783,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)}
                           style={{ position: "absolute", inset: 0, cursor: "pointer", opacity: idx === (heroIndex % heroBooks.length) ? 1 : 0, transition: "opacity 0.8s ease" }}>
                           {book.cover
-                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>📖</div>}
                           {/* Couverture seule, sans dégradé */}
                         </div>
@@ -24827,7 +24850,7 @@ export default function App() {
                             </div>
                             <div style={{ width: "100%", aspectRatio: "130 / 180", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 6, position: "relative", border: "1px solid " + G.border }}>
                               {book.cover
-                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <div style={{ width: "100%", height: "100%", background: G.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, marginBottom: 4, height: 32, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
@@ -24851,7 +24874,7 @@ export default function App() {
                 {sortieOuverte && (
                   <div onClick={() => setSortieOuverte(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
                     <div onClick={ev => ev.stopPropagation()} style={{ background: G.carte, borderRadius: 14, maxWidth: 420, width: "100%", maxHeight: "86vh", overflowY: "auto", padding: 18 }}>
-                      <img src={sortieOuverte.cover} alt="" style={{ width: "100%", borderRadius: 10, marginBottom: 14, display: "block" }} />
+                      <img loading="lazy" decoding="async" onError={imageSecours} src={sortieOuverte.cover} alt="" style={{ width: "100%", borderRadius: 10, marginBottom: 14, display: "block" }} />
                       {sortieOuverte.resume ? <div style={{ color: G.text, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", marginBottom: 14 }}>{sortieOuverte.resume}</div> : null}
                       <div style={{ color: G.boutonTexte, background: G.bouton, padding: "11px 14px", borderRadius: 10, fontWeight: "bold", fontSize: 14, textAlign: "center" }}>
                         Date de sortie le {dateEnFrancais(sortieOuverte.date_sortie)}
@@ -24878,7 +24901,7 @@ export default function App() {
                     <div ref={annoncesRef} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none", scrollBehavior: "smooth", scrollSnapType: "x mandatory" }}>
                       {annoncesActives.filter(a => auteurDuSite(a.auteur_id) && annonceDuSite(a)).map(a => (
                         <div key={a.id} onClick={() => { window.location.href = lienInterne(a.lien); }} style={{ flex: "0 0 88%", width: "88%", aspectRatio: "297 / 210", borderRadius: 12, overflow: "hidden", cursor: "pointer", position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", scrollSnapAlign: "start" }}>
-                          <img src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <img onError={imageSecours} src={a.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           <div style={{ position: "absolute", bottom: 8, left: 8, background: "linear-gradient(90deg, #e11d48, #4f46e5, #9333ea)", color: "#fff", fontWeight: "bold", fontSize: 10, padding: "4px 10px", borderRadius: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.4)", letterSpacing: 0.2 }}>Découvrir</div>
                         </div>
                       ))}
@@ -24907,7 +24930,7 @@ export default function App() {
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "calc((100% - 26px) / 1.5)", maxWidth: 300, scrollSnapAlign: "start", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                             {book.cover
-                              ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                              ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                             {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                             {isOutOfStock(book) && (
@@ -24956,7 +24979,7 @@ export default function App() {
                             <div key={book.id} onClick={() => openBook(book)} style={{ minWidth: 0, cursor: "pointer", textAlign: "center" }}>
                               <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 6, overflow: "hidden", marginBottom: 8, position: "relative" }}>
                                 {book.cover
-                                  ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
@@ -24988,7 +25011,7 @@ export default function App() {
                               <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                                 <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                                   {book.cover
-                                    ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                                 </div>
                                 <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{false && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -25014,13 +25037,14 @@ export default function App() {
                           style={{ fontSize: 12, color: G.gold, background: "none", border: "none", cursor: "pointer" }}>Tout voir →</button>
                       </div>
                       <RangeeAuto>
-                        {catBooks.map(book => (
+                        {/* 28/10 : 16 livres au maximum par rubrique sur l'accueil, la suite avec « Tout voir ». */}
+                        {catBooks.slice(0, 16).map(book => (
                           <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: book.product_type === "formation" ? "82vw" : (catBooks.length === 1 ? "86%" : catBooks.length === 2 ? "46%" : "40vw"), maxWidth: book.product_type === "formation" ? 340 : (catBooks.length === 1 ? 320 : catBooks.length === 2 ? 210 : 175), cursor: "pointer", textAlign: "center" }}>
                             {/* 04/10 : une formation a une affiche A4 PAYSAGE. Sans ce test elle
                                 tombait dans le gabarit portrait commun et se faisait rogner. */}
                             <div style={{ width: "100%", aspectRatio: book.product_type === "formation" ? "297 / 210" : "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
                               {book.cover
-                                ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                                ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                                 : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>📖</div>}
                               {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 4, left: 4, background: G.green, color: "#fff", fontSize: 8, padding: "2px 6px", borderRadius: 6 }}>GRATUIT</div>}
                               {isOutOfStock(book) && (
@@ -25066,7 +25090,7 @@ export default function App() {
                       {tutosAccueil.map(t => (
                         <div key={t.id} style={{ flexShrink: 0, width: "90%", maxWidth: 380 }}>
                           <div onClick={() => { if (t.lien) window.location.href = t.lien; }} style={{ width: "100%", aspectRatio: "16 / 9", borderRadius: 12, overflow: "hidden", cursor: t.lien ? "pointer" : "default", boxShadow: "0 2px 10px rgba(0,0,0,0.15)", marginBottom: 8 }}>
-                            <img src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                            <img onError={imageSecours} src={t.image_url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           </div>
                           {t.texte_html ? (<div style={{ padding: "0 2px" }}>
                             <div style={{ fontSize: 13, lineHeight: 1.6, textAlign: "justify", color: G.text, overflow: "hidden", whiteSpace: "pre-wrap", display: tutosOuverts[t.id] ? "block" : "-webkit-box", WebkitLineClamp: tutosOuverts[t.id] ? "none" : 5, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: t.texte_html }} />
@@ -25105,7 +25129,7 @@ export default function App() {
                         {reco.map(book => (
                           <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "23vw", maxWidth: 105, cursor: "pointer" }}>
                             <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8, boxShadow: "0 3px 12px rgba(0,0,0,0.18)" }}>
-                              {book.cover ? <img src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
+                              {book.cover ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 }}>📖</div>}
                             </div>
                             <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>
                             {false && book.author && <div style={{ fontSize: 12, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -25146,7 +25170,7 @@ export default function App() {
                       {books.filter(b => favoriteBooks.includes(b.id) && surCarryBooks(b)).map(book => (
                         <div key={book.id} onClick={() => openBook(book)} style={{ flexShrink: 0, width: "40vw", maxWidth: 175, cursor: "pointer", textAlign: "center" }}>
                           <div style={{ width: "100%", aspectRatio: "110 / 155", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 6, position: "relative" }}>
-                            {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                            {book.cover && <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                             <div style={{ position: "absolute", top: 4, right: 4, color: G.gold, fontSize: 14 }}>♥</div>
                           </div>
                           <div style={{ fontSize: 11, color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{book.title}</div>{false && book.author && <div style={{ fontSize: 9.5, color: G.textDim, marginTop: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{book.author}</div>}
@@ -25173,7 +25197,7 @@ export default function App() {
                         {matches.map(a => (
                           <div key={a.id} onClick={() => ouvrirBoutiqueAuteur(a.code_source)} style={{ background: (EST_HOMOROMANCE ? G.carte : "#fff"), border: "1px solid " + G.border, borderRadius: 10, padding: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
                             <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", background: G.bouton, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: "bold", flexShrink: 0 }}>
-                              {a.photo_url ? <img src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
+                              {a.photo_url ? <img loading="lazy" decoding="async" onError={imageSecours} src={a.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (a.nom_complet || "?").charAt(0).toUpperCase()}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 14, fontWeight: "bold", color: G.text }}>{renderBadgeVerifie(a.verifie)}{a.nom_complet}</div>
@@ -25199,7 +25223,7 @@ export default function App() {
                       <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                         <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
                           {book.cover
-                            ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                            ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                             : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                           {book.price === 0 && book.pdf_url && <div style={{ position: "absolute", top: 8, left: 8, background: G.green, color: "#fff", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontWeight: "bold", letterSpacing: 1 }}>GRATUIT</div>}
                           {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold", letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>-{getDiscountPct(book)}%</div>}
@@ -25274,7 +25298,7 @@ export default function App() {
                   {cart.map(item => (
                     <div key={item.book_id} style={{ background: G.surface, border: "1px solid " + G.border, borderRadius: 8, padding: 12, display: "flex", gap: 12, alignItems: "flex-start" }}>
                       {item.cover ? (
-                        <img src={item.cover} alt={item.title} style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
+                        <img loading="lazy" decoding="async" onError={imageSecours} src={item.cover} alt={item.title} style={{ width: 60, height: 84, objectFit: "cover", borderRadius: 4 }} />
                       ) : (
                         <div style={{ width: 60, height: 84, background: "#eee", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📖</div>
                       )}
@@ -25390,7 +25414,7 @@ export default function App() {
                 marginBottom: 20,
                 boxShadow: "0 6px 20px rgba(177,79,219,0.25)"
               }}>
-                <img
+                <img loading="lazy" decoding="async"
                   src="/hero-carrycolor.png"
                   alt="CarryColor - Livres papier"
                   style={{ width: "100%", display: "block", height: "auto" }}
@@ -25476,7 +25500,7 @@ export default function App() {
                     <div key={book.id} onClick={() => openBook(book)} style={{ cursor: "pointer", textAlign: "center" }}>
                       <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
                         {book.cover
-                          ? <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
+                          ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: isOutOfStock(book) ? "grayscale(70%) brightness(0.6)" : "none" }} />
                           : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: G.textFaint }}>📖</div>}
                         {isOnPromo(book) && <div style={{ position: "absolute", top: 8, right: 8, background: "#dc3545", color: "#fff", fontSize: 10, padding: "3px 9px", borderRadius: 8, fontWeight: "bold" }}>-{getDiscountPct(book)}%</div>}
                         {isOutOfStock(book) && (
@@ -26031,7 +26055,7 @@ export default function App() {
                 {books.filter(b => favoriteBooks.includes(b.id) && surCarryBooks(b)).map(book => (
                   <div key={book.id} style={{ cursor: "pointer" }} onClick={() => openBook(book)}>
                     <div style={{ position: "relative", width: "100%", paddingBottom: "141%", background: G.surface, borderRadius: 0, overflow: "hidden", marginBottom: 8 }}>
-                      {book.cover && <img src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
+                      {book.cover && <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />}
                       <div style={{ position: "absolute", top: 8, right: 8, color: G.gold, fontSize: 16 }}>♥</div>
                     </div>
                     <div style={{ fontSize: 12, color: G.text, marginBottom: 2, lineHeight: 1.3 }}>{book.title}</div>
@@ -27480,7 +27504,7 @@ export default function App() {
             <div style={{ textAlign: "center", marginBottom: 20 }}>
               {enVitrine ? (
                 <>
-                  {vitrineLogoAff ? <img src={vitrineLogoAff} alt="" style={{ height: 48, width: 48, objectFit: "cover", borderRadius: "50%" }} /> : null}
+                  {vitrineLogoAff ? <img loading="lazy" decoding="async" onError={imageSecours} src={vitrineLogoAff} alt="" style={{ height: 48, width: 48, objectFit: "cover", borderRadius: "50%" }} /> : null}
                   <div style={{ color: G.piedTexte, fontSize: 15, fontWeight: "bold", fontFamily: "Georgia, serif", marginTop: 8 }}>{vitrineNomAff}</div>
                 </>
               ) : (
@@ -27517,7 +27541,7 @@ export default function App() {
             <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               {showSubUnlockModal.coverUrl && (
-                <img src={showSubUnlockModal.coverUrl} alt={showSubUnlockModal.title} style={{ height: 100, borderRadius: 6, marginBottom: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+                <img loading="lazy" decoding="async" onError={imageSecours} src={showSubUnlockModal.coverUrl} alt={showSubUnlockModal.title} style={{ height: 100, borderRadius: 6, marginBottom: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
               )}
               <h3 style={{ color: "#1a1a1a", marginBottom: 6, fontSize: 17 }}>{showSubUnlockModal.title}</h3>
               <p style={{ color: "#888", fontSize: 13 }}>par {showSubUnlockModal.author || "Auteur"}</p>

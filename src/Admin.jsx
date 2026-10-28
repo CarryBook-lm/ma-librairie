@@ -13,8 +13,25 @@ const supabase = createClient(
 async function envoyerImageStockage(fd) {
   const echec = { json: async () => ({ success: false }) };
   try {
-    const f = fd && fd.get ? fd.get("image") : null;
+    let f = fd && fd.get ? fd.get("image") : null;
     if (!f) return echec;
+    // 28/10 : on n'envoie jamais l'original en pleine resolution. Couverture (portrait) : 600 px de large ;
+    // banniere ou affiche (paysage) : 1000 px. WebP qualite 80. Les logos de vitrine (logo-512.png / logo-192.png)
+    // gardent leur taille exacte, exigee par Chrome pour installer l'application.
+    try {
+      const estLogo = /^logo-/.test(f.name || "");
+      const anime = (f.type || "") === "image/gif";
+      if (!estLogo && !anime && typeof createImageBitmap === "function") {
+        const bmp = await createImageBitmap(f);
+        const maxL = bmp.width > bmp.height ? 1000 : 600;
+        const ratio = Math.min(1, maxL / bmp.width);
+        const c = document.createElement("canvas");
+        c.width = Math.round(bmp.width * ratio); c.height = Math.round(bmp.height * ratio);
+        c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+        const webp = await new Promise(r => c.toBlob(r, "image/webp", 0.8));
+        if (webp && webp.type === "image/webp" && (webp.size < f.size || ratio < 1)) f = new File([webp], "image.webp", { type: "image/webp" });
+      }
+    } catch (eRed) { /* reduction impossible : on envoie le fichier tel quel */ }
     const nomOrig = (f.name || "image").toLowerCase();
     let ext = (nomOrig.match(/\.(png|jpe?g|webp|gif)$/) || [])[1] || "";
     let type = f.type || "";

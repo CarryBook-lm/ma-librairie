@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 310" width="220" height="310">
+  <rect width="220" height="310" fill="#efe7da"/>
+  <rect x="10" y="10" width="200" height="290" fill="none" stroke="#c9a84c" stroke-width="2"/>
+  <g transform="translate(110 130)" fill="none" stroke="#b39a5e" stroke-width="4" stroke-linejoin="round">
+    <path d="M-38 -22 Q-19 -30 0 -20 Q19 -30 38 -22 L38 26 Q19 18 0 28 Q-19 18 -38 26 Z"/>
+    <path d="M0 -20 L0 28"/>
+  </g>
+  <text x="110" y="205" text-anchor="middle" font-family="Georgia, serif" font-size="15" fill="#7a6f5d">Couverture</text>
+  <text x="110" y="226" text-anchor="middle" font-family="Georgia, serif" font-size="15" fill="#7a6f5d">bientôt disponible</text>
+</svg>
