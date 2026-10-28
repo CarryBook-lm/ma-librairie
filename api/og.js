@@ -69,7 +69,7 @@ export default async function handler(req) {
     // Fallback si livre non trouvé
     const title = book?.title || "CarryBooks";
     const author = book?.author || "Landrine Maff";
-    const cover = book?.cover || "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
+    const cover = book?.cover || "https://carrybooks.com/img/logo-carrybooks-carre.jpg";
     const summary = book?.summary
       ? truncate(book.summary.replace(/\n/g, " ").replace(/\s+/g, " "), 210)
       : "Découvrez ce contenu sur CarryBooks, ta librairie numérique camerounaise.";

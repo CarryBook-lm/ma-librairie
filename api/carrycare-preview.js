@@ -43,31 +43,31 @@ function escapeHtml(str) {
 const PAGES = {
   "carrycare": {
     path: "/carrycare",
-    image: "https://i.ibb.co/BV6YvMgC/CARRYCARE.jpg",
+    image: "https://carrybooks.com/img/carrycare.jpg",
     title: "CarryCare — Ton diagnostic beaute personnalise",
     description: "Votre beaute. Votre diagnostic. Vos resultats. Decouvre CarryCare et recois un accompagnement 100% personnalise. -50% pour les 100 premieres inscrites !",
   },
   "diagnostic-facial": {
     path: "/diagnostic-facial",
-    image: "https://i.ibb.co/F4byLJqj/FACIAL.jpg",
+    image: "https://carrybooks.com/img/carrycare-facial.jpg",
     title: "Beaute Faciale — Diagnostic peau personnalise | CarryCare",
     description: "Analyse de ta peau en profondeur et routine sur-mesure. Resultats clairs en quelques minutes. -50% pour les 100 premieres inscrites !",
   },
   "diagnostic-corporel": {
     path: "/diagnostic-corporel",
-    image: "https://i.ibb.co/TMLXQVQv/CORPOREL.jpg",
+    image: "https://carrybooks.com/img/carrycare-corporel.jpg",
     title: "Beaute Corporelle — Diagnostic corps personnalise | CarryCare",
     description: "Analyse complete de ta peau et conseils adaptes a tes besoins. Resultats clairs en quelques minutes. -50% pour les 100 premieres inscrites !",
   },
   "diagnostic-capillaire": {
     path: "/diagnostic-capillaire",
-    image: "https://i.ibb.co/B5qMv4yc/CAPILLAIRE.jpg",
+    image: "https://carrybooks.com/img/carrycare-capillaire.jpg",
     title: "Beaute Capillaire — Diagnostic cheveux personnalise | CarryCare",
     description: "Analyse approfondie de tes cheveux et routine personnalisee. Resultats clairs en quelques minutes. -50% pour les 100 premieres inscrites !",
   },
   "garde-la-ligne": {
     path: "/garde-la-ligne",
-    image: "https://i.ibb.co/vv4Dy9kx/SANTE-ET-POIDS.jpg",
+    image: "https://carrybooks.com/img/carrycare-sante-poids.jpg",
     title: "Sante et Poids — Plan nutrition personnalise | CarryCare",
     description: "Plan nutrition 100% personnalise pour perdre du poids et garder la ligne. Energie, bien-etre et sante au quotidien. -50% pour les 100 premieres inscrites !",
   },

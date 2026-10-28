@@ -6357,7 +6357,7 @@ function KitExfoliaCard({ skinTone }) {
     <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fff5f0 0%, #ffe8d6 100%)", border: "2px solid #c9952a", borderRadius: 14, padding: 16, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 8, right: 8, background: "#c9952a", color: "#fff", fontSize: 9, fontWeight: "bold", padding: "3px 8px", borderRadius: 4, letterSpacing: 0.5 }}>⭐ COUP DE CŒUR</div>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
-        <img loading="lazy" decoding="async" src="https://i.ibb.co/LLMS3vG/kit-1.webp" alt="Kit Visage Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
+        <img loading="lazy" decoding="async" src="/img/kit-visage-exfolia.webp" alt="Kit Visage Exfolia" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 10, flexShrink: 0, border: "1px solid #c9952a" }} onError={(e) => { e.target.style.display = "none"; }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: "#c9952a", fontWeight: "bold", letterSpacing: 0.5, marginBottom: 4 }}>RECOMMANDÉ PAR CARRYBOOKS</div>
           <div style={{ fontSize: 16, fontWeight: "bold", color: CC.noir, marginBottom: 4 }}>🌿 Kit Visage Exfolia</div>

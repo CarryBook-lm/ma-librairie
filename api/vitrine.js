@@ -23,7 +23,7 @@ const BOT_AGENTS = [
   "Threads", "TikTokBot",
 ];
 
-const LOGO_CB = "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
+const LOGO_CB = "https://carrybooks.com/img/logo-carrybooks-carre.jpg";
 const OR = "#c9a84c";
 
 function isBot(userAgent) {

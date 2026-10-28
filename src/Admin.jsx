@@ -1591,7 +1591,7 @@ export default function Admin() {
     return (
       <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
         <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, textAlign: "center" }}>
-          <img src="https://i.ibb.co/j9ScrTDq/Sans-nom-4-Photoroom-1.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
+          <img src="/img/logo-go.png" alt="CarryBooks" style={{ height: 48, marginBottom: 20 }} />
           <h2 style={{ color: ("" + ACC + ""), fontSize: 18, marginBottom: 8 }}>Administration</h2>
           <p style={{ color: "#f44336", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>{authError}</p>
           {currentUser && (
@@ -5644,7 +5644,7 @@ export default function Admin() {
                     <div style={{ flex: 1, height: 1, background: "#2a2a2a" }} />
                   </div>
                   <input value={form.cover} onChange={e => setForm(f => ({ ...f, cover: e.target.value }))}
-                    placeholder="https://i.ibb.co/.../image.jpg" style={inputStyle} />
+                    placeholder="https://.../image.jpg" style={inputStyle} />
                   {form.cover && (
                     <div style={{ marginTop: 10, textAlign: "center" }}>
                       <img src={form.cover} alt="Aperçu" style={{ maxHeight: 140, border: "1px solid #2a2a2a" }}

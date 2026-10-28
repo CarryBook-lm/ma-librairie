@@ -190,7 +190,7 @@ Detecte comme bot: ${isBotVisit}
   // sinon couverture du livre, sinon logo. Toutes sont statiques = rapides + fiables.
   const ogImageUrl = (book && book.og_image) ? book.og_image
     : (book && book.cover) ? book.cover
-    : "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
+    : "https://carrybooks.com/img/logo-carrybooks-carre.jpg";
 
   // Fallback si livre non trouve
   if (!book) {
@@ -202,7 +202,7 @@ Detecte comme bot: ${isBotVisit}
 <meta property="og:type" content="website">
 <meta property="og:title" content="${nomDuSite}">
 <meta property="og:description" content="${nomDuSite}">
-<meta property="og:image" content="https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg">
+<meta property="og:image" content="https://carrybooks.com/img/logo-carrybooks-carre.jpg">
 <meta property="og:url" content="${base}">
 <meta property="og:site_name" content="${nomDuSite}">
 <meta name="twitter:card" content="summary_large_image">
@@ -222,7 +222,7 @@ Detecte comme bot: ${isBotVisit}
     ? book.summary.replace(/\s+/g, " ").substring(0, 200).trim()
     : `Decouvre "${book.title}" par ${book.author || "CarryBooks"}. ${book.price > 0 ? `Disponible pour ${book.price.toLocaleString("fr-FR")} FCFA.` : "Telechargement gratuit."}`;
   const description = escapeHtml(rawDesc);
-  const cover = book.cover || "https://i.ibb.co/JWGkYdsx/LOGO-CARRYBOOKS.jpg";
+  const cover = book.cover || "https://carrybooks.com/img/logo-carrybooks-carre.jpg";
   const urlPath = book.product_type === "article" ? "article" : "livre";
   const url = `${base}/${urlPath}/${slug}`;
   const priceLabel = book.price > 0 ? `${book.price.toLocaleString("fr-FR")} FCFA` : "Gratuit";
