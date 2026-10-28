@@ -6,6 +6,31 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
+// 28/10 : les images (couvertures, logos, annonces, ateliers, support) vont dans le stockage Supabase
+// (dossier public « images »), et non plus chez imgbb : le 28/10, une panne d'imgbb a fait disparaitre
+// les couvertures du site. Renvoie un objet qui imite la reponse d'imgbb ({ success, data: { url } })
+// pour que les ecrans d'envoi existants restent inchanges.
+async function envoyerImageStockage(fd) {
+  const echec = { json: async () => ({ success: false }) };
+  try {
+    const f = fd && fd.get ? fd.get("image") : null;
+    if (!f) return echec;
+    const nomOrig = (f.name || "image").toLowerCase();
+    let ext = (nomOrig.match(/\.(png|jpe?g|webp|gif)$/) || [])[1] || "";
+    let type = f.type || "";
+    if (type === "image/jpg") type = "image/jpeg";
+    if (!ext) ext = type === "image/png" ? "png" : type === "image/webp" ? "webp" : type === "image/gif" ? "gif" : "jpg";
+    if (!type) type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : ext === "gif" ? "image/gif" : "image/jpeg";
+    const d = new Date();
+    const chemin = d.getFullYear() + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 10) + "." + ext.replace("jpeg", "jpg");
+    const { error } = await supabase.storage.from("images").upload(chemin, f, { contentType: type, cacheControl: "31536000", upsert: false });
+    if (error) { console.error("[images] envoi refuse :", error.message); return echec; }
+    const { data } = supabase.storage.from("images").getPublicUrl(chemin);
+    const url = data && data.publicUrl;
+    return { json: async () => (url ? { success: true, data: { url: url, display_url: url } } : { success: false }) };
+  } catch (e) { console.error("[images] erreur :", e && e.message); return echec; }
+}
+
 // ============================================================
 // 09/10 : ADMIN HOMOROMANCE
 // Le meme admin sert les 2 sites. Ouvert depuis homoromance.com, il ne montre
@@ -803,7 +828,7 @@ export default function Admin() {
     setSupImgUp(true);
     try {
       const fd = new FormData(); fd.append("image", file);
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       if (data && data.success && data.data && data.data.url) setSupImg(data.data.url);
       else alert("Erreur envoi image.");
@@ -2194,15 +2219,12 @@ export default function Admin() {
       const formData = new FormData();
       formData.append("image", file);
       const apiKey = import.meta.env.VITE_IMGBB_KEY;
-      const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await envoyerImageStockage(formData);
       const data = await res.json();
       if (data.success) {
         setForm(f => ({ ...f, cover: data.data.url }));
       } else {
-        setUploadError("Échec de l'upload. Vérifiez votre clé imgbb.");
+        setUploadError("Échec de l'envoi de l'image. Réessaie.");
       }
     } catch {
       setUploadError("Erreur réseau lors de l'upload.");

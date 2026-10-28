@@ -316,6 +316,31 @@ const supabase = createClient(
         getItem: async (key) => {
           try {
             const { value } = await Preferences.get({ key });
+
+// 28/10 : les images (couvertures, logos, annonces, ateliers, support) vont dans le stockage Supabase
+// (dossier public « images »), et non plus chez imgbb : le 28/10, une panne d'imgbb a fait disparaitre
+// les couvertures du site. Renvoie un objet qui imite la reponse d'imgbb ({ success, data: { url } })
+// pour que les ecrans d'envoi existants restent inchanges.
+async function envoyerImageStockage(fd) {
+  const echec = { json: async () => ({ success: false }) };
+  try {
+    const f = fd && fd.get ? fd.get("image") : null;
+    if (!f) return echec;
+    const nomOrig = (f.name || "image").toLowerCase();
+    let ext = (nomOrig.match(/\.(png|jpe?g|webp|gif)$/) || [])[1] || "";
+    let type = f.type || "";
+    if (type === "image/jpg") type = "image/jpeg";
+    if (!ext) ext = type === "image/png" ? "png" : type === "image/webp" ? "webp" : type === "image/gif" ? "gif" : "jpg";
+    if (!type) type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : ext === "gif" ? "image/gif" : "image/jpeg";
+    const d = new Date();
+    const chemin = d.getFullYear() + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 10) + "." + ext.replace("jpeg", "jpg");
+    const { error } = await supabase.storage.from("images").upload(chemin, f, { contentType: type, cacheControl: "31536000", upsert: false });
+    if (error) { console.error("[images] envoi refuse :", error.message); return echec; }
+    const { data } = supabase.storage.from("images").getPublicUrl(chemin);
+    const url = data && data.publicUrl;
+    return { json: async () => (url ? { success: true, data: { url: url, display_url: url } } : { success: false }) };
+  } catch (e) { console.error("[images] erreur :", e && e.message); return echec; }
+}
             return value ?? localStorage.getItem(key);
           } catch { return localStorage.getItem(key); }
         },
@@ -14222,7 +14247,7 @@ export default function App() {
     setSortieUploading(true); setSortieMsg("");
     try {
       const fd = new FormData(); fd.append("image", file);
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const d = await res.json().catch(() => ({}));
       if (d && d.success && d.data && d.data.url) setSortieCover(d.data.url);
       else setSortieMsg("❌ Échec de l'envoi de la couverture.");
@@ -15051,7 +15076,7 @@ export default function App() {
     if (!file) return; setPubAuthorPhotoUp(true); setPubMsg("");
     try {
       const fd = new FormData(); fd.append("image", file);
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const d = await res.json().catch(() => ({}));
       if (d && d.success && d.data && d.data.url) setPubAuthorPhoto(d.data.url);
       else setPubMsg("Erreur photo. Reessaie.");
@@ -15163,7 +15188,7 @@ export default function App() {
     }, ms));
   };
   const chargerTutos = async () => { const { data } = await supabase.from("tutoriels").select("*").order("ordre", { ascending: true }).order("created_at", { ascending: false }); setTutos(data || []); };
-  const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd }); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
+  const uploadTutoImg = async (file) => { if (!file) return; setTutoUploading(true); setTutoMsg(""); try { const fd = new FormData(); fd.append("image", file); const res = await envoyerImageStockage(fd); const d = await res.json().catch(() => ({})); if (d && d.success && d.data && d.data.url) setTutoImg(d.data.url); else setTutoMsg("Erreur envoi image."); } catch (e) { setTutoMsg("Erreur envoi image."); } setTutoUploading(false); };
   const enregistrerTuto = async () => { const html = tutoEditorRef.current ? tutoEditorRef.current.innerHTML : ""; if (!tutoImg) { setTutoMsg("Ajoute une image (16:9)."); return; } const payload = { image_url: tutoImg, lien: tutoLien.trim() || null, texte_html: html, actif: true }; try { if (tutoEditId) { await supabase.from("tutoriels").update(payload).eq("id", tutoEditId); } else { await supabase.from("tutoriels").insert([payload]); } setTutoImg(""); setTutoLien(""); setTutoEditId(null); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = ""; setTutoMsg("OK_ENREGISTRE"); await chargerTutos(); } catch (e) { setTutoMsg("Erreur : " + (e && e.message)); } };
   const editerTuto = (t) => { setTutoEditId(t.id); setTutoImg(t.image_url); setTutoLien(t.lien || ""); setTutoMsg(""); if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = t.texte_html || ""; setTimeout(() => { if (tutoEditorRef.current) tutoEditorRef.current.innerHTML = t.texte_html || ""; try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); } }, 60); };
   const supprimerTuto = async (id) => { if (!window.confirm("Supprimer ce tuto ?")) return; await supabase.from("tutoriels").delete().eq("id", id); await chargerTutos(); };
@@ -15173,7 +15198,7 @@ export default function App() {
     setAnnonceUploading(true); setAnnonceMsg("");
     try {
       const fd = new FormData(); fd.append("image", file);
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       if (data && data.success && data.data && data.data.url) setAnnonceImg(data.data.url);
       else setAnnonceMsg("Erreur lors de l'envoi de l'image. Reessaie.");
@@ -15209,7 +15234,7 @@ export default function App() {
     setAnnonceBusyId(annonce.id); setAnnonceMsg("");
     try {
       const fd = new FormData(); fd.append("image", file);
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       const url = data && data.success && data.data ? data.data.url : "";
       if (!url) { setAnnonceMsg("Erreur lors de l'envoi de l'image. Reessaie."); setAnnonceBusyId(null); return; }
@@ -15375,7 +15400,7 @@ export default function App() {
     setSupportImgUploading(true);
     try {
       const fd = new FormData(); fd.append("image", file);
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + import.meta.env.VITE_IMGBB_KEY, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       if (data && data.success && data.data && data.data.url) setSupportImg(data.data.url);
       else alert("Erreur lors de l'envoi de l'image. Réessaie.");
@@ -18950,7 +18975,7 @@ export default function App() {
   const envoyerImgbb = async (blob, nom) => {
     const fd = new FormData(); fd.append("image", blob, nom);
     const key = import.meta.env.VITE_IMGBB_KEY;
-    const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+    const res = await envoyerImageStockage(fd);
     const data = await res.json().catch(() => ({}));
     return (data && data.success && data.data && data.data.url) ? data.data.url : null;
   };
@@ -19007,7 +19032,7 @@ export default function App() {
     try {
       const fd = new FormData(); fd.append("image", file);
       const key = import.meta.env.VITE_IMGBB_KEY;
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       if (data && data.success && data.data && data.data.url) {
         setAuteurPhoto(data.data.url);
@@ -19098,7 +19123,7 @@ export default function App() {
     try {
       const fd = new FormData(); fd.append("image", file);
       const key = import.meta.env.VITE_IMGBB_KEY;
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json();
       if (data.success) setPubForm(f => ({ ...f, cover: data.data.url }));
       else setPubMsg("❌ Échec de l'envoi de la couverture.");
@@ -19479,7 +19504,7 @@ export default function App() {
     try {
       const fd = new FormData(); fd.append("image", file);
       const key = import.meta.env.VITE_IMGBB_KEY;
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       if (data && data.success && data.data && data.data.url) {
         fmInsererAuCurseur((ratio === "916" ? "[IMG916:" : "[IMG169:") + data.data.url + "]");
@@ -19493,7 +19518,7 @@ export default function App() {
     try {
       const fd = new FormData(); fd.append("image", file);
       const key = import.meta.env.VITE_IMGBB_KEY;
-      const res = await fetch("https://api.imgbb.com/1/upload?key=" + key, { method: "POST", body: fd });
+      const res = await envoyerImageStockage(fd);
       const data = await res.json().catch(() => ({}));
       if (data && data.success && data.data && data.data.url) setFmForm(f => ({ ...f, cover: data.data.url }));
       else setFmMsg("❌ La couverture n'a pas pu être envoyée. Réessaie.");
