@@ -346,6 +346,11 @@ const supabase = createClient(
 // pour que les ecrans d'envoi existants restent inchanges.
 // 28/10 : si une image ne se charge pas, on affiche une couverture neutre au lieu d'un carre vide
 // (aucun nom de service tiers ni de marque : elle sert aussi dans les vitrines d'auteur).
+// 30/10 : vrai dans l'application Android du Play Store (coque Capacitor qui affiche le site).
+// Les fenetres « Installer l'application » ne doivent jamais s'y afficher : on est deja dans l'application.
+function estAppNative() {
+  try { return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform()); } catch (e) { return false; }
+}
 function imageSecours(e) {
   try { const im = e.currentTarget; if (im.dataset.secours) return; im.dataset.secours = "1"; im.src = "/couverture-indisponible.svg"; } catch (x) {}
 }
@@ -14527,7 +14532,7 @@ export default function App() {
   useEffect(() => {
     const t = setTimeout(() => {
       try {
-        const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || estAppNative();
         if (standalone) return;
         const today = new Date().toISOString().slice(0, 10);
         if (localStorage.getItem("carrybooks_install_popup") === today) return;
@@ -14543,7 +14548,8 @@ export default function App() {
     const isInstalled =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true ||
-      document.referrer.includes("android-app://");
+      document.referrer.includes("android-app://") ||
+      estAppNative();
 
     if (isInstalled) {
       setShowInstallBanner(false);
@@ -14633,7 +14639,7 @@ export default function App() {
 
   // Fonction pour déclencher l'installation
   const triggerInstall = async () => {
-    try { if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true) return; } catch (e) {}
+    try { if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || estAppNative()) return; } catch (e) {}
     // 18/10 : depuis Facebook / TikTok / Instagram, l'installation est impossible sur place.
     // Android : on saute directement dans Chrome (la fenetre d'installation s'y ouvre seule).
     // Si le saut est refuse (TikTok le bloque parfois), le guide s'affiche 1,5 s plus tard.
@@ -20527,7 +20533,7 @@ export default function App() {
                   ) : <span />}
                   {(() => {
                     let deja = false;
-                    try { deja = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; } catch (e) {}
+                    try { deja = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || estAppNative(); } catch (e) {}
                     // Navigateur integre de Facebook / TikTok : l'application n'est jamais installee, le bouton reste visible.
                     let integre = false;
                     try { integre = isInAppBrowser(); } catch (e) {}
@@ -24625,7 +24631,7 @@ export default function App() {
                     <span style={{ lineHeight: 1.1, textAlign: "center", fontSize: 8.5, fontWeight: "normal", opacity: 0.8 }}>{estAuteurValide ? "Gère tes livres et tes ventes" : "Vends tes livres sur " + SITE_NOM}</span>
                   </button>
                   ); })()}
-                  {!window.matchMedia("(display-mode: standalone)").matches && (
+                  {!window.matchMedia("(display-mode: standalone)").matches && !estAppNative() && (
                     <button onClick={() => {
                       const ua = (navigator.userAgent || "").toLowerCase();
                       if (isInAppBrowser()) {

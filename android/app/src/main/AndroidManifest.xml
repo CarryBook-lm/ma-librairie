@@ -22,6 +22,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- 30/10 : retour de la connexion Google. Google refuse de se connecter dans la fenetre de
+                 l'application : la connexion s'ouvre dans Chrome, puis Supabase renvoie vers
+                 com.carrybooks.bibliotheque://login-callback. Sans ce bloc, Android ne sait pas que
+                 cette adresse appartient a l'application et la connexion ne revient jamais. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.carrybooks.bibliotheque" android:host="login-callback" />
+            </intent-filter>
+
         </activity>
 
         <provider
