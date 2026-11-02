@@ -15894,6 +15894,11 @@ export default function App() {
   useEffect(() => {
     if (user || lecteur) setShowLecteurModal(false);
   }, [user, lecteur]);
+  // 02/11 : connecte(e) avec Google -> le prenom est deja connu.
+  useEffect(() => {
+    if (!showLecteurModal || !user || lecteurPrenom) return;
+    try { const m = user.user_metadata || {}; const pr = String(m.full_name || m.name || "").trim().split(/\s+/)[0] || ""; if (pr) setLecteurPrenom(pr); } catch (e) {}
+  }, [showLecteurModal, user]);
   useEffect(() => {
     if (lecteur && lecteur.telephone) loadLecteurPurchases(lecteur.telephone);
   }, [lecteur]);
@@ -15951,8 +15956,18 @@ export default function App() {
           {enVitrine
             ? (vitrineLogoAff ? <img loading="lazy" decoding="async" onError={imageSecours} src={vitrineLogoAff} alt={vitrineNomAff} style={{ height: 56, width: 56, objectFit: "cover", borderRadius: "50%", marginBottom: 12 }} /> : null)
             : <img src={SITE_LOGO} alt={SITE_NOM} style={{ height: 44, marginBottom: 12 }} />}
-          <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur {enVitrine ? vitrineNomAff : SITE_NOM} 📚</h2>
-          <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
+          {/* 02/11 : connecte(e) avec Google mais sans numero : on le dit clairement, sinon la personne croit qu'on lui redemande de se connecter. */}
+          {user ? (
+            <>
+              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Tu es bien connecté(e) ✅</h2>
+              <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Il nous manque juste ton pays et ton numéro de téléphone : ils servent à payer en Mobile Money et à retrouver tes livres. Tu ne les donnes qu'une seule fois.</p>
+            </>
+          ) : (
+            <>
+              <h2 style={{ color: "#1a1a1a", fontSize: 18, margin: "0 0 6px" }}>Bienvenue sur {enVitrine ? vitrineNomAff : SITE_NOM} 📚</h2>
+              <p style={{ color: "#888", fontSize: 13, margin: 0, lineHeight: 1.5 }}>Entre tes infos pour accéder à tes livres.</p>
+            </>
+          )}
         </div>
         <label style={LEC_LABEL}>Ton prénom *</label>
         <input value={lecteurPrenom} onChange={e => setLecteurPrenom(e.target.value)} placeholder="Ex : Nadia" style={LEC_INPUT} />
@@ -15970,10 +15985,10 @@ export default function App() {
         </div>
         <div style={{ height: 18 }} />
         <button onClick={saveLecteur} disabled={lecteurSaving} style={{ width: "100%", padding: 14, background: G.bouton, color: "#fff", border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: lecteurSaving ? 0.6 : 1 }}>{lecteurSaving ? "..." : "Entrer"}</button>
-        <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
+        {!user && <div style={{ textAlign: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" }}>
           <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Déjà un compte Google ?</div>
           <button onClick={signInWithGoogle} style={{ background: "none", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", color: "#555", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}><img loading="lazy" decoding="async" src="https://www.google.com/favicon.ico" alt="" style={{ width: 14 }} />Se connecter avec Google</button>
-        </div>
+        </div>}
       </div>
     </div>
   );
