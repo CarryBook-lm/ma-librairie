@@ -2058,6 +2058,8 @@ const getSlugFromURL = () => {
   if (path.startsWith("/lecture/")) return path.replace("/lecture/", "");
   return null;
 };
+// 02/11 : adresse d'arrivee, avant que la synchronisation d'URL ne la reecrive (lien d'un pack).
+const SLUG_ARRIVEE = (() => { try { return getSlugFromURL(); } catch (e) { return null; } })();
 
 const buildPath = (page, book, categorie) => {
   // 🎯 PRÉSERVER les URLs de diagnostic CarryCare (pour pubs Facebook)
@@ -15295,6 +15297,7 @@ export default function App() {
   const [packForm, setPackForm] = useState(null); // null = liste ; objet = formulaire ouvert
   const [packMsg, setPackMsg] = useState("");
   const [packBusy, setPackBusy] = useState(false);
+  const [packCopie, setPackCopie] = useState(null); // id du pack dont le lien vient d'etre copie
   const chargerMesPacks = async () => {
     if (!auteurProfil || !auteurProfil.id) return;
     try {
@@ -16254,6 +16257,15 @@ export default function App() {
       setCarryCarePage(carryCareTarget);
     }
   }, []);
+
+  // 02/11 : lien d'un pack (/livre/<titre du pack>) : les packs ne sont pas dans le catalogue, on les cherche dans packsAll.
+  useEffect(() => {
+    if (selectedBook || !packsAll.length) return;
+    const slug = getSlugFromURL() || SLUG_ARRIVEE;
+    if (!slug) return;
+    const pk = packsAll.find(x => slugify(x.title || "") === slug && x.status === "actif" && !x.masque);
+    if (pk) { setSelectedBook(pk); if (page !== "detail") setPage("detail"); }
+  }, [packsAll]);
 
   // Détecter livre dans l'URL (slug /livre/xxx OU ?book=XX) et ouvrir
   useEffect(() => {
@@ -17278,7 +17290,7 @@ export default function App() {
     return ach;
   })();
   const packVisible = (pk) => pk && pk.status === "actif" && !pk.masque;
-  const livresDuPack = (pk) => ((pk && pk.pack_livres) || []).map(i => books.find(b => String(b.id) === String(i))).filter(Boolean);
+  const livresDuPack = (pk) => ((pk && pk.pack_livres) || ((pk && (packsAll || []).find(x => String(x.id) === String(pk.id))) || {}).pack_livres || []).map(i => books.find(b => String(b.id) === String(i))).filter(Boolean);
   const couverturePack = (pk) => {
     const couv = livresDuPack(pk).map(b => b.cover).filter(Boolean).slice(0, 4);
     if (couv.length === 0 && pk.cover) couv.push(pk.cover);
@@ -21663,7 +21675,8 @@ export default function App() {
                       const ids = (p.pack_livres || []).map(Number);
                       const couv = ids.map(i => (mesLivres.find(b => Number(b.id) === i) || {}).cover).filter(Boolean).slice(0, 3);
                       return (
-                        <div key={p.id} style={{ ...carte, display: "flex", gap: 12, alignItems: "center" }}>
+                        <div key={p.id} style={carte}>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                           <div style={{ position: "relative", width: 70, height: 80, flexShrink: 0 }}>
                             {couv.map((c, k) => <img key={k} loading="lazy" decoding="async" onError={imageSecours} src={c} alt="" style={{ position: "absolute", left: k * 14, top: k * 4, width: 42, height: 60, objectFit: "cover", borderRadius: 3, boxShadow: "0 2px 6px rgba(0,0,0,0.3)", transform: "rotate(" + ((k - 1) * 6) + "deg)" }} />)}
                           </div>
@@ -21676,6 +21689,20 @@ export default function App() {
                               <button onClick={() => retirerPack(p)} disabled={packBusy} style={{ flex: 1, padding: 8, borderRadius: 8, border: "1px solid #c62828", background: "none", color: "#c62828", fontWeight: "bold", fontSize: 12, cursor: "pointer" }}>🗑 Retirer</button>
                             </div>
                           </div>
+                          </div>
+                          {/* 02/11 : lien de pub du pack, avec le code de l'auteur (85 %) */}
+                          {(() => {
+                            const lien = SITE_URL + "/livre/" + slugify(p.title) + (auteurProfil && auteurProfil.code_source ? "?src=" + encodeURIComponent(auteurProfil.code_source) : "");
+                            return (
+                              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid " + G.border }}>
+                                <div style={{ fontSize: 12, color: G.textDim, marginBottom: 6 }}>🔗 Lien de ton pack (85 % pour toi quand l'achat vient de ce lien) :</div>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  <input readOnly value={lien} onFocus={e => e.target.select()} style={{ flex: 1, minWidth: 0, fontSize: 12, padding: "8px 10px", border: "1px solid " + G.border, borderRadius: 8, color: G.textDim, background: G.bg }} />
+                                  <button onClick={() => { try { navigator.clipboard.writeText(lien); } catch (e) {} setPackCopie(p.id); setTimeout(() => setPackCopie(c => (c === p.id ? null : c)), 2500); }} style={{ flexShrink: 0, padding: "8px 12px", borderRadius: 8, border: "1px solid " + G.gold, background: packCopie === p.id ? G.gold : "none", color: packCopie === p.id ? "#fff" : G.gold, fontWeight: "bold", fontSize: 12, cursor: "pointer" }}>{packCopie === p.id ? "✅ Copié" : "📋 Copier"}</button>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })}
@@ -23709,6 +23736,15 @@ export default function App() {
           })()}
 
             </>
+          )}
+          {/* 02/11 : bouton d'achat du pack visible tout de suite, avant la liste des livres */}
+          {book.product_type === "pack" && (
+            <div style={{ marginBottom: 14 }}>
+              <button onClick={() => startReading(book)}
+              style={FICHE_STYLE_HR ? { width: "100%", padding: "16px 15px", background: G.bouton, border: "2px solid #ffffff66", borderRadius: 999, color: EST_HOMOROMANCE ? "#fff" : G.boutonTexte, cursor: "pointer", fontSize: 16, fontWeight: 700, fontFamily: "system-ui, sans-serif", boxShadow: EST_HOMOROMANCE ? "0 8px 22px rgba(46,1,56,0.6)" : "0 8px 22px rgba(0,0,0,0.25)" } : { width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
+                {owned ? "📚 Voir les livres du pack dans ma bibliothèque" : "🛒 Acheter le pack – " + Number(book.price).toLocaleString("fr-FR") + " F"}
+              </button>
+            </div>
           )}
           {/* 02/11 : CONTENU DU PACK */}
           {book.product_type === "pack" && (() => {
