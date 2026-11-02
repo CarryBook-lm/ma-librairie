@@ -1,9 +1,41 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { Preferences } from "@capacitor/preferences";
 
+// 02/11 : l'admin lit la MEME connexion que le site (cle "carrybooks-auth", memorisee aussi dans
+// l'application Android). Avant, il avait sa propre cle : dans l'application du Play Store, Landrine
+// etait connectee sur le site et dans son espace auteur, mais l'admin la croyait deconnectee.
+// Repli sur l'ancienne cle de l'admin, pour ne deconnecter personne dans Chrome.
+const ANCIENNE_CLE_ADMIN = "sb-huikxujxsklboejkbnda-auth-token";
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  import.meta.env.VITE_SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: "carrybooks-auth",
+      storage: {
+        getItem: async (key) => {
+          let v = null;
+          try { const { value } = await Preferences.get({ key }); v = value; } catch (e) {}
+          if (!v) { try { v = localStorage.getItem(key); } catch (e) {} }
+          if (!v) { try { v = localStorage.getItem(ANCIENNE_CLE_ADMIN); } catch (e) {} }
+          return v || null;
+        },
+        setItem: async (key, value) => {
+          try { await Preferences.set({ key, value }); } catch (e) {}
+          try { localStorage.setItem(key, value); } catch (e) {}
+        },
+        removeItem: async (key) => {
+          try { await Preferences.remove({ key }); } catch (e) {}
+          try { localStorage.removeItem(key); localStorage.removeItem(ANCIENNE_CLE_ADMIN); } catch (e) {}
+        },
+      },
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: "implicit",
+    }
+  }
 );
 
 // 28/10 : les images (couvertures, logos, annonces, ateliers, support) vont dans le stockage Supabase
