@@ -14174,6 +14174,23 @@ function ReclamerLivre({ G, setPage }) {
 // COMPOSANT : Page Statistiques PWA (Admin)
 // ============================================
 
+// 01/11 : video « Comment installer CarryBooks » (accueil, au-dessus des Nouveautes).
+// Image d'apercu + bouton de lecture transparent au centre ; un appui lance la video.
+function VideoInstallCB() {
+  const [lecture, setLecture] = useState(false);
+  const box = { width: "100%", aspectRatio: "16 / 9", display: "block", borderRadius: 10, background: "#000", boxShadow: "0 3px 10px rgba(0,0,0,0.25)" };
+  if (lecture) {
+    return <video src="/videos/installer-carrybooks.mp4" poster="/videos/installer-carrybooks.jpg" controls autoPlay playsInline style={box} />;
+  }
+  return (
+    <div onClick={() => setLecture(true)} role="button" aria-label="Regarder la video" style={{ ...box, position: "relative", cursor: "pointer", overflow: "hidden", backgroundImage: "url(/videos/installer-carrybooks.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}>
+      <div style={{ position: "absolute", left: "50%", top: "50%", width: 48, height: 48, marginLeft: -24, marginTop: -24, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "2px solid rgba(255,255,255,0.75)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
+        <div style={{ width: 0, height: 0, borderLeft: "15px solid rgba(255,255,255,0.95)", borderTop: "9px solid transparent", borderBottom: "9px solid transparent", marginLeft: 4 }} />
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
   const [CATEGORIES, setCATEGORIES] = useState(EST_HOMOROMANCE ? {} : CATEGORIES_FALLBACK);
@@ -24748,6 +24765,13 @@ export default function App() {
                   </div>
                 )}
 
+
+                {/* 01/11 : video « Comment installer CarryBooks », juste au-dessus des Nouveautes (sans titre). Absente de HomoRomance. */}
+                {!EST_HOMOROMANCE && (
+                  <div style={{ padding: "18px 10px 0", marginBottom: 18 }}>
+                    <VideoInstallCB />
+                  </div>
+                )}
 
                 {(() => {
                   // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
