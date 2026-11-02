@@ -3453,7 +3453,8 @@ function QuizResult({ quiz, result, setQuizPage, G, setActiveQuiz, setQuizAnswer
 // ─── LIBRARY PAGE COMPONENT ───
 function LibraryPage({ books, purchasedBooks, purchaseHistory, startReading, setPage, G, recoveredPurchases, onDismissRecovered, user, lecteur, onRecoverLecteur, onPurchasesRecovered, onDownload, retour }) {
   const [libTab, setLibTab] = useState("books"); // "books" | "history"
-  const myBooks = books.filter(b => purchasedBooks.some(id => String(id) === String(b.id)));
+  // 02/11 : purchasedBooks contient aussi les livres des packs achetes ; le pack lui-meme n'est pas un livre a lire.
+  const myBooks = books.filter(b => b.product_type !== "pack" && purchasedBooks.some(id => String(id) === String(b.id)));
 
   // 🆕 État pour le modal de récupération des achats invités
   const [showRecoverModal, setShowRecoverModal] = useState(false);
@@ -13845,6 +13846,7 @@ const titresLivres = (arr) => (arr || []).map(b => (b && b.product_type !== "art
 // Autre livre : "Livre PDF à lire" (non telechargeable) ou "Livre PDF à télécharger".
 // Audio, papier, formation : aucun libelle (non demande).
 function libelleTypeLivre(book) {
+  if (book && book.product_type === "pack") return "📦 Pack de " + ((book.pack_livres || []).length || 2) + " livres";
   if (EST_HOMOROMANCE) return "Roman texte à lire"; // tout HomoRomance = romans texte
   if (!book || book.audio_url) return "";
   if (book.product_type === "papier" || book.product_type === "article" || book.product_type === "formation") return "";
@@ -14272,6 +14274,14 @@ export default function App() {
   const [bookRatings, setBookRatings] = useState({}); // { bookId: { avg, count, userRating } }
   const [topPurchasedBooks, setTopPurchasedBooks] = useState([]); // Best-sellers
   const [annoncesActives, setAnnoncesActives] = useState([]);
+  // 02/11 : PACKS DE LIVRES. Tous les packs (meme masques : un pack deja achete doit
+  // continuer a donner ses livres dans la bibliotheque). L'affichage filtre ensuite.
+  const [packsAll, setPacksAll] = useState([]);
+  useEffect(() => {
+    if (EST_HOMOROMANCE) return;
+    supabase.from("books").select("id, title, author, auteur_id, price, original_price, cover, summary, pack_livres, status, masque, exclusif_vitrine, product_type, category, can_read, can_download")
+      .eq("product_type", "pack").then(({ data }) => setPacksAll(data || []));
+  }, []);
 
   // 09/10 : PROCHAINES SORTIES. Remplace "Explore par categorie" sur l'accueil.
   // Une couverture, un resume, une date. La couverture disparait le jour de la sortie.
@@ -15280,6 +15290,53 @@ export default function App() {
     const res = await fetch("/api/auteur-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, id: auteurProfil.id }) });
     return await res.json().catch(() => ({}));
   };
+  // ===== 02/11 : PACKS DE LIVRES (espace auteur) =====
+  const [mesPacks, setMesPacks] = useState([]);
+  const [packForm, setPackForm] = useState(null); // null = liste ; objet = formulaire ouvert
+  const [packMsg, setPackMsg] = useState("");
+  const [packBusy, setPackBusy] = useState(false);
+  const chargerMesPacks = async () => {
+    if (!auteurProfil || !auteurProfil.id) return;
+    try {
+      const { data } = await supabase.from("books").select("id, title, price, original_price, cover, summary, pack_livres, masque, status, exclusif_vitrine")
+        .eq("product_type", "pack").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
+      setMesPacks((data || []).filter(p => !p.masque));
+    } catch (e) { setMesPacks([]); }
+  };
+  const livresPourPack = () => (mesLivres || []).filter(b => b.status === "actif" && Number(b.price) > 0 && b.product_type !== "pack" && b.product_type !== "formation" && !b.masque);
+  const ouvrirPack = (p) => {
+    setPackMsg("");
+    setPackForm(p ? { id: p.id, titre: p.title || "", prix: String(p.price || ""), resume: p.summary || "", livres: (p.pack_livres || []).map(Number) }
+                  : { id: null, titre: "", prix: "", resume: "", livres: [] });
+    try { window.scrollTo(0, 0); } catch (e) {}
+  };
+  const enregistrerPack = async () => {
+    if (!packForm) return;
+    const choisis = livresPourPack().filter(b => packForm.livres.includes(Number(b.id)));
+    const total = choisis.reduce((t, b) => t + Number(b.price || 0), 0);
+    const prix = parseInt(packForm.prix, 10) || 0;
+    if (!packForm.titre.trim()) { setPackMsg("❌ Donne un titre à ton pack."); return; }
+    if (choisis.length < 2) { setPackMsg("❌ Choisis au moins 2 livres."); return; }
+    if (prix < 2000) { setPackMsg("❌ Le prix d'un pack est d'au moins 2 000 F."); return; }
+    if (prix >= total) { setPackMsg("❌ Le prix du pack doit être inférieur au total des livres (" + total.toLocaleString("fr-FR") + " F)."); return; }
+    setPackBusy(true); setPackMsg("");
+    try {
+      const d = await appelAnnonce({ action: "pack_enregistrer", pack_id: packForm.id || 0, titre: packForm.titre.trim(), prix, resume: packForm.resume.trim(), livres: choisis.map(b => Number(b.id)) });
+      if (d && d.ok) { setPackForm(null); setPackMsg("✅ Pack enregistré."); await chargerMesPacks(); }
+      else setPackMsg("❌ " + ((d && d.error) || "Enregistrement impossible. Réessaie."));
+    } catch (e) { setPackMsg("❌ Erreur réseau. Réessaie."); }
+    setPackBusy(false);
+  };
+  const retirerPack = async (p) => {
+    if (!window.confirm("Retirer le pack « " + p.title + " » de la vente ?\n\nLes lecteurs qui l'ont déjà acheté gardent leurs livres.")) return;
+    setPackBusy(true); setPackMsg("");
+    try {
+      const d = await appelAnnonce({ action: "pack_supprimer", pack_id: p.id });
+      if (d && d.ok) { setPackMsg(d.masque ? "✅ Pack retiré de la vente (déjà acheté " + d.vendus + " fois : les acheteurs gardent leurs livres)." : "✅ Pack supprimé."); await chargerMesPacks(); }
+      else setPackMsg("❌ " + ((d && d.error) || "Impossible de retirer ce pack."));
+    } catch (e) { setPackMsg("❌ Erreur réseau. Réessaie."); }
+    setPackBusy(false);
+  };
   const chargerMesAnnonces = async () => {
     if (!auteurProfil || !auteurProfil.id) return;
     setMesAnnoncesLoading(true);
@@ -15520,7 +15577,7 @@ export default function App() {
         (cats || []).forEach(cc => { obj[cc.name] = (subs || []).filter(s => s.category_id === cc.id).map(s => s.name); });
         setPubCats(obj);
         const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
-        setMesLivres(livres || []);
+        setMesLivres((livres || []).filter(b => b.product_type !== "pack"));
       } catch (e) {} finally { setMesLivresLoading(false); }
     })();
   }, [auteurProfil]);
@@ -15867,6 +15924,7 @@ export default function App() {
   const exigerConnexion = () => { if (!lecteur && !user) { setShowLecteurModal(true); return false; } return true; };
   useEffect(() => { if (page === "library" && !lecteur && !user) setShowLecteurModal(true); }, [page, lecteur, user]);
   useEffect(() => { if (auteurTab === "support" && auteurProfil) chargerSupport(); }, [auteurTab, auteurProfil]);
+  useEffect(() => { if (auteurTab === "packs" && auteurProfil) { chargerMesPacks(); setPackForm(null); setPackMsg(""); } }, [auteurTab, auteurProfil]);
   useEffect(() => { if (auteurTab === "tutobook" && auteurProfil) chargerTutos(); }, [auteurTab, auteurProfil]);
   // Précharge l'admin en arrière-plan (pour Landrine) → ouverture quasi instantanée depuis la 2e rangée
   useEffect(() => {
@@ -17014,6 +17072,7 @@ export default function App() {
       const booksPromise = supabase.from("books").select(lightColumns)
         .eq("status", "actif")
         .neq("product_type", "article")
+        .neq("product_type", "pack") // 02/11 : les packs ont leur propre rangee (chantier packs)
         .order("created_at", { ascending: false })
         .range(0, 999);
       const { data: booksData } = await Promise.race([booksPromise, timeoutBooks]);
@@ -17027,7 +17086,7 @@ export default function App() {
       if (cached) {
         try {
           const all = JSON.parse(cached);
-          setBooks(titresLivres(all.filter(b => b.product_type !== "article")));
+          setBooks(titresLivres(all.filter(b => b.product_type !== "article" && b.product_type !== "pack")));
         } catch (err) {}
       }
       setLoading(false);
@@ -17212,19 +17271,60 @@ export default function App() {
     }
   }
 
+  // 02/11 : livres possedes = achats directs + livres des packs achetes
+  const idsPossedes = (() => {
+    const ach = new Set((purchasedBooks || []).map(x => String(x)));
+    (packsAll || []).forEach(pk => { if (ach.has(String(pk.id))) (pk.pack_livres || []).forEach(i => ach.add(String(i))); });
+    return ach;
+  })();
+  const packVisible = (pk) => pk && pk.status === "actif" && !pk.masque;
+  const livresDuPack = (pk) => ((pk && pk.pack_livres) || []).map(i => books.find(b => String(b.id) === String(i))).filter(Boolean);
+  const couverturePack = (pk) => {
+    const couv = livresDuPack(pk).map(b => b.cover).filter(Boolean).slice(0, 4);
+    if (couv.length === 0 && pk.cover) couv.push(pk.cover);
+    const n = couv.length;
+    return (
+      <div style={{ width: "100%", aspectRatio: "2 / 3", position: "relative", isolation: "isolate" }}>
+        {couv.map((c, k) => (
+          <img key={k} onError={imageSecours} src={c} loading="lazy" decoding="async" alt="" style={{ position: "absolute", top: (k * (n > 1 ? 18 / (n - 1) : 0)) + "%", left: (k * (n > 1 ? 30 / (n - 1) : 0)) + "%", width: "70%", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 8, boxShadow: "0 6px 18px rgba(0,0,0,0.45)", zIndex: k + 1 }} />
+        ))}
+      </div>
+    );
+  };
+  const cartePack = (pk, largeur) => {
+    const lv = livresDuPack(pk);
+    const couv = lv.map(b => b.cover).filter(Boolean).slice(0, 3);
+    if (couv.length === 0 && pk.cover) couv.push(pk.cover);
+    const total = Number(pk.original_price) || lv.reduce((t, b) => t + Number(b.price || 0), 0);
+    const remise = total > pk.price ? Math.round((1 - pk.price / total) * 100) : 0;
+    return (
+      <div key={"pack" + pk.id} onClick={() => openBook(pk)} style={{ flexShrink: 0, width: largeur || "44vw", maxWidth: 190, cursor: "pointer" }}>
+        <div style={{ width: "100%", aspectRatio: "130 / 150", background: "linear-gradient(135deg, " + G.surface + ", " + G.surface2 + ")", border: "1px solid " + G.border, borderRadius: 8, position: "relative", overflow: "hidden", marginBottom: 6, isolation: "isolate" }}>
+          {couv.map((c, k) => (
+            <img key={k} onError={imageSecours} src={c} loading="lazy" decoding="async" alt="" style={{ position: "absolute", top: "17%", left: (5 + k * (couv.length > 1 ? 43 / (couv.length - 1) : 0)) + "%", width: "52%", aspectRatio: "110 / 155", objectFit: "cover", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.35)", transform: "rotate(" + ((k - (couv.length - 1) / 2) * 8) + "deg)", zIndex: k + 1 }} />
+          ))}
+          <div style={{ position: "absolute", top: 6, left: 6, zIndex: 10, background: G.gold, color: "#fff", fontSize: 10, fontWeight: "bold", padding: "2px 8px", borderRadius: 10 }}>📦 Pack {(pk.pack_livres || []).length} livres</div>
+          {remise > 0 && <div style={{ position: "absolute", bottom: 6, right: 6, zIndex: 10, background: "#dc2626", color: "#fff", fontSize: 11, fontWeight: "bold", padding: "2px 7px", borderRadius: 10 }}>-{remise} %</div>}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: "bold", color: G.text, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{pk.title}</div>
+        <div style={{ fontSize: 12, marginTop: 2 }}><b style={{ color: G.prix || G.gold }}>{Number(pk.price).toLocaleString("fr-FR")} F</b>{total > pk.price ? <span style={{ color: G.textFaint, textDecoration: "line-through", marginLeft: 5, fontSize: 11 }}>{total.toLocaleString("fr-FR")} F</span> : null}</div>
+      </div>
+    );
+  };
   function hasAccess(book) {
     // Accès total pour l'admin (Landrine) : peut tout lire sans payer
     if ((auteurProfil && auteurProfil.id === 8) || estAdmin(user)) return true;
     // L'auteur peut lire gratuitement SES propres livres
     if (auteurProfil && book.auteur_id && String(book.auteur_id) === String(auteurProfil.id)) return true;
     if (book.price === 0) return true;
-    if (purchasedBooks.some(x => String(x) === String(book.id))) return true;
+    if (idsPossedes.has(String(book.id))) return true;
     return false;
   }
 
   // L'abonné peut-il utiliser son abonnement pour débloquer ce livre ?
   function canUseSubscriptionFor(book) {
     if (!subscription || subscription.status !== "actif") return false;
+    if (book && book.product_type === "pack") return false; // 02/11 : un pack ne se debloque pas avec 1 credit d'abonnement
     if (book.price === 0 || purchasedBooks.some(x => String(x) === String(book.id))) return false;
     if (book.exclude_from_subscription === true) return false; // Livre exclu de l'abonnement
     if (book.pdf_url || book.audio_url) return false; // abonnement = romans (liseuse) uniquement
@@ -17984,6 +18084,11 @@ export default function App() {
   }
 
   async function startReading(book, excerpt = false) {
+    // 02/11 : un pack n'a pas de texte. Achete -> on ouvre la bibliotheque, ou ses livres apparaissent.
+    if (book && book.product_type === "pack") {
+      if (excerpt) return;
+      if (hasAccess(book)) { setPage("library"); try { window.scrollTo(0, 0); } catch (e) {} return; }
+    }
     const bookToRead = (!isOnline && cachedBooks[book.id]) ? cachedBooks[book.id] : book;
     if (!excerpt && book && book.id) { try { const lus = JSON.parse(sessionStorage.getItem("livresLus") || "[]"); if (!lus.includes(book.id)) { lus.push(book.id); sessionStorage.setItem("livresLus", JSON.stringify(lus)); supabase.rpc("incrementer_vente", { p_book_id: book.id }); setSelectedBook(b => (b && b.id === book.id) ? { ...b, nb_ventes: (b.nb_ventes || 0) + 1 } : b); } } catch (e) {} }
     if (!excerpt && !hasAccess(bookToRead)) {
@@ -19401,7 +19506,7 @@ export default function App() {
       setMesLivresDetail(null);
       setPubMsg("🗑️ Livre supprimé.");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
-      setMesLivres(livres || []);
+      setMesLivres((livres || []).filter(b => b.product_type !== "pack"));
     } catch (e) { alert("Erreur lors de la suppression : " + (e.message || e)); }
   }
 
@@ -19543,7 +19648,7 @@ export default function App() {
       setPubDraftMsg("💾 Enregistré à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + " — en cours d'édition");
       if (!silent) setPubMsg("✅ Enregistré. Tu le retrouveras dans « Mes livres » → « En cours d'édition » pour continuer plus tard.");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
-      setMesLivres(livres || []);
+      setMesLivres((livres || []).filter(b => b.product_type !== "pack"));
     } catch (e) { if (!silent) setPubMsg("❌ " + (e.message || e)); }
     setPubSavingDraft(false);
   }
@@ -19681,7 +19786,7 @@ export default function App() {
       setFmForm({ title: "", category: "", subcategory: "", price: "", cover: "", contenu: "" });
       setFmLiens([]); setPubEditId(null);
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
-      setMesLivres(livres || []);
+      setMesLivres((livres || []).filter(b => b.product_type !== "pack"));
     } catch (e) { setFmMsg("❌ " + (e.message || e)); }
     setFmSaving(false);
   }
@@ -19768,7 +19873,7 @@ export default function App() {
       setPubEditId(null);
       setPubOpen(false); setPubTypeSelected(null); setPubDraftMsg(""); setAuteurTab("meslivres");
       const { data: livres } = await supabase.from("books").select("id,title,cover,status,moderation,motif_refus,price,category,subcategory,summary,extract_pages,content,pdf_url,audio_url,exclusif_vitrine,product_type,formation_contenu").or(filtreMesLivres(auteurProfil)).order("id", { ascending: false });
-      setMesLivres(livres || []);
+      setMesLivres((livres || []).filter(b => b.product_type !== "pack"));
     } catch (e) { setPubMsg("❌ " + (e.message || e)); }
     setPubSaving(false);
   }
@@ -19780,7 +19885,7 @@ export default function App() {
     (async () => {
       setBoutiqueLoading(true);
       try {
-        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").order("id", { ascending: false });
+        const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url,author_ville,author_photo,masque").eq("author", boutiqueNom).eq("status", "actif").or("product_type.is.null,product_type.neq.pack").order("id", { ascending: false });
         if (!cancel) setBoutiqueBooks((livres || []).filter(b => !b.masque));
       } catch (e) { if (!cancel) setBoutiqueBooks([]); }
       if (!cancel) setBoutiqueLoading(false);
@@ -19809,7 +19914,7 @@ export default function App() {
           if (tc && a && a.couleur) tc.setAttribute("content", a.couleur);
         } catch (e2) {}
         if (a) {
-          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("status", "actif").or(a.id === 8 ? "auteur_id.eq.8,author.ilike.%Johanna Morisson%" : "auteur_id.eq." + a.id).order("id", { ascending: false });
+          const { data: livres } = await supabase.from("books").select("id,title,cover,price,category,subcategory,summary,status,product_type,extract_pages,pdf_url,excerpt_pdf_url,can_read,can_download,author,audio_url").eq("status", "actif").or(a.id === 8 ? "auteur_id.eq.8,author.ilike.%Johanna Morisson%" : "auteur_id.eq." + a.id).or("product_type.is.null,product_type.neq.pack").order("id", { ascending: false });
           // 24/10 : la vitrine de Landrine montre AUSSI les romans Johanna Morisson (categorie HomoRomance), memes liens /livre/<titre>?src=<code>.
           if (!cancel) setBoutiqueBooks(livres || []);
         } else if (!cancel) { setBoutiqueBooks([]); }
@@ -20195,7 +20300,7 @@ export default function App() {
                   ) : (
                     <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
                       style={{ width: "100%", padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: G.boutonTexte, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                      📖 Lire maintenant
+                      {paymentBook.product_type === "pack" ? "📚 Voir mes livres dans ma bibliothèque" : "📖 Lire maintenant"}
                     </button>
                   )}
                 </div>
@@ -20485,6 +20590,20 @@ export default function App() {
                 </div>
               ) : (
                 <>
+                  {/* 02/11 : PACKS DE L'AUTEUR, en haut de la vitrine */}
+                  {(() => {
+                    const liste = packsAll.filter(pk => packVisible(pk) && boutiqueAuteur && (String(pk.auteur_id) === String(boutiqueAuteur.id) || livresDuPack(pk).some(b => String(b.auteur_id) === String(boutiqueAuteur.id))) && livresDuPack(pk).length >= 2);
+                    if (liste.length === 0) return null;
+                    return (
+                      <div style={{ marginBottom: 26 }}>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📦 Packs</div>
+                        <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4 }}>
+                          {liste.map(pk => cartePack(pk))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* ===== NOUVEAUTES ===== */}
                   {bqBooks.length >= 4 && (
                     <div style={{ marginBottom: 26 }}>
@@ -21386,6 +21505,7 @@ export default function App() {
                 <div>
                 <div style={{ background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📚 Mes livres</div>
+                  {!EST_HOMOROMANCE && <button onClick={() => setAuteurTab("packs")} style={{ width: "100%", padding: "10px 12px", marginBottom: 12, borderRadius: 10, border: "1px dashed " + G.gold, background: G.goldDim, color: G.text, fontSize: 13, fontWeight: "bold", cursor: "pointer", textAlign: "left" }}>📦 Mes packs : vends plusieurs livres ensemble à prix réduit →</button>}
                   {mesLivres.filter(b => b.moderation === "refuse").length > 0 && (
                     <div onClick={() => setMesLivresTab("refuse")} style={{ background: "#fdecea", border: "1px solid #e53935", borderRadius: 10, padding: 12, marginBottom: 12, cursor: "pointer" }}>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: "#c62828", marginBottom: 4 }}>❌ {mesLivres.filter(b => b.moderation === "refuse").length} livre(s) refusé(s)</div>
@@ -21478,6 +21598,90 @@ export default function App() {
                 </div>
               )}
               {/* VENTES */}
+              {/* 02/11 : PACKS DE LIVRES */}
+              {auteurTab === "packs" && (() => {
+                const dispo = livresPourPack();
+                const carte = { background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 };
+                if (packForm) {
+                  const choisis = dispo.filter(b => packForm.livres.includes(Number(b.id)));
+                  const total = choisis.reduce((t, b) => t + Number(b.price || 0), 0);
+                  const prix = parseInt(packForm.prix, 10) || 0;
+                  const basculer = (id) => setPackForm(f => ({ ...f, livres: f.livres.includes(id) ? f.livres.filter(x => x !== id) : [...f.livres, id] }));
+                  return (
+                    <div style={carte}>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📦 {packForm.id ? "Modifier le pack" : "Créer un pack"}</div>
+                      <label style={labelSt}>Titre du pack</label>
+                      <input value={packForm.titre} onChange={e => setPackForm(f => ({ ...f, titre: e.target.value }))} placeholder="Ex : Pack Amour – 3 romans" style={champ} />
+                      <div style={{ height: 12 }} />
+                      <label style={labelSt}>Choisis au moins 2 livres ({choisis.length} choisi{choisis.length > 1 ? "s" : ""})</label>
+                      {dispo.length < 2 ? (
+                        <div style={{ fontSize: 13, color: G.textDim, lineHeight: 1.5, padding: "8px 0" }}>Il faut au moins 2 livres payants déjà en ligne pour créer un pack.</div>
+                      ) : (
+                        <div style={{ display: "grid", gap: 8, marginBottom: 6 }}>
+                          {dispo.map(b => {
+                            const on = packForm.livres.includes(Number(b.id));
+                            return (
+                              <div key={b.id} onClick={() => basculer(Number(b.id))} style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 8, cursor: "pointer", border: "2px solid " + (on ? G.gold : G.border), background: on ? G.goldDim : "transparent" }}>
+                                <div style={{ width: 22, height: 22, borderRadius: 5, border: "2px solid " + (on ? G.gold : G.border), background: on ? G.gold : "transparent", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{on ? "✓" : ""}</div>
+                                {b.cover ? <img loading="lazy" decoding="async" onError={imageSecours} src={b.cover} alt="" style={{ width: 34, height: 48, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} /> : null}
+                                <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: G.text, lineHeight: 1.3 }}>{b.title}</div>
+                                <div style={{ fontSize: 12, fontWeight: "bold", color: G.gold, whiteSpace: "nowrap" }}>{Number(b.price).toLocaleString("fr-FR")} F</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 13, color: G.textDim, margin: "8px 0 12px" }}>Total des livres achetés séparément : <b style={{ color: G.text }}>{total.toLocaleString("fr-FR")} F</b></div>
+                      <label style={labelSt}>Prix du pack (en F)</label>
+                      <input type="number" inputMode="numeric" value={packForm.prix} onChange={e => setPackForm(f => ({ ...f, prix: e.target.value }))} placeholder="Au moins 2 000" style={champ} />
+                      {total > 0 && prix > 0 && (
+                        prix >= 2000 && prix < total
+                          ? <div style={{ fontSize: 13, color: G.green, marginTop: 6 }}>✅ Le lecteur économise {(total - prix).toLocaleString("fr-FR")} F (-{Math.round((1 - prix / total) * 100)} %).</div>
+                          : <div style={{ fontSize: 13, color: "#c62828", marginTop: 6 }}>Le prix doit être d'au moins 2 000 F et inférieur à {total.toLocaleString("fr-FR")} F.</div>
+                      )}
+                      <div style={{ height: 12 }} />
+                      <label style={labelSt}>Présentation du pack (facultatif)</label>
+                      <textarea value={packForm.resume} onChange={e => setPackForm(f => ({ ...f, resume: e.target.value }))} rows={4} placeholder="Pourquoi lire ces livres ensemble ?" style={{ ...champ, resize: "vertical", fontFamily: "inherit" }} />
+                      <div style={{ fontSize: 11, color: G.textDim, margin: "6px 0 14px", lineHeight: 1.5 }}>La couverture du pack montre les couvertures de ses livres. Tu touches ta part habituelle sur le prix du pack : 85 % quand l'achat vient de ton lien, 50 % sinon.</div>
+                      {packMsg && <div style={{ fontSize: 13, marginBottom: 10, color: packMsg.startsWith("✅") ? G.green : "#c62828" }}>{packMsg}</div>}
+                      <button onClick={enregistrerPack} disabled={packBusy} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer", opacity: packBusy ? 0.6 : 1 }}>{packBusy ? "Enregistrement…" : "💾 Enregistrer le pack"}</button>
+                      <button onClick={() => { setPackForm(null); setPackMsg(""); }} style={{ width: "100%", padding: 10, background: "none", border: "none", color: G.textDim, cursor: "pointer", fontSize: 13, marginTop: 6 }}>Annuler</button>
+                    </div>
+                  );
+                }
+                return (
+                  <div>
+                    <div style={carte}>
+                      <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 6 }}>📦 Mes packs</div>
+                      <div style={{ fontSize: 13, color: G.textDim, lineHeight: 1.55, marginBottom: 12 }}>Vends plusieurs de tes livres ensemble, à un prix plus bas que s'ils étaient achetés un par un. Le lecteur paie une seule fois et reçoit tous les livres du pack dans sa bibliothèque.</div>
+                      <button onClick={() => ouvrirPack(null)} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Créer un pack</button>
+                    </div>
+                    {packMsg && <div style={{ fontSize: 13, marginBottom: 12, color: packMsg.startsWith("✅") ? G.green : "#c62828" }}>{packMsg}</div>}
+                    {mesPacks.length === 0 ? (
+                      <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: 20 }}>Tu n'as pas encore de pack.</div>
+                    ) : mesPacks.map(p => {
+                      const ids = (p.pack_livres || []).map(Number);
+                      const couv = ids.map(i => (mesLivres.find(b => Number(b.id) === i) || {}).cover).filter(Boolean).slice(0, 3);
+                      return (
+                        <div key={p.id} style={{ ...carte, display: "flex", gap: 12, alignItems: "center" }}>
+                          <div style={{ position: "relative", width: 70, height: 80, flexShrink: 0 }}>
+                            {couv.map((c, k) => <img key={k} loading="lazy" decoding="async" onError={imageSecours} src={c} alt="" style={{ position: "absolute", left: k * 14, top: k * 4, width: 42, height: 60, objectFit: "cover", borderRadius: 3, boxShadow: "0 2px 6px rgba(0,0,0,0.3)", transform: "rotate(" + ((k - 1) * 6) + "deg)" }} />)}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: "bold", color: G.text, lineHeight: 1.3 }}>{p.title}</div>
+                            <div style={{ fontSize: 12, color: G.textDim, margin: "3px 0" }}>{ids.length} livres{p.exclusif_vitrine ? " · vitrine seule" : ""}</div>
+                            <div style={{ fontSize: 13 }}><b style={{ color: G.gold }}>{Number(p.price).toLocaleString("fr-FR")} F</b>{p.original_price ? <span style={{ color: G.textDim, textDecoration: "line-through", marginLeft: 6 }}>{Number(p.original_price).toLocaleString("fr-FR")} F</span> : null}</div>
+                            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                              <button onClick={() => ouvrirPack(p)} disabled={packBusy} style={{ flex: 1, padding: 8, borderRadius: 8, border: "1px solid " + G.gold, background: "none", color: G.gold, fontWeight: "bold", fontSize: 12, cursor: "pointer" }}>✏️ Modifier</button>
+                              <button onClick={() => retirerPack(p)} disabled={packBusy} style={{ flex: 1, padding: 8, borderRadius: 8, border: "1px solid #c62828", background: "none", color: "#c62828", fontWeight: "bold", fontSize: 12, cursor: "pointer" }}>🗑 Retirer</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
               {auteurTab === "ventes" && (() => {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
                 const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
@@ -22187,6 +22391,7 @@ export default function App() {
                 <div style={{ fontSize: 11, color: G.textDim }}>Espace auteur {SITE_NOM}</div>
               </div>
               <div style={{ padding: "4px 12px", overflowY: "auto", flex: 1 }}>
+{!EST_HOMOROMANCE && (            <button onClick={() => { setAuteurTab("packs"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "packs" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "packs" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>📦</span> Mes packs</button>)}
 {!EST_HOMOROMANCE && (            <button onClick={() => { setAuteurTab("vitrine"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "vitrine" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "vitrine" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🏪</span> Ma vitrine</button>)}
             <button onClick={() => { setAuteurTab("integration"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "integration" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "integration" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>🔌</span> Intégrations</button>
             <button onClick={() => { setAuteurTab("parametres"); setAuteurMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 8px", background: auteurTab === "parametres" ? G.goldDim : "none", border: "none", borderBottom: "1px solid " + G.navBorder, color: auteurTab === "parametres" ? G.gold : G.text, fontSize: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 18 }}>⚙️</span> Paramètres</button>
@@ -23365,7 +23570,7 @@ export default function App() {
               {/* 13/10 : fiche livre HomoRomance. Couverture a gauche, infos a droite, resume replie. */}
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 22 }}>
                 <div style={{ flex: "0 0 40%", maxWidth: 200 }}>
-                  {book.cover
+                  {book.product_type === "pack" ? couverturePack(book) : book.cover
                     ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: "100%", display: "block", borderRadius: 14, boxShadow: "0 10px 30px rgba(0,0,0,0.6)" }} />
                     : <div style={{ width: "100%", aspectRatio: "2 / 3", background: G.surface2, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
                 </div>
@@ -23423,7 +23628,7 @@ export default function App() {
           ) : (
             <>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-            {book.cover
+            {book.product_type === "pack" ? <div style={{ width: 170 }}>{couverturePack(book)}</div> : book.cover
               ? <img onError={imageSecours} src={book.cover} loading="lazy" decoding="async" alt={book.title} style={{ width: 160, borderRadius: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }} />
               : <div style={{ width: 160, height: 226, background: G.surface2, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📖</div>}
           </div>
@@ -23505,8 +23710,32 @@ export default function App() {
 
             </>
           )}
+          {/* 02/11 : CONTENU DU PACK */}
+          {book.product_type === "pack" && (() => {
+            const lv = livresDuPack(book);
+            return (
+              <div style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 14, background: EST_HOMOROMANCE ? G.carte : "#fff", textAlign: "left" }}>
+                <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📦 Ce pack contient {lv.length} livres</div>
+                {lv.map(b => (
+                  <div key={b.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderTop: "1px solid " + G.border }}>
+                    <div onClick={() => openBook(b)} style={{ width: 46, flexShrink: 0, cursor: "pointer" }}>
+                      {b.cover ? <img onError={imageSecours} src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 46, height: 64, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 46, height: 64, background: G.surface, borderRadius: 4 }} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div onClick={() => openBook(b)} style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, cursor: "pointer" }}>{b.title}</div>
+                      <div style={{ fontSize: 11, color: G.textFaint, marginTop: 2 }}>{libelleTypeLivre(b)}{Number(b.price) > 0 ? " · seul : " + Number(b.price).toLocaleString("fr-FR") + " F" : ""}</div>
+                    </div>
+                    <button onClick={() => startReading(b, true)} style={{ flexShrink: 0, padding: "7px 10px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>{b.audio_url ? "🎧 Extrait" : "📄 Extrait"}</button>
+                  </div>
+                ))}
+                {Number(book.original_price) > Number(book.price) && (
+                  <div style={{ fontSize: 13, color: G.green, fontWeight: "bold", marginTop: 8 }}>✅ Tu économises {(Number(book.original_price) - Number(book.price)).toLocaleString("fr-FR")} F par rapport à l'achat des livres un par un.</div>
+                )}
+              </div>
+            );
+          })()}
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-            {!isArticle(book) && (
+            {!isArticle(book) && book.product_type !== "pack" && (
               <button onClick={() => startReading(book, true)}
                 style={{ flex: 1, padding: "12px 8px", background: "none", border: "1.5px solid " + G.gold, borderRadius: 6, color: G.gold, cursor: "pointer", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: "bold" }}>
                 {book.audio_url ? "🎧 Extrait" : "📄 Extrait"}
@@ -23546,9 +23775,25 @@ export default function App() {
             <button
               onClick={() => startReading(book)}
               style={FICHE_STYLE_HR ? { width: "100%", padding: "16px 15px", background: G.bouton, border: "2px solid #ffffff66", borderRadius: 999, color: EST_HOMOROMANCE ? "#fff" : G.boutonTexte, cursor: "pointer", fontSize: 16, fontWeight: 700, fontFamily: "system-ui, sans-serif", boxShadow: EST_HOMOROMANCE ? "0 8px 22px rgba(46,1,56,0.6)" : "0 8px 22px rgba(0,0,0,0.25)" } : { width: "100%", padding: 15, background: G.bouton, border: "none", borderRadius: 6, color: G.boutonTexte, cursor: "pointer", fontSize: 14, letterSpacing: 2, textTransform: "uppercase", fontWeight: "bold" }}>
-              {owned || free ? (book.audio_url ? "🎧 Écouter maintenant" : "📖 Lire maintenant") : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.audio_url ? "🎧 Écouter — " : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ")) + book.price?.toLocaleString() + " FCFA"}
+              {book.product_type === "pack" ? (owned ? "📚 Voir les livres du pack dans ma bibliothèque" : "🛒 Acheter le pack – " + Number(book.price).toLocaleString("fr-FR") + " F") : owned || free ? (book.audio_url ? "🎧 Écouter maintenant" : "📖 Lire maintenant") : (subscription && subscription.status === "actif" && booksLeftThisMonth() > 0 && book.exclude_from_subscription !== true) ? "✨ Débloquer avec mon abonnement" : (book.audio_url ? "🎧 Écouter — " : (((/^roman/i.test(book.category || "") || book.category === "Saga") || !book.pdf_url || book.can_download === false) ? "📖 Lire — " : "📥 Télécharger — ")) + book.price?.toLocaleString() + " FCFA"}
             </button>
           )}
+
+          {/* 02/11 : ce livre fait partie d'un pack ? */}
+          {book.product_type !== "pack" && !owned && (() => {
+            const pk = packsAll.find(x => packVisible(x) && (x.pack_livres || []).map(String).includes(String(book.id)) && (!x.exclusif_vitrine || enVitrine) && livresDuPack(x).length >= 2);
+            if (!pk) return null;
+            const total = Number(pk.original_price) || 0;
+            return (
+              <div onClick={() => openBook(pk)} style={{ marginTop: 12, padding: 12, borderRadius: 10, border: "1.5px dashed " + G.gold, background: G.goldDim, cursor: "pointer", display: "flex", gap: 10, alignItems: "center" }}>
+                <div style={{ fontSize: 26 }}>📦</div>
+                <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: G.text, lineHeight: 1.45 }}>
+                  Aussi disponible dans le pack <b>« {pk.title} »</b> : {(pk.pack_livres || []).length} livres pour <b style={{ color: G.gold }}>{Number(pk.price).toLocaleString("fr-FR")} F</b>{total > pk.price ? <> au lieu de <span style={{ textDecoration: "line-through" }}>{total.toLocaleString("fr-FR")} F</span></> : null}.
+                </div>
+                <div style={{ color: G.gold, fontWeight: "bold" }}>→</div>
+              </div>
+            );
+          })()}
 
           {/* BOUTON ACHETER (livre papier OU article divers) */}
           {(() => {
@@ -24205,7 +24450,7 @@ export default function App() {
                   ) : (
                     <button onClick={() => { setShowPayment(false); setPaymentStep(1); setPaymentMethod(null); setPhoneNumber(""); startReading(paymentBook); }}
                       style={{ width: "100%", padding: 14, background: G.bouton, border: "none", borderRadius: 10, color: G.boutonTexte, fontWeight: "bold", fontSize: 14, cursor: "pointer" }}>
-                      📖 Lire maintenant
+                      {paymentBook.product_type === "pack" ? "📚 Voir mes livres dans ma bibliothèque" : "📖 Lire maintenant"}
                     </button>
                   )}
 
@@ -24960,6 +25205,23 @@ export default function App() {
                     </div>
                   </div>
                 )}
+
+                {/* 02/11 : PACKS A PETITS PRIX (entre les annonces et la premiere categorie) */}
+                {!EST_HOMOROMANCE && (() => {
+                  const liste = packsAll.filter(pk => packVisible(pk) && !pk.exclusif_vitrine && auteurDuSite(pk.auteur_id) && livresDuPack(pk).length >= 2);
+                  if (liste.length === 0) return null;
+                  return (
+                    <div style={{ marginBottom: 28 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px", marginBottom: 12 }}>
+                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>📦 Packs à petits prix</div>
+                        <div style={{ fontSize: 11, color: G.gold }}>Plusieurs livres, un seul prix</div>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
+                        {melangerListe(liste).map(pk => cartePack(pk))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* NOUVEAUTÉS (PRODUITS NUMÉRIQUES) - numérique + mixte */}
                                 {false && (() => {
@@ -26058,8 +26320,8 @@ export default function App() {
 
         {page === "library" && (
           <LibraryPage 
-            books={books} 
-            purchasedBooks={purchasedBooks} 
+            books={[...books, ...packsAll]} 
+            purchasedBooks={[...idsPossedes]} 
             purchaseHistory={purchaseHistory} 
             startReading={startReading} 
             setPage={setPage} 

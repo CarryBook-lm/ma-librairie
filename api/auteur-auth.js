@@ -589,7 +589,8 @@ export default async function handler(req, res) {
         content: "", pdf_url: "", audio_url: "",
         product_type: "pack",
         pack_livres: ids,
-        auteur_id: id,
+        // Le pack appartient au compte (ou pseudonyme) qui possede ses livres : il apparait dans la bonne vitrine.
+        auteur_id: (ordonnes[0] && ordonnes[0].auteur_id) || id,
         status: "actif", moderation: "valide", motif_refus: null, masque: false,
         // Un pack qui contient un livre reserve a la vitrine est lui aussi reserve a la vitrine.
         exclusif_vitrine: ordonnes.some(b => b.exclusif_vitrine),
