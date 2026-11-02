@@ -48,6 +48,7 @@ export default async function handler(req, res) {
         .select("title, product_type, created_at, masque, exclusif_vitrine")
         .eq("status", "actif")
         .or("category.is.null,category.neq.HomoRomance")
+        .or("product_type.is.null,product_type.neq.pack") // 02/11 : packs exclus pour l'instant
         .limit(5000);
 
       if (error) {

@@ -35,6 +35,7 @@ export default async function handler(req, res) {
       .eq("status", "actif")
       .or("category.is.null,category.neq.HomoRomance") // 15/10 : les romans HomoRomance ont leur propre catalogue
       .neq("exclu_catalogue", true)
+      .or("product_type.is.null,product_type.neq.pack") // 02/11 : packs exclus du catalogue pour l'instant
       .order("id", { ascending: false });
 
     const base = "https://carrybooks.com";

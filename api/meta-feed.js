@@ -67,7 +67,8 @@ export default async function handler(req, res) {
     const { data: books, error } = await supabase
       .from("books")
       .select("id, title, author, category, price, paper_price, cover, product_type, stock, status, masque, exclusif_vitrine")
-      .or("category.is.null,category.neq.HomoRomance"); // 15/10 : les romans HomoRomance ont leur propre flux
+      .or("category.is.null,category.neq.HomoRomance")
+      .or("product_type.is.null,product_type.neq.pack"); // 02/11 : packs exclus des flux pour l'instant. 15/10 : les romans HomoRomance ont leur propre flux
 
     if (error) {
       res.status(500).send("Erreur Supabase : " + error.message);
