@@ -14403,6 +14403,24 @@ export default function App() {
     }, 3000);
     return () => clearInterval(id);
   }, []);
+  // 02/11 : les rangees de packs (accueil + vitrine) defilent toutes seules toutes les 3 secondes.
+  // Un doigt pose sur la rangee met le defilement en pause 6 secondes.
+  const packsAccRef = useRef(null);
+  const packsVitRef = useRef(null);
+  const packsPause = useRef(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (Date.now() - packsPause.current < 6000) return;
+      [packsAccRef.current, packsVitRef.current].forEach(c => {
+        if (!c || c.scrollWidth <= c.clientWidth + 4) return;
+        const premier = c.firstElementChild; if (!premier) return;
+        const pas = premier.getBoundingClientRect().width + 10;
+        if (c.scrollLeft + c.clientWidth >= c.scrollWidth - 12) { c.scrollTo({ left: 0, behavior: "smooth" }); }
+        else { c.scrollBy({ left: pas, behavior: "smooth" }); }
+      });
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
   // Defilement automatique des Nouveautes sur la vitrine d'un auteur.
   // NB : boutiqueBooks et page sont declares plus haut dans le composant.
   const bqNouvRef = useRef(null);
@@ -20624,7 +20642,7 @@ export default function App() {
                     return (
                       <div style={{ marginBottom: 26 }}>
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text, marginBottom: 12 }}>📦 Packs</div>
-                        <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4 }}>
+                        <div ref={packsVitRef} onTouchStart={() => { packsPause.current = Date.now(); }} onMouseDown={() => { packsPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4 }}>
                           {liste.map(pk => cartePack(pk))}
                         </div>
                       </div>
@@ -25267,7 +25285,7 @@ export default function App() {
                         <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>📦 Packs à petits prix</div>
                         <div style={{ fontSize: 11, color: G.gold }}>Plusieurs livres, un seul prix</div>
                       </div>
-                      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
+                      <div ref={packsAccRef} onTouchStart={() => { packsPause.current = Date.now(); }} onMouseDown={() => { packsPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
                         {melangerListe(liste).map(pk => cartePack(pk))}
                       </div>
                     </div>
