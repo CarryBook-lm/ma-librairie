@@ -10,6 +10,27 @@ const supabase = createClient(
 // (dossier public « images »), et non plus chez imgbb : le 28/10, une panne d'imgbb a fait disparaitre
 // les couvertures du site. Renvoie un objet qui imite la reponse d'imgbb ({ success, data: { url } })
 // pour que les ecrans d'envoi existants restent inchanges.
+// 02/11 : liens cliquables dans les messages et annonces du Support (http://, https:// et www.).
+// Le texte reste du texte : aucun HTML n'est interprete, seuls les liens deviennent des balises <a>.
+function texteAvecLiens(texte) {
+  const s = String(texte || "");
+  const re = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+  const morceaux = []; let dernier = 0; let m; let k = 0;
+  while ((m = re.exec(s)) !== null) {
+    let url = m[0];
+    // ponctuation finale exclue du lien : « va sur www.site.com. »
+    const fin = (url.match(/[.,;:!?)\]»"']+$/) || [""])[0];
+    if (fin) url = url.slice(0, url.length - fin.length);
+    if (m.index > dernier) morceaux.push(s.slice(dernier, m.index));
+    const href = /^https?:\/\//i.test(url) ? url : "https://" + url;
+    morceaux.push(<a key={"l" + (k++)} href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "inherit", textDecoration: "underline", fontWeight: "bold", wordBreak: "break-all" }}>{url}</a>);
+    if (fin) morceaux.push(fin);
+    dernier = m.index + m[0].length;
+  }
+  if (dernier < s.length) morceaux.push(s.slice(dernier));
+  return morceaux;
+}
+
 async function envoyerImageStockage(fd) {
   const echec = { json: async () => ({ success: false }) };
   try {
@@ -4993,7 +5014,7 @@ export default function Admin() {
                         <div key={m.id} style={{ alignSelf: m.cote === "admin" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "admin" ? "#0e5a52" : "#1e1e1e", color: m.cote === "admin" ? "#fff" : "#e8e0d0", border: m.cote === "admin" ? "none" : "1px solid #333", borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                           {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: ("" + ACC + ""), marginBottom: 3 }}>📢 Annonce</div> : null}
                           {m.image_url ? <img src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
-                          {m.texte}
+                          {texteAvecLiens(m.texte)}
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 9, marginTop: 3 }}>
                             {m.cote === "admin" ? <button onClick={() => supprimerMsgAdmin(m)} title="Supprimer ce message" style={{ background: "none", border: "none", color: "#fff", opacity: 0.6, fontSize: 12, cursor: "pointer", padding: 0, lineHeight: 1 }}>🗑</button> : null}
                             <div style={{ fontSize: 9, opacity: 0.55 }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>

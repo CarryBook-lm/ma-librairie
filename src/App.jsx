@@ -351,6 +351,27 @@ const supabase = createClient(
 function estAppNative() {
   try { return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform()); } catch (e) { return false; }
 }
+// 02/11 : liens cliquables dans les messages et annonces du Support (http://, https:// et www.).
+// Le texte reste du texte : aucun HTML n'est interprete, seuls les liens deviennent des balises <a>.
+function texteAvecLiens(texte) {
+  const s = String(texte || "");
+  const re = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+  const morceaux = []; let dernier = 0; let m; let k = 0;
+  while ((m = re.exec(s)) !== null) {
+    let url = m[0];
+    // ponctuation finale exclue du lien : « va sur www.site.com. »
+    const fin = (url.match(/[.,;:!?)\]»"']+$/) || [""])[0];
+    if (fin) url = url.slice(0, url.length - fin.length);
+    if (m.index > dernier) morceaux.push(s.slice(dernier, m.index));
+    const href = /^https?:\/\//i.test(url) ? url : "https://" + url;
+    morceaux.push(<a key={"l" + (k++)} href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "inherit", textDecoration: "underline", fontWeight: "bold", wordBreak: "break-all" }}>{url}</a>);
+    if (fin) morceaux.push(fin);
+    dernier = m.index + m[0].length;
+  }
+  if (dernier < s.length) morceaux.push(s.slice(dernier));
+  return morceaux;
+}
+
 function imageSecours(e) {
   try { const im = e.currentTarget; if (im.dataset.secours) return; im.dataset.secours = "1"; im.src = "/couverture-indisponible.svg"; } catch (x) {}
 }
@@ -14153,23 +14174,6 @@ function ReclamerLivre({ G, setPage }) {
 // COMPOSANT : Page Statistiques PWA (Admin)
 // ============================================
 
-// 01/11 : video « Comment installer CarryBooks » (accueil, au-dessus des Nouveautes).
-// Image d'apercu + bouton de lecture transparent au centre ; un appui lance la video.
-function VideoInstallCB() {
-  const [lecture, setLecture] = useState(false);
-  const box = { width: "100%", aspectRatio: "16 / 9", display: "block", borderRadius: 10, background: "#000", boxShadow: "0 3px 10px rgba(0,0,0,0.25)" };
-  if (lecture) {
-    return <video src="/videos/installer-carrybooks.mp4" poster="/videos/installer-carrybooks.jpg" controls autoPlay playsInline style={box} />;
-  }
-  return (
-    <div onClick={() => setLecture(true)} role="button" aria-label="Regarder la video" style={{ ...box, position: "relative", cursor: "pointer", overflow: "hidden", backgroundImage: "url(/videos/installer-carrybooks.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}>
-      <div style={{ position: "absolute", left: "50%", top: "50%", width: 48, height: 48, marginLeft: -24, marginTop: -24, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "2px solid rgba(255,255,255,0.75)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
-        <div style={{ width: 0, height: 0, borderLeft: "15px solid rgba(255,255,255,0.95)", borderTop: "9px solid transparent", borderBottom: "9px solid transparent", marginLeft: 4 }} />
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   // CATEGORIES chargées depuis Supabase (fallback sur valeurs codées en dur si pas encore prêt)
   const [CATEGORIES, setCATEGORIES] = useState(EST_HOMOROMANCE ? {} : CATEGORIES_FALLBACK);
@@ -22066,7 +22070,7 @@ export default function App() {
                       <div key={m.id} style={{ alignSelf: m.cote === "auteur" ? "flex-end" : "flex-start", maxWidth: "82%", background: m.cote === "auteur" ? "#0e5a52" : (EST_HOMOROMANCE ? G.carte : "#fff"), color: m.cote === "auteur" ? "#fff" : G.text, border: m.cote === "auteur" ? "none" : "1px solid " + G.border, borderRadius: 12, padding: "9px 12px", fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                         {m.annonce_id ? <div style={{ fontSize: 10, fontWeight: "bold", color: m.cote === "auteur" ? "#cde" : G.gold, marginBottom: 3 }}>📢 Annonce {SITE_NOM}</div> : null}
                         {m.image_url ? <img loading="lazy" decoding="async" onError={imageSecours} src={m.image_url} alt="" onClick={() => window.open(m.image_url, "_blank")} style={{ maxWidth: "100%", borderRadius: 8, marginBottom: m.texte ? 6 : 0, cursor: "pointer", display: "block" }} /> : null}
-                        {m.texte}
+                        {texteAvecLiens(m.texte)}
                         <div style={{ fontSize: 9, opacity: 0.6, marginTop: 3, textAlign: "right" }}>{new Date(m.created_at).toLocaleDateString("fr-FR")} {new Date(m.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</div>
                       </div>
                     ))}
@@ -24744,13 +24748,6 @@ export default function App() {
                   </div>
                 )}
 
-
-                {/* 01/11 : video « Comment installer CarryBooks », juste au-dessus des Nouveautes (sans titre). Absente de HomoRomance. */}
-                {!EST_HOMOROMANCE && (
-                  <div style={{ padding: "18px 10px 0", marginBottom: 18 }}>
-                    <VideoInstallCB />
-                  </div>
-                )}
 
                 {(() => {
                   // Inclure : numerique, mixte, ou pas de product_type d�fini (anciens livres)
