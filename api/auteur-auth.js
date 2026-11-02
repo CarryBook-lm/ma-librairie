@@ -535,6 +535,107 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, id: cree && cree.id });
     }
 
+    // ---------- 02/11 : PACKS DE LIVRES ----------
+    // Un pack est une ligne de books avec product_type = 'pack' et la liste de ses livres
+    // dans pack_livres. Il est achete comme un livre ordinaire (memes paiements, meme
+    // commission 85 % / 50 % calculee sur le prix du pack) ; la bibliotheque « deplie »
+    // ensuite le pack en ses livres. Regles fixees par Landrine le 02/11 :
+    //   - au moins 2 livres, tous a l'auteur, deja valides et en ligne (romans et PDF melanges : oui) ;
+    //   - prix d'au moins 2 000 F ET inferieur au total des livres achetes separement.
+    // Ecriture par le serveur (cle de service) : le navigateur ne peut pas mettre un livre « actif ».
+    if (action === "pack_enregistrer") {
+      const id = Number(body.id || 0);
+      const packId = Number(body.pack_id || 0);
+      const titre = String(body.titre || "").trim().slice(0, 160);
+      const prix = Math.round(Number(body.prix || 0));
+      const resume = String(body.resume || "").trim().slice(0, 3000);
+      const couverture = String(body.cover || "").trim();
+      const ids = Array.from(new Set((Array.isArray(body.livres) ? body.livres : []).map(Number).filter(n => n > 0)));
+      if (!id) return res.status(400).json({ error: "Compte auteur manquant. Reconnecte-toi." });
+      if (!titre) return res.status(400).json({ error: "Donne un titre à ton pack." });
+      if (ids.length < 2) return res.status(400).json({ error: "Un pack contient au moins 2 livres." });
+      if (ids.length > 10) return res.status(400).json({ error: "Un pack contient au maximum 10 livres." });
+
+      const { data: aa } = await supa.from("auteurs").select("id, nom_complet, banni").eq("id", id).limit(1);
+      const aut = aa && aa[0];
+      if (!aut) return res.status(404).json({ error: "Compte auteur introuvable." });
+      if (aut.banni) return res.status(403).json({ error: "Ton compte est suspendu." });
+
+      const proprio = idsComptesLies(id).map(String);
+      const { data: livres } = await supa.from("books").select("id, title, author, price, cover, status, auteur_id, product_type, masque, exclusif_vitrine").in("id", ids);
+      const liste = livres || [];
+      if (liste.length !== ids.length) return res.status(400).json({ error: "Un des livres choisis est introuvable. Recharge la page." });
+      for (const b of liste) {
+        if (!proprio.includes(String(b.auteur_id))) return res.status(403).json({ error: "« " + b.title + " » n'est pas un de tes livres." });
+        if (b.product_type === "pack") return res.status(400).json({ error: "Un pack ne peut pas contenir un autre pack." });
+        if (b.status !== "actif" || b.masque) return res.status(400).json({ error: "« " + b.title + " » n'est pas en ligne : seuls les livres validés et en ligne peuvent entrer dans un pack." });
+        if (!(Number(b.price) > 0)) return res.status(400).json({ error: "« " + b.title + " » est gratuit : un pack ne contient que des livres payants." });
+      }
+      const total = liste.reduce((t, b) => t + Number(b.price || 0), 0);
+      if (prix < 2000) return res.status(400).json({ error: "Le prix d'un pack est d'au moins 2 000 F." });
+      if (prix >= total) return res.status(400).json({ error: "Le prix du pack doit être inférieur au total des livres achetés séparément (" + total + " F)." });
+
+      // Ordre des livres = ordre choisi par l'auteur
+      const parId = {}; liste.forEach(b => { parId[b.id] = b; });
+      const ordonnes = ids.map(i => parId[i]);
+      const row = {
+        title: titre,
+        author: (ordonnes[0] && ordonnes[0].author) || aut.nom_complet,
+        price: prix,
+        original_price: total,
+        cover: couverture || (ordonnes[0] && ordonnes[0].cover) || null,
+        summary: resume || null,
+        category: null, subcategory: null,
+        content: "", pdf_url: "", audio_url: "",
+        product_type: "pack",
+        pack_livres: ids,
+        auteur_id: id,
+        status: "actif", moderation: "valide", motif_refus: null, masque: false,
+        // Un pack qui contient un livre reserve a la vitrine est lui aussi reserve a la vitrine.
+        exclusif_vitrine: ordonnes.some(b => b.exclusif_vitrine),
+        can_read: true, can_download: false,
+      };
+
+      if (packId) {
+        const { data: ps } = await supa.from("books").select("id, auteur_id, product_type").eq("id", packId).limit(1);
+        const pk = ps && ps[0];
+        if (!pk || pk.product_type !== "pack") return res.status(404).json({ error: "Ce pack est introuvable. Recharge la page." });
+        if (!proprio.includes(String(pk.auteur_id))) return res.status(403).json({ error: "Ce pack ne t'appartient pas." });
+        const { error } = await supa.from("books").update(row).eq("id", packId);
+        if (error) return res.status(500).json({ error: error.message });
+        return res.status(200).json({ ok: true, id: packId });
+      }
+      const { data: cree, error } = await supa.from("books").insert(row).select("id").maybeSingle();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, id: cree && cree.id });
+    }
+
+    // Retirer un pack : s'il a deja ete vendu, il est seulement masque (les acheteurs
+    // doivent continuer a retrouver ses livres dans leur bibliotheque) ; sinon il est supprime.
+    if (action === "pack_supprimer") {
+      const id = Number(body.id || 0);
+      const packId = Number(body.pack_id || 0);
+      if (!id || !packId) return res.status(400).json({ error: "id et pack_id requis." });
+      const { data: ps } = await supa.from("books").select("id, auteur_id, product_type").eq("id", packId).limit(1);
+      const pk = ps && ps[0];
+      if (!pk || pk.product_type !== "pack") return res.status(404).json({ error: "Ce pack est introuvable. Recharge la page." });
+      if (!idsComptesLies(id).map(String).includes(String(pk.auteur_id))) return res.status(403).json({ error: "Ce pack ne t'appartient pas." });
+      let vendus = 0;
+      try {
+        const { count: c1 } = await supa.from("purchases").select("id", { count: "exact", head: true }).eq("book_id", packId);
+        const { count: c2 } = await supa.from("guest_purchases").select("id", { count: "exact", head: true }).eq("book_id", packId);
+        vendus = (c1 || 0) + (c2 || 0);
+      } catch (e) {}
+      if (vendus > 0) {
+        const { error } = await supa.from("books").update({ masque: true }).eq("id", packId);
+        if (error) return res.status(500).json({ error: error.message });
+        return res.status(200).json({ ok: true, masque: true, vendus });
+      }
+      const { error } = await supa.from("books").delete().eq("id", packId);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ ok: true, supprime: true });
+    }
+
     return res.status(400).json({ error: "Action inconnue." });
   } catch (e) {
     return res.status(500).json({ error: e.message });
