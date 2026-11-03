@@ -15332,6 +15332,46 @@ export default function App() {
       } else setPackMsg("❌ " + ((d && d.error) || "Ordre non enregistré. Réessaie."));
     } catch (e) { setPackMsg("❌ Erreur réseau. Réessaie."); }
   };
+  // 03/11 : ordre des livres DANS un pack (formulaire). Le 1er = livre phare, mis en avant partout.
+  const [livreGlisse, setLivreGlisse] = useState(null);
+  const packFormRef = useRef(null);
+  packFormRef.current = packForm;
+  const deplacerLivrePack = (id, sens) => {
+    setPackForm(f => {
+      if (!f) return f;
+      const l = [...f.livres]; const i = l.indexOf(id); const j = i + sens;
+      if (i < 0 || j < 0 || j >= l.length) return f;
+      const [x] = l.splice(i, 1); l.splice(j, 0, x);
+      return { ...f, livres: l };
+    });
+  };
+  const debutGlisseLivre = (e, id) => {
+    try { e.preventDefault(); } catch (er) {}
+    setLivreGlisse(id);
+    const bouge = (ev) => {
+      const y = ev.clientY;
+      try { if (y < 90) window.scrollBy(0, -14); else if (y > window.innerHeight - 90) window.scrollBy(0, 14); } catch (er) {}
+      const lignes = [...document.querySelectorAll("[data-livre-pack]")];
+      let cible = lignes.length - 1;
+      for (let k = 0; k < lignes.length; k++) { const r = lignes[k].getBoundingClientRect(); if (y < r.top + r.height / 2) { cible = k; break; } }
+      const f = packFormRef.current; if (!f) return;
+      const vis = lignes.map(el => Number(el.getAttribute("data-livre-pack")));
+      const i = vis.indexOf(id); if (i < 0 || i === cible) return;
+      const [x] = vis.splice(i, 1); vis.splice(cible, 0, x);
+      const reste = f.livres.filter(v => !vis.includes(v));
+      const nf = { ...f, livres: [...vis, ...reste] };
+      packFormRef.current = nf; setPackForm(nf);
+    };
+    const fin = () => {
+      window.removeEventListener("pointermove", bouge);
+      window.removeEventListener("pointerup", fin);
+      window.removeEventListener("pointercancel", fin);
+      setLivreGlisse(null);
+    };
+    window.addEventListener("pointermove", bouge);
+    window.addEventListener("pointerup", fin);
+    window.addEventListener("pointercancel", fin);
+  };
   const deplacerPack = (id, sens) => {
     const l = [...mesPacksRef.current];
     const i = l.findIndex(p => p.id === id); const j = i + sens;
@@ -15384,7 +15424,8 @@ export default function App() {
   };
   const enregistrerPack = async () => {
     if (!packForm) return;
-    const choisis = livresPourPack().filter(b => packForm.livres.includes(Number(b.id)));
+    // 03/11 : ordre des livres = ordre choisi par l'auteur ; le 1er est le livre phare du pack.
+    const choisis = packForm.livres.map(i => livresPourPack().find(b => Number(b.id) === Number(i))).filter(Boolean);
     const total = choisis.reduce((t, b) => t + Number(b.price || 0), 0);
     const prix = parseInt(packForm.prix, 10) || 0;
     if (!packForm.titre.trim()) { setPackMsg("❌ Donne un titre à ton pack."); return; }
@@ -17376,7 +17417,7 @@ export default function App() {
   const packVisible = (pk) => pk && pk.status === "actif" && !pk.masque;
   const livresDuPack = (pk) => ((pk && pk.pack_livres) || ((pk && (packsAll || []).find(x => String(x.id) === String(pk.id))) || {}).pack_livres || []).map(i => books.find(b => String(b.id) === String(i))).filter(Boolean);
   const couverturePack = (pk) => {
-    const couv = livresDuPack(pk).map(b => b.cover).filter(Boolean).slice(0, 4);
+    const couv = livresDuPack(pk).map(b => b.cover).filter(Boolean).slice(0, 4).reverse(); // 03/11 : le livre phare (1er) est dessine en dernier = devant
     if (couv.length === 0 && pk.cover) couv.push(pk.cover);
     const n = couv.length;
     return (
@@ -17389,7 +17430,7 @@ export default function App() {
   };
   const cartePack = (pk, largeur) => {
     const lv = livresDuPack(pk);
-    const couv = lv.map(b => b.cover).filter(Boolean).slice(0, 3);
+    const couv = lv.map(b => b.cover).filter(Boolean).slice(0, 3).reverse(); // 03/11 : livre phare devant
     if (couv.length === 0 && pk.cover) couv.push(pk.cover);
     const total = Number(pk.original_price) || lv.reduce((t, b) => t + Number(b.price || 0), 0);
     const remise = total > pk.price ? Math.round((1 - pk.price / total) * 100) : 0;
@@ -21701,7 +21742,7 @@ export default function App() {
                 const dispo = livresPourPack();
                 const carte = { background: EST_HOMOROMANCE ? "#2a2c4d" : "#fff", border: "1px solid " + G.border, borderRadius: 10, padding: 16, marginBottom: 16 };
                 if (packForm) {
-                  const choisis = dispo.filter(b => packForm.livres.includes(Number(b.id)));
+                  const choisis = packForm.livres.map(i => dispo.find(b => Number(b.id) === Number(i))).filter(Boolean);
                   const total = choisis.reduce((t, b) => t + Number(b.price || 0), 0);
                   const prix = parseInt(packForm.prix, 10) || 0;
                   const basculer = (id) => setPackForm(f => ({ ...f, livres: f.livres.includes(id) ? f.livres.filter(x => x !== id) : [...f.livres, id] }));
@@ -21727,6 +21768,22 @@ export default function App() {
                               </div>
                             );
                           })}
+                        </div>
+                      )}
+                      {choisis.length >= 2 && (
+                        <div style={{ margin: "14px 0 6px", padding: 12, borderRadius: 10, border: "1px solid " + G.border, background: EST_HOMOROMANCE ? "transparent" : "#faf8f3" }}>
+                          <div style={{ fontSize: 13.5, fontWeight: "bold", color: G.text, marginBottom: 4 }}>⭐ Ordre des livres dans le pack</div>
+                          <div style={{ fontSize: 12, color: G.textDim, lineHeight: 1.5, marginBottom: 10 }}>Le <b>1er livre</b> est le <b>livre phare</b> : sa couverture passe devant les autres et il apparaît en premier sur la page du pack. Maintiens le doigt sur <b>⠿</b> et fais glisser, ou utilise les flèches ▲ ▼.</div>
+                          {choisis.map((b, k) => (
+                            <div key={b.id} data-livre-pack={Number(b.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 4px", borderTop: k ? "1px solid " + G.border : "none", background: livreGlisse === Number(b.id) ? G.goldDim : "transparent", borderRadius: 6 }}>
+                              <div onPointerDown={e => debutGlisseLivre(e, Number(b.id))} title="Maintiens et fais glisser" style={{ touchAction: "none", cursor: "grab", userSelect: "none", WebkitUserSelect: "none", fontSize: 20, color: G.textDim, padding: "2px 6px", lineHeight: 1 }}>⠿</div>
+                              <div style={{ width: 22, fontSize: 13, fontWeight: "bold", color: G.gold, textAlign: "center", flexShrink: 0 }}>{k + 1}</div>
+                              {b.cover ? <img loading="lazy" decoding="async" onError={imageSecours} src={b.cover} alt="" style={{ width: 28, height: 40, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} /> : null}
+                              <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: G.text, lineHeight: 1.3 }}>{b.title}{k === 0 ? <span style={{ display: "inline-block", marginLeft: 6, fontSize: 10.5, fontWeight: "bold", color: "#fff", background: G.gold, borderRadius: 8, padding: "1px 7px" }}>⭐ Livre phare</span> : null}</div>
+                              <button onClick={() => deplacerLivrePack(Number(b.id), -1)} disabled={k === 0} aria-label="Monter" style={{ background: "none", border: "none", color: k === 0 ? G.border : G.gold, fontSize: 15, cursor: k === 0 ? "default" : "pointer", padding: 4 }}>▲</button>
+                              <button onClick={() => deplacerLivrePack(Number(b.id), 1)} disabled={k === choisis.length - 1} aria-label="Descendre" style={{ background: "none", border: "none", color: k === choisis.length - 1 ? G.border : G.gold, fontSize: 15, cursor: k === choisis.length - 1 ? "default" : "pointer", padding: 4 }}>▼</button>
+                            </div>
+                          ))}
                         </div>
                       )}
                       <div style={{ fontSize: 13, color: G.textDim, margin: "8px 0 12px" }}>Total des livres achetés séparément : <b style={{ color: G.text }}>{total.toLocaleString("fr-FR")} F</b></div>
@@ -21760,7 +21817,7 @@ export default function App() {
                       <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: 20 }}>Tu n'as pas encore de pack.</div>
                     ) : mesPacks.map((p, rang) => {
                       const ids = (p.pack_livres || []).map(Number);
-                      const couv = ids.map(i => (mesLivres.find(b => Number(b.id) === i) || {}).cover).filter(Boolean).slice(0, 3);
+                      const couv = ids.map(i => (mesLivres.find(b => Number(b.id) === i) || {}).cover).filter(Boolean).slice(0, 3).reverse();
                       return (
                         <div key={p.id} data-pack-carte="1" style={{ ...carte, ...(packGlisse === p.id ? { opacity: 0.75, border: "2px solid " + G.gold, boxShadow: "0 10px 26px rgba(0,0,0,0.25)" } : {}) }}>
                           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -23847,12 +23904,13 @@ export default function App() {
             return (
               <div style={{ border: "1px solid " + G.border, borderRadius: 10, padding: 12, marginBottom: 14, background: EST_HOMOROMANCE ? G.carte : "#fff", textAlign: "left" }}>
                 <div style={{ fontSize: 15, fontWeight: "bold", color: G.text, marginBottom: 10 }}>📦 Ce pack contient {lv.length} livres</div>
-                {lv.map(b => (
+                {lv.map((b, rangLv) => (
                   <div key={b.id} style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderTop: "1px solid " + G.border }}>
                     <div onClick={() => openBook(b)} style={{ width: 46, flexShrink: 0, cursor: "pointer" }}>
                       {b.cover ? <img onError={imageSecours} src={b.cover} loading="lazy" decoding="async" alt="" style={{ width: 46, height: 64, objectFit: "cover", borderRadius: 4 }} /> : <div style={{ width: 46, height: 64, background: G.surface, borderRadius: 4 }} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
+                      {rangLv === 0 && lv.length > 1 ? <div style={{ display: "inline-block", fontSize: 10.5, fontWeight: "bold", color: "#fff", background: G.gold, borderRadius: 8, padding: "1px 7px", marginBottom: 3 }}>⭐ Livre phare</div> : null}
                       <div onClick={() => openBook(b)} style={{ fontSize: 13, fontWeight: "bold", color: G.text, lineHeight: 1.3, cursor: "pointer" }}>{b.title}</div>
                       <div style={{ fontSize: 11, color: G.textFaint, marginTop: 2 }}>{libelleTypeLivre(b)}{Number(b.price) > 0 ? " · seul : " + Number(b.price).toLocaleString("fr-FR") + " F" : ""}</div>
                     </div>
