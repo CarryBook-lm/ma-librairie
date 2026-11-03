@@ -606,6 +606,11 @@ export default async function handler(req, res) {
         if (error) return res.status(500).json({ error: error.message });
         return res.status(200).json({ ok: true, id: packId });
       }
+      // 03/11 : un nouveau pack se place EN PREMIER sur la vitrine (avant les packs deja classes).
+      try {
+        const { data: ord } = await supa.from("books").select("pack_ordre").eq("product_type", "pack").in("auteur_id", idsComptesLies(id)).not("pack_ordre", "is", null).order("pack_ordre", { ascending: true }).limit(1);
+        if (ord && ord[0] && ord[0].pack_ordre !== null && ord[0].pack_ordre !== undefined) row.pack_ordre = Number(ord[0].pack_ordre) - 1;
+      } catch (e) {}
       const { data: cree, error } = await supa.from("books").insert(row).select("id").maybeSingle();
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, id: cree && cree.id });
@@ -635,6 +640,27 @@ export default async function handler(req, res) {
       const { error } = await supa.from("books").delete().eq("id", packId);
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, supprime: true });
+    }
+
+    // 03/11 : l'auteur classe ses packs (ordre d'affichage sur sa vitrine).
+    // body.ordre = liste des id de packs, du premier au dernier.
+    if (action === "pack_ordonner") {
+      const id = Number(body.id || 0);
+      const ordre = Array.isArray(body.ordre) ? body.ordre.map(Number).filter(Boolean) : [];
+      if (!id || ordre.length === 0) return res.status(400).json({ error: "id et ordre requis." });
+      if (ordre.length > 200) return res.status(400).json({ error: "Trop de packs." });
+      const proprio = idsComptesLies(id).map(String);
+      const { data: ps } = await supa.from("books").select("id, auteur_id, product_type").in("id", ordre);
+      const liste = ps || [];
+      if (liste.length !== ordre.length) return res.status(400).json({ error: "Un des packs est introuvable. Recharge la page." });
+      for (const pk of liste) {
+        if (pk.product_type !== "pack" || !proprio.includes(String(pk.auteur_id))) return res.status(403).json({ error: "Un de ces packs ne t'appartient pas." });
+      }
+      for (let i = 0; i < ordre.length; i++) {
+        const { error } = await supa.from("books").update({ pack_ordre: i + 1 }).eq("id", ordre[i]);
+        if (error) return res.status(500).json({ error: error.message });
+      }
+      return res.status(200).json({ ok: true });
     }
 
     return res.status(400).json({ error: "Action inconnue." });

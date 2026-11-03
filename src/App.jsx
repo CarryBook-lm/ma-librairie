@@ -14281,7 +14281,7 @@ export default function App() {
   const [packsAll, setPacksAll] = useState([]);
   useEffect(() => {
     if (EST_HOMOROMANCE) return;
-    supabase.from("books").select("id, title, author, auteur_id, price, original_price, cover, summary, pack_livres, status, masque, exclusif_vitrine, product_type, category, can_read, can_download")
+    supabase.from("books").select("id, title, author, auteur_id, price, original_price, cover, summary, pack_livres, status, masque, exclusif_vitrine, product_type, category, can_read, can_download, pack_ordre")
       .eq("product_type", "pack").then(({ data }) => setPacksAll(data || []));
   }, []);
 
@@ -15316,11 +15316,62 @@ export default function App() {
   const [packMsg, setPackMsg] = useState("");
   const [packBusy, setPackBusy] = useState(false);
   const [packCopie, setPackCopie] = useState(null); // id du pack dont le lien vient d'etre copie
+  // 03/11 : classer ses packs en les glissant (doigt ou souris) ou avec les fleches ; l'ordre est celui de la vitrine.
+  const [packGlisse, setPackGlisse] = useState(null); // id du pack en train d'etre deplace
+  const mesPacksRef = useRef([]);
+  mesPacksRef.current = mesPacks;
+  const sauverOrdrePacks = async (liste) => {
+    const ordre = (liste || []).map(p => Number(p.id));
+    if (ordre.length < 2) return;
+    setPackMsg("");
+    try {
+      const d = await appelAnnonce({ action: "pack_ordonner", ordre });
+      if (d && d.ok) {
+        setPackMsg("✅ Ordre enregistré : tes packs s'affichent dans cet ordre sur ta vitrine.");
+        setPacksAll(prev => prev.map(x => { const i = ordre.indexOf(Number(x.id)); return i >= 0 ? { ...x, pack_ordre: i + 1 } : x; }));
+      } else setPackMsg("❌ " + ((d && d.error) || "Ordre non enregistré. Réessaie."));
+    } catch (e) { setPackMsg("❌ Erreur réseau. Réessaie."); }
+  };
+  const deplacerPack = (id, sens) => {
+    const l = [...mesPacksRef.current];
+    const i = l.findIndex(p => p.id === id); const j = i + sens;
+    if (i < 0 || j < 0 || j >= l.length) return;
+    const [x] = l.splice(i, 1); l.splice(j, 0, x);
+    setMesPacks(l); sauverOrdrePacks(l);
+  };
+  const debutGlissePack = (e, id) => {
+    if (packBusy || mesPacksRef.current.length < 2) return;
+    try { e.preventDefault(); } catch (er) {}
+    setPackGlisse(id);
+    const depart = mesPacksRef.current.map(p => p.id).join(",");
+    const bouge = (ev) => {
+      const y = ev.clientY;
+      try { if (y < 90) window.scrollBy(0, -14); else if (y > window.innerHeight - 90) window.scrollBy(0, 14); } catch (er) {}
+      const cartes = [...document.querySelectorAll("[data-pack-carte]")];
+      let cible = cartes.length - 1;
+      for (let k = 0; k < cartes.length; k++) { const r = cartes[k].getBoundingClientRect(); if (y < r.top + r.height / 2) { cible = k; break; } }
+      const l = [...mesPacksRef.current];
+      const i = l.findIndex(p => p.id === id);
+      if (i < 0 || i === cible) return;
+      const [x] = l.splice(i, 1); l.splice(cible, 0, x);
+      mesPacksRef.current = l; setMesPacks(l);
+    };
+    const fin = () => {
+      window.removeEventListener("pointermove", bouge);
+      window.removeEventListener("pointerup", fin);
+      window.removeEventListener("pointercancel", fin);
+      setPackGlisse(null);
+      if (mesPacksRef.current.map(p => p.id).join(",") !== depart) sauverOrdrePacks(mesPacksRef.current);
+    };
+    window.addEventListener("pointermove", bouge);
+    window.addEventListener("pointerup", fin);
+    window.addEventListener("pointercancel", fin);
+  };
   const chargerMesPacks = async () => {
     if (!auteurProfil || !auteurProfil.id) return;
     try {
-      const { data } = await supabase.from("books").select("id, title, price, original_price, cover, summary, pack_livres, masque, status, exclusif_vitrine")
-        .eq("product_type", "pack").in("auteur_id", idsComptesLies(auteurProfil.id)).order("id", { ascending: false });
+      const { data } = await supabase.from("books").select("id, title, price, original_price, cover, summary, pack_livres, masque, status, exclusif_vitrine, pack_ordre")
+        .eq("product_type", "pack").in("auteur_id", idsComptesLies(auteurProfil.id)).order("pack_ordre", { ascending: true, nullsFirst: true }).order("id", { ascending: false });
       setMesPacks((data || []).filter(p => !p.masque));
     } catch (e) { setMesPacks([]); }
   };
@@ -20637,7 +20688,9 @@ export default function App() {
                 <>
                   {/* 02/11 : PACKS DE L'AUTEUR, en haut de la vitrine */}
                   {(() => {
-                    const liste = packsAll.filter(pk => packVisible(pk) && boutiqueAuteur && (String(pk.auteur_id) === String(boutiqueAuteur.id) || livresDuPack(pk).some(b => String(b.auteur_id) === String(boutiqueAuteur.id))) && livresDuPack(pk).length >= 2);
+                    const liste = packsAll.filter(pk => packVisible(pk) && boutiqueAuteur && (String(pk.auteur_id) === String(boutiqueAuteur.id) || livresDuPack(pk).some(b => String(b.auteur_id) === String(boutiqueAuteur.id))) && livresDuPack(pk).length >= 2)
+                      // 03/11 : ordre choisi par l'auteur dans « Mes packs » (les packs jamais classes passent en premier, du plus recent au plus ancien)
+                      .sort((a, b) => ((a.pack_ordre === null || a.pack_ordre === undefined) ? -1e9 : a.pack_ordre) - ((b.pack_ordre === null || b.pack_ordre === undefined) ? -1e9 : b.pack_ordre) || (Number(b.id) - Number(a.id)));
                     if (liste.length === 0) return null;
                     return (
                       <div style={{ marginBottom: 26 }}>
@@ -21702,14 +21755,22 @@ export default function App() {
                       <button onClick={() => ouvrirPack(null)} style={{ width: "100%", padding: 14, background: G.bouton, color: G.boutonTexte, border: "none", borderRadius: 10, fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>➕ Créer un pack</button>
                     </div>
                     {packMsg && <div style={{ fontSize: 13, marginBottom: 12, color: packMsg.startsWith("✅") ? G.green : "#c62828" }}>{packMsg}</div>}
+                    {mesPacks.length > 1 && <div style={{ fontSize: 12.5, color: G.textDim, lineHeight: 1.5, margin: "0 2px 10px" }}>↕️ Pour choisir l'ordre de tes packs sur ta vitrine, maintiens le doigt sur <b>⠿</b> et fais glisser le pack vers le haut ou vers le bas. Tu peux aussi utiliser les flèches ▲ ▼. L'ordre s'enregistre tout seul.</div>}
                     {mesPacks.length === 0 ? (
                       <div style={{ fontSize: 13, color: G.textDim, textAlign: "center", padding: 20 }}>Tu n'as pas encore de pack.</div>
-                    ) : mesPacks.map(p => {
+                    ) : mesPacks.map((p, rang) => {
                       const ids = (p.pack_livres || []).map(Number);
                       const couv = ids.map(i => (mesLivres.find(b => Number(b.id) === i) || {}).cover).filter(Boolean).slice(0, 3);
                       return (
-                        <div key={p.id} style={carte}>
+                        <div key={p.id} data-pack-carte="1" style={{ ...carte, ...(packGlisse === p.id ? { opacity: 0.75, border: "2px solid " + G.gold, boxShadow: "0 10px 26px rgba(0,0,0,0.25)" } : {}) }}>
                           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                          {mesPacks.length > 1 && (
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                              <button onClick={() => deplacerPack(p.id, -1)} disabled={rang === 0} aria-label="Monter" style={{ background: "none", border: "none", color: rang === 0 ? G.border : G.gold, fontSize: 14, cursor: rang === 0 ? "default" : "pointer", padding: 2, lineHeight: 1 }}>▲</button>
+                              <div onPointerDown={e => debutGlissePack(e, p.id)} title="Maintiens et fais glisser" style={{ touchAction: "none", cursor: "grab", userSelect: "none", WebkitUserSelect: "none", fontSize: 22, color: G.textDim, padding: "4px 6px", lineHeight: 1 }}>⠿</div>
+                              <button onClick={() => deplacerPack(p.id, 1)} disabled={rang === mesPacks.length - 1} aria-label="Descendre" style={{ background: "none", border: "none", color: rang === mesPacks.length - 1 ? G.border : G.gold, fontSize: 14, cursor: rang === mesPacks.length - 1 ? "default" : "pointer", padding: 2, lineHeight: 1 }}>▼</button>
+                            </div>
+                          )}
                           <div style={{ position: "relative", width: 70, height: 80, flexShrink: 0 }}>
                             {couv.map((c, k) => <img key={k} loading="lazy" decoding="async" onError={imageSecours} src={c} alt="" style={{ position: "absolute", left: k * 14, top: k * 4, width: 42, height: 60, objectFit: "cover", borderRadius: 3, boxShadow: "0 2px 6px rgba(0,0,0,0.3)", transform: "rotate(" + ((k - 1) * 6) + "deg)" }} />)}
                           </div>
