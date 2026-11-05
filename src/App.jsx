@@ -17415,6 +17415,15 @@ export default function App() {
     return ach;
   })();
   const packVisible = (pk) => pk && pk.status === "actif" && !pk.masque;
+  // 05/11 : titre d'un article vendu (Ventes / Stats de l'auteur). Un pack n'est pas dans mesLivres :
+  // on le cherche dans les packs (meme retires de la vente) et on l'affiche « 📦 Pack : titre ».
+  const titreVendu = (id) => {
+    const b = (mesLivres || []).find(x => String(x.id) === String(id));
+    if (b) return b.title;
+    const pk = (packsAll || []).find(x => String(x.id) === String(id)) || (mesPacks || []).find(x => String(x.id) === String(id));
+    if (pk) return "📦 Pack : " + pk.title;
+    return "Livre #" + id;
+  };
   const livresDuPack = (pk) => ((pk && pk.pack_livres) || ((pk && (packsAll || []).find(x => String(x.id) === String(pk.id))) || {}).pack_livres || []).map(i => books.find(b => String(b.id) === String(i))).filter(Boolean);
   const couverturePack = (pk) => {
     const couv = livresDuPack(pk).map(b => b.cover).filter(Boolean).slice(0, 4).reverse(); // 03/11 : le livre phare (1er) est dessine en dernier = devant
@@ -21862,7 +21871,7 @@ export default function App() {
               })()}
               {auteurTab === "ventes" && (() => {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
-                const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
+                const titleOf = titreVendu;
                 const vv = filterVentesByPeriod(ventesSite(ventesAuteur), statsPeriod, statsDate);
                 const vd = vv.filter(v => v.source !== "abonnement");
                 const va = vv.filter(v => v.source === "abonnement");
@@ -21947,7 +21956,7 @@ export default function App() {
               {/* STATS */}
               {auteurTab === "stats" && (() => {
                 const fmt = n => (n || 0).toLocaleString("fr-FR") + " F";
-                const titleOf = id => (mesLivres.find(b => b.id === id) || {}).title || ("Livre #" + id);
+                const titleOf = titreVendu;
                 const vv = filterVentesByPeriod(ventesSite(ventesAuteur), statsPeriod, statsDate);
                 const vitr = vv.filter(v => v.source === "vitrine");
                 const avec = vv.filter(v => v.source === "auteur");
