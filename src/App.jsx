@@ -2022,6 +2022,7 @@ const PAGE_TO_PATH = {
   reclamer: "/mon-livre",
   espace_auteur: "/espace-auteur",
   auteurs: "/auteurs",
+  packs: "/packs",
 };
 
 const PATH_TO_PAGE = {
@@ -2041,6 +2042,7 @@ const PATH_TO_PAGE = {
   "/mon-livre": "reclamer",
   "/espace-auteur": "espace_auteur",
   "/auteurs": "auteurs",
+  "/packs": "packs",
 };
 
 // 22/09 — UNE ADRESSE PAR CATEGORIE : carrybooks.com/categorie/<nom-de-la-categorie>
@@ -17478,7 +17480,7 @@ export default function App() {
     const total = Number(pk.original_price) || lv.reduce((t, b) => t + Number(b.price || 0), 0);
     const remise = total > pk.price ? Math.round((1 - pk.price / total) * 100) : 0;
     return (
-      <div key={"pack" + pk.id} onClick={() => openBook(pk)} style={{ flexShrink: 0, width: largeur || "44vw", maxWidth: 190, cursor: "pointer" }}>
+      <div key={"pack" + pk.id} onClick={() => openBook(pk)} style={{ flexShrink: 0, width: largeur || "44vw", maxWidth: largeur === "100%" ? "none" : 190, cursor: "pointer" }}>
         <div style={{ width: "100%", aspectRatio: "130 / 150", background: "linear-gradient(135deg, " + G.surface + ", " + G.surface2 + ")", border: "1px solid " + G.border, borderRadius: 8, position: "relative", overflow: "hidden", marginBottom: 6, isolation: "isolate" }}>
           {couv.map((c, k) => (
             <img key={k} onError={imageSecours} src={c} loading="lazy" decoding="async" alt="" style={{ position: "absolute", top: "17%", left: (5 + k * (couv.length > 1 ? 43 / (couv.length - 1) : 0)) + "%", width: "52%", aspectRatio: "110 / 155", objectFit: "cover", borderRadius: 4, boxShadow: "0 3px 10px rgba(0,0,0,0.35)", transform: "rotate(" + ((k - (couv.length - 1) / 2) * 8) + "deg)", zIndex: k + 1 }} />
@@ -20420,6 +20422,32 @@ export default function App() {
   };
 
   // ================= LISTE DES AUTEUR(ES) =================
+  // 07/11 : TOUS LES PACKS (bouton « Tout voir » de la rangée Packs de l'accueil)
+  if (page === "packs") {
+    const tousPacks = packsAll.filter(pk => packVisible(pk) && !pk.exclusif_vitrine && auteurDuSite(pk.auteur_id) && livresDuPack(pk).length >= 2)
+      .sort((a, b) => Number(b.id) - Number(a.id));
+    return (
+      <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
+        {bandeauInstallNode}
+        {iosModalNode}
+        <div style={{ position: "sticky", top: 0, background: G.navSurface, borderBottom: "1px solid " + G.navBorder, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, zIndex: 10 }}>
+          <button onClick={() => { setPage("home"); try { window.history.pushState({}, "", "/"); } catch (e) {} }} style={{ background: "none", border: "none", color: G.navText, fontSize: 22, cursor: "pointer" }}>←</button>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: G.gold }}>📦 Tous les packs</div>
+        </div>
+        <div style={{ maxWidth: 800, margin: "0 auto", padding: 16 }}>
+          <div style={{ fontSize: 13, color: G.textDim, marginBottom: 14, lineHeight: 1.5 }}>Plusieurs livres, un seul prix : tu paies une fois et tous les livres du pack arrivent dans ta bibliothèque.</div>
+          {tousPacks.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 40, color: G.textDim }}>{packsAll.length ? "Aucun pack pour le moment." : "Chargement…"}</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
+              {tousPacks.map(pk => cartePack(pk, "100%"))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (page === "auteurs") {
     return (
       <div style={{ minHeight: "100vh", background: G.bg, color: G.text, fontFamily: "Georgia, serif", paddingTop: 0 }}>
@@ -25613,8 +25641,12 @@ export default function App() {
                   return (
                     <div style={{ marginBottom: 28 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px", marginBottom: 12 }}>
-                        <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>📦 Packs à petits prix</div>
-                        <div style={{ fontSize: 11, color: G.gold }}>Plusieurs livres, un seul prix</div>
+                        <div>
+                          <div style={{ fontSize: 16, fontWeight: "bold", color: G.text }}>📦 Packs à petits prix</div>
+                          <div style={{ fontSize: 11, color: G.textDim }}>Plusieurs livres, un seul prix</div>
+                        </div>
+                        <button onClick={() => { setPage("packs"); try { window.scrollTo(0, 0); } catch (e) {} }}
+                          style={{ fontSize: 12, color: G.gold, background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>Tout voir →</button>
                       </div>
                       <div ref={packsAccRef} onTouchStart={() => { packsPause.current = Date.now(); }} onMouseDown={() => { packsPause.current = Date.now(); }} style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 4px", scrollbarWidth: "none" }}>
                         {melangerListe(liste).map(pk => cartePack(pk))}
