@@ -5190,7 +5190,7 @@ export default function Admin() {
         )}
 
         {view === "ventes_pays" && (() => {
-          const NOMS = { CMR:"🇨🇲 Cameroun", CIV:"🇨🇮 Côte d'Ivoire", SEN:"🇸🇳 Sénégal", BEN:"🇧🇯 Bénin", GAB:"🇬🇦 Gabon", COG:"🇨🇬 Congo-Brazzaville", COD:"🇨🇩 RD Congo", TCD:"🇹🇩 Tchad", RWA:"🇷🇼 Rwanda", KEN:"🇰🇪 Kenya", MOZ:"🇲🇿 Mozambique", UGA:"🇺🇬 Ouganda", SLE:"🇸🇱 Sierra Leone", ZMB:"🇿🇲 Zambie", "??":"❔ Non renseigné (ventes anciennes)" };
+          const NOMS = { CMR:"🇨🇲 Cameroun", CIV:"🇨🇮 Côte d'Ivoire", SEN:"🇸🇳 Sénégal", BEN:"🇧🇯 Bénin", GAB:"🇬🇦 Gabon", COG:"🇨🇬 Congo-Brazzaville", COD:"🇨🇩 RD Congo", TCD:"🇹🇩 Tchad", RWA:"🇷🇼 Rwanda", KEN:"🇰🇪 Kenya", MOZ:"🇲🇿 Mozambique", UGA:"🇺🇬 Ouganda", SLE:"🇸🇱 Sierra Leone", ZMB:"🇿🇲 Zambie", BFA:"🇧🇫 Burkina Faso", "??":"❔ Non renseigné (ventes anciennes)" };
           const f = n => (n || 0).toLocaleString("fr-FR") + " F";
           const totCA = vpData.reduce((s, r) => s + r.ca, 0);
           const totNb = vpData.reduce((s, r) => s + r.nb, 0);

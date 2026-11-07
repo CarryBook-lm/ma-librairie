@@ -1944,7 +1944,16 @@ const PAYS_TEL = [
   { nom: "Rwanda", code: "+250", flag: "🇷🇼" }, { nom: "Kenya", code: "+254", flag: "🇰🇪" },
   { nom: "Mozambique", code: "+258", flag: "🇲🇿" }, { nom: "Ouganda", code: "+256", flag: "🇺🇬" },
   { nom: "Sierra Leone", code: "+232", flag: "🇸🇱" }, { nom: "Zambie", code: "+260", flag: "🇿🇲" },
+  { nom: "Burkina Faso", code: "+226", flag: "🇧🇫" },
 ];
+// 07/11 : iKeePay (achat direct Mobile Money) pour ces 4 pays, decide par Landrine.
+// Le Cameroun reste sur CamPay, les autres pays sur PawaPay.
+const IKP_PAYS = {
+  "Côte d'Ivoire": { dial: "225", ops: [["ORANGE", "Orange Money", "#FF6600", "#fff"], ["MTN", "MTN MoMo", "#FFCC00", "#000"], ["MOOV", "Moov Money", "#0057a8", "#fff"], ["WAVE", "Wave", "#1dc8f2", "#fff"]] },
+  "Sénégal":       { dial: "221", ops: [["ORANGE", "Orange Money", "#FF6600", "#fff"], ["WAVE", "Wave", "#1dc8f2", "#fff"]] },
+  "Bénin":         { dial: "229", ops: [["MTN", "MTN MoMo", "#FFCC00", "#000"], ["MOOV", "Moov Money", "#0057a8", "#fff"]] },
+  "Burkina Faso":  { dial: "226", ops: [["ORANGE", "Orange Money", "#FF6600", "#fff"], ["MOOV", "Moov Money", "#0057a8", "#fff"]] },
+};
 // Comptes auteurs liés : un compte principal regroupe les ventes/livres de ses noms de plume.
 // Ex : Landrine (8) voit aussi Julia ShiMen (9).
 const COMPTES_LIES = { 8: [9] };
@@ -1955,7 +1964,7 @@ const filtreMesLivres = (p) => {
   const ids = idsComptesLies(p.id).join(",");
   return (EST_HOMOROMANCE && p.id === 8) ? "author.ilike.%Johanna Morisson%" : ("auteur_id.in.(" + ids + ")");
 };
-const PAYS_TO_PP = { "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
+const PAYS_TO_PP = { "Burkina Faso": "BFA", "Cameroun": "CMR", "Côte d'Ivoire": "CIV", "Sénégal": "SEN", "Bénin": "BEN", "Gabon": "GAB", "Congo (Brazzaville)": "COG", "Congo (RDC)": "COD", "Tchad": "TCD", "Rwanda": "RWA", "Kenya": "KEN", "Mozambique": "MOZ", "Ouganda": "UGA", "Sierra Leone": "SLE", "Zambie": "ZMB" };
 const LEC_LABEL = { display: "block", fontSize: 12, fontWeight: 700, color: "#7a6f5d", marginBottom: 5 };
 const LEC_INPUT = { width: "100%", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, boxSizing: "border-box", color: "#1a1a1a", background: "#fff" };
 // Capture globale de l'événement d'installation PWA (Android/Chrome) dès le chargement,
@@ -15071,6 +15080,18 @@ export default function App() {
   const [paydunyaLoading, setPaydunyaLoading] = useState(false);
   const [paydunyaReturn, setPaydunyaReturn] = useState(false);
   const [pawapayLoading, setPawapayLoading] = useState(false);
+  // 07/11 : iKeePay (paiement direct Mobile Money) — etapes 7 (formulaire) et 8 (attente)
+  const [ikpOp, setIkpOp] = useState("");
+  const [ikpNum, setIkpNum] = useState("");
+  const [ikpOtp, setIkpOtp] = useState("");
+  const [ikpErr, setIkpErr] = useState("");
+  const [ikpBusy, setIkpBusy] = useState(false);
+  const [ikpJeton, setIkpJeton] = useState("");
+  const [ikpLien, setIkpLien] = useState("");
+  const [ikpMontant, setIkpMontant] = useState(0);
+  const [ikpDebut, setIkpDebut] = useState(0);
+  const [ikpSec, setIkpSec] = useState(0);
+  const [ikpLong, setIkpLong] = useState(false);
   const [pawapayCountry, setPawapayCountry] = useState("");
   const [showPawapayCountries, setShowPawapayCountries] = useState(false);
   const [auteurProfil, setAuteurProfil] = useState(null);
@@ -18370,7 +18391,7 @@ export default function App() {
   async function payerCarrycarePawapay(quizType, resultData, amount) {
     try {
       const iso = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
-      if (!iso) { alert("Le paiement Mobile Money n'est pas encore disponible pour ton pays."); return; }
+      if (!iso || iso === "BFA") { alert("Le paiement Mobile Money n'est pas encore disponible pour ton pays."); return; }
       const userResp = await supabase.auth.getUser();
       const userId = userResp.data.user?.id || null;
       let referrerCode = null;
@@ -18400,6 +18421,112 @@ export default function App() {
       alert("Le paiement n'a pas pu démarrer. Vérifie ta connexion et réessaie.");
     }
   }
+
+  // ===== 07/11 : iKeePay — achat direct Mobile Money (Côte d'Ivoire, Sénégal, Bénin, Burkina Faso) =====
+  // Le lecteur choisit son opérateur, tape son numéro, et valide sur son téléphone : aucune autre page.
+  // Le PRIX est relu par le serveur dans la base ; le livre n'est donné qu'après la confirmation d'iKeePay.
+  function ouvrirIkeepay() {
+    const P = lecteur && IKP_PAYS[lecteur.pays];
+    if (!P) return false;
+    let num = String((lecteur && lecteur.telephone) || "").replace(/\D/g, "");
+    if (num.indexOf(P.dial) === 0 && num.length > P.dial.length + 5) num = num.slice(P.dial.length);
+    setIkpOp(P.ops[0][0]); setIkpNum(num); setIkpOtp(""); setIkpErr(""); setIkpBusy(false);
+    setIkpJeton(""); setIkpLien(""); setIkpLong(false);
+    setPaymentStep(7);
+    return true;
+  }
+  async function payerIkeepay() {
+    const P = lecteur && IKP_PAYS[lecteur.pays];
+    if (!P || !paymentBook) return;
+    const num = String(ikpNum || "").replace(/\D/g, "");
+    if (num.length < 6) { setIkpErr("Écris ton numéro Mobile Money en entier."); return; }
+    const avecOtp = lecteur.pays === "Burkina Faso" && ikpOp === "ORANGE";
+    if (avecOtp && String(ikpOtp).replace(/\D/g, "").length < 4) { setIkpErr("Écris le code Orange Money obtenu avec *144*4*6*montant#."); return; }
+    setIkpErr(""); setIkpBusy(true);
+    let referrerCode = null;
+    try {
+      const code = localStorage.getItem("carrybooks_referrer_code");
+      const exp = parseInt(localStorage.getItem("carrybooks_referrer_expires") || "0");
+      if (code && exp > Date.now()) referrerCode = code;
+    } catch (e) {}
+    let authorSrc = "";
+    try { authorSrc = localStorage.getItem("carrybooks_src_code") || localStorage.getItem("carrybooks_referrer_code") || ""; } catch (e) {}
+    let tok = "";
+    try { const r = await supabase.auth.getSession(); tok = (r && r.data && r.data.session && r.data.session.access_token) || ""; } catch (e) {}
+    let d = null;
+    try {
+      const r = await fetch("/api/ikeepay-payin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "payer", book_id: paymentBook.id, operator: ikpOp, numero: num, otp: avecOtp ? ikpOtp : "",
+          phone: lecteur.telephone || "", pays: lecteur.pays, access_token: tok,
+          promo_id: appliedPromo ? appliedPromo.id : null, referrer_code: referrerCode, author_src: authorSrc,
+        }),
+      });
+      d = await r.json().catch(() => null);
+    } catch (e) { d = null; }
+    setIkpBusy(false);
+    if (!d || !d.ok || !d.jeton) { setIkpErr((d && d.message) || "Le paiement n’a pas pu démarrer. Vérifie ta connexion et réessaie."); return; }
+    try { localStorage.setItem("carrybooks_ikp_attente", JSON.stringify({ jeton: d.jeton, book_id: paymentBook.id, at: Date.now() })); } catch (e) {}
+    setIkpMontant(d.montant || 0); setIkpJeton(d.jeton); setIkpLien(d.lien || "");
+    setIkpDebut(Date.now()); setIkpSec(0); setIkpLong(false);
+    setPaymentStep(8);
+  }
+  // Le paiement est confirmé par le serveur : même suite que les autres moyens de paiement.
+  function succesIkeepay(jeton) {
+    try { localStorage.removeItem("carrybooks_ikp_attente"); } catch (e) {}
+    setPaymentStep(5);
+    const newP = [...purchasedBooks, paymentBook.id];
+    setPurchasedBooks(newP);
+    try { localStorage.setItem("purchasedBooks", JSON.stringify(newP)); } catch (e) {}
+    try { supabase.rpc("incrementer_vente", { p_book_id: paymentBook.id }); setSelectedBook(b => (b && b.id === paymentBook.id) ? { ...b, nb_ventes: (b.nb_ventes || 0) + 1 } : b); } catch (e) {}
+    if (appliedPromo) setAppliedPromo(null);
+    try { cacheBook(paymentBook); } catch (e) {}
+    try {
+      trackPixelEvent("Purchase", {
+        content_ids: [String(paymentBook.id)], content_name: paymentBook.title || "", content_type: "product",
+        value: ikpMontant || paymentBook.price || 0, currency: "XAF", num_items: 1,
+      }, "carrybooks_purchase_IKP_" + jeton, paymentBook);
+    } catch (e) {}
+  }
+  // Attente : on demande au serveur toutes les 4 secondes. Au bout de 3 minutes, message honnête.
+  useEffect(() => {
+    if (paymentStep !== 8 || !ikpJeton) return;
+    let fini = false;
+    const chrono = setInterval(() => setIkpSec(Math.floor((Date.now() - ikpDebut) / 1000)), 1000);
+    const tour = async () => {
+      if (fini) return;
+      try {
+        const r = await fetch("/api/ikeepay-payin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "etat", jeton: ikpJeton }) });
+        const d = await r.json().catch(() => null);
+        if (fini) return;
+        if (d && d.statut === "reussi") { fini = true; succesIkeepay(ikpJeton); return; }
+        if (d && d.statut === "echec") { fini = true; try { localStorage.removeItem("carrybooks_ikp_attente"); } catch (e) {} setIkpErr("Ton opérateur n’a pas validé ce paiement. Rien n’a été débité."); setPaymentStep(7); return; }
+      } catch (e) {}
+      if (Date.now() - ikpDebut > 180000) setIkpLong(true);
+      if (!fini) setTimeout(tour, 4000);
+    };
+    const t0 = setTimeout(tour, 4000);
+    return () => { fini = true; clearInterval(chrono); clearTimeout(t0); };
+  }, [paymentStep, ikpJeton]);
+  // Paiement lancé puis page fermée : au retour, on redemande une fois où il en est
+  // (le serveur donne le livre si iKeePay l'a confirmé entre-temps).
+  useEffect(() => {
+    let a = null;
+    try { a = JSON.parse(localStorage.getItem("carrybooks_ikp_attente") || "null"); } catch (e) {}
+    if (!a || !a.jeton || Date.now() - (a.at || 0) > 2 * 86400000) { try { localStorage.removeItem("carrybooks_ikp_attente"); } catch (e) {} return; }
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch("/api/ikeepay-payin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "etat", jeton: a.jeton }) });
+        const d = await r.json().catch(() => null);
+        if (d && d.statut === "reussi") {
+          try { localStorage.removeItem("carrybooks_ikp_attente"); } catch (e) {}
+          setPurchasedBooks(prev => { const n = prev.some(x => String(x) === String(a.book_id)) ? prev : [...prev, a.book_id]; try { localStorage.setItem("purchasedBooks", JSON.stringify(n)); } catch (e) {} return n; });
+        } else if (d && (d.statut === "echec" || d.erreur === "INCONNU")) { try { localStorage.removeItem("carrybooks_ikp_attente"); } catch (e) {} }
+      } catch (e) {}
+    }, 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   async function payWithPawapay(forceCountry, deviseChoisie) {
     try {
@@ -20326,10 +20453,64 @@ export default function App() {
   // 04/10 : le modal de paiement n'etait pose que sur la page detail et sur
   // l'accueil. Sur la page Formation il manquait : cliquer sur Acheter ne
   // faisait rien. Il est desormais ecrit ici une fois et pose aux deux endroits.
+  // 07/11 : écrans iKeePay (7 = opérateur + numéro, 8 = attente), posés dans les deux fenêtres de paiement.
+  const ikpP = lecteur && IKP_PAYS[lecteur.pays];
+  const ikeepayNode = (paymentStep === 7 || paymentStep === 8) && paymentBook && ikpP ? (
+    paymentStep === 7 ? (
+      <div style={{ padding: "6px 0", textAlign: "left" }}>
+        <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 16px" }} />
+        <h3 style={{ color: "#1a1a1a", margin: "0 0 4px", fontSize: 17, textAlign: "center" }}>📱 Payer par Mobile Money</h3>
+        <p style={{ color: "#888", fontSize: 13, margin: "0 0 14px", textAlign: "center" }}>{paymentBook.title}</p>
+        <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6 }}>Ton opérateur</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+          {ikpP.ops.map(o => (
+            <button key={o[0]} onClick={() => { setIkpOp(o[0]); setIkpErr(""); }} style={{ padding: "12px 8px", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", background: ikpOp === o[0] ? o[2] : "#fff", color: ikpOp === o[0] ? o[3] : "#1a1a1a", border: "2px solid " + (ikpOp === o[0] ? o[2] : "#ddd") }}>{ikpOp === o[0] ? "✓ " : ""}{o[1]}</button>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6 }}>Ton numéro {ikpP.ops.find(o => o[0] === ikpOp) ? ikpP.ops.find(o => o[0] === ikpOp)[1] : "Mobile Money"}</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <div style={{ padding: "12px 10px", border: "1px solid #ddd", borderRadius: 8, fontSize: 15, color: "#1a1a1a", background: "#f5f5f5" }}>+{ikpP.dial}</div>
+          <input type="tel" inputMode="tel" value={ikpNum} onChange={e => { setIkpNum(e.target.value); setIkpErr(""); }} placeholder="07 00 00 00 00" style={{ flex: 1, minWidth: 0, padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 15, color: "#1a1a1a", background: "#fff" }} />
+        </div>
+        {lecteur.pays === "Burkina Faso" && ikpOp === "ORANGE" && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6 }}>Code Orange Money</div>
+            <input type="tel" inputMode="numeric" value={ikpOtp} onChange={e => { setIkpOtp(e.target.value.replace(/\D/g, "")); setIkpErr(""); }} placeholder="123456" maxLength={8} style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1px solid #ddd", borderRadius: 8, fontSize: 15, color: "#1a1a1a", background: "#fff" }} />
+            <div style={{ fontSize: 12, color: "#7a5c00", background: "#fff8e1", borderRadius: 8, padding: "8px 10px", marginTop: 6, lineHeight: 1.5 }}>Sur ton téléphone, compose <b>*144*4*6*{Math.floor(((paymentBook.price || 0) - (appliedPromo ? Math.round((paymentBook.price || 0) * appliedPromo.discount_pct / 100) : 0)) / 100) * 100}#</b> pour obtenir ce code, puis recopie-le ici.</div>
+          </div>
+        )}
+        <div style={{ fontSize: 12, color: "#4c1d95", background: "#f3effc", borderRadius: 8, padding: "10px 12px", marginBottom: 12, lineHeight: 1.5 }}>Tu vas recevoir la demande de paiement directement sur ton téléphone. Tape ton <b>code secret Mobile Money</b> pour valider. Aucune autre page ne s’ouvre.</div>
+        {ikpErr && <div style={{ fontSize: 13, color: "#c62828", marginBottom: 10, lineHeight: 1.5 }}>❌ {ikpErr}</div>}
+        <button onClick={payerIkeepay} disabled={ikpBusy} style={{ width: "100%", padding: 16, marginBottom: 10, background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer", opacity: ikpBusy ? 0.6 : 1 }}>
+          {ikpBusy ? "Un instant…" : "Payer " + (((paymentBook.price || 0) - (appliedPromo ? Math.round((paymentBook.price || 0) * appliedPromo.discount_pct / 100) : 0))).toLocaleString("fr-FR") + " FCFA"}
+        </button>
+        <button onClick={() => { setPaymentStep(1); setIkpErr(""); }} style={{ width: "100%", background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", padding: 8 }}>← Retour</button>
+      </div>
+    ) : (
+      <div style={{ padding: "16px 0", textAlign: "center" }}>
+        <div style={{ fontSize: 44, marginBottom: 8 }}>📲</div>
+        <h3 style={{ color: "#1a1a1a", margin: "0 0 6px", fontSize: 17 }}>Valide sur ton téléphone</h3>
+        <p style={{ color: "#c62828", fontWeight: "bold", fontSize: 14, margin: "0 0 10px" }}>Ne quitte pas cet écran.</p>
+        <p style={{ color: "#444", fontSize: 14, lineHeight: 1.6, margin: "0 0 10px" }}>Une demande de paiement de <b>{Number(ikpMontant || 0).toLocaleString("fr-FR")} FCFA</b> vient de partir sur ton téléphone. Tape ton <b>code secret Mobile Money</b> pour valider.</p>
+        {ikpLien && (
+          <button onClick={() => { try { window.open(ikpLien, "_blank"); } catch (e) { window.location.href = ikpLien; } }} style={{ width: "100%", padding: 14, margin: "4px 0 12px", background: ikpOp === "WAVE" ? "#1dc8f2" : "#FF6600", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>Ouvrir la page de paiement {ikpOp === "WAVE" ? "Wave" : "Orange Money"}</button>
+        )}
+        <div style={{ fontSize: 28, fontWeight: "bold", color: "#1a1a1a", margin: "6px 0" }}>{Math.floor(ikpSec / 60)}:{String(ikpSec % 60).padStart(2, "0")}</div>
+        {ikpSec >= 20 && !ikpLong && <p style={{ fontSize: 13, color: "#1c8a3e", lineHeight: 1.6, margin: "8px 0" }}>✅ Tu as tapé ton code ? Tout va bien : ton opérateur met parfois <b>1 à 2 minutes</b> à confirmer. Ton livre s’ouvre tout seul.</p>}
+        {ikpLong && (
+          <div style={{ fontSize: 13, color: "#7a5c00", background: "#fff8e1", borderRadius: 8, padding: "10px 12px", lineHeight: 1.6, margin: "8px 0", textAlign: "left" }}>
+            ⏳ Ton opérateur n’a pas encore confirmé.<br /><b>Si tu as tapé ton code secret</b>, le livre arrivera tout seul dans « Ma bibliothèque » dans quelques minutes.<br />Si tu ne l’as pas tapé, rien n’a été débité.
+          </div>
+        )}
+        {ikpLong && <button onClick={() => { setShowPayment(false); setPaymentStep(1); }} style={{ width: "100%", padding: 12, marginTop: 6, background: "#1a1a1a", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer" }}>D’accord</button>}
+      </div>
+    )
+  ) : null;
   const paiementModalNode = (
         showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
             <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+              {ikeepayNode}
               {paymentStep === 1 && (
                 <>
                   <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
@@ -20344,7 +20525,7 @@ export default function App() {
                     <div style={{ fontSize: 11, color: "#7a5c00", marginBottom: 4 }}>Prix du livre</div>
                     <div style={{ fontSize: 22, fontWeight: "bold", color: "#1a1a1a" }}>{paymentBook.price?.toLocaleString()} FCFA</div>
                   </div>
-                  <button onClick={() => setPaymentStep(2)} style={{
+                  <button onClick={() => { if (!ouvrirIkeepay()) setPaymentStep(2); }} style={{
                     width: "100%", padding: 14, background: "#1a1a1a", color: "#fff",
                     border: "none", borderRadius: 10, fontSize: 14, fontWeight: "bold", cursor: "pointer", marginBottom: 10
                   }}>
@@ -24370,6 +24551,7 @@ export default function App() {
         {showPayment && paymentBook && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
             <div style={{ background: (EST_HOMOROMANCE ? G.carte : "#ffffff"), borderRadius: "16px 16px 0 0", width: "100%", padding: "24px 20px 40px", border: "1px solid #e0e0e0" }}>
+              {ikeepayNode}
               {paymentStep === 1 && (
                 <>
                   <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 20px" }} />
@@ -24476,7 +24658,9 @@ export default function App() {
                     }, null, paymentBook);
                     // Lecteur hors Cameroun (pays PawaPay activé) → paiement direct, sans écran de choix
                     const iso = lecteur ? PAYS_TO_PP[lecteur.pays] : null;
-                    if (lecteur && lecteur.pays !== "Cameroun" && iso) {
+                    // 07/11 : Côte d'Ivoire, Sénégal, Bénin, Burkina Faso -> iKeePay (achat direct)
+                    if (ouvrirIkeepay()) { /* écran iKeePay ouvert */ }
+                    else if (lecteur && lecteur.pays !== "Cameroun" && iso) {
                       payWithPawapay(iso);
                     } else {
                       setPaymentStep(2);
@@ -24515,7 +24699,10 @@ export default function App() {
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
                   }}>📱 Orange Money</button>
                   </>)}
-                  {lecteur && lecteur.pays !== "Cameroun" && (
+                  {lecteur && IKP_PAYS[lecteur.pays] && (
+                    <button onClick={ouvrirIkeepay} style={{ width: "100%", padding: 16, marginBottom: 14, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>📱 Payer avec Mobile Money</button>
+                  )}
+                  {lecteur && lecteur.pays !== "Cameroun" && !IKP_PAYS[lecteur.pays] && (
                     PAYS_TO_PP[lecteur.pays]
                       ? (lecteur.pays === "Congo (RDC)" ? (<>
                           <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8, fontWeight: "bold", textAlign: "left" }}>Choisis ta devise :</div>
