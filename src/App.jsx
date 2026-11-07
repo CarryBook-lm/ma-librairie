@@ -1954,6 +1954,19 @@ const IKP_PAYS = {
   "Bénin":         { dial: "229", ops: [["MTN", "MTN MoMo", "#FFCC00", "#000"], ["MOOV", "Moov Money", "#0057a8", "#fff"]] },
   "Burkina Faso":  { dial: "226", ops: [["ORANGE", "Orange Money", "#FF6600", "#fff"], ["MOOV", "Moov Money", "#0057a8", "#fff"]] },
 };
+// 07/11 : MODE TEST iKeePay pour Landrine (Cameroun). Activé par carrybooks.com/?test_ikeepay=1,
+// coupé par ?test_ikeepay=0. Seul CE téléphone passe alors par iKeePay ; les autres lecteurs
+// camerounais restent sur CamPay.
+const IKP_CM = { dial: "237", test: true, ops: [["MTN", "MTN MoMo", "#FFCC00", "#000"], ["ORANGE", "Orange Money", "#FF6600", "#fff"]] };
+if (typeof window !== "undefined") {
+  try {
+    const q = new URLSearchParams(window.location.search).get("test_ikeepay");
+    if (q === "1") localStorage.setItem("carrybooks_test_ikeepay", "1");
+    if (q === "0") localStorage.removeItem("carrybooks_test_ikeepay");
+  } catch (e) {}
+}
+const ikpTestActif = () => { try { return localStorage.getItem("carrybooks_test_ikeepay") === "1"; } catch (e) { return false; } };
+const ikpPaysDe = (pays) => IKP_PAYS[pays] || ((pays === "Cameroun" && ikpTestActif()) ? IKP_CM : null);
 // Comptes auteurs liés : un compte principal regroupe les ventes/livres de ses noms de plume.
 // Ex : Landrine (8) voit aussi Julia ShiMen (9).
 const COMPTES_LIES = { 8: [9] };
@@ -18426,7 +18439,7 @@ export default function App() {
   // Le lecteur choisit son opérateur, tape son numéro, et valide sur son téléphone : aucune autre page.
   // Le PRIX est relu par le serveur dans la base ; le livre n'est donné qu'après la confirmation d'iKeePay.
   function ouvrirIkeepay() {
-    const P = lecteur && IKP_PAYS[lecteur.pays];
+    const P = lecteur && ikpPaysDe(lecteur.pays);
     if (!P) return false;
     let num = String((lecteur && lecteur.telephone) || "").replace(/\D/g, "");
     if (num.indexOf(P.dial) === 0 && num.length > P.dial.length + 5) num = num.slice(P.dial.length);
@@ -18436,7 +18449,7 @@ export default function App() {
     return true;
   }
   async function payerIkeepay() {
-    const P = lecteur && IKP_PAYS[lecteur.pays];
+    const P = lecteur && ikpPaysDe(lecteur.pays);
     if (!P || !paymentBook) return;
     const num = String(ikpNum || "").replace(/\D/g, "");
     if (num.length < 6) { setIkpErr("Écris ton numéro Mobile Money en entier."); return; }
@@ -18461,6 +18474,7 @@ export default function App() {
           action: "payer", book_id: paymentBook.id, operator: ikpOp, numero: num, otp: avecOtp ? ikpOtp : "",
           phone: lecteur.telephone || "", pays: lecteur.pays, access_token: tok,
           promo_id: appliedPromo ? appliedPromo.id : null, referrer_code: referrerCode, author_src: authorSrc,
+          test: !!P.test,
         }),
       });
       d = await r.json().catch(() => null);
@@ -20454,12 +20468,13 @@ export default function App() {
   // l'accueil. Sur la page Formation il manquait : cliquer sur Acheter ne
   // faisait rien. Il est desormais ecrit ici une fois et pose aux deux endroits.
   // 07/11 : écrans iKeePay (7 = opérateur + numéro, 8 = attente), posés dans les deux fenêtres de paiement.
-  const ikpP = lecteur && IKP_PAYS[lecteur.pays];
+  const ikpP = lecteur && ikpPaysDe(lecteur.pays);
   const ikeepayNode = (paymentStep === 7 || paymentStep === 8) && paymentBook && ikpP ? (
     paymentStep === 7 ? (
       <div style={{ padding: "6px 0", textAlign: "left" }}>
         <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 16px" }} />
         <h3 style={{ color: "#1a1a1a", margin: "0 0 4px", fontSize: 17, textAlign: "center" }}>📱 Payer par Mobile Money</h3>
+        {ikpP.test && <div style={{ textAlign: "center", fontSize: 12, fontWeight: "bold", color: "#6d28d9", marginBottom: 4 }}>🧪 Mode test iKeePay</div>}
         <p style={{ color: "#888", fontSize: 13, margin: "0 0 14px", textAlign: "center" }}>{paymentBook.title}</p>
         <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6 }}>Ton opérateur</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
@@ -24699,10 +24714,10 @@ export default function App() {
                     border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer"
                   }}>📱 Orange Money</button>
                   </>)}
-                  {lecteur && IKP_PAYS[lecteur.pays] && (
+                  {lecteur && ikpPaysDe(lecteur.pays) && (
                     <button onClick={ouvrirIkeepay} style={{ width: "100%", padding: 16, marginBottom: 14, background: "#6d28d9", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: "bold", cursor: "pointer" }}>📱 Payer avec Mobile Money</button>
                   )}
-                  {lecteur && lecteur.pays !== "Cameroun" && !IKP_PAYS[lecteur.pays] && (
+                  {lecteur && lecteur.pays !== "Cameroun" && !ikpPaysDe(lecteur.pays) && (
                     PAYS_TO_PP[lecteur.pays]
                       ? (lecteur.pays === "Congo (RDC)" ? (<>
                           <div style={{ fontSize: 12, color: "#4c1d95", marginBottom: 8, fontWeight: "bold", textAlign: "left" }}>Choisis ta devise :</div>

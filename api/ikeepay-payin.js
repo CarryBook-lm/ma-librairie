@@ -66,7 +66,11 @@ export default async function handler(req, res) {
     }
 
     // ================= LANCER UN PAIEMENT =================
-    const P = PAYS_IKP[String(b.pays || "").trim()];
+    // Cameroun : seulement en MODE TEST (Landrine, avec son propre numéro). Les lecteurs
+    // camerounais restent sur CamPay : leur téléphone n'envoie jamais « test ».
+    const nomPays = String(b.pays || "").trim();
+    const P = PAYS_IKP[nomPays] || ((nomPays === "Cameroun" && b.test === true)
+      ? { iso: "CM", iso3: "CMR", dial: "237", ops: ["MTN", "ORANGE"], devise: "XAF" } : null);
     if (!P) return res.status(400).json({ ok: false, erreur: "PAYS", message: "Le paiement direct n’est pas ouvert dans ton pays." });
 
     const op = String(b.operator || "").toUpperCase().trim();
@@ -125,7 +129,7 @@ export default async function handler(req, res) {
     const { data: cree, error: eIns } = await supa.from("ikeepay_paiements").insert([{
       jeton, statut: "attente", book_id: bookId, user_id: userId,
       phone: String(b.phone || "").trim() || ("+" + complet), numero_paiement: complet,
-      pays: P.iso3, operateur: op, montant, devise: "XOF", promo_id: promoId,
+      pays: P.iso3, operateur: op, montant, devise: P.devise || "XOF", promo_id: promoId,
       referrer_code: b.referrer_code ? String(b.referrer_code).slice(0, 60) : null,
       author_src: b.author_src ? String(b.author_src).slice(0, 60) : null,
     }]).select("id").limit(1);
@@ -133,7 +137,7 @@ export default async function handler(req, res) {
     paiementId = cree[0].id;
 
     const corps = {
-      amount: montant, currency: "XOF", country: P.iso, phoneNumber: complet, operator: op,
+      amount: montant, currency: P.devise || "XOF", country: P.iso, phoneNumber: complet, operator: op,
       external_reference: paiementId, customer_email: email || "",
     };
     if (otp) corps.otp = otp;
@@ -154,7 +158,7 @@ export default async function handler(req, res) {
     // Wave et Orange peuvent renvoyer une page à ouvrir au lieu de pousser la demande sur le téléphone.
     const lien = (d && (d.payment_link || (d.data && d.data.payment_link))) || null;
 
-    return res.status(200).json({ ok: true, jeton, montant, devise: "XOF", lien });
+    return res.status(200).json({ ok: true, jeton, montant, devise: P.devise || "XOF", lien });
   } catch (e) {
     const m = String((e && e.message) || e);
     console.error("[IKEEPAY-PAYIN]", m.slice(0, 300));
