@@ -66,11 +66,8 @@ export default async function handler(req, res) {
     }
 
     // ================= LANCER UN PAIEMENT =================
-    // Cameroun : seulement en MODE TEST (Landrine, avec son propre numéro). Les lecteurs
-    // camerounais restent sur CamPay : leur téléphone n'envoie jamais « test ».
-    const nomPays = String(b.pays || "").trim();
-    const P = PAYS_IKP[nomPays] || ((nomPays === "Cameroun" && b.test === true)
-      ? { iso: "CM", iso3: "CMR", dial: "237", ops: ["MTN", "ORANGE"], devise: "XAF" } : null);
+    // Uniquement les 4 pays. Le Cameroun reste sur CamPay (le mode test du 07/11 est retiré).
+    const P = PAYS_IKP[String(b.pays || "").trim()];
     if (!P) return res.status(400).json({ ok: false, erreur: "PAYS", message: "Le paiement direct n’est pas ouvert dans ton pays." });
 
     const op = String(b.operator || "").toUpperCase().trim();

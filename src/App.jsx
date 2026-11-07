@@ -1954,19 +1954,10 @@ const IKP_PAYS = {
   "Bénin":         { dial: "229", ops: [["MTN", "MTN MoMo", "#FFCC00", "#000"], ["MOOV", "Moov Money", "#0057a8", "#fff"]] },
   "Burkina Faso":  { dial: "226", ops: [["ORANGE", "Orange Money", "#FF6600", "#fff"], ["MOOV", "Moov Money", "#0057a8", "#fff"]] },
 };
-// 07/11 : MODE TEST iKeePay pour Landrine (Cameroun). Activé par carrybooks.com/?test_ikeepay=1,
-// coupé par ?test_ikeepay=0. Seul CE téléphone passe alors par iKeePay ; les autres lecteurs
-// camerounais restent sur CamPay.
-const IKP_CM = { dial: "237", test: true, ops: [["MTN", "MTN MoMo", "#FFCC00", "#000"], ["ORANGE", "Orange Money", "#FF6600", "#fff"]] };
-if (typeof window !== "undefined") {
-  try {
-    const q = new URLSearchParams(window.location.search).get("test_ikeepay");
-    if (q === "1") localStorage.setItem("carrybooks_test_ikeepay", "1");
-    if (q === "0") localStorage.removeItem("carrybooks_test_ikeepay");
-  } catch (e) {}
-}
-const ikpTestActif = () => { try { return localStorage.getItem("carrybooks_test_ikeepay") === "1"; } catch (e) { return false; } };
-const ikpPaysDe = (pays) => IKP_PAYS[pays] || ((pays === "Cameroun" && ikpTestActif()) ? IKP_CM : null);
+// 07/11 : le mode test Cameroun (?test_ikeepay=1) a servi au premier paiement réel, puis a été
+// retiré à la demande de Landrine. On efface la trace laissée dans les téléphones qui l'avaient activé.
+if (typeof window !== "undefined") { try { localStorage.removeItem("carrybooks_test_ikeepay"); } catch (e) {} }
+const ikpPaysDe = (pays) => IKP_PAYS[pays] || null;
 // Comptes auteurs liés : un compte principal regroupe les ventes/livres de ses noms de plume.
 // Ex : Landrine (8) voit aussi Julia ShiMen (9).
 const COMPTES_LIES = { 8: [9] };
@@ -18476,7 +18467,6 @@ export default function App() {
           action: "payer", book_id: paymentBook.id, operator: ikpOp, numero: num, otp: avecOtp ? ikpOtp : "",
           phone: lecteur.telephone || "", pays: lecteur.pays, access_token: tok,
           promo_id: appliedPromo ? appliedPromo.id : null, referrer_code: referrerCode, author_src: authorSrc,
-          test: !!P.test,
         }),
       });
       d = await r.json().catch(() => null);
@@ -20502,7 +20492,6 @@ export default function App() {
       <div style={{ padding: "6px 0", textAlign: "left" }}>
         <div style={{ width: 40, height: 4, background: "#ddd", borderRadius: 2, margin: "0 auto 16px" }} />
         <h3 style={{ color: "#1a1a1a", margin: "0 0 4px", fontSize: 17, textAlign: "center" }}>📱 Payer par Mobile Money</h3>
-        {ikpP.test && <div style={{ textAlign: "center", fontSize: 12, fontWeight: "bold", color: "#6d28d9", marginBottom: 4 }}>🧪 Mode test iKeePay</div>}
         <p style={{ color: "#888", fontSize: 13, margin: "0 0 14px", textAlign: "center" }}>{paymentBook.title}</p>
         <div style={{ fontSize: 12, fontWeight: "bold", color: "#555", marginBottom: 6 }}>Ton opérateur</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
